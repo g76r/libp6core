@@ -3,7 +3,7 @@
 #include <QtDebug>
 #include "pfinternals.h"
 #include <QBuffer>
-#include "util/ioutils.h"
+#include "pfioutils.h"
 #include "pfarray.h"
 
 enum State { TopLevel, Name, Content, Comment, Quote, BinarySurfaceOrLength,

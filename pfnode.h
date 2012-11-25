@@ -1,6 +1,7 @@
 #ifndef PFNODE_H
 #define PFNODE_H
 
+#include "libqtpf_global.h"
 #include <QString>
 #include <QList>
 #include <QIODevice>
@@ -11,7 +12,7 @@
 
 class PfNode;
 
-class PfNodeData : public QSharedData {
+class LIBQTPFSHARED_EXPORT PfNodeData : public QSharedData {
   friend class PfNode;
 private:
   QString _name;
@@ -41,7 +42,7 @@ private:
   static void staticInit();
 };
 
-class PfNode {
+class LIBQTPFSHARED_EXPORT PfNode {
   friend class PfNodeData;
 private:
   QSharedDataPointer<PfNodeData> d;

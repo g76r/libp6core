@@ -1,6 +1,7 @@
 #ifndef PFCONTENT_H
 #define PFCONTENT_H
 
+#include "libqtpf_global.h"
 #include <QIODevice>
 #include <QList>
 #include <QBuffer>
@@ -12,7 +13,7 @@
 /** Internal class for Qt's implicit sharing idiom.
   * @see PfFragment
   */
-class PfFragmentData : public QSharedData {
+class LIBQTPFSHARED_EXPORT PfFragmentData : public QSharedData {
   friend class PfFragment;
 private:
   enum Format {Raw, Pf, XmlBase64 };
@@ -54,7 +55,7 @@ private:
   * implementation, mainly PfContent. It should not be used directly by
   * application code.
   */
-class PfFragment {
+class LIBQTPFSHARED_EXPORT PfFragment {
 private:
   QSharedDataPointer<PfFragmentData> d;
 
@@ -103,7 +104,7 @@ public:
 /** Internal class for Qt's implicit sharing idiom.
   * @see PfContent
   */
-class PfContentData : public QSharedData {
+class LIBQTPFSHARED_EXPORT PfContentData : public QSharedData {
   friend class PfContent;
 private:
   QList<PfFragment> _fragments;
@@ -118,7 +119,7 @@ public:
 /** Content of a PF node.
   * @see PfNode
   */
-class PfContent {
+class LIBQTPFSHARED_EXPORT PfContent {
   QSharedDataPointer<PfContentData> d;
 
 public:

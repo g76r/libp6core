@@ -1,9 +1,10 @@
 #ifndef PFOPTIONS_H
 #define PFOPTIONS_H
 
+#include "libqtpf_global.h"
 #include <QString>
 
-class PfOptions {
+class LIBQTPFSHARED_EXPORT PfOptions {
 private:
   bool _shouldLazyLoadBinaryFragments;
   bool _shouldTranslateArrayIntoTree;

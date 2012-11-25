@@ -6,6 +6,7 @@
  * user code.
  */
 
+#include "libqtpf_global.h"
 #include <QObject>
 #include <QString>
 

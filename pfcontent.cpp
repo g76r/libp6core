@@ -1,6 +1,6 @@
 #include "pfcontent.h"
 #include "pfinternals.h"
-#include "util/ioutils.h"
+#include "pfioutils.h"
 #include <QtDebug>
 #include <QRegExp>
 #include "pfnode.h"

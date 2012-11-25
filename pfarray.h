@@ -1,6 +1,7 @@
 #ifndef PFARRAY_H
 #define PFARRAY_H
 
+#include "libqtpf_global.h"
 #include <QString>
 #include <QList>
 #include <QSharedData>
@@ -9,7 +10,7 @@
 class QIODevice;
 class PfNode;
 
-class PfArrayData : public QSharedData {
+class LIBQTPFSHARED_EXPORT PfArrayData : public QSharedData {
   friend class PfArray;
 private:
   QList<QString> _headers;
@@ -21,7 +22,7 @@ public:
     _headers(other._headers), _rows(other._rows) { }
 };
 
-class PfArray {
+class LIBQTPFSHARED_EXPORT PfArray {
 private:
   QSharedDataPointer<PfArrayData> d;
 

@@ -1,6 +1,7 @@
 #ifndef PFPARSER_H
 #define PFPARSER_H
 
+#include "libqtpf_global.h"
 #include "pfhandler.h"
 #include "pfoptions.h"
 
@@ -13,7 +14,7 @@ class PfArray;
   * @see PfHandler
   * @see PfDomHandler
   */
-class PfParser {
+class LIBQTPFSHARED_EXPORT PfParser {
 private:
   PfHandler *_handler;
 

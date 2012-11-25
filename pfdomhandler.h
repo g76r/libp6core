@@ -1,6 +1,7 @@
 #ifndef PFDOMHANDLER_H
 #define PFDOMHANDLER_H
 
+#include "libqtpf_global.h"
 #include "pfhandler.h"
 #include "pfnode.h"
 #include <QList>
@@ -11,7 +12,7 @@
   * event-oriented parsing: all the data is loaded into memory (excepted binary
   * fragments if they are lazy-loaded) and can be manipuled as PfNode trees.
   */
-class PfDomHandler : public PfHandler {
+class LIBQTPFSHARED_EXPORT PfDomHandler : public PfHandler {
 protected:
   QList<PfNode> _path;
   QList<PfNode> _roots;

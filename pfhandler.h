@@ -1,6 +1,7 @@
 #ifndef PFHANDLER_H
 #define PFHANDLER_H
 
+#include "libqtpf_global.h"
 #include <QString>
 #include <QList>
 #include <QIODevice>
@@ -13,7 +14,7 @@
   * @see PfParser
   * @see PfDomHandler
   */
-class PfHandler {
+class LIBQTPFSHARED_EXPORT PfHandler {
 private:
   QString _errorString;
   PfOptions _options;

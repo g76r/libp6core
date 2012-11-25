@@ -1,0 +1,5 @@
+*.pro.user*
+/Makefile
+/*.so
+/*.so.*
+*.o
