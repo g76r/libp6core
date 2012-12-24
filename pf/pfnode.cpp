@@ -93,7 +93,7 @@ qint64 PfNodeData::writeFlatXml(QIODevice *target,
   if ((r = target.write("<")) < 0)
     return -1;
   total += r;
-  if ((r = target.write(pftoxmlname(_name).toUtf8())) < 0) // FIXME xmlnameescape
+  if ((r = target.write(pftoxmlname(_name).toUtf8())) < 0) // fixme xmlnameescape
     return -1;
   total += r;
   // attributes
