@@ -1,3 +1,5 @@
 *.pro.user
 *.o
 moc_*.cpp
+/Makefile
+/*libqtssu.so*
