@@ -19,7 +19,7 @@
 
 class QSqlQuery;
 
-class PfSqlArrayFiller {
+class LIBQTPFSHARED_EXPORT PfSqlArrayFiller {
 private:
   QSqlDatabase &_db;
 
