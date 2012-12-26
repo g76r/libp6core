@@ -31,9 +31,11 @@ SOURCES += \
     thread/periodictask.cpp \
     thread/blockingtimer.cpp \
     textview/viewscomposerhandler.cpp \
-    textview/treehtmlview.cpp \
+    textview/htmltableview.cpp \
     textview/textview.cpp \
-    textview/asynctextview.cpp
+    textview/asynctextview.cpp \
+    textview/htmllistview.cpp \
+    textview/csvview.cpp
 
 
 HEADERS +=\
@@ -50,9 +52,11 @@ HEADERS +=\
     thread/periodictask.h \
     thread/blockingtimer.h \
     textview/viewscomposerhandler.h \
-    textview/treehtmlview.h \
+    textview/htmltableview.h \
     textview/textview.h \
-    textview/asynctextview.h
+    textview/asynctextview.h \
+    textview/htmllistview.h \
+    textview/csvview.h
 
 
 unix {

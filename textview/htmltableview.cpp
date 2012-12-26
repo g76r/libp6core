@@ -1,8 +1,8 @@
-#include "treehtmlview.h"
+#include "htmltableview.h"
 #include <QtDebug>
 
-TreeHtmlView::TreeHtmlView(QObject *parent) : AsyncTextView(parent) {
-  //qDebug() << "TreeHtmlView()" << parent;
+HtmlTableView::HtmlTableView(QObject *parent) : AsyncTextView(parent) {
+  //qDebug() << "HtmlTableView()" << parent;
 }
 
 /*inline void writeHtmlUlTree(QAbstractItemModel *m, QString &v,
@@ -23,11 +23,11 @@ TreeHtmlView::TreeHtmlView(QObject *parent) : AsyncTextView(parent) {
   v.append("</ul>");
 }*/
 
-void TreeHtmlView::writeHtmlTableTree(QAbstractItemModel *m, QString &v,
-                                      QModelIndex parent, int depth) {
+void HtmlTableView::writeHtmlTableTree(QAbstractItemModel *m, QString &v,
+                                       QModelIndex parent, int depth) {
   int rows = m->rowCount(parent);
   int columns = m->columnCount(parent);
-  //qDebug() << "TreeHtmlView::writeHtmlTableTree()" << depth << parent << rows
+  //qDebug() << "HtmlTableView::writeHtmlTableTree()" << depth << parent << rows
   //         << columns;
   for (int row = 0; row < rows; ++row) {
     v.append("<tr>");
@@ -46,11 +46,10 @@ void TreeHtmlView::writeHtmlTableTree(QAbstractItemModel *m, QString &v,
   }
 }
 
-void TreeHtmlView::updateText() {
+void HtmlTableView::updateText() {
   QAbstractItemModel *m = model();
   QString v;
   if (m) {
-    // TODO enhance look and allow themes (at less a Twitter Bootstrap theme)
     v.append("<table>\n<tr>");
     int columns = m->columnCount(QModelIndex());
     for (int i = 0; i < columns; ++i)
@@ -60,6 +59,6 @@ void TreeHtmlView::updateText() {
     writeHtmlTableTree(m, v, QModelIndex(), 0);
     v.append("</table>\n");
   }
-  //qDebug() << "TreeHtmlView::updateText()" << m << v << (m?m->rowCount():-1);
+  //qDebug() << "HtmlTableView::updateText()" << m << v << (m?m->rowCount():-1);
   _text = v; // this operation is atomic, therefore htmlPart is thread-safe
 }

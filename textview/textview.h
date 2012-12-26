@@ -5,6 +5,9 @@
 #include <QAbstractItemModel>
 #include "libqtssu_global.h"
 
+/** Class to use Qt's Model-View UI framework for text-oriented display, such
+ * as web applications, REST APIs and command line interfaces.
+ */
 class LIBQTSSUSHARED_EXPORT TextView : public QObject {
   Q_OBJECT
   QAbstractItemModel *_model;
@@ -21,7 +24,7 @@ public slots:
    * within a HTML page body, a JSON document or an ASCII art string fo a
    * text interface.
    * This method must be thread-safe, since it may be called by any thread,
-   * e.g. any HTTP server thread.
+   * e.g. a HTTP server thread.
    */
   virtual QString text() const = 0;
 };

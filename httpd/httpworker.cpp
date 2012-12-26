@@ -114,7 +114,7 @@ finally:
   // give object back to parent event loop, otherwise deleteLater() wouldn't
   // be processed
   this->moveToThread(_server ? _server->thread() : 0);
-  long long duration = before.msecsTo(QTime::currentTime());
+  //long long duration = before.msecsTo(QTime::currentTime());
   //Statistics::record("server.http.hit", "", url.path(), duration,
   //                   req.header("Content-Length").toLongLong(), 1, 0, 0,
   //                   req.param("login"));

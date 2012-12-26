@@ -21,6 +21,7 @@ class DefaultHandler : public HttpHandler {
   }
 
   virtual void handleRequest(HttpRequest &req, HttpResponse &res) {
+    Q_UNUSED(req)
     // TODO handle HEAD request (I don't know yet the most usefull way)
     res.setStatus(404);
     res.output()->write("Error 404 - Not found");
