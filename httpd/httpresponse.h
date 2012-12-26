@@ -21,10 +21,9 @@ under the License.
 class LIBQTSSUSHARED_EXPORT HttpResponse {
 private:
   QAbstractSocket *_output;
-  QString _contentType;
-  qint64 _contentLength; // -1 means unknown
   int _status;
   bool _headersSent;
+  QMultiMap<QString,QString> _headers;
 
 public:
   HttpResponse(QAbstractSocket *output);
@@ -32,14 +31,33 @@ public:
     * the response status and headers.
     */
   QAbstractSocket *output();
-  inline void setContentType(const QString &type) { _contentType = type; }
-  inline void setContentType(const char *type) { _contentType = type; }
-  inline const QString &contentType() const { return _contentType; }
-  inline void setContentLength(qint64 length) { _contentLength = length; }
-  inline qint64 contentLength() const { return _contentLength; }
-  inline void setStatus(int status) { _status = status; }
-  inline int status() const { return _status; }
-  // LATER handle headers, redirect, cookies, session?
+  /** Syntaxic sugar for setHeader("Content-Type", type).
+   * Default content type is "text/plain;charset=UTF-8".
+   */
+  inline void setContentType(const QString type) {
+    setHeader("Content-Type", type); }
+  /** Syntaxic sugar for setHeader("Content-Length", length).
+   */
+  inline void setContentLength(qint64 length) {
+    setHeader("Content-Length", QString::number(length)); }
+  /** Set HTTP status code. Default is 200.
+   * Must be called before output().
+   */
+  void setStatus(int status);
+  /** Replace any header of this name by one header with this value.
+   * Must be called before output().
+   */
+  void setHeader(const QString name, const QString value);
+  /** Append a header regardless one already exists with the same name.
+   * Must be called before output().
+   */
+  void addHeader(const QString name, const QString value);
+  inline const QMultiMap<QString,QString> headers() const { return _headers; }
+  /** Respond with a temporary moved page (302).
+   * Must be called before output().
+   */
+  void redirect(const QString location);
+  // LATER cookies, session
 };
 
 #endif // HTTPRESPONSE_H

@@ -8,8 +8,7 @@ void CsvView::writeCsvTree(QAbstractItemModel *m, QString &v,
                                        QModelIndex parent, int depth) {
   int rows = m->rowCount(parent);
   int columns = m->columnCount(parent);
-  qDebug() << "CsvView::writeHtmlTableTree()" << depth << parent << rows
-           << columns;
+  //qDebug() << "CsvView::writeCsvTree()" << depth << parent << rows << columns;
   for (int row = 0; row < rows; ++row) {
     for (int column = 0; column < columns; ++column) {
       if (!column) {
@@ -39,6 +38,6 @@ void CsvView::updateText() {
     v.append("\n");
     writeCsvTree(m, v, QModelIndex(), 0);
   }
-  qDebug() << "CsvView::updateText()" << m << v << (m?m->rowCount():-1);
+  //qDebug() << "CsvView::updateText()" << m << v << (m?m->rowCount():-1);
   _text = v; // this operation is atomic, therefore htmlPart is thread-safe
 }
