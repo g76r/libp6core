@@ -21,7 +21,6 @@ under the License.
 
 class LIBQTSSUSHARED_EXPORT HttpServer : public QTcpServer {
   Q_OBJECT
-private:
   QMutex _mutex;
   QList<HttpHandler *> _handlers;
   HttpHandler *_defaultHandler;

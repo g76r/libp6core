@@ -22,7 +22,6 @@ class QTcpSocket;
 
 class LIBQTSSUSHARED_EXPORT HttpWorker : public ThreadedTask {
   Q_OBJECT
-private:
   HttpServer *_server;
   int _socketDescriptor;
 

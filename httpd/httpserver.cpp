@@ -24,7 +24,7 @@ class DefaultHandler : public HttpHandler {
     // TODO handle HEAD request (I don't know yet the most usefull way)
     res.setStatus(404);
     res.output()->write("Error 404 - Not found");
-    qDebug() << "serving with default handler" << req.methodName() << req.url();
+    //qDebug() << "serving with default handler" << req.methodName() << req.url();
   }
 
   virtual bool acceptRequest(const HttpRequest &req) {

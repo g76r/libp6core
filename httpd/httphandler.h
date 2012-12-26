@@ -16,18 +16,15 @@ under the License.
 
 #include "httprequest.h"
 #include "httpresponse.h"
+#include <QObject>
 
-class LIBQTSSUSHARED_EXPORT HttpHandler {
+class LIBQTSSUSHARED_EXPORT HttpHandler : public QObject {
+  Q_OBJECT
 public:
-  inline HttpHandler() { }
-  virtual ~HttpHandler();
+  inline HttpHandler(QObject *parent = 0) : QObject(parent) { }
   virtual QString name() const = 0;
-  virtual void handleRequest(HttpRequest &req, HttpResponse &res) = 0;
   virtual bool acceptRequest(const HttpRequest &req) = 0;
-
-signals:
-
-public slots:
+  virtual void handleRequest(HttpRequest &req, HttpResponse &res) = 0;
 
 private:
   Q_DISABLE_COPY(HttpHandler)

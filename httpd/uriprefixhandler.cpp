@@ -13,8 +13,9 @@ under the License.
 */
 #include "uriprefixhandler.h"
 
-UriPrefixHandler::UriPrefixHandler(const QString &prefix, int allowedMethods)
-  : _prefix(prefix), _allowedMethods(allowedMethods) {
+UriPrefixHandler::UriPrefixHandler(QObject *parent, const QString &prefix,
+                                   int allowedMethods)
+  : HttpHandler(parent), _prefix(prefix), _allowedMethods(allowedMethods) {
 }
 
 QString UriPrefixHandler::name() const {

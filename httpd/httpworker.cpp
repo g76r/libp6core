@@ -106,6 +106,7 @@ void HttpWorker::run() {
   //qDebug() << req;
 finally:
   out.flush();
+  // LATER fix random warning "QAbstractSocket::waitForBytesWritten() is not allowed in UnconnectedState"
   while(socket->waitForBytesWritten(10000))
     ; //qDebug() << "waitForBytesWritten returned true" << socket->bytesToWrite();
   socket->close();
@@ -117,7 +118,7 @@ finally:
   //Statistics::record("server.http.hit", "", url.path(), duration,
   //                   req.header("Content-Length").toLongLong(), 1, 0, 0,
   //                   req.param("login"));
-  qDebug() << "served" << (handler ? handler->name() : "default") << "in"
-      << duration << "ms" << url.path() << req.header("Content-Length")
-      << req.param("login");
+  //qDebug() << "served" << (handler ? handler->name() : "default") << "in"
+  //    << duration << "ms" << url.path() << req.header("Content-Length")
+  //    << req.param("login");
 }

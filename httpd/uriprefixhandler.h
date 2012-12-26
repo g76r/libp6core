@@ -18,12 +18,12 @@ under the License.
 #include "httprequest.h"
 
 class LIBQTSSUSHARED_EXPORT UriPrefixHandler : public HttpHandler {
-private:
+  Q_OBJECT
   QString _prefix;
   int _allowedMethods;
 
 public:
-  UriPrefixHandler(const QString &prefix,
+  UriPrefixHandler(QObject *parent, const QString &prefix,
                    int allowedMethods = HttpRequest::GET);
   QString name() const;
   bool acceptRequest(const HttpRequest &req);

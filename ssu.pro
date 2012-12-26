@@ -29,7 +29,12 @@ SOURCES += \
     thread/threadedtask.cpp \
     thread/periodictaskthread.cpp \
     thread/periodictask.cpp \
-    thread/blockingtimer.cpp
+    thread/blockingtimer.cpp \
+    textview/viewscomposerhandler.cpp \
+    textview/treehtmlview.cpp \
+    textview/textview.cpp \
+    textview/asynctextview.cpp
+
 
 HEADERS +=\
     libqtssu_global.h \
@@ -43,7 +48,12 @@ HEADERS +=\
     thread/threadedtask.h \
     thread/periodictaskthread.h \
     thread/periodictask.h \
-    thread/blockingtimer.h
+    thread/blockingtimer.h \
+    textview/viewscomposerhandler.h \
+    textview/treehtmlview.h \
+    textview/textview.h \
+    textview/asynctextview.h
+
 
 unix {
     target.path = /usr/lib
