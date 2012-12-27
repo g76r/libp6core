@@ -8,6 +8,7 @@
  * Calls updateText() only once per event loop iteration regardless the number
  * of times update() was called, like QWidget::update() does.
  */
+// LATER provide several update strategies (on change, on request, delayed change)
 class LIBQTSSUSHARED_EXPORT AsyncTextView : public TextView {
   Q_OBJECT
 protected:

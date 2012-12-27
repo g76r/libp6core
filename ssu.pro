@@ -35,7 +35,10 @@ SOURCES += \
     textview/textview.cpp \
     textview/asynctextview.cpp \
     textview/htmllistview.cpp \
-    textview/csvview.cpp
+    textview/csvview.cpp \
+    httpd/filesystemhttphandler.cpp \
+    util/ioutils.cpp \
+    httpd/templatinghttphandler.cpp
 
 
 HEADERS +=\
@@ -56,7 +59,10 @@ HEADERS +=\
     textview/textview.h \
     textview/asynctextview.h \
     textview/htmllistview.h \
-    textview/csvview.h
+    textview/csvview.h \
+    httpd/filesystemhttphandler.h \
+    util/ioutils.h \
+    httpd/templatinghttphandler.h
 
 
 unix {
