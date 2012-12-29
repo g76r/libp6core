@@ -14,10 +14,11 @@ void HtmlTableView::writeHtmlTableTree(QAbstractItemModel *m, QString &v,
   //qDebug() << "HtmlTableView::writeHtmlTableTree()" << depth << parent << rows
   //         << columns;
   for (int row = 0; row < rows; ++row) {
+    QString trClass;
     if (_trClassRole >= 0)
-      v.append("<tr class=\"")
-          .append(m->data(m->index(row, 0, parent), _trClassRole).toString())
-          .append("\">");
+      trClass = m->data(m->index(row, 0, parent), _trClassRole).toString();
+    if (!trClass.isEmpty())
+      v.append("<tr class=\"").append(trClass).append("\">");
     else
       v.append("<tr>");
     for (int column = 0; column < columns; ++column) {

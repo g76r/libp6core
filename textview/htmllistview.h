@@ -7,7 +7,7 @@
  * tree of the model if any.
  */
 // LATER add style options (html classes, ul or ol, icons, columns selection...)
-class HtmlListView : public AsyncTextView {
+class LIBQTSSUSHARED_EXPORT HtmlListView : public AsyncTextView {
   Q_OBJECT
 public:
   explicit HtmlListView(QObject *parent = 0);

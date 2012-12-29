@@ -7,7 +7,7 @@
  * indented to reflect the tree of the model if any.
  */
 // LATER add style options (separators, quotes, indentation string, columns selection, hide non-leaf rows...)
-class CsvView : public AsyncTextView {
+class LIBQTSSUSHARED_EXPORT CsvView : public AsyncTextView {
   Q_OBJECT
 public:
   explicit CsvView(QObject *parent = 0);
