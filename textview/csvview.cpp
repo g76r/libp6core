@@ -34,7 +34,10 @@ void CsvView::writeCsvTree(QAbstractItemModel *m, QString &v,
         v.append(";");
     }
     v.append("\n");
-    writeCsvTree(m, v, m->index(row, 0, parent), depth+1);
+
+    QModelIndex index = m->index(row, 0, parent);
+    if (m->parent(index) != m->parent(parent))
+      writeCsvTree(m, v, index, depth+1);
   }
 }
 

@@ -23,13 +23,15 @@
 // LATER implement thClassRole and tdClassRole for real
 class LIBQTSSUSHARED_EXPORT HtmlTableView : public AsyncTextView {
   Q_OBJECT
-  QString _tableClass;
+  QString _tableClass, _topLeftHeader;
   int _thClassRole, _trClassRole, _tdClassRole, _linkRole, _linkClassRole;
   int _htmlPrefixRole;
+  bool _columnHeaders, _rowHeaders;
 
 public:
   explicit HtmlTableView(QObject *parent = 0);
   void setTableClass(const QString tableClass) { _tableClass = tableClass; }
+  void setTopLeftHeader(const QString rawHtml) { _topLeftHeader = rawHtml; }
   void setThClassRole(int role) { _thClassRole = role; }
   void setTrClassRole(int role) { _trClassRole = role; }
   void setTdClassRole(int role) { _tdClassRole = role; }
@@ -38,6 +40,8 @@ public:
   void setLinkClassRole(int role) { _linkClassRole = role; }
   /** Prefix with unescaped HTML text, e.g. "<img src='icon/foo.png'/>". */
   void setHtmlPrefixRole(int role) { _htmlPrefixRole = role; }
+  void setColumnHeaders(bool set = true) { _columnHeaders = set; }
+  void setRowHeaders(bool set = true) { _rowHeaders = set; }
 
 protected:
   void updateText();

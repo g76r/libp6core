@@ -18,7 +18,8 @@
 #include "textview/textview.h"
 #include <QWeakPointer>
 
-class TemplatingHttpHandler : public FilesystemHttpHandler {
+class LIBQTSSUSHARED_EXPORT TemplatingHttpHandler
+    : public FilesystemHttpHandler {
   Q_OBJECT
   QHash<QString,QWeakPointer<TextView> > _views;
   QSet<QString> _filters;
