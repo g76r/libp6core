@@ -74,8 +74,7 @@ void HtmlTableView::writeHtmlTableTree(QAbstractItemModel *m, QString &v,
     }
     v.append("</tr>\n");
     QModelIndex index = m->index(row, 0, parent);
-    if (m->parent(index) != m->parent(parent))
-      writeHtmlTableTree(m, v, index, depth+1);
+    writeHtmlTableTree(m, v, index, depth+1);
   }
 }
 

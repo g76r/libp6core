@@ -31,8 +31,7 @@ void HtmlListView::writeHtmlListTree(QAbstractItemModel *m, QString &v,
       v.append(m->data(index).toString()).append(" ");
     }
     QModelIndex index = m->index(row, 0, parent);
-    if (m->parent(index) != m->parent(parent))
-      writeHtmlListTree(m, v, index, depth+1);
+    writeHtmlListTree(m, v, index, depth+1);
   }
   v.append("</ul>");
 }
