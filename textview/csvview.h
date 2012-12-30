@@ -22,14 +22,21 @@
 // LATER add style options (separators, quotes, indentation string, columns selection, hide non-leaf rows...)
 class LIBQTSSUSHARED_EXPORT CsvView : public AsyncTextView {
   Q_OBJECT
+  QString _topLeftHeader;
+  bool _columnHeaders, _rowHeaders;
+
 public:
   explicit CsvView(QObject *parent = 0);
+  void setTopLeftHeader(const QString rawHtml) { _topLeftHeader = rawHtml; }
+  void setColumnHeaders(bool set = true) { _columnHeaders = set; }
+  void setRowHeaders(bool set = true) { _rowHeaders = set; }
+
 protected:
   void updateText();
 
 private:
-  void writeCsvTree(QAbstractItemModel *m, QString &v,
-                    QModelIndex parent, int depth);
+  void writeCsvTree(QAbstractItemModel *m, QString &v, QModelIndex parent,
+                    int depth);
 };
 
 #endif // CSVVIEW_H

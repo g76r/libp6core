@@ -14,7 +14,8 @@
 #include "csvview.h"
 #include <QtDebug>
 
-CsvView::CsvView(QObject *parent) : AsyncTextView(parent) {
+CsvView::CsvView(QObject *parent) : AsyncTextView(parent), _columnHeaders(true),
+  _rowHeaders(false) {
 }
 
 void CsvView::writeCsvTree(QAbstractItemModel *m, QString &v,
@@ -23,6 +24,8 @@ void CsvView::writeCsvTree(QAbstractItemModel *m, QString &v,
   int columns = m->columnCount(parent);
   //qDebug() << "CsvView::writeCsvTree()" << depth << parent << rows << columns;
   for (int row = 0; row < rows; ++row) {
+    if (_rowHeaders)
+      v.append(m->headerData(row, Qt::Vertical).toString()).append(";");
     for (int column = 0; column < columns; ++column) {
       if (!column) {
         for (int i = 0; i < depth; ++i)
@@ -43,13 +46,17 @@ void CsvView::updateText() {
   QAbstractItemModel *m = model();
   QString v;
   if (m) {
-    int columns = m->columnCount(QModelIndex());
-    for (int i = 0; i < columns; ++i) {
-      v.append(m->headerData(i, Qt::Horizontal).toString());
-      if (i < columns-1)
-        v.append(";");
+    if (_columnHeaders) {
+      if (_rowHeaders)
+        v.append(_topLeftHeader).append(";");
+      int columns = m->columnCount(QModelIndex());
+      for (int i = 0; i < columns; ++i) {
+        v.append(m->headerData(i, Qt::Horizontal).toString());
+        if (i < columns-1)
+          v.append(";");
+      }
+      v.append("\n");
     }
-    v.append("\n");
     writeCsvTree(m, v, QModelIndex(), 0);
   }
   //qDebug() << "CsvView::updateText()" << m << v << (m?m->rowCount():-1);
