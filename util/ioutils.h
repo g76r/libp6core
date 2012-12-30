@@ -16,10 +16,11 @@
 
 #include <QtGlobal>
 #include <QUrl>
+#include "libqtssu_global.h"
 
 class QIODevice;
 
-class IOUtils {
+class LIBQTSSUSHARED_EXPORT IOUtils {
   IOUtils() { }
 public:
   /** Copy content of src into dest until reaching src's end.
