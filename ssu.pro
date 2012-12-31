@@ -39,7 +39,8 @@ SOURCES += \
     textview/csvview.cpp \
     httpd/filesystemhttphandler.cpp \
     util/ioutils.cpp \
-    httpd/templatinghttphandler.cpp
+    httpd/templatinghttphandler.cpp \
+    textview/htmlsetview.cpp
 
 
 HEADERS +=\
@@ -63,7 +64,8 @@ HEADERS +=\
     textview/csvview.h \
     httpd/filesystemhttphandler.h \
     util/ioutils.h \
-    httpd/templatinghttphandler.h
+    httpd/templatinghttphandler.h \
+    textview/htmlsetview.h
 
 
 unix {
