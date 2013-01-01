@@ -21,19 +21,23 @@
 #include <QList>
 #include <QMap>
 
-class LIBQTSSUSHARED_EXPORT MailSender : public QObject {
-  Q_OBJECT
+class LIBQTSSUSHARED_EXPORT MailSender {
   QUrl _url;
 
 public:
   MailSender(const QUrl &url);
   MailSender(const QString &url);
-  /** @return true only if SMTP server accepted to queue the mail
-    */
-  bool queue(const QString &sender, const QList<QString> &recipients,
-             const QVariant &body,
-             const QMap<QString, QString> &headers = QMap<QString,QString>(),
-             const QList<QVariant> &attachments = QList<QVariant>());
+  /** @return true only if SMTP server accepted to queue the mail */
+  bool send(const QString sender, const QList<QString> recipients,
+            const QVariant body, const QMap<QString, QString> headers,
+            const QList<QVariant> attachments, QString &errorString);
+  inline bool send(const QString sender, const QList<QString> recipients,
+                   const QVariant body,
+                   const QMap<QString, QString> headers = QMap<QString,QString>(),
+                   const QList<QVariant> attachments = QList<QVariant>()) {
+    QString errorString;
+    return send(sender, recipients, body, headers, attachments, errorString);
+  }
 };
 
 #endif // MAILSENDER_H

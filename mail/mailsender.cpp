@@ -16,14 +16,13 @@
 #include <QTcpSocket>
 #include <QRegExp>
 
-// TODO clean this old code, especially references on implicitly shared objects
-
-MailSender::MailSender(const QUrl &url) : QObject(0), _url(url) {
+MailSender::MailSender(const QUrl &url) : _url(url) {
 }
 
-MailSender::MailSender(const QString &url) : QObject(0), _url(url) {
+MailSender::MailSender(const QString &url) : _url(url) {
 }
 
+// LATER avoid this ugly QObject subclass without Q_OBJECT
 class EnhancedSocket : public QTcpSocket {
 private:
   QString _lastExpectLine;
@@ -41,8 +40,8 @@ public:
       //qDebug() << "match on expectPrefix()" << line << prefix;
       return true;
     }
-    qDebug() << "mismatch on expectPrefix()" << line << prefix;
-    // TODO set errorString
+    //qDebug() << "mismatch on expectPrefix()" << line << prefix;
+    // LATER set errorString
     return false;
   }
   inline const QString &lastExpectLine() const { return _lastExpectLine; }
@@ -78,40 +77,42 @@ public:
   inline bool valid() const { return _valid; }
 };
 
-bool MailSender::queue(const QString &sender,
-                       const QList<QString> &recipients,
-                       const QVariant &body,
-                       const QMap<QString, QString> &headers,
-                       const QList<QVariant> &attachments) {
+bool MailSender::send(const QString sender,
+                         const QList<QString> recipients,
+                         const QVariant body,
+                         const QMap<QString, QString> headers,
+                         const QList<QVariant> attachments,
+                         QString &errorString) {
   Q_UNUSED(attachments)
   EmailAddress senderAddress(sender);
   if (!senderAddress.valid()) {
-    qWarning() << "invalid sender address" << sender;
+    errorString = "invalid sender address: "+sender;
     return false;
   }
   EnhancedSocket socket;
   socket.connectToHost(_url.host(), _url.port(25));
   if (!socket.waitForConnected(1000)) {
-    qWarning() << "cannot connect to SMTP server" << _url
-        << socket.errorString();
+    errorString = "cannot connect to SMTP server "
+        +_url.toString(QUrl::RemovePassword)+": "+socket.errorString();
     return false;
   }
   if (!socket.expectPrefix("2")) {
-    qWarning() << "bad banner on SMTP server" << _url
-        << socket.errorString();
+    errorString = "bad banner on SMTP server "
+        +_url.toString(QUrl::RemovePassword)+": "+socket.errorString();
     return false;
   }
   socket.write("HELO 127.0.0.1\r\n");
   if (!socket.expectPrefix("2")) {
-    qWarning() << "bad HELO response on SMTP server" << _url
-        << socket.errorString();
+    errorString = "bad HELO response on SMTP server "
+        +_url.toString(QUrl::RemovePassword)+": "+socket.errorString();
     return false;
   }
-  // TODO check if addresses should be written in ASCII or in another code
+  // LATER check if addresses should be written in ASCII or in another code
   socket.write(QString("MAIL From: %1\r\n").arg(senderAddress.addr()).toAscii());
   if (!socket.expectPrefix("2")) {
-    qWarning() << "bad MAIL response on SMTP server" << _url
-        << socket.errorString() << sender;
+    errorString = "bad MAIL response on SMTP server "
+        +_url.toString(QUrl::RemovePassword)+" for sender "+sender+": "
+        +socket.errorString();
     return false;
   }
   foreach (QString recipient, recipients) {
@@ -119,49 +120,51 @@ bool MailSender::queue(const QString &sender,
     if (addr.valid()) {
       socket.write(QString("RCPT To: %1\r\n").arg(addr.addr()).toAscii());
       if (!socket.expectPrefix("2")) {
-        qWarning() << "bad RCPT response on SMTP server" << _url
-            << socket.errorString() << recipient;
+        errorString = "bad RCPT response on SMTP server "
+            +_url.toString(QUrl::RemovePassword)+" for recipient "+recipient
+            +": "+socket.errorString();
         return false;
       }
     } else {
-      qWarning() << "invalid recipient address" << recipient;
+      errorString = "invalid recipient address: "+recipient;
       return false;
     }
   }
   socket.write("DATA\r\n");
   if (!socket.expectPrefix("3")) {
-    qWarning() << "bad DATA response on SMTP server" << _url
-        << socket.errorString();
+    errorString = "bad DATA response on SMTP server "
+        +_url.toString(QUrl::RemovePassword)+": "
+        +socket.errorString();
     return false;
   }
   foreach (QString key, headers.uniqueKeys()) {
     foreach (QString value, headers.values(key)) {
-      // TODO normalize header case, ensure values validity, handle multi line headers, etc.
+      // LATER normalize header case, ensure values validity, handle multi line headers, etc.
       if (socket.write(QString("%1: %2\r\n").arg(key).arg(value)
         .toAscii()) == -1) {
-        qWarning() << "error writing header" << key << socket.errorString();
+        errorString = "error writing header "+key+": "+socket.errorString();
         return false;
       }
     }
   }
   if (socket.write("\r\n") == -1) {
-    qWarning() << "error writing white line" << socket.errorString();
+    errorString = "error writing white line: "+socket.errorString();
     return false;
   }
-  // TODO remove . line in body
-  // TODO handle body encoding (force utf8 ?)
+  // LATER remove . line in body
+  // LATER handle body encoding (force utf8 ?)
   if (socket.write(body.toString().toAscii()) == -1) {
-    qWarning() << "error writing body" << socket.errorString();
+    errorString = "error writing body: "+socket.errorString();
     return false;
   }
   // LATER handle attachements
   if (socket.write("\r\n.\r\n") == -1) {
-    qWarning() << "error writing footer" << socket.errorString();
+    errorString = "error writing footer: "+socket.errorString();
     return false;
   }
   if (!socket.expectPrefix("2")) {
-    qWarning() << "bad end of data response on SMTP server" << _url
-        << socket.errorString();
+    errorString = "bad end of data response on SMTP server "
+        +_url.toString(QUrl::RemovePassword)+": "+socket.errorString();
     return false;
   }
   socket.write("QUIT\r\n");
