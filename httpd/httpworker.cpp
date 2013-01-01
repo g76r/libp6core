@@ -107,7 +107,8 @@ void HttpWorker::run() {
 finally:
   out.flush();
   // LATER fix random warning "QAbstractSocket::waitForBytesWritten() is not allowed in UnconnectedState"
-  while(socket->waitForBytesWritten(10000))
+  while(socket->state() != QAbstractSocket::UnconnectedState
+        && socket->waitForBytesWritten(10000))
     ; //qDebug() << "waitForBytesWritten returned true" << socket->bytesToWrite();
   socket->close();
   socket->deleteLater();
