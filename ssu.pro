@@ -40,7 +40,8 @@ SOURCES += \
     httpd/filesystemhttphandler.cpp \
     util/ioutils.cpp \
     httpd/templatinghttphandler.cpp \
-    textview/htmlsetview.cpp
+    textview/htmlsetview.cpp \
+    mail/mailsender.cpp
 
 
 HEADERS +=\
@@ -65,7 +66,8 @@ HEADERS +=\
     httpd/filesystemhttphandler.h \
     util/ioutils.h \
     httpd/templatinghttphandler.h \
-    textview/htmlsetview.h
+    textview/htmlsetview.h \
+    mail/mailsender.h
 
 
 unix {
