@@ -15,32 +15,34 @@
 #include "httpworker.h"
 #include <QMutexLocker>
 
+// LATER this QObject should have its Q_OBJECT macro
 class DefaultHandler : public HttpHandler {
+public:
+  DefaultHandler(QObject *parent) : HttpHandler(parent) { }
+
   virtual QString name() const {
     return "default";
   }
 
-  virtual void handleRequest(HttpRequest &req, HttpResponse &res) {
+  void handleRequest(HttpRequest &req, HttpResponse &res) {
     Q_UNUSED(req)
-    // TODO handle HEAD request (I don't know yet the most usefull way)
+    // LATER handle HEAD request (I don't know yet the most usefull way)
     res.setStatus(404);
     res.output()->write("Error 404 - Not found");
     //qDebug() << "serving with default handler" << req.methodName() << req.url();
   }
 
-  virtual bool acceptRequest(const HttpRequest &req) {
+  bool acceptRequest(const HttpRequest &req) {
     Q_UNUSED(req)
     return true;
   }
 };
 
 HttpServer::HttpServer(QObject *parent) : QTcpServer(parent),
-_defaultHandler(new DefaultHandler()){
+  _defaultHandler(new DefaultHandler(this)) {
 }
 
 HttpServer::~HttpServer() {
-  delete _defaultHandler;
-  qDeleteAll(_handlers);
 }
 
 void HttpServer::incomingConnection(int socketDescriptor)  {
@@ -52,11 +54,13 @@ void HttpServer::incomingConnection(int socketDescriptor)  {
 void HttpServer::appendHandler(HttpHandler *handler) {
   QMutexLocker ml(&_mutex);
   _handlers.append(handler);
+  handler->setParent(this);
 }
 
 void HttpServer::prependHandler(HttpHandler *handler) {
   QMutexLocker ml(&_mutex);
   _handlers.prepend(handler);
+  handler->setParent(this);
 }
 
 HttpHandler *HttpServer::chooseHandler(const HttpRequest &req) {

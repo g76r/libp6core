@@ -28,9 +28,9 @@ class LIBQTSSUSHARED_EXPORT HttpServer : public QTcpServer {
 public:
   explicit HttpServer(QObject *parent = 0);
   virtual ~HttpServer();
-  /** handlers are deleted by ~HttpServer */
-  // LATER make handlers inherit from QObject and take ownership of them
+  /** Takes ownership of the handler */
   void appendHandler(HttpHandler *handler);
+  /** Takes ownership of the handler */
   void prependHandler(HttpHandler *handler);
   HttpHandler *chooseHandler(const HttpRequest &req);
 
