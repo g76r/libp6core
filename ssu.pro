@@ -41,7 +41,8 @@ SOURCES += \
     util/ioutils.cpp \
     httpd/templatinghttphandler.cpp \
     textview/htmlsetview.cpp \
-    mail/mailsender.cpp
+    mail/mailsender.cpp \
+    util/timerwitharguments.cpp
 
 
 HEADERS +=\
@@ -67,7 +68,8 @@ HEADERS +=\
     util/ioutils.h \
     httpd/templatinghttphandler.h \
     textview/htmlsetview.h \
-    mail/mailsender.h
+    mail/mailsender.h \
+    util/timerwitharguments.h
 
 
 unix {
