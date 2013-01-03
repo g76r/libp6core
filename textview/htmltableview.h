@@ -23,10 +23,11 @@
 // LATER implement thClassRole and tdClassRole for real
 class LIBQTSSUSHARED_EXPORT HtmlTableView : public AsyncTextView {
   Q_OBJECT
-  QString _tableClass, _topLeftHeader;
+  QString _tableClass, _topLeftHeader, _emptyPlaceholder, _ellipsePlaceholder;
   int _thClassRole, _trClassRole, _tdClassRole, _linkRole, _linkClassRole;
   int _htmlPrefixRole;
   bool _columnHeaders, _rowHeaders;
+  int _maxrows;
 
 public:
   explicit HtmlTableView(QObject *parent = 0);
@@ -42,13 +43,22 @@ public:
   void setHtmlPrefixRole(int role) { _htmlPrefixRole = role; }
   void setColumnHeaders(bool set = true) { _columnHeaders = set; }
   void setRowHeaders(bool set = true) { _rowHeaders = set; }
+  /** Text printed if the table is empty. Default is "(empty)". */
+  void setEmptyPlaceholder(const QString rawHtml) {
+    _emptyPlaceholder = rawHtml; }
+  /** Text printed if the table is truncated to maxrows. Default is "...". */
+  void setEllipsePlaceholder(const QString rawHtml) {
+    _ellipsePlaceholder = rawHtml; }
+  /** Max number of rows to display. Default is 100. Use INT_MAX if you want
+    * no limit. */
+  void setMaxrows(int maxrows) { _maxrows = maxrows; }
 
 protected:
   void updateText();
 
 private:
   void writeHtmlTableTree(QAbstractItemModel *m, QString &v,
-                          QModelIndex parent, int depth);
+                          QModelIndex parent, int depth, int &totalRaws);
 };
 
 #endif // HTMLTABLEVIEW_H

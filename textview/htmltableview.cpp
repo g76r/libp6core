@@ -15,19 +15,22 @@
 #include <QtDebug>
 
 HtmlTableView::HtmlTableView(QObject *parent) : AsyncTextView(parent),
+  _emptyPlaceholder("(empty)"), _ellipsePlaceholder("..."),
   _thClassRole(-1), _trClassRole(-1), _tdClassRole(-1), _linkRole(-1),
   _linkClassRole(-1), _htmlPrefixRole(-1),
-  _columnHeaders(true), _rowHeaders(false) {
+  _columnHeaders(true), _rowHeaders(false),
+  _maxrows(100) {
   //qDebug() << "HtmlTableView()" << parent;
 }
 
 void HtmlTableView::writeHtmlTableTree(QAbstractItemModel *m, QString &v,
-                                       QModelIndex parent, int depth) {
+                                       QModelIndex parent, int depth,
+                                       int &totalRaws) {
   int rows = m->rowCount(parent);
   int columns = m->columnCount(parent);
   //qDebug() << "HtmlTableView::writeHtmlTableTree()" << depth << parent << rows
   //         << columns;
-  for (int row = 0; row < rows; ++row) {
+  for (int row = 0; row < rows && totalRaws < _maxrows; ++row, ++totalRaws) {
     QString trClass;
     if (_trClassRole >= 0)
       trClass = m->data(m->index(row, 0, parent), _trClassRole).toString();
@@ -74,14 +77,16 @@ void HtmlTableView::writeHtmlTableTree(QAbstractItemModel *m, QString &v,
     }
     v.append("</tr>\n");
     QModelIndex index = m->index(row, 0, parent);
-    writeHtmlTableTree(m, v, index, depth+1);
+    writeHtmlTableTree(m, v, index, depth+1, totalRaws);
   }
 }
 
 void HtmlTableView::updateText() {
   QAbstractItemModel *m = model();
   QString v;
+  int totalRaws = 0;
   if (m) {
+    int columns = m->columnCount(QModelIndex());
     if (_tableClass.isEmpty())
       v.append("<table>\n");
     else
@@ -90,7 +95,6 @@ void HtmlTableView::updateText() {
       v.append("<tr>");
       if (_rowHeaders)
         v.append("<th>").append(_topLeftHeader).append("</th>");
-      int columns = m->columnCount(QModelIndex());
       for (int i = 0; i < columns; ++i) {
         v.append("<th>");
         if (_htmlPrefixRole >= 0)
@@ -101,7 +105,15 @@ void HtmlTableView::updateText() {
       v.append("</tr>\n");
       //qDebug() << "headers written:" << v;
     }
-    writeHtmlTableTree(m, v, QModelIndex(), 0);
+    writeHtmlTableTree(m, v, QModelIndex(), 0, totalRaws);
+    // LATER don't print ellipse place holder if _maxraws is *exactly* reached
+    if (totalRaws == _maxrows) {
+      v.append("<tr><td colspan=").append(QString::number(columns)).append(">")
+          .append(_ellipsePlaceholder).append("</td>");
+      //for (int i = 0; i < columns; ++i)
+      //  v.append("<td></td>");
+      v.append("</tr>\n");
+    }
     v.append("</table>\n");
   }
   //qDebug() << "HtmlTableView::updateText()" << m << v << (m?m->rowCount():-1);
