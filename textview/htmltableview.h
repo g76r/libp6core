@@ -21,6 +21,7 @@
  */
 // LATER add style options (headers or not, indentation string, columns selection, hide non-leaf rows...)
 // LATER implement thClassRole and tdClassRole for real
+// LATER have a specialized html table that is more efficient for big tables modified line by line (such as a log)
 class LIBQTSSUSHARED_EXPORT HtmlTableView : public AsyncTextView {
   Q_OBJECT
   QString _tableClass, _topLeftHeader, _emptyPlaceholder, _ellipsePlaceholder;

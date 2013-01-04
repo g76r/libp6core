@@ -105,7 +105,11 @@ void HtmlTableView::updateText() {
       v.append("</tr>\n");
       //qDebug() << "headers written:" << v;
     }
-    writeHtmlTableTree(m, v, QModelIndex(), 0, totalRaws);
+    if (!_emptyPlaceholder.isEmpty() && m->rowCount(QModelIndex()) == 0)
+      v.append("<tr><td colspan=").append(QString::number(columns)).append(">")
+          .append(_emptyPlaceholder).append("</td>");
+    else
+      writeHtmlTableTree(m, v, QModelIndex(), 0, totalRaws);
     // LATER don't print ellipse place holder if _maxraws is *exactly* reached
     if (totalRaws == _maxrows) {
       v.append("<tr><td colspan=").append(QString::number(columns)).append(">")
