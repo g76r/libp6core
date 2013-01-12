@@ -43,7 +43,15 @@ SOURCES += \
     textview/htmlsetview.cpp \
     mail/mailsender.cpp \
     util/timerwitharguments.cpp \
-    textview/clockview.cpp
+    textview/clockview.cpp \
+    util/paramset.cpp \
+    log/memorylogger.cpp \
+    log/logmodel.cpp \
+    log/logger.cpp \
+    log/log.cpp \
+    log/filelogger.cpp \
+    util/paramsprovider.cpp \
+    util/paramsetmodel.cpp
 
 
 HEADERS +=\
@@ -71,7 +79,15 @@ HEADERS +=\
     textview/htmlsetview.h \
     mail/mailsender.h \
     util/timerwitharguments.h \
-    textview/clockview.h
+    textview/clockview.h \
+    util/paramset.h \
+    log/memorylogger.h \
+    log/logmodel.h \
+    log/logger.h \
+    log/log.h \
+    log/filelogger.h \
+    util/paramsprovider.h \
+    util/paramsetmodel.h
 
 
 unix {
