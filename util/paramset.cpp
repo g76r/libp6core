@@ -110,6 +110,18 @@ void ParamSet::appendVariableValue(QString &value, QString &variable,
     } else if (variable == "!8601Z") {
       value.append(QDateTime::currentDateTimeUtc()
                    .toString("yyyy-MM-ddThh:mm:ss,zzzZ"));
+    } else if (variable == "!s1970") {
+      value.append(QString::number(
+                     QDateTime::currentDateTime().toMSecsSinceEpoch()/1000));
+    } else if (variable == "!ms1970") {
+      value.append(QString::number(
+                     QDateTime::currentDateTime().toMSecsSinceEpoch()));
+    } else if (variable == "!s1970Z") {
+      value.append(QString::number(
+                     QDateTime::currentDateTimeUtc().toMSecsSinceEpoch()/1000));
+    } else if (variable == "!ms1970Z") {
+      value.append(QString::number(
+                     QDateTime::currentDateTimeUtc().toMSecsSinceEpoch()));
     } else {
       QString s;
       if (context)
