@@ -23,6 +23,7 @@
 class LIBQTSSUSHARED_EXPORT ParamsProvider {
 public:
   ParamsProvider();
+  virtual ~ParamsProvider();
   /** Return a parameter value. */
   virtual QString paramValue(
       const QString key, const QString defaultValue = QString()) const = 0;

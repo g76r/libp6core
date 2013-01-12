@@ -15,3 +15,6 @@
 
 ParamsProvider::ParamsProvider() {
 }
+
+ParamsProvider::~ParamsProvider() {
+}
