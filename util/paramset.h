@@ -48,28 +48,42 @@ public:
    * @param searchInParents should search values in parents if not found
     */
   inline QString value(const QString key, QString defaultValue = QString(),
-                       bool inherit = true) const {
-    return evaluate(rawValue(key, defaultValue, inherit)); }
+                       bool inherit = true,
+                       const ParamsProvider *context = 0) const {
+    return evaluate(rawValue(key, defaultValue, inherit), context); }
   inline QString value(const QString key, const char *defaultValue,
-                       bool inherit = true) const {
-    return evaluate(rawValue(key, QString(defaultValue), inherit)); }
-  inline QString value(const QString key, bool inherit) const {
-    return evaluate(rawValue(key, QString(), inherit)); }
+                       bool inherit = true,
+                       const ParamsProvider *context = 0) const {
+    return evaluate(rawValue(key, QString(defaultValue), inherit), context); }
+  inline QString value(const QString key, bool inherit,
+                       const ParamsProvider *context = 0) const {
+    return evaluate(rawValue(key, QString(), inherit), context); }
+  inline QString value(const QString key, const ParamsProvider *context) const {
+    return evaluate(rawValue(key, QString(), true), context); }
   /** Return a value splitted into strings after parameters substitution.
     */
   QStringList valueAsStrings(const QString key,
                              const QString separator = " ",
-                             bool inherit = true) const {
-    return splitAndEvaluate(rawValue(key), separator, inherit); }
+                             bool inherit = true,
+                             const ParamsProvider *context = 0) const {
+    return splitAndEvaluate(rawValue(key), separator, inherit, context); }
   /** Return all keys for which the ParamSet or one of its parents hold a value.
     */
   const QSet<QString> keys(bool inherit = true) const;
   /** Perform parameters substitution within the string. */
-  QString evaluate(const QString rawValue, bool inherit = true) const;
+  QString evaluate(const QString rawValue, bool inherit = true,
+                   const ParamsProvider *context = 0) const;
+  QString evaluate(const QString rawValue,
+                   const ParamsProvider *context) const {
+    return evaluate(rawValue, true, context); }
   /** Split string and perform parameters substitution. */
   QStringList splitAndEvaluate(const QString rawValue,
                                const QString separator = " ",
-                               bool inherit = true) const;
+                               bool inherit = true,
+                               const ParamsProvider *context = 0) const;
+  QStringList splitAndEvaluate(const QString rawValue,
+                               const ParamsProvider *context) const {
+    return splitAndEvaluate(rawValue, " ", true, context); }
   QString paramValue(const QString key, const QString defaultValue) const;
   bool isNull() const;
   int size() const;
@@ -78,7 +92,8 @@ public:
 
 private:
   inline void appendVariableValue(QString &value, QString &variable,
-                                  bool inherit = true) const;
+                                  bool inherit,
+                                  const ParamsProvider *context) const;
 };
 
 QDebug LIBQTSSUSHARED_EXPORT operator<<(QDebug dbg, const ParamSet &params);

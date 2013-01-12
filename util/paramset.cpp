@@ -77,13 +77,15 @@ QString ParamSet::rawValue(const QString key, const QString defaultValue, bool i
   return value.isNull() ? defaultValue : value;
 }
 
-QString ParamSet::evaluate(const QString rawValue, bool inherit) const {
-  QStringList values = splitAndEvaluate(rawValue, QString(), inherit);
+QString ParamSet::evaluate(const QString rawValue, bool inherit,
+                           const ParamsProvider *context) const {
+  QStringList values = splitAndEvaluate(rawValue, QString(), inherit, context);
   return values.isEmpty() ? QString() : values.first();
 }
 
 void ParamSet::appendVariableValue(QString &value, QString &variable,
-                                   bool inherit) const {
+                                   bool inherit,
+                                   const ParamsProvider *context) const {
   if (variable.isEmpty()) {
     Log::warning() << "unsupported variable substitution: empty variable name";
   } else if (variable.at(0) == '!') {
@@ -108,9 +110,16 @@ void ParamSet::appendVariableValue(QString &value, QString &variable,
     } else if (variable == "!8601Z") {
       value.append(QDateTime::currentDateTimeUtc()
                    .toString("yyyy-MM-ddThh:mm:ss,zzzZ"));
-    } else
-      Log::warning() << "unsupported variable substitution: %{" << variable
-                     << "}";
+    } else {
+      QString s;
+      if (context)
+        s = context->paramValue(variable);
+      if (s.isNull())
+        Log::warning() << "unsupported variable substitution: %{" << variable
+                       << "}";
+      else
+        value.append(s);
+    }
   } else {
     const QString v = this->rawValue(variable, inherit);
     if (v.isNull()) {
@@ -129,7 +138,8 @@ void ParamSet::appendVariableValue(QString &value, QString &variable,
 
 QStringList ParamSet::splitAndEvaluate(const QString rawValue,
                                        const QString separator,
-                                       bool inherit) const {
+                                       bool inherit,
+                                       const ParamsProvider *context) const {
   QStringList values;
   QString value, variable;
   int i = 0;
@@ -147,7 +157,7 @@ QStringList ParamSet::splitAndEvaluate(const QString rawValue,
           else
             variable.append(c);
         }
-        appendVariableValue(value, variable, inherit);
+        appendVariableValue(value, variable, inherit, context);
       } else if (c == '!' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
                  || c == '_') {
         variable.append(c);
@@ -161,7 +171,7 @@ QStringList ParamSet::splitAndEvaluate(const QString rawValue,
             break;
           }
         }
-        appendVariableValue(value, variable, inherit);
+        appendVariableValue(value, variable, inherit, context);
       } else {
         // % is used as an escape character, for '%', a separator or anything
         value.append('%').append(c);
