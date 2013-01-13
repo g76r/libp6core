@@ -24,12 +24,14 @@ class LIBQTSSUSHARED_EXPORT FileLogger : public Logger {
   Q_OBJECT
   QIODevice *_device;
   QThread *_thread;
+  QString _patternPath, _currentPath;
 
 public:
   /** Takes ownership of the device (= will delete it). */
   explicit FileLogger(QIODevice *device, Log::Severity minSeverity = Log::Info);
   explicit FileLogger(QString path, Log::Severity minSeverity = Log::Info);
   ~FileLogger();
+  QString currentPath() const;
 
 protected:
   void doLog(QDateTime timestamp, QString message, Log::Severity severity,

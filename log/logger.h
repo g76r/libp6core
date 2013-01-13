@@ -29,6 +29,8 @@ public:
   /** This method is thread-safe. */
   void log(QDateTime timestamp, QString message, Log::Severity severity,
            QString task, QString execId, QString sourceCode);
+  virtual QString currentPath() const;
+  Log::Severity minSeverity() const { return _minSeverity; }
 
 protected:
   Q_INVOKABLE virtual void doLog(QDateTime timestamp, QString message,

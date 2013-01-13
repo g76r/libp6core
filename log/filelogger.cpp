@@ -41,12 +41,13 @@ FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity)
 }
 
 FileLogger::FileLogger(QString path, Log::Severity minSeverity)
-  : Logger(0, minSeverity), _device(0), _thread(new QThread(0)) {
-  QString actualPath = ParamSet().evaluate(path);
-  qDebug() << "creating FileLogger from path" << path << actualPath;
+  : Logger(0, minSeverity), _device(0), _thread(new QThread(0)),
+    _patternPath(path) {
+  _currentPath = ParamSet().evaluate(path);
+  qDebug() << "creating FileLogger from path" << path << _currentPath;
   if (_device)
     delete _device;
-  _device = new QFile(actualPath, this);
+  _device = new QFile(_currentPath, this);
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();
@@ -54,17 +55,21 @@ FileLogger::FileLogger(QString path, Log::Severity minSeverity)
   // LATER open in FileLogger thread (maybe during reopen)
   if (!_device->open(QIODevice::WriteOnly|QIODevice::Append
                      |QIODevice::Unbuffered)) {
-    qWarning() << "cannot open log file" << actualPath << ":"
+    qWarning() << "cannot open log file" << _currentPath << ":"
                << _device->errorString();
     _device->deleteLater();
     _device = 0;
   } else
-    qDebug() << "opened log file" << actualPath;
+    qDebug() << "opened log file" << _currentPath;
 }
 
 FileLogger::~FileLogger() {
   if (_device)
     delete _device;
+}
+
+QString FileLogger::currentPath() const {
+  return _currentPath;
 }
 
 void FileLogger::doLog(QDateTime timestamp, QString message,

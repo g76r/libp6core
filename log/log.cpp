@@ -142,3 +142,21 @@ void Log::logMessageHandler(QtMsgType type, const char *msg) {
     // LATER shutdown process because default Qt message handler does shutdown
   }
 }
+
+QString Log::pathToFullestLog() {
+  QMutexLocker locker(&_loggersMutex);
+  int severity = Fatal+1;
+  QString path;
+  foreach(Logger *logger, _loggers) {
+    if (logger->minSeverity() < severity) {
+      QString p = logger->currentPath();
+      if (!p.isEmpty()) {
+        if (severity == Debug)
+          return p;
+        path = p;
+        severity = logger->minSeverity();
+      }
+    }
+  }
+  return path;
+}

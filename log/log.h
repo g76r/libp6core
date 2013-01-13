@@ -78,6 +78,7 @@ public:
                                 const QString sourceCode = QString());
   static inline LogHelper fatal(const QString task, quint64 execId,
                                 const QString sourceCode = QString());
+  static QString pathToFullestLog();
 
 private:
   Log() { }
