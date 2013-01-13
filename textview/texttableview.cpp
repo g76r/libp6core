@@ -19,13 +19,28 @@ TextTableView::TextTableView(QObject *parent) : AsyncTextView(parent),
 
 void TextTableView::setEmptyPlaceholder(const QString rawText) {
   _emptyPlaceholder = rawText;
+  update();
 }
 
 void TextTableView::setEllipsePlaceholder(const QString rawText) {
   _ellipsePlaceholder = rawText;
+  update();
+}
+
+void TextTableView::setModel(QAbstractItemModel *model) {
+  AsyncTextView::setModel(model);
+  if (_columnIndexes.isEmpty()) {
+    _effectiveColumnIndexes.clear();
+    if (model) {
+      int columns = model->columnCount();
+      for (int i = 0; i < columns; ++i)
+        _effectiveColumnIndexes.append(i);
+    }
+  }
 }
 
 void TextTableView::updateText() {
+  //qDebug() << "TextTableView::updateText";
   QAbstractItemModel *m = model();
   QString v;
   if (!_headersAndFootersAlreadyRead) {
@@ -51,6 +66,7 @@ void TextTableView::updateText() {
 }
 
 void TextTableView::resetAll() {
+  //qDebug() << "TextTableView::resetAll";// << objectName();;// << metaObject()->className();
   QAbstractItemModel *m = model();
   _header = headerText();
   _footer = footerText();
@@ -58,11 +74,12 @@ void TextTableView::resetAll() {
   if (m)
     rowsInserted(QModelIndex(), 0, m->rowCount());
   else
-    updateText();
+    update();
 }
 
 void TextTableView::dataChanged(const QModelIndex &topLeft,
                                 const QModelIndex &bottomRight) {
+  //qDebug() << "TextTableView::dataChanged" << topLeft << bottomRight;
   QAbstractItemModel *m = model();
   int start = topLeft.row(), end = bottomRight.row();
   if (!topLeft.isValid() || !bottomRight.isValid() || topLeft.parent().isValid()
@@ -77,6 +94,7 @@ void TextTableView::dataChanged(const QModelIndex &topLeft,
 
 void TextTableView::rowsRemoved(const QModelIndex &parent, int start,
                                          int end) {
+  //qDebug() << "TextTableView::rowsRemoved" << start << end;
   QAbstractItemModel *m = model();
   if (parent.isValid() || !m || start >= _rows.size())
     return;
@@ -85,11 +103,12 @@ void TextTableView::rowsRemoved(const QModelIndex &parent, int start,
   for (int i = start; i <= end; ++i)
     _rows.removeAt(start);
   // TODO add more rows if maxrows (and insert one more than maxrows if available)
-  updateText();
+  update();
 }
 
 void TextTableView::rowsInserted (const QModelIndex &parent, int start,
                                   int end) {
+  //qDebug() << "TextTableView::rowsInserted" << start << end;
   QAbstractItemModel *m = model();
   if (parent.isValid() || !m)
     return;
@@ -97,5 +116,5 @@ void TextTableView::rowsInserted (const QModelIndex &parent, int start,
     end = _maxrows+1; // +1 to have a mean to detect that there are more
   for (int row = start; row <= end; ++row)
     _rows.insert(row, rowText(row));
-  updateText();
+  update();
 }

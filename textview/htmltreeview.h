@@ -54,6 +54,7 @@ public:
 
 protected:
   void resetAll();
+  void updateText();
 
 private:
   void writeHtmlTableTree(QAbstractItemModel *m, QString &v,

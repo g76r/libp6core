@@ -41,21 +41,34 @@ public slots:
    * This method can be called several times in the same event loop iteration
    * without forcing several updates, like QWidget::update() does.
    * It is automatically connected to model signals when setModel() is called,
-   * therefore there should be no need to call update() explicitly. */
+   * therefore there should be no need to call update() explicitly.
+   * @see updateText()
+   * @see QWidget::update() */
   void update();
 
+protected:
+  /** Update _text depending on the current internal state of the view. The
+    * internal state can be updated by resetAll() dataChanged() and other
+    * slots. This method should not be called directly, but is rather
+    * automatically called once and only once per events loop iteration when
+    * update() has been called at less once in previous iterations.
+    * @see update() */
+  virtual void updateText() = 0;
+  void customEvent(QEvent *event);
+
 protected slots:
+  /** Recompute the whole view: headers, data, layout... */
   virtual void resetAll() = 0;
-  /** Default: call resetAll(). */
+  /** Recompute the view part impacted by a data change.
+   * Default: call resetAll(). */
   virtual void dataChanged(const QModelIndex &topLeft,
                             const QModelIndex &bottomRight);
-  /** Default: call resetAll(). */
+  /** Recompute the view part impacted by removing rows.
+   * Default: call resetAll(). */
   virtual void rowsRemoved(const QModelIndex &parent, int start, int end);
-  /** Default: call resetAll(). */
+  /** Recompute the view part impacted by inserting rows.
+   * Default: call resetAll(). */
   virtual void rowsInserted (const QModelIndex &parent, int start, int end);
-
-protected:
-  void customEvent(QEvent *event);
 };
 
 #endif // ASYNCTEXTVIEW_H

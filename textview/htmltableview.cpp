@@ -22,8 +22,7 @@ HtmlTableView::HtmlTableView(QObject *parent) : TextTableView(parent),
 }
 
 void HtmlTableView::setEmptyPlaceholder(const QString rawText) {
-  QAbstractItemModel *m = model();
-  int columns = m ? m->columnCount(QModelIndex()) : 1;
+  int columns = effectiveColumnIndexes().size();
   if (rawText.isEmpty())
     TextTableView::setEmptyPlaceholder(QString());
   else
@@ -33,8 +32,7 @@ void HtmlTableView::setEmptyPlaceholder(const QString rawText) {
 }
 
 void HtmlTableView::setEllipsePlaceholder(const QString rawText) {
-  QAbstractItemModel *m = model();
-  int columns = m ? m->columnCount(QModelIndex()) : 1;
+  int columns = effectiveColumnIndexes().size();
   if (rawText.isEmpty())
     TextTableView::setEllipsePlaceholder(QString());
   else
@@ -47,7 +45,6 @@ QString HtmlTableView::headerText() {
   QAbstractItemModel *m = model();
   if (m) {
     QString v;
-    int columns = m->columnCount(QModelIndex());
     if (_tableClass.isEmpty())
       v.append("<table>\n");
     else
@@ -56,7 +53,7 @@ QString HtmlTableView::headerText() {
       v.append("<tr>");
       if (_rowHeaders)
         v.append("<th>").append(_topLeftHeader).append("</th>");
-      for (int i = 0; i < columns; ++i) {
+      foreach (int i, effectiveColumnIndexes()) {
         v.append("<th>");
         if (_htmlPrefixRole >= 0)
           v.append(m->headerData(i, Qt::Horizontal, _htmlPrefixRole)
@@ -78,7 +75,6 @@ QString HtmlTableView::rowText(int row) {
   QAbstractItemModel *m = model();
   if (!m)
     return QString();
-  int columns = m->columnCount();
   QString v, trClass;
   if (_trClassRole >= 0)
     trClass = m->data(m->index(row, 0, QModelIndex()), _trClassRole).toString();
@@ -92,7 +88,7 @@ QString HtmlTableView::rowText(int row) {
       v.append(m->headerData(row, Qt::Vertical, _htmlPrefixRole).toString());
     v.append(m->headerData(row, Qt::Vertical).toString()).append("</th>");
   }
-  for (int column = 0; column < columns; ++column) {
+  foreach (int column, effectiveColumnIndexes()) {
     QModelIndex index = m->index(row, column, QModelIndex());
     if (_tdClassRole >= 0)
       v.append("<td class=\"")

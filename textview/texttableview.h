@@ -20,7 +20,7 @@ class LIBQTSSUSHARED_EXPORT TextTableView : public AsyncTextView {
   Q_OBJECT
   bool _headersAndFootersAlreadyRead;
   int _maxrows;
-  QList<int> _columnIndexes;
+  QList<int> _columnIndexes, _effectiveColumnIndexes;
   QList<QString> _rows;
   QString _emptyPlaceholder, _ellipsePlaceholder, _header, _footer;
 
@@ -31,13 +31,18 @@ public:
   void setMaxrows(int maxrows) { _maxrows = maxrows; }
   /** Set model columns to be displayed (default: all). */
   void setColumnIndexes(QList<int> columnIndexes) {
-    _columnIndexes = columnIndexes; }
+    _columnIndexes = columnIndexes; _effectiveColumnIndexes = columnIndexes;
+    _header = headerText(); _footer = footerText(); }
   /** Text printed if the table is empty. Default is "(empty)". */
   virtual void setEmptyPlaceholder(const QString rawText);
   /** Text printed if the table is truncated to maxrows. Default is "...". */
   virtual void setEllipsePlaceholder(const QString rawText);
+  void setModel(QAbstractItemModel *model);
 
 protected:
+  const QList<int> effectiveColumnIndexes() const {
+    return _effectiveColumnIndexes; }
+  void updateText();
   void resetAll();
   void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
   void rowsRemoved(const QModelIndex &parent, int start, int end);
@@ -47,7 +52,6 @@ protected:
   virtual QString rowText(int row) = 0;
 
 private:
-  void updateText();
   Q_DISABLE_COPY(TextTableView)
 };
 

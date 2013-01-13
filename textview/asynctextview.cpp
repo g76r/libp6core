@@ -83,7 +83,7 @@ void AsyncTextView::update() {
 void AsyncTextView::customEvent(QEvent *event) {
   if (event->type() == UPDATE_EVENT) {
     QCoreApplication::removePostedEvents(this, UPDATE_EVENT);
-    resetAll();
+    updateText();
   } else {
     TextView::customEvent(event);
   }

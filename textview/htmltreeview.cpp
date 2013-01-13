@@ -82,6 +82,10 @@ void HtmlTreeView::writeHtmlTableTree(QAbstractItemModel *m, QString &v,
 }
 
 void HtmlTreeView::resetAll() {
+  update();
+}
+
+void HtmlTreeView::updateText() {
   QAbstractItemModel *m = model();
   QString v;
   int totalRaws = 0;
