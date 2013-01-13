@@ -26,48 +26,49 @@ QString AsyncTextView::text() const {
 }
 
 void AsyncTextView::setModel(QAbstractItemModel *model) {
-  QAbstractItemModel *prev = this->model();
-  if (prev) {
-    disconnect(prev, SIGNAL(dataChanged(QModelIndex,QModelIndex)),
-               this, SLOT(update()));
-    disconnect(prev, SIGNAL(layoutChanged()),
-               this, SLOT(update()));
-    disconnect(prev, SIGNAL(headerDataChanged(Qt::Orientation,int,int)),
-               this, SLOT(update()));
-    disconnect(prev, SIGNAL(modelReset()), this, SLOT(update()));
-    disconnect(prev, SIGNAL(rowsInserted(const QModelIndex&,int,int)),
-               this, SLOT(update()));
-    disconnect(prev, SIGNAL(rowsRemoved(const QModelIndex&,int,int)),
-               this, SLOT(update()));
-    disconnect(prev, SIGNAL(columnsInserted(const QModelIndex&,int,int)),
-               this, SLOT(update()));
-    disconnect(prev, SIGNAL(columnsRemoved(const QModelIndex&,int,int)),
-               this, SLOT(update()));
-    disconnect(prev, SIGNAL(rowsMoved(const QModelIndex&,int,int,const QModelIndex&,int)),
-               this, SLOT(update()));
-    disconnect(prev, SIGNAL(columnsMoved(const QModelIndex&,int,int,const QModelIndex&,int)),
-               this, SLOT(update()));
+  QAbstractItemModel *m = this->model();
+  if (m) {
+    disconnect(m, SIGNAL(dataChanged(QModelIndex,QModelIndex)),
+               this, SLOT(dataChanged(QModelIndex,QModelIndex)));
+    disconnect(m, SIGNAL(layoutChanged()),
+               this, SLOT(resetAll()));
+    disconnect(m, SIGNAL(headerDataChanged(Qt::Orientation,int,int)),
+               this, SLOT(resetAll()));
+    disconnect(m, SIGNAL(modelReset()), this, SLOT(resetAll()));
+    disconnect(m, SIGNAL(rowsInserted(const QModelIndex&,int,int)),
+               this, SLOT(rowsInserted(QModelIndex,int,int)));
+    disconnect(m, SIGNAL(rowsRemoved(QModelIndex,int,int)),
+               this, SLOT(rowsRemoved(QModelIndex,int,int)));
+    disconnect(m, SIGNAL(rowsMoved(QModelIndex,int,int,QModelIndex,int)),
+               this, SLOT(resetAll()));
+    disconnect(m, SIGNAL(columnsInserted(const QModelIndex&,int,int)),
+               this, SLOT(resetAll()));
+    disconnect(m, SIGNAL(columnsRemoved(const QModelIndex&,int,int)),
+               this, SLOT(resetAll()));
+    disconnect(m, SIGNAL(columnsMoved(const QModelIndex&,int,int,const QModelIndex&,int)),
+               this, SLOT(resetAll()));
   }
   if (model) {
-    connect(model, SIGNAL(dataChanged(QModelIndex,QModelIndex)),
-            this, SLOT(update()));
-    connect(model, SIGNAL(layoutChanged()),
-            this, SLOT(update()));
-    connect(model, SIGNAL(headerDataChanged(Qt::Orientation,int,int)),
-            this, SLOT(update()));
-    connect(model, SIGNAL(modelReset()), this, SLOT(update()));
-    connect(model, SIGNAL(rowsInserted(const QModelIndex&,int,int)),
-            this, SLOT(update()));
-    connect(model, SIGNAL(rowsRemoved(const QModelIndex&,int,int)),
-            this, SLOT(update()));
-    connect(model, SIGNAL(columnsInserted(const QModelIndex&,int,int)),
-            this, SLOT(update()));
-    connect(model, SIGNAL(columnsRemoved(const QModelIndex&,int,int)),
-            this, SLOT(update()));
-    connect(model, SIGNAL(rowsMoved(const QModelIndex&,int,int,const QModelIndex&,int)),
-            this, SLOT(update()));
-    connect(model, SIGNAL(columnsMoved(const QModelIndex&,int,int,const QModelIndex&,int)),
-            this, SLOT(update()));
+    m = model;
+    connect(m, SIGNAL(dataChanged(QModelIndex,QModelIndex)),
+            this, SLOT(dataChanged(QModelIndex,QModelIndex)));
+    connect(m, SIGNAL(layoutChanged()),
+            this, SLOT(resetAll()));
+    connect(m, SIGNAL(headerDataChanged(Qt::Orientation,int,int)),
+            this, SLOT(resetAll()));
+    connect(m, SIGNAL(modelReset()), this, SLOT(resetAll()));
+    connect(m, SIGNAL(rowsInserted(const QModelIndex&,int,int)),
+            this, SLOT(rowsInserted(QModelIndex,int,int)));
+    connect(m, SIGNAL(rowsRemoved(QModelIndex,int,int)),
+            this, SLOT(rowsRemoved(QModelIndex,int,int)));
+    connect(m, SIGNAL(rowsMoved(QModelIndex,int,int,QModelIndex,int)),
+            this, SLOT(resetAll()));
+    connect(m, SIGNAL(columnsInserted(const QModelIndex&,int,int)),
+            this, SLOT(resetAll()));
+    connect(m, SIGNAL(columnsRemoved(const QModelIndex&,int,int)),
+            this, SLOT(resetAll()));
+    connect(m, SIGNAL(columnsMoved(const QModelIndex&,int,int,const QModelIndex&,int)),
+            this, SLOT(resetAll()));
   }
   TextView::setModel(model);
   //qDebug() << "AsyncTextView::setModel()" << model;
@@ -82,8 +83,31 @@ void AsyncTextView::update() {
 void AsyncTextView::customEvent(QEvent *event) {
   if (event->type() == UPDATE_EVENT) {
     QCoreApplication::removePostedEvents(this, UPDATE_EVENT);
-    updateText();
+    resetAll();
   } else {
     TextView::customEvent(event);
   }
+}
+
+void AsyncTextView::dataChanged(const QModelIndex &topLeft,
+                                const QModelIndex &bottomRight) {
+  Q_UNUSED(topLeft)
+  Q_UNUSED(bottomRight)
+  resetAll();
+}
+
+void AsyncTextView::rowsRemoved(const QModelIndex &parent, int start,
+                                         int end) {
+  Q_UNUSED(parent)
+  Q_UNUSED(start)
+  Q_UNUSED(end)
+  resetAll();
+}
+
+void AsyncTextView::rowsInserted (const QModelIndex &parent, int start,
+                                  int end) {
+  Q_UNUSED(parent)
+  Q_UNUSED(start)
+  Q_UNUSED(end)
+  resetAll();
 }

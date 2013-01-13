@@ -36,7 +36,7 @@ void HtmlListView::writeHtmlListTree(QAbstractItemModel *m, QString &v,
   v.append("</ul>");
 }
 
-void HtmlListView::updateText() {
+void HtmlListView::resetAll() {
   QAbstractItemModel *m = model();
   QString v;
   if (m) {

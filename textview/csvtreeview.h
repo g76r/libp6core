@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,26 +11,32 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef HTMLLISTVIEW_H
-#define HTMLLISTVIEW_H
+#ifndef CSVTREEVIEW_H
+#define CSVTREEVIEW_H
 
 #include "asynctextview.h"
 
-/** Display the model content as a HTML list, or list of lists to reflect the
- * tree of the model if any.
+/** Display the model content as a CSV table which first column is
+ * indented to reflect the tree of the model if any.
  */
-// LATER add style options (html classes, ul or ol, icons, columns selection...)
-class LIBQTSSUSHARED_EXPORT HtmlListView : public AsyncTextView {
+// LATER add style options (separators, quotes, indentation string, columns selection, hide non-leaf rows...)
+class LIBQTSSUSHARED_EXPORT CsvTreeView : public AsyncTextView {
   Q_OBJECT
+  QString _topLeftHeader;
+  bool _columnHeaders, _rowHeaders;
+
 public:
-  explicit HtmlListView(QObject *parent = 0);
+  explicit CsvTreeView(QObject *parent = 0);
+  void setTopLeftHeader(const QString rawHtml) { _topLeftHeader = rawHtml; }
+  void setColumnHeaders(bool set = true) { _columnHeaders = set; }
+  void setRowHeaders(bool set = true) { _rowHeaders = set; }
 
 protected:
   void resetAll();
 
 private:
-  void writeHtmlListTree(QAbstractItemModel *m, QString &v,
-                         QModelIndex parent, int depth);
+  void writeCsvTree(QAbstractItemModel *m, QString &v, QModelIndex parent,
+                    int depth);
 };
 
-#endif // HTMLLISTVIEW_H
+#endif // CSVTREEVIEW_H

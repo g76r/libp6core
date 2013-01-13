@@ -44,7 +44,7 @@ public:
   void setHtmlPrefixRole(int role) { _htmlPrefixRole = role; }
 
 protected:
-  void updateText();
+  void resetAll();
 };
 
 #endif // HTMLSETVIEW_H

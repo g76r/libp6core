@@ -18,7 +18,7 @@ HtmlSetView::HtmlSetView(QObject *parent) : AsyncTextView(parent),
   _displayedColumn(0), _linkRole(-1), _linkClassRole(-1), _htmlPrefixRole(-1) {
 }
 
-void HtmlSetView::updateText() {
+void HtmlSetView::resetAll() {
   QAbstractItemModel *m = model();
   QString v;
   //v.append("{ ");

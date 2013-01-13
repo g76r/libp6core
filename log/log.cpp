@@ -35,8 +35,8 @@ void Log::addLogger(Logger *logger, bool removable) {
   QMutexLocker locker(&_loggersMutex);
   if (logger) {
     logger->_removable = removable;
-    if (_loggers.isEmpty())
-      qInstallMsgHandler(Log::logMessageHandler);
+    //if (_loggers.isEmpty())
+    //  qInstallMsgHandler(Log::logMessageHandler);
     _loggers.append(logger);
   }
 }

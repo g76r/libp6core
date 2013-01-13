@@ -11,23 +11,25 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef HTMLTABLEVIEW_H
-#define HTMLTABLEVIEW_H
+#ifndef HTMLTREEVIEW_H
+#define HTMLTREEVIEW_H
 
-#include "texttableview.h"
+#include "asynctextview.h"
 
-/** Display the model content as a HTML table. Only rows of the root index
-  * are displayed. */
+/** Display the model content as a HTML table which first column is
+ * indented to reflect the tree of the model if any. */
+// LATER add style options (indentation string, hide non-leaf rows...)
 // LATER implement thClassRole and tdClassRole for real
-class LIBQTSSUSHARED_EXPORT HtmlTableView : public TextTableView {
+class LIBQTSSUSHARED_EXPORT HtmlTreeView : public AsyncTextView {
   Q_OBJECT
-  QString _tableClass, _topLeftHeader;
+  QString _tableClass, _topLeftHeader, _emptyPlaceholder, _ellipsePlaceholder;
   int _thClassRole, _trClassRole, _tdClassRole, _linkRole, _linkClassRole;
   int _htmlPrefixRole;
   bool _columnHeaders, _rowHeaders;
+  int _maxrows;
 
 public:
-  explicit HtmlTableView(QObject *parent = 0);
+  explicit HtmlTreeView(QObject *parent = 0);
   void setTableClass(const QString tableClass) { _tableClass = tableClass; }
   void setTopLeftHeader(const QString rawHtml) { _topLeftHeader = rawHtml; }
   void setThClassRole(int role) { _thClassRole = role; }
@@ -40,14 +42,22 @@ public:
   void setHtmlPrefixRole(int role) { _htmlPrefixRole = role; }
   void setColumnHeaders(bool set = true) { _columnHeaders = set; }
   void setRowHeaders(bool set = true) { _rowHeaders = set; }
-  void setEmptyPlaceholder(const QString rawText);
-  void setEllipsePlaceholder(const QString rawText);
+  /** Text printed if the table is empty. Default is "(empty)". */
+  void setEmptyPlaceholder(const QString rawHtml) {
+    _emptyPlaceholder = rawHtml; }
+  /** Text printed if the table is truncated to maxrows. Default is "...". */
+  void setEllipsePlaceholder(const QString rawHtml) {
+    _ellipsePlaceholder = rawHtml; }
+  /** Max number of rows to display. Default is 100. Use INT_MAX if you want
+    * no limit. */
+  void setMaxrows(int maxrows) { _maxrows = maxrows; }
 
 protected:
-  QString headerText();
-  QString footerText();
-  QString rowText(int row);
-  Q_DISABLE_COPY(HtmlTableView)
+  void resetAll();
+
+private:
+  void writeHtmlTableTree(QAbstractItemModel *m, QString &v,
+                          QModelIndex parent, int depth, int &totalRaws);
 };
 
-#endif // HTMLTABLEVIEW_H
+#endif // HTMLTREEVIEW_H

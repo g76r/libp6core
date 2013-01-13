@@ -36,7 +36,6 @@ SOURCES += \
     textview/textview.cpp \
     textview/asynctextview.cpp \
     textview/htmllistview.cpp \
-    textview/csvview.cpp \
     httpd/filesystemhttphandler.cpp \
     util/ioutils.cpp \
     httpd/templatinghttphandler.cpp \
@@ -51,7 +50,11 @@ SOURCES += \
     log/log.cpp \
     log/filelogger.cpp \
     util/paramsprovider.cpp \
-    util/paramsetmodel.cpp
+    util/paramsetmodel.cpp \
+    textview/htmltreeview.cpp \
+    textview/csvtreeview.cpp \
+    textview/csvtableview.cpp \
+    textview/texttableview.cpp
 
 
 HEADERS +=\
@@ -72,7 +75,6 @@ HEADERS +=\
     textview/textview.h \
     textview/asynctextview.h \
     textview/htmllistview.h \
-    textview/csvview.h \
     httpd/filesystemhttphandler.h \
     util/ioutils.h \
     httpd/templatinghttphandler.h \
@@ -87,7 +89,11 @@ HEADERS +=\
     log/log.h \
     log/filelogger.h \
     util/paramsprovider.h \
-    util/paramsetmodel.h
+    util/paramsetmodel.h \
+    textview/htmltreeview.h \
+    textview/csvtreeview.h \
+    textview/csvtableview.h \
+    textview/texttableview.h
 
 
 unix {

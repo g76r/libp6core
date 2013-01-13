@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,15 +11,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "csvview.h"
-#include <QtDebug>
+#include "csvtreeview.h"
 
-CsvView::CsvView(QObject *parent) : AsyncTextView(parent), _columnHeaders(true),
-  _rowHeaders(false) {
+CsvTreeView::CsvTreeView(QObject *parent) : AsyncTextView(parent),
+  _columnHeaders(true), _rowHeaders(false) {
 }
 
-void CsvView::writeCsvTree(QAbstractItemModel *m, QString &v,
-                                       QModelIndex parent, int depth) {
+void CsvTreeView::writeCsvTree(QAbstractItemModel *m, QString &v,
+                           QModelIndex parent, int depth) {
   int rows = m->rowCount(parent);
   int columns = m->columnCount(parent);
   //qDebug() << "CsvView::writeCsvTree()" << depth << parent << rows << columns;
@@ -38,11 +37,11 @@ void CsvView::writeCsvTree(QAbstractItemModel *m, QString &v,
     }
     v.append("\n");
     QModelIndex index = m->index(row, 0, parent);
-    writeCsvTree(m, v, index, depth+1);
+    //writeCsvTree(m, v, index, depth+1); //FIXME
   }
 }
 
-void CsvView::updateText() {
+void CsvTreeView::resetAll() {
   QAbstractItemModel *m = model();
   QString v;
   if (m) {
