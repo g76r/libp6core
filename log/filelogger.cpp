@@ -85,12 +85,12 @@ void FileLogger::doLog(QDateTime timestamp, QString message,
     QByteArray ba = line.toUtf8();
     ba.append("\n");
     if (_device->write(ba) != ba.size()) {
-      qWarning() << "error while writing log:" << _device
-                 << _device->errorString();
-      qWarning() << line;
+      //qWarning() << "error while writing log:" << _device
+      //           << _device->errorString();
+      //qWarning() << line;
     }
   } else {
-    qWarning() << "error while writing log: null log device";
-    qWarning() << line;
+    //qWarning() << "error while writing log: null log device";
+    //qWarning() << line;
   }
 }
