@@ -15,6 +15,7 @@
 #define FILELOGGER_H
 
 #include <QObject>
+#include <QDateTime>
 #include "logger.h"
 
 class QIODevice;
@@ -24,12 +25,16 @@ class LIBQTSSUSHARED_EXPORT FileLogger : public Logger {
   Q_OBJECT
   QIODevice *_device;
   QThread *_thread;
-  QString _patternPath, _currentPath;
+  QString _pathPattern, _currentPath;
+  QDateTime _lastOpen;
+  int _secondsReopenInterval;
 
 public:
   /** Takes ownership of the device (= will delete it). */
   explicit FileLogger(QIODevice *device, Log::Severity minSeverity = Log::Info);
-  explicit FileLogger(QString path, Log::Severity minSeverity = Log::Info);
+  explicit FileLogger(QString pathPattern,
+                      Log::Severity minSeverity = Log::Info,
+                      int secondsReopenInterval = 300);
   ~FileLogger();
   QString currentPath() const;
 
