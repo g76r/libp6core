@@ -32,11 +32,22 @@ public:
             const QVariant body, const QMap<QString, QString> headers,
             const QList<QVariant> attachments, QString &errorString);
   inline bool send(const QString sender, const QList<QString> recipients,
-                   const QVariant body,
-                   const QMap<QString, QString> headers = QMap<QString,QString>(),
-                   const QList<QVariant> attachments = QList<QVariant>()) {
+                   const QVariant body, const QMap<QString, QString> headers,
+                   const QList<QVariant> attachments) {
     QString errorString;
     return send(sender, recipients, body, headers, attachments, errorString);
+  }
+  inline bool send(const QString sender, const QList<QString> recipients,
+                   const QVariant body, const QMap<QString, QString> headers) {
+    QString errorString;
+    return send(sender, recipients, body, headers, QList<QVariant>(),
+                errorString);
+  }
+  inline bool send(const QString sender, const QList<QString> recipients,
+                   const QVariant body) {
+    QString errorString;
+    return send(sender, recipients, body, QMap<QString,QString>(),
+                QList<QVariant>(), errorString);
   }
 };
 
