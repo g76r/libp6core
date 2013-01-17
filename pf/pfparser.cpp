@@ -71,7 +71,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
     case TopLevel:
       if (c == '(') {
         state = Name;
-      } else if (pfisnewline(c)) {
+      } else if (c == '\n') {
         ++line;
         column = 0;
       } else if (pfisspace(c)) {
@@ -105,7 +105,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
         names.removeLast();
         state = names.size() ? Content : TopLevel;
       } else if (pfisspace(c)) {
-        if (pfisnewline(c)) {
+        if (c == '\n') {
           ++line;
           column = 0;
         }
@@ -183,7 +183,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
         names.removeLast();
         state = names.size() ? Content : TopLevel;
       } else if (pfisspace(c)) {
-        if (pfisnewline(c)) {
+        if (c == '\n') {
           ++line;
           column = 0;
         }
@@ -227,17 +227,17 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
       } else
         content.append(c);
       break;
-      case Comment:
+    case Comment:
       if (c == '\n') {
         if (!options.shouldIgnoreComment()) {
           if (!_handler->comment(comment)) {
             _handler->setErrorString(tr("cannot handle comment"));
             goto error;
           }
-          comment.clear();
-          ++line;
-          column = 0;
         }
+        comment.clear();
+        ++line;
+        column = 0;
         state = nextState;
       } else {
         if (!options.shouldIgnoreComment())
@@ -248,7 +248,13 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
     case Quote:
       if (c == quote) {
         state = nextState;
+        ++column;
       } else {
+        if (c == '\n') {
+          ++line;
+          column = 0;
+        } else
+          ++column;
         content.append(c);
       }
       break;
@@ -267,18 +273,23 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
         if (!readAndFinishBinaryFragment(source, lazyBinaryFragments, "", l))
           goto error;
         content.clear();
+        ++line;
+        column = 0;
         state = Content;
-      } else if (c == '|') {
-        surface = content;
-        content.clear();
-        state = BinaryLength;
-      } else if (std::isdigit(c) || std::islower(c) || std::isupper(c)
-                 || c == ':') {
-        content.append(c);
       } else {
-        _handler->setErrorString(tr("unexpected character '%1'")
-                                 .arg(pfquotechar(c)));
-        goto error;
+        if (c == '|') {
+          surface = content;
+          content.clear();
+          state = BinaryLength;
+        } else if (std::isdigit(c) || std::islower(c) || std::isupper(c)
+                   || c == ':') {
+          content.append(c);
+        } else {
+          _handler->setErrorString(tr("unexpected character '%1'")
+                                   .arg(pfquotechar(c)));
+          goto error;
+        }
+        ++column;
       }
       break;
     case BinaryLength:
@@ -291,29 +302,22 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
                                          content.toLongLong()))
           goto error;
         content.clear();
+        ++line;
+        column = 0;
         state = Content;
-      } else if (std::isdigit(c)) {
-        content.append(c);
       } else {
-        _handler->setErrorString(tr("unexpected character '%1'")
-                                 .arg(pfquotechar(c)));
-        goto error;
+        if (std::isdigit(c)) {
+          content.append(c);
+        } else {
+          _handler->setErrorString(tr("unexpected character '%1'")
+                                   .arg(pfquotechar(c)));
+          goto error;
+        }
+        ++column;
       }
       break;
     case ArrayHeader:
-      if (c == ';') {
-        if (!content.isEmpty()) {
-          array.appendHeader(QString::fromUtf8(content));
-          content.clear();
-        } else
-          array.appendHeader(QString::number(arrayColumn));
-        ++arrayColumn;
-      } else if (c == ')') {
-        content.clear();
-        if (!finishArray(array, names))
-          goto error;
-        state = names.size() ? Content : TopLevel;
-      } else if (pfisnewline(c)) {
+      if (c == '\n') {
         if (!content.isEmpty()) {
           array.appendHeader(QString::fromUtf8(content));
           content.clear();
@@ -322,89 +326,106 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
         ++line;
         column = 0;
         state = ArrayBody;
-      } else if (c == '#') {
-        if (!content.isEmpty()) {
-          array.appendHeader(QString::fromUtf8(content));
-          content.clear();
-        } else
-          array.appendHeader(QString::number(arrayColumn));
-        ++column;
-        state = Comment;
-        nextState = ArrayBody;
-      } else if (pfisspace(c)) {
-        // ignore
-      } else if (pfisquote(c)) {
-        quote = c;
-        state = Quote;
-        nextState = ArrayHeader;
-      } else if (c == '\\') {
-        state = Escape;
-        nextState = ArrayHeader;
-      } else if (pfisspecial(c)) {
-        _handler->setErrorString(tr("unexpected character '%1'")
-                                 .arg(pfquotechar(c)));
-        goto error;
       } else {
-        content.append(c);
+        if (c == ';') {
+          if (!content.isEmpty()) {
+            array.appendHeader(QString::fromUtf8(content));
+            content.clear();
+          } else
+            array.appendHeader(QString::number(arrayColumn));
+          ++arrayColumn;
+        } else if (c == ')') {
+          content.clear();
+          if (!finishArray(array, names))
+            goto error;
+          state = names.size() ? Content : TopLevel;
+        } else if (c == '#') {
+          if (!content.isEmpty()) {
+            array.appendHeader(QString::fromUtf8(content));
+            content.clear();
+          } else
+            array.appendHeader(QString::number(arrayColumn));
+          ++column;
+          state = Comment;
+          nextState = ArrayBody;
+        } else if (pfisspace(c)) {
+          // ignore
+        } else if (pfisquote(c)) {
+          quote = c;
+          state = Quote;
+          nextState = ArrayHeader;
+        } else if (c == '\\') {
+          state = Escape;
+          nextState = ArrayHeader;
+        } else if (pfisspecial(c)) {
+          _handler->setErrorString(tr("unexpected character '%1'")
+                                   .arg(pfquotechar(c)));
+          goto error;
+        } else {
+          content.append(c);
+        }
+        ++column;
       }
       break;
     case ArrayBody:
-      if (c == ';') {
-        array.appendCell(QString::fromUtf8(content));
-        content.clear();
-      } else if (c == ')') {
-        if (content.size())
-          array.appendCell((QString::fromUtf8(content)));
-        array.removeLastRowIfEmpty();
-        content.clear();
-        if (!finishArray(array, names))
-          goto error;
-        state = names.size() ? Content : TopLevel;
-      } else if (pfisnewline(c)) {
+      if (c == '\n') {
         array.appendCell(QString::fromUtf8(content));
         content.clear();
         array.appendRow();
         ++line;
         column = 0;
-      } else if (c == '#') {
-        if (content.size())
-          array.appendCell((QString::fromUtf8(content)));
-        content.clear();
-        ++column;
-        state = Comment;
-        nextState = ArrayBody;
-      } else if (pfisspace(c)) {
-        // ignore
-      } else if (pfisquote(c)) {
-        quote = c;
-        state = Quote;
-        nextState = ArrayBody;
-      } else if (c == '\\') {
-        state = Escape;
-        nextState = ArrayBody;
-      } else if (pfisspecial(c)) {
-        _handler->setErrorString(tr("unexpected character '%1'")
-                                 .arg(pfquotechar(c)));
-        goto error;
       } else {
-        content.append(c);
+        if (c == ';') {
+          array.appendCell(QString::fromUtf8(content));
+          content.clear();
+        } else if (c == ')') {
+          if (content.size())
+            array.appendCell((QString::fromUtf8(content)));
+          array.removeLastRowIfEmpty();
+          content.clear();
+          if (!finishArray(array, names))
+            goto error;
+          state = names.size() ? Content : TopLevel;
+        } else if (c == '#') {
+          if (content.size())
+            array.appendCell((QString::fromUtf8(content)));
+          content.clear();
+          ++column;
+          state = Comment;
+          nextState = ArrayBody;
+        } else if (pfisspace(c)) {
+          // ignore
+        } else if (pfisquote(c)) {
+          quote = c;
+          state = Quote;
+          nextState = ArrayBody;
+        } else if (c == '\\') {
+          state = Escape;
+          nextState = ArrayBody;
+        } else if (pfisspecial(c)) {
+          _handler->setErrorString(tr("unexpected character '%1'")
+                                   .arg(pfquotechar(c)));
+          goto error;
+        } else {
+          content.append(c);
+        }
+        ++column;
       }
       break;
     case Escape:
       if (c == '\n') {
         column = 0;
         ++line;
-      } else
-        ++column;
-      if (c == 'n')
-        c = '\n';
-      else if (c == 'r')
-        c = '\r';
-      else if (c == 't')
-        c = '\t';
-      else if (c == '0')
-        c = 0;
-      /*else if (c == 'v')
+      } else {
+        if (c == 'n')
+          c = '\n';
+        else if (c == 'r')
+          c = '\r';
+        else if (c == 't')
+          c = '\t';
+        else if (c == '0')
+          c = 0;
+        /*else if (c == 'v')
         c = '\v';
       else if (c == 'b')
         c = '\b';
@@ -412,19 +433,21 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
         c = '\f';
       else if (c == 'a')
         c = '\a';*/
-      else if (c == 'x') {
-        state = EscapeHex;
-        quote = 4;
-        escaped = 0;
-        break;
-      } else if (c == 'u') {
-        state = EscapeHex;
-        quote = 12;
-        escaped = 0;
-        break;
+        else if (c == 'x') {
+          state = EscapeHex;
+          quote = 4; // LATER use another variable, this is really too ugly!
+          escaped = 0;
+          break;
+        } else if (c == 'u') {
+          state = EscapeHex;
+          quote = 12;
+          escaped = 0;
+          break;
+        }
+        content.append(c);
+        state = nextState;
+        ++column;
       }
-      content.append(c);
-      state = nextState;
       break;
     case EscapeHex:
       digit = hexdigits[c];
@@ -442,6 +465,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
           content.append(QChar(escaped|digit));
         state = nextState;
       }
+      ++column;
       break;
     }
   }
@@ -454,7 +478,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
     goto error;
   }
   return true;
-  error:
+error:
   _handler->error(line, column);
   return false;
 }

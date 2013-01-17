@@ -38,8 +38,6 @@ inline bool pfin(const char &c, const char *s) {
   return false;
 }
 
-inline bool pfisnewline(const char &c) { return c == '\n'; }
-
 inline bool pfisspace(const char &c) { return pfin(c, PF_SPACES); }
 
 inline bool pfisquote(const char &c) { return pfin(c, PF_QUOTES); }
