@@ -63,14 +63,10 @@ void FilesystemHttpHandler::handleRequest(HttpRequest &req, HttpResponse &res) {
       file.setFileName(_documentRoot+path+"/"+index);
       //qDebug() << "try file" << file.fileName();
       if (file.exists() && file.open(QIODevice::ReadOnly)) {
-        QString location;
-        if (!_urlPrefix.startsWith("/"))
-          location = "/";
-        location.append(_urlPrefix);
-        if (!_urlPrefix.isEmpty() && !_urlPrefix.endsWith("/"))
-          location.append("/");
-        location.append(path);
-        if (!path.isEmpty())
+        QString location(req.url().path());
+        while (location.size() && location.at(location.size()-1) == '/')
+          location.chop(1);
+        if (!location.isEmpty())
           location.append("/");
         location.append(index);
         res.redirect(location);
