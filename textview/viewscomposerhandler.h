@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -26,8 +26,8 @@ class LIBQTSSUSHARED_EXPORT ViewsComposerHandler : public UriPrefixHandler {
   QList<QWeakPointer<TextView> > _views;
 
 public:
-  ViewsComposerHandler(QObject *parent, const QString &prefix,
-                       int allowedMethods);
+  ViewsComposerHandler(const QString &prefix, int allowedMethods,
+                       QObject *parent);
   void handleRequest(HttpRequest &req, HttpResponse &res);
   QString pageTemplate() const { return _pageTemplate; }
   void setPageTemplate(QString pageTemplate) { _pageTemplate = pageTemplate; }

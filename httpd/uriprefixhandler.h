@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,8 +23,8 @@ class LIBQTSSUSHARED_EXPORT UriPrefixHandler : public HttpHandler {
   int _allowedMethods;
 
 public:
-  UriPrefixHandler(QObject *parent, const QString &prefix,
-                   int allowedMethods = HttpRequest::GET);
+  UriPrefixHandler(const QString &prefix, int allowedMethods = HttpRequest::GET,
+                   QObject *parent = 0);
   QString name() const;
   bool acceptRequest(const HttpRequest &req);
 };
