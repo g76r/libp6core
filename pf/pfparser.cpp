@@ -79,7 +79,8 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
         state = Comment;
         nextState = TopLevel;
       } else {
-        _handler->setErrorString(tr("unexpected character '%1'")
+        _handler->setErrorString(tr("unexpected character '%1' "
+                                    "(in TopLevel state)")
                                  .arg(pfquotechar(c)));
         goto error;
       }
@@ -141,7 +142,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
         state = Escape;
         nextState = Name;
       } else if (pfisspecial(c)) {
-        _handler->setErrorString(tr("unexpected character '%1'")
+        _handler->setErrorString(tr("unexpected character '%1' (in Name state)")
                                  .arg(pfquotechar(c)));
         goto error;
       } else {
@@ -221,7 +222,8 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
         state = Escape;
         nextState = Content;
       } else if (pfisspecial(c)) {
-        _handler->setErrorString(tr("unexpected character '%1'")
+        _handler->setErrorString(tr("unexpected character '%1' "
+                                    "(in Content state)")
                                  .arg(pfquotechar(c)));
         goto error;
       } else
@@ -273,11 +275,13 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
         if (!readAndFinishBinaryFragment(source, lazyBinaryFragments, "", l))
           goto error;
         content.clear();
-        ++line;
+        line = 10000000; // LATER hide line numbers after first binary fragment
         column = 0;
         state = Content;
       } else {
-        if (c == '|') {
+        if (std::isspace(c)) {
+          // ignore whitespace, incl. \r
+        } else if (c == '|') {
           surface = content;
           content.clear();
           state = BinaryLength;
@@ -285,7 +289,8 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
                    || c == ':') {
           content.append(c);
         } else {
-          _handler->setErrorString(tr("unexpected character '%1'")
+          _handler->setErrorString(tr("unexpected character '%1' "
+                                      "(in BinarySurfaceOrLength state)")
                                    .arg(pfquotechar(c)));
           goto error;
         }
@@ -298,18 +303,27 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
           _handler->setErrorString(tr("binary fragment without length"));
           goto error;
         }
+        bool ok;
+        qint64 l = content.toLongLong(&ok);
+        if (!ok) {
+          _handler->setErrorString(tr("binary fragment with incorrect length"));
+          goto error;
+        }
         if (!readAndFinishBinaryFragment(source, lazyBinaryFragments, surface,
-                                         content.toLongLong()))
+                                         l))
           goto error;
         content.clear();
-        ++line;
+        line = 10000000; // LATER hide line numbers after first binary fragment
         column = 0;
         state = Content;
       } else {
-        if (std::isdigit(c)) {
+        if (std::isspace(c)) {
+          // ignore whitespace, incl. \r
+        } else if (std::isdigit(c)) {
           content.append(c);
         } else {
-          _handler->setErrorString(tr("unexpected character '%1'")
+          _handler->setErrorString(tr("unexpected character '%1' "
+                                      "(in BinaryLength state)")
                                    .arg(pfquotechar(c)));
           goto error;
         }
@@ -358,7 +372,8 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
           state = Escape;
           nextState = ArrayHeader;
         } else if (pfisspecial(c)) {
-          _handler->setErrorString(tr("unexpected character '%1'")
+          _handler->setErrorString(tr("unexpected character '%1'"
+                                      " (in ArrayHeader state)")
                                    .arg(pfquotechar(c)));
           goto error;
         } else {
@@ -403,7 +418,8 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
           state = Escape;
           nextState = ArrayBody;
         } else if (pfisspecial(c)) {
-          _handler->setErrorString(tr("unexpected character '%1'")
+          _handler->setErrorString(tr("unexpected character '%1'"
+                                      " (in ArrayBody state)")
                                    .arg(pfquotechar(c)));
           goto error;
         } else {
@@ -425,14 +441,6 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
           c = '\t';
         else if (c == '0')
           c = 0;
-        /*else if (c == 'v')
-        c = '\v';
-      else if (c == 'b')
-        c = '\b';
-      else if (c == 'f')
-        c = '\f';
-      else if (c == 'a')
-        c = '\a';*/
         else if (c == 'x') {
           state = EscapeHex;
           quote = 4; // LATER use another variable, this is really too ugly!
@@ -444,10 +452,10 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
           escaped = 0;
           break;
         }
-        content.append(c);
-        state = nextState;
         ++column;
       }
+      content.append(c);
+      state = nextState;
       break;
     case EscapeHex:
       digit = hexdigits[c];
@@ -493,6 +501,8 @@ bool PfParser::parse(QByteArray source, const PfOptions options) {
 bool PfParser::readAndFinishBinaryFragment(QIODevice *source,
                                            bool &lazyBinaryFragments,
                                            const QString surface, qint64 l) {
+  //qDebug() << "readAndFinishBinaryFragment" << lazyBinaryFragments
+  //         << surface << l;
   if (l <= 0)
     return true;
   if (lazyBinaryFragments && source->isSequential()) {
