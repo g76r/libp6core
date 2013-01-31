@@ -53,6 +53,10 @@ public:
    * or even "Global Warming" and "" are all interpreted as Log::Debug. */
   static Log::Severity severityFromString(const QString string);
   static void logMessageHandler(QtMsgType type, const char *msg);
+  static inline LogHelper log(Log::Severity severity,
+                              const QString task = QString(),
+                              const QString execId = QString(),
+                              const QString sourceCode = QString());
   static inline LogHelper debug(const QString task = QString(),
                                 const QString execId = QString(),
                                 const QString sourceCode = QString());
@@ -68,6 +72,9 @@ public:
   static inline LogHelper fatal(const QString task = QString(),
                                 const QString execId = QString(),
                                 const QString sourceCode = QString());
+  static inline LogHelper log(Log::Severity severity, const QString task,
+                              quint64 execId,
+                              const QString sourceCode = QString());
   static inline LogHelper debug(const QString task, quint64 execId,
                                 const QString sourceCode = QString());
   static inline LogHelper info(const QString task, quint64 execId,
@@ -158,6 +165,12 @@ public:
     return *this; }
 };
 
+
+LogHelper Log::log(Log::Severity severity, const QString task,
+                   const QString execId, const QString sourceCode) {
+  return LogHelper(severity, task, execId, sourceCode);
+}
+
 LogHelper Log::debug(const QString task, const QString execId,
                      const QString sourceCode) {
   return LogHelper(Log::Debug, task, execId, sourceCode);
@@ -181,6 +194,11 @@ LogHelper Log::error(const QString task, const QString execId,
 LogHelper Log::fatal(const QString task, const QString execId,
                      const QString sourceCode) {
   return LogHelper(Log::Fatal, task, execId, sourceCode);
+}
+
+LogHelper Log::log(Log::Severity severity, const QString task, quint64 execId,
+                   const QString sourceCode) {
+  return log(severity, task, QString::number(execId), sourceCode);
 }
 
 LogHelper Log::debug(const QString task, quint64 execId,
