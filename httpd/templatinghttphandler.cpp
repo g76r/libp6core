@@ -48,6 +48,8 @@ void TemplatingHttpHandler::sendLocalResource(HttpRequest &req,
         QWeakPointer<TextView> view = _views.value(label);
         if (view)
           output.append(view.data()->text());
+        else
+          output.append("?");
       }
       output.append(input.right(input.size()-pos));
       QByteArray ba = output.toUtf8();
