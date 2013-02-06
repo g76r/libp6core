@@ -37,6 +37,7 @@ void TextTableView::setModel(QAbstractItemModel *model) {
         _effectiveColumnIndexes.append(i);
     }
   }
+  resetAll();
 }
 
 void TextTableView::updateText() {
