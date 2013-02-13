@@ -13,8 +13,8 @@
  */
 #include "csvtableview.h"
 
-CsvTableView::CsvTableView(QObject *parent) : TextTableView(parent),
-  _columnHeaders(true), _rowHeaders(false) {
+CsvTableView::CsvTableView(QObject *parent, int maxrows)
+  : TextTableView(parent, maxrows), _columnHeaders(true), _rowHeaders(false) {
 }
 
 QString CsvTableView::headerText() {

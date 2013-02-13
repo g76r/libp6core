@@ -25,7 +25,7 @@ class LIBQTSSUSHARED_EXPORT TextTableView : public AsyncTextView {
   QString _emptyPlaceholder, _ellipsePlaceholder, _header, _footer;
 
 public:
-  explicit TextTableView(QObject *parent = 0);
+  explicit TextTableView(QObject *parent = 0, int maxrows = 100);
   /** Max number of rows to display. Default is 100. Use INT_MAX if you want
     * no limit. */
   void setMaxrows(int maxrows) { _maxrows = maxrows; }

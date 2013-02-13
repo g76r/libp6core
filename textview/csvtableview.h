@@ -25,7 +25,7 @@ class LIBQTSSUSHARED_EXPORT CsvTableView : public TextTableView {
   bool _columnHeaders, _rowHeaders;
 
 public:
-  explicit CsvTableView(QObject *parent = 0);
+  explicit CsvTableView(QObject *parent = 0, int maxrows = 10000);
   void setTopLeftHeader(const QString rawHtml) { _topLeftHeader = rawHtml; }
   void setColumnHeaders(bool set = true) { _columnHeaders = set; }
   void setRowHeaders(bool set = true) { _rowHeaders = set; }

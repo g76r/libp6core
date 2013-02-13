@@ -13,8 +13,9 @@
  */
 #include "texttableview.h"
 
-TextTableView::TextTableView(QObject *parent) : AsyncTextView(parent),
-  _headersAndFootersAlreadyRead(false), _maxrows(100) {
+TextTableView::TextTableView(QObject *parent, int maxrows)
+  : AsyncTextView(parent), _headersAndFootersAlreadyRead(false),
+    _maxrows(maxrows) {
 }
 
 void TextTableView::setEmptyPlaceholder(const QString rawText) {
