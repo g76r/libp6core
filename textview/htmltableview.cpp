@@ -15,7 +15,7 @@
 
 HtmlTableView::HtmlTableView(QObject *parent) : TextTableView(parent),
   _thClassRole(-1), _trClassRole(-1), _tdClassRole(-1), _linkRole(-1),
-  _linkClassRole(-1), _htmlPrefixRole(-1),
+  _linkClassRole(-1), _htmlPrefixRole(-1), _htmlSuffixRole(-1),
   _columnHeaders(true), _rowHeaders(false) {
   setEmptyPlaceholder("(empty)");
   setEllipsePlaceholder("...");
@@ -59,6 +59,9 @@ QString HtmlTableView::headerText() {
           v.append(m->headerData(i, Qt::Horizontal, _htmlPrefixRole)
                    .toString());
         v.append(m->headerData(i, Qt::Horizontal).toString()).append("</th>");
+        if (_htmlSuffixRole >= 0)
+          v.append(m->headerData(i, Qt::Horizontal, _htmlSuffixRole)
+                   .toString());
       }
       v.append("</tr>\n");
     }
@@ -87,6 +90,8 @@ QString HtmlTableView::rowText(int row) {
     if (_htmlPrefixRole >= 0)
       v.append(m->headerData(row, Qt::Vertical, _htmlPrefixRole).toString());
     v.append(m->headerData(row, Qt::Vertical).toString()).append("</th>");
+    if (_htmlSuffixRole >= 0)
+      v.append(m->headerData(row, Qt::Vertical, _htmlSuffixRole).toString());
   }
   foreach (int column, effectiveColumnIndexes()) {
     QModelIndex index = m->index(row, column, QModelIndex());
@@ -113,6 +118,8 @@ QString HtmlTableView::rowText(int row) {
     v.append(m->data(index).toString());
     if (!link.isEmpty())
       v.append("</a>");
+    if (_htmlSuffixRole >= 0)
+      v.append(m->data(index, _htmlSuffixRole).toString());
     v.append("</td>");
   }
   v.append("</tr>\n");

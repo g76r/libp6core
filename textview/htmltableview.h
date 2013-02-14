@@ -23,7 +23,7 @@ class LIBQTSSUSHARED_EXPORT HtmlTableView : public TextTableView {
   Q_OBJECT
   QString _tableClass, _topLeftHeader;
   int _thClassRole, _trClassRole, _tdClassRole, _linkRole, _linkClassRole;
-  int _htmlPrefixRole;
+  int _htmlPrefixRole, _htmlSuffixRole;
   bool _columnHeaders, _rowHeaders;
 
 public:
@@ -38,6 +38,8 @@ public:
   void setLinkClassRole(int role) { _linkClassRole = role; }
   /** Prefix with unescaped HTML text, e.g. "<img src='icon/foo.png'/>". */
   void setHtmlPrefixRole(int role) { _htmlPrefixRole = role; }
+  /** Suffix with unescaped HTML text, e.g. "<a href='help.html'>help</a>". */
+  void setHtmlSuffixRole(int role) { _htmlSuffixRole = role; }
   void setColumnHeaders(bool set = true) { _columnHeaders = set; }
   void setRowHeaders(bool set = true) { _rowHeaders = set; }
   void setEmptyPlaceholder(const QString rawText);
