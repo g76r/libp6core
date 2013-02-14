@@ -22,13 +22,16 @@
  */
 class LIBQTSSUSHARED_EXPORT ClockView : public TextView {
   Q_OBJECT
-  const QString _textFormat;
+  QString _textFormat;
   Qt::DateFormat _dateFormat;
 
 public:
   ClockView(QObject *parent, const QString format);
   explicit ClockView(QObject *parent = 0, Qt::DateFormat format = Qt::ISODate);
   QString text() const;
+  void setFormat(const QString format) { _textFormat = format; }
+  void setFormat(Qt::DateFormat format) {
+    _dateFormat = format; _textFormat = QString(); }
 };
 
 #endif // CLOCKVIEW_H
