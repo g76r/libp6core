@@ -46,9 +46,7 @@ private:
   int _maxrows;
   QString _warningIcon, _errorIcon, _warningTrClass, _errorTrClass;
 
-
 public:
-  explicit LogModel(QObject *parent = 0, int maxrows = 100);
   int rowCount(const QModelIndex &parent) const;
   int columnCount(const QModelIndex &parent) const;
   QVariant data(const QModelIndex &index, int role) const;
@@ -59,6 +57,9 @@ public:
   void setErrorTrClass(const QString rawHtml) { _errorTrClass = rawHtml; }
 
 private:
+  // only MemoryLogger can create LogModel or log to it
+  // this ensures that LogModel and MemoryLogger share the same thread
+  explicit LogModel(QObject *parent = 0, int maxrows = 100);
   void log(QDateTime timestamp, QString message, Log::Severity severity,
            QString task, QString execId, QString sourceCode);
 };

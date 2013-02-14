@@ -14,8 +14,9 @@
 #include "memorylogger.h"
 #include "logmodel.h"
 
-MemoryLogger::MemoryLogger(QObject *parent, Log::Severity minSeverity) :
-  Logger(parent, minSeverity), _model(new LogModel(this)) {
+MemoryLogger::MemoryLogger(QObject *parent, Log::Severity minSeverity,
+                           int maxrows) :
+  Logger(parent, minSeverity), _model(new LogModel(this, maxrows)) {
 }
 
 void MemoryLogger::doLog(QDateTime timestamp, QString message,

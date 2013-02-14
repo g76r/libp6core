@@ -23,7 +23,8 @@ class LIBQTSSUSHARED_EXPORT MemoryLogger : public Logger {
 
 public:
   explicit MemoryLogger(QObject *parent = 0,
-                        Log::Severity minSeverity = Log::Info);
+                        Log::Severity minSeverity = Log::Info,
+                        int maxrows = 100);
   LogModel *model() { return _model; }
   
 protected:
