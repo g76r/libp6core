@@ -84,6 +84,16 @@ public:
   QStringList splitAndEvaluate(const QString rawValue,
                                const ParamsProvider *context) const {
     return splitAndEvaluate(rawValue, " ", true, context); }
+  /** Return a globing expression that matches any string that can result
+   * in evaluation of the rawValue (@see QRegExp::Wildcard).
+   * For instance "foo%!yyyy-%{bar}" is converted into "foo????-*" or
+   * into "foo*-*".
+   */
+  static QString matchingPattern(const QString rawValue);
+  inline static QRegExp matchingRegexp(const QString rawValue) {
+    return QRegExp(matchingPattern(rawValue), Qt::CaseSensitive,
+                   QRegExp::Wildcard);
+  }
   QString paramValue(const QString key, const QString defaultValue) const;
   bool isNull() const;
   int size() const;

@@ -201,6 +201,50 @@ QStringList ParamSet::splitAndEvaluate(const QString rawValue,
   return values;
 }
 
+QString ParamSet::matchingPattern(const QString rawValue) {
+  int i = 0;
+  QString value, variable;
+  QString specialChars("*?[]\\");
+  while (i < rawValue.size()) {
+    QChar c = rawValue.at(i++);
+    if (c == '%') {
+      variable.clear();
+      c = rawValue.at(i++);
+      if (c == '{') {
+        while (i < rawValue.size()) {
+          c = rawValue.at(i++);
+          if (c == '}')
+            break;
+          else
+            variable.append(c);
+        }
+        // LATER handle ! variables in a specific manner, e.g. !yyyy -> ????
+        value.append("*");
+      } else if (c == '!' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+                 || c == '_') {
+        variable.append(c);
+        while (i < rawValue.size()) {
+          c = rawValue.at(i++);
+          if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+              || (c >= '0' && c <= '9') || c == '_') {
+            variable.append(c);
+          } else {
+            --i;
+            break;
+          }
+        }
+        // LATER handle ! variables in a specific manner, e.g. !yyyy -> ????
+        value.append("*");
+      } else {
+        value.append(specialChars.contains(c) ? '?' : c);
+      }
+    } else {
+      value.append(specialChars.contains(c) ? '?' : c);
+    }
+  }
+  return value;
+}
+
 const QSet<QString> ParamSet::keys(bool inherit) const {
   QSet<QString> set;
   if (d) {
