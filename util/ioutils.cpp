@@ -14,6 +14,7 @@
 #include "ioutils.h"
 #include <QIODevice>
 #include <QRegExp>
+#include <QDir>
 #include <QtDebug>
 
 QString IOUtils::url2path(const QUrl &url) {
@@ -90,7 +91,7 @@ qint64 IOUtils::grepString(QIODevice *dest, QIODevice *src, qint64 max,
 
 }
 
-qint64 grepRegexp(QIODevice *dest, QIODevice *src, qint64 max,
+qint64 IOUtils::grepRegexp(QIODevice *dest, QIODevice *src, qint64 max,
                                 const QString pattern, qint64 maxLineSize) {
   char buf[maxLineSize+1];
   QRegExp re(pattern);
@@ -112,4 +113,31 @@ qint64 grepRegexp(QIODevice *dest, QIODevice *src, qint64 max,
   }
   return total;
 
+}
+
+static void findFiles(QDir dir, QStringList &files, const QRegExp pattern) {
+  //qDebug() << "findFiles:" << dir.path() << dir.entryInfoList().size() << files.size() << pattern.pattern();
+  foreach (const QFileInfo fi,
+           dir.entryInfoList(QDir::Dirs|QDir::Files|QDir::NoDotAndDotDot,
+                             QDir::Name)) {
+    const QString path = fi.filePath();
+    //qDebug() << "  QFileInfo:" << path << fi.isDir() << fi.isFile();
+    if (fi.isDir()) {
+      //qDebug() << "  Going down:" << path;
+      findFiles(QDir(path), files, pattern);
+    } else if (fi.isFile() && pattern.exactMatch(path)) {
+      //qDebug() << "  Appending:" << path;
+      files.append(path);
+    }
+  }
+}
+
+QStringList IOUtils::findFiles(const QString pattern) {
+  QStringList files;
+  QString pat = QDir().absoluteFilePath(QDir::fromNativeSeparators(pattern));
+  int i = pat.indexOf(QRegExp("/[^/]*[*?[]|\\]"));
+  QString dir = i >= 0 ? pat.left(i+1) : pat;
+  QRegExp re(pat, Qt::CaseSensitive, QRegExp::Wildcard);
+  ::findFiles(QDir(dir), files, re);
+  return files;
 }

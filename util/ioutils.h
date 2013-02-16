@@ -14,8 +14,8 @@
 #ifndef IOUTILS_H
 #define IOUTILS_H
 
-#include <QtGlobal>
 #include <QUrl>
+#include <QStringList>
 #include "libqtssu_global.h"
 
 class QIODevice;
@@ -62,10 +62,18 @@ public:
     return copy(*dest, *src, max, bufsize);
   }
 
+  /** Copy at most max bytes from dest to src, copying only lines that match
+   * pattern.
+   * There may be some strange behaviour if lines are longer than maxLineSize.
+   */
   static qint64 grepString(QIODevice *dest, QIODevice *src, qint64 max,
                            const QString pattern,
                            qint64 maxLineSize = 65535);
 
+  /** Copy at most max bytes from dest to src, copying only lines that match
+   * pattern.
+   * There may be some strange behaviour if lines are longer than maxLineSize.
+   */
   static qint64 grepRegexp(QIODevice *dest, QIODevice *src, qint64 max,
                            const QString pattern,
                            qint64 maxLineSize = 65535);
@@ -75,6 +83,23 @@ public:
     * @return path, QString::isNull() if URL not supported (e.g. its scheme)
     */
   static QString url2path(const QUrl &url);
+
+  /** Return paths of all existing files that match pattern.
+    * Pattern is a globing pattern (@see QRegExp::Wildcard).
+    * Beware that this method can take a lot of time depending on filesystem
+    * tree size. */
+  static QStringList findFiles(const QString pattern);
+
+  /** Return paths of all existing files that match patterns.
+    * Pattern is a globing pattern (@see QRegExp::Wildcard).
+    * Beware that this method can take a lot of time depending on filesystem
+    * tree size. */
+  inline static QStringList findFiles(const QStringList patterns) {
+    QStringList files;
+    foreach (const QString pattern, patterns)
+      files.append(findFiles(pattern));
+    return files;
+  }
 };
 
 #endif // IOUTILS_H
