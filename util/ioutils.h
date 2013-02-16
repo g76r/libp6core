@@ -62,6 +62,14 @@ public:
     return copy(*dest, *src, max, bufsize);
   }
 
+  static qint64 grepString(QIODevice *dest, QIODevice *src, qint64 max,
+                           const QString pattern,
+                           qint64 maxLineSize = 65535);
+
+  static qint64 grepRegexp(QIODevice *dest, QIODevice *src, qint64 max,
+                           const QString pattern,
+                           qint64 maxLineSize = 65535);
+
   /** Convert QUrl object to local path usable with e.g. QFile
     * Only support "file" and "qrc" schemes.
     * @return path, QString::isNull() if URL not supported (e.g. its scheme)

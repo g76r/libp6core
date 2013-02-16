@@ -48,7 +48,7 @@ qint64 IOUtils::copyAll(QIODevice &dest, QIODevice &src, qint64 bufsize) {
 }
 
 qint64 IOUtils::copy(QIODevice &dest, QIODevice &src, qint64 max,
-                            qint64 bufsize) {
+                     qint64 bufsize) {
   char buf[bufsize];
   int total = 0, n, m;
   while (total < max) {
@@ -65,4 +65,51 @@ qint64 IOUtils::copy(QIODevice &dest, QIODevice &src, qint64 max,
     total += n;
   }
   return total;
+}
+
+qint64 IOUtils::grepString(QIODevice *dest, QIODevice *src, qint64 max,
+                           const QString pattern, qint64 maxLineSize) {
+  char buf[maxLineSize+1];
+  int total = 0, n, m;
+  while (total < max) {
+    if (src->bytesAvailable() < 1)
+      src->waitForReadyRead(30000);
+    n = src->readLine(buf, sizeof buf);
+    if (n < 0)
+      return -1;
+    if (n == 0)
+      break;
+    if (QString::fromUtf8(buf).contains(pattern)) {
+      m = dest->write(buf, n);
+      if (m != n)
+        return -1;
+      total += n;
+    }
+  }
+  return total;
+
+}
+
+qint64 grepRegexp(QIODevice *dest, QIODevice *src, qint64 max,
+                                const QString pattern, qint64 maxLineSize) {
+  char buf[maxLineSize+1];
+  QRegExp re(pattern);
+  int total = 0, n, m;
+  while (total < max) {
+    if (src->bytesAvailable() < 1)
+      src->waitForReadyRead(30000);
+    n = src->readLine(buf, sizeof buf);
+    if (n < 0)
+      return -1;
+    if (n == 0)
+      break;
+    if (QString::fromUtf8(buf).contains(re)) {
+      m = dest->write(buf, n);
+      if (m != n)
+        return -1;
+      total += n;
+    }
+  }
+  return total;
+
 }
