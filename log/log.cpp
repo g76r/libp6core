@@ -20,6 +20,7 @@
 #include <QThread>
 #include <QMutex>
 #include <QFile>
+#include "util/ioutils.h"
 
 static QList<Logger*> _loggers;
 static QMutex _loggersMutex;
@@ -143,7 +144,7 @@ void Log::logMessageHandler(QtMsgType type, const char *msg) {
   }
 }
 
-QString Log::pathToFullestLog() {
+QString Log::pathToLastFullestLog() {
   QMutexLocker locker(&_loggersMutex);
   int severity = Fatal+1;
   QString path;
@@ -159,4 +160,34 @@ QString Log::pathToFullestLog() {
     }
   }
   return path;
+}
+
+QStringList Log::pathsToFullestLogs() {
+  QMutexLocker locker(&_loggersMutex);
+  int severity = Fatal+1;
+  QString path;
+  foreach(Logger *logger, _loggers) {
+    if (logger->minSeverity() < severity) {
+      QString p = logger->pathMathchingPattern();
+      if (!p.isEmpty()) {
+        if (severity == Debug) {
+          return IOUtils::findFiles(p);
+        }
+        path = p;
+        severity = logger->minSeverity();
+      }
+    }
+  }
+  return IOUtils::findFiles(path);
+}
+
+QStringList Log::pathsToAllLogs() {
+  QMutexLocker locker(&_loggersMutex);
+  QStringList paths;
+  foreach(Logger *logger, _loggers) {
+    QString p = logger->pathMathchingPattern();
+    if (!p.isEmpty())
+      paths.append(p);
+  }
+  return IOUtils::findFiles(paths);
 }

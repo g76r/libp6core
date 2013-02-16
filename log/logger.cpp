@@ -37,3 +37,7 @@ void Logger::log(QDateTime timestamp, QString message, Log::Severity severity,
 QString Logger::currentPath() const {
   return QString();
 }
+
+QString Logger::pathPattern() const {
+  return currentPath();
+}

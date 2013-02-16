@@ -37,6 +37,7 @@ public:
                       int secondsReopenInterval = 300);
   ~FileLogger();
   QString currentPath() const;
+  QString pathPattern() const;
 
 protected:
   void doLog(QDateTime timestamp, QString message, Log::Severity severity,

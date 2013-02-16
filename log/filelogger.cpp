@@ -57,6 +57,10 @@ QString FileLogger::currentPath() const {
   return _currentPath;
 }
 
+QString FileLogger::pathPattern() const {
+  return _pathPattern;
+}
+
 void FileLogger::doLog(QDateTime timestamp, QString message,
                        Log::Severity severity,
                        QString task, QString execId,

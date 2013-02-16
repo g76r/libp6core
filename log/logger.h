@@ -17,6 +17,7 @@
 #include <QObject>
 #include "log.h"
 #include <QDateTime>
+#include "util/paramset.h"
 
 class LIBQTSSUSHARED_EXPORT Logger : public QObject {
   friend class Log;
@@ -30,6 +31,14 @@ public:
   void log(QDateTime timestamp, QString message, Log::Severity severity,
            QString task, QString execId, QString sourceCode);
   virtual QString currentPath() const;
+  /** Return the path pattern, e.g. "/var/log/qron-%!yyyy%!mm%!dd.log" */
+  virtual QString pathPattern() const;
+  /** Return the path regexp pattern, e.g. "/var/log/qron-.*\\.log" */
+  inline QString pathMathchingPattern() const {
+    return ParamSet::matchingPattern(pathPattern()); }
+  /** Return the path regexp pattern, e.g. "/var/log/qron-.*\\.log" */
+  inline QRegExp pathMatchingRegexp() const {
+    return ParamSet::matchingRegexp(pathPattern()); }
   Log::Severity minSeverity() const { return _minSeverity; }
 
 protected:
