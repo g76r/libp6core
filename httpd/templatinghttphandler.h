@@ -32,7 +32,8 @@ public:
   void addFilter(const QString regexp) { _filters.insert(regexp); }
 
 protected:
-  void sendLocalResource(HttpRequest &req, HttpResponse &res, QFile &file);
+  void sendLocalResource(HttpRequest &req, HttpResponse &res, QFile &file,
+                         const QHash<QString,QVariant> values);
 };
 
 #endif // TEMPLATINGHTTPHANDLER_H

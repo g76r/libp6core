@@ -16,40 +16,65 @@
 #include <QFile>
 #include <QBuffer>
 #include "util/ioutils.h"
-#include <QtDebug>
+#include "log/log.h"
 
 TemplatingHttpHandler::TemplatingHttpHandler(
     QObject *parent, const QString urlPrefix, const QString documentRoot) :
   FilesystemHttpHandler(parent, urlPrefix, documentRoot) {
 }
 
-void TemplatingHttpHandler::sendLocalResource(HttpRequest &req,
-                                              HttpResponse &res, QFile &file) {
+void TemplatingHttpHandler::sendLocalResource(
+    HttpRequest &req, HttpResponse &res, QFile &file,
+    const QHash<QString,QVariant> values) {
   Q_UNUSED(req)
-  //qDebug() << "TemplatingHttpHandler::sendLocalResource" << file.fileName();
   setMimeTypeByName(file.fileName(), res);
   foreach (QString filter, _filters) {
     QRegExp re(filter);
     if (re.indexIn(file.fileName()) >= 0) {
-      //qDebug() << "TemplatingHttpHandler::sendLocalResource filter enabled";
       QBuffer buf;
       buf.open(QIODevice::WriteOnly);
       IOUtils::copyAll(&buf, file);
       buf.close();
       QString input = QString::fromUtf8(buf.data()), output;
       int pos = 0, markup;
-      while ((markup = input.indexOf("<?view:", pos)) >= 0) {
+      while ((markup = input.indexOf("<?", pos)) >= 0) {
         output.append(input.mid(pos, markup-pos));
-        pos = markup+7;
+        pos = markup+2;
         markup = input.indexOf("?>", pos);
         QString label = input.mid(pos, markup-pos).trimmed();
-        pos = markup+2;
-        //qDebug() << "TemplatingHttpHandler::sendLocalResource view:" << label;
-        QWeakPointer<TextView> view = _views.value(label);
-        if (view)
-          output.append(view.data()->text());
-        else
+        int colon = label.indexOf(":");
+        if (colon < 0) {
+          Log::warning() << "TemplatingHttpHandler found incorrect markup '"
+                         << label << "'";
           output.append("?");
+        } else {
+          QString data = label.mid(colon+1);
+          label = label.left(colon);
+          if (label == "view") {
+            QWeakPointer<TextView> view = _views.value(data);
+            if (view)
+              output.append(view.data()->text());
+            else {
+              Log::warning() << "TemplatingHttpHandler did not find view '"
+                             << data << "' among " << _views.keys();
+              output.append("?");
+            }
+          } else if (label == "value") {
+            QString value = values.value(data).toString();
+            if (!value.isNull())
+              output.append(value);
+            else {
+              Log::warning() << "TemplatingHttpHandler did not find value: '"
+                             << data << "' among " << values.keys();
+              output.append("?");
+            }
+          } else {
+            Log::warning() << "TemplatingHttpHandler found incorrect markup: <?"
+                           << label << ":" << data << "?>";
+            output.append("?");
+          }
+        }
+        pos = markup+2;
       }
       output.append(input.right(input.size()-pos));
       QByteArray ba = output.toUtf8();

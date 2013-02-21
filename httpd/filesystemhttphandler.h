@@ -52,10 +52,13 @@ public:
   void clearMimeTypes() { _mimeTypes.clear(); }
   bool acceptRequest(const HttpRequest &req);
   void handleRequest(HttpRequest &req, HttpResponse &res);
+  void handleRequestWithContext(HttpRequest &req, HttpResponse &res,
+                                const QHash<QString,QVariant> values);
 
 protected:
-  virtual void sendLocalResource(HttpRequest &req, HttpResponse &res,
-                                 QFile &file);
+  virtual void sendLocalResource(
+      HttpRequest &req, HttpResponse &res, QFile &file,
+      const QHash<QString,QVariant> values);
 
 protected:
   void setMimeTypeByName(const QString &name, HttpResponse &res);

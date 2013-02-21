@@ -49,6 +49,11 @@ bool FilesystemHttpHandler::acceptRequest(const HttpRequest &req) {
 }
 
 void FilesystemHttpHandler::handleRequest(HttpRequest &req, HttpResponse &res) {
+  handleRequestWithContext(req, res, QHash<QString,QVariant>());
+}
+
+void FilesystemHttpHandler::handleRequestWithContext(
+    HttpRequest &req, HttpResponse &res, const QHash<QString,QVariant> values) {
   QString path = req.url().path();
   path.remove(0, _urlPrefix.length());
   while (path.size() && path.at(path.size()-1) == '/')
@@ -79,7 +84,7 @@ void FilesystemHttpHandler::handleRequest(HttpRequest &req, HttpResponse &res) {
     res.output()->write("Directory list denied.");
   }
   if (file.open(QIODevice::ReadOnly)) {
-    sendLocalResource(req, res, file);
+    sendLocalResource(req, res, file, values);
     return;
   }
   int status = file.error() == QFile::PermissionsError ? 403 : 404;
@@ -91,9 +96,11 @@ void FilesystemHttpHandler::handleRequest(HttpRequest &req, HttpResponse &res) {
   //         << file.fileName() << status;
 }
 
-void FilesystemHttpHandler::sendLocalResource(HttpRequest &req,
-                                              HttpResponse &res, QFile &file) {
+void FilesystemHttpHandler::sendLocalResource(
+    HttpRequest &req, HttpResponse &res, QFile &file,
+    const QHash<QString, QVariant> values) {
   Q_UNUSED(req)
+  Q_UNUSED(values)
   //qDebug() << "success";
   setMimeTypeByName(file.fileName(), res);
   res.setContentLength(file.size());
