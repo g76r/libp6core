@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -29,6 +29,7 @@ private:
   QAbstractSocket *_input;
   HttpRequestMethod _method;
   QMultiMap<QString,QString> _headers;
+  QMap<QString,QString> _cookies;
   QUrl _url;
 
 public:
@@ -37,19 +38,48 @@ public:
   inline void setMethod(HttpRequestMethod method) { _method = method; }
   inline HttpRequestMethod method() const { return _method; }
   QString methodName() const; // human readable, e.g. "GET"
-  bool parseAndAddHeader(const QString &rawHeader);
-  inline const QString header(const QString &name) const {
-    return _headers.value(name); // if multiple, the last one is returned
-    // whereas in the J2EE API this is the first one
+  bool parseAndAddHeader(const QString rawHeader);
+  inline const QString header(const QString name) const {
+    return _headers.value(name);
+    // if multiple, the last one is returned
+    // whereas in the J2EE API it's the first one
   }
-  inline const QList<QString> headers(const QString &name) const {
-    return _headers.values(name);
+  inline const QString header(const QString name,
+                              const QString defaultValue = QString()) const {
+    const QString v = _headers.value(name);
+    return v.isNull() ? defaultValue : v;
+    // if multiple, the last one is returned
+    // whereas in the J2EE API it's the first one
+  }
+  inline const QList<QString> headers(const QString name) const {
+    return _headers.values(name); }
+  inline const QMultiMap<QString,QString> headers() const {
+    return _headers; }
+  inline QString cookie(
+      const QString name, const QString defaultValue = QString()) {
+    const QString v = _cookies.value(name);
+    return v.isNull() ? defaultValue : v;
+  }
+  inline QString base64Cookie(
+      const QString name, const QString defaultValue = QString()) {
+    const QString v = _cookies.value(name);
+    return v.isNull() ? defaultValue
+                      : QString::fromUtf8(QByteArray::fromBase64(v.toAscii()));
+  }
+  inline QByteArray base64BinaryCookie(
+      const QString name, const QByteArray defaultValue = QByteArray()) {
+    const QString v = _cookies.value(name);
+    return v.isNull() ? defaultValue
+                      : QByteArray::fromBase64(cookie(name).toAscii());
   }
   inline void setUrl(const QUrl &url) { _url = url; }
   inline const QUrl &url() const { return _url; }
   QString param(const QString &key) const;
   operator QString() const;
   // LATER handle cookies and sessions
+
+private:
+  void parseAndAddCookie(const QString rawHeaderValue);
 };
 
 #endif // HTTPREQUEST_H

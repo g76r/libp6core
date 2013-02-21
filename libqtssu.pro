@@ -93,7 +93,8 @@ HEADERS +=\
     textview/htmltreeview.h \
     textview/csvtreeview.h \
     textview/csvtableview.h \
-    textview/texttableview.h
+    textview/texttableview.h \
+    httpd/httpcommon.h
 
 
 unix {
