@@ -65,7 +65,7 @@ void HttpRequest::parseAndAddCookie(const QString rawHeaderValue) {
   //qDebug() << "parseAndAddCookie" << rawHeaderValue;
   while ((re.indexIn(rawHeaderValue, pos)) != -1) {
     const QString name = re.cap(1), value = re.cap(2);
-    qDebug() << "  " << name << value << pos;
+    //qDebug() << "  " << name << value << pos;
     _cookies.insert(name, value);
     pos += re.matchedLength();
   }
