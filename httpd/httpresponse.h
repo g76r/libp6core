@@ -19,6 +19,7 @@
 #include "libqtssu_global.h"
 #include <QDateTime>
 
+// LATER should be implicitly shared
 class LIBQTSSUSHARED_EXPORT HttpResponse {
 private:
   QAbstractSocket *_output;

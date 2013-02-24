@@ -20,6 +20,7 @@
 #include <QAbstractSocket>
 #include "libqtssu_global.h"
 
+// LATER should be implicitly shared
 class LIBQTSSUSHARED_EXPORT HttpRequest {
 public:
   enum HttpRequestMethod { NONE = 0, HEAD = 1, GET = 2, POST = 4, PUT = 8,
