@@ -40,11 +40,6 @@ public:
   inline HttpRequestMethod method() const { return _method; }
   QString methodName() const; // human readable, e.g. "GET"
   bool parseAndAddHeader(const QString rawHeader);
-  inline const QString header(const QString name) const {
-    return _headers.value(name);
-    // if multiple, the last one is returned
-    // whereas in the J2EE API it's the first one
-  }
   inline const QString header(const QString name,
                               const QString defaultValue = QString()) const {
     const QString v = _headers.value(name);
