@@ -90,6 +90,11 @@ public:
     * The goal is to emulate XML attributes, hence the name.
     */
   QString attribute(QString name, QString defaultValue) const;
+  /** Syntaxic sugar. */
+  qint64 intAttribute(QString name, qint64 defaultValue = 0) const;
+  /** Syntaxic sugar. */
+  double floatAttribute(QString name, double defaultValue = 0.0) const;
+  // note that there is no boolAttribute() method because hasChild() is enough
   /** Set a child named 'name' with 'content' content and remove any other
     * child named 'name'.
     */
@@ -103,6 +108,14 @@ public:
     */
   inline void setAttribute(QString name, const char *content) {
     setAttribute(name, QString::fromUtf8(content));
+  }
+  /** Syntaxic sugar. */
+  inline void setAttribute(QString name, qint64 integer) {
+    setAttribute(name, QString::number(integer));
+  }
+  /** Syntaxic sugar. */
+  inline void setAttribute(QString name, double integer) {
+    setAttribute(name, QString::number(integer));
   }
   /** Construct a list of all children named 'name'.
     */

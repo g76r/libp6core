@@ -309,6 +309,18 @@ QString PfNode::attribute(QString name, QString defaultValue) const {
   return defaultValue;
 }
 
+qint64 PfNode::intAttribute(QString name, qint64 defaultValue) const {
+  bool ok;
+  qint64 i = attribute(name).toLongLong(&ok, 0);
+  return ok ? i : defaultValue;
+}
+
+double PfNode::floatAttribute(QString name, double defaultValue) const {
+  bool ok;
+  double f = attribute(name).toDouble(&ok);
+  return ok ? f : defaultValue;
+}
+
 void PfNode::setAttribute(QString name, QString content) {
   removeChildrenByName(name);
   d->_children.append(PfNode(name, content));
