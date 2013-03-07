@@ -14,15 +14,16 @@
 #include "timerwitharguments.h"
 #include <QMetaObject>
 #include <QtDebug>
+#include <QAbstractEventDispatcher>
 
 TimerWithArguments::TimerWithArguments(QObject *parent) : QTimer(parent) {
   connect(this, SIGNAL(timeout()), this, SLOT(forwardTimeout()));
 }
 
 void TimerWithArguments::connectWithArgs(
-    QObject *object, const char *member, Qt::ConnectionType connectionType,
-    QVariant arg0, QVariant arg1, QVariant arg2, QVariant arg3, QVariant arg4,
-    QVariant arg5, QVariant arg6, QVariant arg7, QVariant arg8, QVariant arg9) {
+    QObject *object, const char *member, QVariant arg0, QVariant arg1,
+    QVariant arg2, QVariant arg3, QVariant arg4, QVariant arg5, QVariant arg6,
+    QVariant arg7, QVariant arg8, QVariant arg9) {
   if (object && member) {
     _object = object;
     const char *parenthesis;
@@ -31,7 +32,6 @@ void TimerWithArguments::connectWithArgs(
     else
       _member = member;
     //qDebug() << "    member" << _member << member;
-    _connectionType = connectionType;
     _arg[0] = arg0;
     _arg[1] = arg1;
     _arg[2] = arg2;
@@ -46,10 +46,11 @@ void TimerWithArguments::connectWithArgs(
 }
 
 void TimerWithArguments::forwardTimeout() {
+  //qDebug() << "TimerWithArguments::forwardTimeout" << _member
+  //         << _arg[0].toString();
   if (_object && !_member.isEmpty()) {
-
     if (!QMetaObject::invokeMethod(
-          _object.data(), _member.toUtf8().constData(), _connectionType,
+          _object.data(), _member.toUtf8().constData(), Qt::QueuedConnection,
           _arg[0].isNull() ? QGenericArgument() : Q_ARG(QVariant, _arg[0]),
           _arg[1].isNull() ? QGenericArgument() : Q_ARG(QVariant, _arg[1]),
           _arg[2].isNull() ? QGenericArgument() : Q_ARG(QVariant, _arg[2]),
@@ -61,7 +62,7 @@ void TimerWithArguments::forwardTimeout() {
           _arg[8].isNull() ? QGenericArgument() : Q_ARG(QVariant, _arg[8]),
           _arg[9].isNull() ? QGenericArgument() : Q_ARG(QVariant, _arg[9]))) {
       qWarning() << "cannot signal timer timeout to" << _object.data()
-                 << _member << _connectionType << _arg[0] << _arg[1];
+                 << _member << _arg[0] << _arg[1];
     }
   } else {
     qWarning() << "timer timeout occur before target is configured";
@@ -69,15 +70,19 @@ void TimerWithArguments::forwardTimeout() {
 }
 
 void TimerWithArguments::singleShot(
-    int msec, QObject *receiver, const char *member,
-    Qt::ConnectionType connectionType, QVariant arg0, QVariant arg1,
-    QVariant arg2, QVariant arg3, QVariant arg4, QVariant arg5, QVariant arg6,
-    QVariant arg7, QVariant arg8, QVariant arg9) {
-  TimerWithArguments *t = new TimerWithArguments;
-  t->setSingleShot(true);
-  // this is less optimized than the internal mechanism of QSingleShotTimer
-  connect(t, SIGNAL(timeout()), t, SLOT(deleteLater()));
-  t->connectWithArgs(receiver, member, connectionType, arg0, arg1, arg2, arg3,
-                     arg4, arg5, arg6, arg7, arg8, arg9);
-  t->start(msec);
+    int msec, QObject *receiver, const char *member, QVariant arg0,
+    QVariant arg1, QVariant arg2, QVariant arg3, QVariant arg4, QVariant arg5,
+    QVariant arg6, QVariant arg7, QVariant arg8, QVariant arg9) {
+  if (receiver && member) {
+    TimerWithArguments *t =
+        new TimerWithArguments(QAbstractEventDispatcher::instance());
+    t->setSingleShot(true);
+    // this is less optimized than the internal mechanism of QSingleShotTimer
+    connect(t, SIGNAL(timeout()), t, SLOT(deleteLater()));
+    t->connectWithArgs(receiver, member, arg0, arg1, arg2, arg3, arg4, arg5,
+                       arg6, arg7, arg8, arg9);
+    t->start(msec);
+    //qDebug() << "TimerWithArguments::singleShot" << msec << member
+    //         << arg0.toString();
+  }
 }
