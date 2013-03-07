@@ -67,6 +67,22 @@ public:
                              bool inherit = true,
                              const ParamsProvider *context = 0) const {
     return splitAndEvaluate(rawValue(key), separator, inherit, context); }
+  /** Syntaxic sugar. */
+  inline qlonglong valueAsLong(const QString key, qlonglong defaultValue = 0,
+                               bool inherit = true,
+                               const ParamsProvider *context = 0) const {
+    bool ok;
+    qlonglong v = evaluate(rawValue(key, QString(), inherit),
+                           context).toLongLong(&ok);
+    return ok ? v : defaultValue; }
+  /** Syntaxic sugar. */
+  inline double valueAsDouble(const QString key, double defaultValue = 0,
+                              bool inherit = true,
+                              const ParamsProvider *context = 0) const {
+    bool ok;
+    double  v = evaluate(rawValue(key, QString(), inherit),
+                         context).toLongLong(&ok);
+    return ok ? v : defaultValue; }
   /** Return all keys for which the ParamSet or one of its parents hold a value.
     */
   const QSet<QString> keys(bool inherit = true) const;
