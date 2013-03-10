@@ -25,11 +25,11 @@
 static QList<Logger*> _loggers;
 static QMutex _loggersMutex;
 
-void Log::addConsoleLogger() {
+void Log::addConsoleLogger(Severity severity, bool removable) {
   QFile *console = new QFile;
   console->open(1, QIODevice::WriteOnly|QIODevice::Unbuffered);
-  FileLogger *logger = new FileLogger(console, Log::Debug);
-  Log::addLogger(logger, false);
+  FileLogger *logger = new FileLogger(console, severity);
+  Log::addLogger(logger, removable);
 }
 
 void Log::addLogger(Logger *logger, bool removable) {

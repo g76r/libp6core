@@ -33,7 +33,8 @@ public:
   /** Add a new logger. Takes the ownership of the logger (= will delete it). */
   static void addLogger(Logger *logger, bool removable = true);
   /** Add a logger to stdout. */
-  static void addConsoleLogger();
+  static void addConsoleLogger(Log::Severity severity = Log::Warning,
+                               bool removable = false);
   /** Remove all loggers. */
   static void clearLoggers();
   /** Remove all loggers and replace them with a new one. */
