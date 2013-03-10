@@ -1,5 +1,5 @@
 /*
-Copyright 2012 Hallowyn and others.
+Copyright 2012-2013 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -32,6 +32,7 @@ class LIBQTPFSHARED_EXPORT PfHandler {
 private:
   QString _errorString;
   PfOptions _options;
+  int _errorLine, _errorColumn;
 
 public:
   /** @param ignoreComments should the parser call comment() or not
@@ -40,6 +41,8 @@ public:
   virtual ~PfHandler();
   inline const QString &errorString() const { return _errorString; }
   inline void setErrorString(const QString &string) { _errorString = string; }
+  inline int errorLine() const { return _errorLine; }
+  inline int errorColumn() const { return _errorColumn; }
   /** Event method called once at document begining.
     * @return must return false iff an error occur (and optionaly set errorString before)
     */

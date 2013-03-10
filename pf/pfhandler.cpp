@@ -1,5 +1,5 @@
 /*
-Copyright 2012 Hallowyn and others.
+Copyright 2012-2013 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -15,7 +15,7 @@ under the License.
 #include "pfhandler.h"
 #include <QtDebug>
 
-PfHandler::PfHandler() {
+PfHandler::PfHandler() : _errorLine(0), _errorColumn(0) {
 }
 
 PfHandler::~PfHandler() {
@@ -90,6 +90,8 @@ bool PfHandler::endDocument() {
 }
 
 void PfHandler::error(int line, int column) {
+  _errorLine = line;
+  _errorColumn = column;
   qWarning() << "PfHandler::error line" << line << "column" << column << ":"
       << errorString();
 }
