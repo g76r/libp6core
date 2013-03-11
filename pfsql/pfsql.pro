@@ -19,6 +19,13 @@ INCLUDEPATH = ..
 
 DEFINES += LIBQTPF_LIBRARY
 
+QMAKE_CXXFLAGS += -Wextra
+unix {
+  OBJECTS_DIR = ../pfsql-build-unix/obj
+  RCC_DIR = ../pfsql-build-unix/rcc
+  MOC_DIR = ../pfsql-build-unix/moc
+}
+
 SOURCES += \
     pfsqlarrayfiller.cpp
 

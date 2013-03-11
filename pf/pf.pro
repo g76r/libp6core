@@ -17,6 +17,13 @@ TEMPLATE = lib
 
 DEFINES += LIBQTPF_LIBRARY
 
+QMAKE_CXXFLAGS += -Wextra
+unix {
+  OBJECTS_DIR = ../pf-build-unix/obj
+  RCC_DIR = ../pf-build-unix/rcc
+  MOC_DIR = ../pf-build-unix/moc
+}
+
 SOURCES += \
     pfutils.cpp \
     pfparser.cpp \
