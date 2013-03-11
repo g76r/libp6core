@@ -16,49 +16,79 @@
 #include "httpcommon.h"
 #include <QRegExp>
 #include "log/log.h"
+#include <QSharedData>
+#include <QMultiMap>
 
-HttpResponse::HttpResponse(QAbstractSocket *output) : _output(output),
-  _status(200), _headersSent(false) {
+class HttpResponseData : public QSharedData {
+public:
+  QAbstractSocket *_output;
+  int _status;
+  bool _headersSent;
+  QMultiMap<QString,QString> _headers;
+  HttpResponseData(QAbstractSocket *output = 0) : _output(output),
+    _status(200), _headersSent(false) { }
+  HttpResponseData(const HttpResponseData &other) : QSharedData(),
+    _output(other._output), _status(other._status),
+    _headersSent(other._headersSent), _headers(other._headers) { }
+};
+
+HttpResponse::HttpResponse(QAbstractSocket *output)
+  : d(new HttpResponseData(output)) {
+}
+
+HttpResponse::HttpResponse() {
+}
+
+HttpResponse::HttpResponse(const HttpResponse &other) : d(other.d) {
+}
+
+HttpResponse::~HttpResponse() {
+}
+
+HttpResponse &HttpResponse::operator=(const HttpResponse &other) {
+  if (this != &other)
+    d.operator=(other.d);
+  return *this;
 }
 
 QAbstractSocket *HttpResponse::output() {
-  if (!_headersSent) {
-    QTextStream ts(_output);
+  if (d && !d->_headersSent) {
+    QTextStream ts(d->_output);
     // LATER give a label for each well known status codes
-    ts << "HTTP/1.0 " << _status << " Status " << _status << "\r\n";
+    ts << "HTTP/1.0 " << d->_status << " Status " << d->_status << "\r\n";
     // LATER sanitize well-known headers (Content-Type...) values
     // LATER handle multi-line headers and special chars
-    foreach (QString name, _headers.keys())
-      foreach (QString value, _headers.values(name))
+    foreach (QString name, d->_headers.keys())
+      foreach (QString value, d->_headers.values(name))
         ts << name << ": " << value << "\r\n";
-    if (!_headers.contains("Content-Type"))
+    if (!d->_headers.contains("Content-Type"))
       ts << "Content-Type: text/plain;charset=UTF-8\r\n";
     ts << "\r\n";
-    _headersSent = true;
+    d->_headersSent = true;
   }
-  return _output;
+  return d ? d->_output : 0;
 }
 
 void HttpResponse::setStatus(int status) {
-  if (!_headersSent) {
-    _status = status;
+  if (d && !d->_headersSent) {
+    d->_status = status;
   } else
     qWarning() << "HttpResponse: cannot set status after writing data";
 }
 
 void HttpResponse::setHeader(const QString name, const QString value) {
   // LATER handle case sensitivity in header names
-  if (!_headersSent) {
-    _headers.remove(name);
-    _headers.insert(name, value);
+  if (d && !d->_headersSent) {
+    d->_headers.remove(name);
+    d->_headers.insert(name, value);
   } else
     qWarning() << "HttpResponse: cannot set header after writing data";
 }
 
 void HttpResponse::addHeader(const QString name, const QString value) {
   // LATER handle case sensitivity in header names
-  if (!_headersSent) {
-    _headers.insertMulti(name, value);
+  if (d && !d->_headersSent) {
+    d->_headers.insertMulti(name, value);
   } else
     qWarning() << "HttpResponse: cannot set header after writing data";
 }
@@ -116,4 +146,8 @@ void HttpResponse::setCookie(const QString name, const QString value,
   if (httponly)
     s.append("; HttpOnly");
   setHeader("Set-Cookie", s);
+}
+
+const QMultiMap<QString,QString> HttpResponse::headers() const {
+  return d ? d->_headers : QMultiMap<QString,QString>();
 }

@@ -13,7 +13,7 @@
  */
 #include "uriprefixhandler.h"
 
-UriPrefixHandler::UriPrefixHandler(const QString &prefix, int allowedMethods,
+UriPrefixHandler::UriPrefixHandler(QString prefix, int allowedMethods,
                                    QObject *parent)
   : HttpHandler(parent), _prefix(prefix), _allowedMethods(allowedMethods) {
 }
@@ -22,7 +22,7 @@ QString UriPrefixHandler::name() const {
   return "UriPrefixHandler:" + _prefix;
 }
 
-bool UriPrefixHandler::acceptRequest(const HttpRequest &req) {
+bool UriPrefixHandler::acceptRequest(HttpRequest req) {
   if ((req.method()&_allowedMethods) && req.url().path().startsWith(_prefix))
     return true;
   return false;

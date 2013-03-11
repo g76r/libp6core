@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,8 +23,8 @@ class LIBQTSSUSHARED_EXPORT HttpHandler : public QObject {
 public:
   inline HttpHandler(QObject *parent = 0) : QObject(parent) { }
   virtual QString name() const = 0;
-  virtual bool acceptRequest(const HttpRequest &req) = 0;
-  virtual void handleRequest(HttpRequest &req, HttpResponse &res) = 0;
+  virtual bool acceptRequest(HttpRequest req) = 0;
+  virtual void handleRequest(HttpRequest req, HttpResponse res) = 0;
 
 private:
   Q_DISABLE_COPY(HttpHandler)

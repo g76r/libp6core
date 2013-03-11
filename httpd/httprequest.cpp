@@ -15,13 +15,47 @@
 #include <QtDebug>
 #include <QRegExp>
 #include "httpcommon.h"
+#include <QSharedData>
 
-HttpRequest::HttpRequest(QAbstractSocket *input) : _input(input),
-  _method(NONE) {
+class HttpRequestData : public QSharedData {
+public:
+  QAbstractSocket *_input;
+  HttpRequest::HttpRequestMethod _method;
+  QMultiMap<QString,QString> _headers;
+  QMap<QString,QString> _cookies;
+  QUrl _url;
+  HttpRequestData(QAbstractSocket *input = 0)  : _input(input),
+    _method(HttpRequest::NONE) { }
+  HttpRequestData(const HttpRequestData &other) : QSharedData(),
+    _input(other._input), _method(other._method), _headers(other._headers),
+    _cookies(other._cookies), _url(other._url) { }
+};
+
+HttpRequest::HttpRequest(QAbstractSocket *input)
+  : d(new HttpRequestData(input)) {
+}
+
+HttpRequest::HttpRequest() {
+}
+
+HttpRequest::HttpRequest(const HttpRequest &other) : d(other.d) {
+}
+
+HttpRequest::~HttpRequest() {
+}
+
+HttpRequest &HttpRequest::operator=(const HttpRequest &other) {
+  if (this != &other)
+    d.operator=(other.d);
+  return *this;
 }
 
 QString HttpRequest::methodName() const {
-  switch(_method) {
+  return methodName(method());
+}
+
+QString HttpRequest::methodName(HttpRequestMethod method) {
+  switch(method) {
   case NONE:
     return "NONE";
   case HEAD:
@@ -41,6 +75,8 @@ QString HttpRequest::methodName() const {
 }
 
 bool HttpRequest::parseAndAddHeader(const QString rawHeader) {
+  if (!d)
+    return false;
   int i = rawHeader.indexOf(':');
   if (i == -1)
     return false;
@@ -49,7 +85,7 @@ bool HttpRequest::parseAndAddHeader(const QString rawHeader) {
   QString key = rawHeader.left(i).trimmed();
   QString value = rawHeader.right(rawHeader.size()-i-1).trimmed();
   //qDebug() << "header:" << rawHeader << key << value;
-  _headers.insertMulti(key, value);
+  d->_headers.insertMulti(key, value);
   if (key.compare("Cookie", Qt::CaseInsensitive) == 0)
     parseAndAddCookie(value);
   return true;
@@ -58,6 +94,8 @@ bool HttpRequest::parseAndAddHeader(const QString rawHeader) {
 void HttpRequest::parseAndAddCookie(const QString rawHeaderValue) {
   // LATER ensure that utf8 is supported as specified in RFC6265
   // LATER enhance regexp performance
+  if (!d)
+    return;
   QRegExp re("\\s*;?\\s*(" RFC2616_TOKEN_OCTET_RE "*)\\s*=\\s*(("
              RFC6265_COOKIE_OCTET_RE "*|\"" RFC6265_COOKIE_OCTET_RE
              "+\"))\\s*;?\\s*");
@@ -66,27 +104,92 @@ void HttpRequest::parseAndAddCookie(const QString rawHeaderValue) {
   while ((re.indexIn(rawHeaderValue, pos)) != -1) {
     const QString name = re.cap(1), value = re.cap(2);
     //qDebug() << "  " << name << value << pos;
-    _cookies.insert(name, value);
+    d->_cookies.insert(name, value);
     pos += re.matchedLength();
   }
 }
 
-QString HttpRequest::param(const QString &key) const {
+QString HttpRequest::param(QString key) const {
   // TODO better handle parameters, including POST parameters
-  return _url.queryItemValue(key);
+  return d ? d->_url.queryItemValue(key) : QString();
 }
 
 HttpRequest::operator QString() const {
+  if (!d)
+    return "HttpRequest{}";
   QString s;
   QTextStream ts(&s, QIODevice::WriteOnly);
   ts << "HttpRequest{ " << methodName() << ", " << url().toString() << ", { ";
-  foreach (QString key, _headers.keys()) {
+  foreach (QString key, d->_headers.keys()) {
     ts << key << ":{ ";
-    foreach (QString value, _headers.values(key)) {
+    foreach (QString value, d->_headers.values(key)) {
       ts << value << " ";
     }
     ts << "} ";
   }
   ts << "} }";
   return s;
+}
+
+void HttpRequest::setUrl(QUrl url) {
+  if (d)
+    d->_url = url;
+}
+
+QUrl HttpRequest::url() const {
+  return d ? d->_url : QUrl();
+}
+
+QAbstractSocket *HttpRequest::input() {
+  return d ? d->_input : 0;
+}
+
+void HttpRequest::setMethod(HttpRequestMethod method) {
+  if (d)
+    d->_method = method;
+}
+
+HttpRequest::HttpRequestMethod HttpRequest::method() const {
+  return d ? d->_method : NONE;
+}
+
+QString HttpRequest::header(QString name, QString defaultValue) const {
+  if (!d)
+    return defaultValue;
+  const QString v = d->_headers.value(name);
+  return v.isNull() ? defaultValue : v;
+  // if multiple, the last one is returned
+  // whereas in the J2EE API it's the first one
+}
+
+QStringList HttpRequest::headers(QString name) const {
+  return d ? d->_headers.values(name) : QStringList();
+}
+
+QMultiMap<QString,QString> HttpRequest::headers() const {
+  return d ? d->_headers : QMultiMap<QString,QString>();
+}
+
+QString HttpRequest::cookie(QString name, QString defaultValue) const {
+  if (!d)
+    return defaultValue;
+  const QString v = d->_cookies.value(name);
+  return v.isNull() ? defaultValue : v;
+}
+
+QString HttpRequest::base64Cookie(QString name, QString defaultValue) const {
+  if (!d)
+    return defaultValue;
+  const QString v = d->_cookies.value(name);
+  return v.isNull() ? defaultValue
+                    : QString::fromUtf8(QByteArray::fromBase64(v.toAscii()));
+}
+
+QByteArray HttpRequest::base64BinaryCookie(QString name,
+                                           QByteArray defaultValue) const {
+  if (!d)
+    return defaultValue;
+  const QString v = d->_cookies.value(name);
+  return v.isNull() ? defaultValue
+                    : QByteArray::fromBase64(cookie(name).toAscii());
 }

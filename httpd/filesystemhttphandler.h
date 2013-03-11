@@ -50,18 +50,17 @@ public:
   void prependMimeTypes(const QString pattern, const QString contentType) {
     _mimeTypes.prepend(qMakePair(pattern, contentType)); }
   void clearMimeTypes() { _mimeTypes.clear(); }
-  bool acceptRequest(const HttpRequest &req);
-  void handleRequest(HttpRequest &req, HttpResponse &res);
-  void handleRequestWithContext(HttpRequest &req, HttpResponse &res,
-                                const QHash<QString,QVariant> values);
+  bool acceptRequest(HttpRequest req);
+  void handleRequest(HttpRequest req, HttpResponse res);
+  void handleRequestWithContext(HttpRequest req, HttpResponse res,
+                                QHash<QString,QVariant> values);
 
 protected:
-  virtual void sendLocalResource(
-      HttpRequest &req, HttpResponse &res, QFile &file,
-      const QHash<QString,QVariant> values);
+  virtual void sendLocalResource(HttpRequest req, HttpResponse res, QFile *file,
+                                 QHash<QString,QVariant> values);
 
 protected:
-  void setMimeTypeByName(const QString &name, HttpResponse &res);
+  void setMimeTypeByName(QString name, HttpResponse res);
 };
 
 #endif // FILESYSTEMHTTPHANDLER_H

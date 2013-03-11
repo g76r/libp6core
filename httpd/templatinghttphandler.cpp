@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,13 +24,13 @@ TemplatingHttpHandler::TemplatingHttpHandler(
 }
 
 void TemplatingHttpHandler::sendLocalResource(
-    HttpRequest &req, HttpResponse &res, QFile &file,
-    const QHash<QString,QVariant> values) {
+    HttpRequest req, HttpResponse res, QFile *file,
+    QHash<QString, QVariant> values) {
   Q_UNUSED(req)
-  setMimeTypeByName(file.fileName(), res);
+  setMimeTypeByName(file->fileName(), res);
   foreach (QString filter, _filters) {
     QRegExp re(filter);
-    if (re.indexIn(file.fileName()) >= 0) {
+    if (re.indexIn(file->fileName()) >= 0) {
       QBuffer buf;
       buf.open(QIODevice::WriteOnly);
       IOUtils::copyAll(&buf, file);
@@ -85,6 +85,6 @@ void TemplatingHttpHandler::sendLocalResource(
       return;
     }
   }
-  res.setContentLength(file.size());
+  res.setContentLength(file->size());
   IOUtils::copyAll(res.output(), file);
 }

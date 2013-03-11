@@ -14,21 +14,31 @@
 #ifndef HTTPRESPONSE_H
 #define HTTPRESPONSE_H
 
-#include <QString>
-#include <QAbstractSocket>
 #include "libqtssu_global.h"
+#include <QString>
 #include <QDateTime>
+#include <QExplicitlySharedDataPointer>
+#include <QByteArray>
+#include <QAbstractSocket>
 
-// LATER should be implicitly shared
+class HttpResponseData;
+
+/** Class holding all information and actions about the response to an incoming
+ * HTTP request.
+ * This class uses Qt explicit sharing idioms, i.e. it can be copied for a
+ * very low cost in thread-safe manner, however it cannot be accessed from
+ * several threads at a time.
+ */
 class LIBQTSSUSHARED_EXPORT HttpResponse {
 private:
-  QAbstractSocket *_output;
-  int _status;
-  bool _headersSent;
-  QMultiMap<QString,QString> _headers;
+  QExplicitlySharedDataPointer<HttpResponseData> d;
 
 public:
-  HttpResponse(QAbstractSocket *output);
+  explicit HttpResponse(QAbstractSocket *output);
+  HttpResponse();
+  HttpResponse(const HttpResponse &other);
+  ~HttpResponse();
+  HttpResponse &operator=(const HttpResponse &other);
   /** Get the output to write content; calling this method triggers sending
     * the response status and headers.
     */
@@ -54,7 +64,7 @@ public:
    * Must be called before output().
    */
   void addHeader(const QString name, const QString value);
-  inline const QMultiMap<QString,QString> headers() const { return _headers; }
+  const QMultiMap<QString,QString> headers() const;
   /** Respond with a temporary moved page (302).
    * Must be called before output().
    */
@@ -192,14 +202,12 @@ public:
               QDateTime::currentDateTime().addSecs(seconds),
               path, domain, secure, httponly);
   }
-
   /** Remove a cookie. */
   inline void clearCookie(const QString name, const QString path = QString(),
                           const QString domain = QString()) {
     setCookie(name, QString(), QDateTime::currentDateTime().addDays(-2).toUTC(),
               path, domain, false, false);
   }
-
   // LATER session
 
 private:

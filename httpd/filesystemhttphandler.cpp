@@ -44,16 +44,16 @@ QString FilesystemHttpHandler::name() const {
   return "FilesystemHttpHandler";
 }
 
-bool FilesystemHttpHandler::acceptRequest(const HttpRequest &req) {
+bool FilesystemHttpHandler::acceptRequest(HttpRequest req) {
   return _urlPrefix.isEmpty() || req.url().path().startsWith(_urlPrefix);
 }
 
-void FilesystemHttpHandler::handleRequest(HttpRequest &req, HttpResponse &res) {
+void FilesystemHttpHandler::handleRequest(HttpRequest req, HttpResponse res) {
   handleRequestWithContext(req, res, QHash<QString,QVariant>());
 }
 
 void FilesystemHttpHandler::handleRequestWithContext(
-    HttpRequest &req, HttpResponse &res, const QHash<QString,QVariant> values) {
+    HttpRequest req, HttpResponse res, QHash<QString, QVariant> values) {
   QString path = req.url().path();
   path.remove(0, _urlPrefix.length());
   while (path.size() && path.at(path.size()-1) == '/')
@@ -84,7 +84,7 @@ void FilesystemHttpHandler::handleRequestWithContext(
     res.output()->write("Directory list denied.");
   }
   if (file.open(QIODevice::ReadOnly)) {
-    sendLocalResource(req, res, file, values);
+    sendLocalResource(req, res, &file, values);
     return;
   }
   int status = file.error() == QFile::PermissionsError ? 403 : 404;
@@ -97,18 +97,17 @@ void FilesystemHttpHandler::handleRequestWithContext(
 }
 
 void FilesystemHttpHandler::sendLocalResource(
-    HttpRequest &req, HttpResponse &res, QFile &file,
-    const QHash<QString, QVariant> values) {
+    HttpRequest req, HttpResponse res, QFile *file,
+    QHash<QString, QVariant> values) {
   Q_UNUSED(req)
   Q_UNUSED(values)
   //qDebug() << "success";
-  setMimeTypeByName(file.fileName(), res);
-  res.setContentLength(file.size());
+  setMimeTypeByName(file->fileName(), res);
+  res.setContentLength(file->size());
   IOUtils::copyAll(res.output(), file);
 }
 
-void FilesystemHttpHandler::setMimeTypeByName(const QString &name,
-                                              HttpResponse &res) {
+void FilesystemHttpHandler::setMimeTypeByName(QString name, HttpResponse res) {
   // LATER check if performance can be enhanced (regexp)
   typedef QPair<QString,QString> QStringQString;
   //qDebug() << "setMimeTypeByName" << name;

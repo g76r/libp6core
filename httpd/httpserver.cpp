@@ -26,7 +26,7 @@ public:
     return "default";
   }
 
-  void handleRequest(HttpRequest &req, HttpResponse &res) {
+  void handleRequest(HttpRequest req, HttpResponse res) {
     Q_UNUSED(req)
     // LATER handle HEAD request (I don't know yet the most usefull way)
     res.setStatus(404);
@@ -34,7 +34,7 @@ public:
     //qDebug() << "serving with default handler" << req.methodName() << req.url();
   }
 
-  bool acceptRequest(const HttpRequest &req) {
+  bool acceptRequest(const HttpRequest req) {
     Q_UNUSED(req)
     return true;
   }
@@ -82,7 +82,7 @@ void HttpServer::prependHandler(HttpHandler *handler) {
   handler->setParent(this);
 }
 
-HttpHandler *HttpServer::chooseHandler(const HttpRequest &req) {
+HttpHandler *HttpServer::chooseHandler(HttpRequest req) {
   QMutexLocker ml(&_mutex);
   foreach (HttpHandler *h, _handlers) {
     if (h->acceptRequest(req))

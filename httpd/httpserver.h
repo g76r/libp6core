@@ -35,7 +35,7 @@ public:
   void appendHandler(HttpHandler *handler);
   /** Takes ownership of the handler */
   void prependHandler(HttpHandler *handler);
-  HttpHandler *chooseHandler(const HttpRequest &req);
+  HttpHandler *chooseHandler(HttpRequest req);
 
 protected:
   void incomingConnection(int handle);

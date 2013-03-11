@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -32,8 +32,8 @@ public:
   void addFilter(const QString regexp) { _filters.insert(regexp); }
 
 protected:
-  void sendLocalResource(HttpRequest &req, HttpResponse &res, QFile &file,
-                         const QHash<QString,QVariant> values);
+  void sendLocalResource(HttpRequest req, HttpResponse res, QFile *file,
+                         QHash<QString,QVariant> values);
 };
 
 #endif // TEMPLATINGHTTPHANDLER_H

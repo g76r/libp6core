@@ -23,10 +23,10 @@ class LIBQTSSUSHARED_EXPORT UriPrefixHandler : public HttpHandler {
   int _allowedMethods;
 
 public:
-  UriPrefixHandler(const QString &prefix, int allowedMethods = HttpRequest::GET,
+  UriPrefixHandler(QString prefix, int allowedMethods = HttpRequest::GET,
                    QObject *parent = 0);
   QString name() const;
-  bool acceptRequest(const HttpRequest &req);
+  bool acceptRequest(HttpRequest req);
 };
 
 #endif // URIPREFIXHANDLER_H

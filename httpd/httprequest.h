@@ -14,63 +14,53 @@
 #ifndef HTTPREQUEST_H
 #define HTTPREQUEST_H
 
-#include <QString>
+#include <QStringList>
 #include <QMultiMap>
 #include <QUrl>
 #include <QAbstractSocket>
 #include "libqtssu_global.h"
+#include <QExplicitlySharedDataPointer>
 
-// LATER should be implicitly shared
+class HttpRequestData;
+
+/** Class holding all information and actions about an HTTP incoming request.
+ * This class uses Qt explicit sharing idioms, i.e. it can be copied for a
+ * very low cost in thread-safe manner, however it cannot be accessed from
+ * several threads at a time.
+ */
 class LIBQTSSUSHARED_EXPORT HttpRequest {
 public:
   enum HttpRequestMethod { NONE = 0, HEAD = 1, GET = 2, POST = 4, PUT = 8,
                            DELETE = 16, ANY = 0xffff} ;
 
 private:
-  QAbstractSocket *_input;
-  HttpRequestMethod _method;
-  QMultiMap<QString,QString> _headers;
-  QMap<QString,QString> _cookies;
-  QUrl _url;
+  QExplicitlySharedDataPointer<HttpRequestData> d;
 
 public:
   HttpRequest(QAbstractSocket *input);
-  inline QAbstractSocket *input() { return _input; }
-  inline void setMethod(HttpRequestMethod method) { _method = method; }
-  inline HttpRequestMethod method() const { return _method; }
-  QString methodName() const; // human readable, e.g. "GET"
+  HttpRequest();
+  HttpRequest(const HttpRequest &other);
+  ~HttpRequest();
+  HttpRequest &operator=(const HttpRequest &other);
+  QAbstractSocket *input();
+  void setMethod(HttpRequestMethod method);
+  HttpRequest::HttpRequestMethod method() const;
+  /** @return protocol and human readable string, e.g. "GET" */
+  inline QString methodName() const;
+  /** @return protocol and human readable string, e.g. "GET" */
+  static QString methodName(HttpRequestMethod method);
   bool parseAndAddHeader(const QString rawHeader);
-  inline const QString header(const QString name,
-                              const QString defaultValue = QString()) const {
-    const QString v = _headers.value(name);
-    return v.isNull() ? defaultValue : v;
-    // if multiple, the last one is returned
-    // whereas in the J2EE API it's the first one
-  }
-  inline const QList<QString> headers(const QString name) const {
-    return _headers.values(name); }
-  inline const QMultiMap<QString,QString> headers() const {
-    return _headers; }
-  inline QString cookie(
-      const QString name, const QString defaultValue = QString()) {
-    const QString v = _cookies.value(name);
-    return v.isNull() ? defaultValue : v;
-  }
-  inline QString base64Cookie(
-      const QString name, const QString defaultValue = QString()) {
-    const QString v = _cookies.value(name);
-    return v.isNull() ? defaultValue
-                      : QString::fromUtf8(QByteArray::fromBase64(v.toAscii()));
-  }
-  inline QByteArray base64BinaryCookie(
-      const QString name, const QByteArray defaultValue = QByteArray()) {
-    const QString v = _cookies.value(name);
-    return v.isNull() ? defaultValue
-                      : QByteArray::fromBase64(cookie(name).toAscii());
-  }
-  inline void setUrl(const QUrl &url) { _url = url; }
-  inline const QUrl &url() const { return _url; }
-  QString param(const QString &key) const;
+  QString header(
+      const QString name, const QString defaultValue = QString()) const;
+  QStringList headers(const QString name) const;
+  QMultiMap<QString,QString> headers() const;
+  QString cookie(QString name, QString defaultValue = QString()) const;
+  QString base64Cookie(QString name, QString defaultValue = QString()) const;
+  QByteArray base64BinaryCookie(QString name,
+                                QByteArray defaultValue = QByteArray()) const;
+  void setUrl(QUrl url);
+  QUrl url() const;
+  QString param(QString key) const;
   operator QString() const;
   // LATER handle cookies and sessions
 
