@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,16 +23,23 @@
 #include <QTime>
 //#include "stats/statistics.h"
 
-HttpWorker::HttpWorker(int socketDescriptor, HttpServer *parent)
-  : _server(parent), _socketDescriptor(socketDescriptor) {
+HttpWorker::HttpWorker(HttpServer *server)
+  : _server(server), _thread(new QThread()) {
+  _thread->setObjectName(QString("HttpWorker-%1")
+                         .arg((long)_thread, sizeof(long)*2, 16,
+                              QLatin1Char('0')));
+  connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
+  connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
+  _thread->start();
+  moveToThread(_thread);
 }
 
-void HttpWorker::run() {
-  // TODO replace by QDateTime when Qt >= 4.7
+void HttpWorker::handleConnection(int socketDescriptor) {
+  // LATER replace by QDateTime when Qt >= 4.7
   QTime before= QTime::currentTime();
   QTcpSocket *socket = new QTcpSocket(this);
-  if (!socket->setSocketDescriptor(_socketDescriptor)) {
-    // TODO
+  if (!socket->setSocketDescriptor(socketDescriptor)) {
+    // LATER
     // emit error(_socket->error());
   }
   QStringList args;
@@ -44,7 +51,7 @@ void HttpWorker::run() {
   QTextStream out(socket);
   QString line;
   if (!socket->canReadLine() && !socket->waitForReadyRead(5000)) {
-    // TODO check RFC, HTTP may require \r\n end of line sequence
+    // LATER check RFC, HTTP may require \r\n end of line sequence
     out << "HTTP/1.0 500 Protocol error\n\n";
     goto finally;
   }
@@ -112,9 +119,7 @@ finally:
     ; //qDebug() << "waitForBytesWritten returned true" << socket->bytesToWrite();
   socket->close();
   socket->deleteLater();
-  // give object back to parent event loop, otherwise deleteLater() wouldn't
-  // be processed
-  this->moveToThread(_server ? _server->thread() : 0);
+  emit connectionHandled(this);
   //long long duration = before.msecsTo(QTime::currentTime());
   //Statistics::record("server.http.hit", "", url.path(), duration,
   //                   req.header("Content-Length").toLongLong(), 1, 0, 0,

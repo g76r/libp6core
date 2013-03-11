@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,6 +14,8 @@
 #include "httpserver.h"
 #include "httpworker.h"
 #include <QMutexLocker>
+#include "log/log.h"
+#include <unistd.h>
 
 // LATER this QObject should have its Q_OBJECT macro
 class DefaultHandler : public HttpHandler {
@@ -38,18 +40,35 @@ public:
   }
 };
 
-HttpServer::HttpServer(QObject *parent) : QTcpServer(parent),
-  _defaultHandler(new DefaultHandler(this)) {
+HttpServer::HttpServer(int workersPoolSize, QObject *parent)
+  : QTcpServer(parent), _defaultHandler(new DefaultHandler(this)) {
+  for (int i = 0; i < workersPoolSize; ++i)
+    _workersPool.append(new HttpWorker(this));
 }
 
 HttpServer::~HttpServer() {
 }
 
 void HttpServer::incomingConnection(int socketDescriptor)  {
-  HttpWorker *worker = new HttpWorker(socketDescriptor, this);
-  connect(worker, SIGNAL(taskFinished(long)), worker, SLOT(deleteLater()));
-  worker->start();
+  if (_workersPool.size() > 0) {
+    HttpWorker *worker = _workersPool.takeFirst();
+    connect(worker, SIGNAL(connectionHandled(HttpWorker*)),
+            this, SLOT(connectionHandled(HttpWorker*)));
+    QMetaObject::invokeMethod(worker, "handleConnection",
+                              Q_ARG(int, socketDescriptor));
+  } else {
+    Log::error() << "no HttpWorker available in pool, throwing incoming "
+                    "connection away";
+    ::close(socketDescriptor);
+  }
 }
+
+void HttpServer::connectionHandled(HttpWorker *worker) {
+  disconnect(worker, SIGNAL(connectionHandled(HttpWorker*)),
+             this, SLOT(connectionHandled(HttpWorker*)));
+  _workersPool.append(worker);
+}
+
 
 void HttpServer::appendHandler(HttpHandler *handler) {
   QMutexLocker ml(&_mutex);

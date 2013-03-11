@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,14 +19,17 @@
 #include "httphandler.h"
 #include <QMutex>
 
+class HttpWorker;
+
 class LIBQTSSUSHARED_EXPORT HttpServer : public QTcpServer {
   Q_OBJECT
   QMutex _mutex;
   QList<HttpHandler *> _handlers;
   HttpHandler *_defaultHandler;
+  QList<HttpWorker*> _workersPool;
 
 public:
-  explicit HttpServer(QObject *parent = 0);
+  explicit HttpServer(int workersPoolSize = 16, QObject *parent = 0);
   virtual ~HttpServer();
   /** Takes ownership of the handler */
   void appendHandler(HttpHandler *handler);
@@ -37,9 +40,8 @@ public:
 protected:
   void incomingConnection(int handle);
 
-signals:
-
-public slots:
+private slots:
+  void connectionHandled(HttpWorker *worker);
 
 private:
   Q_DISABLE_COPY(HttpServer)

@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,21 +14,25 @@
 #ifndef HTTPWORKER_H
 #define HTTPWORKER_H
 
-#include "thread/threadedtask.h"
+#include <QThread>
 #include "httpserver.h"
 #include "libqtssu_global.h"
 
 class QTcpSocket;
 
-class LIBQTSSUSHARED_EXPORT HttpWorker : public ThreadedTask {
+class LIBQTSSUSHARED_EXPORT HttpWorker : public QObject {
   Q_OBJECT
   HttpServer *_server;
-  int _socketDescriptor;
+  QThread *_thread;
 
 public:
-  explicit HttpWorker(int socketDescriptor, HttpServer *parent);
-  // virtual ~HttpWorker() { qDebug("~HttpWorker"); }
-  void run();
+  explicit HttpWorker(HttpServer *server);
+
+public slots:
+  void handleConnection(int socketDescriptor);
+
+signals:
+  void connectionHandled(HttpWorker *worker);
 
 private:
   Q_DISABLE_COPY(HttpWorker)
