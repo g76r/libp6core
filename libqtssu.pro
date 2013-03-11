@@ -19,6 +19,13 @@ TEMPLATE = lib
 
 DEFINES += LIBQTSSU_LIBRARY
 
+QMAKE_CXXFLAGS += -Wextra
+unix {
+  OBJECTS_DIR = ../ssu-build-unix/obj
+  RCC_DIR = ../ssu-build-unix/rcc
+  MOC_DIR = ../ssu-build-unix/moc
+}
+
 SOURCES += \
     httpd/uriprefixhandler.cpp \
     httpd/httpworker.cpp \
