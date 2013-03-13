@@ -17,8 +17,8 @@
 #include "log/log.h"
 #include <unistd.h>
 
-// LATER this QObject should have its Q_OBJECT macro
 class DefaultHandler : public HttpHandler {
+  // this QObject has no Q_OBJECT macro
 public:
   DefaultHandler(QObject *parent) : HttpHandler(parent) { }
 
@@ -40,8 +40,9 @@ public:
   }
 };
 
-HttpServer::HttpServer(int workersPoolSize, QObject *parent)
-  : QTcpServer(parent), _defaultHandler(new DefaultHandler(this)) {
+HttpServer::HttpServer(int workersPoolSize, int maxQueuedSockets, QObject *parent)
+  : QTcpServer(parent), _defaultHandler(new DefaultHandler(this)),
+    _maxQueuedSockets(maxQueuedSockets) {
   for (int i = 0; i < workersPoolSize; ++i)
     _workersPool.append(new HttpWorker(this));
 }
@@ -57,18 +58,26 @@ void HttpServer::incomingConnection(int socketDescriptor)  {
     QMetaObject::invokeMethod(worker, "handleConnection",
                               Q_ARG(int, socketDescriptor));
   } else {
-    Log::error() << "no HttpWorker available in pool, throwing incoming "
-                    "connection away";
-    ::close(socketDescriptor);
+    if (_queuedSockets.size() < _maxQueuedSockets) {
+      _queuedSockets.append(socketDescriptor);
+    } else {
+      Log::error() << "no HttpWorker available in pool and maximum queue size"
+                      "reached, throwing incoming connection away";
+      ::close(socketDescriptor);
+    }
   }
 }
 
 void HttpServer::connectionHandled(HttpWorker *worker) {
-  disconnect(worker, SIGNAL(connectionHandled(HttpWorker*)),
-             this, SLOT(connectionHandled(HttpWorker*)));
-  _workersPool.append(worker);
+  if (_queuedSockets.isEmpty()) {
+    _workersPool.append(worker);
+    disconnect(worker, SIGNAL(connectionHandled(HttpWorker*)),
+               this, SLOT(connectionHandled(HttpWorker*)));
+  } else {
+    QMetaObject::invokeMethod(worker, "handleConnection",
+                              Q_ARG(int, _queuedSockets.takeFirst()));
+  }
 }
-
 
 void HttpServer::appendHandler(HttpHandler *handler) {
   QMutexLocker ml(&_mutex);

@@ -27,9 +27,12 @@ class LIBQTSSUSHARED_EXPORT HttpServer : public QTcpServer {
   QList<HttpHandler *> _handlers;
   HttpHandler *_defaultHandler;
   QList<HttpWorker*> _workersPool;
+  QList<int> _queuedSockets;
+  int _maxQueuedSockets;
 
 public:
-  explicit HttpServer(int workersPoolSize = 16, QObject *parent = 0);
+  explicit HttpServer(int workersPoolSize = 16, int maxQueuedSockets = 32,
+                      QObject *parent = 0);
   virtual ~HttpServer();
   /** Takes ownership of the handler */
   void appendHandler(HttpHandler *handler);
