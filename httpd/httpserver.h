@@ -18,27 +18,33 @@
 #include <QList>
 #include "httphandler.h"
 #include <QMutex>
+#include <QThread>
 
 class HttpWorker;
 
 class LIBQTSSUSHARED_EXPORT HttpServer : public QTcpServer {
   Q_OBJECT
-  QMutex _mutex;
+  QMutex _handlersMutex;
   QList<HttpHandler *> _handlers;
   HttpHandler *_defaultHandler;
   QList<HttpWorker*> _workersPool;
   QList<int> _queuedSockets;
   int _maxQueuedSockets;
+  QThread *_thread;
 
 public:
   explicit HttpServer(int workersPoolSize = 16, int maxQueuedSockets = 32,
                       QObject *parent = 0);
   virtual ~HttpServer();
-  /** Takes ownership of the handler */
+  /** The handler does not become a child of HttpServer but its deleteLater()
+   * method is called by ~HttpServer(). */
   void appendHandler(HttpHandler *handler);
-  /** Takes ownership of the handler */
+  /** The handler does not become a child of HttpServer but its deleteLater()
+   * method is called by ~HttpServer(). */
   void prependHandler(HttpHandler *handler);
   HttpHandler *chooseHandler(HttpRequest req);
+  bool listen(const QHostAddress &address = QHostAddress::Any,
+              quint16 port = 0);
 
 protected:
   void incomingConnection(int handle);
@@ -47,6 +53,7 @@ private slots:
   void connectionHandled(HttpWorker *worker);
 
 private:
+  Q_INVOKABLE bool doListen(const QHostAddress &address, quint16 port);
   Q_DISABLE_COPY(HttpServer)
 };
 

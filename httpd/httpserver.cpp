@@ -40,11 +40,24 @@ public:
   }
 };
 
-HttpServer::HttpServer(int workersPoolSize, int maxQueuedSockets, QObject *parent)
-  : QTcpServer(parent), _defaultHandler(new DefaultHandler(this)),
-    _maxQueuedSockets(maxQueuedSockets) {
-  for (int i = 0; i < workersPoolSize; ++i)
-    _workersPool.append(new HttpWorker(this));
+HttpServer::HttpServer(int workersPoolSize, int maxQueuedSockets,
+                       QObject *parent)
+  : QTcpServer(parent), _defaultHandler(0), _maxQueuedSockets(maxQueuedSockets),
+    _thread(new QThread()) {
+  _thread->setObjectName("HttpServer");
+  connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
+  connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
+  _thread->start();
+  _defaultHandler = new DefaultHandler(this);
+  for (int i = 0; i < workersPoolSize; ++i) {
+    HttpWorker *worker = new HttpWorker(this);
+    // cannot make workers become children, and cannot rely on _workersPool to
+    // remove them in ~HttpServer since some may be in use, hence connecting
+    // server's destroyed() to workers' deleteLater()
+    connect(this, SIGNAL(destroyed()), worker, SLOT(deleteLater()));
+    _workersPool.append(worker);
+  }
+  moveToThread(_thread);
 }
 
 HttpServer::~HttpServer() {
@@ -80,22 +93,44 @@ void HttpServer::connectionHandled(HttpWorker *worker) {
 }
 
 void HttpServer::appendHandler(HttpHandler *handler) {
-  QMutexLocker ml(&_mutex);
+  QMutexLocker ml(&_handlersMutex);
   _handlers.append(handler);
-  handler->setParent(this);
+  // cannot make handlers become children, hence connecting
+  // server's destroyed() to handlers' deleteLater()
+  connect(this, SIGNAL(destroyed()), handler, SLOT(deleteLater()));
 }
 
 void HttpServer::prependHandler(HttpHandler *handler) {
-  QMutexLocker ml(&_mutex);
+  QMutexLocker ml(&_handlersMutex);
   _handlers.prepend(handler);
-  handler->setParent(this);
+  // cannot make handlers become children, hence connecting
+  // server's destroyed() to handlers' deleteLater()
+  connect(this, SIGNAL(destroyed()), handler, SLOT(deleteLater()));
 }
 
 HttpHandler *HttpServer::chooseHandler(HttpRequest req) {
-  QMutexLocker ml(&_mutex);
+  QMutexLocker ml(&_handlersMutex);
   foreach (HttpHandler *h, _handlers) {
     if (h->acceptRequest(req))
       return h;
   }
   return _defaultHandler;
+}
+
+bool HttpServer::listen(const QHostAddress &address, quint16 port) {
+  // the constructor calls moveToThread() and QTcpServer::listen must be called
+  // by owner thread (at less because it creates QObjects using this as parent)
+  bool success;
+  if (_thread == QThread::currentThread())
+    success = doListen(address, port);
+  else
+    QMetaObject::invokeMethod(this, "doListen", Qt::BlockingQueuedConnection,
+                              Q_RETURN_ARG(bool, success),
+                              Q_ARG(QHostAddress, address),
+                              Q_ARG(quint16, port));
+  return success;
+}
+
+bool HttpServer::doListen(const QHostAddress &address, quint16 port) {
+  return QTcpServer::listen(address, port);
 }

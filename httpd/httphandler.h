@@ -18,12 +18,27 @@
 #include "httpresponse.h"
 #include <QObject>
 
+/** HttpHandler is responsible for handling every HTTP request the server
+ * receives.
+ * Its method must all be thread-safe since they will be called by HttpWorker
+ * threads.
+ * When registred with an HttpServer, an HttpHandler stays within its previous
+ * thread and keep its previous parent, however, it will be deleted at
+ * HttpServer destruction, through deleteLater(). If the HttpHandler interract
+ * with other QObjects (for instance with models) it may be a good idea that it
+ * share the same thread than these objects (the main thread or a dedicated
+ * one).
+ */
 class LIBQTSSUSHARED_EXPORT HttpHandler : public QObject {
   Q_OBJECT
 public:
   inline HttpHandler(QObject *parent = 0) : QObject(parent) { }
   virtual QString name() const = 0;
+  /** Return true iff the handler accept to handle the request.
+   * Thread-safe (called by several HttpWorker threads at the same time). */
   virtual bool acceptRequest(HttpRequest req) = 0;
+  /** Handle the request.
+   * Thread-safe (called by several HttpWorker threads at the same time). */
   virtual void handleRequest(HttpRequest req, HttpResponse res) = 0;
 
 private:
