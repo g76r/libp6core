@@ -51,16 +51,17 @@ public:
   inline QString value(const QString key, QString defaultValue = QString(),
                        bool inherit = true,
                        const ParamsProvider *context = 0) const {
-    return evaluate(rawValue(key, defaultValue, inherit), context); }
+    return evaluate(rawValue(key, defaultValue, inherit), inherit, context); }
   inline QString value(const QString key, const char *defaultValue,
                        bool inherit = true,
                        const ParamsProvider *context = 0) const {
-    return evaluate(rawValue(key, QString(defaultValue), inherit), context); }
+    return evaluate(rawValue(key, QString(defaultValue), inherit), inherit,
+                    context); }
   inline QString value(const QString key, bool inherit,
                        const ParamsProvider *context = 0) const {
-    return evaluate(rawValue(key, QString(), inherit), context); }
+    return evaluate(rawValue(key, QString(), inherit), inherit, context); }
   inline QString value(const QString key, const ParamsProvider *context) const {
-    return evaluate(rawValue(key, QString(), true), context); }
+    return evaluate(rawValue(key, QString(), true), true, context); }
   /** Return a value splitted into strings after parameters substitution.
     */
   QStringList valueAsStrings(const QString key,
@@ -73,7 +74,7 @@ public:
                                bool inherit = true,
                                const ParamsProvider *context = 0) const {
     bool ok;
-    qlonglong v = evaluate(rawValue(key, QString(), inherit),
+    qlonglong v = evaluate(rawValue(key, QString(), inherit),  inherit,
                            context).toLongLong(&ok);
     return ok ? v : defaultValue; }
   /** Syntaxic sugar. */
@@ -81,7 +82,7 @@ public:
                               bool inherit = true,
                               const ParamsProvider *context = 0) const {
     bool ok;
-    double  v = evaluate(rawValue(key, QString(), inherit),
+    double  v = evaluate(rawValue(key, QString(), inherit), inherit,
                          context).toLongLong(&ok);
     return ok ? v : defaultValue; }
   /** Return all keys for which the ParamSet or one of its parents hold a value.

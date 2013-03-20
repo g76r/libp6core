@@ -71,7 +71,8 @@ void ParamSet::clear() {
   d = new ParamSetData();
 }
 
-QString ParamSet::rawValue(const QString key, const QString defaultValue, bool inherit) const {
+QString ParamSet::rawValue(const QString key, const QString defaultValue,
+                           bool inherit) const {
   QString value;
   if (d) {
     value = d->_params.value(key);
@@ -83,6 +84,7 @@ QString ParamSet::rawValue(const QString key, const QString defaultValue, bool i
 
 QString ParamSet::evaluate(const QString rawValue, bool inherit,
                            const ParamsProvider *context) const {
+  //Log::debug() << "evaluate " << rawValue << " " << QString::number((qint64)context, 16);
   QStringList values = splitAndEvaluate(rawValue, QString(), inherit, context);
   return values.isEmpty() ? QString() : values.first();
 }
@@ -93,7 +95,6 @@ void ParamSet::appendVariableValue(QString &value, QString &variable,
   if (variable.isEmpty()) {
     Log::warning() << "unsupported variable substitution: empty variable name";
   } else if (variable.at(0) == '!') {
-    // LATER %!Z %!taskid %!fqtn %!requestid %!taskgroupid %!retcode %!status %!eventid %!taskduration %!taskdelay
     if (variable == "!yyyy") {
       value.append(QDateTime::currentDateTime().toString("yyyy"));
     } else if (variable == "!mm") {
@@ -132,7 +133,7 @@ void ParamSet::appendVariableValue(QString &value, QString &variable,
         s = context->paramValue(variable);
       if (s.isNull())
         Log::warning() << "unsupported variable substitution: %{" << variable
-                       << "}";
+                       << "} " << QString::number((qint64)context, 16);
       else
         value.append(s);
     }
