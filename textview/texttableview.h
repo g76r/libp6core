@@ -29,14 +29,17 @@ public:
   /** Max number of rows to display. Default is 100. Use INT_MAX if you want
     * no limit. */
   void setMaxrows(int maxrows) { _maxrows = maxrows; }
-  /** Set model columns to be displayed (default: all). */
-  void setColumnIndexes(QList<int> columnIndexes) {
+  /** Set model columns to be displayed.
+   * Default: all columns */
+  void setColumnIndexes(QList<int> columnIndexes = QList<int>()) {
     _columnIndexes = columnIndexes; _effectiveColumnIndexes = columnIndexes;
     _header = headerText(); _footer = footerText(); }
-  /** Text printed if the table is empty. Default is "(empty)". */
-  virtual void setEmptyPlaceholder(const QString rawText);
-  /** Text printed if the table is truncated to maxrows. Default is "...". */
-  virtual void setEllipsePlaceholder(const QString rawText);
+  /** Text printed if the table is empty.
+   * Default: "(empty)" */
+  virtual void setEmptyPlaceholder(const QString rawText = "(empty)");
+  /** Text printed if the table is truncated to maxrows.
+   * Default: "..." */
+  virtual void setEllipsePlaceholder(const QString rawText = "...");
   void setModel(QAbstractItemModel *model);
 
 protected:

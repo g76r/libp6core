@@ -73,8 +73,8 @@ void TextTableView::resetAll() {
   _header = headerText();
   _footer = footerText();
   _rows.clear();
-  if (m)
-    rowsInserted(QModelIndex(), 0, m->rowCount());
+  if (m && m->rowCount())
+    rowsInserted(QModelIndex(), 0, m->rowCount()-1);
   else
     update();
 }

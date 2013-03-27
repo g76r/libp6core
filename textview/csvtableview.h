@@ -21,12 +21,37 @@
 // LATER add style options (separators, quotes, indentation string, columns selection, hide non-leaf rows...)
 class LIBQTSSUSHARED_EXPORT CsvTableView : public TextTableView {
   Q_OBJECT
-  QString _topLeftHeader;
+  QString _topLeftHeader, _recordSeparator, _specialChars;
+  QChar _fieldSeparator, _fieldQuote, _escapeChar, _replacementChar;
   bool _columnHeaders, _rowHeaders;
 
 public:
   explicit CsvTableView(QObject *parent = 0, int maxrows = 10000);
-  void setTopLeftHeader(const QString rawHtml) { _topLeftHeader = rawHtml; }
+  void setTopLeftHeader(QString rawText) { _topLeftHeader = rawText; }
+  /** Default: comma */
+  void setFieldSeparator(QChar c = ',');
+  /** Default: newline (a.k.a. Unix end of line) */
+  void setRecordSeparator(QString string = "\n");
+  /** Used to quote every field on both left and right sides.
+   * Default: none
+   * Example: double quote */
+  void setFieldQuote(QChar c = QChar());
+  /** Used to protect special character within field.
+   * If field quote is set, only field quote and escape char are special chars,
+   * otherwise field and record separators are also special chars.
+   * If escape char is not found, special chars sequences are replaced with
+   * replacement char, or removed if replacement char not found.
+   * Default: none
+   * Example: backslash */
+  void setEscapeChar(QChar c = QChar());
+  /** Used as a placeholder for special chars within field data.
+   * If field quote is set, only field quote and escape char are special chars,
+   * otherwise field and record separators are also special chars.
+   * If escape char is not found, special chars sequences are replaced with
+   * replacement char, or removed if replacement char not found.
+   * Default: none
+   * Examples: underscore, question mark */
+  void setReplacementChar(QChar c = QChar()) { _replacementChar = c; }
   void setColumnHeaders(bool set = true) { _columnHeaders = set; }
   void setRowHeaders(bool set = true) { _rowHeaders = set; }
 
@@ -34,6 +59,10 @@ protected:
   QString headerText();
   QString footerText();
   QString rowText(int row);
+
+private:
+  inline void updateSpecialChars();
+  inline QString formatField(QString rawData) const;
   Q_DISABLE_COPY(CsvTableView)
 };
 

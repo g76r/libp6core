@@ -14,7 +14,9 @@
 #include "csvtableview.h"
 
 CsvTableView::CsvTableView(QObject *parent, int maxrows)
-  : TextTableView(parent, maxrows), _columnHeaders(true), _rowHeaders(false) {
+  : TextTableView(parent, maxrows), _recordSeparator("\n"),
+    _fieldSeparator(','), _columnHeaders(true), _rowHeaders(false) {
+  updateSpecialChars();
 }
 
 QString CsvTableView::headerText() {
@@ -22,14 +24,14 @@ QString CsvTableView::headerText() {
   QString v;
   if (m && _columnHeaders) {
     if (_rowHeaders)
-      v.append(_topLeftHeader).append(";");
+      v.append(_topLeftHeader).append(_fieldSeparator);
     int columns = m->columnCount(QModelIndex());
     for (int i = 0; i < columns; ++i) {
-      v.append(m->headerData(i, Qt::Horizontal).toString());
+      v.append(formatField(m->headerData(i, Qt::Horizontal).toString()));
       if (i < columns-1)
-        v.append(";");
+        v.append(_fieldSeparator);
     }
-    v.append("\n");
+    v.append(_recordSeparator);
   }
   return v;
 }
@@ -45,13 +47,80 @@ QString CsvTableView::rowText(int row) {
     return QString();
   int columns = m->columnCount();
   if (_rowHeaders)
-    v.append(m->headerData(row, Qt::Vertical).toString()).append(";");
+    v.append(formatField(m->headerData(row, Qt::Vertical).toString()))
+        .append(_fieldSeparator);
   for (int column = 0; column < columns; ++column) {
     QModelIndex index = m->index(row, column, QModelIndex());
-    v.append(m->data(index).toString());
+    v.append(formatField(m->data(index).toString()));
     if (column < columns-1)
-      v.append(";");
+      v.append(_fieldSeparator);
   }
-  v.append("\n");
+  v.append(_recordSeparator);
   return v;
+}
+
+void CsvTableView::setFieldSeparator(QChar c) {
+  _fieldSeparator = c;
+  updateSpecialChars();
+}
+
+void CsvTableView::setRecordSeparator(QString string) {
+  _recordSeparator = string;
+  updateSpecialChars();
+}
+
+void CsvTableView::setFieldQuote(QChar c) {
+  _fieldQuote = c;
+  updateSpecialChars();
+}
+
+void CsvTableView::setEscapeChar(QChar c) {
+  _escapeChar = c;
+  updateSpecialChars();
+}
+
+void CsvTableView::updateSpecialChars() {
+  _specialChars.clear();
+  if (!_escapeChar.isNull())
+    _specialChars.append(_escapeChar);
+  if (!_fieldQuote.isNull()) {
+    _specialChars.append(_fieldQuote);
+  } else {
+    if (!_fieldSeparator.isNull())
+      _specialChars.append(_fieldSeparator);
+    _specialChars.append(_recordSeparator);
+  }
+}
+
+QString CsvTableView::formatField(QString rawData) const {
+  QString s;
+  if (!_fieldQuote.isNull())
+    s.append(_fieldQuote);
+  if (!_escapeChar.isNull()) {
+    foreach (const QChar c, rawData) {
+      if (_specialChars.contains(c))
+        s.append(_escapeChar);
+      s.append(c);
+    }
+  } else if (!_replacementChar.isNull()) {
+    bool first = true;
+    foreach (const QChar c, rawData) {
+      if (_specialChars.contains(c)) {
+        if (first) {
+          s.append(_replacementChar);
+          first = false;
+        }
+      } else {
+        s.append(c);
+        first = true;
+      }
+    }
+  } else {
+    foreach (const QChar c, rawData)
+      if (!_specialChars.contains(c))
+        s.append(c);
+  }
+  if (!_fieldQuote.isNull())
+    s.append(_fieldQuote);
+  return s;
 }
