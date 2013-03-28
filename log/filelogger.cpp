@@ -25,6 +25,8 @@ FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity)
   _device->setParent(this);
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
+  _thread->setObjectName("FileLogger-"+Log::severityToString(minSeverity)
+                         +"-"+QString::number((long)this, 16));
   _thread->start();
   moveToThread(_thread);
   if (!_device->isOpen()) {
@@ -45,6 +47,8 @@ FileLogger::FileLogger(QString pathPattern, Log::Severity minSeverity,
     _secondsReopenInterval(secondsReopenInterval) {
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
+  _thread->setObjectName("FileLogger-"+Log::severityToString(minSeverity)
+                         +"-"+QString::number((long)this, 16));
   _thread->start();
   moveToThread(_thread);
   //qDebug() << "creating FileLogger from path" << path << _currentPath;
