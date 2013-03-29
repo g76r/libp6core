@@ -35,6 +35,7 @@ public:
   void setParent(ParamSet parent);
   void setValue(const QString key, const QString value);
   void clear();
+  void removeValue(const QString key);
   /** Return a value without performing parameters substitution.
    * @param inherit should search values in parents if not found
    */

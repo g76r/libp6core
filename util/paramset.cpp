@@ -67,6 +67,11 @@ void ParamSet::setValue(const QString key, const QString value) {
   d->_params.insert(key, value);
 }
 
+void ParamSet::removeValue(const QString key) {
+  if (d)
+    d->_params.remove(key);
+}
+
 void ParamSet::clear() {
   d = new ParamSetData();
 }
