@@ -79,6 +79,14 @@ public:
                            context).toLongLong(&ok);
     return ok ? v : defaultValue; }
   /** Syntaxic sugar. */
+  inline int valueAsInt(const QString key, int defaultValue = 0,
+                        bool inherit = true,
+                        const ParamsProvider *context = 0) const {
+    bool ok;
+    int v = evaluate(rawValue(key, QString(), inherit),  inherit,
+                     context).toInt(&ok);
+    return ok ? v : defaultValue; }
+  /** Syntaxic sugar. */
   inline double valueAsDouble(const QString key, double defaultValue = 0,
                               bool inherit = true,
                               const ParamsProvider *context = 0) const {
