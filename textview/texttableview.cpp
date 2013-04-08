@@ -12,6 +12,7 @@
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "texttableview.h"
+//#include "log/log.h"
 
 TextTableView::TextTableView(QObject *parent, int maxrows)
   : AsyncTextView(parent), _headersAndFootersAlreadyRead(false),
@@ -81,7 +82,10 @@ void TextTableView::resetAll() {
 
 void TextTableView::dataChanged(const QModelIndex &topLeft,
                                 const QModelIndex &bottomRight) {
-  //qDebug() << "TextTableView::dataChanged" << topLeft << bottomRight;
+  //Log::fatal() << "TextTableView::dataChanged " << objectName() << " "
+  //             << metaObject()->className() << " " << topLeft.row()
+  //             << "," << topLeft.column() << " " << bottomRight.row()
+  //             << "," << bottomRight.column();
   QAbstractItemModel *m = model();
   int start = topLeft.row(), end = bottomRight.row();
   if (!topLeft.isValid() || !bottomRight.isValid() || topLeft.parent().isValid()
