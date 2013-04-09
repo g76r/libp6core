@@ -31,14 +31,7 @@ void TextTableView::setEllipsePlaceholder(const QString rawText) {
 
 void TextTableView::setModel(QAbstractItemModel *model) {
   AsyncTextView::setModel(model);
-  if (_columnIndexes.isEmpty()) {
-    _effectiveColumnIndexes.clear();
-    if (model) {
-      int columns = model->columnCount();
-      for (int i = 0; i < columns; ++i)
-        _effectiveColumnIndexes.append(i);
-    }
-  }
+  layoutChanged();
   resetAll();
 }
 
@@ -70,6 +63,7 @@ void TextTableView::updateText() {
 
 void TextTableView::resetAll() {
   //qDebug() << "TextTableView::resetAll";// << objectName();;// << metaObject()->className();
+  layoutChanged();
   QAbstractItemModel *m = model();
   _header = headerText();
   _footer = footerText();
@@ -122,5 +116,18 @@ void TextTableView::rowsInserted (const QModelIndex &parent, int start,
     end = _maxrows+1; // +1 to have a mean to detect that there are more
   for (int row = start; row <= end; ++row)
     _rows.insert(row, rowText(row));
+  update();
+}
+
+void TextTableView::layoutChanged() {
+  if (model()) {
+    if (_columnIndexes.isEmpty()) {
+      _effectiveColumnIndexes.clear();
+      int columns = model()->columnCount();
+      for (int i = 0; i < columns; ++i)
+        _effectiveColumnIndexes.append(i);
+    }
+  } else
+    _effectiveColumnIndexes.clear();
   update();
 }

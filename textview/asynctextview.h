@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -59,16 +59,39 @@ protected:
 protected slots:
   /** Recompute the whole view: headers, data, layout... */
   virtual void resetAll() = 0;
+  /** Recompute the view part impacted by a layout change.
+   * Default: call resetAll(). */
+  virtual void layoutChanged();
+  /** Recompute the view part impacted by a header data change.
+   * Default: call resetAll(). */
+  virtual void headerDataChanged(Qt::Orientation orientation, int first,
+                                 int last);
   /** Recompute the view part impacted by a data change.
    * Default: call resetAll(). */
   virtual void dataChanged(const QModelIndex &topLeft,
-                            const QModelIndex &bottomRight);
+                           const QModelIndex &bottomRight);
   /** Recompute the view part impacted by removing rows.
    * Default: call resetAll(). */
   virtual void rowsRemoved(const QModelIndex &parent, int start, int end);
   /** Recompute the view part impacted by inserting rows.
    * Default: call resetAll(). */
   virtual void rowsInserted (const QModelIndex &parent, int start, int end);
+  /** Recompute the view part impacted my moving rows.
+   * Default: call resetAll(). */
+  virtual void rowsMoved(const QModelIndex &sourceParent, int sourceStart,
+                         int sourceEnd, const QModelIndex &destinationParent,
+                         int destinationRow);
+  /** Recompute the view part impacted my inserting columns.
+   * Default: call resetAll(). */
+  virtual void columnsInserted(const QModelIndex &parent, int start, int end);
+  /** Recompute the view part impacted my removing columns.
+   * Default: call resetAll(). */
+  virtual void columnsRemoved(const QModelIndex &parent, int start, int end);
+  /** Recompute the view part impacted my moving columns.
+   * Default: call resetAll(). */
+  virtual void columnsMoved(const QModelIndex &sourceParent, int sourceStart,
+                            int sourceEnd, const QModelIndex &destinationParent,
+                            int destinationColumn);
 };
 
 #endif // ASYNCTEXTVIEW_H

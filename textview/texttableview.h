@@ -47,6 +47,7 @@ protected:
     return _effectiveColumnIndexes; }
   void updateText();
   void resetAll();
+  void layoutChanged();
   void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
   void rowsRemoved(const QModelIndex &parent, int start, int end);
   void rowsInserted (const QModelIndex &parent, int start, int end);
