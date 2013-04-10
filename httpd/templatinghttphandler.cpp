@@ -25,7 +25,7 @@ TemplatingHttpHandler::TemplatingHttpHandler(
 
 void TemplatingHttpHandler::sendLocalResource(
     HttpRequest req, HttpResponse res, QFile *file,
-    QHash<QString, QVariant> values) {
+    ParamsProvider *values) {
   Q_UNUSED(req)
   setMimeTypeByName(file->fileName(), res);
   foreach (QString filter, _filters) {
@@ -60,12 +60,13 @@ void TemplatingHttpHandler::sendLocalResource(
               output.append("?");
             }
           } else if (label == "value") {
-            QString value = values.value(data).toString();
+            QString value(values ? values->paramValue(data) : QString());
             if (!value.isNull())
               output.append(value);
             else {
               Log::warning() << "TemplatingHttpHandler did not find value: '"
-                             << data << "' among " << values.keys();
+                             << data << "' among paramset 0x"
+                             << QString::number((long long)values, 16);
               output.append("?");
             }
           } else {

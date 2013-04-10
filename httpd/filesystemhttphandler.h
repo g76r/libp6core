@@ -17,6 +17,7 @@
 #include "httphandler.h"
 #include <QStringList>
 #include <QPair>
+#include "util/paramsprovider.h"
 
 class QFile;
 
@@ -53,11 +54,11 @@ public:
   bool acceptRequest(HttpRequest req);
   void handleRequest(HttpRequest req, HttpResponse res);
   void handleRequestWithContext(HttpRequest req, HttpResponse res,
-                                QHash<QString,QVariant> values);
+                                ParamsProvider *values);
 
 protected:
   virtual void sendLocalResource(HttpRequest req, HttpResponse res, QFile *file,
-                                 QHash<QString,QVariant> values);
+                                 ParamsProvider *values = 0);
 
 protected:
   void setMimeTypeByName(QString name, HttpResponse res);

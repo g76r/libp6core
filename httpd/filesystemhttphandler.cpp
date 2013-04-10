@@ -49,11 +49,11 @@ bool FilesystemHttpHandler::acceptRequest(HttpRequest req) {
 }
 
 void FilesystemHttpHandler::handleRequest(HttpRequest req, HttpResponse res) {
-  handleRequestWithContext(req, res, QHash<QString,QVariant>());
+  handleRequestWithContext(req, res, 0);
 }
 
 void FilesystemHttpHandler::handleRequestWithContext(
-    HttpRequest req, HttpResponse res, QHash<QString, QVariant> values) {
+    HttpRequest req, HttpResponse res, ParamsProvider *values) {
   QString path = req.url().path();
   path.remove(0, _urlPrefix.length());
   while (path.size() && path.at(path.size()-1) == '/')
@@ -98,7 +98,7 @@ void FilesystemHttpHandler::handleRequestWithContext(
 
 void FilesystemHttpHandler::sendLocalResource(
     HttpRequest req, HttpResponse res, QFile *file,
-    QHash<QString, QVariant> values) {
+    ParamsProvider *values) {
   Q_UNUSED(req)
   Q_UNUSED(values)
   //qDebug() << "success";
