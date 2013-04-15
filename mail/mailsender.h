@@ -19,7 +19,7 @@
 #include <QString>
 #include <QUrl>
 #include <QList>
-#include <QMap>
+#include <QHash>
 
 class LIBQTSSUSHARED_EXPORT MailSender {
   QUrl _url;
@@ -29,16 +29,16 @@ public:
   MailSender(const QString &url);
   /** @return true only if SMTP server accepted to queue the mail */
   bool send(const QString sender, const QList<QString> recipients,
-            const QVariant body, const QMap<QString, QString> headers,
+            const QVariant body, const QHash<QString, QString> headers,
             const QList<QVariant> attachments, QString &errorString);
   inline bool send(const QString sender, const QList<QString> recipients,
-                   const QVariant body, const QMap<QString, QString> headers,
+                   const QVariant body, const QHash<QString, QString> headers,
                    const QList<QVariant> attachments) {
     QString errorString;
     return send(sender, recipients, body, headers, attachments, errorString);
   }
   inline bool send(const QString sender, const QList<QString> recipients,
-                   const QVariant body, const QMap<QString, QString> headers) {
+                   const QVariant body, const QHash<QString, QString> headers) {
     QString errorString;
     return send(sender, recipients, body, headers, QList<QVariant>(),
                 errorString);
@@ -46,7 +46,7 @@ public:
   inline bool send(const QString sender, const QList<QString> recipients,
                    const QVariant body) {
     QString errorString;
-    return send(sender, recipients, body, QMap<QString,QString>(),
+    return send(sender, recipients, body, QHash<QString,QString>(),
                 QList<QVariant>(), errorString);
   }
 };

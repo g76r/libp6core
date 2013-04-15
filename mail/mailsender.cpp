@@ -80,7 +80,7 @@ public:
 bool MailSender::send(const QString sender,
                          const QList<QString> recipients,
                          const QVariant body,
-                         const QMap<QString, QString> headers,
+                         const QHash<QString, QString> headers,
                          const QList<QVariant> attachments,
                          QString &errorString) {
   Q_UNUSED(attachments)
