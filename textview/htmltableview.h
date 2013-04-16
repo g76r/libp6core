@@ -21,9 +21,9 @@
 // LATER implement thClassRole and tdClassRole for real
 class LIBQTSSUSHARED_EXPORT HtmlTableView : public TextTableView {
   Q_OBJECT
-  QString _tableClass, _topLeftHeader;
+  QString _tableClass, _topLeftHeader, _rowAnchorPrefix;
   int _thClassRole, _trClassRole, _tdClassRole, _linkRole, _linkClassRole;
-  int _htmlPrefixRole, _htmlSuffixRole;
+  int _htmlPrefixRole, _htmlSuffixRole, _rowAnchorColumn;
   bool _columnHeaders, _rowHeaders;
 
 public:
@@ -44,6 +44,10 @@ public:
   void setRowHeaders(bool set = true) { _rowHeaders = set; }
   void setEmptyPlaceholder(const QString rawText);
   void setEllipsePlaceholder(const QString rawText);
+  void setRowAnchor(QString prefix = "", int column = 0) {
+    _rowAnchorPrefix = prefix;
+    _rowAnchorColumn = column;
+  }
 
 protected:
   QString headerText();

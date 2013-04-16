@@ -16,6 +16,7 @@
 HtmlTableView::HtmlTableView(QObject *parent) : TextTableView(parent),
   _thClassRole(-1), _trClassRole(-1), _tdClassRole(-1), _linkRole(-1),
   _linkClassRole(-1), _htmlPrefixRole(-1), _htmlSuffixRole(-1),
+  _rowAnchorColumn(-1),
   _columnHeaders(true), _rowHeaders(false) {
   setEmptyPlaceholder("(empty)");
   setEllipsePlaceholder("...");
@@ -93,6 +94,7 @@ QString HtmlTableView::rowText(int row) {
     if (_htmlSuffixRole >= 0)
       v.append(m->headerData(row, Qt::Vertical, _htmlSuffixRole).toString());
   }
+  bool first = true;
   foreach (int column, effectiveColumnIndexes()) {
     QModelIndex index = m->index(row, column, QModelIndex());
     if (_tdClassRole >= 0)
@@ -101,6 +103,13 @@ QString HtmlTableView::rowText(int row) {
           .append("\">");
     else
       v.append("<td>");
+    if (first) {
+      first = false;
+      if (!_rowAnchorPrefix.isNull())
+          v.append("<a name=\"").append(_rowAnchorPrefix).append(
+                m->data(m->index(row, _rowAnchorColumn, QModelIndex())).toString())
+              .append("\"></a>");
+    }
     if (_htmlPrefixRole >= 0)
       v.append(m->data(index, _htmlPrefixRole).toString());
     QString link;
