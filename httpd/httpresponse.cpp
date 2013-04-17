@@ -145,7 +145,7 @@ void HttpResponse::setCookie(const QString name, const QString value,
     s.append("; Secure");
   if (httponly)
     s.append("; HttpOnly");
-  setHeader("Set-Cookie", s);
+  addHeader("Set-Cookie", s);
 }
 
 const QMultiMap<QString,QString> HttpResponse::headers() const {
