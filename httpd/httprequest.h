@@ -58,9 +58,17 @@ public:
   QString base64Cookie(QString name, QString defaultValue = QString()) const;
   QByteArray base64BinaryCookie(QString name,
                                 QByteArray defaultValue = QByteArray()) const;
-  void setUrl(QUrl url);
+  /** Replace url. If params have already been queried and new url has
+   * different query items than former one, one should also call
+   * discardParamsCache(). */
+  void overrideUrl(QUrl url);
   QUrl url() const;
   QString param(QString key) const;
+  void overrideParam(QString key, QString value);
+  void overrideUnsetParam(QString key);
+  /** Discard params cache built by calls to param(). These also discard any
+   * overiding done on params. */
+  void discardParamsCache();
   operator QString() const;
   // LATER handle cookies and sessions
 

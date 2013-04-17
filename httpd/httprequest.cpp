@@ -22,7 +22,7 @@ public:
   QAbstractSocket *_input;
   HttpRequest::HttpRequestMethod _method;
   QMultiMap<QString,QString> _headers;
-  QMap<QString,QString> _cookies;
+  QHash<QString,QString> _cookies, _paramsCache;
   QUrl _url;
   HttpRequestData(QAbstractSocket *input = 0)  : _input(input),
     _method(HttpRequest::NONE) { }
@@ -110,8 +110,30 @@ void HttpRequest::parseAndAddCookie(const QString rawHeaderValue) {
 }
 
 QString HttpRequest::param(QString key) const {
-  // TODO better handle parameters, including POST parameters
-  return d ? d->_url.queryItemValue(key) : QString();
+  // TODO better handle parameters, including POST and multi-valued params
+  QString value;
+  if (d) {
+    if (d->_paramsCache.contains(key))
+      return d->_paramsCache.value(key);
+    value = d->_url.queryItemValue(key);
+    d->_paramsCache.insert(key, value);
+  }
+  return value;
+}
+
+void HttpRequest::overrideParam(QString key, QString value) {
+  if (d)
+    d->_paramsCache.insert(key, value);
+}
+
+void HttpRequest::overrideUnsetParam(QString key) {
+  if (d)
+    d->_paramsCache.insert(key, QString());
+}
+
+void HttpRequest::discardParamsCache() {
+  if (d)
+    d->_paramsCache.clear();
 }
 
 HttpRequest::operator QString() const {
@@ -131,7 +153,7 @@ HttpRequest::operator QString() const {
   return s;
 }
 
-void HttpRequest::setUrl(QUrl url) {
+void HttpRequest::overrideUrl(QUrl url) {
   if (d)
     d->_url = url;
 }
