@@ -91,9 +91,9 @@ public:
     */
   QString attribute(QString name, QString defaultValue) const;
   /** Syntaxic sugar. */
-  qint64 intAttribute(QString name, qint64 defaultValue = 0) const;
+  qint64 longAttribute(QString name, qint64 defaultValue = 0) const;
   /** Syntaxic sugar. */
-  double floatAttribute(QString name, double defaultValue = 0.0) const;
+  double doubleAttribute(QString name, double defaultValue = 0.0) const;
   // note that there is no boolAttribute() method because hasChild() is enough
   /** Set a child named 'name' with 'content' content and remove any other
     * child named 'name'.
