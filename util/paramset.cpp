@@ -23,6 +23,7 @@ public:
   QSharedDataPointer<ParamSetData> _parent;
   QHash<QString,QString> _params;
   ParamSetData() { }
+  ParamSetData(QHash<QString,QString> params) : _params(params) { }
   ParamSetData(const ParamSetData &other) : QSharedData(),
     _parent(other._parent), _params(other._params) { }
 };
@@ -34,6 +35,15 @@ ParamSet::ParamSet(const ParamSet &other) : d(other.d) {
 }
 
 ParamSet::ParamSet(ParamSetData *data) : d(data) {
+}
+
+ParamSet::ParamSet(QHash<QString,QString> params)
+  : d(new ParamSetData(params)) {
+}
+
+ParamSet::ParamSet(QMap<QString,QString> params) {
+  foreach(QString key, params.keys())
+    d->_params.insert(key, params.value(key));
 }
 
 ParamSet::~ParamSet() {
@@ -265,6 +275,10 @@ const QSet<QString> ParamSet::keys(bool inherit) const {
   return set;
 }
 
+bool ParamSet::contains(QString key, bool inherit) const {
+  return d && (d->_params.contains(key) || (inherit && parent().contains(key)));
+}
+
 bool ParamSet::isNull() const {
   return !d;
 }
@@ -303,4 +317,10 @@ LogHelper operator <<(LogHelper lh, const ParamSet &params) {
   foreach(QString key, params.keys())
     lh << key << "=" << params.value(key) << " ";
   return lh << "}";
+}
+
+ParamSet ParamSet::createChild() const {
+  ParamSet params;
+  params.setParent(*this);
+  return params;
 }

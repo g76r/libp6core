@@ -28,6 +28,9 @@ class LIBQTSSUSHARED_EXPORT ParamSet : public ParamsProvider {
 public:
   ParamSet();
   ParamSet(const ParamSet &other);
+  ParamSet(QHash<QString,QString> params);
+  /** For multi-valued keys, only most recently inserted value is kept. */
+  explicit ParamSet(QMap<QString,QString> params);
   ~ParamSet();
   ParamSet &operator =(const ParamSet &other);
   const ParamSet parent() const;
@@ -97,6 +100,8 @@ public:
   /** Return all keys for which the ParamSet or one of its parents hold a value.
     */
   const QSet<QString> keys(bool inherit = true) const;
+  /** Return true if key is set. */
+  bool contains(QString key, bool inherit = true) const;
   /** Perform parameters substitution within the string. */
   QString evaluate(const QString rawValue, bool inherit = true,
                    const ParamsProvider *context = 0) const;
@@ -126,6 +131,8 @@ public:
   int size() const;
   bool isEmpty() const;
   QString toString(bool inherit = true) const;
+  /** Create an empty ParamSet having this one for parent. */
+  ParamSet createChild() const;
 
 private:
   inline void appendVariableValue(QString &value, QString &variable,
