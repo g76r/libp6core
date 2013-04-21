@@ -20,6 +20,7 @@
 #include <QAbstractSocket>
 #include "libqtssu_global.h"
 #include <QExplicitlySharedDataPointer>
+#include "util/paramset.h"
 
 class HttpRequestData;
 
@@ -69,11 +70,15 @@ public:
   /** Discard params cache built by calls to param(). These also discard any
    * overiding done on params. */
   void discardParamsCache();
+  /** Retrieve request parameters as a ParamSet.
+   * Only first value of multi-valued parameters is kept. */
+  ParamSet paramsAsParamSet() const;
   operator QString() const;
   // LATER handle cookies and sessions
 
 private:
   void parseAndAddCookie(const QString rawHeaderValue);
+  void cacheAllParams() const;
 };
 
 #endif // HTTPREQUEST_H

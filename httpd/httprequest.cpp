@@ -136,6 +136,25 @@ void HttpRequest::discardParamsCache() {
     d->_paramsCache.clear();
 }
 
+ParamSet HttpRequest::paramsAsParamSet() const {
+  if (d) {
+    cacheAllParams();
+    return d->_paramsCache;
+  } else
+    return ParamSet();
+}
+
+void HttpRequest::cacheAllParams() const {
+  if (d) {
+    QListIterator<QPair<QString,QString> > it(d->_url.queryItems());
+    while (it.hasNext()) {
+      QPair<QString,QString> p(it.next());
+      if (!d->_paramsCache.contains(p.first))
+        d->_paramsCache.insert(p.first, p.second);
+    }
+  }
+}
+
 HttpRequest::operator QString() const {
   if (!d)
     return "HttpRequest{}";
