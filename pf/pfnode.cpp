@@ -1,5 +1,4 @@
-/*
-Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -21,11 +20,13 @@ under the License.
 #define INDENTATION_STRING "  "
 #define INDENTATION_STRING_LENGTH 2
 
-void PfNodeData::staticInit() {
-  static QAtomicInt i;
-  if (i.testAndSetOrdered(0, 1))
-    qRegisterMetaType<PfNode>("PfNode");
+static int staticInit() {
+  qRegisterMetaType<PfNode>("PfNode");
+  return 0;
 }
+Q_CONSTRUCTOR_FUNCTION(staticInit)
+
+static QRegExp whitespace("\\s");
 
 qint64 PfNodeData::writePf(QIODevice *target, const PfOptions options) const {
   if (options.shouldIndent())
@@ -291,22 +292,34 @@ bool PfNode::hasChild(QString name) const {
   return false;
 }
 
-QString PfNode::attribute(QString name) const {
-  foreach (PfNode child, children())
-    if (child.d->_name == name)
-      return child.contentAsString();
-  return QString();
-}
-
 QString PfNode::attribute(QString name, QString defaultValue) const {
   foreach (PfNode child, children())
-    if (child.d->_name == name) {
-      if (child.contentIsBinary())
-        return defaultValue;
-      else
+    if (child.d->_name == name && child.contentIsText())
         return child.contentAsString();
-    }
   return defaultValue;
+}
+
+QStringList PfNode::stringChildrenByName(QString name) const {
+  QStringList sl;
+  foreach (PfNode child, children())
+    if (child.d->_name == name && child.contentIsText())
+        sl.append(child.contentAsString());
+  return sl;
+}
+
+QList<QPair<QString,QString> > PfNode::stringsPairChildrenByName(
+    QString name) const {
+  QList<QPair<QString,QString> > l;
+  foreach (PfNode child, children())
+    if (child.d->_name == name && child.contentIsText()) {
+      QString s = child.contentAsString().trimmed();
+      int i = s.indexOf(whitespace);
+      if (i >= 0)
+        l.append(QPair<QString,QString>(s.left(i), s.mid(i).trimmed()));
+      else
+        l.append(QPair<QString,QString>(s, QString()));
+    }
+  return l;
 }
 
 qint64 PfNode::longAttribute(QString name, qint64 defaultValue) const {

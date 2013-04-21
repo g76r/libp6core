@@ -1,5 +1,4 @@
-/*
-Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -36,10 +35,10 @@ private:
 
 public:
   explicit inline PfNodeData(const QString &name = QString()) : _name(name),
-    _isComment(false) { staticInit(); }
+    _isComment(false) { }
   inline PfNodeData(const QString &name, const QString &content,
                     bool isComment = false) : _name(name),
-    _isComment(isComment) { staticInit(); _content.append(content); }
+    _isComment(isComment) { _content.append(content); }
   inline PfNodeData(const PfNodeData &other) : QSharedData(),
     _name(other._name), _children(other._children),
     _isComment(other._isComment), _content(other._content) { }
@@ -53,7 +52,6 @@ private:
   //inline void buildChildrenFromArray() const;
   inline qint64 internalWritePf(QIODevice *target, QString indent,
                                 const PfOptions options) const;
-  static void staticInit();
 };
 
 class LIBQTPFSHARED_EXPORT PfNode {
@@ -77,19 +75,31 @@ public:
   inline const QList<PfNode> children() const { return d->_children; }
   inline void appendChild(PfNode child) { d->_children.append(child); }
   /** Return a child content knowing the child name.
-    * QString() if child does not exist or the child content is binary.
+    * QString() if no text child exists.
     * QString("") if child exists but has no content
-    * If several children has the same name the first one is choosen.
+    * If several children have the same name the first text one is choosen.
     * The goal is to emulate XML attributes, hence the name.
     */
-  QString attribute(QString name) const;
+  inline QString attribute(QString name) const {
+    return attribute(name, QString()); }
   /** Return a child content knowing the child name.
-    * defaultValue if child does not exist or the child content is binary.
+    * defaultValue if no text child exists.
     * QString("") if child exists but has no content
-    * If several children has the same name the first one is choosen.
+    * If several children have the same name the first text one is choosen.
     * The goal is to emulate XML attributes, hence the name.
     */
   QString attribute(QString name, QString defaultValue) const;
+  /** Return the content (as string) of every child with a given name.
+   * This is the same as attribute() with multi-valued semantics.
+   * Skip children with non-text content.
+   * If no text child matches the name, the list is empty. */
+  QStringList stringChildrenByName(QString name) const;
+  /** Return the string content of children, splited into string pairs at the
+   * first whitespace.
+   * Child whole content and both strings of the pair are trimmed.
+   * Skip children with non-text content.
+   * If no text child matches the name, the list is empty. */
+  QList<QPair<QString,QString> > stringsPairChildrenByName(QString name) const;
   /** Syntaxic sugar. */
   qint64 longAttribute(QString name, qint64 defaultValue = 0) const;
   /** Syntaxic sugar. */
