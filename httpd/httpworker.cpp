@@ -22,6 +22,11 @@
 #include "httpresponse.h"
 #include <QTime>
 //#include "stats/statistics.h"
+#include "log/log.h"
+
+#define MAXIMUM_LINE_SIZE 65536
+#define MAXIMUM_READ_WAIT 5000
+#define MAXIMUM_WRITE_WAIT 10000
 
 HttpWorker::HttpWorker(HttpServer *server)
   : _server(server), _thread(new QThread()) {
@@ -36,7 +41,7 @@ HttpWorker::HttpWorker(HttpServer *server)
 
 void HttpWorker::handleConnection(int socketDescriptor) {
   // LATER replace by QDateTime when Qt >= 4.7
-  QTime before= QTime::currentTime();
+  //QTime before= QTime::currentTime();
   QTcpSocket *socket = new QTcpSocket(this);
   if (!socket->setSocketDescriptor(socketDescriptor)) {
     // LATER
@@ -49,34 +54,48 @@ void HttpWorker::handleConnection(int socketDescriptor) {
   QUrl url;
   //qDebug() << "new client socket" << socket->peerAddress();
   QTextStream out(socket);
-  QString line;
-  if (!socket->canReadLine() && !socket->waitForReadyRead(5000)) {
-    // LATER check RFC, HTTP may require \r\n end of line sequence
-    out << "HTTP/1.0 500 Protocol error\n\n";
+  QString line, method;
+  if (!socket->canReadLine() && !socket->waitForReadyRead(MAXIMUM_READ_WAIT)) {
+    out << "HTTP/1.0 408 Request timeout\r\n\r\n";
+    Log::error() << "HTTP/1.0 408 Request timeout";
     goto finally;
   }
-  line = socket->readLine(1024).trimmed();
-  args = line.split(" ");
+  line = socket->readLine(MAXIMUM_LINE_SIZE+2);
+  if (line.size() > MAXIMUM_LINE_SIZE) {
+    out << "HTTP/1.0 414 Request URI too long\r\n\r\n";
+    Log::error() << "HTTP/1.0 414 Request URI too long, starting with: "
+                 << line.left(200);
+    goto finally;
+  }
+  line = line.trimmed();
+  args = line.split(QRegExp("[ \t]+"));
   if (args.size() != 3) {
-    out << "HTTP/1.0 501 Protocol error\n\n";
+    out << "HTTP/1.0 400 Bad request line\r\n\r\n"+line;
+    Log::error() << "HTTP/1.0 400 Bad request line, starting with: "
+                 << line.left(200);
     goto finally;
   }
-  if (args.at(0) == "HEAD")
+  method = args[0];
+  if (method == "HEAD")
     req.setMethod(HttpRequest::HEAD);
-  else if (args.at(0) == "GET")
+  else if (method == "GET")
     req.setMethod(HttpRequest::GET);
-  else if (args.at(0) == "POST")
+  else if (method == "POST")
     req.setMethod(HttpRequest::POST);
-  else if (args.at(0) == "PUT")
+  else if (method == "PUT")
     req.setMethod(HttpRequest::PUT);
-  else if (args.at(0) == "DELETE")
+  else if (method == "DELETE")
     req.setMethod(HttpRequest::DELETE);
   else {
-    out << "HTTP/1.0 502 Protocol error\n\n";
+    out << "HTTP/1.0 405 Method not allowed: \r\n\r\n"+method;
+    Log::error() << "HTTP/1.0 405 Method not allowed, starting with: "
+                 << method.left(200);
     goto finally;
   }
-  if (!args.at(2).startsWith("HTTP/")) {
-    out << "HTTP/1.0 503 Protocol error\n\n";
+  if (!args[2].startsWith("HTTP/")) {
+    out << "HTTP/1.0 400 Bad request protocol\r\n\r\n";
+    Log::error() << "HTTP/1.0 400 Bad request protocol, starting with: "
+                 << args[2].left(200);
     goto finally;
   }
   //qDebug() << "a1" << args;
@@ -85,11 +104,18 @@ void HttpWorker::handleConnection(int socketDescriptor) {
       //qDebug() << "socket is not open";
       break;
     }
-    if (!socket->canReadLine() && !socket->waitForReadyRead(5000)) {
+    if (!socket->canReadLine()
+        && !socket->waitForReadyRead(MAXIMUM_READ_WAIT)) {
       //qDebug() << "socket is not readable";
       break;
     }
-    line = socket->readLine(1024).trimmed();
+    line = socket->readLine(MAXIMUM_LINE_SIZE+2).trimmed();
+    if (line.size() > MAXIMUM_LINE_SIZE) {
+      out << "HTTP/1.0 413 Header line too long\r\n\r\n";
+      Log::error() << "HTTP/1.0 413 Header line too long, starting with: "
+                   << line.left(200);
+      goto finally;
+    }
     if (line.isNull()) {
       //qDebug() << "line is null";
       break;
@@ -100,12 +126,14 @@ void HttpWorker::handleConnection(int socketDescriptor) {
     }
     // LATER: handle multi line headers
     if (!req.parseAndAddHeader(line)) {
-      out << "HTTP/1.0 504 Protocol error\n\n";
+      out << "HTTP/1.0 400 Bad request header line\r\n\r\n"+line;
+      Log::error() << "HTTP/1.0 400 Bad request header line, starting with: "
+                   << line.left(200);
       goto finally;
     }
     //qDebug() << "a7";
   }
-  url = QUrl::fromEncoded(args.at(1).toAscii()/*, QUrl::StrictMode */);
+  url = QUrl::fromEncoded(args[1].toAscii()/*, QUrl::StrictMode */);
   req.overrideUrl(url);
   handler = _server->chooseHandler(req);
   handler->handleRequest(req, res);
@@ -115,7 +143,7 @@ finally:
   out.flush();
   // LATER fix random warning "QAbstractSocket::waitForBytesWritten() is not allowed in UnconnectedState"
   while(socket->state() != QAbstractSocket::UnconnectedState
-        && socket->waitForBytesWritten(10000))
+        && socket->waitForBytesWritten(MAXIMUM_WRITE_WAIT))
     ; //qDebug() << "waitForBytesWritten returned true" << socket->bytesToWrite();
   socket->close();
   socket->deleteLater();
