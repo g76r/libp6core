@@ -95,9 +95,11 @@ public:
    * If no text child matches the name, the list is empty. */
   QStringList stringChildrenByName(QString name) const;
   /** Return the string content of children, splited into string pairs at the
-   * first whitespace.
+   * first whitespace, one list item per child.
    * Child whole content and both strings of the pair are trimmed.
    * Skip children with non-text content.
+   * Chilren without whitespace will have the first pair item set to the whole
+   * node content (which may be empty) and the second one to QString().
    * If no text child matches the name, the list is empty. */
   QList<QPair<QString,QString> > stringsPairChildrenByName(QString name) const;
   /** Syntaxic sugar. */
