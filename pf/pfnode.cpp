@@ -322,6 +322,22 @@ QList<QPair<QString,QString> > PfNode::stringsPairChildrenByName(
   return l;
 }
 
+QList<QPair<QString,qlonglong> > PfNode::stringLongPairChildrenByName(
+    QString name) const {
+  QList<QPair<QString,qlonglong> > l;
+  foreach (PfNode child, children())
+    if (child.d->_name == name && child.contentIsText()) {
+      QString s = child.contentAsString().trimmed();
+      int i = s.indexOf(whitespace);
+      if (i >= 0)
+        l.append(QPair<QString,qlonglong>(s.left(i),
+                                          s.mid(i).trimmed().toLongLong(0, 0)));
+      else
+        l.append(QPair<QString,qlonglong>(s, 0));
+    }
+  return l;
+}
+
 qint64 PfNode::longAttribute(QString name, qint64 defaultValue) const {
   bool ok;
   qint64 i = attribute(name).toLongLong(&ok, 0);

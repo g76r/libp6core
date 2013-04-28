@@ -102,6 +102,8 @@ public:
    * node content (which may be empty) and the second one to QString().
    * If no text child matches the name, the list is empty. */
   QList<QPair<QString,QString> > stringsPairChildrenByName(QString name) const;
+  QList<QPair<QString, qlonglong> > stringLongPairChildrenByName(
+      QString name) const;
   /** Syntaxic sugar. */
   qint64 longAttribute(QString name, qint64 defaultValue = 0) const;
   /** Syntaxic sugar. */
