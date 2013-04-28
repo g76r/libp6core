@@ -14,7 +14,7 @@
 #ifndef PARAMSPROVIDER_H
 #define PARAMSPROVIDER_H
 
-#include <QString>
+#include <QVariant>
 #include "libqtssu_global.h"
 
 /** Base class for any class that may provide text parameters.
@@ -25,8 +25,8 @@ public:
   ParamsProvider();
   virtual ~ParamsProvider();
   /** Return a parameter value. */
-  virtual QString paramValue(
-      const QString key, const QString defaultValue = QString()) const = 0;
+  virtual QVariant paramValue(
+      const QString key, const QVariant defaultValue = QVariant()) const = 0;
 };
 
 #endif // PARAMSPROVIDER_H

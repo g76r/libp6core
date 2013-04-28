@@ -145,7 +145,7 @@ void ParamSet::appendVariableValue(QString &value, QString &variable,
     } else {
       QString s;
       if (context)
-        s = context->paramValue(variable);
+        s = context->paramValue(variable).toString();
       if (s.isNull())
         Log::warning() << "unsupported variable substitution: %{" << variable
                        << "} " << QString::number((qint64)context, 16);
@@ -291,9 +291,9 @@ bool ParamSet::isEmpty() const {
   return d ? d->_params.isEmpty() : true;
 }
 
-QString ParamSet::paramValue(const QString key,
-                             const QString defaultValue) const{
-  return value(key, defaultValue, true);
+QVariant ParamSet::paramValue(const QString key,
+                              const QVariant defaultValue) const{
+  return value(key, defaultValue.toString(), true);
 }
 
 QString ParamSet::toString(bool inherit) const {

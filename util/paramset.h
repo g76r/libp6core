@@ -126,7 +126,7 @@ public:
     return QRegExp(matchingPattern(rawValue), Qt::CaseSensitive,
                    QRegExp::Wildcard);
   }
-  QString paramValue(const QString key, const QString defaultValue) const;
+  QVariant paramValue(const QString key, const QVariant defaultValue) const;
   bool isNull() const;
   int size() const;
   bool isEmpty() const;
