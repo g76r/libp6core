@@ -15,7 +15,7 @@ under the License.
 #include "pfhandler.h"
 #include <QtDebug>
 
-PfHandler::PfHandler() : _errorLine(0), _errorColumn(0) {
+PfHandler::PfHandler() : _errorLine(0), _errorColumn(0), _errorOccured(false) {
 }
 
 PfHandler::~PfHandler() {
@@ -41,12 +41,14 @@ bool PfHandler::binary(QIODevice *device, qint64 length, qint64 offset,
   if (device->isSequential()) {
     setErrorString("PfHandler: binary fragment lazy loading cannot handle"
                    "sequential (= not seekable) data input");
+    _errorOccured = true;
     return false;
   }
   qint64 pos = device->pos();
   if (!device->seek(offset)) {
     setErrorString(QString("PfHandler: cannot seek at %1 within data input")
                    .arg(offset));
+    _errorOccured = true;
     return false;
   }
   // waiting for bytes being available seems useless since there are no
@@ -57,6 +59,7 @@ bool PfHandler::binary(QIODevice *device, qint64 length, qint64 offset,
     setErrorString(QString("PfHandler: cannot read %1 bytes at %2 within data "
                            "input").arg(length).arg(offset));
     device->seek(pos);
+    _errorOccured = true;
     return false;
 
   }
@@ -92,6 +95,7 @@ bool PfHandler::endDocument() {
 void PfHandler::error(int line, int column) {
   _errorLine = line;
   _errorColumn = column;
+  _errorOccured = true;
   qWarning() << "PfHandler::error line" << line << "column" << column << ":"
       << errorString();
 }

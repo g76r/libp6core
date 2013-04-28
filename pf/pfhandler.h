@@ -33,6 +33,7 @@ private:
   QString _errorString;
   PfOptions _options;
   int _errorLine, _errorColumn;
+  bool _errorOccured;
 
 public:
   /** @param ignoreComments should the parser call comment() or not
@@ -43,6 +44,7 @@ public:
   inline void setErrorString(const QString &string) { _errorString = string; }
   inline int errorLine() const { return _errorLine; }
   inline int errorColumn() const { return _errorColumn; }
+  inline bool errorOccured() const { return _errorOccured; }
   /** Event method called once at document begining.
     * @return must return false iff an error occur (and optionaly set errorString before)
     */
