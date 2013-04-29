@@ -18,6 +18,9 @@
 #include <QModelIndex>
 
 /** Asynchronously updating and caching base class for text views.
+ * In many cases this is not the more efficient way to manage text views in
+ * terms of computing resources, however this is a way very consistent with
+ * GUI-oriented views.
  * Cache last rendered text string and calls updateText() on model updates.
  * Calls updateText() only once per event loop iteration regardless the number
  * of times update() was called, like QWidget::update() does.
@@ -31,7 +34,10 @@ protected:
 
 public:
   explicit AsyncTextView(QObject *parent = 0);
-  QString text() const;
+  QString text(ParamsProvider *params = 0,
+               QString scope = QString()) const;
+  inline QString text(ParamSet params, QString scope = QString()) {
+    return text(&params, scope); }
   /** Set which model the view will display.
    */
   void setModel(QAbstractItemModel *model);
@@ -55,43 +61,6 @@ protected:
     * @see update() */
   virtual void updateText() = 0;
   void customEvent(QEvent *event);
-
-protected slots:
-  /** Recompute the whole view: headers, data, layout... */
-  virtual void resetAll() = 0;
-  /** Recompute the view part impacted by a layout change.
-   * Default: call resetAll(). */
-  virtual void layoutChanged();
-  /** Recompute the view part impacted by a header data change.
-   * Default: call resetAll(). */
-  virtual void headerDataChanged(Qt::Orientation orientation, int first,
-                                 int last);
-  /** Recompute the view part impacted by a data change.
-   * Default: call resetAll(). */
-  virtual void dataChanged(const QModelIndex &topLeft,
-                           const QModelIndex &bottomRight);
-  /** Recompute the view part impacted by removing rows.
-   * Default: call resetAll(). */
-  virtual void rowsRemoved(const QModelIndex &parent, int start, int end);
-  /** Recompute the view part impacted by inserting rows.
-   * Default: call resetAll(). */
-  virtual void rowsInserted (const QModelIndex &parent, int start, int end);
-  /** Recompute the view part impacted my moving rows.
-   * Default: call resetAll(). */
-  virtual void rowsMoved(const QModelIndex &sourceParent, int sourceStart,
-                         int sourceEnd, const QModelIndex &destinationParent,
-                         int destinationRow);
-  /** Recompute the view part impacted my inserting columns.
-   * Default: call resetAll(). */
-  virtual void columnsInserted(const QModelIndex &parent, int start, int end);
-  /** Recompute the view part impacted my removing columns.
-   * Default: call resetAll(). */
-  virtual void columnsRemoved(const QModelIndex &parent, int start, int end);
-  /** Recompute the view part impacted my moving columns.
-   * Default: call resetAll(). */
-  virtual void columnsMoved(const QModelIndex &sourceParent, int sourceStart,
-                            int sourceEnd, const QModelIndex &destinationParent,
-                            int destinationColumn);
 };
 
 #endif // ASYNCTEXTVIEW_H

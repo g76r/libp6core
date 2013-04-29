@@ -56,8 +56,7 @@ public:
   void setRowHeaders(bool set = true) { _rowHeaders = set; }
 
 protected:
-  QString headerText();
-  QString footerText();
+  void updateHeaderAndFooterText();
   QString rowText(int row);
 
 private:

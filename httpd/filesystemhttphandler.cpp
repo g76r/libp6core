@@ -98,9 +98,10 @@ void FilesystemHttpHandler::handleRequestWithContext(
 
 void FilesystemHttpHandler::sendLocalResource(
     HttpRequest req, HttpResponse res, QFile *file,
-    ParamsProvider *values) {
+    ParamsProvider *values, QString scope) {
   Q_UNUSED(req)
   Q_UNUSED(values)
+  Q_UNUSED(scope)
   //qDebug() << "success";
   setMimeTypeByName(file->fileName(), res);
   res.setContentLength(file->size());

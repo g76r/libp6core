@@ -19,7 +19,7 @@ CsvTableView::CsvTableView(QObject *parent, int maxrows)
   updateSpecialChars();
 }
 
-QString CsvTableView::headerText() {
+void CsvTableView::updateHeaderAndFooterText() {
   QAbstractItemModel *m = model();
   QString v;
   if (m && _columnHeaders) {
@@ -33,11 +33,8 @@ QString CsvTableView::headerText() {
     }
     v.append(_recordSeparator);
   }
-  return v;
-}
-
-QString CsvTableView::footerText() {
-  return QString();
+  _header = v;
+  _footer = QString();
 }
 
 QString CsvTableView::rowText(int row) {

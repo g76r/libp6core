@@ -28,7 +28,7 @@ class LIBQTSSUSHARED_EXPORT ClockView : public TextView {
 public:
   ClockView(QObject *parent, const QString format);
   explicit ClockView(QObject *parent = 0, Qt::DateFormat format = Qt::ISODate);
-  QString text() const;
+  QString text(ParamsProvider *params, QString scope) const;
   void setFormat(const QString format) { _textFormat = format; }
   void setFormat(Qt::DateFormat format) {
     _dateFormat = format; _textFormat = QString(); }

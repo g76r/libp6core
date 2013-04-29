@@ -58,7 +58,8 @@ public:
 
 protected:
   virtual void sendLocalResource(HttpRequest req, HttpResponse res, QFile *file,
-                                 ParamsProvider *values = 0);
+                                 ParamsProvider *values = 0,
+                                 QString scope = QString());
 
 protected:
   void setMimeTypeByName(QString name, HttpResponse res);

@@ -22,7 +22,9 @@ ClockView::ClockView(QObject *parent, Qt::DateFormat format)
 
 }
 
-QString ClockView::text() const {
+QString ClockView::text(ParamsProvider *params, QString scope) const {
+  Q_UNUSED(params)
+  Q_UNUSED(scope)
   return _textFormat.isNull()
       ? QDateTime::currentDateTime().toString(_dateFormat)
       : QDateTime::currentDateTime().toString(_textFormat);

@@ -42,14 +42,14 @@ void HtmlTableView::setEllipsePlaceholder(const QString rawText) {
           +"</td></tr>\n");
 }
 
-QString HtmlTableView::headerText() {
+void HtmlTableView::updateHeaderAndFooterText() {
   QAbstractItemModel *m = model();
+  QString v;
+  if (_tableClass.isEmpty())
+    v.append("<table>\n");
+  else
+    v.append(QString("<table class=\"%1\">\n").arg(_tableClass));
   if (m) {
-    QString v;
-    if (_tableClass.isEmpty())
-      v.append("<table>\n");
-    else
-      v.append(QString("<table class=\"%1\">\n").arg(_tableClass));
     if (_columnHeaders) {
       v.append("<tr>");
       if (_rowHeaders)
@@ -66,13 +66,9 @@ QString HtmlTableView::headerText() {
       }
       v.append("</tr>\n");
     }
-    return v;
   }
-  return "<table>";
-}
-
-QString HtmlTableView::footerText() {
-  return "</table>\n";
+  _header = v;
+  _footer = "</table>\n";
 }
 
 QString HtmlTableView::rowText(int row) {

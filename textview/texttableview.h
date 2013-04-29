@@ -16,16 +16,23 @@
 
 #include "asynctextview.h"
 
-class LIBQTSSUSHARED_EXPORT TextTableView : public AsyncTextView {
+class LIBQTSSUSHARED_EXPORT TextTableView : public TextView {
   Q_OBJECT
   bool _headersAndFootersAlreadyRead;
   int _maxrows;
   QList<int> _columnIndexes, _effectiveColumnIndexes;
   QList<QString> _rows;
-  QString _emptyPlaceholder, _ellipsePlaceholder, _header, _footer;
+  QString _emptyPlaceholder, _ellipsePlaceholder;
+
+protected:
+  QString _header, _footer;
 
 public:
   explicit TextTableView(QObject *parent = 0, int maxrows = 100);
+  QString text(ParamsProvider *params = 0,
+               QString scope = QString()) const;
+  inline QString text(ParamSet params, QString scope = QString()) {
+    return text(&params, scope); }
   /** Max number of rows to display. Default is 100. Use INT_MAX if you want
     * no limit. */
   void setMaxrows(int maxrows) { _maxrows = maxrows; }
@@ -33,7 +40,7 @@ public:
    * Default: all columns */
   void setColumnIndexes(QList<int> columnIndexes = QList<int>()) {
     _columnIndexes = columnIndexes; _effectiveColumnIndexes = columnIndexes;
-    _header = headerText(); _footer = footerText(); }
+    updateHeaderAndFooterText(); }
   /** Text printed if the table is empty.
    * Default: "(empty)" */
   virtual void setEmptyPlaceholder(const QString rawText = "(empty)");
@@ -51,8 +58,7 @@ protected:
   void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
   void rowsRemoved(const QModelIndex &parent, int start, int end);
   void rowsInserted (const QModelIndex &parent, int start, int end);
-  virtual QString headerText() = 0;
-  virtual QString footerText() = 0;
+  virtual void updateHeaderAndFooterText() = 0;
   virtual QString rowText(int row) = 0;
 
 private:

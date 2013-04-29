@@ -28,8 +28,10 @@ class LIBQTSSUSHARED_EXPORT HtmlTableView : public TextTableView {
 
 public:
   explicit HtmlTableView(QObject *parent = 0);
-  void setTableClass(const QString tableClass) { _tableClass = tableClass; }
-  void setTopLeftHeader(const QString rawHtml) { _topLeftHeader = rawHtml; }
+  void setTableClass(const QString tableClass) {
+    _tableClass = tableClass; updateHeaderAndFooterText(); }
+  void setTopLeftHeader(const QString rawHtml) {
+    _topLeftHeader = rawHtml; updateHeaderAndFooterText(); }
   void setThClassRole(int role) { _thClassRole = role; }
   void setTrClassRole(int role) { _trClassRole = role; }
   void setTdClassRole(int role) { _tdClassRole = role; }
@@ -40,8 +42,10 @@ public:
   void setHtmlPrefixRole(int role) { _htmlPrefixRole = role; }
   /** Suffix with unescaped HTML text, e.g. "<a href='help.html'>help</a>". */
   void setHtmlSuffixRole(int role) { _htmlSuffixRole = role; }
-  void setColumnHeaders(bool set = true) { _columnHeaders = set; }
-  void setRowHeaders(bool set = true) { _rowHeaders = set; }
+  void setColumnHeaders(bool set = true) {
+    _columnHeaders = set; updateHeaderAndFooterText(); }
+  void setRowHeaders(bool set = true) {
+    _rowHeaders = set; updateHeaderAndFooterText(); }
   void setEmptyPlaceholder(const QString rawText);
   void setEllipsePlaceholder(const QString rawText);
   void setRowAnchor(QString prefix = "", int column = 0) {
@@ -50,8 +54,7 @@ public:
   }
 
 protected:
-  QString headerText();
-  QString footerText();
+  void updateHeaderAndFooterText();
   QString rowText(int row);
   Q_DISABLE_COPY(HtmlTableView)
 };

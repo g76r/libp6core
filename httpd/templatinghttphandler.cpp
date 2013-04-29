@@ -25,8 +25,9 @@ TemplatingHttpHandler::TemplatingHttpHandler(
 
 void TemplatingHttpHandler::sendLocalResource(
     HttpRequest req, HttpResponse res, QFile *file,
-    ParamsProvider *values) {
+    ParamsProvider *values, QString scope) {
   Q_UNUSED(req)
+  Q_UNUSED(scope)
   setMimeTypeByName(file->fileName(), res);
   foreach (QString filter, _filters) {
     QRegExp re(filter);
@@ -53,7 +54,7 @@ void TemplatingHttpHandler::sendLocalResource(
           if (label == "view") {
             QWeakPointer<TextView> view = _views.value(data);
             if (view)
-              output.append(view.data()->text());
+              output.append(view.data()->text(values, data));
             else {
               Log::warning() << "TemplatingHttpHandler did not find view '"
                              << data << "' among " << _views.keys();

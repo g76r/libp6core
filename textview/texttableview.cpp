@@ -15,63 +15,53 @@
 //#include "log/log.h"
 
 TextTableView::TextTableView(QObject *parent, int maxrows)
-  : AsyncTextView(parent), _headersAndFootersAlreadyRead(false),
+  : TextView(parent), _headersAndFootersAlreadyRead(false),
     _maxrows(maxrows) {
 }
 
 void TextTableView::setEmptyPlaceholder(const QString rawText) {
   _emptyPlaceholder = rawText;
-  update();
 }
 
 void TextTableView::setEllipsePlaceholder(const QString rawText) {
   _ellipsePlaceholder = rawText;
-  update();
 }
 
 void TextTableView::setModel(QAbstractItemModel *model) {
-  AsyncTextView::setModel(model);
-  layoutChanged();
+  TextView::setModel(model);
   resetAll();
 }
 
-void TextTableView::updateText() {
-  //qDebug() << "TextTableView::updateText";
-  QAbstractItemModel *m = model();
+QString TextTableView::text(ParamsProvider *params, QString scope) const {
+  // TODO provide pages management
+  Q_UNUSED(params)
+  Q_UNUSED(scope)
+  //qDebug() << "TextTableView::text()";
   QString v;
-  if (!_headersAndFootersAlreadyRead) {
-    _header = headerText();
-    _footer = footerText();
-  }
   v.append(_header);
-  if (m) {
-    if (m->rowCount(QModelIndex()) == 0)
-      v.append(_emptyPlaceholder);
-    else {
-      int rows = _rows.size();
-      if (_maxrows > 0 && rows > _maxrows)
-        rows = _maxrows;
-      for (int row = 0; row < rows; ++row)
-        v.append(_rows.at(row));
-      if (_maxrows > 0 && _rows.size() > _maxrows)
-        v.append(_ellipsePlaceholder);
-    }
+  QList<QString> rows = _rows;
+  int rowsCount = rows.size();
+  if (rowsCount == 0)
+    v.append(_emptyPlaceholder);
+  else {
+    if (_maxrows > 0 && rowsCount > _maxrows)
+      rowsCount = _maxrows;
+    for (int row = 0; row < rowsCount; ++row)
+      v.append(rows.at(row));
+    if (_maxrows > 0 && rows.size() > _maxrows)
+      v.append(_ellipsePlaceholder);
   }
   v.append(_footer);
-  _text = v;
+  return v;
 }
 
 void TextTableView::resetAll() {
   //qDebug() << "TextTableView::resetAll";// << objectName();;// << metaObject()->className();
   layoutChanged();
   QAbstractItemModel *m = model();
-  _header = headerText();
-  _footer = footerText();
   _rows.clear();
   if (m && m->rowCount())
     rowsInserted(QModelIndex(), 0, m->rowCount()-1);
-  else
-    update();
 }
 
 void TextTableView::dataChanged(const QModelIndex &topLeft,
@@ -103,7 +93,6 @@ void TextTableView::rowsRemoved(const QModelIndex &parent, int start,
   for (int i = start; i <= end; ++i)
     _rows.removeAt(start);
   // TODO add more rows if maxrows (and insert one more than maxrows if available)
-  update();
 }
 
 void TextTableView::rowsInserted (const QModelIndex &parent, int start,
@@ -116,7 +105,6 @@ void TextTableView::rowsInserted (const QModelIndex &parent, int start,
     end = _maxrows+1; // +1 to have a mean to detect that there are more
   for (int row = start; row <= end; ++row)
     _rows.insert(row, rowText(row));
-  update();
 }
 
 void TextTableView::layoutChanged() {
@@ -129,5 +117,5 @@ void TextTableView::layoutChanged() {
     }
   } else
     _effectiveColumnIndexes.clear();
-  update();
+  updateHeaderAndFooterText();
 }

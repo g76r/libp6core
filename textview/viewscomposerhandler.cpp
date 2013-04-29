@@ -23,6 +23,6 @@ void ViewsComposerHandler::handleRequest(HttpRequest &req, HttpResponse &res) {
   QString s = pageTemplate();
   foreach (QWeakPointer<TextView> view, views())
     if (view)
-      s.arg(view.data()->text());
+      s.arg(view.data()->text(req.paramsAsParamSet(), req.url().path()));
   res.output()->write(s.toUtf8().constData());
 }

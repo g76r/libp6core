@@ -33,7 +33,7 @@ public:
 
 protected:
   void sendLocalResource(HttpRequest req, HttpResponse res, QFile *file,
-                         ParamsProvider *values);
+                         ParamsProvider *values, QString scope);
 };
 
 #endif // TEMPLATINGHTTPHANDLER_H
