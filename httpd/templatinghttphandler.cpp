@@ -60,7 +60,8 @@ void TemplatingHttpHandler::sendLocalResource(
               output.append("?");
             }
           } else if (label == "value") {
-            QString value(values ? values->paramValue(data) : QString());
+            QString value(values ? values->paramValue(data).toString()
+                                 : QString());
             if (!value.isNull())
               output.append(value);
             else {
