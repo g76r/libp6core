@@ -17,7 +17,7 @@
 #include <QVariant>
 #include "libqtssu_global.h"
 
-/** Base class for any class that may provide text parameters.
+/** Base class for any class that may provide key/value parameters.
  * @see ParamSet
  */
 class LIBQTSSUSHARED_EXPORT ParamsProvider {
