@@ -14,9 +14,8 @@
 #include "texttableview.h"
 //#include "log/log.h"
 
-TextTableView::TextTableView(QObject *parent, int maxrows)
-  : TextView(parent), _headersAndFootersAlreadyRead(false),
-    _maxrows(maxrows) {
+TextTableView::TextTableView(QObject *parent, int cachedRows, int rowsPerPage)
+  : TextView(parent), _cachedRows(cachedRows), _rowsPerPage(rowsPerPage) {
 }
 
 void TextTableView::setEmptyPlaceholder(const QString rawText) {
@@ -33,26 +32,37 @@ void TextTableView::setModel(QAbstractItemModel *model) {
 }
 
 QString TextTableView::text(ParamsProvider *params, QString scope) const {
-  // TODO provide pages management
-  Q_UNUSED(params)
-  Q_UNUSED(scope)
-  //qDebug() << "TextTableView::text()";
   QString v;
-  v.append(_header);
   QList<QString> rows = _rows;
   int rowsCount = rows.size();
+  QString pageVariableName(scope.isEmpty() ? "page" : scope+".page");
+  QString pageVariableValue(
+        params ? params->paramValue(pageVariableName).toString() : "disabled");
+  int currentPage = qMax(1, pageVariableValue.toInt());
+  int maxPage = currentPage;
   if (rowsCount == 0)
-    v.append(_emptyPlaceholder);
+    v = _emptyPlaceholder;
   else {
-    if (_maxrows > 0 && rowsCount > _maxrows)
-      rowsCount = _maxrows;
-    for (int row = 0; row < rowsCount; ++row)
+    int min, max;
+    // TODO read uncached data if needed
+    if (_rowsPerPage > 0 && pageVariableValue != "disabled") {
+      maxPage = rowsCount/_rowsPerPage
+          + (rowsCount%_rowsPerPage || !rowsCount ? 1 : 0);
+      if (currentPage > maxPage)
+        currentPage = maxPage;
+      min = _rowsPerPage*(currentPage-1);
+      max = qMin(_rowsPerPage*currentPage, rowsCount)-1;
+    } else {
+      min = 0;
+      max = rowsCount-1;
+    }
+    for (int row = min; row <= max; ++row)
       v.append(rows.at(row));
-    if (_maxrows > 0 && rows.size() > _maxrows)
+    if (maxPage > currentPage)
       v.append(_ellipsePlaceholder);
   }
-  v.append(_footer);
-  return v;
+  return header(currentPage, maxPage, pageVariableName)
+      +v+footer(currentPage, maxPage, pageVariableName);
 }
 
 void TextTableView::resetAll() {
@@ -101,8 +111,8 @@ void TextTableView::rowsInserted (const QModelIndex &parent, int start,
   QAbstractItemModel *m = model();
   if (parent.isValid() || !m)
     return;
-  if (_maxrows > 0 && end > _maxrows+1)
-    end = _maxrows+1; // +1 to have a mean to detect that there are more
+  if (_cachedRows > 0 && end > _cachedRows)
+    end = _cachedRows;
   for (int row = start; row <= end; ++row)
     _rows.insert(row, rowText(row));
 }
@@ -117,5 +127,21 @@ void TextTableView::layoutChanged() {
     }
   } else
     _effectiveColumnIndexes.clear();
-  updateHeaderAndFooterText();
+  updateHeaderAndFooterCache();
+}
+
+QString TextTableView::header(int currentPage, int lastPage,
+                              QString pageVariableName) const {
+  Q_UNUSED(currentPage)
+  Q_UNUSED(lastPage)
+  Q_UNUSED(pageVariableName)
+  return QString();
+}
+
+QString TextTableView::footer(int currentPage, int lastPage,
+                              QString pageVariableName) const {
+  Q_UNUSED(currentPage)
+  Q_UNUSED(lastPage)
+  Q_UNUSED(pageVariableName)
+  return QString();
 }

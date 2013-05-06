@@ -13,7 +13,9 @@
  */
 #include "htmltableview.h"
 
-HtmlTableView::HtmlTableView(QObject *parent) : TextTableView(parent),
+HtmlTableView::HtmlTableView(QObject *parent, int cachedRows, int rowsPerPage)
+  : TextTableView(parent, cachedRows, rowsPerPage),
+  _pageUrlPrefix("?"),
   _thClassRole(-1), _trClassRole(-1), _tdClassRole(-1), _linkRole(-1),
   _linkClassRole(-1), _htmlPrefixRole(-1), _htmlSuffixRole(-1),
   _rowAnchorColumn(-1),
@@ -42,13 +44,13 @@ void HtmlTableView::setEllipsePlaceholder(const QString rawText) {
           +"</td></tr>\n");
 }
 
-void HtmlTableView::updateHeaderAndFooterText() {
-  QAbstractItemModel *m = model();
+void HtmlTableView::updateHeaderAndFooterCache() {
   QString v;
   if (_tableClass.isEmpty())
-    v.append("<table>\n");
+    v = "<table>\n";
   else
-    v.append(QString("<table class=\"%1\">\n").arg(_tableClass));
+    v = QString("<table class=\"%1\">\n").arg(_tableClass);
+  QAbstractItemModel *m = model();
   if (m) {
     if (_columnHeaders) {
       v.append("<tr>");
@@ -67,10 +69,59 @@ void HtmlTableView::updateHeaderAndFooterText() {
       v.append("</tr>\n");
     }
   }
-  _header = v;
-  _footer = "</table>\n";
+  _tableHeader = v;
 }
 
+inline QString HtmlTableView::pageLink(int page, QString pageVariableName,
+                                       QString pagebarAnchor) const {
+  QString s("<li><a href=\""), n(QString::number(page));
+  s.append(_pageUrlPrefix).append(pageVariableName).append("=").append(n);
+  if (!pagebarAnchor.isEmpty())
+    s.append("&anchor=").append(pagebarAnchor);
+  s.append("\">").append(n).append("</a></li>");
+  return s;
+}
+
+QString HtmlTableView::header(int currentPage, int lastPage,
+                              QString pageVariableName) const {
+  if (currentPage > 1 || currentPage < lastPage) {
+    QString v, pagebarAnchor("pagebar."+pageVariableName);
+    currentPage = qMax(currentPage, 1);
+    v.append("<div class=\"pagination pagination-centered\">"
+             "<a name=\""+pagebarAnchor+"\"></a><ul>");
+    if (currentPage > 1) {
+      v.append(pageLink(1, pageVariableName, pagebarAnchor));
+      if (currentPage > 2) {
+        if (currentPage > 3)
+          v.append("<li class=\"disabled\"><a href=\"#\">...</a></li>");
+        v.append(pageLink(currentPage-1, pageVariableName, pagebarAnchor));
+      }
+    }
+    v.append("<li class=\"active\"><a href=\"#\">"+QString::number(currentPage)
+             +"</a></li>");
+    if (currentPage < lastPage) {
+      v.append(pageLink(currentPage+1, pageVariableName, pagebarAnchor));
+      if (currentPage < lastPage-1) {
+        if (currentPage < lastPage-2)
+          v.append("<li class=\"disabled\"><a href=\"#\">...</a></li>");
+        v.append(pageLink(lastPage, pageVariableName, pagebarAnchor));
+      }
+    }
+    // LATER if (lastPage > 5) add a form to go to any arbitrary page
+    v.append("</ul></div>\n");
+    v.append(_tableHeader);
+    return v;
+  } else
+    return _tableHeader;
+}
+
+QString HtmlTableView::footer(int currentPage, int lastPage,
+                              QString pageVariableName) const {
+  Q_UNUSED(currentPage)
+  Q_UNUSED(lastPage)
+  Q_UNUSED(pageVariableName)
+  return "</table>\n";
+}
 QString HtmlTableView::rowText(int row) {
   QAbstractItemModel *m = model();
   if (!m)

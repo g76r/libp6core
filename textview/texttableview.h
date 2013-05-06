@@ -16,35 +16,55 @@
 
 #include "asynctextview.h"
 
+/** Base class for text table views.
+ * @see HtmlTableView
+ * @see CsvTableView
+ */
 class LIBQTSSUSHARED_EXPORT TextTableView : public TextView {
   Q_OBJECT
-  bool _headersAndFootersAlreadyRead;
-  int _maxrows;
+  int _cachedRows, _rowsPerPage;
   QList<int> _columnIndexes, _effectiveColumnIndexes;
   QList<QString> _rows;
   QString _emptyPlaceholder, _ellipsePlaceholder;
 
-protected:
-  QString _header, _footer;
+public:
+  const static int defaultCachedRows = 100, defaultRowsPerPage = 25;
 
 public:
-  explicit TextTableView(QObject *parent = 0, int maxrows = 100);
+  explicit TextTableView(QObject *parent = 0,
+                         int cachedRows = defaultCachedRows,
+                         int rowsPerPage = defaultRowsPerPage);
+  /** Provide the HTML table view of the model, including headers and footers.
+   * If params is set, param named scope+".page" (or "page" if scope is not set)
+   * is expected to contain either "disabled" or the current page number, e.g.
+   * "42", any unexpected value (e.g. "0", "-37", "foo" or a number > to last
+   * page) will be processed as if it were "1".
+   * If params is not set, page param is assumed to be "disabled".
+   */
   QString text(ParamsProvider *params = 0,
                QString scope = QString()) const;
   inline QString text(ParamSet params, QString scope = QString()) {
     return text(&params, scope); }
-  /** Max number of rows to display. Default is 100. Use INT_MAX if you want
+  /** Max number of rows to display. Default is 100. Use -1 if you want
     * no limit. */
-  void setMaxrows(int maxrows) { _maxrows = maxrows; }
+  void setCachedRows(int cachedRows) { _cachedRows = cachedRows; }
+  /** @see setCachedRows() */
+  int cachedRows() const { return _cachedRows; }
+  /** Max number of rows to display on one page. Default is 25.
+   * Use -1 to disable. */
+  void setRowsPerPage(int rowsPerPage) {
+    _rowsPerPage = rowsPerPage; updateHeaderAndFooterCache(); }
+  /** @see setRowsPerPage() */
+  int rowsPerPage() const { return _rowsPerPage; }
   /** Set model columns to be displayed.
    * Default: all columns */
   void setColumnIndexes(QList<int> columnIndexes = QList<int>()) {
     _columnIndexes = columnIndexes; _effectiveColumnIndexes = columnIndexes;
-    updateHeaderAndFooterText(); }
+    updateHeaderAndFooterCache(); }
   /** Text printed if the table is empty.
    * Default: "(empty)" */
   virtual void setEmptyPlaceholder(const QString rawText = "(empty)");
-  /** Text printed if the table is truncated to maxrows.
+  /** Text printed if the table is truncated.
    * Default: "..." */
   virtual void setEllipsePlaceholder(const QString rawText = "...");
   void setModel(QAbstractItemModel *model);
@@ -58,8 +78,17 @@ protected:
   void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
   void rowsRemoved(const QModelIndex &parent, int start, int end);
   void rowsInserted (const QModelIndex &parent, int start, int end);
-  virtual void updateHeaderAndFooterText() = 0;
+  /** Update cachable (i.e. not page-related) header and footer data */
+  virtual void updateHeaderAndFooterCache() = 0;
   virtual QString rowText(int row) = 0;
+  /** Table header, including optionnal page navigation header.
+   * Default: QString() */
+  virtual QString header(int currentPage, int lastPage,
+                         QString pageVariableName) const;
+  /** Table footer, including optionnal page navigation footer.
+   * Default: QString() */
+  virtual QString footer(int currentPage, int lastPage,
+                         QString pageVariableName) const;
 
 private:
   Q_DISABLE_COPY(TextTableView)

@@ -13,13 +13,13 @@
  */
 #include "csvtableview.h"
 
-CsvTableView::CsvTableView(QObject *parent, int maxrows)
-  : TextTableView(parent, maxrows), _recordSeparator("\n"),
+CsvTableView::CsvTableView(QObject *parent, int cachedRows, int rowsPerPage)
+  : TextTableView(parent, cachedRows, rowsPerPage), _recordSeparator("\n"),
     _fieldSeparator(','), _columnHeaders(true), _rowHeaders(false) {
   updateSpecialChars();
 }
 
-void CsvTableView::updateHeaderAndFooterText() {
+void CsvTableView::updateHeaderAndFooterCache() {
   QAbstractItemModel *m = model();
   QString v;
   if (m && _columnHeaders) {
@@ -33,8 +33,15 @@ void CsvTableView::updateHeaderAndFooterText() {
     }
     v.append(_recordSeparator);
   }
-  _header = v;
-  _footer = QString();
+  _tableHeader = v;
+}
+
+QString CsvTableView::header(int currentPage, int lastPage,
+                             QString pageVariableName) const {
+  Q_UNUSED(currentPage)
+  Q_UNUSED(lastPage)
+  Q_UNUSED(pageVariableName)
+  return _tableHeader;
 }
 
 QString CsvTableView::rowText(int row) {

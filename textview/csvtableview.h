@@ -21,12 +21,14 @@
 // LATER add style options (separators, quotes, indentation string, columns selection, hide non-leaf rows...)
 class LIBQTSSUSHARED_EXPORT CsvTableView : public TextTableView {
   Q_OBJECT
-  QString _topLeftHeader, _recordSeparator, _specialChars;
+  QString _topLeftHeader, _recordSeparator, _specialChars, _tableHeader;
   QChar _fieldSeparator, _fieldQuote, _escapeChar, _replacementChar;
   bool _columnHeaders, _rowHeaders;
 
 public:
-  explicit CsvTableView(QObject *parent = 0, int maxrows = 10000);
+  explicit CsvTableView(QObject *parent = 0,
+                        int cachedRows = defaultCachedRows,
+                        int rowsPerPage = defaultRowsPerPage);
   void setTopLeftHeader(QString rawText) { _topLeftHeader = rawText; }
   /** Default: comma */
   void setFieldSeparator(QChar c = ',');
@@ -56,12 +58,13 @@ public:
   void setRowHeaders(bool set = true) { _rowHeaders = set; }
 
 protected:
-  void updateHeaderAndFooterText();
+  void updateHeaderAndFooterCache();
   QString rowText(int row);
 
 private:
   inline void updateSpecialChars();
   inline QString formatField(QString rawData) const;
+  QString header(int currentPage, int lastPage, QString pageVariableName) const;
   Q_DISABLE_COPY(CsvTableView)
 };
 

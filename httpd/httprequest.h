@@ -29,6 +29,7 @@ class HttpRequestData;
  * very low cost in thread-safe manner, however it cannot be accessed from
  * several threads at a time.
  */
+// LATER implement ParamsProviders, giving either queryItems or cookies values
 class LIBQTSSUSHARED_EXPORT HttpRequest {
 public:
   enum HttpRequestMethod { NONE = 0, HEAD = 1, GET = 2, POST = 4, PUT = 8,

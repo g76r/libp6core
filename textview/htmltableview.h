@@ -21,17 +21,20 @@
 // LATER implement thClassRole and tdClassRole for real
 class LIBQTSSUSHARED_EXPORT HtmlTableView : public TextTableView {
   Q_OBJECT
-  QString _tableClass, _topLeftHeader, _rowAnchorPrefix;
+  QString _tableClass, _topLeftHeader, _rowAnchorPrefix, _tableHeader,
+  _pageUrlPrefix;
   int _thClassRole, _trClassRole, _tdClassRole, _linkRole, _linkClassRole;
   int _htmlPrefixRole, _htmlSuffixRole, _rowAnchorColumn;
   bool _columnHeaders, _rowHeaders;
 
 public:
-  explicit HtmlTableView(QObject *parent = 0);
+  explicit HtmlTableView(QObject *parent = 0,
+                         int cachedRows = defaultCachedRows,
+                         int rowsPerPage = defaultRowsPerPage);
   void setTableClass(const QString tableClass) {
-    _tableClass = tableClass; updateHeaderAndFooterText(); }
+    _tableClass = tableClass; updateHeaderAndFooterCache(); }
   void setTopLeftHeader(const QString rawHtml) {
-    _topLeftHeader = rawHtml; updateHeaderAndFooterText(); }
+    _topLeftHeader = rawHtml; updateHeaderAndFooterCache(); }
   void setThClassRole(int role) { _thClassRole = role; }
   void setTrClassRole(int role) { _trClassRole = role; }
   void setTdClassRole(int role) { _tdClassRole = role; }
@@ -43,19 +46,29 @@ public:
   /** Suffix with unescaped HTML text, e.g. "<a href='help.html'>help</a>". */
   void setHtmlSuffixRole(int role) { _htmlSuffixRole = role; }
   void setColumnHeaders(bool set = true) {
-    _columnHeaders = set; updateHeaderAndFooterText(); }
+    _columnHeaders = set; updateHeaderAndFooterCache(); }
   void setRowHeaders(bool set = true) {
-    _rowHeaders = set; updateHeaderAndFooterText(); }
+    _rowHeaders = set; updateHeaderAndFooterCache(); }
   void setEmptyPlaceholder(const QString rawText);
   void setEllipsePlaceholder(const QString rawText);
   void setRowAnchor(QString prefix = "", int column = 0) {
     _rowAnchorPrefix = prefix;
     _rowAnchorColumn = column;
   }
+  /** Prefix of set page url.
+   * Will be suffixed with e.g. "page=42" "myscope.page=1&anchor=pagebar.foo"
+   * Default: "?" Example: "../setpage?" */
+  void setPageUrlPrefix(QString urlPrefix) { _pageUrlPrefix = urlPrefix; }
 
 protected:
-  void updateHeaderAndFooterText();
+  void updateHeaderAndFooterCache();
   QString rowText(int row);
+  QString header(int currentPage, int lastPage, QString pageVariableName) const;
+  QString footer(int currentPage, int lastPage, QString pageVariableName) const;
+
+private:
+  inline QString pageLink(int page, QString pageVariableName,
+                          QString pagebarAnchor) const;
   Q_DISABLE_COPY(HtmlTableView)
 };
 
