@@ -75,8 +75,11 @@ void Log::log(const QString message, Severity severity, const QString task,
               const QString execId, const QString sourceCode) {
   QDateTime now = QDateTime::currentDateTime();
   QString realTask(task);
-  if (realTask.isNull())
-    realTask = QThread::currentThread()->objectName();
+  if (realTask.isNull()) {
+    QThread *t(QThread::currentThread());
+    if (t)
+      realTask = t->objectName();
+  }
   realTask = realTask.isEmpty() ? "?" : sanitize(realTask);
   QString realExecId = execId.isEmpty() ? "0" : sanitize(execId);
   QString realSourceCode = sourceCode.isEmpty() ? ":" : sanitize(sourceCode);
