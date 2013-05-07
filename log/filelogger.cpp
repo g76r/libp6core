@@ -89,13 +89,13 @@ void FileLogger::doLog(QDateTime timestamp, QString message,
     } //else
       //qDebug() << "opened log file" << _currentPath;
   }
-  QString line = QString("%1 %2/%3 %4 %5 %6")
-      .arg(timestamp.toString("yyyy-MM-ddThh:mm:ss,zzz")).arg(task).arg(execId)
-      .arg(sourceCode).arg(Log::severityToString(severity)).arg(message);
-  //qDebug() << "***log" << line;
   if (_device) {
+    QString line = QString("%1 %2/%3 %4 %5 %6")
+        .arg(timestamp.toString("yyyy-MM-ddThh:mm:ss,zzz")).arg(task)
+        .arg(execId).arg(sourceCode).arg(Log::severityToString(severity))
+        .arg(message).append('\n');
+    //qDebug() << "***log" << line;
     QByteArray ba = line.toUtf8();
-    ba.append("\n");
     if (_device->write(ba) != ba.size()) {
       //qWarning() << "error while writing log:" << _device
       //           << _device->errorString();
