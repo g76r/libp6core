@@ -71,8 +71,9 @@ QString TextMatrixModel::value(const QString row, const QString column) const {
 }
 
 void TextMatrixModel::setCellValue(const QString row, const QString column,
-                               const QString value) {
+                                   const QString value) {
   //Log::fatal() << "TextMatrixModel::setCellValue " << row << " " << column << " " << value;
+  // LATER optimize TextMatrixModel::setCellValue, complexity is O(4n) and should be at most O(log n)
   if (!_rowNames.contains(row)) {
     int pos = _rowNames.size();
     //Log::fatal() << "insert row " << pos << " " << row;
