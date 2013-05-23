@@ -16,6 +16,7 @@
 #include <QDir>
 #include "util/ioutils.h"
 #include <QtDebug>
+#include "util/standardformats.h"
 
 FilesystemHttpHandler::FilesystemHttpHandler(
     QObject *parent, const QString urlPrefix, const QString documentRoot) :
@@ -103,9 +104,12 @@ void FilesystemHttpHandler::sendLocalResource(
   Q_UNUSED(values)
   Q_UNUSED(scope)
   //qDebug() << "success";
-  setMimeTypeByName(file->fileName(), res);
-  res.setContentLength(file->size());
-  IOUtils::copyAll(res.output(), file);
+  QString filename(file->fileName());
+  if (!handleCacheHeadersAndSend304(file, req, res)) {
+    setMimeTypeByName(filename, res);
+    res.setContentLength(file->size());
+    IOUtils::copyAll(res.output(), file);
+  }
 }
 
 void FilesystemHttpHandler::setMimeTypeByName(QString name, HttpResponse res) {
@@ -121,4 +125,32 @@ void FilesystemHttpHandler::setMimeTypeByName(QString name, HttpResponse res) {
       return;
     }
   }
+}
+
+// LATER handle ETag / If-None-Match
+bool FilesystemHttpHandler::handleCacheHeadersAndSend304(
+    QFile *file, HttpRequest req, HttpResponse res) {
+  static QDateTime startTime(QDateTime::currentDateTimeUtc());
+  if (file) {
+    QString filename(file->fileName());
+    QFileInfo info(*file);
+    QDateTime lastModified;
+    if (filename.startsWith("qrc:") || filename.startsWith(":"))
+      lastModified = startTime;
+    else
+      lastModified = info.lastModified();
+    if (lastModified.isValid())
+      res.setHeader("Last-Modified", StandardFormats::toRfc2822DateTime(
+                      lastModified));
+    QDateTime ifModifiedSince(StandardFormats::fromRfc2822DateTime(
+                                req.header("If-Modified-Since")).toUTC());
+    // compare to If-Modified-Since +1" against rounding issues
+    if (ifModifiedSince.isValid() && lastModified.isValid()
+        && lastModified <= ifModifiedSince.addSecs(1)) {
+      res.setStatus(304);
+      return true;
+    }
+    return false;
+  }
+  return false;
 }

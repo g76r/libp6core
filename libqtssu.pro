@@ -63,7 +63,8 @@ SOURCES += \
     textview/csvtableview.cpp \
     textview/texttableview.cpp \
     log/qterrorcodes.cpp \
-    textview/textmatrixmodel.cpp
+    textview/textmatrixmodel.cpp \
+    util/standardformats.cpp
 
 
 HEADERS +=\
@@ -105,7 +106,8 @@ HEADERS +=\
     textview/texttableview.h \
     httpd/httpcommon.h \
     log/qterrorcodes.h \
-    textview/textmatrixmodel.h
+    textview/textmatrixmodel.h \
+    util/standardformats.h
 
 
 unix {

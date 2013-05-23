@@ -63,6 +63,9 @@ protected:
 
 protected:
   void setMimeTypeByName(QString name, HttpResponse res);
+  /** @return true iff 304 was sent */
+  bool handleCacheHeadersAndSend304(QFile *file, HttpRequest req,
+                                    HttpResponse res);
 };
 
 #endif // FILESYSTEMHTTPHANDLER_H

@@ -18,6 +18,7 @@
 #include "log/log.h"
 #include <QSharedData>
 #include <QMultiMap>
+#include "util/standardformats.h"
 
 class HttpResponseData : public QSharedData {
 public:
@@ -120,9 +121,7 @@ void HttpResponse::setCookie(const QString name, const QString value,
   s.append('=');
   s.append(value);
   if (!expires.isNull())
-    s.append("; Expires=")
-        .append(expires.toUTC().toString("ddd, dd MMM yyyy hh:mm:ss"))
-        .append(" GMT");
+    s.append("; Expires=").append(StandardFormats::toRfc2822DateTime(expires));
   if (!path.isEmpty()) {
     if (QRegExp(RFC6265_PATH_VALUE_RE).exactMatch(path))
       s.append("; Path=").append(path);

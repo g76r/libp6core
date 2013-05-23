@@ -88,6 +88,8 @@ void TemplatingHttpHandler::sendLocalResource(
       return;
     }
   }
-  res.setContentLength(file->size());
-  IOUtils::copyAll(res.output(), file);
+  if (!handleCacheHeadersAndSend304(file, req, res)) {
+    res.setContentLength(file->size());
+    IOUtils::copyAll(res.output(), file);
+  }
 }
