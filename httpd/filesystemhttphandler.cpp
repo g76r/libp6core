@@ -138,7 +138,7 @@ bool FilesystemHttpHandler::handleCacheHeadersAndSend304(
     if (filename.startsWith("qrc:") || filename.startsWith(":"))
       lastModified = startTime;
     else
-      lastModified = info.lastModified();
+      lastModified = info.lastModified().toUTC();
     if (lastModified.isValid())
       res.setHeader("Last-Modified", StandardFormats::toRfc2822DateTime(
                       lastModified));

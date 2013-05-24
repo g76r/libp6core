@@ -106,7 +106,6 @@ QString StandardFormats::toRfc2822DateTime(QDateTime dt) {
     return QString();
 }
 
-// FIXME fatal -> debug or QString&
 QDateTime StandardFormats::fromRfc2822DateTime(QString rfc2822DateTime,
                                                QString &errorString) {
   QRegExp re(instance()->_rfc2822DateTime);
@@ -162,7 +161,7 @@ QDateTime StandardFormats::fromRfc2822DateTime(QString rfc2822DateTime,
     tz = re.cap(10).toInt(&ok);
     if (!ok && ((s = re.cap(11)) == "Z" || s == "GMT" || s == "UTC"))
       tz = 0;
-    if (tz < -1200 || tz > 1200) {
+    if (tz < -2400 || tz > 2400) {
       errorString = "invalid rfc2822 timezone: '"+re.cap(9)+"'";
       Log::debug() << errorString;
       return QDateTime();
