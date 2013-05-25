@@ -20,7 +20,9 @@
 
 class StandardFormatsPrivate;
 class StandardFormats;
+#ifdef STANDARDFORMATS_CPP
 static StandardFormats *standardFormatsInstance(void);
+#endif
 
 class LIBQTSSUSHARED_EXPORT StandardFormats {
   friend StandardFormats *standardFormatsInstance(void);
