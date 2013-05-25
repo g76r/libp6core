@@ -221,6 +221,17 @@ QStringList ParamSet::splitAndEvaluate(const QString rawValue,
   return values;
 }
 
+QPair<QString,QString> ParamSet::valueAsStringsPair(
+    const QString key, bool inherit, const ParamsProvider *context) const {
+  static QRegExp whitespace("\\s");
+  QString v = rawValue(key, inherit).trimmed();
+  int i = v.indexOf(whitespace);
+  if (i == -1)
+    return QPair<QString,QString>(v,QString());
+  return QPair<QString,QString>(v.left(i),
+                                evaluate(v.mid(i+1).trimmed(), context));
+}
+
 QString ParamSet::matchingPattern(const QString rawValue) {
   int i = 0;
   QString value, variable;

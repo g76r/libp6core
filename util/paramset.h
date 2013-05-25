@@ -73,6 +73,13 @@ public:
                              bool inherit = true,
                              const ParamsProvider *context = 0) const {
     return splitAndEvaluate(rawValue(key), separator, inherit, context); }
+  /** Return a value splitted at first whitespace. Both strings are trimmed.
+   * E.g. a raw value of "  foo    bar baz  " is returned as a
+   * QPair<>("foo", "bar baz").
+   */
+  QPair<QString,QString> valueAsStringsPair(
+      const QString key, bool inherit = true,
+      const ParamsProvider *context = 0) const;
   /** Syntaxic sugar. */
   inline qlonglong valueAsLong(const QString key, qlonglong defaultValue = 0,
                                bool inherit = true,
