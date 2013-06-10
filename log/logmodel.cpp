@@ -13,6 +13,73 @@
  */
 #include "logmodel.h"
 
+class LogModel::LogEntryData : public QSharedData {
+public:
+  QString _timestamp, _message;
+  Log::Severity _severity;
+  QString _task, _execId, _sourceCode;
+  LogEntryData(QDateTime timestamp, QString message, Log::Severity severity,
+               QString task, QString execId, QString sourceCode)
+    : _timestamp(timestamp.toString("yyyy-MM-dd hh:mm:ss,zzz")),
+      _message(message), _severity(severity), _task(task), _execId(execId),
+      _sourceCode(sourceCode) { }
+  /*
+  LogEntryData(const LogEntryData &o) : QSharedData(), _timestamp(o._timestamp),
+    _message(o._message), _severity(o._severity), _task(o._task),
+    _execId(o._execId), _sourceCode(o._sourceCode) {
+    qDebug() << "LogEntryData::LogEntryData(const LogEntryData&) [copy]";
+  }
+  */
+};
+
+LogModel::LogEntry::LogEntry(QDateTime timestamp, QString message,
+                             Log::Severity severity, QString task,
+                             QString execId, QString sourceCode)
+  : d(new LogEntryData(timestamp, message, severity, task, execId,
+                       sourceCode)) { }
+
+LogModel::LogEntry::LogEntry() {
+}
+
+LogModel::LogEntry::LogEntry(const LogModel::LogEntry &o) : d(o.d) {
+}
+
+LogModel::LogEntry::~LogEntry() {
+}
+
+LogModel::LogEntry &LogModel::LogEntry::operator=(const LogModel::LogEntry &o) {
+  d = o.d;
+  return *this;
+}
+
+QString LogModel::LogEntry::timestamp() const {
+  return d ? d->_timestamp : QString();
+}
+
+QString LogModel::LogEntry::message() const {
+  return d ? d->_message : QString();
+}
+
+Log::Severity LogModel::LogEntry::severity() const {
+  return d ? d->_severity : Log::Debug;
+}
+
+QString LogModel::LogEntry::severityText() const {
+  return Log::severityToString(d ? d->_severity : Log::Debug);
+}
+
+QString LogModel::LogEntry::task() const {
+  return d ? d->_task : QString();
+}
+
+QString LogModel::LogEntry::execId() const {
+  return d ? d->_execId : QString();
+}
+
+QString LogModel::LogEntry::sourceCode() const {
+  return d ? d->_sourceCode : QString();
+}
+
 LogModel::LogModel(QObject *parent, int maxrows) : QAbstractListModel(parent),
   _maxrows(maxrows) {
 }
@@ -31,27 +98,27 @@ int LogModel::columnCount(const QModelIndex &parent) const {
 
 QVariant LogModel::data(const QModelIndex &index, int role) const {
   if (index.isValid() && index.row() >= 0 && index.row() < _log.size()) {
-    const LogEntry &le = _log.at(index.row());
+    LogEntry le = _log[index.row()];
     switch(role) {
     case Qt::DisplayRole:
       switch(index.column()) {
       case 0:
-        return le._timestamp;
+        return le.timestamp();
       case 1:
-        return le._task;
+        return le.task();
       case 2:
-        return le._execId;
+        return le.execId();
       case 3:
-        return le._sourceCode;
+        return le.sourceCode();
       case 4:
-        return le._severityText;
+        return le.severityText();
       case 5:
-        return le._message;
+        return le.message();
       }
       break;
     case HtmlPrefixRole:
       if (index.column() == 5)
-        switch (le._severity) {
+        switch (le.severity()) {
         case Log::Warning:
           return _warningIcon;
         case Log::Error:
@@ -62,7 +129,7 @@ QVariant LogModel::data(const QModelIndex &index, int role) const {
         }
       break;
     case TrClassRole:
-      switch (le._severity) {
+      switch (le.severity()) {
       case Log::Warning:
         return _warningTrClass;
       case Log::Error:

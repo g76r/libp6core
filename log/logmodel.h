@@ -28,19 +28,24 @@ public:
   static const int TrClassRole = Qt::UserRole+1;
 
 private:
-  // LATER LogEntry should be implicitly shared
   // LATER remove old logs too
+  class LogEntryData;
   class LogEntry {
+    QSharedPointer<LogEntryData> d;
   public:
-    QString _timestamp, _message, _severityText;
-    Log::Severity _severity;
-    QString _task, _execId, _sourceCode;
     LogEntry(QDateTime timestamp, QString message, Log::Severity severity,
-             QString task, QString execId, QString sourceCode)
-      : _timestamp(timestamp.toString("yyyy-MM-dd hh:mm:ss,zzz")),
-        _message(message), _severityText(Log::severityToString(severity)),
-        _severity(severity), _task(task), _execId(execId),
-        _sourceCode(sourceCode) { }
+             QString task, QString execId, QString sourceCode);
+    LogEntry();
+    LogEntry(const LogEntry &o);
+    ~LogEntry();
+    LogEntry &operator=(const LogEntry &o);
+    QString timestamp() const;
+    QString message() const;
+    Log::Severity severity() const;
+    QString severityText() const;
+    QString task() const;
+    QString execId() const;
+    QString sourceCode() const;
   };
   QList<LogEntry> _log;
   int _maxrows;
