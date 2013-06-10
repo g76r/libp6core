@@ -111,8 +111,15 @@ public:
                    const QString execId, const QString sourceCode)
     : _data(new LogHelperData(severity, task, execId, sourceCode)) {
   }
-  inline LogHelper(const LogHelper &other) : _data(other._data){
+  // The following copy constructor is needed because static Log::*() methods
+  // return LogHelper by value. It must never be called in another context,
+  // especially because its reference counting is not thread-safe.
+  // Compilers are likely not to use the copy constructor at all, for instance
+  // GCC won't use it but if it is called with -fno-elide-constructors option,
+  // therefore the whole LogHelperData/_ref stuff is most of the time useless.
+  inline LogHelper(const LogHelper &other) : _data(other._data) {
     ++_data->_ref;
+    //qDebug() << "### copying LogHelper" << _data->_ref << _data->_message;
   }
   inline ~LogHelper() {
     if (!--_data->_ref) {
