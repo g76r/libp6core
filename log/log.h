@@ -96,82 +96,77 @@ private:
 };
 
 class LIBQTSSUSHARED_EXPORT LogHelper {
-  class LogHelperData {
-  public:
-    int _ref;
-    Log::Severity _severity;
-    QString _message, _task, _execId, _sourceCode;
-    LogHelperData(Log::Severity severity, const QString task,
-                  const QString execId, const QString sourceCode)
-      : _ref(1), _severity(severity), _task(task), _execId(execId),
-        _sourceCode(sourceCode) { }
-  } *_data;
+  mutable bool _logOnDestroy;
+  Log::Severity _severity;
+  QString _message, _task, _execId, _sourceCode;
+
 public:
   inline LogHelper(Log::Severity severity, const QString task,
                    const QString execId, const QString sourceCode)
-    : _data(new LogHelperData(severity, task, execId, sourceCode)) {
+    : _logOnDestroy(true), _severity(severity), _task(task), _execId(execId),
+      _sourceCode(sourceCode) {
   }
   // The following copy constructor is needed because static Log::*() methods
   // return LogHelper by value. It must never be called in another context,
-  // especially because its reference counting is not thread-safe.
+  // especially because it is not thread-safe.
   // Compilers are likely not to use the copy constructor at all, for instance
-  // GCC won't use it but if it is called with -fno-elide-constructors option,
-  // therefore the whole LogHelperData/_ref stuff is most of the time useless.
-  inline LogHelper(const LogHelper &other) : _data(other._data) {
-    ++_data->_ref;
-    //qDebug() << "### copying LogHelper" << _data->_ref << _data->_message;
+  // GCC won't use it but if it is called with -fno-elide-constructors option.
+  inline LogHelper(const LogHelper &other)
+    : _logOnDestroy(true), _severity(other._severity), _message(other._message),
+      _task(other._task), _execId(other._execId),
+      _sourceCode(other._sourceCode) {
+    other._logOnDestroy = false;
+    //qDebug() << "### copying LogHelper" << _message;
   }
   inline ~LogHelper() {
-    if (!--_data->_ref) {
-      //qDebug() << "***log" << _data->_message;
-      Log::log(_data->_message, _data->_severity, _data->_task, _data->_execId,
-               _data->_sourceCode);
-      delete _data;
+    if (_logOnDestroy) {
+      //qDebug() << "***log" << _message;
+      Log::log(_message, _severity, _task, _execId, _sourceCode);
     }
   }
   inline LogHelper &operator <<(const QString &o) {
-    _data->_message.append(o); return *this; }
+    _message.append(o); return *this; }
   inline LogHelper &operator <<(const QLatin1String &o) {
-    _data->_message.append(o); return *this; }
+    _message.append(o); return *this; }
   inline LogHelper &operator <<(const QStringRef &o) {
-    _data->_message.append(o); return *this; }
+    _message.append(o); return *this; }
   inline LogHelper &operator <<(const QByteArray &o) {
-    _data->_message.append(o); return *this; }
+    _message.append(o); return *this; }
   inline LogHelper &operator <<(const QChar &o) {
-    _data->_message.append(o); return *this; }
+    _message.append(o); return *this; }
   inline LogHelper &operator <<(const char *o) {
-    _data->_message.append(o); return *this; }
+    _message.append(o); return *this; }
   inline LogHelper &operator <<(char o) {
-    _data->_message.append(o); return *this; }
+    _message.append(o); return *this; }
   inline LogHelper &operator <<(qint64 o) {
-    _data->_message.append(QString::number(o)); return *this; }
+    _message.append(QString::number(o)); return *this; }
   inline LogHelper &operator <<(quint64 o) {
-    _data->_message.append(QString::number(o)); return *this; }
+    _message.append(QString::number(o)); return *this; }
   inline LogHelper &operator <<(qint32 o) {
-    _data->_message.append(QString::number(o)); return *this; }
+    _message.append(QString::number(o)); return *this; }
   inline LogHelper &operator <<(quint32 o) {
-    _data->_message.append(QString::number(o)); return *this; }
+    _message.append(QString::number(o)); return *this; }
   inline LogHelper &operator <<(double o) {
-    _data->_message.append(QString::number(o)); return *this; }
+    _message.append(QString::number(o)); return *this; }
   inline LogHelper &operator <<(const QVariant &o) {
-    _data->_message.append(o.toString()); return *this; }
+    _message.append(o.toString()); return *this; }
   inline LogHelper &operator <<(const QStringList &o) {
-    _data->_message.append("{ ");
+    _message.append("{ ");
     foreach (const QString &s, o)
-      _data->_message.append("\"").append(s).append("\" ");
-    _data->_message.append("}");
+      _message.append("\"").append(s).append("\" ");
+    _message.append("}");
     return *this; }
   inline LogHelper &operator <<(const QObject *o) {
     if (o)
-      _data->_message.append(o->objectName()).append("(0x")
+      _message.append(o->objectName()).append("(0x")
           .append(QString::number((quint64)o, 16)).append(")");
     else
-      _data->_message.append("null");
+      _message.append("null");
     return *this; }
   inline LogHelper &operator <<(const QObject &o) {
     return operator <<(&o); }
   inline LogHelper &operator <<(const void *o) {
-    _data->_message.append("0x").append(QString::number((quint64)o, 16));
+    _message.append("0x").append(QString::number((quint64)o, 16));
     return *this; }
 };
 

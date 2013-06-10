@@ -36,8 +36,15 @@ void Log::addLogger(Logger *logger, bool removable) {
   QMutexLocker locker(&_loggersMutex);
   if (logger) {
     logger->_removable = removable;
-    if (_loggers.isEmpty())
-      qInstallMsgHandler(Log::logMessageHandler);
+    // LATER provide an option to enable Qt's standard log interception
+    // drawbacks:
+    // - Qt's log is synchronous (no writer thread) and thus intercepting it
+    //   would change the behavior (log order, even missing log entries on
+    //   crash)
+    // - qFatal() expect the program to write a log and shutdown, which is not
+    //   easy to reproduce here
+    //if (_loggers.isEmpty())
+    //  qInstallMsgHandler(Log::logMessageHandler);
     _loggers.append(logger);
   }
 }
@@ -89,19 +96,25 @@ void Log::log(const QString message, Severity severity, const QString task,
 }
 
 const QString Log::severityToString(Severity severity) {
+  static const QString severityDebug("DEBUG");
+  static const QString severityInfo("INFO");
+  static const QString severityWarning("WARNING");
+  static const QString severityError("ERROR");
+  static const QString severityFatal("FATAL");
+  static const QString severityUnknown("UNKNOWN");
   switch (severity) {
   case Debug:
-    return "DEBUG";
+    return severityDebug;
   case Info:
-    return "INFO";
+    return severityInfo;
   case Warning:
-    return "WARNING";
+    return severityWarning;
   case Error:
-    return "ERROR";
+    return severityError;
   case Fatal:
-    return "FATAL";
+    return severityFatal;
   }
-  return "UNKNOWN";
+  return severityUnknown;
 }
 
 Log::Severity Log::severityFromString(const QString string) {
@@ -124,9 +137,10 @@ Log::Severity Log::severityFromString(const QString string) {
 }
 
 QString Log::sanitize(const QString string) {
+  static const QRegExp whitespace("\\s");
   QString s(string);
   // LATER optimize: avoid using a regexp 3 times per log line
-  s.replace(QRegExp("\\s"), "_");
+  s.replace(whitespace, "_");
   return s;
 }
 
@@ -148,6 +162,7 @@ void Log::logMessageHandler(QtMsgType type, const char *msg) {
 }
 
 QString Log::pathToLastFullestLog() {
+  // LATER avoid locking here whereas right logger won't change often
   QMutexLocker locker(&_loggersMutex);
   int severity = Fatal+1;
   QString path;
@@ -166,6 +181,7 @@ QString Log::pathToLastFullestLog() {
 }
 
 QStringList Log::pathsToFullestLogs() {
+  // LATER avoid locking here whereas right logger won't change often
   QMutexLocker locker(&_loggersMutex);
   int severity = Fatal+1;
   QString path;
@@ -185,6 +201,7 @@ QStringList Log::pathsToFullestLogs() {
 }
 
 QStringList Log::pathsToAllLogs() {
+  // LATER avoid locking here whereas loggers list won't change often
   QMutexLocker locker(&_loggersMutex);
   QStringList paths;
   foreach(Logger *logger, _loggers) {
