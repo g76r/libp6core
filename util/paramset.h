@@ -22,6 +22,9 @@
 
 class ParamSetData;
 
+/** String key-value parameter set with inheritance, substitution macro-language
+ * and syntaxic sugar for converting values to non-string types.
+ */
 class LIBQTSSUSHARED_EXPORT ParamSet : public ParamsProvider {
   QSharedDataPointer<ParamSetData> d;
   ParamSet(ParamSetData *data);

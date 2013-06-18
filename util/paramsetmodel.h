@@ -17,8 +17,14 @@
 #include <QAbstractListModel>
 #include "util/paramset.h"
 
+/** Model to display a ParamSet into a View.
+ * @see ParamSet
+ * @see QAbstractItemModel
+ */
 class LIBQTSSUSHARED_EXPORT ParamSetModel : public QAbstractListModel {
   Q_OBJECT
+  Q_DISABLE_COPY(ParamSetModel)
+
   ParamSet _params;
   QStringList _keys;
   bool _inherit, _evaluate;
@@ -32,6 +38,7 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
 public slots:
+  /** Must be signaled each time the ParamSet data changes. */
   void paramsChanged(ParamSet params);
 };
 

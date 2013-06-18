@@ -31,6 +31,9 @@
  */
 class LIBQTSSUSHARED_EXPORT HttpHandler : public QObject {
   Q_OBJECT
+  Q_DISABLE_COPY(HttpHandler)
+  // LATER give handlers their own threads and make server and handler threads exchange signals
+
 public:
   inline HttpHandler(QObject *parent = 0) : QObject(parent) { }
   virtual QString name() const = 0;
@@ -40,10 +43,6 @@ public:
   /** Handle the request.
    * Thread-safe (called by several HttpWorker threads at the same time). */
   virtual void handleRequest(HttpRequest req, HttpResponse res) = 0;
-
-private:
-  Q_DISABLE_COPY(HttpHandler)
-  // LATER give handlers their own threads and make server and handler threads exchange signals
 };
 
 #endif // HTTPHANDLER_H

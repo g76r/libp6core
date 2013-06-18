@@ -22,6 +22,7 @@ class QTcpSocket;
 
 class LIBQTSSUSHARED_EXPORT HttpWorker : public QObject {
   Q_OBJECT
+  Q_DISABLE_COPY(HttpWorker)
   HttpServer *_server;
   QThread *_thread;
 
@@ -33,9 +34,6 @@ public slots:
 
 signals:
   void connectionHandled(HttpWorker *worker);
-
-private:
-  Q_DISABLE_COPY(HttpWorker)
 };
 
 #endif // HTTPWORKER_H

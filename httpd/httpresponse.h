@@ -25,8 +25,8 @@ class HttpResponseData;
 
 /** Class holding all information and actions about the response to an incoming
  * HTTP request.
- * This class uses Qt explicit sharing idioms, i.e. it can be copied for a
- * very low cost in thread-safe manner, however it cannot be accessed from
+ * This class uses Qt explicit sharing idiom, i.e. it can be copied for a
+ * very low cost in thread-safe manner, however it must not be accessed from
  * several threads at a time.
  */
 class LIBQTSSUSHARED_EXPORT HttpResponse {

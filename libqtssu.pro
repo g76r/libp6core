@@ -38,7 +38,6 @@ SOURCES += \
     thread/periodictaskthread.cpp \
     thread/periodictask.cpp \
     thread/blockingtimer.cpp \
-    textview/viewscomposerhandler.cpp \
     textview/htmltableview.cpp \
     textview/textview.cpp \
     textview/asynctextview.cpp \
@@ -80,7 +79,6 @@ HEADERS +=\
     thread/periodictaskthread.h \
     thread/periodictask.h \
     thread/blockingtimer.h \
-    textview/viewscomposerhandler.h \
     textview/htmltableview.h \
     textview/textview.h \
     textview/asynctextview.h \

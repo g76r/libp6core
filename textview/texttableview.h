@@ -22,6 +22,8 @@
  */
 class LIBQTSSUSHARED_EXPORT TextTableView : public TextView {
   Q_OBJECT
+  Q_DISABLE_COPY(TextTableView)
+
   int _cachedRows, _rowsPerPage;
   QList<int> _columnIndexes, _effectiveColumnIndexes;
   QList<QString> _rows;
@@ -82,16 +84,15 @@ protected:
   virtual void updateHeaderAndFooterCache() = 0;
   virtual QString rowText(int row) = 0;
   /** Table header, including optionnal page navigation header.
+   * This method implementation must be thread-safe.
    * Default: QString() */
   virtual QString header(int currentPage, int lastPage,
                          QString pageVariableName) const;
   /** Table footer, including optionnal page navigation footer.
+   * This method implementation must be thread-safe.
    * Default: QString() */
   virtual QString footer(int currentPage, int lastPage,
                          QString pageVariableName) const;
-
-private:
-  Q_DISABLE_COPY(TextTableView)
 };
 
 #endif // TEXTTABLEVIEW_H

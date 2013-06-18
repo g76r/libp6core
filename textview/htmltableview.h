@@ -21,6 +21,8 @@
 // LATER implement thClassRole and tdClassRole for real
 class LIBQTSSUSHARED_EXPORT HtmlTableView : public TextTableView {
   Q_OBJECT
+  Q_DISABLE_COPY(HtmlTableView)
+
   QString _tableClass, _topLeftHeader, _rowAnchorPrefix, _tableHeader,
   _pageUrlPrefix;
   int _thClassRole, _trClassRole, _tdClassRole, _linkRole, _linkClassRole;
@@ -69,7 +71,6 @@ protected:
 private:
   inline QString pageLink(int page, QString pageVariableName,
                           QString pagebarAnchor) const;
-  Q_DISABLE_COPY(HtmlTableView)
 };
 
 #endif // HTMLTABLEVIEW_H

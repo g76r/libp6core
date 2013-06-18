@@ -4,3 +4,4 @@ moc_*.cpp
 /Makefile
 /*libqtssu.so*
 /TODO
+.rsync-filter

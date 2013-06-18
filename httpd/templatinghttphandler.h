@@ -18,11 +18,20 @@
 #include "textview/textview.h"
 #include <QWeakPointer>
 
+/** HttpHandler which serves filesystem or Qt resources files parsing some of
+ * them for special markups such as <?value:foo?> or <?view:bar?> to replace
+ * these markups with dynamic content.
+ * Files to be parsed must be declared first, e.g. with addFilter("\\.html$").
+ * Views are permanent objects registred through addView() whereas values are
+ * request-time data avalaible through a ParamsProvider.
+ */
 class LIBQTSSUSHARED_EXPORT TemplatingHttpHandler
     : public FilesystemHttpHandler {
   Q_OBJECT
+  Q_DISABLE_COPY(TemplatingHttpHandler)
   QHash<QString,QWeakPointer<TextView> > _views;
   QSet<QString> _filters;
+
 public:
   explicit TemplatingHttpHandler(QObject *parent = 0,
                                  const QString urlPrefix = "",

@@ -25,8 +25,8 @@ class LIBQTSSUSHARED_EXPORT MailSender {
   QUrl _url;
 
 public:
-  MailSender(const QUrl &url);
-  MailSender(const QString &url);
+  explicit MailSender(const QUrl &url);
+  explicit MailSender(const QString &url);
   /** @return true only if SMTP server accepted to queue the mail */
   bool send(const QString sender, const QList<QString> recipients,
             const QVariant body, const QHash<QString, QString> headers,

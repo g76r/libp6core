@@ -17,8 +17,11 @@
 #include "httphandler.h"
 #include "httprequest.h"
 
+/** Base class that only accept requests which path begins with a given prefix.
+ */
 class LIBQTSSUSHARED_EXPORT UriPrefixHandler : public HttpHandler {
   Q_OBJECT
+  Q_DISABLE_COPY(UriPrefixHandler)
   QString _prefix;
   int _allowedMethods;
 
