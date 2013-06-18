@@ -26,9 +26,10 @@ class QFile;
  */
 class LIBQTSSUSHARED_EXPORT FilesystemHttpHandler : public HttpHandler {
   Q_OBJECT
+  Q_DISABLE_COPY(FilesystemHttpHandler)
   QString _urlPrefix, _documentRoot;
   QStringList _directoryIndex;
-  QList<QPair<QString,QString> > _mimeTypes;
+  QList<QPair<QRegExp,QString> > _mimeTypes;
 
 public:
   explicit FilesystemHttpHandler(QObject *parent = 0,
@@ -46,10 +47,12 @@ public:
     _directoryIndex.prepend(index); }
   void clearDirectoryIndex() { _directoryIndex.clear(); }
   QString name() const;
-  void appendMimeTypes(const QString pattern, const QString contentType) {
-    _mimeTypes.append(qMakePair(pattern, contentType)); }
-  void prependMimeTypes(const QString pattern, const QString contentType) {
-    _mimeTypes.prepend(qMakePair(pattern, contentType)); }
+  void appendMimeType(const QString pattern, const QString contentType) {
+    _mimeTypes.append(qMakePair(QRegExp(pattern, Qt::CaseInsensitive),
+                                contentType)); }
+  void prependMimeType(const QString pattern, const QString contentType) {
+    _mimeTypes.prepend(qMakePair(QRegExp(pattern, Qt::CaseInsensitive),
+                                 contentType)); }
   void clearMimeTypes() { _mimeTypes.clear(); }
   bool acceptRequest(HttpRequest req);
   void handleRequest(HttpRequest req, HttpResponse res);

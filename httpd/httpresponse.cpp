@@ -26,11 +26,11 @@ public:
   int _status;
   bool _headersSent;
   QMultiMap<QString,QString> _headers;
-  HttpResponseData(QAbstractSocket *output = 0) : _output(output),
+  explicit HttpResponseData(QAbstractSocket *output) : _output(output),
     _status(200), _headersSent(false) { }
-  HttpResponseData(const HttpResponseData &other) : QSharedData(),
+  /*HttpResponseData(const HttpResponseData &other) : QSharedData(),
     _output(other._output), _status(other._status),
-    _headersSent(other._headersSent), _headers(other._headers) { }
+    _headersSent(other._headersSent), _headers(other._headers) { }*/
 };
 
 HttpResponse::HttpResponse(QAbstractSocket *output)
@@ -95,6 +95,8 @@ void HttpResponse::addHeader(const QString name, const QString value) {
 }
 
 void HttpResponse::redirect(const QString location) {
+  if (!d)
+    return;
   setStatus(302);
   setHeader("Location", location);
   setContentType("text/html;charset=UTF-8");
@@ -106,13 +108,16 @@ void HttpResponse::redirect(const QString location) {
 void HttpResponse::setCookie(const QString name, const QString value,
                              const QDateTime expires, const QString path,
                              const QString domain, bool secure, bool httponly) {
-  // LATER enhance regexp performance
-  if (!QRegExp(RFC2616_TOKEN_OCTET_RE "+").exactMatch(name)) {
+  static const QRegExp nameRegexp(RFC2616_TOKEN_OCTET_RE "+");
+  static const QRegExp valueRegexp(RFC6265_COOKIE_OCTET_RE "*");
+  static const QRegExp pathRegexp(RFC6265_PATH_VALUE_RE);
+  static const QRegExp domainRegexp(INTERNET_DOMAIN_RE);
+  if (!QRegExp(nameRegexp).exactMatch(name)) {
     Log::warning() << "HttpResponse: incorrect name when setting cookie: "
                    << name;
     return;
   }
-  if (!QRegExp(RFC6265_COOKIE_OCTET_RE "*").exactMatch(value)) {
+  if (!QRegExp(valueRegexp).exactMatch(value)) {
     Log::warning() << "HttpResponse: incorrect value when setting cookie: "
                    << value;
     return;
@@ -123,7 +128,7 @@ void HttpResponse::setCookie(const QString name, const QString value,
   if (!expires.isNull())
     s.append("; Expires=").append(StandardFormats::toRfc2822DateTime(expires));
   if (!path.isEmpty()) {
-    if (QRegExp(RFC6265_PATH_VALUE_RE).exactMatch(path))
+    if (QRegExp(pathRegexp).exactMatch(path))
       s.append("; Path=").append(path);
     else {
       Log::warning() << "HttpResponse: incorrect path when setting cookie: "
@@ -132,7 +137,7 @@ void HttpResponse::setCookie(const QString name, const QString value,
     }
   }
   if (!domain.isEmpty()) {
-    if (QRegExp(INTERNET_DOMAIN_RE).exactMatch(domain))
+    if (QRegExp(domainRegexp).exactMatch(domain))
       s.append("; Domain=").append(domain);
     else {
       Log::warning() << "HttpResponse: incorrect domain when setting cookie: "

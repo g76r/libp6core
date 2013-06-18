@@ -22,23 +22,23 @@ FilesystemHttpHandler::FilesystemHttpHandler(
     QObject *parent, const QString urlPrefix, const QString documentRoot) :
   HttpHandler(parent), _urlPrefix(urlPrefix), _documentRoot(documentRoot) {
   appendDirectoryIndex("index.html");
-  appendMimeTypes("\\.html$", "text/html;charset=UTF-8");
-  appendMimeTypes("\\.js$", "application/javascript");
-  appendMimeTypes("\\.css$", "text/css");
-  appendMimeTypes("\\.png$", "image/png");
-  appendMimeTypes("\\.jpeg$", "image/jpeg");
-  appendMimeTypes("\\.svg$", "image/svg+xml");
-  appendMimeTypes("\\.tiff$", "image/tiff");
-  appendMimeTypes("\\.csv$", "text/csv");
-  appendMimeTypes("\\.pdf$", "application/pdf");
-  appendMimeTypes("\\.json$", "application/json");
-  appendMimeTypes("\\.xml$", "application/xml");
-  appendMimeTypes("\\.zip$", "application/zip");
-  appendMimeTypes("\\.gz$", "application/gzip");
-  appendMimeTypes("\\.htm$", "text/html;charset=UTF-8");
-  appendMimeTypes("\\.jpg$", "image/jpeg");
-  appendMimeTypes("\\.gif$", "image/gif");
-  appendMimeTypes("\\.ico$", "image/vnd.microsoft.icon");
+  appendMimeType("\\.html$", "text/html;charset=UTF-8");
+  appendMimeType("\\.js$", "application/javascript");
+  appendMimeType("\\.css$", "text/css");
+  appendMimeType("\\.png$", "image/png");
+  appendMimeType("\\.jpeg$", "image/jpeg");
+  appendMimeType("\\.svg$", "image/svg+xml");
+  appendMimeType("\\.tiff$", "image/tiff");
+  appendMimeType("\\.csv$", "text/csv");
+  appendMimeType("\\.pdf$", "application/pdf");
+  appendMimeType("\\.json$", "application/json");
+  appendMimeType("\\.xml$", "application/xml");
+  appendMimeType("\\.zip$", "application/zip");
+  appendMimeType("\\.gz$", "application/gzip");
+  appendMimeType("\\.htm$", "text/html;charset=UTF-8");
+  appendMimeType("\\.jpg$", "image/jpeg");
+  appendMimeType("\\.gif$", "image/gif");
+  appendMimeType("\\.ico$", "image/vnd.microsoft.icon");
 }
 
 QString FilesystemHttpHandler::name() const {
@@ -114,10 +114,10 @@ void FilesystemHttpHandler::sendLocalResource(
 
 void FilesystemHttpHandler::setMimeTypeByName(QString name, HttpResponse res) {
   // LATER check if performance can be enhanced (regexp)
-  typedef QPair<QString,QString> QStringQString;
+  typedef QPair<QRegExp,QString> QRegExpQString;
   //qDebug() << "setMimeTypeByName" << name;
-  foreach (QStringQString pair, _mimeTypes) {
-    QRegExp re(pair.first, Qt::CaseInsensitive);
+  foreach (QRegExpQString pair, _mimeTypes) {
+    QRegExp re(pair.first);
     //qDebug() << "check" << pair.first;
     if (re.indexIn(name) >= 0) {
       //qDebug() << "match" << pair.second;

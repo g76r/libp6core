@@ -24,11 +24,11 @@ public:
   QMultiMap<QString,QString> _headers;
   QHash<QString,QString> _cookies, _paramsCache;
   QUrl _url;
-  HttpRequestData(QAbstractSocket *input = 0)  : _input(input),
+  explicit HttpRequestData(QAbstractSocket *input)  : _input(input),
     _method(HttpRequest::NONE) { }
-  HttpRequestData(const HttpRequestData &other) : QSharedData(),
+  /*HttpRequestData(const HttpRequestData &other) : QSharedData(),
     _input(other._input), _method(other._method), _headers(other._headers),
-    _cookies(other._cookies), _url(other._url) { }
+    _cookies(other._cookies), _url(other._url) { }*/
 };
 
 HttpRequest::HttpRequest(QAbstractSocket *input)
@@ -93,12 +93,13 @@ bool HttpRequest::parseAndAddHeader(const QString rawHeader) {
 
 void HttpRequest::parseAndAddCookie(const QString rawHeaderValue) {
   // LATER ensure that utf8 is supported as specified in RFC6265
-  // LATER enhance regexp performance
   if (!d)
     return;
-  QRegExp re("\\s*;?\\s*(" RFC2616_TOKEN_OCTET_RE "*)\\s*=\\s*(("
-             RFC6265_COOKIE_OCTET_RE "*|\"" RFC6265_COOKIE_OCTET_RE
-             "+\"))\\s*;?\\s*");
+  static const QRegExp cookieHeaderValue(
+        "\\s*;?\\s*(" RFC2616_TOKEN_OCTET_RE "*)\\s*=\\s*(("
+        RFC6265_COOKIE_OCTET_RE "*|\"" RFC6265_COOKIE_OCTET_RE
+        "+\"))\\s*;?\\s*");
+  QRegExp re(cookieHeaderValue);
   int pos = 0;
   //qDebug() << "parseAndAddCookie" << rawHeaderValue;
   while ((re.indexIn(rawHeaderValue, pos)) != -1) {
