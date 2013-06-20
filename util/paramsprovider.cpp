@@ -13,8 +13,5 @@
  */
 #include "paramsprovider.h"
 
-ParamsProvider::ParamsProvider() {
-}
-
 ParamsProvider::~ParamsProvider() {
 }
