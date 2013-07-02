@@ -20,6 +20,7 @@ INCLUDEPATH = ..
 DEFINES += LIBQTPF_LIBRARY
 
 QMAKE_CXXFLAGS += -Wextra
+unix:debug:QMAKE_CXXFLAGS += -ggdb
 unix {
   OBJECTS_DIR = ../pfsql-build-unix/obj
   RCC_DIR = ../pfsql-build-unix/rcc
