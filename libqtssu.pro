@@ -20,6 +20,7 @@ TEMPLATE = lib
 DEFINES += LIBQTSSU_LIBRARY
 
 QMAKE_CXXFLAGS += -Wextra
+unix:debug:QMAKE_CXXFLAGS += -ggdb
 unix {
   OBJECTS_DIR = ../ssu-build-unix/obj
   RCC_DIR = ../ssu-build-unix/rcc
