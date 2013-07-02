@@ -61,6 +61,11 @@ void TextView::setModel(QAbstractItemModel *model) {
             this, SLOT(columnsRemoved(QModelIndex,int,int)));
     connect(m, SIGNAL(columnsMoved(const QModelIndex&,int,int,const QModelIndex&,int)),
             this, SLOT(columnsMoved(QModelIndex,int,int,QModelIndex,int)));
+    setObjectName(QString("view on %1::%2")
+                  .arg(model->metaObject()->className())
+                  .arg(model->objectName()));
+  } else {
+    setObjectName(QString());
   }
   _model = model;
   emit modelChanged();
