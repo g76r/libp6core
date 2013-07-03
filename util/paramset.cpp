@@ -20,7 +20,7 @@
 
 class ParamSetData : public QSharedData {
 public:
-  QSharedDataPointer<ParamSetData> _parent;
+  ParamSet _parent;
   QHash<QString,QString> _params;
   ParamSetData() { }
   ParamSetData(QHash<QString,QString> params) : _params(params) { }
@@ -32,9 +32,6 @@ ParamSet::ParamSet() {
 }
 
 ParamSet::ParamSet(const ParamSet &other) : d(other.d) {
-}
-
-ParamSet::ParamSet(ParamSetData *data) : d(data) {
 }
 
 ParamSet::ParamSet(QHash<QString,QString> params)
@@ -55,20 +52,14 @@ ParamSet &ParamSet::operator =(const ParamSet &other) {
   return *this;
 }
 
-const ParamSet ParamSet::parent() const {
-  return d ? ParamSet(const_cast<QSharedDataPointer<ParamSetData>&>(
-                        d.constData()->_parent))
-           : ParamSet();
-}
-
-ParamSet ParamSet::parent() {
-  return d ? ParamSet(d->_parent) : ParamSet();
+ParamSet ParamSet::parent() const {
+  return d ? d->_parent : ParamSet();
 }
 
 void ParamSet::setParent(ParamSet parent) {
   if (!d)
     d = new ParamSetData();
-  d->_parent = parent.d;
+  d->_parent = parent;
 }
 
 void ParamSet::setValue(const QString key, const QString value) {
@@ -155,18 +146,16 @@ void ParamSet::appendVariableValue(QString &value, QString &variable,
   } else {
     const QString v = this->rawValue(variable, inherit);
     if (v.isNull()) {
-      Log::debug() << "in paramset " << toString(false) << " " << d.constData()
-                   << " parent " << parent().toString(false) << " "
-                   << parent().d.constData();
       Log::debug() << "unsupported variable substitution: variable not found: "
-                      "%{" << variable << "}";
+                      "%{" << variable << "} in paramset " << toString(false)
+                   << " " << d.constData() << " parent "
+                   << parent().toString(false);
     }
     else
       value.append(v);
   }
   variable.clear();
 }
-
 
 QStringList ParamSet::splitAndEvaluate(const QString rawValue,
                                        const QString separator,

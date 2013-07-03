@@ -27,7 +27,6 @@ class ParamSetData;
  */
 class LIBQTSSUSHARED_EXPORT ParamSet : public ParamsProvider {
   QSharedDataPointer<ParamSetData> d;
-  ParamSet(ParamSetData *data);
 public:
   ParamSet();
   ParamSet(const ParamSet &other);
@@ -36,8 +35,7 @@ public:
   explicit ParamSet(QMap<QString,QString> params);
   ~ParamSet();
   ParamSet &operator =(const ParamSet &other);
-  const ParamSet parent() const;
-  ParamSet parent();
+  ParamSet parent() const;
   void setParent(ParamSet parent);
   void setValue(const QString key, const QString value);
   void clear();
