@@ -28,9 +28,6 @@ public:
   QMultiMap<QString,QString> _headers;
   explicit HttpResponseData(QAbstractSocket *output) : _output(output),
     _status(200), _headersSent(false) { }
-  /*HttpResponseData(const HttpResponseData &other) : QSharedData(),
-    _output(other._output), _status(other._status),
-    _headersSent(other._headersSent), _headers(other._headers) { }*/
 };
 
 HttpResponse::HttpResponse(QAbstractSocket *output)

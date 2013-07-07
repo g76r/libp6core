@@ -17,6 +17,7 @@
 
 #define COLUMNS 2
 
+// LATER provide a 3-column mode with 3rd column displaying "", "inherited" or "overrided"
 ParamSetModel::ParamSetModel(QObject *parent, bool inherit, bool evaluate)
   : QAbstractListModel(parent), _inherit(inherit), _evaluate(evaluate) {
 }

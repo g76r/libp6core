@@ -22,7 +22,6 @@
  */
 class LIBQTSSUSHARED_EXPORT ParamsProvider {
 public:
-  ParamsProvider() { }
   virtual ~ParamsProvider();
   /** Return a parameter value. */
   virtual QVariant paramValue(

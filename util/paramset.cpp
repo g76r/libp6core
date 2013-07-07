@@ -24,8 +24,6 @@ public:
   QHash<QString,QString> _params;
   ParamSetData() { }
   ParamSetData(QHash<QString,QString> params) : _params(params) { }
-  /*ParamSetData(const ParamSetData &other) : QSharedData(),
-    _parent(other._parent), _params(other._params) { }*/
 };
 
 ParamSet::ParamSet() {

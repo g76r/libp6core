@@ -19,8 +19,8 @@
 
 /** Asynchronously updating and caching base class for text views.
  * In many cases this is not the more efficient way to manage text views in
- * terms of computing resources, however this is a way very consistent with
- * GUI-oriented views.
+ * terms of computing resources (roughtly: when data changes more often than
+ * it is viewed), however this way is very consistent with GUI-oriented views.
  * Cache last rendered text string and calls updateText() on model updates.
  * Calls updateText() only once per event loop iteration regardless the number
  * of times update() was called, like QWidget::update() does.

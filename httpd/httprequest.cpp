@@ -24,11 +24,8 @@ public:
   QMultiMap<QString,QString> _headers;
   QHash<QString,QString> _cookies, _paramsCache;
   QUrl _url;
-  explicit HttpRequestData(QAbstractSocket *input)  : _input(input),
+  explicit HttpRequestData(QAbstractSocket *input) : _input(input),
     _method(HttpRequest::NONE) { }
-  /*HttpRequestData(const HttpRequestData &other) : QSharedData(),
-    _input(other._input), _method(other._method), _headers(other._headers),
-    _cookies(other._cookies), _url(other._url) { }*/
 };
 
 HttpRequest::HttpRequest(QAbstractSocket *input)

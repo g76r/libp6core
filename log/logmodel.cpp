@@ -23,13 +23,6 @@ public:
     : _timestamp(timestamp.toString("yyyy-MM-dd hh:mm:ss,zzz")),
       _message(message), _severity(severity), _task(task), _execId(execId),
       _sourceCode(sourceCode) { }
-  /*
-  LogEntryData(const LogEntryData &o) : QSharedData(), _timestamp(o._timestamp),
-    _message(o._message), _severity(o._severity), _task(o._task),
-    _execId(o._execId), _sourceCode(o._sourceCode) {
-    qDebug() << "LogEntryData::LogEntryData(const LogEntryData&) [copy]";
-  }
-  */
 };
 
 LogModel::LogEntry::LogEntry(QDateTime timestamp, QString message,
