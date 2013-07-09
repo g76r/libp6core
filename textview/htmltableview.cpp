@@ -93,8 +93,6 @@ QString HtmlTableView::pagebar(
     if (defineAnchor)
       v.append("<a name=\""+pagebarAnchor+"\"></a>");
     v.append("<ul>");
-    v.append("<div class=\"pagination pagination-centered\">"
-             "<a name=\""+pagebarAnchor+"\"></a><ul>");
     if (currentPage > 1) {
       v.append(pageLink(1, pageVariableName, pagebarAnchor));
       if (currentPage > 2) {
