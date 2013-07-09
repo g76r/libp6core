@@ -71,6 +71,8 @@ protected:
 private:
   inline QString pageLink(int page, QString pageVariableName,
                           QString pagebarAnchor) const;
+  QString pagebar(int currentPage, int lastPage,
+                  QString pageVariableName, bool defineAnchor) const;
 };
 
 #endif // HTMLTABLEVIEW_H

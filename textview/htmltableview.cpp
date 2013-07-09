@@ -72,8 +72,8 @@ void HtmlTableView::updateHeaderAndFooterCache() {
   _tableHeader = v;
 }
 
-inline QString HtmlTableView::pageLink(int page, QString pageVariableName,
-                                       QString pagebarAnchor) const {
+QString HtmlTableView::pageLink(int page, QString pageVariableName,
+                                QString pagebarAnchor) const {
   QString s("<li><a href=\""), n(QString::number(page));
   s.append(_pageUrlPrefix).append(pageVariableName).append("=").append(n);
   if (!pagebarAnchor.isEmpty())
@@ -82,11 +82,17 @@ inline QString HtmlTableView::pageLink(int page, QString pageVariableName,
   return s;
 }
 
-QString HtmlTableView::header(int currentPage, int lastPage,
-                              QString pageVariableName) const {
+QString HtmlTableView::pagebar(
+    int currentPage, int lastPage, QString pageVariableName,
+    bool defineAnchor) const {
+  QString v;
   if (currentPage > 1 || currentPage < lastPage) {
-    QString v, pagebarAnchor("pagebar."+pageVariableName);
+    QString pagebarAnchor("pagebar."+pageVariableName);
     currentPage = qMax(currentPage, 1);
+    v.append("<div class=\"pagination pagination-centered\">");
+    if (defineAnchor)
+      v.append("<a name=\""+pagebarAnchor+"\"></a>");
+    v.append("<ul>");
     v.append("<div class=\"pagination pagination-centered\">"
              "<a name=\""+pagebarAnchor+"\"></a><ul>");
     if (currentPage > 1) {
@@ -109,18 +115,20 @@ QString HtmlTableView::header(int currentPage, int lastPage,
     }
     // LATER if (lastPage > 5) add a form to go to any arbitrary page
     v.append("</ul></div>\n");
-    v.append(_tableHeader);
-    return v;
-  } else
-    return _tableHeader;
+  }
+  return v;
+}
+
+// LATER change the HtmlTableView API to avoid computing pagebar twice per page display
+
+QString HtmlTableView::header(int currentPage, int lastPage,
+                              QString pageVariableName) const {
+  return pagebar(currentPage, lastPage, pageVariableName, true)+_tableHeader;
 }
 
 QString HtmlTableView::footer(int currentPage, int lastPage,
                               QString pageVariableName) const {
-  Q_UNUSED(currentPage)
-  Q_UNUSED(lastPage)
-  Q_UNUSED(pageVariableName)
-  return "</table>\n";
+  return "</table>\n"+pagebar(currentPage, lastPage, pageVariableName, false);
 }
 QString HtmlTableView::rowText(int row) {
   QAbstractItemModel *m = model();
