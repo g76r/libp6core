@@ -30,8 +30,8 @@ class LIBQTSSUSHARED_EXPORT ParamSetModel : public QAbstractListModel {
   bool _inherit, _evaluate;
 
 public:
-  explicit ParamSetModel(QObject *parent = 0, bool inherit = true,
-                         bool evaluate = true);
+  explicit ParamSetModel(QObject *parent = 0, bool inherit = false,
+                         bool evaluate = false);
   int rowCount(const QModelIndex &parent) const;
   int columnCount(const QModelIndex &parent) const;
   QVariant data(const QModelIndex &index, int role) const;
