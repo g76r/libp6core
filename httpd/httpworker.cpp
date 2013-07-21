@@ -25,7 +25,7 @@
 #include "log/log.h"
 
 #define MAXIMUM_LINE_SIZE 65536
-#define MAXIMUM_READ_WAIT 5000
+#define MAXIMUM_READ_WAIT 30000
 #define MAXIMUM_WRITE_WAIT 10000
 
 HttpWorker::HttpWorker(HttpServer *server)
