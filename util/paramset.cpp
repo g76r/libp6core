@@ -90,7 +90,9 @@ QString ParamSet::evaluate(const QString rawValue, bool inherit,
                            const ParamsProvider *context) const {
   //Log::debug() << "evaluate " << rawValue << " " << QString::number((qint64)context, 16);
   QStringList values = splitAndEvaluate(rawValue, QString(), inherit, context);
-  return values.isEmpty() ? QString() : values.first();
+  if (values.isEmpty())
+    return rawValue.isNull() ? QString() : "";
+  return values.first();
 }
 
 void ParamSet::appendVariableValue(QString &value, QString &variable,
