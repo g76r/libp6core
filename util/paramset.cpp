@@ -44,7 +44,7 @@ ParamSet::ParamSet(QMap<QString,QString> params) {
 ParamSet::~ParamSet() {
 }
 
-ParamSet &ParamSet::operator =(const ParamSet &other) {
+ParamSet &ParamSet::operator=(const ParamSet &other) {
   if (this != &other)
     d = other.d;
   return *this;
@@ -310,7 +310,7 @@ QDebug operator<<(QDebug dbg, const ParamSet &params) {
   return dbg.space();
 }
 
-LogHelper operator <<(LogHelper lh, const ParamSet &params) {
+LogHelper operator<<(LogHelper lh, const ParamSet &params) {
   lh << "{ ";
   foreach(QString key, params.keys())
     lh << key << "=" << params.value(key) << " ";

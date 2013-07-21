@@ -124,48 +124,48 @@ public:
       Log::log(_message, _severity, _task, _execId, _sourceCode);
     }
   }
-  inline LogHelper &operator <<(const QString &o) {
+  inline LogHelper &operator<<(const QString &o) {
     _message.append(o); return *this; }
-  inline LogHelper &operator <<(const QLatin1String &o) {
+  inline LogHelper &operator<<(const QLatin1String &o) {
     _message.append(o); return *this; }
-  inline LogHelper &operator <<(const QStringRef &o) {
+  inline LogHelper &operator<<(const QStringRef &o) {
     _message.append(o); return *this; }
-  inline LogHelper &operator <<(const QByteArray &o) {
+  inline LogHelper &operator<<(const QByteArray &o) {
     _message.append(o); return *this; }
-  inline LogHelper &operator <<(const QChar &o) {
+  inline LogHelper &operator<<(const QChar &o) {
     _message.append(o); return *this; }
-  inline LogHelper &operator <<(const char *o) {
+  inline LogHelper &operator<<(const char *o) {
     _message.append(o); return *this; }
-  inline LogHelper &operator <<(char o) {
+  inline LogHelper &operator<<(char o) {
     _message.append(o); return *this; }
-  inline LogHelper &operator <<(qint64 o) {
+  inline LogHelper &operator<<(qint64 o) {
     _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator <<(quint64 o) {
+  inline LogHelper &operator<<(quint64 o) {
     _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator <<(qint32 o) {
+  inline LogHelper &operator<<(qint32 o) {
     _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator <<(quint32 o) {
+  inline LogHelper &operator<<(quint32 o) {
     _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator <<(double o) {
+  inline LogHelper &operator<<(double o) {
     _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator <<(const QVariant &o) {
+  inline LogHelper &operator<<(const QVariant &o) {
     _message.append(o.toString()); return *this; }
-  inline LogHelper &operator <<(const QStringList &o) {
+  inline LogHelper &operator<<(const QStringList &o) {
     _message.append("{ ");
     foreach (const QString &s, o)
       _message.append("\"").append(s).append("\" ");
     _message.append("}");
     return *this; }
-  inline LogHelper &operator <<(const QObject *o) {
+  inline LogHelper &operator<<(const QObject *o) {
     if (o)
       _message.append(o->objectName()).append("(0x")
           .append(QString::number((quint64)o, 16)).append(")");
     else
       _message.append("null");
     return *this; }
-  inline LogHelper &operator <<(const QObject &o) {
-    return operator <<(&o); }
-  inline LogHelper &operator <<(const void *o) {
+  inline LogHelper &operator<<(const QObject &o) {
+    return operator<<(&o); }
+  inline LogHelper &operator<<(const void *o) {
     _message.append("0x").append(QString::number((quint64)o, 16));
     return *this; }
 };

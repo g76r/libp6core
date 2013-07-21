@@ -34,7 +34,7 @@ public:
   /** For multi-valued keys, only most recently inserted value is kept. */
   explicit ParamSet(QMap<QString,QString> params);
   ~ParamSet();
-  ParamSet &operator =(const ParamSet &other);
+  ParamSet &operator=(const ParamSet &other);
   ParamSet parent() const;
   void setParent(ParamSet parent);
   void setValue(const QString key, const QString value);
@@ -150,7 +150,7 @@ private:
 
 QDebug LIBQTSSUSHARED_EXPORT operator<<(QDebug dbg, const ParamSet &params);
 
-LogHelper LIBQTSSUSHARED_EXPORT operator <<(LogHelper lh,
+LogHelper LIBQTSSUSHARED_EXPORT operator<<(LogHelper lh,
                                             const ParamSet &params);
 
 #endif // PARAMSET_H
