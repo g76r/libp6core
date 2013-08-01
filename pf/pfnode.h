@@ -22,6 +22,7 @@ under the License.
 #include <QVariant>
 #include <QSharedData>
 #include "pfoptions.h"
+#include <QStringList>
 
 class PfNode;
 
@@ -56,6 +57,7 @@ private:
 
 class LIBQTPFSHARED_EXPORT PfNode {
   friend class PfNodeData;
+  // LATER return PfNode& from currently void-returning inline methods
 private:
   QSharedDataPointer<PfNodeData> d;
 
@@ -74,21 +76,25 @@ public:
 
   inline const QList<PfNode> children() const { return d->_children; }
   inline void appendChild(PfNode child) { d->_children.append(child); }
+  /** @return first text child by name
+   * Most of the time one will use attribute() and xxxAttribute() methods rather
+   * than directly calling firstTextChildByName(). */
+  PfNode firstTextChildByName(QString name) const;
   /** Return a child content knowing the child name.
     * QString() if no text child exists.
     * QString("") if child exists but has no content
     * If several children have the same name the first text one is choosen.
-    * The goal is to emulate XML attributes, hence the name.
-    */
+    * The goal is to emulate XML attributes, hence the name. */
   inline QString attribute(QString name) const {
-    return attribute(name, QString()); }
+    return firstTextChildByName(name).contentAsString(); }
   /** Return a child content knowing the child name.
     * defaultValue if no text child exists.
     * QString("") if child exists but has no content
     * If several children have the same name the first text one is choosen.
-    * The goal is to emulate XML attributes, hence the name.
-    */
-  QString attribute(QString name, QString defaultValue) const;
+    * The goal is to emulate XML attributes, hence the name. */
+  inline QString attribute(QString name, QString defaultValue) const {
+    PfNode child = firstTextChildByName(name);
+    return child.isNull() ? defaultValue : child.contentAsString(); }
   /** Return the content (as string) of every child with a given name.
    * This is the same as attribute() with multi-valued semantics.
    * Skip children with non-text content.
@@ -102,37 +108,46 @@ public:
    * node content (which may be empty) and the second one to QString().
    * If no text child matches the name, the list is empty. */
   QList<QPair<QString,QString> > stringsPairChildrenByName(QString name) const;
-  QList<QPair<QString, qlonglong> > stringLongPairChildrenByName(
+  /** Return the integer content of children, splited into pairs at the
+   * first whitespace, one list item per child.
+   * @see stringsPairChildrenByName() */
+  QList<QPair<QString, qint64> > stringLongPairChildrenByName(
       QString name) const;
-  /** Syntaxic sugar. */
-  qint64 longAttribute(QString name, qint64 defaultValue = 0) const;
-  /** Syntaxic sugar. */
-  double doubleAttribute(QString name, double defaultValue = 0.0) const;
-  // note that there is no boolAttribute() method because hasChild() is enough
+  /** @see contentAsLong() */
+  qint64 longAttribute(QString name, qint64 defaultValue, bool *ok = 0) const {
+    return firstTextChildByName(name).contentAsLong(defaultValue, ok); }
+  /** @see contentAsDouble() */
+  double doubleAttribute(QString name, double defaultValue,
+                         bool *ok = 0) const {
+    return firstTextChildByName(name).contentAsDouble(defaultValue, ok); }
+  // LATER contentAsDateTime()
+  /** @see contentAsBool() */
+  bool boolAttribute(QString name, bool defaultValue = false,
+                     bool *ok = 0) const {
+    return firstTextChildByName(name).contentAsBool(defaultValue, ok); }
+  /** @see contentAsStringList() */
+  QStringList stringListAttribute(QString name) const {
+    return firstTextChildByName(name).contentAsStringList(); }
   /** Set a child named 'name' with 'content' content and remove any other
-    * child named 'name'.
-    */
+    * child named 'name'. */
   void setAttribute(QString name, QString content);
-  /** Convenience method
-    */
+  /** Convenience method */
   inline void setAttribute(QString name, QVariant content) {
-    setAttribute(name, content.toString());
-  }
-  /** Disambiguation method (assume content is UTF-8 encoded)
-    */
+    setAttribute(name, content.toString()); }
+  /** Convenience method (assume content is UTF-8 encoded) */
   inline void setAttribute(QString name, const char *content) {
-    setAttribute(name, QString::fromUtf8(content));
-  }
-  /** Syntaxic sugar. */
-  inline void setAttribute(QString name, qint64 integer) {
-    setAttribute(name, QString::number(integer));
-  }
-  /** Syntaxic sugar. */
-  inline void setAttribute(QString name, double integer) {
-    setAttribute(name, QString::number(integer));
-  }
-  /** Construct a list of all children named 'name'.
-    */
+    setAttribute(name, QString::fromUtf8(content)); }
+  // LATER setAttribute() for QDateTime, QDate, QTime and QList<QString>/QSet<QString>
+  void setAttribute(QString name, QList<QString> content);
+  //  /** Syntaxic sugar. */
+  //  inline void setAttribute(QString name, qint64 integer) {
+  //    setAttribute(name, QString::number(integer));
+  //  }
+  //  /** Syntaxic sugar. */
+  //  inline void setAttribute(QString name, double integer) {
+  //    setAttribute(name, QString::number(integer));
+  //  }
+  /** Construct a list of all children named 'name'. */
   const QList<PfNode> childrenByName(QString name) const;
   bool hasChild(QString name) const;
   bool isLeaf() const { return d->_children.size() == 0; }
@@ -141,73 +156,84 @@ public:
 
   // Content related methods //////////////////////////////////////////////////
 
-  /** @return true when there is no content
-    */
+  /** @return true when there is no content */
   inline bool contentIsEmpty() const { return d->_content.isEmpty(); }
-  /** @return true if the content consist only of text data (no binary or array) or is empty
-    */
+  /** @return true if the content consist only of text data (no binary or
+   * array) or is empty */
   inline bool contentIsText() const { return d->_content.isText(); }
-  /** @return true if the content is (fully or partly) binary data, therefore false when empty
-    */
+  /** @return true if the content is (fully or partly) binary data, therefore
+   * false when empty */
   inline bool contentIsBinary() const { return d->_content.isBinary(); }
   /** @return true if the content is an array
     */
   inline bool contentIsArray() const { return d->_content.isArray(); }
-  /** @return QString() if contentIsBinary() or contentIsArray(), and QString("") if contentIsEmpty()
-    */
+  /** @return QString() if contentIsBinary() or contentIsArray(), and
+   * QString("") if contentIsEmpty() */
   inline QString contentAsString() const { return d->_content.toString(); }
-  /** @return QByteArray() if contentIsEmpty() otherwise raw content (no escape for PF special characters)
-    */
-  inline QByteArray contentAsByteArray() const { return d->_content.toByteArray(); }
-  /** @return PfArray() if not contentIsArray()
-    */
+  /** @return integer value if the string content is a valid C-like integer */
+  qint64 contentAsLong(qint64 defaultValue = 0, bool *ok = 0) const;
+  /** @return decimal value if the string content is a valid E notation number
+   * the implementation does not fully support the PF specications since it
+   * uses QString::toDouble() which relies on the default locale
+   * (QLocale::setDefault()) to define the separators (especially comma versus
+   * period) */
+  double contentAsDouble(double defaultValue = 0.0, bool *ok = 0) const;
+  /** @return bool value if the child string content is a valid boolean
+   * "true" regardless of case and any non null integer are regarded as true
+   * "false" regardless of case and 0 are regarded as false
+   * any other text is regarded as invalid */
+  bool contentAsBool(bool defaultValue = false, bool *ok = 0) const;
+  /** Split text content into strings on whitespace (e.g. "foo bar baz",
+   * "    foo  bar\nbaz" are both interpreted as the same 3 items list).
+   * Whitespace can be escaped with backspaces. Actually backspace must be
+   * doubled since it's already an escape character in PF syntax (e.g.
+   * "foo\\ 1 bar baz" first element is "foo 1"). */
+  QStringList contentAsStringList() const;
+  /** @return QByteArray() if contentIsEmpty() otherwise raw content (no escape
+   * for PF special characters) */
+  inline QByteArray contentAsByteArray() const {
+    return d->_content.toByteArray(); }
+  /** @return PfArray() if not contentIsArray() */
   PfArray contentAsArray() const { return d->_content.array(); }
-  /** Append text fragment to context (and remove array if any).
-    */
+  /** Append text fragment to context (and remove array if any). */
   inline void appendContent(const QString text) { d->_content.append(text); }
-  /** Append text fragment to context (and remove array if any).
-    */
+  /** Append text fragment to context (and remove array if any). */
   inline void appendContent(const char *utf8text) {
     appendContent(QString::fromUtf8(utf8text)); }
-  /** Append in-memory binary fragment to context (and remove array if any).
-    */
+  /** Append in-memory binary fragment to context (and remove array if any). */
   inline void appendContent(const QByteArray data,
                             const QString surface = QString()) {
     d->_content.append(data, surface); }
-  /** Append lazy-loaded binary fragment to context (and remove array if any).
-    */
+  /** Append lazy-loaded binary fragment to context (and remove array if any) */
   inline void appendContent(QIODevice *device, qint64 length, qint64 offset,
                             const QString surface = QString()) {
     d->_content.append(device, length, offset, surface); }
-  /** Replace current content with text fragment.
-    */
+  /** Replace current content with text fragment. */
   inline void setContent(const QString text) {
     d->_content.clear(); appendContent(text); }
-  /** Replace current content with text fragment.
-    */
+  /** Replace current content with text fragment. */
   inline void setContent(const char *utf8text) {
     setContent(QString::fromUtf8(utf8text)); }
-  /** Replace current content with in-memory binary fragment.
-    */
+  /** Replace current content with in-memory binary fragment. */
   inline void setContent(const QByteArray data) {
     d->_content.clear(); appendContent(data); }
-  /** Replace current content with lazy-loaded binary fragment.
-    */
+  /** Replace current content with lazy-loaded binary fragment. */
   inline void setContent(QIODevice *device, qint64 length, qint64 offset) {
     d->_content.clear(); appendContent(device, length, offset); }
-  /** Replace current content with an array.
-    */
+  /** Replace current content with an array. */
   inline void setContent(const PfArray array) { d->_content.set(array); }
+  /** Replace current content with a text content containing a space separated
+   * strings list. Backspaces and spaces inside strings are escaped with
+   * backslash */
+  void setContent(QList<QString> strings);
 
   // Output methods ///////////////////////////////////////////////////////////
 
-  /** Write the whole PfNode tree in PF file format.
-    */
+  /** Write the whole PfNode tree in PF file format. */
   inline qint64 writePf(QIODevice *target,
                         const PfOptions options = PfOptions()) const {
     return d->writePf(target, options); }
-  /** Convert the whole PfNode tree to PF in a byte array.
-    */
+  /** Convert the whole PfNode tree to PF in a byte array. */
   QByteArray toPf(const PfOptions options = PfOptions()) const;
   /** Convert the whole PfNode tree to PF in a characters string.
     * Note that the string will be truncated to the first \0 encountered,
@@ -218,16 +244,14 @@ public:
   inline QString toString() const {
     return QString::fromUtf8(toPf(PfOptions().setShouldIndent()));
   }
-  /** Convenience operator to transparently convert into a QString
-    */
+  /** Convenience operator to transparently convert into a QString */
   /*inline operator QString() const {
     return QString::fromUtf8(toPf(true));
   }*/
   /** Write node and whole tree (children recursively) in flat XML format.
     * Flat XML format is a format without any attribute (every PF node is
     * written as an XML element) and with binary content converted into
-    * Base64 text. Encoding is always UTF-8.
-    */  
+    * Base64 text. Encoding is always UTF-8. */
   inline qint64 writeFlatXml(QIODevice *target,
                              const PfOptions options = PfOptions()) const {
     return d->writeFlatXml(target, options); }
@@ -244,8 +268,7 @@ public:
     */
   //qint64 writeCompatibleXml(QIODevice *target) const;
   /** Write the node content (without node structure and children tree)
-    * with no escape for PF special chars and so on.
-    */
+    * with no escape for PF special chars and so on. */
   inline qint64 writeRawContent(QIODevice *target,
                                 const PfOptions options = PfOptions()) const {
     return d->_content.writeRaw(target, options); }

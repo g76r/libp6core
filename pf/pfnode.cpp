@@ -292,11 +292,11 @@ bool PfNode::hasChild(QString name) const {
   return false;
 }
 
-QString PfNode::attribute(QString name, QString defaultValue) const {
+PfNode PfNode::firstTextChildByName(QString name) const {
   foreach (PfNode child, children())
     if (child.d->_name == name && child.contentIsText())
-        return child.contentAsString();
-  return defaultValue;
+        return child;
+  return PfNode();
 }
 
 QStringList PfNode::stringChildrenByName(QString name) const {
@@ -322,37 +322,99 @@ QList<QPair<QString,QString> > PfNode::stringsPairChildrenByName(
   return l;
 }
 
-QList<QPair<QString,qlonglong> > PfNode::stringLongPairChildrenByName(
+QList<QPair<QString, qint64> > PfNode::stringLongPairChildrenByName(
     QString name) const {
-  QList<QPair<QString,qlonglong> > l;
+  QList<QPair<QString,qint64> > l;
   foreach (PfNode child, children())
     if (child.d->_name == name && child.contentIsText()) {
       QString s = child.contentAsString().trimmed();
       int i = s.indexOf(whitespace);
       if (i >= 0)
-        l.append(QPair<QString,qlonglong>(s.left(i),
-                                          s.mid(i).trimmed().toLongLong(0, 0)));
+        l.append(QPair<QString,qint64>(s.left(i),
+                                       s.mid(i).trimmed().toLongLong(0, 0)));
       else
-        l.append(QPair<QString,qlonglong>(s, 0));
+        l.append(QPair<QString,qint64>(s, 0));
     }
   return l;
 }
 
-qint64 PfNode::longAttribute(QString name, qint64 defaultValue) const {
-  bool ok;
-  qint64 i = attribute(name).toLongLong(&ok, 0);
-  return ok ? i : defaultValue;
+qint64 PfNode::contentAsLong(qint64 defaultValue, bool *ok) const {
+  bool myok;
+  qint64 v = d->_content.toString().trimmed().toLongLong(&myok, 0);
+  if (ok)
+    *ok = myok;
+  return myok ? v : defaultValue;
 }
 
-double PfNode::doubleAttribute(QString name, double defaultValue) const {
-  bool ok;
-  double f = attribute(name).toDouble(&ok);
-  return ok ? f : defaultValue;
+double PfNode::contentAsDouble(double defaultValue, bool *ok) const {
+  bool myok;
+  double v = d->_content.toString().trimmed().toDouble(&myok);
+  if (ok)
+    *ok = myok;
+  return myok ? v : defaultValue;
+}
+
+bool PfNode::contentAsBool(bool defaultValue, bool *ok) const {
+  QString s = d->_content.toString().trimmed();
+  bool myok = true, v;
+  if (s.compare("true", Qt::CaseInsensitive))
+    v = true;
+  else if (s.compare("false", Qt::CaseInsensitive))
+    v = false;
+  else
+    v = s.toLongLong(&myok, 0) != 0;
+  if (ok)
+    *ok = myok;
+  return myok ? v : defaultValue;
+}
+
+QStringList PfNode::contentAsStringList() const {
+  QString v = d->_content.toString().trimmed(), s;
+  QStringList l;
+  for (int i = 0; i < v.size(); ++i) {
+    const QChar &c = v[i];
+    if (c == '\\') {
+      if (++i < v.size())
+        s.append(v[i]);
+    } else if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
+      l.append(s);
+      s.clear();
+      while (++i < v.size()) {
+        const QChar &c = v[i];
+        if (c != ' ' || c != '\t' || c != '\r' || c != '\n') {
+          --i;
+          break;
+        }
+      }
+    } else
+      s.append(c);
+  }
+  if (!s.isEmpty())
+    l.append(s);
+  return l;
 }
 
 void PfNode::setAttribute(QString name, QString content) {
   removeChildrenByName(name);
   d->_children.append(PfNode(name, content));
+}
+
+void PfNode::setAttribute(QString name, QList<QString> content) {
+  removeChildrenByName(name);
+  PfNode child(name);
+  child.setContent(content);
+  appendChild(child);
+}
+
+void PfNode::setContent(QList<QString> strings) {
+  QString v;
+  foreach(QString s, strings) {
+    s.replace('\\', "\\\\").replace(' ', "\\ ");
+    v.append(s).append(' ');
+  }
+  if (!v.isEmpty())
+    v.chop(1);
+  setContent(v);
 }
 
 QByteArray PfNode::toPf(const PfOptions options) const {
