@@ -25,7 +25,7 @@ under the License.
 #include <QString>
 
 #define PF_SPACES " \t\n\r"
-#define PF_RESERVED "$&~`^[]{}"
+#define PF_RESERVED "$~[]{}"
 #define PF_SEPARATORS "()|#;"
 #define PF_QUOTES "'\""
 #define PF_ESCAPE "\\"
