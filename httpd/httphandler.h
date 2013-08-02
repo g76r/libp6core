@@ -16,6 +16,7 @@
 
 #include "httprequest.h"
 #include "httpresponse.h"
+#include "httprequestcontext.h"
 #include <QObject>
 
 /** HttpHandler is responsible for handling every HTTP request the server
@@ -33,16 +34,21 @@ class LIBQTSSUSHARED_EXPORT HttpHandler : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(HttpHandler)
   // LATER give handlers their own threads and make server and handler threads exchange signals
+  QString _name;
 
 public:
-  inline HttpHandler(QObject *parent = 0) : QObject(parent) { }
-  virtual QString name() const = 0;
+  explicit inline HttpHandler(QObject *parent = 0) : QObject(parent) { }
+  explicit inline HttpHandler(QString name, QObject *parent = 0)
+    : QObject(parent), _name(name) { }
+  virtual QString name() const;
   /** Return true iff the handler accept to handle the request.
    * Thread-safe (called by several HttpWorker threads at the same time). */
   virtual bool acceptRequest(HttpRequest req) = 0;
   /** Handle the request.
-   * Thread-safe (called by several HttpWorker threads at the same time). */
-  virtual void handleRequest(HttpRequest req, HttpResponse res) = 0;
+   * Thread-safe (called by several HttpWorker threads at the same time).
+   * @return false if a failure should interrupt the pipeline */
+  virtual bool handleRequest(HttpRequest req, HttpResponse res,
+                             HttpRequestContext ctxt) = 0;
 };
 
 #endif // HTTPHANDLER_H

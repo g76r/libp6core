@@ -16,29 +16,7 @@
 #include <QMutexLocker>
 #include "log/log.h"
 #include <unistd.h>
-
-class DefaultHandler : public HttpHandler {
-  // this QObject has no Q_OBJECT macro
-public:
-  DefaultHandler(QObject *parent) : HttpHandler(parent) { }
-
-  virtual QString name() const {
-    return "default";
-  }
-
-  void handleRequest(HttpRequest req, HttpResponse res) {
-    Q_UNUSED(req)
-    // LATER handle HEAD request (I don't know yet the most usefull way)
-    res.setStatus(404);
-    res.output()->write("Error 404 - Not found");
-    //qDebug() << "serving with default handler" << req.methodName() << req.url();
-  }
-
-  bool acceptRequest(const HttpRequest req) {
-    Q_UNUSED(req)
-    return true;
-  }
-};
+#include "pipelinehttphandler.h"
 
 HttpServer::HttpServer(int workersPoolSize, int maxQueuedSockets,
                        QObject *parent)
@@ -48,7 +26,7 @@ HttpServer::HttpServer(int workersPoolSize, int maxQueuedSockets,
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();
-  _defaultHandler = new DefaultHandler(this);
+  _defaultHandler = new PipelineHttpHandler(this);
   for (int i = 0; i < workersPoolSize; ++i) {
     HttpWorker *worker = new HttpWorker(this);
     // cannot make workers become children, and cannot rely on _workersPool to

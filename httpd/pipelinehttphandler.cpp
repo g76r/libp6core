@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2013 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,19 +11,22 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "uriprefixhandler.h"
+#include "pipelinehttphandler.h"
 
-UriPrefixHandler::UriPrefixHandler(QString prefix, int allowedMethods,
-                                   QObject *parent)
-  : HttpHandler(parent), _prefix(prefix), _allowedMethods(allowedMethods) {
+bool PipelineHttpHandler::acceptRequest(HttpRequest req) {
+  return _urlPathPrefix.isEmpty()
+      || req.url().path().startsWith(_urlPathPrefix);
 }
 
-QString UriPrefixHandler::name() const {
-  return "UriPrefixHandler:" + _prefix;
-}
-
-bool UriPrefixHandler::acceptRequest(HttpRequest req) {
-  if ((req.method()&_allowedMethods) && req.url().path().startsWith(_prefix))
+bool PipelineHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
+                                        HttpRequestContext ctxt) {
+  if (_handlers.isEmpty()) {
+    res.setStatus(404);
+    res.output()->write("Error 404 - Not found");
     return true;
-  return false;
+  }
+  foreach (HttpHandler *handler, _handlers)
+    if (!handler->handleRequest(req, res, ctxt))
+      return false;
+  return true;
 }

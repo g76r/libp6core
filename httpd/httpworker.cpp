@@ -136,7 +136,7 @@ void HttpWorker::handleConnection(int socketDescriptor) {
   url = QUrl::fromEncoded(args[1].toAscii()/*, QUrl::StrictMode */);
   req.overrideUrl(url);
   handler = _server->chooseHandler(req);
-  handler->handleRequest(req, res);
+  handler->handleRequest(req, res, HttpRequestContext());
   res.output()->flush(); // calling output() ensures that header was sent
   //qDebug() << req;
 finally:

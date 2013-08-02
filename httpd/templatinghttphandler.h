@@ -34,7 +34,7 @@ class LIBQTSSUSHARED_EXPORT TemplatingHttpHandler
 
 public:
   explicit TemplatingHttpHandler(QObject *parent = 0,
-                                 const QString urlPrefix = "",
+                                 const QString urlPathPrefix = "",
                                  const QString documentRoot = ":docroot/");
   void addView(const QString label, TextView *view) {
     _views.insert(label, QWeakPointer<TextView>(view)); }
@@ -42,7 +42,7 @@ public:
 
 protected:
   void sendLocalResource(HttpRequest req, HttpResponse res, QFile *file,
-                         ParamsProvider *values, QString scope);
+                         HttpRequestContext ctxt);
 };
 
 #endif // TEMPLATINGHTTPHANDLER_H

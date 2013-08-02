@@ -28,7 +28,6 @@ unix {
 }
 
 SOURCES += \
-    httpd/uriprefixhandler.cpp \
     httpd/httpworker.cpp \
     httpd/httpserver.cpp \
     httpd/httpresponse.cpp \
@@ -64,12 +63,13 @@ SOURCES += \
     textview/texttableview.cpp \
     log/qterrorcodes.cpp \
     textview/textmatrixmodel.cpp \
-    util/standardformats.cpp
+    util/standardformats.cpp \
+    httpd/httprequestcontext.cpp \
+    httpd/pipelinehttphandler.cpp
 
 
 HEADERS +=\
     libqtssu_global.h \
-    httpd/uriprefixhandler.h \
     httpd/httpworker.h \
     httpd/httpserver.h \
     httpd/httpresponse.h \
@@ -106,7 +106,9 @@ HEADERS +=\
     httpd/httpcommon.h \
     log/qterrorcodes.h \
     textview/textmatrixmodel.h \
-    util/standardformats.h
+    util/standardformats.h \
+    httpd/httprequestcontext.h \
+    httpd/pipelinehttphandler.h
 
 
 unix {

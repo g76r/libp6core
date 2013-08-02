@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -12,3 +12,11 @@
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "httphandler.h"
+
+QString HttpHandler::name() const {
+  if (!_name.isEmpty())
+      return _name;
+  if (!objectName().isEmpty())
+    return objectName();
+  return metaObject()->className();
+}

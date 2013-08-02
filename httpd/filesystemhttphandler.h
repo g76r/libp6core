@@ -27,16 +27,17 @@ class QFile;
 class LIBQTSSUSHARED_EXPORT FilesystemHttpHandler : public HttpHandler {
   Q_OBJECT
   Q_DISABLE_COPY(FilesystemHttpHandler)
-  QString _urlPrefix, _documentRoot;
+  QString _urlPathPrefix, _documentRoot;
   QStringList _directoryIndex;
   QList<QPair<QRegExp,QString> > _mimeTypes;
 
 public:
   explicit FilesystemHttpHandler(QObject *parent = 0,
-                                 const QString urlPrefix = "",
+                                 const QString urlPathPrefix = "",
                                  const QString documentRoot = ":docroot/");
-  QString urlPrefix() const { return _urlPrefix; }
-  void setUrlPrefix(const QString urlPrefix){ _urlPrefix = urlPrefix; }
+  QString urlPathPrefix() const { return _urlPathPrefix; }
+  void setUrlPrefix(const QString urlPathPrefix){
+    _urlPathPrefix = urlPathPrefix; }
   QString documentRoot() const { return _documentRoot; }
   void setDocumentRoot(const QString documentRoot) {
     _documentRoot = documentRoot; }
@@ -46,7 +47,6 @@ public:
   void prependDirectoryIndex(const QString index) {
     _directoryIndex.prepend(index); }
   void clearDirectoryIndex() { _directoryIndex.clear(); }
-  QString name() const;
   void appendMimeType(const QString pattern, const QString contentType) {
     _mimeTypes.append(qMakePair(QRegExp(pattern, Qt::CaseInsensitive),
                                 contentType)); }
@@ -55,14 +55,12 @@ public:
                                  contentType)); }
   void clearMimeTypes() { _mimeTypes.clear(); }
   bool acceptRequest(HttpRequest req);
-  void handleRequest(HttpRequest req, HttpResponse res);
-  void handleRequestWithContext(HttpRequest req, HttpResponse res,
-                                ParamsProvider *values);
+  bool handleRequest(HttpRequest req, HttpResponse res,
+                     HttpRequestContext ctxt);
 
 protected:
   virtual void sendLocalResource(HttpRequest req, HttpResponse res, QFile *file,
-                                 ParamsProvider *values = 0,
-                                 QString scope = QString());
+                                 HttpRequestContext ctxt);
 
 protected:
   void setMimeTypeByName(QString name, HttpResponse res);

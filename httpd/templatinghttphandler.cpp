@@ -19,15 +19,14 @@
 #include "log/log.h"
 
 TemplatingHttpHandler::TemplatingHttpHandler(
-    QObject *parent, const QString urlPrefix, const QString documentRoot) :
-  FilesystemHttpHandler(parent, urlPrefix, documentRoot) {
+    QObject *parent, const QString urlPathPrefix, const QString documentRoot)
+  : FilesystemHttpHandler(parent, urlPathPrefix, documentRoot) {
 }
 
 void TemplatingHttpHandler::sendLocalResource(
     HttpRequest req, HttpResponse res, QFile *file,
-    ParamsProvider *values, QString scope) {
+    HttpRequestContext ctxt) {
   Q_UNUSED(req)
-  Q_UNUSED(scope)
   setMimeTypeByName(file->fileName(), res);
   foreach (QString filter, _filters) {
     QRegExp re(filter);
@@ -54,21 +53,20 @@ void TemplatingHttpHandler::sendLocalResource(
           if (label == "view") {
             QWeakPointer<TextView> view = _views.value(data);
             if (view)
-              output.append(view.data()->text(values, data));
+              output.append(view.data()->text(&ctxt, data));
             else {
               Log::warning() << "TemplatingHttpHandler did not find view '"
                              << data << "' among " << _views.keys();
               output.append("?");
             }
           } else if (label == "value") {
-            QString value(values ? values->paramValue(data).toString()
-                                 : QString());
+            QString value = ctxt.paramValue(data).toString();
             if (!value.isNull())
               output.append(value);
             else {
               Log::warning() << "TemplatingHttpHandler did not find value: '"
-                             << data << "' among paramset 0x"
-                             << QString::number((long long)values, 16);
+                             << data << "' in context 0x"
+                             << QString::number((long long)&ctxt, 16);
               output.append("?");
             }
           } else {

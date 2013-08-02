@@ -19,8 +19,9 @@
 #include "util/standardformats.h"
 
 FilesystemHttpHandler::FilesystemHttpHandler(
-    QObject *parent, const QString urlPrefix, const QString documentRoot) :
-  HttpHandler(parent), _urlPrefix(urlPrefix), _documentRoot(documentRoot) {
+    QObject *parent, const QString urlPathPrefix, const QString documentRoot) :
+  HttpHandler(parent), _urlPathPrefix(urlPathPrefix),
+  _documentRoot(documentRoot) {
   appendDirectoryIndex("index.html");
   appendMimeType("\\.html$", "text/html;charset=UTF-8");
   appendMimeType("\\.js$", "application/javascript");
@@ -41,22 +42,15 @@ FilesystemHttpHandler::FilesystemHttpHandler(
   appendMimeType("\\.ico$", "image/vnd.microsoft.icon");
 }
 
-QString FilesystemHttpHandler::name() const {
-  return "FilesystemHttpHandler";
-}
-
 bool FilesystemHttpHandler::acceptRequest(HttpRequest req) {
-  return _urlPrefix.isEmpty() || req.url().path().startsWith(_urlPrefix);
+  return _urlPathPrefix.isEmpty()
+      || req.url().path().startsWith(_urlPathPrefix);
 }
 
-void FilesystemHttpHandler::handleRequest(HttpRequest req, HttpResponse res) {
-  handleRequestWithContext(req, res, 0);
-}
-
-void FilesystemHttpHandler::handleRequestWithContext(
-    HttpRequest req, HttpResponse res, ParamsProvider *values) {
+bool FilesystemHttpHandler::handleRequest(
+    HttpRequest req, HttpResponse res, HttpRequestContext ctxt) {
   QString path = req.url().path();
-  path.remove(0, _urlPrefix.length());
+  path.remove(0, _urlPathPrefix.length());
   while (path.size() && path.at(path.size()-1) == '/')
     path.chop(1);
   QFile file(_documentRoot+path);
@@ -78,15 +72,15 @@ void FilesystemHttpHandler::handleRequestWithContext(
         }
         location.append(index);
         res.redirect(location);
-        return;
+        return true;
       }
     }
     res.setStatus(403);
     res.output()->write("Directory list denied.");
   }
   if (file.open(QIODevice::ReadOnly)) {
-    sendLocalResource(req, res, &file, values);
-    return;
+    sendLocalResource(req, res, &file, ctxt);
+    return true;
   }
   int status = file.error() == QFile::PermissionsError ? 403 : 404;
   //qDebug() << "failure" << status;
@@ -95,14 +89,14 @@ void FilesystemHttpHandler::handleRequestWithContext(
                                     : "Document not found.");
   //qDebug() << "Cannot serve HTTP static resource" << req.url()
   //         << file.fileName() << status;
+  return true;
 }
 
 void FilesystemHttpHandler::sendLocalResource(
     HttpRequest req, HttpResponse res, QFile *file,
-    ParamsProvider *values, QString scope) {
+    HttpRequestContext ctxt) {
   Q_UNUSED(req)
-  Q_UNUSED(values)
-  Q_UNUSED(scope)
+  Q_UNUSED(ctxt)
   //qDebug() << "success";
   QString filename(file->fileName());
   if (!handleCacheHeadersAndSend304(file, req, res)) {
