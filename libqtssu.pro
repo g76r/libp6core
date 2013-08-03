@@ -65,7 +65,14 @@ SOURCES += \
     textview/textmatrixmodel.cpp \
     util/standardformats.cpp \
     httpd/httprequestcontext.cpp \
-    httpd/pipelinehttphandler.cpp
+    httpd/pipelinehttphandler.cpp \
+    httpd/basicauthhttphandler.cpp \
+    auth/authenticator.cpp \
+    auth/inmemoryauthenticator.cpp \
+    auth/usersdatabase.cpp \
+    auth/inmemoryusersdatabase.cpp \
+    auth/authorizer.cpp \
+    auth/inmemoryrulesauthorizer.cpp
 
 
 HEADERS +=\
@@ -108,7 +115,15 @@ HEADERS +=\
     textview/textmatrixmodel.h \
     util/standardformats.h \
     httpd/httprequestcontext.h \
-    httpd/pipelinehttphandler.h
+    httpd/pipelinehttphandler.h \
+    httpd/basicauthhttphandler.h \
+    auth/authenticator.h \
+    auth/inmemoryauthenticator.h \
+    auth/usersdatabase.h \
+    auth/inmemoryusersdatabase.h \
+    auth/usersdatabase_spi.h \
+    auth/authorizer.h \
+    auth/inmemoryrulesauthorizer.h
 
 
 unix {

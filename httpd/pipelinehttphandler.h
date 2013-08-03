@@ -20,6 +20,7 @@
  * one of them returns false.
  * Usefull to prepend and append technical processing (authentication,
  * session data, etc.) to the main handler. */
+// LATER make this class really thread-safe, currently it is not if handlers are changed while handling requests
 class LIBQTSSUSHARED_EXPORT PipelineHttpHandler : public HttpHandler {
   Q_OBJECT
   Q_DISABLE_COPY(PipelineHttpHandler)
@@ -29,7 +30,7 @@ class LIBQTSSUSHARED_EXPORT PipelineHttpHandler : public HttpHandler {
 public:
   explicit inline PipelineHttpHandler(QObject *parent = 0)
     : HttpHandler(parent) { }
-  explicit inline PipelineHttpHandler(QString urlPathPrefix = QString(),
+  explicit inline PipelineHttpHandler(QString urlPathPrefix,
                                       QObject *parent = 0)
     : HttpHandler(parent), _urlPathPrefix(urlPathPrefix) { }
   explicit inline PipelineHttpHandler(HttpHandler *handler,
@@ -43,7 +44,9 @@ public:
   inline PipelineHttpHandler &appendHandler(HttpHandler *handler) {
     if (handler) {
       _handlers.append(handler);
-      handler->setParent(this);
+      // handler can be in another thread, therefore it cannot become a child
+      handler->setParent(0);
+      connect(this, SIGNAL(destroyed()), handler, SLOT(deleteLater()));
     }
     return *this; }
   /** Append a handler to the pipeline and take its ownership (it will become
@@ -52,7 +55,9 @@ public:
   inline PipelineHttpHandler &prependHandler(HttpHandler *handler) {
     if (handler) {
       _handlers.prepend(handler);
-      handler->setParent(this);
+      // handler can be in another thread, therefore it cannot become a child
+      handler->setParent(0);
+      connect(this, SIGNAL(destroyed()), handler, SLOT(deleteLater()));
     }
     return *this; }
   inline PipelineHttpHandler &clearHandlers() {

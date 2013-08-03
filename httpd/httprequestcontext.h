@@ -22,21 +22,33 @@ class HttpRequestContextData;
 /** HTTP request context, which contain server-side enriched information
  * related to authentication, server-side session data, etc.
  * This class uses Qt's explicit sharing, therefore it is not thread-safe
- * but its modifications will be propagated to other copies. */
+ * but its modifications will be propagated to other copies (especially
+ * usefull along a PipelineHttpHandler pipeline). */
 class LIBQTSSUSHARED_EXPORT HttpRequestContext : public ParamsProvider {
   QExplicitlySharedDataPointer<HttpRequestContextData> d;
 
 public:
   HttpRequestContext();
   HttpRequestContext(const HttpRequestContext &other);
-  HttpRequestContext(QString scope);
-  HttpRequestContext(ParamsProvider *params);
+  explicit HttpRequestContext(QString scope);
+  explicit HttpRequestContext(ParamsProvider *params);
   ~HttpRequestContext();
   HttpRequestContext &operator=(const HttpRequestContext &other);
   bool operator==(const HttpRequestContext &other) const {
     return d == other.d; }
   QVariant paramValue(const QString key,
                       const QVariant defaultValue = QVariant()) const;
+  /** Parameters set through overrideParamValue() will override any
+   * ParamsProvider, even those prepended. */
+  HttpRequestContext &overrideParamValue(QString key, QString value);
+  /** Parameters set through overrideParamValue() will override any
+   * ParamsProvider, even those prepended. */
+  inline HttpRequestContext &overrideParamValue(QString key, QVariant value) {
+    return overrideParamValue(key, value.toString()); }
+  /** Parameters set through overrideParamValue() will override any
+   * ParamsProvider, even those prepended. */
+  inline HttpRequestContext &overrideParamValue(QString key, const char *value){
+    return overrideParamValue(key, QString(value)); }
   HttpRequestContext &appendParamsProvider(ParamsProvider *params);
   HttpRequestContext &prependParamsProvider(ParamsProvider *params);
   QString scope() const;

@@ -12,10 +12,13 @@
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "httprequestcontext.h"
+#include "util/paramset.h"
 
 class HttpRequestContextData : public QSharedData {
+  Q_DISABLE_COPY(HttpRequestContextData)
 public:
   QString _scope;
+  ParamSet _localParams;
   QList<ParamsProvider*> _params;
   HttpRequestContextData() { }
   HttpRequestContextData(QString scope) : _scope(scope) { }
@@ -47,12 +50,11 @@ HttpRequestContext &HttpRequestContext::operator=(
   return *this;
 }
 
-/*bool HttpRequestContext::operator==(const HttpRequestContext &other) const {
-  return d == other.d;
-}*/
-
 QVariant HttpRequestContext::paramValue(const QString key,
                                         const QVariant defaultValue) const {
+  QString s = d->_localParams.rawValue(key);
+  if (!s.isNull())
+    return s;
   foreach (ParamsProvider *params, d->_params)
     if (params) {
       QVariant v = params->paramValue(key);
@@ -60,6 +62,12 @@ QVariant HttpRequestContext::paramValue(const QString key,
         return v;
     }
   return defaultValue;
+}
+
+HttpRequestContext &HttpRequestContext::overrideParamValue(QString key,
+                                                           QString value) {
+  d->_localParams.setValue(key, value);
+  return *this;
 }
 
 HttpRequestContext &HttpRequestContext::appendParamsProvider(

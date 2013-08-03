@@ -12,6 +12,7 @@
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "pipelinehttphandler.h"
+#include "log/log.h"
 
 bool PipelineHttpHandler::acceptRequest(HttpRequest req) {
   return _urlPathPrefix.isEmpty()
@@ -25,8 +26,15 @@ bool PipelineHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
     res.output()->write("Error 404 - Not found");
     return true;
   }
-  foreach (HttpHandler *handler, _handlers)
+  foreach (HttpHandler *handler, _handlers) {
+    if (!handler) {
+      res.setStatus(404);
+      res.output()->write("Error 404 - Not found");
+      Log::error() << "PipelineHttpHandler containing a null handler";
+      return false;
+    }
     if (!handler->handleRequest(req, res, ctxt))
       return false;
+  }
   return true;
 }
