@@ -150,7 +150,13 @@ public:
     _message.append(QString::number(o)); return *this; }
   inline LogHelper &operator<<(const QVariant &o) {
     _message.append(o.toString()); return *this; }
-  inline LogHelper &operator<<(const QStringList &o) {
+  inline LogHelper &operator<<(const QList<QString> &o) {
+    _message.append("{ ");
+    foreach (const QString &s, o)
+      _message.append("\"").append(s).append("\" ");
+    _message.append("}");
+    return *this; }
+  inline LogHelper &operator<<(const QSet<QString> &o) {
     _message.append("{ ");
     foreach (const QString &s, o)
       _message.append("\"").append(s).append("\" ");
