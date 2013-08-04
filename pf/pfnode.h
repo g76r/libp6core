@@ -86,7 +86,8 @@ public:
     * If several children have the same name the first text one is choosen.
     * The goal is to emulate XML attributes, hence the name. */
   inline QString attribute(QString name) const {
-    return firstTextChildByName(name).contentAsString(); }
+    PfNode child = firstTextChildByName(name);
+    return child.isNull() ? QString() : child.contentAsString(); }
   /** Return a child content knowing the child name.
     * defaultValue if no text child exists.
     * QString("") if child exists but has no content
