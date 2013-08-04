@@ -42,15 +42,15 @@ public:
         QString algo = re.cap(1).trimmed().toUpper();
         encodedPassword = re.cap(2);
         if (algo == "SHA" || algo == "SSHA")
-          encoding = InMemoryAuthenticator::Sha1Base64;
+          encoding = Sha1Base64;
         if (algo == "MD5" || algo == "SMD5")
-          encoding = InMemoryAuthenticator::Md5Base64;
+          encoding = Md5Base64;
         if (algo == "CLEARTEXT")
-          encoding = InMemoryAuthenticator::Plain;
+          encoding = Plain;
         else // LATER RFC 2307 also define {CRYPT} algorithm
-          encoding = InMemoryAuthenticator::Unknown;
+          encoding = Unknown;
       } else {
-        encoding = InMemoryAuthenticator::Unknown;
+        encoding = Unknown;
       }
     }
     d = new Data(userId, encodedPassword, encoding);
@@ -66,34 +66,34 @@ public:
       QByteArray hash, salt;
       int hashSize = 0;
       switch(d->_encoding) {
-      case InMemoryAuthenticator::Plain:
-      case InMemoryAuthenticator::OpenLdapStyle:
-      case InMemoryAuthenticator::Unknown:
+      case Plain:
+      case OpenLdapStyle:
+      case Unknown:
         break;
-      case InMemoryAuthenticator::Md4Hex:
-      case InMemoryAuthenticator::Md5Hex:
-      case InMemoryAuthenticator::Sha1Hex:
+      case Md4Hex:
+      case Md5Hex:
+      case Sha1Hex:
         hash = QByteArray::fromHex(d->_encodedPassword.toUtf8());
         break;
-      case InMemoryAuthenticator::Md4Base64:
-      case InMemoryAuthenticator::Md5Base64:
-      case InMemoryAuthenticator::Sha1Base64:
+      case Md4Base64:
+      case Md5Base64:
+      case Sha1Base64:
         hash = QByteArray::fromBase64(d->_encodedPassword.toUtf8());
         break;
       }
       switch(d->_encoding) {
-      case InMemoryAuthenticator::Plain:
-      case InMemoryAuthenticator::OpenLdapStyle:
-      case InMemoryAuthenticator::Unknown:
+      case Plain:
+      case OpenLdapStyle:
+      case Unknown:
         break;
-      case InMemoryAuthenticator::Md4Hex:
-      case InMemoryAuthenticator::Md4Base64:
-      case InMemoryAuthenticator::Md5Hex:
-      case InMemoryAuthenticator::Md5Base64:
+      case Md4Hex:
+      case Md4Base64:
+      case Md5Hex:
+      case Md5Base64:
         hashSize = 128/8;
         break;
-      case InMemoryAuthenticator::Sha1Hex:
-      case InMemoryAuthenticator::Sha1Base64:
+      case Sha1Hex:
+      case Sha1Base64:
         hashSize = 160/8;
         break;
       }
@@ -103,26 +103,26 @@ public:
       }
       bool granted = false;
       switch(d->_encoding) {
-      case InMemoryAuthenticator::Plain:
+      case Plain:
         granted = password.toUtf8() == d->_encodedPassword.toUtf8();
         break;
-      case InMemoryAuthenticator::Md4Hex:
-      case InMemoryAuthenticator::Md4Base64:
+      case Md4Hex:
+      case Md4Base64:
         granted = hash == QCryptographicHash::hash(password.toUtf8()+salt,
                                                    QCryptographicHash::Md4);
         break;
-      case InMemoryAuthenticator::Md5Hex:
-      case InMemoryAuthenticator::Md5Base64:
+      case Md5Hex:
+      case Md5Base64:
         granted = hash == QCryptographicHash::hash(password.toUtf8()+salt,
                                                    QCryptographicHash::Md5);
         break;
-      case InMemoryAuthenticator::Sha1Hex:
-      case InMemoryAuthenticator::Sha1Base64:
+      case Sha1Hex:
+      case Sha1Base64:
         granted = hash == QCryptographicHash::hash(password.toUtf8()+salt,
                                                    QCryptographicHash::Sha1);
         break;
-      case InMemoryAuthenticator::OpenLdapStyle:
-      case InMemoryAuthenticator::Unknown:
+      case OpenLdapStyle:
+      case Unknown:
         break;
       }
       /*Log::fatal() << "authenticate: " << d->_userId << "/" << password
