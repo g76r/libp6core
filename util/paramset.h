@@ -105,6 +105,24 @@ public:
     double  v = evaluate(rawValue(key, QString(), inherit), inherit,
                          context).toLongLong(&ok);
     return ok ? v : defaultValue; }
+  /** "false" and "0" are interpreted as false, "true" and any non null
+   * valid integer number are interpreted as true. Spaces and case are
+   * ignored. */
+  inline bool valueAsBool(const QString key, bool defaultValue = false,
+                          bool inherit = true,
+                          const ParamsProvider *context = 0) const {
+    QString v = evaluate(rawValue(key, QString(), inherit), inherit, context)
+        .trimmed().toLower();
+    if (v == "true")
+      return true;
+    if (v == "false")
+      return false;
+    bool ok;
+    int i = v.toInt(&ok);
+    if (ok)
+      return i == 0 ? false : true;
+    return defaultValue;
+  }
   /** Return all keys for which the ParamSet or one of its parents hold a value.
     */
   const QSet<QString> keys(bool inherit = true) const;
