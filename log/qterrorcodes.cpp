@@ -26,7 +26,7 @@ QString networkErrorAsString(QNetworkReply::NetworkError code) {
   case QNetworkReply::TimeoutError:
     return "timeout";
   case QNetworkReply::OperationCanceledError:
-    return "opertaion canceled";
+    return "operation canceled";
   case QNetworkReply::SslHandshakeFailedError:
     return "SSL handshake failed";
   case QNetworkReply::TemporaryNetworkFailureError:
