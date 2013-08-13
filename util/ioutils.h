@@ -65,9 +65,10 @@ public:
   /** Copy at most max bytes from dest to src, copying only lines that match
    * pattern.
    * There may be some strange behaviour if lines are longer than maxLineSize.
+   * @param useRegexp otherwise pattern is plain data
    */
   static qint64 grepString(QIODevice *dest, QIODevice *src, qint64 max,
-                           const QString pattern,
+                           const QString pattern, bool useRegexp,
                            qint64 maxLineSize = 65535);
 
   /** Copy at most max bytes from dest to src, copying only lines that match

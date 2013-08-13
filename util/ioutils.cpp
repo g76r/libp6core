@@ -69,7 +69,11 @@ qint64 IOUtils::copy(QIODevice &dest, QIODevice &src, qint64 max,
 }
 
 qint64 IOUtils::grepString(QIODevice *dest, QIODevice *src, qint64 max,
-                           const QString pattern, qint64 maxLineSize) {
+                           const QString pattern, bool useRegexp,
+                           qint64 maxLineSize) {
+  QRegExp re;
+  if (useRegexp)
+    re = QRegExp(pattern);
   char buf[maxLineSize+1];
   int total = 0, n, m;
   while (total < max) {
@@ -80,7 +84,8 @@ qint64 IOUtils::grepString(QIODevice *dest, QIODevice *src, qint64 max,
       return -1;
     if (n == 0)
       break;
-    if (QString::fromUtf8(buf).contains(pattern)) {
+    if ((!useRegexp && QString::fromUtf8(buf).contains(pattern))
+        || (useRegexp && re.indexIn(QString::fromUtf8(buf)) >= 0)) {
       m = dest->write(buf, n);
       if (m != n)
         return -1;
