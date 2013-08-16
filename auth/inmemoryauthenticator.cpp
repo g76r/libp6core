@@ -43,12 +43,14 @@ public:
         encodedPassword = re.cap(2);
         if (algo == "SHA" || algo == "SSHA")
           encoding = Sha1Base64;
-        if (algo == "MD5" || algo == "SMD5")
+        else if (algo == "MD5" || algo == "SMD5")
           encoding = Md5Base64;
-        if (algo == "CLEARTEXT")
+        else if (algo == "CLEARTEXT")
           encoding = Plain;
         else // LATER RFC 2307 also define {CRYPT} algorithm
           encoding = Unknown;
+        /*Log::fatal() << "login:" << userId << " password:" << encodedPassword
+                     << " algo:" << algo << " encoding:" << encoding;*/
       } else {
         encoding = Unknown;
       }
@@ -127,7 +129,7 @@ public:
       }
       /*Log::fatal() << "authenticate: " << d->_userId << "/" << password
                    << "/" << d->_encodedPassword << "/" << d->_encoding
-                   << " salt:" << salt.toHex()
+                   << " salt:0x" << salt.toHex()
                    << " granted:" << granted;*/
       return granted;
     }
