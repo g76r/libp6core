@@ -12,6 +12,7 @@
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "htmltableview.h"
+#include "util/htmlutils.h"
 
 HtmlTableView::HtmlTableView(QObject *parent, int cachedRows, int rowsPerPage)
   : TextTableView(parent, cachedRows, rowsPerPage),
@@ -61,7 +62,12 @@ void HtmlTableView::updateHeaderAndFooterCache() {
         if (_htmlPrefixRole >= 0)
           v.append(m->headerData(i, Qt::Horizontal, _htmlPrefixRole)
                    .toString());
-        v.append(m->headerData(i, Qt::Horizontal).toString()).append("</th>");
+        if (_columnHeaderHtmlDisableEncode.contains(i))
+          v.append(m->headerData(i, Qt::Horizontal).toString());
+        else
+          v.append(HtmlUtils::htmlEncode(
+                     m->headerData(i, Qt::Horizontal).toString(), true));
+        v.append("</th>");
         if (_htmlSuffixRole >= 0)
           v.append(m->headerData(i, Qt::Horizontal, _htmlSuffixRole)
                    .toString());
@@ -129,6 +135,7 @@ QString HtmlTableView::footer(int currentPage, int lastPage,
   return "</table>\n"+pagebar(currentPage, lastPage, pageVariableName, false);
 }
 QString HtmlTableView::rowText(int row) {
+  static QRegExp notName("[^a-zA-Z0-9\\_]+");
   QAbstractItemModel *m = model();
   if (!m)
     return QString();
@@ -143,7 +150,12 @@ QString HtmlTableView::rowText(int row) {
     v.append("<th>");
     if (_htmlPrefixRole >= 0)
       v.append(m->headerData(row, Qt::Vertical, _htmlPrefixRole).toString());
-    v.append(m->headerData(row, Qt::Vertical).toString()).append("</th>");
+    if (_rowHeaderHtmlEncode)
+      v.append(HtmlUtils::htmlEncode(
+                 m->headerData(row, Qt::Vertical).toString(), true));
+    else
+      v.append(m->headerData(row, Qt::Vertical).toString());
+    v.append("</th>");
     if (_htmlSuffixRole >= 0)
       v.append(m->headerData(row, Qt::Vertical, _htmlSuffixRole).toString());
   }
@@ -160,7 +172,8 @@ QString HtmlTableView::rowText(int row) {
       first = false;
       if (!_rowAnchorPrefix.isNull())
           v.append("<a name=\"").append(_rowAnchorPrefix).append(
-                m->data(m->index(row, _rowAnchorColumn, QModelIndex())).toString())
+                m->data(m->index(row, _rowAnchorColumn, QModelIndex()))
+                .toString().replace(QRegExp(notName), "_"))
               .append("\"></a>");
     }
     if (_htmlPrefixRole >= 0)
@@ -176,10 +189,14 @@ QString HtmlTableView::rowText(int row) {
             .append("\">");
       else
         v.append("\">");
-    }
-    v.append(m->data(index).toString());
-    if (!link.isEmpty())
+      v.append(HtmlUtils::htmlEncode(m->data(index).toString(), false));
       v.append("</a>");
+    } else {
+      if (_dataHtmlDisableEncode.contains(index.column()))
+        v.append(m->data(index).toString());
+      else
+        v.append(HtmlUtils::htmlEncode(m->data(index).toString(), true));
+    }
     if (_htmlSuffixRole >= 0)
       v.append(m->data(index, _htmlSuffixRole).toString());
     v.append("</td>");

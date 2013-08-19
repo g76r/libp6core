@@ -72,7 +72,8 @@ SOURCES += \
     auth/usersdatabase.cpp \
     auth/inmemoryusersdatabase.cpp \
     auth/authorizer.cpp \
-    auth/inmemoryrulesauthorizer.cpp
+    auth/inmemoryrulesauthorizer.cpp \
+    util/htmlutils.cpp
 
 
 HEADERS +=\
@@ -123,7 +124,8 @@ HEADERS +=\
     auth/inmemoryusersdatabase.h \
     auth/usersdatabase_spi.h \
     auth/authorizer.h \
-    auth/inmemoryrulesauthorizer.h
+    auth/inmemoryrulesauthorizer.h \
+    util/htmlutils.h
 
 
 unix {

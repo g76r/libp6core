@@ -27,7 +27,8 @@ class LIBQTSSUSHARED_EXPORT HtmlTableView : public TextTableView {
   _pageUrlPrefix;
   int _thClassRole, _trClassRole, _tdClassRole, _linkRole, _linkClassRole;
   int _htmlPrefixRole, _htmlSuffixRole, _rowAnchorColumn;
-  bool _columnHeaders, _rowHeaders;
+  bool _columnHeaders, _rowHeaders, _rowHeaderHtmlEncode;
+  QSet<int> _dataHtmlDisableEncode, _columnHeaderHtmlDisableEncode;
 
 public:
   explicit HtmlTableView(QObject *parent = 0,
@@ -61,6 +62,18 @@ public:
    * Will be suffixed with e.g. "page=42" "myscope.page=1&anchor=pagebar.foo"
    * Default: "?" Example: "../setpage?" */
   void setPageUrlPrefix(QString urlPrefix) { _pageUrlPrefix = urlPrefix; }
+  void setDataHtmlEncode(int column, bool encode = true) {
+    if (encode)
+      _dataHtmlDisableEncode.remove(column);
+    else
+      _dataHtmlDisableEncode.insert(column); }
+  void setColumnHeaderHtmlEncode(int column, bool encode = true) {
+    if (encode)
+      _columnHeaderHtmlDisableEncode.remove(column);
+    else
+      _columnHeaderHtmlDisableEncode.insert(column); }
+  void setRowHeaderHtmlEncode(bool encode = true) {
+    _rowHeaderHtmlEncode = encode; }
 
 protected:
   void updateHeaderAndFooterCache();
