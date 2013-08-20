@@ -102,7 +102,7 @@ void FilesystemHttpHandler::sendLocalResource(
   if (!handleCacheHeadersAndSend304(file, req, res)) {
     setMimeTypeByName(filename, res);
     res.setContentLength(file->size());
-    IOUtils::copyAll(res.output(), file);
+    IOUtils::copy(res.output(), file);
   }
 }
 

@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,74 +23,37 @@ class QIODevice;
 class LIBQTSSUSHARED_EXPORT IOUtils {
   IOUtils() { }
 public:
-  /** Copy content of src into dest until reaching src's end.
-    */
-  static qint64 copyAll(QIODevice &dest, QIODevice &src,
-                        qint64 bufsize = 65536);
-  /** syntaxic sugar */
-  inline static qint64 copyAll(QIODevice *dest, QIODevice &src,
-                               qint64 bufsize = 65536) {
-    return copyAll(*dest, src, bufsize);
-  }
-  /** syntaxic sugar */
-  inline static qint64 copyAll(QIODevice &dest, QIODevice *src,
-                               qint64 bufsize = 65536) {
-    return copyAll(dest, *src, bufsize);
-  }
-  /** syntaxic sugar */
-  inline static qint64 copyAll(QIODevice *dest, QIODevice *src,
-                               qint64 bufsize = 65536) {
-    return copyAll(*dest, *src, bufsize);
-  }
-  /** Copy content of src into dest until max bytes or src's end is reached.
-    */
-  static qint64 copy(QIODevice &dest, QIODevice &src, qint64 max,
+  /** Copy content of src into dest until max bytes or src's end is reached. */
+  static qint64 copy(QIODevice *dest, QIODevice *src, qint64 max = LLONG_MAX,
                      qint64 bufsize = 65536);
-  /** syntaxic sugar */
-  inline static qint64 copy(QIODevice *dest, QIODevice &src, qint64 max,
-                            qint64 bufsize = 65536) {
-    return copy(*dest, src, max, bufsize);
-  }
-  /** syntaxic sugar */
-  inline static qint64 copy(QIODevice &dest, QIODevice *src, qint64 max,
-                            qint64 bufsize = 65536) {
-    return copy(dest, *src, max, bufsize);
-  }
-  /** syntaxic sugar */
-  inline static qint64 copy(QIODevice *dest, QIODevice *src, qint64 max,
-                            qint64 bufsize = 65536) {
-    return copy(*dest, *src, max, bufsize);
-  }
-
   /** Copy at most max bytes from dest to src, copying only lines that match
    * pattern.
-   * There may be some strange behaviour if lines are longer than maxLineSize.
-   * @param useRegexp otherwise pattern is plain data
-   */
-  static qint64 grepString(QIODevice *dest, QIODevice *src, qint64 max,
-                           const QString pattern, bool useRegexp,
-                           qint64 maxLineSize = 65535);
-
+   * Filter may mismatch lines if they are longer than bufsize-1.
+   * @param useRegexp otherwise pattern is plain text */
+  static qint64 grep(QIODevice *dest, QIODevice *src, const QString pattern,
+                     bool useRegexp = false, qint64 max = LLONG_MAX,
+                     qint64 bufsize = 65535);
+  /** Syntaxic sugar */
+  inline static qint64 grep(QIODevice *dest, QIODevice *src,
+                            const char *pattern, bool useRegexp = false,
+                            qint64 max = LLONG_MAX, qint64 bufsize = 65535) {
+    return useRegexp ? grep(dest, src, QRegExp(pattern), max, bufsize)
+        : grep(dest, src, QString(pattern), false, max, bufsize); }
   /** Copy at most max bytes from dest to src, copying only lines that match
-   * pattern.
-   * There may be some strange behaviour if lines are longer than maxLineSize.
-   */
-  static qint64 grepRegexp(QIODevice *dest, QIODevice *src, qint64 max,
-                           const QString pattern,
-                           qint64 maxLineSize = 65535);
-
+   * regexp.
+   * Filter may mismatch lines if they are longer than bufsize-1. */
+  static qint64 grep(QIODevice *dest, QIODevice *src, const QRegExp regexp,
+                     qint64 max = LLONG_MAX, qint64 maxLineSize = 65535);
   /** Convert QUrl object to local path usable with e.g. QFile
     * Only support "file" and "qrc" schemes.
     * @return path, QString::isNull() if URL not supported (e.g. its scheme)
     */
   static QString url2path(const QUrl &url);
-
   /** Return paths of all existing files that match pattern.
     * Pattern is a globing pattern (@see QRegExp::Wildcard).
     * Beware that this method can take a lot of time depending on filesystem
     * tree size. */
   static QStringList findFiles(const QString pattern);
-
   /** Return paths of all existing files that match patterns.
     * Pattern is a globing pattern (@see QRegExp::Wildcard).
     * Beware that this method can take a lot of time depending on filesystem

@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -30,94 +30,82 @@ QString IOUtils::url2path(const QUrl &url) {
   return QString();
 }
 
-qint64 IOUtils::copyAll(QIODevice &dest, QIODevice &src, qint64 bufsize) {
-  char buf[bufsize];
-  int total = 0, n, m;
-  for (;;) {
-    if (src.bytesAvailable() < 1)
-      src.waitForReadyRead(30000);
-    n = src.read(buf, bufsize);
-    if (n < 0)
-      return -1;
-    if (n == 0)
-      return total;
-    m = dest.write(buf, n);
-    if (m != n)
-      return -1;
-    total += n;
-  }
-}
-
-qint64 IOUtils::copy(QIODevice &dest, QIODevice &src, qint64 max,
+qint64 IOUtils::copy(QIODevice *dest, QIODevice *src, qint64 max,
                      qint64 bufsize) {
+  if (!dest || !src)
+    return -1;
   char buf[bufsize];
   int total = 0, n, m;
   while (total < max) {
-    if (src.bytesAvailable() < 1)
-      src.waitForReadyRead(30000);
-    n = src.read(buf, std::min(bufsize, max-total));
+    if (src->bytesAvailable() < 1)
+      src->waitForReadyRead(30000);
+    n = src->read(buf, std::min(bufsize, max-total));
     if (n < 0)
       return -1;
     if (n == 0)
       break;
-    m = dest.write(buf, n);
+    m = dest->write(buf, n);
     if (m != n)
       return -1;
+    if (dest->bytesToWrite() > bufsize)
+      while (dest->waitForBytesWritten(30000) > bufsize);
     total += n;
   }
   return total;
 }
 
-qint64 IOUtils::grepString(QIODevice *dest, QIODevice *src, qint64 max,
-                           const QString pattern, bool useRegexp,
-                           qint64 maxLineSize) {
-  QRegExp re;
+qint64 IOUtils::grep(QIODevice *dest, QIODevice *src, const QString pattern,
+                     bool useRegexp, qint64 max, qint64 bufsize) {
+  if (!dest || !src)
+    return -1;
   if (useRegexp)
-    re = QRegExp(pattern);
-  char buf[maxLineSize+1];
+    return grep(dest, src, QRegExp(pattern), max, bufsize);
+  char buf[bufsize];
   int total = 0, n, m;
   while (total < max) {
     if (src->bytesAvailable() < 1)
       src->waitForReadyRead(30000);
-    n = src->readLine(buf, sizeof buf);
+    n = src->readLine(buf, std::min(bufsize, max-total));
     if (n < 0)
       return -1;
     if (n == 0)
       break;
-    if ((!useRegexp && QString::fromUtf8(buf).contains(pattern))
-        || (useRegexp && re.indexIn(QString::fromUtf8(buf)) >= 0)) {
+    if (QString::fromUtf8(buf).contains(pattern)) {
       m = dest->write(buf, n);
       if (m != n)
         return -1;
+      if (dest->bytesToWrite() > bufsize)
+        while (dest->waitForBytesWritten(30000) > bufsize);
       total += n;
     }
   }
   return total;
-
 }
 
-qint64 IOUtils::grepRegexp(QIODevice *dest, QIODevice *src, qint64 max,
-                                const QString pattern, qint64 maxLineSize) {
-  char buf[maxLineSize+1];
-  QRegExp re(pattern);
+qint64 IOUtils::grep(QIODevice *dest, QIODevice *src,
+                     const QRegExp regexp, qint64 max, qint64 bufsize) {
+  if (!dest || !src)
+    return -1;
+  char buf[bufsize];
   int total = 0, n, m;
   while (total < max) {
     if (src->bytesAvailable() < 1)
       src->waitForReadyRead(30000);
-    n = src->readLine(buf, sizeof buf);
+    n = src->readLine(buf, std::min(bufsize, max-total));
     if (n < 0)
       return -1;
     if (n == 0)
       break;
-    if (QString::fromUtf8(buf).contains(re)) {
+    if (regexp.indexIn(QString::fromUtf8(buf)) >= 0) {
       m = dest->write(buf, n);
       if (m != n)
         return -1;
+      if (dest->bytesToWrite() > bufsize)
+        while (dest->waitForBytesWritten(30000) > bufsize);
       total += n;
     }
   }
   return total;
-
 }
 
 static void findFiles(QDir dir, QStringList &files, const QRegExp pattern) {
@@ -140,7 +128,8 @@ static void findFiles(QDir dir, QStringList &files, const QRegExp pattern) {
 QStringList IOUtils::findFiles(const QString pattern) {
   QStringList files;
   QString pat = QDir().absoluteFilePath(QDir::fromNativeSeparators(pattern));
-  int i = pat.indexOf(QRegExp("/[^/]*[*?[]|\\]"));
+  static const QRegExp slashFollowedByWildcard("/[^/]*[*?[]|\\]");
+  int i = pat.indexOf(QRegExp(slashFollowedByWildcard));
   QString dir = i >= 0 ? pat.left(i+1) : pat;
   QRegExp re(pat, Qt::CaseSensitive, QRegExp::Wildcard);
   ::findFiles(QDir(dir), files, re);

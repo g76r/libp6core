@@ -33,7 +33,7 @@ void TemplatingHttpHandler::sendLocalResource(
     if (re.indexIn(file->fileName()) >= 0) {
       QBuffer buf;
       buf.open(QIODevice::WriteOnly);
-      IOUtils::copyAll(&buf, file);
+      IOUtils::copy(&buf, file);
       buf.close();
       QString input = QString::fromUtf8(buf.data()), output;
       int pos = 0, markup;
@@ -82,12 +82,12 @@ void TemplatingHttpHandler::sendLocalResource(
       res.setContentLength(ba.size());
       buf.setData(ba);
       buf.open(QIODevice::ReadOnly);
-      IOUtils::copyAll(res.output(), &buf);
+      IOUtils::copy(res.output(), &buf);
       return;
     }
   }
   if (!handleCacheHeadersAndSend304(file, req, res)) {
     res.setContentLength(file->size());
-    IOUtils::copyAll(res.output(), file);
+    IOUtils::copy(res.output(), file);
   }
 }
