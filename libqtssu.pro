@@ -73,7 +73,9 @@ SOURCES += \
     auth/inmemoryusersdatabase.cpp \
     auth/authorizer.cpp \
     auth/inmemoryrulesauthorizer.cpp \
-    util/htmlutils.cpp
+    util/htmlutils.cpp \
+    httpd/imagehttphandler.cpp \
+    httpd/graphvizimagehttphandler.cpp
 
 
 HEADERS +=\
@@ -125,7 +127,9 @@ HEADERS +=\
     auth/usersdatabase_spi.h \
     auth/authorizer.h \
     auth/inmemoryrulesauthorizer.h \
-    util/htmlutils.h
+    util/htmlutils.h \
+    httpd/imagehttphandler.h \
+    httpd/graphvizimagehttphandler.h
 
 
 unix {
