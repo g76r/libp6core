@@ -89,6 +89,15 @@ void GraphvizImageHttpHandler::startRendering() {
   case Dot:
     cmd = "dot";
     break;
+  case Fdp:
+    cmd = "fdp";
+    break;
+  case Sfdp:
+    cmd = "sfdp";
+    break;
+  case Osage:
+    cmd = "osage";
+    break;
   }
   QStringList args;
   args << "-Tpng";

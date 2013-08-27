@@ -22,7 +22,7 @@
 class LIBQTSSUSHARED_EXPORT GraphvizImageHttpHandler : public ImageHttpHandler {
   Q_OBJECT
 public:
-  enum GraphvizRenderer { Dot, Neato, TwoPi, Circo };
+  enum GraphvizRenderer { Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage };
 
 private:
   GraphvizRenderer _renderer;
