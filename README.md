@@ -5,8 +5,7 @@ ABOUT
 -----
 
 Libqtssu is a free software collection of tools for using Qt/C++ on
-the server side (server-compliant threading model, small REST webapps,
-etc.).
+the server side (logging framework, small REST webapps, etc.).
 
 LICENSE
 -------
