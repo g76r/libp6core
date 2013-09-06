@@ -81,6 +81,10 @@ void TimerWithArguments::singleShot(
     connect(t, SIGNAL(timeout()), t, SLOT(deleteLater()));
     t->connectWithArgs(receiver, member, arg0, arg1, arg2, arg3, arg4, arg5,
                        arg6, arg7, arg8, arg9);
+    if (msec < 0) {
+      qDebug() << "TimerWithArguments::singleShot abormal ms" << msec
+               << receiver << receiver->metaObject()->className() << member;
+    }
     t->start(msec);
     //qDebug() << "TimerWithArguments::singleShot" << msec << member
     //         << arg0.toString();
