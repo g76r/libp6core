@@ -1,5 +1,4 @@
-/*
-Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -21,23 +20,23 @@ PfHandler::PfHandler() : _errorLine(0), _errorColumn(0), _errorOccured(false) {
 PfHandler::~PfHandler() {
 }
 
-bool PfHandler::startDocument(const PfOptions &options) {
+bool PfHandler::startDocument(PfOptions options) {
   _options = options;
   return true;
 }
 
-bool PfHandler::startNode(const QList<QString> &names) {
+bool PfHandler::startNode(QList<QString> names) {
   Q_UNUSED(names);
   return true;
 }
 
-bool PfHandler::text(const QString &text) {
+bool PfHandler::text(QString text) {
   Q_UNUSED(text);
   return true;
 }
 
 bool PfHandler::binary(QIODevice *device, qint64 length, qint64 offset,
-                       const QString &surface) {
+                       QString surface) {
   if (device->isSequential()) {
     setErrorString("PfHandler: binary fragment lazy loading cannot handle"
                    "sequential (= not seekable) data input");
@@ -67,23 +66,23 @@ bool PfHandler::binary(QIODevice *device, qint64 length, qint64 offset,
   return binary(data, surface);
 }
 
-bool PfHandler::binary(const QByteArray &data, const QString &surface) {
+bool PfHandler::binary(QByteArray data, QString surface) {
   Q_UNUSED(data);
   Q_UNUSED(surface);
   return true;
 }
 
-bool PfHandler::array(const PfArray &array) {
+bool PfHandler::array(PfArray array) {
   Q_UNUSED(array);
   return true;
 }
 
-bool PfHandler::endNode(const QList<QString> &names) {
+bool PfHandler::endNode(QList<QString> names) {
   Q_UNUSED(names);
   return true;
 }
 
-bool PfHandler::comment(const QString &content) {
+bool PfHandler::comment(QString content) {
   Q_UNUSED(content);
   return true;
 }

@@ -28,31 +28,27 @@ class PfNode;
 
 class LIBQTPFSHARED_EXPORT PfNodeData : public QSharedData {
   friend class PfNode;
-private:
+
   QString _name;
   QList<PfNode> _children;
   bool _isComment;
   PfContent _content;
 
 public:
-  explicit inline PfNodeData(const QString &name = QString()) : _name(name),
+  explicit inline PfNodeData(QString name = QString()) : _name(name),
     _isComment(false) { }
-  inline PfNodeData(const QString &name, const QString &content,
-                    bool isComment = false) : _name(name),
-    _isComment(isComment) { _content.append(content); }
-  inline PfNodeData(const PfNodeData &other) : QSharedData(),
-    _name(other._name), _children(other._children),
-    _isComment(other._isComment), _content(other._content) { }
-  inline bool isNull() const { return _name.isNull(); }
-  inline bool isComment() const { return _isComment; }
-  qint64 writePf(QIODevice *target, const PfOptions options) const;
-  qint64 writeFlatXml(QIODevice *target, const PfOptions options) const;
-  //qint64 writeCompatibleXml(QIODevice &target) const;
 
 private:
+  inline PfNodeData(QString name, QString content, bool isComment = false)
+    : _name(name), _isComment(isComment) { _content.append(content); }
+  inline bool isNull() const { return _name.isNull(); }
+  inline bool isComment() const { return _isComment; }
+  qint64 writePf(QIODevice *target, PfOptions options) const;
+  qint64 writeFlatXml(QIODevice *target, PfOptions options) const;
+  //qint64 writeCompatibleXml(QIODevice &target) const;
   //inline void buildChildrenFromArray() const;
   inline qint64 internalWritePf(QIODevice *target, QString indent,
-                                const PfOptions options) const;
+                                PfOptions options) const;
 };
 
 class LIBQTPFSHARED_EXPORT PfNode {
@@ -65,6 +61,7 @@ public:
   explicit inline PfNode(QString name = QString()) : d(new PfNodeData(name)) { }
   inline PfNode(QString name, QString content, bool isComment = false)
     : d(new PfNodeData(name, content, isComment)) { }
+  inline PfNode &operator=(const PfNode &other) { d = other.d; return *this; }
 
   // Node related methods /////////////////////////////////////////////////////
 
@@ -153,7 +150,7 @@ public:
   bool hasChild(QString name) const;
   bool isLeaf() const { return d->_children.size() == 0; }
   void removeAllChildren() { d->_children.clear(); }
-  void removeChildrenByName(const QString name);
+  void removeChildrenByName(QString name);
 
   // Content related methods //////////////////////////////////////////////////
 
@@ -202,27 +199,26 @@ public:
   inline void appendContent(const char *utf8text) {
     appendContent(QString::fromUtf8(utf8text)); }
   /** Append in-memory binary fragment to context (and remove array if any). */
-  inline void appendContent(const QByteArray data,
-                            const QString surface = QString()) {
+  inline void appendContent(QByteArray data, QString surface = QString()) {
     d->_content.append(data, surface); }
   /** Append lazy-loaded binary fragment to context (and remove array if any) */
   inline void appendContent(QIODevice *device, qint64 length, qint64 offset,
-                            const QString surface = QString()) {
+                            QString surface = QString()) {
     d->_content.append(device, length, offset, surface); }
   /** Replace current content with text fragment. */
-  inline void setContent(const QString text) {
+  inline void setContent(QString text) {
     d->_content.clear(); appendContent(text); }
   /** Replace current content with text fragment. */
   inline void setContent(const char *utf8text) {
     setContent(QString::fromUtf8(utf8text)); }
   /** Replace current content with in-memory binary fragment. */
-  inline void setContent(const QByteArray data) {
+  inline void setContent(QByteArray data) {
     d->_content.clear(); appendContent(data); }
   /** Replace current content with lazy-loaded binary fragment. */
   inline void setContent(QIODevice *device, qint64 length, qint64 offset) {
     d->_content.clear(); appendContent(device, length, offset); }
   /** Replace current content with an array. */
-  inline void setContent(const PfArray array) { d->_content.set(array); }
+  inline void setContent(PfArray array) { d->_content.set(array); }
   /** Replace current content with a text content containing a space separated
    * strings list. Backspaces and spaces inside strings are escaped with
    * backslash */
@@ -232,10 +228,10 @@ public:
 
   /** Write the whole PfNode tree in PF file format. */
   inline qint64 writePf(QIODevice *target,
-                        const PfOptions options = PfOptions()) const {
+                        PfOptions options = PfOptions()) const {
     return d->writePf(target, options); }
   /** Convert the whole PfNode tree to PF in a byte array. */
-  QByteArray toPf(const PfOptions options = PfOptions()) const;
+  QByteArray toPf(PfOptions options = PfOptions()) const;
   /** Convert the whole PfNode tree to PF in a characters string.
     * Note that the string will be truncated to the first \0 encountered,
     * which may happen inside binary segments, if any, therefore this
@@ -254,7 +250,7 @@ public:
     * written as an XML element) and with binary content converted into
     * Base64 text. Encoding is always UTF-8. */
   inline qint64 writeFlatXml(QIODevice *target,
-                             const PfOptions options = PfOptions()) const {
+                             PfOptions options = PfOptions()) const {
     return d->writeFlatXml(target, options); }
   // LATER test, debug and uncomment method
   /* Write node and whole tree (children recursively) in compatible XML format.
@@ -271,13 +267,13 @@ public:
   /** Write the node content (without node structure and children tree)
     * with no escape for PF special chars and so on. */
   inline qint64 writeRawContent(QIODevice *target,
-                                const PfOptions options = PfOptions()) const {
+                                PfOptions options = PfOptions()) const {
     return d->_content.writeRaw(target, options); }
   /** Write the node content (without node structure and children tree)
     * in PF syntax (escaping special chars and adding binary fragment headers).
     */
   inline qint64 writeContentAsPf(QIODevice *target,
-                                 const PfOptions options = PfOptions()) const {
+                                 PfOptions options = PfOptions()) const {
     return d->_content.writePf(target, options); }
 };
 

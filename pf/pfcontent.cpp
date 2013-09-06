@@ -1,5 +1,4 @@
-/*
-Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -14,7 +13,6 @@ under the License.
 
 #include "pfcontent.h"
 #include "pfinternals.h"
-#include "pfioutils.h"
 #include <QtDebug>
 #include <QRegExp>
 #include "pfnode.h"
@@ -161,7 +159,7 @@ error:
 }
 
 qint64 PfFragmentData::write(QIODevice *target, Format format,
-                             const PfOptions options) const {
+                             PfOptions options) const {
   if (isEmpty())
     return 0;
   if (isText()) {
@@ -271,7 +269,7 @@ error:
   return -1;
 }
 
-qint64 PfContent::writePf(QIODevice *target, const PfOptions options) const {
+qint64 PfContent::writePf(QIODevice *target, PfOptions options) const {
   if (!d->_array.isNull()) {
     if (options.shouldTranslateArrayIntoTree()) {
       PfNode tmp;
@@ -297,7 +295,7 @@ qint64 PfContent::writePf(QIODevice *target, const PfOptions options) const {
   return total;
 }
 
-qint64 PfContent::writeRaw(QIODevice *target, const PfOptions options) const {
+qint64 PfContent::writeRaw(QIODevice *target, PfOptions options) const {
   if (!d->_array.isNull())
     return d->_array.writePf(target, options);
   qint64 total = 0, r;
@@ -311,7 +309,7 @@ qint64 PfContent::writeRaw(QIODevice *target, const PfOptions options) const {
 }
 
 qint64 PfContent::writeXmlUsingBase64(QIODevice *target,
-                                      const PfOptions options) const {
+                                      PfOptions options) const {
   if (!d->_array.isNull()) {
     if (options.shouldTranslateArrayIntoTree()) {
       PfNode tmp;

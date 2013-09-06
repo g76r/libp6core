@@ -28,7 +28,7 @@ Q_CONSTRUCTOR_FUNCTION(staticInit)
 
 static QRegExp whitespace("\\s");
 
-qint64 PfNodeData::writePf(QIODevice *target, const PfOptions options) const {
+qint64 PfNodeData::writePf(QIODevice *target, PfOptions options) const {
   if (options.shouldIndent())
     return internalWritePf(target, "", options);
   else
@@ -36,7 +36,7 @@ qint64 PfNodeData::writePf(QIODevice *target, const PfOptions options) const {
 }
 
 qint64 PfNodeData::writeFlatXml(QIODevice *target,
-                                const PfOptions options) const  {
+                                PfOptions options) const  {
   // may indent one day (however xmllint does that well)
   qint64 total = 0, r;
   // opening tag
@@ -156,7 +156,7 @@ qint64 PfNodeData::writeFlatXml(QIODevice *target,
 }*/
 
 qint64 PfNodeData::internalWritePf(QIODevice *target, QString indent,
-                                   const PfOptions options) const {
+                                   PfOptions options) const {
   // LATER indent
   qint64 total = 0, r;
   if (isComment()) {
@@ -417,7 +417,7 @@ void PfNode::setContent(QList<QString> strings) {
   setContent(v);
 }
 
-QByteArray PfNode::toPf(const PfOptions options) const {
+QByteArray PfNode::toPf(PfOptions options) const {
   QByteArray ba;
   QBuffer b(&ba);
   b.open(QIODevice::WriteOnly);
@@ -425,7 +425,7 @@ QByteArray PfNode::toPf(const PfOptions options) const {
   return ba;
 }
 
-void PfNode::removeChildrenByName(const QString name) {
+void PfNode::removeChildrenByName(QString name) {
   for (int i = 0; i < d->_children.size(); ) {
     PfNode child = d->_children.at(i);
     if (child.name() == name)

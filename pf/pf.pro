@@ -33,8 +33,7 @@ SOURCES += \
     pfhandler.cpp \
     pfdomhandler.cpp \
     pfcontent.cpp \
-    pfarray.cpp \
-    pfioutils.cpp
+    pfarray.cpp
 
 HEADERS +=\
         libqtpf_global.h \
@@ -46,8 +45,7 @@ HEADERS +=\
     pfhandler.h \
     pfdomhandler.h \
     pfcontent.h \
-    pfarray.h \
-    pfioutils.h
+    pfarray.h
 
 unix {
     target.path = /usr/lib

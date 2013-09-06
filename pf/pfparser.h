@@ -1,5 +1,4 @@
-/*
-Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -26,8 +25,7 @@ class PfArray;
 
 /** Parenthesis Format (PF) event-oriented (SAX-like) parser.
   * @see PfHandler
-  * @see PfDomHandler
-  */
+  * @see PfDomHandler */
 class LIBQTPFSHARED_EXPORT PfParser {
 private:
   PfHandler *_handler;
@@ -40,24 +38,22 @@ public:
   // LATER provide a paused/continue mechanism as QXmlSimpleReader does
   /** Parse from a QIODevice source, such as a QFile or a QTcpSocket.
     * Support both sequential and seekable devices, but lazy-loading of
-    * binary fragments will be disabled on sequential devices.
-    */
-  bool parse(QIODevice *source, const PfOptions options = PfOptions());
+    * binary fragments will be disabled on sequential devices. */
+  bool parse(QIODevice *source, PfOptions options = PfOptions());
   /** Parse from a QByteArray source.
     * The current implementation does not support lazy loading (i.e. every
     * binary fragment will be copied from the original QByteArray and thus
     * will consume about twice the original memory).
     * Therefore the current implementation is only suitable for small
     * PF documents without binary fragments or if the source array is a
-    * temporary array and will be deleted soon after parsing.
-    */
-  bool parse(QByteArray source, const PfOptions options = PfOptions());
+    * temporary array and will be deleted soon after parsing. */
+  bool parse(QByteArray source, PfOptions options = PfOptions());
 
 private:
   inline bool readAndFinishBinaryFragment(QIODevice *source,
-                                          bool &lazyBinaryFragments,
+                                          bool *lazyBinaryFragments,
                                           const QString surface, qint64 l);
-  inline bool finishArray(PfArray &array, QList<QString> &names);
+  inline bool finishArray(PfArray *array, QList<QString> *names);
 };
 
 #endif // PFPARSER_H

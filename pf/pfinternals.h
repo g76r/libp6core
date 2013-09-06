@@ -1,5 +1,4 @@
-/*
-Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -31,22 +30,22 @@ under the License.
 #define PF_ESCAPE "\\"
 #define PF_XML_SPECIAL_CHARS "<>#&["
 
-inline bool pfin(const char &c, const char *s) {
+inline bool pfin(const char c, const char *s) {
   while (*s)
     if (c == *(s++))
       return true;
   return false;
 }
 
-inline bool pfisspace(const char &c) { return pfin(c, PF_SPACES); }
+inline bool pfisspace(char c) { return pfin(c, PF_SPACES); }
 
-inline bool pfisquote(const char &c) { return pfin(c, PF_QUOTES); }
+inline bool pfisquote(char c) { return pfin(c, PF_QUOTES); }
 
-inline bool pfisspecial(const char &c) {
+inline bool pfisspecial(char c) {
   return pfin(c, PF_SPACES PF_RESERVED PF_SEPARATORS PF_QUOTES PF_ESCAPE);
 }
 
-inline bool pfisendofname(const char &c) {
+inline bool pfisendofname(char c) {
   return pfin(c, PF_SPACES PF_SEPARATORS);
 }
 
@@ -58,7 +57,7 @@ inline QString tr(const char *s) { return QObject::tr(s); }
   * 233 (é in ISO 8859-1)           ->      \xe9
   * 10 (a.k.a. \n or end of line)   ->      \x0a
   */
-inline QString pfquotechar(const unsigned char &c) {
+inline QString pfquotechar(unsigned char c) {
   if (c == '\\')
     return "\\\\";
   if (c > 32 && c < 128)
@@ -72,7 +71,7 @@ inline QString pfquotechar(const unsigned char &c) {
   * foo\\bar      ->      foo\\\\bar
   * "foo"(|       ->      \"foo\"\(\|
   */
-inline QString pfescape(const QString &string) {
+inline QString pfescape(QString string) {
   QString s;
   for (int i = 0; i < string.size(); ++i) {
     QChar c = string.at(i);
@@ -83,7 +82,7 @@ inline QString pfescape(const QString &string) {
   return s;
 }
 
-inline QString pftoxmlname(const QString &string) {
+inline QString pftoxmlname(QString string) {
   QString s;
   for (int i = 0; i < string.size(); ++i) {
     QChar c = string.at(i);
@@ -99,7 +98,7 @@ inline QString pftoxmlname(const QString &string) {
   return s;
 }
 
-inline QString pftoxmltext(const QString &string) {
+inline QString pftoxmltext(QString string) {
   QString s;
   for (int i = 0; i < string.size(); ++i) {
     QChar c = string.at(i);

@@ -1,5 +1,4 @@
-/*
-Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -24,8 +23,7 @@ under the License.
   * binary fragments).
   * This class is usefull for manipulating PF content without bothering with
   * event-oriented parsing: all the data is loaded into memory (excepted binary
-  * fragments if they are lazy-loaded) and can be manipuled as PfNode trees.
-  */
+  * fragments if they are lazy-loaded) and can be manipuled as PfNode trees. */
 class LIBQTPFSHARED_EXPORT PfDomHandler : public PfHandler {
 protected:
   QList<PfNode> _path;
@@ -34,19 +32,18 @@ protected:
 
 public:
   // LATER add option to enable (or disable) loading of arrays as children
-  /** @param ignoreComments if set, won't receive comment() calls
-    */
+  /** @param ignoreComments if set, won't receive comment() calls */
   PfDomHandler();
   ~PfDomHandler();
-  bool startDocument(const PfOptions &options);
-  bool startNode(const QList<QString> &names);
-  bool text(const QString &text);
+  bool startDocument(PfOptions options);
+  bool startNode(QList<QString> names);
+  bool text(QString text);
   bool binary(QIODevice *device, qint64 length, qint64 offset,
-              const QString &surface);
-  bool binary(const QByteArray &data, const QString &surface);
-  bool array(const PfArray &array);
-  bool endNode(const QList<QString> &names);
-  bool comment(const QString &content);
+              QString surface);
+  bool binary(QByteArray data, QString surface);
+  bool array(PfArray array);
+  bool endNode(QList<QString> names);
+  bool comment(QString content);
   bool endDocument();
   QList<PfNode> roots() const { return _roots; }
 };

@@ -1,5 +1,4 @@
-/*
-Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -21,20 +20,20 @@ PfDomHandler::PfDomHandler() : PfHandler() {
 PfDomHandler::~PfDomHandler() {
 }
 
-bool PfDomHandler::startDocument(const PfOptions &options) {
+bool PfDomHandler::startDocument(PfOptions options) {
   Q_UNUSED(options)
   _roots.clear();
   _path.clear();
   return true;
 }
 
-bool PfDomHandler::startNode(const QList<QString> &names) {
+bool PfDomHandler::startNode(QList<QString> names) {
   PfNode node(names.last());
   _path.append(node);
   return true;
 }
 
-bool PfDomHandler::text(const QString &text) {
+bool PfDomHandler::text(QString text) {
   if (_path.size() == 0) {
     setErrorString(tr("text data before root node"));
     return false;
@@ -47,7 +46,7 @@ bool PfDomHandler::text(const QString &text) {
 }
 
 bool PfDomHandler::binary(QIODevice *device, qint64 length, qint64 offset,
-                          const QString &surface) {
+                          QString surface) {
   if (_path.size() == 0) {
     setErrorString(tr("binary data before root node"));
     return false;
@@ -56,7 +55,7 @@ bool PfDomHandler::binary(QIODevice *device, qint64 length, qint64 offset,
   return true;
 }
 
-bool PfDomHandler::binary(const QByteArray &data, const QString &surface) {
+bool PfDomHandler::binary(QByteArray data, QString surface) {
   if (_path.size() == 0) {
     setErrorString(tr("binary data before root node"));
     return false;
@@ -65,7 +64,7 @@ bool PfDomHandler::binary(const QByteArray &data, const QString &surface) {
   return true;
 }
 
-bool PfDomHandler::array(const PfArray &array) {
+bool PfDomHandler::array(PfArray array) {
   if (_path.size() == 0) {
     setErrorString(tr("array data before root node"));
     return false;
@@ -80,7 +79,7 @@ bool PfDomHandler::array(const PfArray &array) {
   return true;
 }
 
-bool PfDomHandler::endNode(const QList<QString> &names) {
+bool PfDomHandler::endNode(QList<QString> names) {
   Q_UNUSED(names);
   PfNode node(_path.takeLast());
   if (!_path.isEmpty())
@@ -90,7 +89,7 @@ bool PfDomHandler::endNode(const QList<QString> &names) {
   return true;
 }
 
-bool PfDomHandler::comment(const QString &content) {
+bool PfDomHandler::comment(QString content) {
   PfNode node("", content, true);
   if (_path.size())
     _path.last().appendChild(node);

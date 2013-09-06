@@ -1,5 +1,4 @@
-/*
-Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -17,7 +16,6 @@ under the License.
 #include <QtDebug>
 #include "pfinternals.h"
 #include <QBuffer>
-#include "pfioutils.h"
 #include "pfarray.h"
 
 enum State { TopLevel, Name, Content, Comment, Quote, BinarySurfaceOrLength,
@@ -41,7 +39,8 @@ static const char hexdigits[] = {
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
-bool PfParser::parse(QIODevice *source, const PfOptions options) {
+// LATER make read and write timeout parameters
+bool PfParser::parse(QIODevice *source, PfOptions options) {
   bool lazyBinaryFragments = options.shouldLazyLoadBinaryFragments();
   if (!_handler) {
     qWarning() << "PfParser::parse called before setting a handler";
@@ -272,7 +271,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
           _handler->setErrorString(tr("binary fragment with incorrect length"));
           goto error;
         }
-        if (!readAndFinishBinaryFragment(source, lazyBinaryFragments, "", l))
+        if (!readAndFinishBinaryFragment(source, &lazyBinaryFragments, "", l))
           goto error;
         content.clear();
         line = 10000000; // LATER hide line numbers after first binary fragment
@@ -309,7 +308,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
           _handler->setErrorString(tr("binary fragment with incorrect length"));
           goto error;
         }
-        if (!readAndFinishBinaryFragment(source, lazyBinaryFragments, surface,
+        if (!readAndFinishBinaryFragment(source, &lazyBinaryFragments, surface,
                                          l))
           goto error;
         content.clear();
@@ -350,7 +349,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
           ++arrayColumn;
         } else if (c == ')') {
           content.clear();
-          if (!finishArray(array, names))
+          if (!finishArray(&array, &names))
             goto error;
           state = names.size() ? Content : TopLevel;
         } else if (c == '#') {
@@ -398,7 +397,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions options) {
             array.appendCell((QString::fromUtf8(content)));
           array.removeLastRowIfEmpty();
           content.clear();
-          if (!finishArray(array, names))
+          if (!finishArray(&array, &names))
             goto error;
           state = names.size() ? Content : TopLevel;
         } else if (c == '#') {
@@ -491,26 +490,51 @@ error:
   return false;
 }
 
-bool PfParser::parse(QByteArray source, const PfOptions options) {
+bool PfParser::parse(QByteArray source, PfOptions options) {
   QBuffer buf(&source);
   if (!buf.open(QBuffer::ReadOnly))
     return false; // unlikely to occur
   return parse(&buf, options);
 }
 
+static qint64 copy(QIODevice *dest, QIODevice *src, qint64 max,
+                   qint64 bufsize = 65536, int readTimeout = 30000,
+                   int writeTimeout = 30000) {
+  if (!dest || !src)
+    return -1;
+  char buf[bufsize];
+  int total = 0, n, m;
+  while (total < max) {
+    if (src->bytesAvailable() < 1)
+      src->waitForReadyRead(readTimeout);
+    n = src->read(buf, std::min(bufsize, max-total));
+    if (n < 0)
+      return -1;
+    if (n == 0)
+      break;
+    m = dest->write(buf, n);
+    if (m != n)
+      return -1;
+    if (dest->bytesToWrite() > bufsize)
+      while (dest->waitForBytesWritten(writeTimeout) > bufsize);
+    total += n;
+  }
+  return total;
+}
+
 bool PfParser::readAndFinishBinaryFragment(QIODevice *source,
-                                           bool &lazyBinaryFragments,
+                                           bool *lazyBinaryFragments,
                                            const QString surface, qint64 l) {
   //qDebug() << "readAndFinishBinaryFragment" << lazyBinaryFragments
   //         << surface << l;
   if (l <= 0)
     return true;
-  if (lazyBinaryFragments && source->isSequential()) {
+  if (*lazyBinaryFragments && source->isSequential()) {
     qDebug() << "lazyBinaryFragments ignored because source is "
                 "sequential (= not seekable)";
-    lazyBinaryFragments = false;
+    *lazyBinaryFragments = false;
   }
-  if (lazyBinaryFragments) {
+  if (*lazyBinaryFragments) {
     qint64 p = source->pos();
     if (!source->seek(p+l)) {
       _handler->setErrorString(tr("binary fragment beyond end of document"));
@@ -524,7 +548,7 @@ bool PfParser::readAndFinishBinaryFragment(QIODevice *source,
     QByteArray data; //(source.read(l));
     QBuffer buf(&data);
     buf.open(QIODevice::WriteOnly);
-    IOUtils::copy(buf, source, l);
+    copy(&buf, source, l);
     if (data.size() != l) {
       _handler->setErrorString(tr("binary fragment beyond end of "
                                   "document (%1 bytes instead of %2)")
@@ -539,16 +563,16 @@ bool PfParser::readAndFinishBinaryFragment(QIODevice *source,
   return true;
 }
 
-bool PfParser::finishArray(PfArray &array, QList<QString> &names) {
-  if (!(_handler->array(array))) {
-    array.clear();
+bool PfParser::finishArray(PfArray *array, QList<QString> *names) {
+  if (!(_handler->array(*array))) {
+    array->clear();
     _handler->setErrorString(tr("cannot handle array fragment"));
     return false;
   }
-  if (!_handler->endNode(names)) {
+  if (!_handler->endNode(*names)) {
     _handler->setErrorString(tr("cannot handle end of node"));
     return false;
   }
-  names.removeLast();
+  names->removeLast();
   return true;
 }

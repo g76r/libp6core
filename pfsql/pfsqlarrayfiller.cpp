@@ -1,5 +1,4 @@
-/*
- * Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * See the NOTICE file distributed with this work for additional information
  * regarding copyright ownership.  The ASF licenses this file to you under
  * the Apache License, Version 2.0 (the "License"); you may not use this
@@ -17,22 +16,29 @@
 #include <QSqlError>
 #include <QVariant>
 
-PfSqlArrayFiller::PfSqlArrayFiller(QSqlDatabase &db)
+PfSqlArrayFiller::PfSqlArrayFiller(QSqlDatabase *db)
   : _db(db) {
 }
 
-PfArray PfSqlArrayFiller::buildArray(QString query, QString &errorString) {
+PfArray PfSqlArrayFiller::buildArray(QString query, QString *errorString) {
   PfArray array;
-  QSqlQuery q(_db);
+  if (!_db) {
+    if (errorString)
+      *errorString = QObject::tr("cannot prepare or execute query on null db");
+    return array;
+  }
+  QSqlQuery q(*_db);
   if (!q.prepare(query) || !q.exec()) {
-    errorString = QObject::tr("cannot prepare or execute query: %1, query "
-                              "was: %2").arg(_db.lastError().text()).arg(query);
+    if (errorString)
+      *errorString =
+        QObject::tr("cannot prepare or execute query: %1, query was: %2")
+          .arg(_db->lastError().text()).arg(query);
     return array;
   }
   return buildArray(&q, errorString);
 }
 
-PfArray PfSqlArrayFiller::buildArray(QSqlQuery *query, QString &errorString) {
+PfArray PfSqlArrayFiller::buildArray(QSqlQuery *query, QString *errorString) {
   Q_UNUSED(errorString);
   PfArray array;
   if (query->first()) {

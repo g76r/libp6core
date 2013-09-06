@@ -1,5 +1,4 @@
-/*
- * Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * See the NOTICE file distributed with this work for additional information
  * regarding copyright ownership.  The ASF licenses this file to you under
  * the Apache License, Version 2.0 (the "License"); you may not use this
@@ -21,12 +20,12 @@ class QSqlQuery;
 
 class LIBQTPFSHARED_EXPORT PfSqlArrayFiller {
 private:
-  QSqlDatabase &_db;
+  QSqlDatabase *_db;
 
 public:
-  PfSqlArrayFiller(QSqlDatabase &db);
-  PfArray buildArray(QString query, QString &errorString);
-  PfArray buildArray(QSqlQuery *query, QString &errorString);
+  PfSqlArrayFiller(QSqlDatabase *db);
+  PfArray buildArray(QString query, QString *errorString);
+  PfArray buildArray(QSqlQuery *query, QString *errorString);
 };
 
 #endif // PFSQLARRAYFILLER_H
