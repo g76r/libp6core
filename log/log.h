@@ -41,6 +41,9 @@ public:
   static void replaceLoggers(Logger *newLogger);
   /** Remove all loggers and replace them with new ones. */
   static void replaceLoggers(QList<Logger*> newLoggers);
+  /** Remove all loggers and replace them with new ones plus a console logger.*/
+  static void replaceLoggersPlusConsole(Log::Severity consoleLoggerSeverity,
+                                        QList<Logger*> newLoggers);
   static void log(const QString message, Severity severity = Info,
                   const QString task = QString(),
                   const QString execId = QString(),
