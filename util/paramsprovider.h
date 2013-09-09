@@ -18,14 +18,13 @@
 #include "libqtssu_global.h"
 
 /** Base class for any class that may provide key/value parameters.
- * @see ParamSet
- */
+ * @see ParamSet */
 class LIBQTSSUSHARED_EXPORT ParamsProvider {
 public:
   virtual ~ParamsProvider();
   /** Return a parameter value. */
-  virtual QVariant paramValue(
-      const QString key, const QVariant defaultValue = QVariant()) const = 0;
+  virtual QVariant paramValue(QString key,
+                              QVariant defaultValue = QVariant()) const = 0;
 };
 
 #endif // PARAMSPROVIDER_H

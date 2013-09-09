@@ -25,7 +25,7 @@ HtmlTableView::HtmlTableView(QObject *parent, int cachedRows, int rowsPerPage)
   setEllipsePlaceholder("...");
 }
 
-void HtmlTableView::setEmptyPlaceholder(const QString rawText) {
+void HtmlTableView::setEmptyPlaceholder(QString rawText) {
   int columns = effectiveColumnIndexes().size();
   if (rawText.isEmpty())
     TextTableView::setEmptyPlaceholder(QString());
@@ -35,7 +35,7 @@ void HtmlTableView::setEmptyPlaceholder(const QString rawText) {
           +"</td></tr>\n");
 }
 
-void HtmlTableView::setEllipsePlaceholder(const QString rawText) {
+void HtmlTableView::setEllipsePlaceholder(QString rawText) {
   int columns = effectiveColumnIndexes().size();
   if (rawText.isEmpty())
     TextTableView::setEllipsePlaceholder(QString());

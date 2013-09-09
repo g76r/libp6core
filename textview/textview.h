@@ -29,8 +29,7 @@
  * mechanisms (caching, pages...);
  * <li>cache content in members data updated by protected slots (such as
  * columnsInserted()) and implement text() to build actual full display data
- * using cached content.
- */
+ * using cached content. */
 class LIBQTSSUSHARED_EXPORT TextView : public QObject {
   Q_OBJECT
   QAbstractItemModel *_model;

@@ -25,15 +25,15 @@ class LIBQTSSUSHARED_EXPORT MailSender {
   QUrl _url;
 
 public:
-  explicit MailSender(const QUrl &url);
-  explicit MailSender(const QString &url);
+  explicit MailSender(QUrl url);
+  explicit MailSender(QString url);
   /** @return true only if SMTP server accepted to queue the mail */
-  bool send(const QString sender, const QList<QString> recipients,
-            const QVariant body, const QHash<QString, QString> headers,
-            const QList<QVariant> attachments, QString &errorString);
-  inline bool send(const QString sender, const QList<QString> recipients,
-                   const QVariant body, const QHash<QString, QString> headers,
-                   const QList<QVariant> attachments) {
+  bool send(QString sender, QList<QString> recipients, QVariant body,
+            QHash<QString, QString> headers, QList<QVariant> attachments,
+            QString &errorString);
+  inline bool send(QString sender, QList<QString> recipients, QVariant body,
+                   QHash<QString, QString> headers,
+                   QList<QVariant> attachments) {
     QString errorString;
     return send(sender, recipients, body, headers, attachments, errorString);
   }

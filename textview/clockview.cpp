@@ -13,7 +13,7 @@
  */
 #include "clockview.h"
 
-ClockView::ClockView(QObject *parent, const QString format)
+ClockView::ClockView(QObject *parent, QString format)
   : TextView(parent), _textFormat(format), _dateFormat(Qt::ISODate) {
 }
 

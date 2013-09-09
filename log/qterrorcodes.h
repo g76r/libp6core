@@ -18,6 +18,8 @@
 #include <QString>
 #include <QNetworkReply>
 
-QString LIBQTSSUSHARED_EXPORT networkErrorAsString(QNetworkReply::NetworkError code);
+/** Decoding QNetworkReply error codes. */
+QString LIBQTSSUSHARED_EXPORT networkErrorAsString(
+    QNetworkReply::NetworkError code);
 
 #endif // QTERRORCODES_H

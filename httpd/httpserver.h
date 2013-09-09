@@ -43,8 +43,8 @@ public:
    * method is called by ~HttpServer(). */
   void prependHandler(HttpHandler *handler);
   HttpHandler *chooseHandler(HttpRequest req);
-  bool listen(const QHostAddress &address = QHostAddress::Any,
-              quint16 port = 0);
+  bool listen(QHostAddress address = QHostAddress::Any, quint16 port = 0);
+  bool listen(quint16 port) { return listen (QHostAddress::Any, port); }
 
 protected:
   void incomingConnection(int handle);
@@ -53,7 +53,7 @@ private slots:
   void connectionHandled(HttpWorker *worker);
 
 private:
-  Q_INVOKABLE bool doListen(const QHostAddress &address, quint16 port);
+  Q_INVOKABLE bool doListen(QHostAddress address, quint16 port);
   Q_DISABLE_COPY(HttpServer)
 };
 

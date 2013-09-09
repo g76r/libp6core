@@ -17,8 +17,7 @@
 #include "asynctextview.h"
 
 /** Display the model content as a CSV table which first column is
- * indented to reflect the tree of the model if any.
- */
+ * indented to reflect the tree of the model if any. */
 // LATER add style options (separators, quotes, indentation string, columns selection, hide non-leaf rows...)
 class LIBQTSSUSHARED_EXPORT CsvTreeView : public AsyncTextView {
   Q_OBJECT
@@ -27,7 +26,7 @@ class LIBQTSSUSHARED_EXPORT CsvTreeView : public AsyncTextView {
 
 public:
   explicit CsvTreeView(QObject *parent = 0);
-  void setTopLeftHeader(const QString rawHtml) { _topLeftHeader = rawHtml; }
+  void setTopLeftHeader(QString rawHtml) { _topLeftHeader = rawHtml; }
   void setColumnHeaders(bool set = true) { _columnHeaders = set; }
   void setRowHeaders(bool set = true) { _rowHeaders = set; }
 

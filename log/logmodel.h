@@ -20,9 +20,14 @@
 
 class MemoryLogger;
 
+/** Model used by MemoryLoger. Contains a log entry per row, the first row
+ * being the last recorded entry.
+ * @see MemoryLogger */
 class LIBQTSSUSHARED_EXPORT LogModel : public QAbstractListModel {
   friend class MemoryLogger;
   Q_OBJECT
+  Q_DISABLE_COPY(LogModel)
+
 public:
   static const int HtmlPrefixRole = Qt::UserRole;
   static const int TrClassRole = Qt::UserRole+1;
@@ -56,10 +61,10 @@ public:
   int columnCount(const QModelIndex &parent) const;
   QVariant data(const QModelIndex &index, int role) const;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-  void setWarningIcon(const QString rawHtml) { _warningIcon = rawHtml; }
-  void setErrorIcon(const QString rawHtml) { _errorIcon = rawHtml; }
-  void setWarningTrClass(const QString rawHtml) { _warningTrClass = rawHtml; }
-  void setErrorTrClass(const QString rawHtml) { _errorTrClass = rawHtml; }
+  void setWarningIcon(QString rawHtml) { _warningIcon = rawHtml; }
+  void setErrorIcon(QString rawHtml) { _errorIcon = rawHtml; }
+  void setWarningTrClass(QString rawHtml) { _warningTrClass = rawHtml; }
+  void setErrorTrClass(QString rawHtml) { _errorTrClass = rawHtml; }
 
 private:
   // only MemoryLogger can create LogModel or log to it

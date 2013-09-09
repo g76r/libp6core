@@ -51,10 +51,9 @@ public:
   inline QString methodName() const;
   /** @return protocol and human readable string, e.g. "GET" */
   static QString methodName(HttpRequestMethod method);
-  bool parseAndAddHeader(const QString rawHeader);
-  QString header(
-      const QString name, const QString defaultValue = QString()) const;
-  QStringList headers(const QString name) const;
+  bool parseAndAddHeader(QString rawHeader);
+  QString header(QString name, QString defaultValue = QString()) const;
+  QStringList headers(QString name) const;
   QMultiMap<QString,QString> headers() const;
   QString cookie(QString name, QString defaultValue = QString()) const;
   QString base64Cookie(QString name, QString defaultValue = QString()) const;
@@ -78,7 +77,7 @@ public:
   // LATER handle cookies and sessions
 
 private:
-  void parseAndAddCookie(const QString rawHeaderValue);
+  void parseAndAddCookie(QString rawHeaderValue);
   void cacheAllParams() const;
 };
 

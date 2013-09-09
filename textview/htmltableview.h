@@ -34,9 +34,9 @@ public:
   explicit HtmlTableView(QObject *parent = 0,
                          int cachedRows = defaultCachedRows,
                          int rowsPerPage = defaultRowsPerPage);
-  void setTableClass(const QString tableClass) {
+  void setTableClass(QString tableClass) {
     _tableClass = tableClass; updateHeaderAndFooterCache(); }
-  void setTopLeftHeader(const QString rawHtml) {
+  void setTopLeftHeader(QString rawHtml) {
     _topLeftHeader = rawHtml; updateHeaderAndFooterCache(); }
   void setThClassRole(int role) { _thClassRole = role; }
   void setTrClassRole(int role) { _trClassRole = role; }
@@ -52,8 +52,8 @@ public:
     _columnHeaders = set; updateHeaderAndFooterCache(); }
   void setRowHeaders(bool set = true) {
     _rowHeaders = set; updateHeaderAndFooterCache(); }
-  void setEmptyPlaceholder(const QString rawText);
-  void setEllipsePlaceholder(const QString rawText);
+  void setEmptyPlaceholder(QString rawText);
+  void setEllipsePlaceholder(QString rawText);
   void setRowAnchor(QString prefix = "", int column = 0) {
     _rowAnchorPrefix = prefix;
     _rowAnchorColumn = column;

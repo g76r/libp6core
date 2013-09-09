@@ -17,8 +17,7 @@
 #include "asynctextview.h"
 
 /** Display the model content as a HTML list, or list of lists to reflect the
- * tree of the model if any.
- */
+ * tree of the model if any. */
 // LATER add style options (html classes, ul or ol, icons, columns selection...)
 class LIBQTSSUSHARED_EXPORT HtmlListView : public AsyncTextView {
   Q_OBJECT

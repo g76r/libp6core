@@ -23,8 +23,7 @@
  * these markups with dynamic content.
  * Files to be parsed must be declared first, e.g. with addFilter("\\.html$").
  * Views are permanent objects registred through addView() whereas values are
- * request-time data avalaible through a ParamsProvider.
- */
+ * request-time data avalaible through a ParamsProvider. */
 class LIBQTSSUSHARED_EXPORT TemplatingHttpHandler
     : public FilesystemHttpHandler {
   Q_OBJECT
@@ -34,11 +33,11 @@ class LIBQTSSUSHARED_EXPORT TemplatingHttpHandler
 
 public:
   explicit TemplatingHttpHandler(QObject *parent = 0,
-                                 const QString urlPathPrefix = "",
-                                 const QString documentRoot = ":docroot/");
-  void addView(const QString label, TextView *view) {
+                                 QString urlPathPrefix = "",
+                                 QString documentRoot = ":docroot/");
+  void addView(QString label, TextView *view) {
     _views.insert(label, QWeakPointer<TextView>(view)); }
-  void addFilter(const QString regexp) { _filters.insert(regexp); }
+  void addFilter(QString regexp) { _filters.insert(regexp); }
 
 protected:
   void sendLocalResource(HttpRequest req, HttpResponse res, QFile *file,

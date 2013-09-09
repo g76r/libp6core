@@ -16,10 +16,10 @@
 #include <QTcpSocket>
 #include <QRegExp>
 
-MailSender::MailSender(const QUrl &url) : _url(url) {
+MailSender::MailSender(QUrl url) : _url(url) {
 }
 
-MailSender::MailSender(const QString &url) : _url(url) {
+MailSender::MailSender(QString url) : _url(url) {
 }
 
 // LATER avoid this ugly QObject subclass without Q_OBJECT
@@ -77,12 +77,9 @@ public:
   inline bool valid() const { return _valid; }
 };
 
-bool MailSender::send(const QString sender,
-                         const QList<QString> recipients,
-                         const QVariant body,
-                         const QHash<QString, QString> headers,
-                         const QList<QVariant> attachments,
-                         QString &errorString) {
+bool MailSender::send(QString sender, QList<QString> recipients, QVariant body,
+                      QHash<QString, QString> headers,
+                      QList<QVariant> attachments, QString &errorString) {
   Q_UNUSED(attachments)
   EmailAddress senderAddress(sender);
   if (!senderAddress.valid()) {

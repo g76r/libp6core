@@ -30,8 +30,8 @@ class LIBQTSSUSHARED_EXPORT HtmlTreeView : public AsyncTextView {
 
 public:
   explicit HtmlTreeView(QObject *parent = 0);
-  void setTableClass(const QString tableClass) { _tableClass = tableClass; }
-  void setTopLeftHeader(const QString rawHtml) { _topLeftHeader = rawHtml; }
+  void setTableClass(QString tableClass) { _tableClass = tableClass; }
+  void setTopLeftHeader(QString rawHtml) { _topLeftHeader = rawHtml; }
   void setThClassRole(int role) { _thClassRole = role; }
   void setTrClassRole(int role) { _trClassRole = role; }
   void setTdClassRole(int role) { _tdClassRole = role; }
@@ -43,11 +43,9 @@ public:
   void setColumnHeaders(bool set = true) { _columnHeaders = set; }
   void setRowHeaders(bool set = true) { _rowHeaders = set; }
   /** Text printed if the table is empty. Default is "(empty)". */
-  void setEmptyPlaceholder(const QString rawHtml) {
-    _emptyPlaceholder = rawHtml; }
+  void setEmptyPlaceholder(QString rawHtml) { _emptyPlaceholder = rawHtml; }
   /** Text printed if the table is truncated to maxrows. Default is "...". */
-  void setEllipsePlaceholder(const QString rawHtml) {
-    _ellipsePlaceholder = rawHtml; }
+  void setEllipsePlaceholder(QString rawHtml) { _ellipsePlaceholder = rawHtml; }
   /** Max number of rows to display. Default is 100. Use INT_MAX if you want
     * no limit. */
   void setMaxrows(int maxrows) { _maxrows = maxrows; }

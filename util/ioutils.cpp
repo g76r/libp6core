@@ -17,7 +17,7 @@
 #include <QDir>
 #include <QtDebug>
 
-QString IOUtils::url2path(const QUrl &url) {
+QString IOUtils::url2path(QUrl url) {
   if (url.scheme() == "file") {
     QString path = url.path();
     QRegExp rx("/[A-Z]:/.*");
@@ -54,7 +54,7 @@ qint64 IOUtils::copy(QIODevice *dest, QIODevice *src, qint64 max,
   return total;
 }
 
-qint64 IOUtils::grep(QIODevice *dest, QIODevice *src, const QString pattern,
+qint64 IOUtils::grep(QIODevice *dest, QIODevice *src, QString pattern,
                      bool useRegexp, qint64 max, qint64 bufsize) {
   if (!dest || !src)
     return -1;
@@ -83,7 +83,7 @@ qint64 IOUtils::grep(QIODevice *dest, QIODevice *src, const QString pattern,
 }
 
 qint64 IOUtils::grep(QIODevice *dest, QIODevice *src,
-                     const QRegExp regexp, qint64 max, qint64 bufsize) {
+                     QRegExp regexp, qint64 max, qint64 bufsize) {
   if (!dest || !src)
     return -1;
   char buf[bufsize];
@@ -125,7 +125,7 @@ static void findFiles(QDir dir, QStringList &files, const QRegExp pattern) {
   }
 }
 
-QStringList IOUtils::findFiles(const QString pattern) {
+QStringList IOUtils::findFiles(QString pattern) {
   QStringList files;
   QString pat = QDir().absoluteFilePath(QDir::fromNativeSeparators(pattern));
   static const QRegExp slashFollowedByWildcard("/[^/]*[*?[]|\\]");

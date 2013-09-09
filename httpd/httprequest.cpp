@@ -71,7 +71,7 @@ QString HttpRequest::methodName(HttpRequestMethod method) {
   return "UNKNOWN";
 }
 
-bool HttpRequest::parseAndAddHeader(const QString rawHeader) {
+bool HttpRequest::parseAndAddHeader(QString rawHeader) {
   if (!d)
     return false;
   int i = rawHeader.indexOf(':');
@@ -88,7 +88,7 @@ bool HttpRequest::parseAndAddHeader(const QString rawHeader) {
   return true;
 }
 
-void HttpRequest::parseAndAddCookie(const QString rawHeaderValue) {
+void HttpRequest::parseAndAddCookie(QString rawHeaderValue) {
   // LATER ensure that utf8 is supported as specified in RFC6265
   if (!d)
     return;

@@ -66,12 +66,11 @@ QVariant TextMatrixModel::headerData(int section, Qt::Orientation orientation,
   return QVariant();
 }
 
-QString TextMatrixModel::value(const QString row, const QString column) const {
+QString TextMatrixModel::value(QString row, QString column) const {
   return _values.value(row).value(column);
 }
 
-void TextMatrixModel::setCellValue(const QString row, const QString column,
-                                   const QString value) {
+void TextMatrixModel::setCellValue(QString row, QString column, QString value) {
   //Log::fatal() << "TextMatrixModel::setCellValue " << row << " " << column << " " << value;
   // LATER optimize TextMatrixModel::setCellValue, complexity is O(4n) and should be at most O(log n)
   if (!_rowNames.contains(row)) {

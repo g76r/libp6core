@@ -18,11 +18,11 @@ TextTableView::TextTableView(QObject *parent, int cachedRows, int rowsPerPage)
   : TextView(parent), _cachedRows(cachedRows), _rowsPerPage(rowsPerPage) {
 }
 
-void TextTableView::setEmptyPlaceholder(const QString rawText) {
+void TextTableView::setEmptyPlaceholder(QString rawText) {
   _emptyPlaceholder = rawText;
 }
 
-void TextTableView::setEllipsePlaceholder(const QString rawText) {
+void TextTableView::setEllipsePlaceholder(QString rawText) {
   _ellipsePlaceholder = rawText;
 }
 

@@ -44,58 +44,57 @@ public:
   /** Remove all loggers and replace them with new ones plus a console logger.*/
   static void replaceLoggersPlusConsole(Log::Severity consoleLoggerSeverity,
                                         QList<Logger*> newLoggers);
-  static void log(const QString message, Severity severity = Info,
-                  const QString task = QString(),
-                  const QString execId = QString(),
-                  const QString sourceCode = QString());
-  static const QString severityToString(Severity severity);
+  static void log(QString message, Severity severity = Info,
+                  QString task = QString(), QString execId = QString(),
+                  QString sourceCode = QString());
+  static QString severityToString(Severity severity);
   /** Very tolerant severity mnemonic reader.
    * Read first character of string in a case insensitive manner, e.g.
    * "W", "warn", "warning", and "war against terror" are all interpreted
    * as Log::Warning.
    * Unmatched letters ar interpreted as Log::Debug, therefore "D", "Debug",
    * or even "Global Warming" and "" are all interpreted as Log::Debug. */
-  static Log::Severity severityFromString(const QString string);
+  static Log::Severity severityFromString(QString string);
   static void logMessageHandler(QtMsgType type, const char *msg);
   static inline LogHelper log(Log::Severity severity,
-                              const QString task = QString(),
-                              const QString execId = QString(),
-                              const QString sourceCode = QString());
-  static inline LogHelper debug(const QString task = QString(),
-                                const QString execId = QString(),
-                                const QString sourceCode = QString());
-  static inline LogHelper info(const QString task = QString(),
-                               const QString execId = QString(),
-                               const QString sourceCode = QString());
-  static inline LogHelper warning(const QString task = QString(),
-                                  const QString execId = QString(),
-                                  const QString sourceCode = QString());
-  static inline LogHelper error(const QString task = QString(),
-                                const QString execId = QString(),
-                                const QString sourceCode = QString());
-  static inline LogHelper fatal(const QString task = QString(),
-                                const QString execId = QString(),
-                                const QString sourceCode = QString());
-  static inline LogHelper log(Log::Severity severity, const QString task,
+                              QString task = QString(),
+                              QString execId = QString(),
+                              QString sourceCode = QString());
+  static inline LogHelper debug(QString task = QString(),
+                                QString execId = QString(),
+                                QString sourceCode = QString());
+  static inline LogHelper info(QString task = QString(),
+                               QString execId = QString(),
+                               QString sourceCode = QString());
+  static inline LogHelper warning(QString task = QString(),
+                                  QString execId = QString(),
+                                  QString sourceCode = QString());
+  static inline LogHelper error(QString task = QString(),
+                                QString execId = QString(),
+                                QString sourceCode = QString());
+  static inline LogHelper fatal(QString task = QString(),
+                                QString execId = QString(),
+                                QString sourceCode = QString());
+  static inline LogHelper log(Log::Severity severity, QString task,
                               quint64 execId,
-                              const QString sourceCode = QString());
-  static inline LogHelper debug(const QString task, quint64 execId,
-                                const QString sourceCode = QString());
-  static inline LogHelper info(const QString task, quint64 execId,
-                               const QString sourceCode = QString());
-  static inline LogHelper warning(const QString task, quint64 execId,
-                                  const QString sourceCode = QString());
-  static inline LogHelper error(const QString task, quint64 execId,
-                                const QString sourceCode = QString());
-  static inline LogHelper fatal(const QString task, quint64 execId,
-                                const QString sourceCode = QString());
+                              QString sourceCode = QString());
+  static inline LogHelper debug(QString task, quint64 execId,
+                                QString sourceCode = QString());
+  static inline LogHelper info(QString task, quint64 execId,
+                               QString sourceCode = QString());
+  static inline LogHelper warning(QString task, quint64 execId,
+                                  QString sourceCode = QString());
+  static inline LogHelper error(QString task, quint64 execId,
+                                QString sourceCode = QString());
+  static inline LogHelper fatal(QString task, quint64 execId,
+                                QString sourceCode = QString());
   static QString pathToLastFullestLog();
   static QStringList pathsToFullestLogs();
   static QStringList pathsToAllLogs();
 
 private:
   Log() { }
-  static inline QString sanitize(const QString string);
+  static inline QString sanitize(QString string);
 };
 
 class LIBQTSSUSHARED_EXPORT LogHelper {
@@ -104,8 +103,8 @@ class LIBQTSSUSHARED_EXPORT LogHelper {
   QString _message, _task, _execId, _sourceCode;
 
 public:
-  inline LogHelper(Log::Severity severity, const QString task,
-                   const QString execId, const QString sourceCode)
+  inline LogHelper(Log::Severity severity, QString task, QString execId,
+                   QString sourceCode)
     : _logOnDestroy(true), _severity(severity), _task(task), _execId(execId),
       _sourceCode(sourceCode) {
   }
@@ -180,63 +179,53 @@ public:
 };
 
 
-LogHelper Log::log(Log::Severity severity, const QString task,
-                   const QString execId, const QString sourceCode) {
+LogHelper Log::log(Log::Severity severity, QString task,
+                   QString execId, QString sourceCode) {
   return LogHelper(severity, task, execId, sourceCode);
 }
 
-LogHelper Log::debug(const QString task, const QString execId,
-                     const QString sourceCode) {
+LogHelper Log::debug(QString task, QString execId, QString sourceCode) {
   return LogHelper(Log::Debug, task, execId, sourceCode);
 }
 
-LogHelper Log::info(const QString task, const QString execId,
-                     const QString sourceCode) {
+LogHelper Log::info(QString task, QString execId, QString sourceCode) {
   return LogHelper(Log::Info, task, execId, sourceCode);
 }
 
-LogHelper Log::warning(const QString task, const QString execId,
-                     const QString sourceCode) {
+LogHelper Log::warning(QString task, QString execId, QString sourceCode) {
   return LogHelper(Log::Warning, task, execId, sourceCode);
 }
 
-LogHelper Log::error(const QString task, const QString execId,
-                     const QString sourceCode) {
+LogHelper Log::error(QString task, QString execId, QString sourceCode) {
   return LogHelper(Log::Error, task, execId, sourceCode);
 }
 
-LogHelper Log::fatal(const QString task, const QString execId,
-                     const QString sourceCode) {
+LogHelper Log::fatal(QString task, QString execId, QString sourceCode) {
   return LogHelper(Log::Fatal, task, execId, sourceCode);
 }
 
-LogHelper Log::log(Log::Severity severity, const QString task, quint64 execId,
-                   const QString sourceCode) {
+LogHelper Log::log(Log::Severity severity, QString task, quint64 execId,
+                   QString sourceCode) {
   return log(severity, task, QString::number(execId), sourceCode);
 }
 
-LogHelper Log::debug(const QString task, quint64 execId,
-                     const QString sourceCode) {
+LogHelper Log::debug(QString task, quint64 execId, QString sourceCode) {
   return debug(task, QString::number(execId), sourceCode);
 }
 
-LogHelper Log::info(const QString task, quint64 execId,
-                    const QString sourceCode) {
+LogHelper Log::info(QString task, quint64 execId, QString sourceCode) {
   return info(task, QString::number(execId), sourceCode);
 }
 
-LogHelper Log::warning(const QString task, quint64 execId,
-                       const QString sourceCode) {
+LogHelper Log::warning(QString task, quint64 execId, QString sourceCode) {
   return warning(task, QString::number(execId), sourceCode);
 }
 
-LogHelper Log::error(const QString task, quint64 execId,
-                     const QString sourceCode) {
+LogHelper Log::error(QString task, quint64 execId, QString sourceCode) {
   return error(task, QString::number(execId), sourceCode);
 }
 
-LogHelper Log::fatal(const QString task, quint64 execId,
-                     const QString sourceCode) {
+LogHelper Log::fatal(QString task, quint64 execId,QString sourceCode) {
   return fatal(task, QString::number(execId), sourceCode);
 }
 

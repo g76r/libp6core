@@ -19,7 +19,7 @@
 #include "log/log.h"
 
 TemplatingHttpHandler::TemplatingHttpHandler(
-    QObject *parent, const QString urlPathPrefix, const QString documentRoot)
+    QObject *parent, QString urlPathPrefix, QString documentRoot)
   : FilesystemHttpHandler(parent, urlPathPrefix, documentRoot) {
 }
 

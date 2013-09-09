@@ -74,7 +74,7 @@ void HttpResponse::setStatus(int status) {
     qWarning() << "HttpResponse: cannot set status after writing data";
 }
 
-void HttpResponse::setHeader(const QString name, const QString value) {
+void HttpResponse::setHeader(QString name, QString value) {
   // LATER handle case sensitivity in header names
   if (d && !d->_headersSent) {
     d->_headers.remove(name);
@@ -83,7 +83,7 @@ void HttpResponse::setHeader(const QString name, const QString value) {
     qWarning() << "HttpResponse: cannot set header after writing data";
 }
 
-void HttpResponse::addHeader(const QString name, const QString value) {
+void HttpResponse::addHeader(QString name, QString value) {
   // LATER handle case sensitivity in header names
   if (d && !d->_headersSent) {
     d->_headers.insertMulti(name, value);
@@ -91,7 +91,7 @@ void HttpResponse::addHeader(const QString name, const QString value) {
     qWarning() << "HttpResponse: cannot set header after writing data";
 }
 
-void HttpResponse::redirect(const QString location) {
+void HttpResponse::redirect(QString location) {
   if (!d)
     return;
   setStatus(302);
@@ -102,9 +102,9 @@ void HttpResponse::redirect(const QString location) {
                   "\">this link</a>").arg(location).toUtf8().constData());
 }
 
-void HttpResponse::setCookie(const QString name, const QString value,
-                             const QDateTime expires, const QString path,
-                             const QString domain, bool secure, bool httponly) {
+void HttpResponse::setCookie(QString name, QString value,
+                             QDateTime expires, QString path,
+                             QString domain, bool secure, bool httponly) {
   static const QRegExp nameRegexp(RFC2616_TOKEN_OCTET_RE "+");
   static const QRegExp valueRegexp(RFC6265_COOKIE_OCTET_RE "*");
   static const QRegExp pathRegexp(RFC6265_PATH_VALUE_RE);
@@ -149,6 +149,6 @@ void HttpResponse::setCookie(const QString name, const QString value,
   addHeader("Set-Cookie", s);
 }
 
-const QMultiMap<QString,QString> HttpResponse::headers() const {
+QMultiMap<QString,QString> HttpResponse::headers() const {
   return d ? d->_headers : QMultiMap<QString,QString>();
 }

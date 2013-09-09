@@ -30,8 +30,7 @@
  * relies on QObject low level mechanisms whereas TimerWithArguments uses
  * regular QMetaObject (signals/slots and invokeMethod) mechanisms. In the
  * other hand, using QTimer needs the receiver class to hold the context
- * by itself since QTimer does not transmit it.
- */
+ * by itself since QTimer does not transmit it. */
 class LIBQTSSUSHARED_EXPORT TimerWithArguments : public QTimer {
   Q_OBJECT
   QWeakPointer<QObject> _object;
@@ -40,10 +39,8 @@ class LIBQTSSUSHARED_EXPORT TimerWithArguments : public QTimer {
 
 public:
   explicit TimerWithArguments(QObject *parent = 0);
-  /**
-    * @param member is either the raw method name (e.g. "foo") either a SLOT
-    *        macro (e.g. SLOT(foo(QVariant,QVariant)))
-    */
+  /** @param member is either the raw method name (e.g. "foo") either a SLOT
+    * macro (e.g. SLOT(foo(QVariant,QVariant))) */
   void connectWithArgs(QObject *object, const char *member,
                        QVariant arg0 = QVariant(), QVariant arg1 = QVariant(),
                        QVariant arg2 = QVariant(), QVariant arg3 = QVariant(),

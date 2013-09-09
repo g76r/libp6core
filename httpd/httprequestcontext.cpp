@@ -50,8 +50,8 @@ HttpRequestContext &HttpRequestContext::operator=(
   return *this;
 }
 
-QVariant HttpRequestContext::paramValue(const QString key,
-                                        const QVariant defaultValue) const {
+QVariant HttpRequestContext::paramValue(QString key,
+                                        QVariant defaultValue) const {
   QString s = d->_localParams.rawValue(key);
   if (!s.isNull())
     return s;

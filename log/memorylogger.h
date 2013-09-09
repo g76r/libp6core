@@ -17,8 +17,11 @@
 #include "logger.h"
 #include "logmodel.h"
 
+/** Logger logging into a LogModel
+ * @see LogModel */
 class LIBQTSSUSHARED_EXPORT MemoryLogger : public Logger {
   Q_OBJECT
+  Q_DISABLE_COPY(MemoryLogger)
   LogModel *_model;
 
 public:

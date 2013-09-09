@@ -22,6 +22,7 @@
 class LIBQTSSUSHARED_EXPORT Logger : public QObject {
   friend class Log;
   Q_OBJECT
+  Q_DISABLE_COPY(Logger)
   Log::Severity _minSeverity;
   bool _removable;
 

@@ -18,8 +18,7 @@
 
 /** Base class for text table views.
  * @see HtmlTableView
- * @see CsvTableView
- */
+ * @see CsvTableView */
 class LIBQTSSUSHARED_EXPORT TextTableView : public TextView {
   Q_OBJECT
   Q_DISABLE_COPY(TextTableView)
@@ -65,15 +64,14 @@ public:
     updateHeaderAndFooterCache(); }
   /** Text printed if the table is empty.
    * Default: "(empty)" */
-  virtual void setEmptyPlaceholder(const QString rawText = "(empty)");
+  virtual void setEmptyPlaceholder(QString rawText = "(empty)");
   /** Text printed if the table is truncated.
    * Default: "..." */
-  virtual void setEllipsePlaceholder(const QString rawText = "...");
+  virtual void setEllipsePlaceholder(QString rawText = "...");
   void setModel(QAbstractItemModel *model);
 
 protected:
-  const QList<int> effectiveColumnIndexes() const {
-    return _effectiveColumnIndexes; }
+  QList<int> effectiveColumnIndexes() const { return _effectiveColumnIndexes; }
   void updateText();
   void resetAll();
   void layoutChanged();

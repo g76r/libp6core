@@ -20,8 +20,7 @@
 #include <QHash>
 
 /** Kind of 2-dimensions QStringListModel.
- * @brief The TextMatrixModel class
- */
+ * @brief The TextMatrixModel class */
 class LIBQTSSUSHARED_EXPORT TextMatrixModel : public QAbstractTableModel {
   Q_OBJECT
   QStringList _columnNames, _rowNames;
@@ -33,13 +32,12 @@ public:
   int columnCount(const QModelIndex &parent) const;
   QVariant data(const QModelIndex &index, int role) const;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-  QString value(const QString row, const QString column) const;
+  QString value(QString row, QString column) const;
 
 public slots:
   /** Set a cell value.
    * Row and/or column will be added if they do not yet exist. */
-  void setCellValue(const QString row, const QString column,
-                    const QString value);
+  void setCellValue(QString row, QString column, QString value);
   /** Remove any data. */
   void clear();
 };

@@ -30,7 +30,7 @@ public:
    * pattern.
    * Filter may mismatch lines if they are longer than bufsize-1.
    * @param useRegexp otherwise pattern is plain text */
-  static qint64 grep(QIODevice *dest, QIODevice *src, const QString pattern,
+  static qint64 grep(QIODevice *dest, QIODevice *src, QString pattern,
                      bool useRegexp = false, qint64 max = LLONG_MAX,
                      qint64 bufsize = 65535);
   /** Syntaxic sugar */
@@ -42,23 +42,23 @@ public:
   /** Copy at most max bytes from dest to src, copying only lines that match
    * regexp.
    * Filter may mismatch lines if they are longer than bufsize-1. */
-  static qint64 grep(QIODevice *dest, QIODevice *src, const QRegExp regexp,
+  static qint64 grep(QIODevice *dest, QIODevice *src, QRegExp regexp,
                      qint64 max = LLONG_MAX, qint64 maxLineSize = 65535);
   /** Convert QUrl object to local path usable with e.g. QFile
     * Only support "file" and "qrc" schemes.
     * @return path, QString::isNull() if URL not supported (e.g. its scheme)
     */
-  static QString url2path(const QUrl &url);
+  static QString url2path(QUrl url);
   /** Return paths of all existing files that match pattern.
     * Pattern is a globing pattern (@see QRegExp::Wildcard).
     * Beware that this method can take a lot of time depending on filesystem
     * tree size. */
-  static QStringList findFiles(const QString pattern);
+  static QStringList findFiles(QString pattern);
   /** Return paths of all existing files that match patterns.
     * Pattern is a globing pattern (@see QRegExp::Wildcard).
     * Beware that this method can take a lot of time depending on filesystem
     * tree size. */
-  inline static QStringList findFiles(const QStringList patterns) {
+  inline static QStringList findFiles(QStringList patterns) {
     QStringList files;
     foreach (const QString pattern, patterns)
       files.append(findFiles(pattern));

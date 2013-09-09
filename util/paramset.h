@@ -23,8 +23,7 @@
 class ParamSetData;
 
 /** String key-value parameter set with inheritance, substitution macro-language
- * and syntaxic sugar for converting values to non-string types.
- */
+ * and syntaxic sugar for converting values to non-string types. */
 class LIBQTSSUSHARED_EXPORT ParamSet : public ParamsProvider {
   QSharedDataPointer<ParamSetData> d;
 public:
@@ -37,52 +36,47 @@ public:
   ParamSet &operator=(const ParamSet &other);
   ParamSet parent() const;
   void setParent(ParamSet parent);
-  void setValue(const QString key, const QString value);
+  void setValue(QString key, QString value);
   void clear();
-  void removeValue(const QString key);
+  void removeValue(QString key);
   /** Return a value without performing parameters substitution.
-   * @param inherit should search values in parents if not found
-   */
-  QString rawValue(const QString key, const QString defaultValue = QString(),
+   * @param inherit should search values in parents if not found */
+  QString rawValue(QString key, QString defaultValue = QString(),
                    bool inherit = true) const;
-  inline QString rawValue(const QString key, const char *defaultValue,
+  inline QString rawValue(QString key, const char *defaultValue,
                    bool inherit = true) const {
     return rawValue(key, QString(defaultValue), inherit); }
-  inline QString rawValue(const QString key, bool inherit) const {
+  inline QString rawValue(QString key, bool inherit) const {
     return rawValue(key, QString(), inherit); }
   /** Return a value after parameters substitution.
-   * @param searchInParents should search values in parents if not found
-    */
-  inline QString value(const QString key, QString defaultValue = QString(),
+   * @param searchInParents should search values in parents if not found */
+  inline QString value(QString key, QString defaultValue = QString(),
                        bool inherit = true,
                        const ParamsProvider *context = 0) const {
     return evaluate(rawValue(key, defaultValue, inherit), inherit, context); }
-  inline QString value(const QString key, const char *defaultValue,
+  inline QString value(QString key, const char *defaultValue,
                        bool inherit = true,
                        const ParamsProvider *context = 0) const {
     return evaluate(rawValue(key, QString(defaultValue), inherit), inherit,
                     context); }
-  inline QString value(const QString key, bool inherit,
+  inline QString value(QString key, bool inherit,
                        const ParamsProvider *context = 0) const {
     return evaluate(rawValue(key, QString(), inherit), inherit, context); }
-  inline QString value(const QString key, const ParamsProvider *context) const {
+  inline QString value(QString key, const ParamsProvider *context) const {
     return evaluate(rawValue(key, QString(), true), true, context); }
-  /** Return a value splitted into strings after parameters substitution.
-    */
-  QStringList valueAsStrings(const QString key,
-                             const QString separator = " ",
+  /** Return a value splitted into strings after parameters substitution. */
+  QStringList valueAsStrings(QString key, QString separator = " ",
                              bool inherit = true,
                              const ParamsProvider *context = 0) const {
     return splitAndEvaluate(rawValue(key), separator, inherit, context); }
   /** Return a value splitted at first whitespace. Both strings are trimmed.
    * E.g. a raw value of "  foo    bar baz  " is returned as a
-   * QPair<>("foo", "bar baz").
-   */
+   * QPair<>("foo", "bar baz"). */
   QPair<QString,QString> valueAsStringsPair(
-      const QString key, bool inherit = true,
+      QString key, bool inherit = true,
       const ParamsProvider *context = 0) const;
   /** Syntaxic sugar. */
-  inline qlonglong valueAsLong(const QString key, qlonglong defaultValue = 0,
+  inline qlonglong valueAsLong(QString key, qlonglong defaultValue = 0,
                                bool inherit = true,
                                const ParamsProvider *context = 0) const {
     bool ok;
@@ -90,15 +84,14 @@ public:
                            context).toLongLong(&ok);
     return ok ? v : defaultValue; }
   /** Syntaxic sugar. */
-  inline int valueAsInt(const QString key, int defaultValue = 0,
-                        bool inherit = true,
+  inline int valueAsInt(QString key, int defaultValue = 0, bool inherit = true,
                         const ParamsProvider *context = 0) const {
     bool ok;
-    int v = evaluate(rawValue(key, QString(), inherit),  inherit,
+    int v = evaluate(rawValue(key, QString(), inherit), inherit,
                      context).toInt(&ok);
     return ok ? v : defaultValue; }
   /** Syntaxic sugar. */
-  inline double valueAsDouble(const QString key, double defaultValue = 0,
+  inline double valueAsDouble(QString key, double defaultValue = 0,
                               bool inherit = true,
                               const ParamsProvider *context = 0) const {
     bool ok;
@@ -108,7 +101,7 @@ public:
   /** "false" and "0" are interpreted as false, "true" and any non null
    * valid integer number are interpreted as true. Spaces and case are
    * ignored. */
-  inline bool valueAsBool(const QString key, bool defaultValue = false,
+  inline bool valueAsBool(QString key, bool defaultValue = false,
                           bool inherit = true,
                           const ParamsProvider *context = 0) const {
     QString v = evaluate(rawValue(key, QString(), inherit), inherit, context)
@@ -125,34 +118,31 @@ public:
   }
   /** Return all keys for which the ParamSet or one of its parents hold a value.
     */
-  const QSet<QString> keys(bool inherit = true) const;
+  QSet<QString> keys(bool inherit = true) const;
   /** Return true if key is set. */
   bool contains(QString key, bool inherit = true) const;
   /** Perform parameters substitution within the string. */
-  QString evaluate(const QString rawValue, bool inherit = true,
+  QString evaluate(QString rawValue, bool inherit = true,
                    const ParamsProvider *context = 0) const;
-  QString evaluate(const QString rawValue,
-                   const ParamsProvider *context) const {
+  QString evaluate(QString rawValue, const ParamsProvider *context) const {
     return evaluate(rawValue, true, context); }
   /** Split string and perform parameters substitution. */
-  QStringList splitAndEvaluate(const QString rawValue,
-                               const QString separator = " ",
+  QStringList splitAndEvaluate(QString rawValue, QString separator = " ",
                                bool inherit = true,
                                const ParamsProvider *context = 0) const;
-  QStringList splitAndEvaluate(const QString rawValue,
+  QStringList splitAndEvaluate(QString rawValue,
                                const ParamsProvider *context) const {
     return splitAndEvaluate(rawValue, " ", true, context); }
   /** Return a globing expression that matches any string that can result
    * in evaluation of the rawValue (@see QRegExp::Wildcard).
    * For instance "foo%!yyyy-%{bar}" is converted into "foo????-*" or
-   * into "foo*-*".
-   */
-  static QString matchingPattern(const QString rawValue);
-  inline static QRegExp matchingRegexp(const QString rawValue) {
+   * into "foo*-*". */
+  static QString matchingPattern(QString rawValue);
+  inline static QRegExp matchingRegexp(QString rawValue) {
     return QRegExp(matchingPattern(rawValue), Qt::CaseSensitive,
                    QRegExp::Wildcard);
   }
-  QVariant paramValue(const QString key, const QVariant defaultValue) const;
+  QVariant paramValue(QString key, QVariant defaultValue) const;
   bool isNull() const;
   int size() const;
   bool isEmpty() const;

@@ -60,13 +60,13 @@ void ParamSet::setParent(ParamSet parent) {
   d->_parent = parent;
 }
 
-void ParamSet::setValue(const QString key, const QString value) {
+void ParamSet::setValue(QString key, QString value) {
   if (!d)
     d = new ParamSetData();
   d->_params.insert(key, value);
 }
 
-void ParamSet::removeValue(const QString key) {
+void ParamSet::removeValue(QString key) {
   if (d)
     d->_params.remove(key);
 }
@@ -75,7 +75,7 @@ void ParamSet::clear() {
   d = new ParamSetData();
 }
 
-QString ParamSet::rawValue(const QString key, const QString defaultValue,
+QString ParamSet::rawValue(QString key, QString defaultValue,
                            bool inherit) const {
   QString value;
   if (d) {
@@ -86,7 +86,7 @@ QString ParamSet::rawValue(const QString key, const QString defaultValue,
   return value.isNull() ? defaultValue : value;
 }
 
-QString ParamSet::evaluate(const QString rawValue, bool inherit,
+QString ParamSet::evaluate(QString rawValue, bool inherit,
                            const ParamsProvider *context) const {
   //Log::debug() << "evaluate " << rawValue << " " << QString::number((qint64)context, 16);
   QStringList values = splitAndEvaluate(rawValue, QString(), inherit, context);
@@ -157,8 +157,8 @@ void ParamSet::appendVariableValue(QString &value, QString &variable,
   variable.clear();
 }
 
-QStringList ParamSet::splitAndEvaluate(const QString rawValue,
-                                       const QString separator,
+QStringList ParamSet::splitAndEvaluate(QString rawValue,
+                                       QString separator,
                                        bool inherit,
                                        const ParamsProvider *context) const {
   QStringList values;
@@ -211,7 +211,7 @@ QStringList ParamSet::splitAndEvaluate(const QString rawValue,
 }
 
 QPair<QString,QString> ParamSet::valueAsStringsPair(
-    const QString key, bool inherit, const ParamsProvider *context) const {
+    QString key, bool inherit, const ParamsProvider *context) const {
   static QRegExp whitespace("\\s");
   QString v = rawValue(key, inherit).trimmed();
   int i = v.indexOf(whitespace);
@@ -221,7 +221,7 @@ QPair<QString,QString> ParamSet::valueAsStringsPair(
                                 evaluate(v.mid(i+1).trimmed(), context));
 }
 
-QString ParamSet::matchingPattern(const QString rawValue) {
+QString ParamSet::matchingPattern(QString rawValue) {
   int i = 0;
   QString value, variable;
   QString specialChars("*?[]\\");
@@ -265,7 +265,7 @@ QString ParamSet::matchingPattern(const QString rawValue) {
   return value;
 }
 
-const QSet<QString> ParamSet::keys(bool inherit) const {
+QSet<QString> ParamSet::keys(bool inherit) const {
   QSet<QString> set;
   if (d) {
     set = d->_params.keys().toSet();
@@ -291,8 +291,8 @@ bool ParamSet::isEmpty() const {
   return d ? d->_params.isEmpty() : true;
 }
 
-QVariant ParamSet::paramValue(const QString key,
-                              const QVariant defaultValue) const{
+QVariant ParamSet::paramValue(QString key,
+                              QVariant defaultValue) const{
   return value(key, defaultValue.toString(), true);
 }
 

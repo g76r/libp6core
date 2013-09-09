@@ -95,8 +95,8 @@ void Log::replaceLoggersPlusConsole(Log::Severity consoleLoggerSeverity,
     _loggers.append(logger);
 }
 
-void Log::log(const QString message, Severity severity, const QString task,
-              const QString execId, const QString sourceCode) {
+void Log::log(QString message, Severity severity, QString task, QString execId,
+              QString sourceCode) {
   QDateTime now = QDateTime::currentDateTime();
   QString realTask(task);
   if (realTask.isNull()) {
@@ -112,7 +112,7 @@ void Log::log(const QString message, Severity severity, const QString task,
     logger->log(now, message, severity, realTask, realExecId, realSourceCode);
 }
 
-const QString Log::severityToString(Severity severity) {
+QString Log::severityToString(Severity severity) {
   static const QString severityDebug("DEBUG");
   static const QString severityInfo("INFO");
   static const QString severityWarning("WARNING");
@@ -134,7 +134,7 @@ const QString Log::severityToString(Severity severity) {
   return severityUnknown;
 }
 
-Log::Severity Log::severityFromString(const QString string) {
+Log::Severity Log::severityFromString(QString string) {
   if (!string.isEmpty())
     switch (string.at(0).toAscii()) {
     case 'I':
@@ -153,7 +153,7 @@ Log::Severity Log::severityFromString(const QString string) {
   return Debug;
 }
 
-QString Log::sanitize(const QString string) {
+QString Log::sanitize(QString string) {
   static const QRegExp whitespace("\\s");
   QString s(string);
   // LATER optimize: avoid using a regexp 3 times per log line

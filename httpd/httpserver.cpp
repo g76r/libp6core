@@ -95,7 +95,7 @@ HttpHandler *HttpServer::chooseHandler(HttpRequest req) {
   return _defaultHandler;
 }
 
-bool HttpServer::listen(const QHostAddress &address, quint16 port) {
+bool HttpServer::listen(QHostAddress address, quint16 port) {
   // the constructor calls moveToThread() and QTcpServer::listen must be called
   // by owner thread (at less because it creates QObjects using this as parent)
   bool success;
@@ -109,6 +109,6 @@ bool HttpServer::listen(const QHostAddress &address, quint16 port) {
   return success;
 }
 
-bool HttpServer::doListen(const QHostAddress &address, quint16 port) {
+bool HttpServer::doListen(QHostAddress address, quint16 port) {
   return QTcpServer::listen(address, port);
 }

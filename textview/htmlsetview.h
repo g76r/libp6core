@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -28,14 +28,13 @@ class LIBQTSSUSHARED_EXPORT HtmlSetView : public AsyncTextView {
 public:
   explicit HtmlSetView(QObject *parent = 0);
   /** Separator between values, default is a single space. */
-  void setSeparator(const QString rawHtml) { _separator = rawHtml; }
+  void setSeparator(QString rawHtml) { _separator = rawHtml; }
   /** Prefix before a given value. Printed before HtmlPrefixRole prefix if any.
    * Default is empty.
    */
-  void setConstantPrefix(const QString rawHtml) { _constantPrefix = rawHtml; }
+  void setConstantPrefix(QString rawHtml) { _constantPrefix = rawHtml; }
   /** Text printed if the set is empty. Default is "(empty)". */
-  void setEmptyPlaceholder(const QString rawHtml) {
-    _emptyPlaceholder = rawHtml; }
+  void setEmptyPlaceholder(QString rawHtml) { _emptyPlaceholder = rawHtml; }
   void setDisplayedColumn(int column) { _displayedColumn = column; }
   /** Surround Qt::DisplayRole text with <a href="${linkRole}"> and </a>. */
   void setLinkRole(int role) { _linkRole = role; }

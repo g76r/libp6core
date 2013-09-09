@@ -36,8 +36,8 @@ public:
   HttpRequestContext &operator=(const HttpRequestContext &other);
   bool operator==(const HttpRequestContext &other) const {
     return d == other.d; }
-  QVariant paramValue(const QString key,
-                      const QVariant defaultValue = QVariant()) const;
+  QVariant paramValue(QString key,
+                      QVariant defaultValue = QVariant()) const;
   /** Parameters set through overrideParamValue() will override any
    * ParamsProvider, even those prepended. */
   HttpRequestContext &overrideParamValue(QString key, QString value);
