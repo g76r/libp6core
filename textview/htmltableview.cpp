@@ -19,7 +19,7 @@ HtmlTableView::HtmlTableView(QObject *parent, int cachedRows, int rowsPerPage)
   _pageUrlPrefix("?"),
   _thClassRole(-1), _trClassRole(-1), _tdClassRole(-1), _linkRole(-1),
   _linkClassRole(-1), _htmlPrefixRole(-1), _htmlSuffixRole(-1),
-  _rowAnchorColumn(-1),
+  _rowAnchorColumn(-1), _maxCellContentLength(200),
   _columnHeaders(true), _rowHeaders(false) {
   setEmptyPlaceholder("(empty)");
   setEllipsePlaceholder("...");
@@ -162,6 +162,12 @@ QString HtmlTableView::rowText(int row) {
   bool first = true;
   foreach (int column, effectiveColumnIndexes()) {
     QModelIndex index = m->index(row, column, QModelIndex());
+    QString content = m->data(index).toString();
+    if (_maxCellContentLength > 0 && content.size() > _maxCellContentLength) {
+      //qDebug("truncating");
+      content = content.left(_maxCellContentLength/2-1)+"..."
+          +content.right(_maxCellContentLength/2-2);
+    }
     if (_tdClassRole >= 0)
       v.append("<td class=\"")
           .append(m->data(index, _trClassRole).toString())
@@ -189,13 +195,13 @@ QString HtmlTableView::rowText(int row) {
             .append("\">");
       else
         v.append("\">");
-      v.append(HtmlUtils::htmlEncode(m->data(index).toString(), false));
+      v.append(HtmlUtils::htmlEncode(content, false));
       v.append("</a>");
     } else {
       if (_dataHtmlDisableEncode.contains(index.column()))
-        v.append(m->data(index).toString());
+        v.append(content);
       else
-        v.append(HtmlUtils::htmlEncode(m->data(index).toString(), true));
+        v.append(HtmlUtils::htmlEncode(content, true));
     }
     if (_htmlSuffixRole >= 0)
       v.append(m->data(index, _htmlSuffixRole).toString());

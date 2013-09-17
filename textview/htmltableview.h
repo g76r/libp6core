@@ -26,11 +26,13 @@ class LIBQTSSUSHARED_EXPORT HtmlTableView : public TextTableView {
   QString _tableClass, _topLeftHeader, _rowAnchorPrefix, _tableHeader,
   _pageUrlPrefix;
   int _thClassRole, _trClassRole, _tdClassRole, _linkRole, _linkClassRole;
-  int _htmlPrefixRole, _htmlSuffixRole, _rowAnchorColumn;
+  int _htmlPrefixRole, _htmlSuffixRole, _rowAnchorColumn, _maxCellContentLength;
   bool _columnHeaders, _rowHeaders, _rowHeaderHtmlEncode;
   QSet<int> _dataHtmlDisableEncode, _columnHeaderHtmlDisableEncode;
 
 public:
+  /** Implicitely set empty placeholder to "(empty)", ellipse placeholder
+   * to "...", columns headers to true and row headers to false. */
   explicit HtmlTableView(QObject *parent = 0,
                          int cachedRows = defaultCachedRows,
                          int rowsPerPage = defaultRowsPerPage);
@@ -74,6 +76,10 @@ public:
       _columnHeaderHtmlDisableEncode.insert(column); }
   void setRowHeaderHtmlEncode(bool encode = true) {
     _rowHeaderHtmlEncode = encode; }
+  /** Maximum length of text inside a cell, measured before HTML encoding if
+   * any. Default: 200. */
+  void setMaxCellContentLength(int maxCellContentLength = 200) {
+    _maxCellContentLength = maxCellContentLength; }
 
 protected:
   void updateHeaderAndFooterCache();

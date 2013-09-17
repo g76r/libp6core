@@ -63,8 +63,8 @@ public:
     _columnIndexes = columnIndexes; _effectiveColumnIndexes = columnIndexes;
     updateHeaderAndFooterCache(); }
   /** Text printed if the table is empty.
-   * Default: "(empty)" */
-  virtual void setEmptyPlaceholder(QString rawText = "(empty)");
+   * Default: no placeholder */
+  virtual void setEmptyPlaceholder(QString rawText = QString());
   /** Text printed if the table is truncated.
    * Default: "..." */
   virtual void setEllipsePlaceholder(QString rawText = "...");
