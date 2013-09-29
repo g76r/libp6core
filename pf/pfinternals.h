@@ -22,6 +22,7 @@ under the License.
 #include "libqtpf_global.h"
 #include <QObject>
 #include <QString>
+#include <QChar>
 
 #define PF_SPACES " \t\n\r"
 #define PF_RESERVED "$~[]{}"
@@ -75,7 +76,7 @@ inline QString pfescape(QString string) {
   QString s;
   for (int i = 0; i < string.size(); ++i) {
     QChar c = string.at(i);
-    if (pfisspecial(c.toAscii()))
+    if (pfisspecial(c.toLatin1()))
       s.append(PF_ESCAPE);
     s.append(c);
   }
@@ -105,7 +106,7 @@ inline QString pftoxmltext(QString string) {
     ushort u = c.unicode();
     if (u == 0)
       s.append('_'); // char 0 is not allowed in XML
-    else if (u < 32 || pfin(c.toAscii(), PF_XML_SPECIAL_CHARS))
+    else if (u < 32 || pfin(c.toLatin1(), PF_XML_SPECIAL_CHARS))
       s.append(QString("&#x%1;").arg(u, 1, 16, QChar('0')));
     else
       s.append(c);
