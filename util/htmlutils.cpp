@@ -41,8 +41,17 @@ QString HtmlUtils::htmlEncode(QString text, bool urlAsLinks) {
       case '<':
         s.append("&lt;");
         break;
+      case '>':
+        s.append("&gt;");
+        break;
       case '&':
         s.append("&amp;");
+        break;
+      case '"':
+        s.append("&quot;");
+        break;
+      case '\'':
+        s.append("&apos;");
         break;
       default:
         s.append(c);
