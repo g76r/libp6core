@@ -32,6 +32,10 @@ QString networkErrorAsString(QNetworkReply::NetworkError code) {
     return QObject::tr("SSL handshake failed");
   case QNetworkReply::TemporaryNetworkFailureError:
     return QObject::tr("temporary network failure");
+  case QNetworkReply::NetworkSessionFailedError:
+    return QObject::tr("network session failed");
+  case QNetworkReply::BackgroundRequestNotAllowedError:
+    return QObject::tr("background request not allowed");
   case QNetworkReply::ProxyConnectionRefusedError:
     return QObject::tr("proxy connection refused");
   case QNetworkReply::ProxyConnectionClosedError:

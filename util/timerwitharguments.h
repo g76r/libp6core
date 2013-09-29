@@ -17,7 +17,7 @@
 #include "libqtssu_global.h"
 #include <QTimer>
 #include <QVariant>
-#include <QWeakPointer>
+#include <QPointer>
 
 /** TimerWithArguments replaces QTimer when the called method needs to
  * receive arguments when the timer times out.
@@ -33,7 +33,7 @@
  * by itself since QTimer does not transmit it. */
 class LIBQTSSUSHARED_EXPORT TimerWithArguments : public QTimer {
   Q_OBJECT
-  QWeakPointer<QObject> _object;
+  QPointer<QObject> _object;
   QString _member;
   QVariant _arg[10];
 
@@ -54,6 +54,9 @@ public:
                          QVariant arg6 = QVariant(), QVariant arg7 = QVariant(),
                          QVariant arg8 = QVariant(),
                          QVariant arg9 = QVariant());
+  // FIXME
+  //Qt::TimerType	timerType() const;
+  //void	setTimerType(Qt::TimerType atype);
 
 private slots:
   void forwardTimeout();

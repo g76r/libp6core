@@ -17,6 +17,7 @@
 #include <QStringList>
 #include <QMultiMap>
 #include <QUrl>
+#include <QUrlQuery>
 #include <QAbstractSocket>
 #include "libqtssu_global.h"
 #include <QExplicitlySharedDataPointer>
@@ -61,9 +62,10 @@ public:
                                 QByteArray defaultValue = QByteArray()) const;
   /** Replace url. If params have already been queried and new url has
    * different query items than former one, one should also call
-   * discardParamsCache(). */
+   * discardParamsCache(). */ // LATER this behaviour is optimisable since Qt5
   void overrideUrl(QUrl url);
   QUrl url() const;
+  QUrlQuery urlQuery() const;
   QString param(QString key) const;
   void overrideParam(QString key, QString value);
   void overrideUnsetParam(QString key);

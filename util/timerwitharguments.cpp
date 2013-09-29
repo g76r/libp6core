@@ -85,6 +85,7 @@ void TimerWithArguments::singleShot(
       qDebug() << "TimerWithArguments::singleShot abormal ms" << msec
                << receiver << receiver->metaObject()->className() << member;
     }
+    t->setTimerType(Qt::PreciseTimer); // FIXME parametrize
     t->start(msec);
     //qDebug() << "TimerWithArguments::singleShot" << msec << member
     //         << arg0.toString();

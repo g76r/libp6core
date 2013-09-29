@@ -41,11 +41,14 @@ HttpServer::HttpServer(int workersPoolSize, int maxQueuedSockets,
 HttpServer::~HttpServer() {
 }
 
-void HttpServer::incomingConnection(int socketDescriptor)  {
+void HttpServer::incomingConnection(qintptr socketDescriptor)  {
+  //qDebug()<< "HttpServer::incomingConnection" << socketDescriptor
+  //        << QThread::currentThread();
   if (_workersPool.size() > 0) {
     HttpWorker *worker = _workersPool.takeFirst();
     connect(worker, SIGNAL(connectionHandled(HttpWorker*)),
             this, SLOT(connectionHandled(HttpWorker*)));
+    // LATER replace double signal with simple invokeMethod
     QMetaObject::invokeMethod(worker, "handleConnection",
                               Q_ARG(int, socketDescriptor));
   } else {

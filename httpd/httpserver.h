@@ -47,7 +47,7 @@ public:
   bool listen(quint16 port) { return listen (QHostAddress::Any, port); }
 
 protected:
-  void incomingConnection(int handle);
+  void incomingConnection(qintptr handle);
 
 private slots:
   void connectionHandled(HttpWorker *worker);

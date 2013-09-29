@@ -37,7 +37,7 @@ QString HtmlUtils::htmlEncode(QString text, bool urlAsLinks) {
       i += l;
     } else {
       const QChar c = text.at(i);
-      switch(c.toAscii()) {
+      switch(c.toLatin1()) {
       case '<':
         s.append("&lt;");
         break;

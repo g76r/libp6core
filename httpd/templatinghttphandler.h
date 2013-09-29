@@ -16,7 +16,7 @@
 
 #include "filesystemhttphandler.h"
 #include "textview/textview.h"
-#include <QWeakPointer>
+#include <QPointer>
 
 /** HttpHandler which serves filesystem or Qt resources files parsing some of
  * them for special markups such as <?value:foo?> or <?view:bar?> to replace
@@ -28,7 +28,7 @@ class LIBQTSSUSHARED_EXPORT TemplatingHttpHandler
     : public FilesystemHttpHandler {
   Q_OBJECT
   Q_DISABLE_COPY(TemplatingHttpHandler)
-  QHash<QString,QWeakPointer<TextView> > _views;
+  QHash<QString,QPointer<TextView> > _views;
   QSet<QString> _filters;
 
 public:
@@ -36,7 +36,7 @@ public:
                                  QString urlPathPrefix = "",
                                  QString documentRoot = ":docroot/");
   void addView(QString label, TextView *view) {
-    _views.insert(label, QWeakPointer<TextView>(view)); }
+    _views.insert(label, QPointer<TextView>(view)); }
   void addFilter(QString regexp) { _filters.insert(regexp); }
 
 protected:

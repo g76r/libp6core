@@ -51,7 +51,7 @@ void TemplatingHttpHandler::sendLocalResource(
           QString data = label.mid(colon+1);
           label = label.left(colon);
           if (label == "view") {
-            QWeakPointer<TextView> view = _views.value(data);
+            QPointer<TextView> view = _views.value(data);
             if (view)
               output.append(view.data()->text(&ctxt, data));
             else {

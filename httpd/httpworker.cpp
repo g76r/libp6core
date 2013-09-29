@@ -23,6 +23,7 @@
 #include <QTime>
 //#include "stats/statistics.h"
 #include "log/log.h"
+#include <QString>
 
 #define MAXIMUM_LINE_SIZE 65536
 #define MAXIMUM_READ_WAIT 30000
@@ -133,7 +134,7 @@ void HttpWorker::handleConnection(int socketDescriptor) {
     }
     //qDebug() << "a7";
   }
-  url = QUrl::fromEncoded(args[1].toAscii()/*, QUrl::StrictMode */);
+  url = QUrl::fromEncoded(args[1].toLatin1()/*, QUrl::StrictMode */);
   req.overrideUrl(url);
   handler = _server->chooseHandler(req);
   handler->handleRequest(req, res, HttpRequestContext());

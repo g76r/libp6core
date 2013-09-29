@@ -105,7 +105,8 @@ bool MailSender::send(QString sender, QList<QString> recipients, QVariant body,
     return false;
   }
   // LATER check if addresses should be written in ASCII or in another code
-  socket.write(QString("MAIL From: %1\r\n").arg(senderAddress.addr()).toAscii());
+  socket.write(QString("MAIL From: %1\r\n").arg(senderAddress.addr())
+               .toLatin1());
   if (!socket.expectPrefix("2")) {
     errorString = "bad MAIL response on SMTP server "
         +_url.toString(QUrl::RemovePassword)+" for sender "+sender+": "
@@ -115,7 +116,7 @@ bool MailSender::send(QString sender, QList<QString> recipients, QVariant body,
   foreach (QString recipient, recipients) {
     EmailAddress addr(recipient);
     if (addr.valid()) {
-      socket.write(QString("RCPT To: %1\r\n").arg(addr.addr()).toAscii());
+      socket.write(QString("RCPT To: %1\r\n").arg(addr.addr()).toLatin1());
       if (!socket.expectPrefix("2")) {
         errorString = "bad RCPT response on SMTP server "
             +_url.toString(QUrl::RemovePassword)+" for recipient "+recipient
@@ -138,7 +139,7 @@ bool MailSender::send(QString sender, QList<QString> recipients, QVariant body,
     foreach (QString value, headers.values(key)) {
       // LATER normalize header case, ensure values validity, handle multi line headers, etc.
       if (socket.write(QString("%1: %2\r\n").arg(key).arg(value)
-        .toAscii()) == -1) {
+                       .toLatin1()) == -1) {
         errorString = "error writing header "+key+": "+socket.errorString();
         return false;
       }
@@ -150,7 +151,7 @@ bool MailSender::send(QString sender, QList<QString> recipients, QVariant body,
   }
   // LATER remove . line in body
   // LATER handle body encoding (force utf8 ?)
-  if (socket.write(body.toString().toAscii()) == -1) {
+  if (socket.write(body.toString().toLatin1()) == -1) {
     errorString = "error writing body: "+socket.errorString();
     return false;
   }

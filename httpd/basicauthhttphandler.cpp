@@ -35,7 +35,7 @@ bool BasicAuthHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
   QString header = req.header("Authorization"), token;
   QRegExp re = headerRe;
   if (re.exactMatch(header)) {
-    token = QString::fromUtf8(QByteArray::fromBase64(re.cap(1).toAscii()));
+    token = QString::fromUtf8(QByteArray::fromBase64(re.cap(1).toLatin1()));
     re = tokenRe;
     if (re.exactMatch(token)) {
       QString login = re.cap(1), password = re.cap(2);

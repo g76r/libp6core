@@ -24,6 +24,7 @@ public:
   QMultiMap<QString,QString> _headers;
   QHash<QString,QString> _cookies, _paramsCache;
   QUrl _url;
+  QUrlQuery _query;
   explicit HttpRequestData(QAbstractSocket *input) : _input(input),
     _method(HttpRequest::NONE) { }
 };
@@ -113,7 +114,7 @@ QString HttpRequest::param(QString key) const {
   if (d) {
     if (d->_paramsCache.contains(key))
       return d->_paramsCache.value(key);
-    value = d->_url.queryItemValue(key);
+    value = d->_query.queryItemValue(key);
     d->_paramsCache.insert(key, value);
   }
   return value;
@@ -144,7 +145,7 @@ ParamSet HttpRequest::paramsAsParamSet() const {
 
 void HttpRequest::cacheAllParams() const {
   if (d) {
-    QListIterator<QPair<QString,QString> > it(d->_url.queryItems());
+    QListIterator<QPair<QString,QString> > it(d->_query.queryItems());
     while (it.hasNext()) {
       QPair<QString,QString> p(it.next());
       if (!d->_paramsCache.contains(p.first))
@@ -171,12 +172,18 @@ HttpRequest::operator QString() const {
 }
 
 void HttpRequest::overrideUrl(QUrl url) {
-  if (d)
+  if (d) {
     d->_url = url;
+    d->_query = QUrlQuery(url);
+  }
 }
 
 QUrl HttpRequest::url() const {
   return d ? d->_url : QUrl();
+}
+
+QUrlQuery HttpRequest::urlQuery() const {
+  return d ? d->_query : QUrlQuery();
 }
 
 QAbstractSocket *HttpRequest::input() {
@@ -221,7 +228,7 @@ QString HttpRequest::base64Cookie(QString name, QString defaultValue) const {
     return defaultValue;
   const QString v = d->_cookies.value(name);
   return v.isNull() ? defaultValue
-                    : QString::fromUtf8(QByteArray::fromBase64(v.toAscii()));
+                    : QString::fromUtf8(QByteArray::fromBase64(v.toLatin1()));
 }
 
 QByteArray HttpRequest::base64BinaryCookie(QString name,
@@ -230,5 +237,5 @@ QByteArray HttpRequest::base64BinaryCookie(QString name,
     return defaultValue;
   const QString v = d->_cookies.value(name);
   return v.isNull() ? defaultValue
-                    : QByteArray::fromBase64(cookie(name).toAscii());
+                    : QByteArray::fromBase64(cookie(name).toLatin1());
 }

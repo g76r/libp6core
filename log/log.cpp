@@ -136,7 +136,7 @@ QString Log::severityToString(Severity severity) {
 
 Log::Severity Log::severityFromString(QString string) {
   if (!string.isEmpty())
-    switch (string.at(0).toAscii()) {
+    switch (string.at(0).toLatin1()) {
     case 'I':
     case 'i':
       return Info;

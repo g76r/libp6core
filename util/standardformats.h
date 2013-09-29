@@ -19,19 +19,15 @@
 #include <QDateTime>
 
 class StandardFormatsPrivate;
-class StandardFormats;
-#ifdef STANDARDFORMATS_CPP
-static StandardFormats *standardFormatsInstance(void);
-#endif
 
 class LIBQTSSUSHARED_EXPORT StandardFormats {
-  friend StandardFormats *standardFormatsInstance(void);
 private:
   StandardFormatsPrivate *d;
-  StandardFormats();
   static inline StandardFormatsPrivate *instance();
 
 public:
+  /** Should never be called directly (only used for singleton init) */
+  StandardFormats();
   static QString toRfc2822DateTime(QDateTime dt);
   static QDateTime fromRfc2822DateTime(QString rfc2822DateTime,
                                        QString &errorString);
