@@ -48,6 +48,7 @@ void HttpWorker::handleConnection(int socketDescriptor) {
     // LATER
     // emit error(_socket->error());
   }
+  socket->setReadBufferSize(MAXIMUM_LINE_SIZE+2);
   QStringList args;
   HttpRequest req(socket);
   HttpResponse res(socket);
@@ -116,10 +117,6 @@ void HttpWorker::handleConnection(int socketDescriptor) {
       Log::error() << "HTTP/1.0 413 Header line too long, starting with: "
                    << line.left(200);
       goto finally;
-    }
-    if (line.isNull()) {
-      //qDebug() << "line is null";
-      break;
     }
     if (line.isEmpty()) {
       //qDebug() << "line is empty";
