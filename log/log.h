@@ -165,11 +165,13 @@ public:
     _message.append("}");
     return *this; }
   inline LogHelper &operator<<(const QObject *o) {
-    if (o)
-      _message.append(o->objectName()).append("(0x")
-          .append(QString::number((quint64)o, 16)).append(")");
+    const QMetaObject *mo = o ? o->metaObject() : 0;
+    if (mo)
+      _message.append(mo->className()).append("(0x")
+          .append(QString::number(reinterpret_cast<qintptr>(o), 16))
+          .append(", \"").append(o->objectName()).append("\")");
     else
-      _message.append("null");
+      _message.append("QObject(0x0)");
     return *this; }
   inline LogHelper &operator<<(const QObject &o) {
     return operator<<(&o); }
