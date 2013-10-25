@@ -179,6 +179,42 @@ QDateTime StandardFormats::fromRfc2822DateTime(QString rfc2822DateTime,
   return QDateTime();
 }
 
+QString StandardFormats::toCoarseHumanReadableTimeInterval(
+    qint64 msecs, bool absolute) {
+  QString s(msecs < 0 && !absolute ? "-" : "");
+  // LATER i18n
+  msecs = qAbs(msecs);
+  if (msecs <= 60*1000)
+    s.append(QObject::tr("%1 seconds", "<= 1 min").arg(.001*msecs));
+  else if (msecs <= 60*60*1000)
+    s.append(QObject::tr("%1 minutes %2 seconds", "<= 1 h").arg(msecs/(60*1000))
+             .arg((msecs/1000)%60));
+  else if (msecs <= 24*60*60*1000)
+    s.append(QObject::tr("%1 hours %2 minutes", "<= 1 day")
+             .arg(msecs/(60*60*1000)).arg((msecs/(60*1000))%60));
+  else if (msecs <= 365LL*24*60*60*1000)
+    s.append(QObject::tr("%1 days %2 hours", "<= 1 year")
+             .arg(msecs/(24*60*60*1000)).arg((msecs/(60*60*1000))%24));
+  else
+    s.append(QObject::tr("%1 years %2 days", "> 1 year")
+             .arg(msecs/(365*24*60*60*1000)).arg((msecs/(24*60*60*1000))%365));
+  return s;
+}
+
+QString StandardFormats::toCoarseHumanReadableRelativeDate(
+    QDateTime dt, QDateTime reference) {
+  // LATER i18n
+  qint64 msecs = reference.msecsTo(dt);
+  if (msecs == 0)
+    return QObject::tr("now");
+  QString s(msecs > 0 ? QObject::tr("in ", "relative date future prefix")
+                      : QObject::tr("", "relative date past prefix"));
+  s.append(toCoarseHumanReadableTimeInterval(msecs, true));
+  s.append(msecs > 0 ? QObject::tr("", "relative date future suffix")
+                     : QObject::tr(" ago", "relative date past suffix"));
+  return s;
+}
+
 /*
 #include "util/standardformats.h"
 #include "log/log.h"
@@ -228,4 +264,42 @@ int main(int argc, char *argv[]) {
 2013-05-23T10:08:49,601 MainThread/0 : FATAL invalid rfc2822 minutes: '99'
 2013-05-23T10:08:49,601 MainThread/0 : FATAL invalid rfc2822 minutes: '99'
 2013-05-23T10:08:49,601 MainThread/0 : FATAL result:
+*/
+
+/*
+#include "util/standardformats.h"
+#include "log/log.h"
+#include <QThread>
+#include <QCoreApplication>
+int main(int argc, char *argv[]) {
+  QCoreApplication a(argc, argv);
+  QThread::currentThread()->setObjectName("MainThread");
+  Log::addConsoleLogger(Log::Debug);
+  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime());
+  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(70));
+  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-3200));
+  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-322983));
+  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-3229839));
+  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-32298397));
+  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-322983972));
+  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-3229839728LL));
+  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-32298397284LL));
+  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-322983972842LL));
+  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-3229839728423LL));
+  ::usleep(100000); // give a chance for last asynchronous log writing
+  return 0;
+}
+*/
+/*
+2013-10-25T20:20:05,854 MainThread/0 : FATAL now
+2013-10-25T20:20:05,855 MainThread/0 : FATAL in 0.07 seconds
+2013-10-25T20:20:05,855 MainThread/0 : FATAL 3.2 seconds ago
+2013-10-25T20:20:05,855 MainThread/0 : FATAL 5 minutes 22 seconds ago
+2013-10-25T20:20:05,855 MainThread/0 : FATAL 53 minutes 49 seconds ago
+2013-10-25T20:20:05,855 MainThread/0 : FATAL 8 hours 58 minutes ago
+2013-10-25T20:20:05,858 MainThread/0 : FATAL 3 days 17 hours ago
+2013-10-25T20:20:05,859 MainThread/0 : FATAL 37 days 9 hours ago
+2013-10-25T20:20:05,859 MainThread/0 : FATAL 21 years 8 days ago
+2013-10-25T20:20:05,859 MainThread/0 : FATAL 219 years 88 days ago
+2013-10-25T20:20:05,859 MainThread/0 : FATAL 2195 years 152 days ago
 */

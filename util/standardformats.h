@@ -34,6 +34,14 @@ public:
   static QDateTime fromRfc2822DateTime(QString rfc2822DateTime) {
     QString s;
     return fromRfc2822DateTime(rfc2822DateTime, s); }
+  /** e.g. "1.250 seconds", "10 months and 3 days", "-10 months and 3 days"
+   * @param absolute if false, add initial "-" if msec < 0 */
+  static QString toCoarseHumanReadableTimeInterval(
+      qint64 msecs, bool absolute = false);
+  /** e.g. "1.250 seconds ago", "in 10 months and 3 days"
+    * invalid QDateTime gives null QString */
+  static QString toCoarseHumanReadableRelativeDate(
+      QDateTime dt, QDateTime reference = QDateTime::currentDateTime());
 };
 
 #endif // STANDARDFORMATS_H
