@@ -18,8 +18,10 @@
 #include <QThread>
 #include "util/paramset.h"
 
-FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity)
-  : Logger(0, minSeverity), _device(0), _thread(new QThread) {
+FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity,
+                       bool buffered)
+  : Logger(0, minSeverity), _device(0), _thread(new QThread),
+    _buffered(buffered) {
   //qDebug() << "creating FileLogger from device" << device;
   _device = device;
   _device->setParent(this);
@@ -30,7 +32,8 @@ FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity)
   _thread->start();
   moveToThread(_thread);
   if (!_device->isOpen()) {
-    if (!_device->open(QIODevice::WriteOnly|QIODevice::Append
+    if (!_device->open(_buffered ? QIODevice::WriteOnly|QIODevice::Append
+                       : QIODevice::WriteOnly|QIODevice::Append
                        |QIODevice::Unbuffered)) {
       qWarning() << "cannot open log device" << _device << ":"
                  << _device->errorString();
@@ -41,10 +44,10 @@ FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity)
 }
 
 FileLogger::FileLogger(QString pathPattern, Log::Severity minSeverity,
-                       int secondsReopenInterval)
+                       int secondsReopenInterval, bool buffered)
   : Logger(0, minSeverity), _device(0), _thread(new QThread(0)),
     _pathPattern(pathPattern), _lastOpen(QDateTime::currentDateTime()),
-    _secondsReopenInterval(secondsReopenInterval) {
+    _secondsReopenInterval(secondsReopenInterval), _buffered(buffered) {
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->setObjectName("FileLogger-"+Log::severityToString(minSeverity)
@@ -80,7 +83,8 @@ void FileLogger::doLog(QDateTime timestamp, QString message,
       delete _device;
     _currentPath = ParamSet().evaluate(_pathPattern);
     _device = new QFile(_currentPath, this);
-    if (!_device->open(QIODevice::WriteOnly|QIODevice::Append
+    if (!_device->open(_buffered ? QIODevice::WriteOnly|QIODevice::Append
+                       : QIODevice::WriteOnly|QIODevice::Append
                        |QIODevice::Unbuffered)) {
       //qWarning() << "cannot open log file" << _currentPath << ":"
       //           << _device->errorString();
