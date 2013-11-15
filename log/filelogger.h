@@ -28,13 +28,17 @@ class LIBQTSSUSHARED_EXPORT FileLogger : public Logger {
   QString _pathPattern, _currentPath;
   QDateTime _lastOpen;
   int _secondsReopenInterval;
+  bool _buffered;
 
 public:
-  /** Takes ownership of the device (= will delete it). */
-  explicit FileLogger(QIODevice *device, Log::Severity minSeverity = Log::Info);
+  /** Takes ownership of the device (= will delete it).
+    * @param buffered only applies if device is not already open */
+  explicit FileLogger(QIODevice *device, Log::Severity minSeverity = Log::Info,
+                      bool buffered = true);
   explicit FileLogger(QString pathPattern,
                       Log::Severity minSeverity = Log::Info,
-                      int secondsReopenInterval = 300);
+                      int secondsReopenInterval = 300,
+                      bool buffered = true);
   ~FileLogger();
   QString currentPath() const;
   QString pathPattern() const;
