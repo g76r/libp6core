@@ -197,7 +197,7 @@ QString StandardFormats::toCoarseHumanReadableTimeInterval(
              .arg(msecs/(24*60*60*1000)).arg((msecs/(60*60*1000))%24));
   else
     s.append(QObject::tr("%1 years %2 days", "> 1 year")
-             .arg(msecs/(365*24*60*60*1000)).arg((msecs/(24*60*60*1000))%365));
+             .arg(msecs/(365LL*24*60*60*1000)).arg((msecs/(24*60*60*1000))%365));
   return s;
 }
 
