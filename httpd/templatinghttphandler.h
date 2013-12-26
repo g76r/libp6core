@@ -35,9 +35,13 @@ public:
   explicit TemplatingHttpHandler(QObject *parent = 0,
                                  QString urlPathPrefix = "",
                                  QString documentRoot = ":docroot/");
-  void addView(QString label, TextView *view) {
-    _views.insert(label, QPointer<TextView>(view)); }
-  void addFilter(QString regexp) { _filters.insert(regexp); }
+  TemplatingHttpHandler *addView(QString label, TextView *view) {
+    _views.insert(label, QPointer<TextView>(view));
+    return this; }
+  TemplatingHttpHandler *addView(TextView *view);
+  TemplatingHttpHandler *addFilter(QString regexp) {
+    _filters.insert(regexp);
+    return this; }
 
 protected:
   void sendLocalResource(HttpRequest req, HttpResponse res, QFile *file,

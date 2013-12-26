@@ -17,6 +17,7 @@
 #include <QBuffer>
 #include "util/ioutils.h"
 #include "log/log.h"
+#include <QtDebug>
 
 TemplatingHttpHandler::TemplatingHttpHandler(
     QObject *parent, QString urlPathPrefix, QString documentRoot)
@@ -90,4 +91,14 @@ void TemplatingHttpHandler::sendLocalResource(
     res.setContentLength(file->size());
     IOUtils::copy(res.output(), file);
   }
+}
+
+TemplatingHttpHandler *TemplatingHttpHandler::addView(TextView *view) {
+  QString label = view ? view->objectName() : QString();
+  if (label.isEmpty())
+    qWarning() << "TemplatingHttpHandler::addView(TextView*) called with empty "
+                  "TextView::objectName():" << view;
+  else
+    _views.insert(label, QPointer<TextView>(view));
+  return this;
 }
