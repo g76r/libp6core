@@ -69,7 +69,7 @@ void HtmlTableView::updateHeaderAndFooterCache() {
   QAbstractItemModel *m = model();
   if (m) {
     if (_columnHeaders) {
-      v.append("<tr>");
+      v.append("<thead><tr>");
       if (_rowHeaders)
         v.append("<th>").append(_topLeftHeader).append("</th>");
       foreach (int i, effectiveColumnIndexes()) {
@@ -87,9 +87,10 @@ void HtmlTableView::updateHeaderAndFooterCache() {
           v.append(m->headerData(i, Qt::Horizontal, _htmlSuffixRole)
                    .toString());
       }
-      v.append("</tr>\n");
+      v.append("</tr></thead>\n");
     }
   }
+  v.append("<tbody>");
   _tableHeader = v;
 }
 
@@ -147,7 +148,7 @@ QString HtmlTableView::header(int currentPage, int lastPage,
 
 QString HtmlTableView::footer(int currentPage, int lastPage,
                               QString pageVariableName) const {
-  return "</table>\n"+pagebar(currentPage, lastPage, pageVariableName, false);
+  return "</tbody></table>\n"+pagebar(currentPage, lastPage, pageVariableName, false);
 }
 QString HtmlTableView::rowText(int row) {
   static QRegExp notName("[^a-zA-Z0-9\\_]+");
