@@ -109,7 +109,7 @@ QString HtmlTableView::pagebar(
     bool defineAnchor) const {
   QString v;
   if (currentPage > 1 || currentPage < lastPage) {
-    QString pagebarAnchor("pagebar."+pageVariableName);
+    QString pagebarAnchor("pagebar-"+pageVariableName);
     currentPage = qMax(currentPage, 1);
     v.append("<div class=\"pagination pagination-centered\">");
     if (defineAnchor)

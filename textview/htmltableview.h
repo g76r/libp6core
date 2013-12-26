@@ -69,7 +69,7 @@ public:
   /** Add an "<a name=" anchor to every row, using objectName() + "." as
    *  prefix. Also add id= to <tr> tag. */
   void enableRowAnchor(int column = 0) {
-    _rowAnchorPrefix = objectName()+".";
+    _rowAnchorPrefix = objectName()+"-";
     _rowAnchorColumn = column;
   }
   /** Do not add "<a name=" anchor to every row. */

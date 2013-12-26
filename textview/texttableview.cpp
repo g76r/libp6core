@@ -39,7 +39,7 @@ QString TextTableView::text(ParamsProvider *params, QString scope) const {
   QList<QString> rows = _rows;
   int rowsCount = rows.size();
   QString pageVariableName(objectName().isEmpty() ? "page"
-                                                  : objectName()+".page");
+                                                  : objectName()+"-page");
   QString pageVariableValue(
         params ? params->paramValue(pageVariableName).toString() : "disabled");
   int currentPage = qMax(1, pageVariableValue.toInt());
