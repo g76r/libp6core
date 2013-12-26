@@ -34,10 +34,12 @@ void TextTableView::setModel(QAbstractItemModel *model) {
 }
 
 QString TextTableView::text(ParamsProvider *params, QString scope) const {
+  Q_UNUSED(scope)
   QString v;
   QList<QString> rows = _rows;
   int rowsCount = rows.size();
-  QString pageVariableName(scope.isEmpty() ? "page" : scope+".page");
+  QString pageVariableName(objectName().isEmpty() ? "page"
+                                                  : objectName()+".page");
   QString pageVariableValue(
         params ? params->paramValue(pageVariableName).toString() : "disabled");
   int currentPage = qMax(1, pageVariableValue.toInt());

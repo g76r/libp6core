@@ -54,7 +54,7 @@ void TemplatingHttpHandler::sendLocalResource(
           if (label == "view") {
             QPointer<TextView> view = _views.value(data);
             if (view)
-              output.append(view.data()->text(&ctxt, data));
+              output.append(view.data()->text(&ctxt, req.url().toString()));
             else {
               Log::warning() << "TemplatingHttpHandler did not find view '"
                              << data << "' among " << _views.keys();

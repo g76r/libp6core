@@ -51,7 +51,7 @@ public slots:
    * This method must be thread-safe, since it may be called by any thread,
    * e.g. a HTTP server thread.
    * @param params optionnal display params, e.g. request or session params
-   * @param scope optionnal scope name, e.g. view instance name or URI
+   * @param scope optionnal scope name, e.g. instance name or URI
    */
   virtual QString text(ParamsProvider *params = 0,
                        QString scope = QString()) const = 0;
