@@ -155,13 +155,19 @@ QString HtmlTableView::rowText(int row) {
   QAbstractItemModel *m = model();
   if (!m)
     return QString();
-  QString v, trClass;
+  QString v, trClass, id;
+  if (!_rowAnchorPrefix.isNull())
+    id = _rowAnchorPrefix
+        + m->data(m->index(row, _rowAnchorColumn, QModelIndex()))
+        .toString().replace(QRegExp(notName), "_");
   if (_trClassRole >= 0)
     trClass = m->data(m->index(row, 0, QModelIndex()), _trClassRole).toString();
+  v.append("<tr");
   if (!trClass.isEmpty())
-    v.append("<tr class=\"").append(trClass).append("\">");
-  else
-    v.append("<tr>");
+    v.append(" class=\"").append(trClass).append('"');
+  if (!id.isNull())
+    v.append(" id=\"").append(id).append('"');
+  v.append(">");
   if (_rowHeaders) {
     v.append("<th>");
     if (_htmlPrefixRole >= 0)
@@ -192,11 +198,8 @@ QString HtmlTableView::rowText(int row) {
       v.append("<td>");
     if (first) {
       first = false;
-      if (!_rowAnchorPrefix.isNull())
-          v.append("<a name=\"").append(_rowAnchorPrefix).append(
-                m->data(m->index(row, _rowAnchorColumn, QModelIndex()))
-                .toString().replace(QRegExp(notName), "_"))
-              .append("\"></a>");
+      if (!id.isNull())
+          v.append("<a name=\"").append(id).append("\"></a>");
     }
     if (_htmlPrefixRole >= 0)
       v.append(m->data(index, _htmlPrefixRole).toString());
