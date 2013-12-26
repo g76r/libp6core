@@ -13,9 +13,18 @@
  */
 #include "csvtableview.h"
 
+QString CsvTableView::_defaultRecordSeparator("\n");
+QChar CsvTableView::_defaultFieldSeparator(',');
+QChar CsvTableView::_defaultFieldQuote;
+QChar CsvTableView::_defaultEscapeChar;
+QChar CsvTableView::_defaultReplacementChar;
+
 CsvTableView::CsvTableView(QObject *parent, int cachedRows, int rowsPerPage)
-  : TextTableView(parent, cachedRows, rowsPerPage), _recordSeparator("\n"),
-    _fieldSeparator(','), _columnHeaders(true), _rowHeaders(false) {
+  : TextTableView(parent, QString(), cachedRows, rowsPerPage),
+    _recordSeparator(_defaultRecordSeparator),
+    _fieldSeparator(_defaultFieldSeparator), _fieldQuote(_defaultFieldQuote),
+    _escapeChar(_defaultEscapeChar), _replacementChar(_defaultReplacementChar),
+    _columnHeaders(true), _rowHeaders(false) {
   updateSpecialChars();
 }
 

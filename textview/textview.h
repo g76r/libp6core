@@ -35,12 +35,14 @@ class LIBQTSSUSHARED_EXPORT TextView : public QObject {
   QAbstractItemModel *_model;
 public:
   explicit TextView(QObject *parent = 0);
+  explicit TextView(QObject *parent, QString objectName);
 
 signals:
   /** Emited when model is changed, e.g. when setModel() is called. */
   void modelChanged();
 
 public slots:
+  /** Connect to a given model */
   virtual void setModel(QAbstractItemModel *model);
   QAbstractItemModel *model() const { return _model; }
   /** Provide the text view of the model, e.g. a HTML string that can be pasted

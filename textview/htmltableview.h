@@ -25,15 +25,19 @@ class LIBQTSSUSHARED_EXPORT HtmlTableView : public TextTableView {
 
   QString _tableClass, _topLeftHeader, _rowAnchorPrefix, _tableHeader,
   _pageUrlPrefix;
-  int _thClassRole, _trClassRole, _tdClassRole, _linkRole, _linkClassRole;
-  int _htmlPrefixRole, _htmlSuffixRole, _rowAnchorColumn, _maxCellContentLength;
+  int _thClassRole, _trClassRole, _tdClassRole, _linkRole, _linkClassRole,
+  _htmlPrefixRole, _htmlSuffixRole, _rowAnchorColumn, _maxCellContentLength;
   bool _columnHeaders, _rowHeaders, _rowHeaderHtmlEncode;
   QSet<int> _dataHtmlDisableEncode, _columnHeaderHtmlDisableEncode;
+  static QString _defaultTableClass;
+  static int _defaultThClassRole, _defaultTrClassRole, _defaultTdClassRole,
+  _defaultLinkRole, _defaultLinkClassRole, _defaultHtmlPrefixRole,
+  _defaultHtmlSuffixRole, _defaultMaxCellContentLength;
 
 public:
   /** Implicitely set empty placeholder to "(empty)", ellipse placeholder
    * to "...", columns headers to true and row headers to false. */
-  explicit HtmlTableView(QObject *parent = 0,
+  explicit HtmlTableView(QObject *parent = 0, QString objectName = QString(),
                          int cachedRows = defaultCachedRows,
                          int rowsPerPage = defaultRowsPerPage);
   void setTableClass(QString tableClass) {
@@ -56,9 +60,21 @@ public:
     _rowHeaders = set; updateHeaderAndFooterCache(); }
   void setEmptyPlaceholder(QString rawText);
   void setEllipsePlaceholder(QString rawText);
-  void setRowAnchor(QString prefix = "", int column = 0) {
+  /** Add an "<a name=" anchor to every row, the anchor is prefix + content of
+   *  column column. */
+  void enableRowAnchor(QString prefix, int column = 0) {
     _rowAnchorPrefix = prefix;
     _rowAnchorColumn = column;
+  }
+  /** Add an "<a name=" anchor to every row, using objectName() + "." as
+   *  prefix */
+  void enableRowAnchor(int column = 0) {
+    _rowAnchorPrefix = objectName()+".";
+    _rowAnchorColumn = column;
+  }
+  /** Do not add "<a name=" anchor to every row. */
+  void disableRowAnchor() {
+    _rowAnchorPrefix = QString();
   }
   /** Prefix of set page url.
    * Will be suffixed with e.g. "page=42" "myscope.page=1&anchor=pagebar.foo"
@@ -80,6 +96,26 @@ public:
    * any. Default: 200. */
   void setMaxCellContentLength(int maxCellContentLength = 200) {
     _maxCellContentLength = maxCellContentLength; }
+  static void setDefaultTableClass(QString tableClass) {
+    _defaultTableClass = tableClass; }
+  static void setDefaultThClassRole(int role) {
+    _defaultThClassRole = role; }
+  static void setDefaultTrClassRole(int role) {
+    _defaultTrClassRole = role; }
+  static void setDefaultTdClassRole(int role) {
+    _defaultTdClassRole = role; }
+  static void setDefaultLinkRole(int role) {
+    _defaultLinkRole = role; }
+  static void setDefaultLinkClassRole(int role) {
+    _defaultLinkClassRole = role; }
+  static void setDefaultHtmlPrefixRole(int role) {
+    _defaultHtmlPrefixRole = role; }
+  static void setDefaultHtmlSuffixRole(int role) {
+    _defaultHtmlSuffixRole = role; }
+  /** Maximum length of text inside a cell, measured before HTML encoding if
+   * any. Default: 200. */
+  static void setDefaultMaxCellContentLength(int length) {
+    _defaultMaxCellContentLength = length; }
 
 protected:
   void updateHeaderAndFooterCache();

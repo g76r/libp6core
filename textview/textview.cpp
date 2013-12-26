@@ -17,6 +17,11 @@ TextView::TextView(QObject *parent)
   : QObject(parent), _model(0) {
 }
 
+TextView::TextView(QObject *parent, QString objectName)
+  : QObject(parent), _model(0) {
+  setObjectName(objectName);
+}
+
 void TextView::setModel(QAbstractItemModel *model) {
   QAbstractItemModel *m = this->model();
   if (m) {
@@ -61,11 +66,6 @@ void TextView::setModel(QAbstractItemModel *model) {
             this, SLOT(columnsRemoved(QModelIndex,int,int)));
     connect(m, SIGNAL(columnsMoved(const QModelIndex&,int,int,const QModelIndex&,int)),
             this, SLOT(columnsMoved(QModelIndex,int,int,QModelIndex,int)));
-    setObjectName(QString("view on %1::%2")
-                  .arg(model->metaObject()->className())
-                  .arg(model->objectName()));
-  } else {
-    setObjectName(QString());
   }
   _model = model;
   emit modelChanged();

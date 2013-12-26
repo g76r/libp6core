@@ -14,8 +14,10 @@
 #include "texttableview.h"
 //#include "log/log.h"
 
-TextTableView::TextTableView(QObject *parent, int cachedRows, int rowsPerPage)
-  : TextView(parent), _cachedRows(cachedRows), _rowsPerPage(rowsPerPage) {
+TextTableView::TextTableView(QObject *parent, QString objectName,
+                             int cachedRows, int rowsPerPage)
+  : TextView(parent, objectName), _cachedRows(cachedRows),
+    _rowsPerPage(rowsPerPage) {
 }
 
 void TextTableView::setEmptyPlaceholder(QString rawText) {

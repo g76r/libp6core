@@ -14,12 +14,26 @@
 #include "htmltableview.h"
 #include "util/htmlutils.h"
 
-HtmlTableView::HtmlTableView(QObject *parent, int cachedRows, int rowsPerPage)
-  : TextTableView(parent, cachedRows, rowsPerPage),
-  _pageUrlPrefix("?"),
-  _thClassRole(-1), _trClassRole(-1), _tdClassRole(-1), _linkRole(-1),
-  _linkClassRole(-1), _htmlPrefixRole(-1), _htmlSuffixRole(-1),
-  _rowAnchorColumn(-1), _maxCellContentLength(200),
+QString HtmlTableView::_defaultTableClass;
+int HtmlTableView::_defaultThClassRole(-1);
+int HtmlTableView::_defaultTrClassRole(-1);
+int HtmlTableView::_defaultTdClassRole(-1);
+int HtmlTableView::_defaultLinkRole(-1);
+int HtmlTableView::_defaultLinkClassRole(-1);
+int HtmlTableView::_defaultHtmlPrefixRole(-1);
+int HtmlTableView::_defaultHtmlSuffixRole(-1);
+int HtmlTableView::_defaultMaxCellContentLength(200);
+
+HtmlTableView::HtmlTableView(QObject *parent, QString objectName,
+                             int cachedRows, int rowsPerPage)
+  : TextTableView(parent, objectName, cachedRows, rowsPerPage),
+  _tableClass(_defaultTableClass), _pageUrlPrefix("?"),
+  _thClassRole(_defaultThClassRole), _trClassRole(_defaultTrClassRole),
+  _tdClassRole(_defaultTdClassRole), _linkRole(_defaultLinkRole),
+  _linkClassRole(_defaultLinkClassRole),
+  _htmlPrefixRole(_defaultHtmlPrefixRole),
+  _htmlSuffixRole(_defaultHtmlSuffixRole),
+  _rowAnchorColumn(-1), _maxCellContentLength(_defaultMaxCellContentLength),
   _columnHeaders(true), _rowHeaders(false) {
   setEmptyPlaceholder("(empty)");
   setEllipsePlaceholder("...");
@@ -50,7 +64,8 @@ void HtmlTableView::updateHeaderAndFooterCache() {
   if (_tableClass.isEmpty())
     v = "<table>\n";
   else
-    v = QString("<table class=\"%1\">\n").arg(_tableClass);
+    v = QString("<table class=\"%1\" id=\"%2\">\n").arg(_tableClass)
+        .arg(objectName());
   QAbstractItemModel *m = model();
   if (m) {
     if (_columnHeaders) {

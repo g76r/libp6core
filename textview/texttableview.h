@@ -32,7 +32,7 @@ public:
   const static int defaultCachedRows = 100, defaultRowsPerPage = 25;
 
 public:
-  explicit TextTableView(QObject *parent = 0,
+  explicit TextTableView(QObject *parent = 0, QString objectName = QString(),
                          int cachedRows = defaultCachedRows,
                          int rowsPerPage = defaultRowsPerPage);
   /** Provide the HTML table view of the model, including headers and footers.
