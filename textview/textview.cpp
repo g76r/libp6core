@@ -148,3 +148,30 @@ void TextView::columnsMoved(const QModelIndex &sourceParent,
   Q_UNUSED(destinationColumn)
   resetAll();
 }
+
+void TextView::setItemDelegate(TextViewItemDelegate *delegate) {
+  _defaultDelegate = delegate;
+  _columnDelegates.clear();
+  _rowDelegates.clear();
+}
+
+TextViewItemDelegate *TextView::itemDelegate() const {
+  return _defaultDelegate;
+}
+
+void TextView::setItemDelegateForColumn(
+    int column, TextViewItemDelegate *delegate) {
+  _columnDelegates.insert(column, delegate);
+}
+
+TextViewItemDelegate *TextView::itemDelegateForColumn(int column) const {
+  return _columnDelegates.value(column);
+}
+
+void TextView::setItemDelegateForRow(int row, TextViewItemDelegate *delegate) {
+  _rowDelegates.insert(row, delegate);
+}
+
+TextViewItemDelegate *TextView::itemDelegateForRow(int row) const {
+  return _rowDelegates.value(row);
+}

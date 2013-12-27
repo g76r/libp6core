@@ -18,6 +18,7 @@
 #include <QAbstractItemModel>
 #include "libqtssu_global.h"
 #include "util/paramset.h"
+#include "textviewitemdelegate.h"
 
 /** Class to use Qt's Model-View UI framework for text-oriented display, such
  * as web applications, REST APIs and command line interfaces.
@@ -33,6 +34,9 @@
 class LIBQTSSUSHARED_EXPORT TextView : public QObject {
   Q_OBJECT
   QAbstractItemModel *_model;
+  TextViewItemDelegate *_defaultDelegate;
+  QHash<int,TextViewItemDelegate*> _columnDelegates, _rowDelegates;
+
 public:
   explicit TextView(QObject *parent = 0);
   explicit TextView(QObject *parent, QString objectName);
@@ -45,8 +49,14 @@ public slots:
   /** Connect to a given model */
   virtual void setModel(QAbstractItemModel *model);
   QAbstractItemModel *model() const { return _model; }
+  void setItemDelegate(TextViewItemDelegate *delegate);
+  TextViewItemDelegate *itemDelegate() const;
+  void setItemDelegateForColumn(int column, TextViewItemDelegate *delegate);
+  TextViewItemDelegate *itemDelegateForColumn(int column) const;
+  void setItemDelegateForRow(int row, TextViewItemDelegate *delegate);
+  TextViewItemDelegate *itemDelegateForRow(int row) const;
   /** Provide the text view of the model, e.g. a HTML string that can be pasted
-   * within a HTML page body, a JSON document or an ASCII art string fo a
+   * within a HTML page body, a JSON document or an ASCII art string for a
    * text interface.
    * This method must be thread-safe, since it may be called by any thread,
    * e.g. a HTTP server thread.
@@ -96,6 +106,15 @@ protected slots:
   virtual void columnsMoved(const QModelIndex &sourceParent, int sourceStart,
                             int sourceEnd, const QModelIndex &destinationParent,
                             int destinationColumn);
+
+protected:
+  TextViewItemDelegate *cellItemDelegate(int row, int column) const {
+    TextViewItemDelegate *d = _rowDelegates.value(row);
+    return d ? d : _columnDelegates.value(column, _defaultDelegate); }
+  TextViewItemDelegate *rowItemDelegate(int row) const {
+    return _rowDelegates.value(row, _defaultDelegate); }
+  TextViewItemDelegate *columnItemDelegate(int column) const {
+    return _columnDelegates.value(column, _defaultDelegate); }
 };
 
 #endif // TEXTVIEW_H

@@ -25,14 +25,10 @@ class LIBQTSSUSHARED_EXPORT HtmlTableView : public TextTableView {
 
   QString _tableClass, _topLeftHeader, _rowAnchorPrefix, _tableHeader,
   _pageUrlPrefix;
-  int _thClassRole, _trClassRole, _tdClassRole, _linkRole, _linkClassRole,
-  _htmlPrefixRole, _htmlSuffixRole, _rowAnchorColumn, _maxCellContentLength;
-  bool _columnHeaders, _rowHeaders, _rowHeaderHtmlEncode;
-  QSet<int> _dataHtmlDisableEncode, _columnHeaderHtmlDisableEncode;
+  int _thClassRole, _trClassRole, _tdClassRole, _rowAnchorColumn;
+  bool _columnHeaders, _rowHeaders;
   static QString _defaultTableClass;
-  static int _defaultThClassRole, _defaultTrClassRole, _defaultTdClassRole,
-  _defaultLinkRole, _defaultLinkClassRole, _defaultHtmlPrefixRole,
-  _defaultHtmlSuffixRole, _defaultMaxCellContentLength;
+  static int _defaultThClassRole, _defaultTrClassRole, _defaultTdClassRole;
 
 public:
   /** Implicitely set empty placeholder to "(empty)", ellipse placeholder
@@ -47,13 +43,6 @@ public:
   void setThClassRole(int role) { _thClassRole = role; }
   void setTrClassRole(int role) { _trClassRole = role; }
   void setTdClassRole(int role) { _tdClassRole = role; }
-  /** Surround Qt::DisplayRole text with <a href="${linkRole}"> and </a>. */
-  void setLinkRole(int role) { _linkRole = role; }
-  void setLinkClassRole(int role) { _linkClassRole = role; }
-  /** Prefix with unescaped HTML text, e.g. "<img src='icon/foo.png'/>". */
-  void setHtmlPrefixRole(int role) { _htmlPrefixRole = role; }
-  /** Suffix with unescaped HTML text, e.g. "<a href='help.html'>help</a>". */
-  void setHtmlSuffixRole(int role) { _htmlSuffixRole = role; }
   void setColumnHeaders(bool set = true) {
     _columnHeaders = set; updateHeaderAndFooterCache(); }
   void setRowHeaders(bool set = true) {
@@ -80,22 +69,6 @@ public:
    * Will be suffixed with e.g. "page=42" "myscope.page=1&anchor=pagebar.foo"
    * Default: "?" Example: "../setpage?" */
   void setPageUrlPrefix(QString urlPrefix) { _pageUrlPrefix = urlPrefix; }
-  void setDataHtmlEncode(int column, bool encode = true) {
-    if (encode)
-      _dataHtmlDisableEncode.remove(column);
-    else
-      _dataHtmlDisableEncode.insert(column); }
-  void setColumnHeaderHtmlEncode(int column, bool encode = true) {
-    if (encode)
-      _columnHeaderHtmlDisableEncode.remove(column);
-    else
-      _columnHeaderHtmlDisableEncode.insert(column); }
-  void setRowHeaderHtmlEncode(bool encode = true) {
-    _rowHeaderHtmlEncode = encode; }
-  /** Maximum length of text inside a cell, measured before HTML encoding if
-   * any. Default: 200. */
-  void setMaxCellContentLength(int maxCellContentLength = 200) {
-    _maxCellContentLength = maxCellContentLength; }
   static void setDefaultTableClass(QString tableClass) {
     _defaultTableClass = tableClass; }
   static void setDefaultThClassRole(int role) {
@@ -104,18 +77,6 @@ public:
     _defaultTrClassRole = role; }
   static void setDefaultTdClassRole(int role) {
     _defaultTdClassRole = role; }
-  static void setDefaultLinkRole(int role) {
-    _defaultLinkRole = role; }
-  static void setDefaultLinkClassRole(int role) {
-    _defaultLinkClassRole = role; }
-  static void setDefaultHtmlPrefixRole(int role) {
-    _defaultHtmlPrefixRole = role; }
-  static void setDefaultHtmlSuffixRole(int role) {
-    _defaultHtmlSuffixRole = role; }
-  /** Maximum length of text inside a cell, measured before HTML encoding if
-   * any. Default: 200. */
-  static void setDefaultMaxCellContentLength(int length) {
-    _defaultMaxCellContentLength = length; }
 
 protected:
   void updateHeaderAndFooterCache();

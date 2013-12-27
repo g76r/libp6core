@@ -75,7 +75,9 @@ SOURCES += \
     auth/inmemoryrulesauthorizer.cpp \
     util/htmlutils.cpp \
     httpd/imagehttphandler.cpp \
-    httpd/graphvizimagehttphandler.cpp
+    httpd/graphvizimagehttphandler.cpp \
+    textview/htmlitemdelegate.cpp \
+    textview/textviewitemdelegate.cpp
 
 
 HEADERS +=\
@@ -129,7 +131,9 @@ HEADERS +=\
     auth/inmemoryrulesauthorizer.h \
     util/htmlutils.h \
     httpd/imagehttphandler.h \
-    httpd/graphvizimagehttphandler.h
+    httpd/graphvizimagehttphandler.h \
+    textview/htmlitemdelegate.h \
+    textview/textviewitemdelegate.h
 
 
 unix {

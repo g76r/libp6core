@@ -13,30 +13,23 @@
  */
 #include "htmltableview.h"
 #include "util/htmlutils.h"
+#include "htmlitemdelegate.h"
 
 QString HtmlTableView::_defaultTableClass;
 int HtmlTableView::_defaultThClassRole(-1);
 int HtmlTableView::_defaultTrClassRole(-1);
 int HtmlTableView::_defaultTdClassRole(-1);
-int HtmlTableView::_defaultLinkRole(-1);
-int HtmlTableView::_defaultLinkClassRole(-1);
-int HtmlTableView::_defaultHtmlPrefixRole(-1);
-int HtmlTableView::_defaultHtmlSuffixRole(-1);
-int HtmlTableView::_defaultMaxCellContentLength(200);
 
 HtmlTableView::HtmlTableView(QObject *parent, QString objectName,
                              int cachedRows, int rowsPerPage)
   : TextTableView(parent, objectName, cachedRows, rowsPerPage),
   _tableClass(_defaultTableClass), _pageUrlPrefix("?"),
   _thClassRole(_defaultThClassRole), _trClassRole(_defaultTrClassRole),
-  _tdClassRole(_defaultTdClassRole), _linkRole(_defaultLinkRole),
-  _linkClassRole(_defaultLinkClassRole),
-  _htmlPrefixRole(_defaultHtmlPrefixRole),
-  _htmlSuffixRole(_defaultHtmlSuffixRole),
-  _rowAnchorColumn(-1), _maxCellContentLength(_defaultMaxCellContentLength),
-  _columnHeaders(true), _rowHeaders(false) {
+  _tdClassRole(_defaultTdClassRole),
+  _rowAnchorColumn(-1), _columnHeaders(true), _rowHeaders(false) {
   setEmptyPlaceholder("(empty)");
   setEllipsePlaceholder("...");
+  setItemDelegate(new HtmlItemDelegate(this));
 }
 
 void HtmlTableView::setEmptyPlaceholder(QString rawText) {
@@ -72,20 +65,15 @@ void HtmlTableView::updateHeaderAndFooterCache() {
       v.append("<thead><tr>");
       if (_rowHeaders)
         v.append("<th>").append(_topLeftHeader).append("</th>");
-      foreach (int i, effectiveColumnIndexes()) {
+      int displayedColumn = 0;
+      foreach (int column, effectiveColumnIndexes()) {
         v.append("<th>");
-        if (_htmlPrefixRole >= 0)
-          v.append(m->headerData(i, Qt::Horizontal, _htmlPrefixRole)
-                   .toString());
-        if (_columnHeaderHtmlDisableEncode.contains(i))
-          v.append(m->headerData(i, Qt::Horizontal).toString());
-        else
-          v.append(HtmlUtils::htmlEncode(
-                     m->headerData(i, Qt::Horizontal).toString(), true));
+        TextViewItemDelegate *d = columnItemDelegate(displayedColumn);
+        v.append(d ? d->headerText(column, Qt::Horizontal, m)
+                   : HtmlUtils::htmlEncode(m->headerData(column, Qt::Horizontal)
+                                           .toString(), true));
         v.append("</th>");
-        if (_htmlSuffixRole >= 0)
-          v.append(m->headerData(i, Qt::Horizontal, _htmlSuffixRole)
-                   .toString());
+        ++displayedColumn;
       }
       v.append("</tr></thead>\n");
     }
@@ -170,26 +158,15 @@ QString HtmlTableView::rowText(int row) {
   v.append(">");
   if (_rowHeaders) {
     v.append("<th>");
-    if (_htmlPrefixRole >= 0)
-      v.append(m->headerData(row, Qt::Vertical, _htmlPrefixRole).toString());
-    if (_rowHeaderHtmlEncode)
-      v.append(HtmlUtils::htmlEncode(
-                 m->headerData(row, Qt::Vertical).toString(), true));
-    else
-      v.append(m->headerData(row, Qt::Vertical).toString());
+    TextViewItemDelegate *d = rowItemDelegate(row);
+    v.append(d ? d->headerText(row, Qt::Vertical, m)
+               : HtmlUtils::htmlEncode(
+                   m->headerData(row, Qt::Vertical).toString(), true));
     v.append("</th>");
-    if (_htmlSuffixRole >= 0)
-      v.append(m->headerData(row, Qt::Vertical, _htmlSuffixRole).toString());
   }
   bool first = true;
   foreach (int column, effectiveColumnIndexes()) {
     QModelIndex index = m->index(row, column, QModelIndex());
-    QString content = m->data(index).toString();
-    if (_maxCellContentLength > 0 && content.size() > _maxCellContentLength) {
-      //qDebug("truncating");
-      content = content.left(_maxCellContentLength/2-1)+"..."
-          +content.right(_maxCellContentLength/2-2);
-    }
     if (_tdClassRole >= 0)
       v.append("<td class=\"")
           .append(m->data(index, _trClassRole).toString())
@@ -201,29 +178,9 @@ QString HtmlTableView::rowText(int row) {
       if (!id.isNull())
           v.append("<a name=\"").append(id).append("\"></a>");
     }
-    if (_htmlPrefixRole >= 0)
-      v.append(m->data(index, _htmlPrefixRole).toString());
-    QString link;
-    if (_linkRole >= 0)
-      link = m->data(index, _linkRole).toString();
-    if (!link.isEmpty()) {
-      v.append("<a href=\"").append(link);
-      if (_linkClassRole >= 0)
-        v.append("\" class=\"")
-            .append(m->data(index, _linkClassRole).toString())
-            .append("\">");
-      else
-        v.append("\">");
-      v.append(HtmlUtils::htmlEncode(content, false));
-      v.append("</a>");
-    } else {
-      if (_dataHtmlDisableEncode.contains(index.column()))
-        v.append(content);
-      else
-        v.append(HtmlUtils::htmlEncode(content, true));
-    }
-    if (_htmlSuffixRole >= 0)
-      v.append(m->data(index, _htmlSuffixRole).toString());
+    TextViewItemDelegate *d = cellItemDelegate(row, column);
+    v.append(d ? d->text(index)
+               : HtmlUtils::htmlEncode(index.data().toString(), true));
     v.append("</td>");
   }
   v.append("</tr>\n");
