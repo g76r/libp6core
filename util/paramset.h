@@ -146,7 +146,10 @@ public:
   bool isNull() const;
   int size() const;
   bool isEmpty() const;
-  QString toString(bool inherit = true) const;
+  /** Turn the paramset into a human readable string showing its content.
+   * @param inherit include params inherited from parents
+   * @param decorate surround with curly braces */
+  QString toString(bool inherit = true, bool decorate = true) const;
   /** Create an empty ParamSet having this one for parent. */
   ParamSet createChild() const;
 

@@ -296,12 +296,21 @@ QVariant ParamSet::paramValue(QString key,
   return value(key, defaultValue.toString(), true);
 }
 
-QString ParamSet::toString(bool inherit) const {
+QString ParamSet::toString(bool inherit, bool decorate) const {
   QString s;
-  s.append("{ ");
-  foreach(QString key, keys(inherit))
-    s.append(key).append("=").append(value(key)).append(" ");
-  return s.append("}");
+  if (decorate)
+    s.append("{ ");
+  bool first = true;
+  foreach(QString key, keys(inherit)) {
+    if (first)
+      first = false;
+    else
+      s.append(' ');
+    s.append(key).append('=').append(value(key));
+  }
+  if (decorate)
+    s.append('}');
+  return s;
 }
 
 QDebug operator<<(QDebug dbg, const ParamSet &params) {
