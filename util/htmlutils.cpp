@@ -15,7 +15,7 @@
 #include <QRegExp>
 #include <QHash>
 
-QString HtmlUtils::htmlEncode(QString text, bool urlAsLinks) {
+QString HtmlUtils::htmlEncode(QString text, bool urlAsLinks, bool newlineAsBr) {
   QString s;
   static QRegExp link("http(s?)://\\S+");
   QHash<int,int> linksIndexes;
@@ -52,6 +52,12 @@ QString HtmlUtils::htmlEncode(QString text, bool urlAsLinks) {
         break;
       case '\'':
         s.append("&apos;");
+        break;
+      case '\n':
+        if (newlineAsBr)
+          s.append("<br/>\n");
+        else
+          s.append(c);
         break;
       default:
         s.append(c);

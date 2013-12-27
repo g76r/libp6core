@@ -15,9 +15,11 @@
 #include "util/htmlutils.h"
 
 int HtmlItemDelegate::_defaultMaxCellContentLength(200);
+HtmlItemDelegate::TextConversion
+HtmlItemDelegate::_defaultConversion(HtmlEscapingWithUrlAsLinks);
 
 HtmlItemDelegate::HtmlItemDelegate(QObject *parent)
-  : TextViewItemDelegate(parent),
+  : TextViewItemDelegate(parent), _conversion(_defaultConversion),
     _maxCellContentLength(_defaultMaxCellContentLength) {
 }
 
@@ -28,10 +30,10 @@ void HtmlItemDelegate::convertData(QString &data) const {
   }
   switch (_conversion) {
   case HtmlEscaping:
-    data = HtmlUtils::htmlEncode(data, false);
+    data = HtmlUtils::htmlEncode(data, false, false);
     break;
   case HtmlEscapingWithUrlAsLinks:
-    data = HtmlUtils::htmlEncode(data, true);
+    data = HtmlUtils::htmlEncode(data, true, true);
     break;
   case AsIs:
     ;

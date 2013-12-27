@@ -36,6 +36,7 @@ private:
   };
 
   TextConversion _conversion;
+  static TextConversion _defaultConversion;
   QHash<int,TextMapper> _columnPrefixes;
   QHash<int,TextMapper> _columnSuffixes;
   QHash<int,TextMapper> _rowPrefixes;
@@ -63,6 +64,10 @@ public:
       TextConversion conversion = HtmlEscapingWithUrlAsLinks) {
     _conversion = conversion; return this; }
   TextConversion textConversion() const { return _conversion; }
+  /** @see setTextConversion(). */
+  HtmlItemDelegate *setDefaultTextConversion(
+      TextConversion conversion = HtmlEscapingWithUrlAsLinks) {
+    _defaultConversion = conversion; return this; }
   /** All data in column column will be prefixed with raw (= copied as is,
    * without text conversion) html pattern that can optionnaly contain a
    * variable part that is defined by a given model column for the same row

@@ -27,7 +27,8 @@ public:
    * document, e.g. using QString::toUtf8()).
    * @urlAsLinks if true strings like "http://foo/bar" will be converted into html links
    */
-  static QString htmlEncode(QString text, bool urlAsLinks = true);
+  static QString htmlEncode(QString text, bool urlAsLinks = true,
+                            bool newlineAsBr = true);
 };
 
 #endif // HTMLUTILS_H
