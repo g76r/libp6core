@@ -38,7 +38,7 @@ void HtmlItemDelegate::convertData(QString &data) const {
   }
 }
 
-QString HtmlItemDelegate::affix(const TextMapper &m,
+QString HtmlItemDelegate::dataAffix(const TextMapper &m,
                                 const QModelIndex &index) const {
   QString affix = m._text;
   if (m._argIndex >= 0) {
@@ -52,7 +52,7 @@ QString HtmlItemDelegate::affix(const TextMapper &m,
   return affix;
 }
 
-QString HtmlItemDelegate::affix(
+QString HtmlItemDelegate::rowHeaderAffix(
     const TextMapper &m, const QAbstractItemModel* model, int row) const {
   QString affix = m._text;
   if (m._argIndex >= 0) {
@@ -70,23 +70,24 @@ QString HtmlItemDelegate::text(const QModelIndex &index) const {
     return QString();
   QString data = index.data().toString();
   convertData(data);
-  // TODO use overriding and priorities like Qt's item delegate (row > column and int > All)
-  if (_rowPrefixes.contains(All))
-    data.prepend(affix(_rowPrefixes[All], index));
+  // prefix
   if (_rowPrefixes.contains(index.row()))
-    data.prepend(affix(_rowPrefixes[index.row()], index));
-  if (_columnPrefixes.contains(All))
-    data.prepend(affix(_columnPrefixes[All], index));
-  if (_columnPrefixes.contains(index.column()))
-    data.prepend(affix(_columnPrefixes[index.column()], index));
-  if (_rowSuffixes.contains(All))
-    data.append(affix(_rowSuffixes[All], index));
+    data.prepend(dataAffix(_rowPrefixes[index.row()], index));
+  else if (_columnPrefixes.contains(index.column()))
+    data.prepend(dataAffix(_columnPrefixes[index.column()], index));
+  else if (_rowPrefixes.contains(AllSections))
+    data.prepend(dataAffix(_rowPrefixes[AllSections], index));
+  else if (_columnPrefixes.contains(AllSections))
+    data.prepend(dataAffix(_columnPrefixes[AllSections], index));
+  // suffix
   if (_rowSuffixes.contains(index.row()))
-    data.append(affix(_rowSuffixes[index.row()], index));
-  if (_columnSuffixes.contains(All))
-    data.append(affix(_columnSuffixes[All], index));
-  if (_columnSuffixes.contains(index.column()))
-    data.append(affix(_columnSuffixes[index.column()], index));
+    data.append(dataAffix(_rowSuffixes[index.row()], index));
+  else if (_columnSuffixes.contains(index.column()))
+    data.append(dataAffix(_columnSuffixes[index.column()], index));
+  else if (_rowSuffixes.contains(AllSections))
+    data.append(dataAffix(_rowSuffixes[AllSections], index));
+  else if (_columnSuffixes.contains(AllSections))
+    data.append(dataAffix(_columnSuffixes[AllSections], index));
   return data;
 }
 
@@ -98,17 +99,27 @@ QString HtmlItemDelegate::headerText(int section, Qt::Orientation orientation,
   convertData(data);
   switch (orientation) {
   case Qt::Vertical:
-    if (_rowPrefixes.contains(Header))
-      data.prepend(affix(_rowPrefixes[Header], model, section));
-    if (_rowSuffixes.contains(Header))
-      data.append(affix(_rowSuffixes[Header], model, section));
+    // prefix
+    if (_rowHeaderPrefixes.contains(section))
+      data.prepend(rowHeaderAffix(_rowHeaderPrefixes[section], model, section));
+    else if (_rowHeaderPrefixes.contains(AllSections))
+      data.prepend(rowHeaderAffix(_rowHeaderPrefixes[AllSections], model,
+                                  section));
+    // suffix
+    if (_rowHeaderSuffixes.contains(section))
+      data.append(rowHeaderAffix(_rowHeaderSuffixes[section], model, section));
+    else if (_rowHeaderSuffixes.contains(AllSections))
+      data.append(rowHeaderAffix(_rowHeaderSuffixes[AllSections], model,
+                                 section));
     break;
   case Qt::Horizontal:
-    if (_columnPrefixes.contains(Header))
-      data.prepend(_columnPrefixes[Header]._text);
-    if (_columnSuffixes.contains(Header))
-      data.prepend(_columnSuffixes[Header]._text);
-    ;
+    // prefix
+    data.prepend(_columnHeaderPrefixes.value(
+                   section, _columnHeaderPrefixes.value(AllSections)));
+    // suffix
+    data.append(_columnHeaderSuffixes.value(
+                  section, _columnHeaderSuffixes.value(AllSections)));
+    break;
   }
   return data;
 }

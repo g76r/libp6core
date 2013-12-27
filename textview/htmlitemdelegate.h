@@ -21,7 +21,7 @@ class LIBQTSSUSHARED_EXPORT HtmlItemDelegate : public TextViewItemDelegate {
   Q_DISABLE_COPY(HtmlItemDelegate)
 public:
   enum TextConversion { AsIs, HtmlEscaping, HtmlEscapingWithUrlAsLinks };
-  enum SpecialSections { All = -1, Header = -2 };
+  enum SpecialSections { AllSections = -1 };
   enum SpecialArgIndexes { None = -1 };
 
 private:
@@ -40,6 +40,10 @@ private:
   QHash<int,TextMapper> _columnSuffixes;
   QHash<int,TextMapper> _rowPrefixes;
   QHash<int,TextMapper> _rowSuffixes;
+  QHash<int,QString> _columnHeaderPrefixes;
+  QHash<int,QString> _columnHeaderSuffixes;
+  QHash<int,TextMapper> _rowHeaderPrefixes;
+  QHash<int,TextMapper> _rowHeaderSuffixes;
   int _maxCellContentLength;
   static int _defaultMaxCellContentLength;
 
@@ -63,9 +67,17 @@ public:
    * without text conversion) html pattern that can optionnaly contain a
    * variable part that is defined by a given model column for the same row
    * and parent. The model column can be one that is not displayed in the view.
+   *
    * The data can optionnaly be transcoded through a constant map.
    * Placeholders and transcoding is not supported for column headers (but it
    * is for row headers, even though it only make sense for table views).
+   *
+   * Different affixes definition are overided according to the following
+   * rule of precedence: exact row > exact column > all rows > all columns.
+   * For instance if two prefixes are defined, one for column #3 and another
+   * one for row #2, the first one will be applied on every cell of column #3
+   * except the one on row #2 where the second prefix will be applied.
+   *
    * @param column column on which to apply prefix or All or Header
    * @param pattern prefix template, can contain %1 placeholder to be replaced
    * @param argIndex index within the model of column containing data to replace
@@ -97,12 +109,36 @@ public:
       QHash<QString,QString> transcodeMap = QHash<QString,QString>()){
     _rowSuffixes.insert(row, TextMapper(pattern, argIndex, transcodeMap));
     return this; }
+  /** @see setPrefixForColumn() */
+  HtmlItemDelegate *setPrefixForColumnHeader(int column, QString text) {
+    _columnHeaderPrefixes.insert(column, text);
+    return this; }
+  /** @see setPrefixForColumn() */
+  HtmlItemDelegate *setSuffixForColumnHeader(int column, QString text) {
+    _columnHeaderSuffixes.insert(column, text);
+    return this; }
+  /** @see setPrefixForColumn() */
+  HtmlItemDelegate *setPrefixForRowHeader(
+      int row, QString pattern, int argIndex = None,
+      QHash<QString,QString> transcodeMap = QHash<QString,QString>()){
+    _rowHeaderPrefixes.insert(row, TextMapper(pattern, argIndex, transcodeMap));
+    return this; }
+  /** @see setPrefixForColumn() */
+  HtmlItemDelegate *setSuffixForRowHeader(
+      int row, QString pattern, int argIndex = None,
+      QHash<QString,QString> transcodeMap = QHash<QString,QString>()){
+    _rowHeaderSuffixes.insert(row, TextMapper(pattern, argIndex, transcodeMap));
+    return this; }
   /** Clear any previous suffix or prefix definition. */
   HtmlItemDelegate *clearAffixes() {
     _columnPrefixes.clear();
     _columnSuffixes.clear();
     _rowPrefixes.clear();
     _rowSuffixes.clear();
+    _columnHeaderPrefixes.clear();
+    _columnHeaderSuffixes.clear();
+    _rowHeaderPrefixes.clear();
+    _rowHeaderSuffixes.clear();
     return this; }
   /** Maximum length of text inside a cell, measured before HTML encoding if
    * any. Default: 200. */
@@ -115,9 +151,9 @@ public:
 
 private:
   inline void convertData(QString &data) const;
-  inline QString affix(const TextMapper &m, const QModelIndex &index) const;
-  inline QString affix(const TextMapper &m, const QAbstractItemModel* model,
-                       int row) const;
+  inline QString dataAffix(const TextMapper &m, const QModelIndex &index) const;
+  inline QString rowHeaderAffix(
+      const TextMapper &m, const QAbstractItemModel* model, int row) const;
 };
 
 #endif // HTMLITEMDELEGATE_H
