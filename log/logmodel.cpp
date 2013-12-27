@@ -109,29 +109,6 @@ QVariant LogModel::data(const QModelIndex &index, int role) const {
         return le.message();
       }
       break;
-    case HtmlPrefixRole:
-      if (index.column() == 5)
-        switch (le.severity()) {
-        case Log::Warning:
-          return _warningIcon;
-        case Log::Error:
-        case Log::Fatal:
-          return _errorIcon;
-        default:
-          ;
-        }
-      break;
-    case TrClassRole:
-      switch (le.severity()) {
-      case Log::Warning:
-        return _warningTrClass;
-      case Log::Error:
-      case Log::Fatal:
-        return _errorTrClass;
-      default:
-        ;
-      }
-      break;
     default:
       ;
     }

@@ -25,21 +25,21 @@ public:
   enum SpecialArgIndexes { None = -1 };
 
 private:
-  class AffixMapper {
+  class TextMapper {
   public:
     QString _text;
     int _argIndex;
     QHash<QString,QString> _transcodeMap;
-    AffixMapper(QString text, int argIndex, QHash<QString,QString> transcodeMap)
+    TextMapper(QString text, int argIndex, QHash<QString,QString> transcodeMap)
       : _text(text), _argIndex(argIndex), _transcodeMap(transcodeMap) { }
-    AffixMapper() : _argIndex(None) { }
+    TextMapper() : _argIndex(None) { }
   };
 
   TextConversion _conversion;
-  QHash<int,AffixMapper> _columnPrefixes;
-  QHash<int,AffixMapper> _columnSuffixes;
-  QHash<int,AffixMapper> _rowPrefixes;
-  QHash<int,AffixMapper> _rowSuffixes;
+  QHash<int,TextMapper> _columnPrefixes;
+  QHash<int,TextMapper> _columnSuffixes;
+  QHash<int,TextMapper> _rowPrefixes;
+  QHash<int,TextMapper> _rowSuffixes;
   int _maxCellContentLength;
   static int _defaultMaxCellContentLength;
 
@@ -67,7 +67,7 @@ public:
    * Placeholders and transcoding is not supported for column headers (but it
    * is for row headers, even though it only make sense for table views).
    * @param column column on which to apply prefix or All or Header
-   * @param html prefix template, can contain %1 placeholder to be replaced
+   * @param pattern prefix template, can contain %1 placeholder to be replaced
    * @param argIndex index within the model of column containing data to replace
    *   %1 with
    * @param transcodeMap if found in the map, argIndex data found in the model
@@ -75,27 +75,27 @@ public:
    * @return this
    */
   HtmlItemDelegate *setPrefixForColumn(
-      int column, QString html, int argIndex = None,
+      int column, QString pattern, int argIndex = None,
       QHash<QString,QString> transcodeMap = QHash<QString,QString>()) {
-    _columnPrefixes.insert(column, AffixMapper(html, argIndex, transcodeMap));
+    _columnPrefixes.insert(column, TextMapper(pattern, argIndex, transcodeMap));
     return this; }
   /** @see setPrefixForColumn() */
   HtmlItemDelegate *setSuffixForColumn(
-      int column, QString html, int argIndex = None,
+      int column, QString pattern, int argIndex = None,
       QHash<QString,QString> transcodeMap = QHash<QString,QString>()){
-    _columnSuffixes.insert(column, AffixMapper(html, argIndex, transcodeMap));
+    _columnSuffixes.insert(column, TextMapper(pattern, argIndex, transcodeMap));
     return this; }
   /** @see setPrefixForColumn() */
   HtmlItemDelegate *setPrefixForRow(
-      int row, QString html, int argIndex = None,
+      int row, QString pattern, int argIndex = None,
       QHash<QString,QString> transcodeMap = QHash<QString,QString>()){
-    _rowPrefixes.insert(row, AffixMapper(html, argIndex, transcodeMap));
+    _rowPrefixes.insert(row, TextMapper(pattern, argIndex, transcodeMap));
     return this; }
   /** @see setPrefixForColumn() */
   HtmlItemDelegate *setSuffixForRow(
-      int row, QString html, int argIndex = None,
+      int row, QString pattern, int argIndex = None,
       QHash<QString,QString> transcodeMap = QHash<QString,QString>()){
-    _rowSuffixes.insert(row, AffixMapper(html, argIndex, transcodeMap));
+    _rowSuffixes.insert(row, TextMapper(pattern, argIndex, transcodeMap));
     return this; }
   /** Clear any previous suffix or prefix definition. */
   HtmlItemDelegate *clearAffixes() {
@@ -115,8 +115,8 @@ public:
 
 private:
   inline void convertData(QString &data) const;
-  inline QString affix(const AffixMapper &m, const QModelIndex &index) const;
-  inline QString affix(const AffixMapper &m, const QAbstractItemModel* model,
+  inline QString affix(const TextMapper &m, const QModelIndex &index) const;
+  inline QString affix(const TextMapper &m, const QAbstractItemModel* model,
                        int row) const;
 };
 

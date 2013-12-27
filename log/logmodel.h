@@ -28,10 +28,6 @@ class LIBQTSSUSHARED_EXPORT LogModel : public QAbstractListModel {
   Q_OBJECT
   Q_DISABLE_COPY(LogModel)
 
-public:
-  static const int HtmlPrefixRole = Qt::UserRole;
-  static const int TrClassRole = Qt::UserRole+1;
-
 private:
   // LATER remove old logs too
   class LogEntryData;
@@ -61,10 +57,6 @@ public:
   int columnCount(const QModelIndex &parent) const;
   QVariant data(const QModelIndex &index, int role) const;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-  void setWarningIcon(QString rawHtml) { _warningIcon = rawHtml; }
-  void setErrorIcon(QString rawHtml) { _errorIcon = rawHtml; }
-  void setWarningTrClass(QString rawHtml) { _warningTrClass = rawHtml; }
-  void setErrorTrClass(QString rawHtml) { _errorTrClass = rawHtml; }
 
 private:
   // only MemoryLogger can create LogModel or log to it

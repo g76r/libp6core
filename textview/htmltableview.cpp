@@ -16,16 +16,11 @@
 #include "htmlitemdelegate.h"
 
 QString HtmlTableView::_defaultTableClass;
-int HtmlTableView::_defaultThClassRole(-1);
-int HtmlTableView::_defaultTrClassRole(-1);
-int HtmlTableView::_defaultTdClassRole(-1);
 
 HtmlTableView::HtmlTableView(QObject *parent, QString objectName,
                              int cachedRows, int rowsPerPage)
   : TextTableView(parent, objectName, cachedRows, rowsPerPage),
   _tableClass(_defaultTableClass), _pageUrlPrefix("?"),
-  _thClassRole(_defaultThClassRole), _trClassRole(_defaultTrClassRole),
-  _tdClassRole(_defaultTdClassRole),
   _rowAnchorColumn(-1), _columnHeaders(true), _rowHeaders(false) {
   setEmptyPlaceholder("(empty)");
   setEllipsePlaceholder("...");
@@ -138,21 +133,28 @@ QString HtmlTableView::footer(int currentPage, int lastPage,
                               QString pageVariableName) const {
   return "</tbody></table>\n"+pagebar(currentPage, lastPage, pageVariableName, false);
 }
+
 QString HtmlTableView::rowText(int row) {
   static QRegExp notName("[^a-zA-Z0-9\\_]+");
   QAbstractItemModel *m = model();
   if (!m)
     return QString();
-  QString v, trClass, id;
+  QString v, id;
   if (!_rowAnchorPrefix.isNull())
     id = _rowAnchorPrefix
         + m->data(m->index(row, _rowAnchorColumn, QModelIndex()))
-        .toString().replace(QRegExp(notName), "_");
-  if (_trClassRole >= 0)
-    trClass = m->data(m->index(row, 0, QModelIndex()), _trClassRole).toString();
+        .toString().replace(notName, "_");
   v.append("<tr");
-  if (!trClass.isEmpty())
+  if (!_trClassMapper._text.isEmpty()) {
+    QString trClass = _trClassMapper._text;
+    if (_trClassMapper._argIndex >= 0) {
+      QString arg = m->data(m->index(row, _trClassMapper._argIndex))
+          .toString();
+      trClass = trClass.arg(_trClassMapper._transcodeMap.isEmpty()
+                            ? arg : _trClassMapper._transcodeMap.value(arg));
+    }
     v.append(" class=\"").append(trClass).append('"');
+  }
   if (!id.isNull())
     v.append(" id=\"").append(id).append('"');
   v.append(">");
@@ -167,12 +169,7 @@ QString HtmlTableView::rowText(int row) {
   bool first = true;
   foreach (int column, effectiveColumnIndexes()) {
     QModelIndex index = m->index(row, column, QModelIndex());
-    if (_tdClassRole >= 0)
-      v.append("<td class=\"")
-          .append(m->data(index, _trClassRole).toString())
-          .append("\">");
-    else
-      v.append("<td>");
+    v.append("<td>");
     if (first) {
       first = false;
       if (!id.isNull())

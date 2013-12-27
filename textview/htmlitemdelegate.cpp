@@ -38,7 +38,7 @@ void HtmlItemDelegate::convertData(QString &data) const {
   }
 }
 
-QString HtmlItemDelegate::affix(const AffixMapper &m,
+QString HtmlItemDelegate::affix(const TextMapper &m,
                                 const QModelIndex &index) const {
   QString affix = m._text;
   if (m._argIndex >= 0) {
@@ -53,7 +53,7 @@ QString HtmlItemDelegate::affix(const AffixMapper &m,
 }
 
 QString HtmlItemDelegate::affix(
-    const AffixMapper &m, const QAbstractItemModel* model, int row) const {
+    const TextMapper &m, const QAbstractItemModel* model, int row) const {
   QString affix = m._text;
   if (m._argIndex >= 0) {
     QString arg = model->data(model->index(row, m._argIndex, QModelIndex()))
@@ -70,6 +70,7 @@ QString HtmlItemDelegate::text(const QModelIndex &index) const {
     return QString();
   QString data = index.data().toString();
   convertData(data);
+  // TODO use overriding and priorities like Qt's item delegate (row > column and int > All)
   if (_rowPrefixes.contains(All))
     data.prepend(affix(_rowPrefixes[All], index));
   if (_rowPrefixes.contains(index.row()))

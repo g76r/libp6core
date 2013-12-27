@@ -18,17 +18,29 @@
 
 /** Display the model content as a HTML table. Only rows of the root index
   * are displayed. */
-// LATER implement thClassRole and tdClassRole for real
 class LIBQTSSUSHARED_EXPORT HtmlTableView : public TextTableView {
   Q_OBJECT
   Q_DISABLE_COPY(HtmlTableView)
+public:
+  enum SpecialArgIndexes { None = -1 };
+
+private:
+  class TextMapper {
+  public:
+    QString _text;
+    int _argIndex;
+    QHash<QString,QString> _transcodeMap;
+    TextMapper(QString text, int argIndex, QHash<QString,QString> transcodeMap)
+      : _text(text), _argIndex(argIndex), _transcodeMap(transcodeMap) { }
+    TextMapper() : _argIndex(None) { }
+  };
 
   QString _tableClass, _topLeftHeader, _rowAnchorPrefix, _tableHeader,
   _pageUrlPrefix;
-  int _thClassRole, _trClassRole, _tdClassRole, _rowAnchorColumn;
+  TextMapper _trClassMapper;
+  int _rowAnchorColumn;
   bool _columnHeaders, _rowHeaders;
   static QString _defaultTableClass;
-  static int _defaultThClassRole, _defaultTrClassRole, _defaultTdClassRole;
 
 public:
   /** Implicitely set empty placeholder to "(empty)", ellipse placeholder
@@ -40,9 +52,6 @@ public:
     _tableClass = tableClass; updateHeaderAndFooterCache(); }
   void setTopLeftHeader(QString rawHtml) {
     _topLeftHeader = rawHtml; updateHeaderAndFooterCache(); }
-  void setThClassRole(int role) { _thClassRole = role; }
-  void setTrClassRole(int role) { _trClassRole = role; }
-  void setTdClassRole(int role) { _tdClassRole = role; }
   void setColumnHeaders(bool set = true) {
     _columnHeaders = set; updateHeaderAndFooterCache(); }
   void setRowHeaders(bool set = true) {
@@ -71,12 +80,26 @@ public:
   void setPageUrlPrefix(QString urlPrefix) { _pageUrlPrefix = urlPrefix; }
   static void setDefaultTableClass(QString tableClass) {
     _defaultTableClass = tableClass; }
-  static void setDefaultThClassRole(int role) {
-    _defaultThClassRole = role; }
-  static void setDefaultTrClassRole(int role) {
-    _defaultTrClassRole = role; }
-  static void setDefaultTdClassRole(int role) {
-    _defaultTdClassRole = role; }
+  /** Each row tr element will have the given class, regarding the pattern that
+   * can optionnaly contain a
+   * variable part that is defined by a given model column for the same row
+   * and parent. The model column can be one that is not displayed in the view.
+   * The data can optionnaly be transcoded through a constant map.
+   * @param pattern class template, can contain %1 placeholder to be replaced
+   * @param argIndex index within the model of column containing data to replace
+   *   %1 with
+   * @param transcodeMap if found in the map, argIndex data found in the model
+   *   is replaced by matching value before %1 replacements
+   * @return this
+   */
+  HtmlTableView *setTrClass(QString pattern, int argIndex = None,
+      QHash<QString,QString> transcodeMap = QHash<QString,QString>()) {
+    _trClassMapper = TextMapper(pattern, argIndex, transcodeMap);
+    return this; }
+  HtmlTableView *clearTrClass() {
+    _trClassMapper = TextMapper();
+    return this; }
+
 
 protected:
   void updateHeaderAndFooterCache();
