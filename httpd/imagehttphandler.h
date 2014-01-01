@@ -16,6 +16,8 @@
 
 #include "httphandler.h"
 
+#define IMAGEHTTPHANDLER_DEFAULT_ONDEMAND_RENDERING_TIMEOUT 5000
+
 class LIBQTSSUSHARED_EXPORT ImageHttpHandler : public HttpHandler {
   Q_OBJECT
   Q_DISABLE_COPY(ImageHttpHandler)
@@ -27,8 +29,12 @@ public:
   bool handleRequest(HttpRequest req, HttpResponse res,
                      HttpRequestContext ctxt);
   /** This method must be thread-safe for the same reasons than
-   * handleRequest() */
-  virtual QByteArray imageData(ParamsProvider *params = 0) const = 0;
+   * handleRequest()
+   * @param timeoutMillis maximum acceptable time if the image rendering is
+   *   performed on demand */
+  virtual QByteArray imageData(
+      ParamsProvider *params = 0, int timeoutMillis
+      = IMAGEHTTPHANDLER_DEFAULT_ONDEMAND_RENDERING_TIMEOUT) = 0;
   /** This method must be thread-safe for the same reasons than
    * handleRequest() */
   virtual QString contentType(ParamsProvider *params = 0) const = 0;

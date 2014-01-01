@@ -14,13 +14,17 @@
 #include "graphvizimagehttphandler.h"
 #include <QCoreApplication>
 #include "log/log.h"
+#include <QThread>
+#include <unistd.h>
 
 #define UPDATE_EVENT (QEvent::Type(QEvent::User+1))
 
-GraphvizImageHttpHandler::GraphvizImageHttpHandler(QObject *parent)
+GraphvizImageHttpHandler::GraphvizImageHttpHandler(QObject *parent,
+    RefreshStrategy refreshStrategy)
   : ImageHttpHandler(parent), _renderer(Dot), _renderingRequested(false),
+    _renderingNeeded(false),
     _renderingRunning(false), _mutex(QMutex::Recursive),
-    _process(new QProcess(this)) {
+    _process(new QProcess(this)), _refreshStrategy(refreshStrategy) {
   connect(_process, SIGNAL(finished(int,QProcess::ExitStatus)),
           this, SLOT(processFinished(int,QProcess::ExitStatus)));
   connect(_process, SIGNAL(error(QProcess::ProcessError)),
@@ -31,9 +35,32 @@ GraphvizImageHttpHandler::GraphvizImageHttpHandler(QObject *parent)
           this, SLOT(readyReadStandardError()));
 }
 
-QByteArray GraphvizImageHttpHandler::imageData(ParamsProvider *params) const {
+QByteArray GraphvizImageHttpHandler::imageData(ParamsProvider *params,
+                                               int timeoutMillis) {
   Q_UNUSED(params)
   QMutexLocker ml(&_mutex);
+  if (_refreshStrategy == OnDemandWithCache && _renderingNeeded) {
+    Log::fatal() << "imageData() with rendering needed";
+    qint64 deadline = QDateTime::currentMSecsSinceEpoch()+timeoutMillis;
+    ml.unlock();
+    if (QThread::currentThread() == thread())
+      startRendering();
+    else
+      QCoreApplication::postEvent(this, new QEvent(UPDATE_EVENT));
+    while (QDateTime::currentMSecsSinceEpoch() <= deadline
+           && _renderingNeeded) {
+      if (QThread::currentThread() == thread()) {
+        if (_process->waitForFinished(
+              deadline - QDateTime::currentMSecsSinceEpoch())) {
+          processFinished(_process->exitCode(), _process->exitStatus());
+          break; // avoid testing _renderingNeeded: in case a new modification
+          // has been done meanwhile we don't want to wait again for a rendering
+        }
+      } else
+        usleep(qMin(50000LL, deadline - QDateTime::currentMSecsSinceEpoch()));
+    }
+    ml.relock();
+  }
   return _imageData;
 }
 
@@ -52,8 +79,9 @@ QString GraphvizImageHttpHandler::source(ParamsProvider *params) const {
 void GraphvizImageHttpHandler::setSource(QString source) {
   QMutexLocker ml(&_mutex);
   _source = source;
-  if (!_renderingRequested) {
-    _renderingRequested = true;
+  _renderingNeeded = true;
+  if (_refreshStrategy == OnChange) {
+    Log::fatal() << "setSource() with OnChange strategy";
     QCoreApplication::postEvent(this, new QEvent(UPDATE_EVENT));
   }
 }
@@ -127,6 +155,8 @@ void GraphvizImageHttpHandler::processError(QProcess::ProcessError error) {
 
 void GraphvizImageHttpHandler::processFinished(
     int exitCode, QProcess::ExitStatus exitStatus) {
+  if (!_renderingRunning)
+    return; // avoid double execution of processFinished in OnDemand strategy
   readyReadStandardError();
   readyReadStandardOutput();
   bool success = (exitStatus == QProcess::NormalExit && exitCode == 0);
@@ -145,9 +175,13 @@ void GraphvizImageHttpHandler::processFinished(
     _imageData = _stderr.toUtf8(); // LATER placeholder image
   }
   _renderingRunning = false;
-  if (_renderingRequested)
+  if (_refreshStrategy == OnChange && _renderingRequested) {
+    ml.unlock();
     startRendering();
-  ml.unlock();
+  } else {
+    _renderingNeeded = false; // FIXME miss concurrent updates in OnDemand strategies
+    ml.unlock();
+  }
   emit contentChanged();
   _tmp.clear();
   _stderr.clear();
