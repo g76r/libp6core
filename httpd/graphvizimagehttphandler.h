@@ -24,6 +24,7 @@ class LIBQTSSUSHARED_EXPORT GraphvizImageHttpHandler : public ImageHttpHandler {
 public:
   enum GraphvizRenderer { Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage };
   enum RefreshStrategy { OnChange, OnDemandWithCache };
+  enum ImageFormat { Png, Svg, Svgz, Plain };
 
 private:
   GraphvizRenderer _renderer;
@@ -33,6 +34,7 @@ private:
   QProcess *_process;
   QByteArray _imageData, _tmp;
   RefreshStrategy _refreshStrategy;
+  ImageFormat _imageFormat;
 
 public:
   explicit GraphvizImageHttpHandler(
@@ -41,10 +43,13 @@ public:
       ParamsProvider *params = 0, int timeoutMillis
       = IMAGEHTTPHANDLER_DEFAULT_ONDEMAND_RENDERING_TIMEOUT);
   QString contentType(ParamsProvider *params = 0) const;
+  QString contentEncoding(ParamsProvider *params) const;
   QString source(ParamsProvider *params = 0) const;
   GraphvizRenderer renderer() const { return _renderer; }
   void setRenderer(GraphvizRenderer renderer) { _renderer = renderer; }
   RefreshStrategy refreshStrategy() const { return _refreshStrategy; }
+  ImageFormat imageFormat() const { return _imageFormat; }
+  void setImageFormat(ImageFormat imageFormat) { _imageFormat = imageFormat; }
 
 public slots:
   /** Set new graphviz-format source and, if refresh strategy is OnChange,

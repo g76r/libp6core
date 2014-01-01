@@ -33,6 +33,9 @@ bool ImageHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
   // LATER content type and content should be retrieve at once atomicaly
   // LATER pass params from request
   res.setContentType(contentType(0));
+  QString contentEncoding = this->contentEncoding(0);
+  if (!contentEncoding.isEmpty())
+    res.setHeader("Content-Encoding", contentEncoding);
   QByteArray data = imageData(0);
   res.setContentLength(data.size());
   res.output()->write(data);
@@ -41,5 +44,10 @@ bool ImageHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
 
 QString ImageHttpHandler::source(ParamsProvider *params) const {
   Q_UNUSED(params);
+  return QString();
+}
+
+QString ImageHttpHandler::contentEncoding(ParamsProvider *params) const {
+  Q_UNUSED(params)
   return QString();
 }

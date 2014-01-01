@@ -19,12 +19,14 @@
 
 #define UPDATE_EVENT (QEvent::Type(QEvent::User+1))
 
+
 GraphvizImageHttpHandler::GraphvizImageHttpHandler(QObject *parent,
-    RefreshStrategy refreshStrategy)
+                                                   RefreshStrategy refreshStrategy)
   : ImageHttpHandler(parent), _renderer(Dot), _renderingRequested(false),
     _renderingNeeded(false),
     _renderingRunning(false), _mutex(QMutex::Recursive),
-    _process(new QProcess(this)), _refreshStrategy(refreshStrategy) {
+    _process(new QProcess(this)), _refreshStrategy(refreshStrategy),
+    _imageFormat(Png) {
   connect(_process, SIGNAL(finished(int,QProcess::ExitStatus)),
           this, SLOT(processFinished(int,QProcess::ExitStatus)));
   connect(_process, SIGNAL(error(QProcess::ProcessError)),
@@ -40,7 +42,7 @@ QByteArray GraphvizImageHttpHandler::imageData(ParamsProvider *params,
   Q_UNUSED(params)
   QMutexLocker ml(&_mutex);
   if (_refreshStrategy == OnDemandWithCache && _renderingNeeded) {
-    Log::fatal() << "imageData() with rendering needed";
+    //Log::debug() << "imageData() with rendering needed";
     qint64 deadline = QDateTime::currentMSecsSinceEpoch()+timeoutMillis;
     ml.unlock();
     if (QThread::currentThread() == thread())
@@ -70,6 +72,12 @@ QString GraphvizImageHttpHandler::contentType(ParamsProvider *params) const {
   return _contentType;
 }
 
+QString GraphvizImageHttpHandler::contentEncoding(
+    ParamsProvider *params) const {
+  Q_UNUSED(params)
+  return (_imageFormat == Svgz) ? "gzip" : QString();
+}
+
 QString GraphvizImageHttpHandler::source(ParamsProvider *params) const {
   Q_UNUSED(params)
   QMutexLocker ml(&_mutex);
@@ -81,7 +89,7 @@ void GraphvizImageHttpHandler::setSource(QString source) {
   _source = source;
   _renderingNeeded = true;
   if (_refreshStrategy == OnChange) {
-    Log::fatal() << "setSource() with OnChange strategy";
+    //Log::debug() << "setSource() with OnChange strategy";
     QCoreApplication::postEvent(this, new QEvent(UPDATE_EVENT));
   }
 }
@@ -128,7 +136,20 @@ void GraphvizImageHttpHandler::startRendering() {
     break;
   }
   QStringList args;
-  args << "-Tpng";
+  switch (_imageFormat) {
+  case Png:
+    args << "-Tpng";
+    break;
+  case Svg:
+    args << "-Tsvg";
+    break;
+  case Svgz:
+    args << "-Tsvgz";
+    break;
+  case Plain:
+    args << "-Tdot";
+    break;
+  }
   QByteArray ba = _source.toUtf8();
   Log::debug() << "starting graphviz rendering with this data: "
                << _source;
@@ -165,7 +186,20 @@ void GraphvizImageHttpHandler::processFinished(
     Log::debug() << "graphviz rendering process successful with return code "
                  << exitCode << " and QProcess::ExitStatus " << exitStatus
                  << " having produced a " << _tmp.size() << " bytes output";
-    _contentType = "image/png";
+    switch (_imageFormat) {
+    case Png:
+      _contentType = "image/png";
+      break;
+    case Svg:
+      _contentType = "image/svg+xml";
+      break;
+    case Svgz:
+      _contentType = "image/svg+xml";
+      break;
+    case Plain:
+      _contentType = "text/plain;charset=UTF-8";
+      break;
+    }
     _imageData = _tmp;
   } else {
     Log::warning() << "graphviz rendering process failed with return code "

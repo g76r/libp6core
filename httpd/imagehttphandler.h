@@ -38,6 +38,10 @@ public:
   /** This method must be thread-safe for the same reasons than
    * handleRequest() */
   virtual QString contentType(ParamsProvider *params = 0) const = 0;
+  /** This method must be thread-safe for the same reasons than
+   * handleRequest()
+   * @return QString() by default */
+  virtual QString contentEncoding(ParamsProvider *params = 0) const;
   /** Return a source code or text for image, if any.
    * Default: QString()
    * This method must be thread-safe for the same reasons than
