@@ -23,8 +23,7 @@
 GraphvizImageHttpHandler::GraphvizImageHttpHandler(QObject *parent,
                                                    RefreshStrategy refreshStrategy)
   : ImageHttpHandler(parent), _renderer(Dot), _renderingRequested(false),
-    _renderingNeeded(false),
-    _renderingRunning(false), _mutex(QMutex::Recursive),
+    _renderingRunning(false), _renderingNeeded(0), _mutex(QMutex::Recursive),
     _process(new QProcess(this)), _refreshStrategy(refreshStrategy),
     _imageFormat(Png) {
   connect(_process, SIGNAL(finished(int,QProcess::ExitStatus)),
@@ -87,7 +86,7 @@ QString GraphvizImageHttpHandler::source(ParamsProvider *params) const {
 void GraphvizImageHttpHandler::setSource(QString source) {
   QMutexLocker ml(&_mutex);
   _source = source;
-  _renderingNeeded = true;
+  ++_renderingNeeded;
   if (_refreshStrategy == OnChange) {
     //Log::debug() << "setSource() with OnChange strategy";
     QCoreApplication::postEvent(this, new QEvent(UPDATE_EVENT));
@@ -209,12 +208,20 @@ void GraphvizImageHttpHandler::processFinished(
     _imageData = _stderr.toUtf8(); // LATER placeholder image
   }
   _renderingRunning = false;
-  if (_refreshStrategy == OnChange && _renderingRequested) {
-    ml.unlock();
-    startRendering();
+  if (_refreshStrategy == OnChange) {
+    if (_renderingRequested) {
+      ml.unlock();
+      startRendering();
+    }
   } else {
-    _renderingNeeded = false; // FIXME miss concurrent updates in OnDemand strategies
-    ml.unlock();
+    if (_renderingNeeded > 1) {
+      _renderingNeeded = 1;
+      ml.unlock();
+      startRendering();
+    } else {
+      _renderingNeeded = 0;
+      ml.unlock();
+    }
   }
   emit contentChanged();
   _tmp.clear();

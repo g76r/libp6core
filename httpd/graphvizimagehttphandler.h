@@ -29,7 +29,8 @@ public:
 private:
   GraphvizRenderer _renderer;
   QString _source, _stderr, _contentType;
-  bool _renderingRequested, _renderingNeeded, _renderingRunning;
+  bool _renderingRequested, _renderingRunning;
+  int _renderingNeeded;
   mutable QMutex _mutex;
   QProcess *_process;
   QByteArray _imageData, _tmp;
