@@ -96,13 +96,11 @@ void CsvTableView::updateSpecialChars() {
   _specialChars.clear();
   if (!_escapeChar.isNull())
     _specialChars.append(_escapeChar);
-  if (!_fieldQuote.isNull()) {
+  if (!_fieldQuote.isNull())
     _specialChars.append(_fieldQuote);
-  } else {
-    if (!_fieldSeparator.isNull())
-      _specialChars.append(_fieldSeparator);
-    _specialChars.append(_recordSeparator);
-  }
+  if (!_fieldSeparator.isNull())
+    _specialChars.append(_fieldSeparator);
+  _specialChars.append(_recordSeparator);
 }
 
 QString CsvTableView::formatField(QString rawData) const {
