@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -92,28 +92,48 @@ public:
    * @return this
    */
   HtmlItemDelegate *setPrefixForColumn(
-      int column, QString pattern, int argIndex = None,
-      QHash<QString,QString> transcodeMap = QHash<QString,QString>()) {
+      int column, QString pattern, int argIndex,
+      QHash<QString,QString> transcodeMap) {
     _columnPrefixes.insert(column, TextMapper(pattern, argIndex, transcodeMap));
     return this; }
+  /** syntaxic sugar */
+  HtmlItemDelegate *setPrefixForColumn(
+      int column, QString pattern, int argIndex = None) {
+    return setPrefixForColumn(
+          column, pattern, argIndex, QHash<QString,QString>()); }
   /** @see setPrefixForColumn() */
   HtmlItemDelegate *setSuffixForColumn(
-      int column, QString pattern, int argIndex = None,
-      QHash<QString,QString> transcodeMap = QHash<QString,QString>()){
+      int column, QString pattern, int argIndex,
+      QHash<QString,QString> transcodeMap){
     _columnSuffixes.insert(column, TextMapper(pattern, argIndex, transcodeMap));
     return this; }
+  /** syntaxic sugar */
+  HtmlItemDelegate *setSuffixForColumn(
+      int column, QString pattern, int argIndex = None) {
+    return setSuffixForColumn(
+          column, pattern, argIndex, QHash<QString,QString>()); }
   /** @see setPrefixForColumn() */
   HtmlItemDelegate *setPrefixForRow(
-      int row, QString pattern, int argIndex = None,
-      QHash<QString,QString> transcodeMap = QHash<QString,QString>()){
+      int row, QString pattern, int argIndex,
+      QHash<QString,QString> transcodeMap){
     _rowPrefixes.insert(row, TextMapper(pattern, argIndex, transcodeMap));
     return this; }
+  /** syntaxic sugar */
+  HtmlItemDelegate *setPrefixForRow(
+      int row, QString pattern, int argIndex = None) {
+    return setPrefixForRow(
+          row, pattern, argIndex, QHash<QString,QString>()); }
   /** @see setPrefixForColumn() */
   HtmlItemDelegate *setSuffixForRow(
-      int row, QString pattern, int argIndex = None,
-      QHash<QString,QString> transcodeMap = QHash<QString,QString>()){
+      int row, QString pattern, int argIndex,
+      QHash<QString,QString> transcodeMap){
     _rowSuffixes.insert(row, TextMapper(pattern, argIndex, transcodeMap));
     return this; }
+  /** syntaxic sugar */
+  HtmlItemDelegate *setSuffixForRow(
+      int row, QString pattern, int argIndex = None) {
+    return setSuffixForRow(
+          row, pattern, argIndex, QHash<QString,QString>()); }
   /** @see setPrefixForColumn() */
   HtmlItemDelegate *setPrefixForColumnHeader(int column, QString text) {
     _columnHeaderPrefixes.insert(column, text);
@@ -124,16 +144,26 @@ public:
     return this; }
   /** @see setPrefixForColumn() */
   HtmlItemDelegate *setPrefixForRowHeader(
-      int row, QString pattern, int argIndex = None,
-      QHash<QString,QString> transcodeMap = QHash<QString,QString>()){
+      int row, QString pattern, int argIndex,
+      QHash<QString,QString> transcodeMap){
     _rowHeaderPrefixes.insert(row, TextMapper(pattern, argIndex, transcodeMap));
     return this; }
+  /** syntaxic sugar */
+  HtmlItemDelegate *setPrefixForRowHeader(
+      int row, QString pattern, int argIndex = None){
+    return setPrefixForRowHeader(
+          row, pattern, argIndex, QHash<QString,QString>()); }
   /** @see setPrefixForColumn() */
   HtmlItemDelegate *setSuffixForRowHeader(
-      int row, QString pattern, int argIndex = None,
-      QHash<QString,QString> transcodeMap = QHash<QString,QString>()){
+      int row, QString pattern, int argIndex,
+      QHash<QString,QString> transcodeMap) {
     _rowHeaderSuffixes.insert(row, TextMapper(pattern, argIndex, transcodeMap));
     return this; }
+  /** syntaxic sugar */
+  HtmlItemDelegate *setSuffixForRowHeader(
+      int row, QString pattern, int argIndex = None){
+    return setSuffixForRowHeader(
+          row, pattern, argIndex, QHash<QString,QString>()); }
   /** Clear any previous suffix or prefix definition. */
   HtmlItemDelegate *clearAffixes() {
     _columnPrefixes.clear();

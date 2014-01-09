@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -92,10 +92,13 @@ public:
    *   is replaced by matching value before %1 replacements
    * @return this
    */
-  HtmlTableView *setTrClass(QString pattern, int argIndex = None,
-      QHash<QString,QString> transcodeMap = QHash<QString,QString>()) {
+  HtmlTableView *setTrClass(QString pattern, int argIndex,
+      QHash<QString,QString> transcodeMap) {
     _trClassMapper = TextMapper(pattern, argIndex, transcodeMap);
     return this; }
+  /** syntaxic sugar */
+  HtmlTableView *setTrClass(QString pattern, int argIndex = None) {
+    return setTrClass(pattern, argIndex, QHash<QString,QString>());}
   HtmlTableView *clearTrClass() {
     _trClassMapper = TextMapper();
     return this; }
