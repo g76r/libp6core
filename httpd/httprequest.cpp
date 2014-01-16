@@ -145,7 +145,8 @@ ParamSet HttpRequest::paramsAsParamSet() const {
 
 void HttpRequest::cacheAllParams() const {
   if (d) {
-    QListIterator<QPair<QString,QString> > it(d->_query.queryItems());
+    QListIterator<QPair<QString,QString> > it(
+          d->_query.queryItems(QUrl::FullyDecoded));
     while (it.hasNext()) {
       QPair<QString,QString> p(it.next());
       if (!d->_paramsCache.contains(p.first))
