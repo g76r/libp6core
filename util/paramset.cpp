@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -95,64 +95,73 @@ QString ParamSet::evaluate(QString rawValue, bool inherit,
   return values.first();
 }
 
+static inline QString automaticValue(QString key) {
+  if (key.at(0) == '!') {
+    if (key == "!yyyy") {
+      return QDateTime::currentDateTime().toString("yyyy");
+    } else if (key == "!mm") {
+      return QDateTime::currentDateTime().toString("MM");
+    } else if (key == "!dd") {
+      return QDateTime::currentDateTime().toString("dd");
+    } else if (key == "!HH") {
+      return QDateTime::currentDateTime().toString("hh");
+    } else if (key == "!MM") {
+      return QDateTime::currentDateTime().toString("mm");
+    } else if (key == "!SS") {
+      return QDateTime::currentDateTime().toString("ss");
+    } else if (key == "!NNN") {
+      return QDateTime::currentDateTime().toString("zzz");
+    } else if (key == "!8601") {
+      return QDateTime::currentDateTime().toString("yyyy-MM-ddThh:mm:ss,zzz");
+    } else if (key == "!8601Z") {
+      return QDateTime::currentDateTimeUtc()
+          .toString("yyyy-MM-ddThh:mm:ss,zzzZ");
+    } else if (key == "!s1970") {
+      return QString::number(
+            QDateTime::currentDateTime().toMSecsSinceEpoch()/1000);
+    } else if (key == "!ms1970") {
+      return QString::number(
+            QDateTime::currentDateTime().toMSecsSinceEpoch());
+    } else if (key == "!s1970Z") {
+      return QString::number(
+            QDateTime::currentDateTimeUtc().toMSecsSinceEpoch()/1000);
+    } else if (key == "!ms1970Z") {
+      return QString::number(
+            QDateTime::currentDateTimeUtc().toMSecsSinceEpoch());
+    }
+  }
+  return QString();
+}
+
 void ParamSet::appendVariableValue(QString &value, QString &variable,
                                    bool inherit,
                                    const ParamsProvider *context) const {
-  if (variable.isEmpty()) {
-    Log::warning() << "unsupported variable substitution: empty variable name";
-  } else if (variable.at(0) == '!') {
-    if (variable == "!yyyy") {
-      value.append(QDateTime::currentDateTime().toString("yyyy"));
-    } else if (variable == "!mm") {
-      value.append(QDateTime::currentDateTime().toString("MM"));
-    } else if (variable == "!dd") {
-      value.append(QDateTime::currentDateTime().toString("dd"));
-    } else if (variable == "!HH") {
-      value.append(QDateTime::currentDateTime().toString("hh"));
-    } else if (variable == "!MM") {
-      value.append(QDateTime::currentDateTime().toString("mm"));
-    } else if (variable == "!SS") {
-      value.append(QDateTime::currentDateTime().toString("ss"));
-    } else if (variable == "!NNN") {
-      value.append(QDateTime::currentDateTime().toString("zzz"));
-    } else if (variable == "!8601") {
-      value.append(QDateTime::currentDateTime()
-                   .toString("yyyy-MM-ddThh:mm:ss,zzz"));
-    } else if (variable == "!8601Z") {
-      value.append(QDateTime::currentDateTimeUtc()
-                   .toString("yyyy-MM-ddThh:mm:ss,zzzZ"));
-    } else if (variable == "!s1970") {
-      value.append(QString::number(
-                     QDateTime::currentDateTime().toMSecsSinceEpoch()/1000));
-    } else if (variable == "!ms1970") {
-      value.append(QString::number(
-                     QDateTime::currentDateTime().toMSecsSinceEpoch()));
-    } else if (variable == "!s1970Z") {
-      value.append(QString::number(
-                     QDateTime::currentDateTimeUtc().toMSecsSinceEpoch()/1000));
-    } else if (variable == "!ms1970Z") {
-      value.append(QString::number(
-                     QDateTime::currentDateTimeUtc().toMSecsSinceEpoch()));
-    } else {
-      QString s;
+  if (!variable.isEmpty()) {
+    QString s = automaticValue(variable);
+    if (!s.isNull())
+      value.append(s);
+    else {
       if (context)
         s = context->paramValue(variable).toString();
-      if (s.isNull())
-        Log::warning() << "unsupported variable substitution: %{" << variable
-                       << "} " << QString::number((qint64)context, 16);
-      else
+      if (!s.isNull())
         value.append(s);
+      else {
+        s = this->rawValue(variable, inherit);
+        if (!s.isNull())
+          value.append(s);
+        else {
+          //Log::warning() << "unsupported variable substitution: %{" << variable
+          //               << "} " << QString::number((qint64)context, 16);
+          Log::debug()
+              << "unsupported variable substitution: variable not found: "
+                 "%{" << variable << "} in paramset " << toString(false)
+              << " " << d.constData() << " parent "
+              << parent().toString(false);
+        }
+      }
     }
   } else {
-    const QString v = this->rawValue(variable, inherit);
-    if (v.isNull()) {
-      Log::debug() << "unsupported variable substitution: variable not found: "
-                      "%{" << variable << "} in paramset " << toString(false)
-                   << " " << d.constData() << " parent "
-                   << parent().toString(false);
-    }
-    else
-      value.append(v);
+    Log::warning() << "unsupported variable substitution: empty variable name";
   }
   variable.clear();
 }
@@ -306,7 +315,7 @@ QString ParamSet::toString(bool inherit, bool decorate) const {
       first = false;
     else
       s.append(' ');
-    s.append(key).append('=').append(value(key));
+    s.append(key).append('=').append(rawValue(key));
   }
   if (decorate)
     s.append('}');
@@ -316,7 +325,7 @@ QString ParamSet::toString(bool inherit, bool decorate) const {
 QDebug operator<<(QDebug dbg, const ParamSet &params) {
   dbg.nospace() << "{";
   foreach(QString key, params.keys())
-    dbg.space() << key << "=" << params.value(key) << ",";
+    dbg.space() << key << "=" << params.rawValue(key) << ",";
   dbg.nospace() << "}";
   return dbg.space();
 }
@@ -324,7 +333,7 @@ QDebug operator<<(QDebug dbg, const ParamSet &params) {
 LogHelper operator<<(LogHelper lh, const ParamSet &params) {
   lh << "{ ";
   foreach(QString key, params.keys())
-    lh << key << "=" << params.value(key) << " ";
+    lh << key << "=" << params.rawValue(key) << " ";
   return lh << "}";
 }
 
