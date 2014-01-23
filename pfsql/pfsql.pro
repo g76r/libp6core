@@ -22,9 +22,9 @@ DEFINES += LIBQTPF_LIBRARY
 QMAKE_CXXFLAGS += -Wextra
 unix:debug:QMAKE_CXXFLAGS += -ggdb
 unix {
-  OBJECTS_DIR = ../pfsql-build-unix/obj
-  RCC_DIR = ../pfsql-build-unix/rcc
-  MOC_DIR = ../pfsql-build-unix/moc
+  OBJECTS_DIR = ../build-pfsql-unix/obj
+  RCC_DIR = ../build-pfsql-unix/rcc
+  MOC_DIR = ../build-pfsql-unix/moc
 }
 
 SOURCES += \

@@ -20,9 +20,9 @@ DEFINES += LIBQTPF_LIBRARY
 QMAKE_CXXFLAGS += -Wextra
 unix:debug:QMAKE_CXXFLAGS += -ggdb
 unix {
-  OBJECTS_DIR = ../pf-build-unix/obj
-  RCC_DIR = ../pf-build-unix/rcc
-  MOC_DIR = ../pf-build-unix/moc
+  OBJECTS_DIR = ../build-pf-unix/obj
+  RCC_DIR = ../build-pf-unix/rcc
+  MOC_DIR = ../build-pf-unix/moc
 }
 
 SOURCES += \

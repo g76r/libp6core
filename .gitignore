@@ -3,4 +3,4 @@ Makefile
 *.so
 *.so.*
 *.o
-/*-build-*
+/build-*-*
