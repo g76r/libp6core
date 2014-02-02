@@ -22,9 +22,9 @@ DEFINES += LIBQTSSU_LIBRARY
 QMAKE_CXXFLAGS += -Wextra
 unix:debug:QMAKE_CXXFLAGS += -ggdb
 unix {
-  OBJECTS_DIR = ../ssu-build-unix/obj
-  RCC_DIR = ../ssu-build-unix/rcc
-  MOC_DIR = ../ssu-build-unix/moc
+  OBJECTS_DIR = ../build-ssu-unix/obj
+  RCC_DIR = ../build-ssu-unix/rcc
+  MOC_DIR = ../build-ssu-unix/moc
 }
 
 SOURCES += \
