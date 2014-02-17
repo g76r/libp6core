@@ -114,7 +114,7 @@ QString HttpRequest::param(QString key) const {
   if (d) {
     if (d->_paramsCache.contains(key))
       return d->_paramsCache.value(key);
-    value = d->_query.queryItemValue(key);
+    value = d->_query.queryItemValue(key, QUrl::FullyDecoded);
     d->_paramsCache.insert(key, value);
   }
   return value;
