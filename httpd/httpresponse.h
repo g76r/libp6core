@@ -178,7 +178,7 @@ public:
   /** Remove a cookie. */
   inline void clearCookie(QString name, QString path = QString(),
                           QString domain = QString()) {
-    setCookie(name, QString(), QDateTime::currentDateTime().addDays(-2).toUTC(),
+    setCookie(name, QString(), QDateTime::fromMSecsSinceEpoch(0),
               path, domain, false, false);
   }
   // LATER session
