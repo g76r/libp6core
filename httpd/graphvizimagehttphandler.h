@@ -49,8 +49,8 @@ public:
   GraphvizRenderer renderer() const { return _renderer; }
   void setRenderer(GraphvizRenderer renderer) { _renderer = renderer; }
   RefreshStrategy refreshStrategy() const { return _refreshStrategy; }
-  ImageFormat imageFormat() const { return _imageFormat; }
-  void setImageFormat(ImageFormat imageFormat) { _imageFormat = imageFormat; }
+  ImageFormat imageFormat() const;
+  void setImageFormat(ImageFormat imageFormat);
 
 public slots:
   /** Set new graphviz-format source and, if refresh strategy is OnChange,

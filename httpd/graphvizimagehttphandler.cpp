@@ -185,26 +185,12 @@ void GraphvizImageHttpHandler::processFinished(
     Log::debug() << "graphviz rendering process successful with return code "
                  << exitCode << " and QProcess::ExitStatus " << exitStatus
                  << " having produced a " << _tmp.size() << " bytes output";
-    switch (_imageFormat) {
-    case Png:
-      _contentType = "image/png";
-      break;
-    case Svg:
-      _contentType = "image/svg+xml";
-      break;
-    case Svgz:
-      _contentType = "image/svg+xml";
-      break;
-    case Plain:
-      _contentType = "text/plain;charset=UTF-8";
-      break;
-    }
     _imageData = _tmp;
   } else {
     Log::warning() << "graphviz rendering process failed with return code "
                    << exitCode << ", QProcess::ExitStatus " << exitStatus
                    << " and stderr content: " << _stderr;
-    _contentType = "text/plain;charset=UTF-8";
+    //_contentType = "text/plain;charset=UTF-8";
     _imageData = _stderr.toUtf8(); // LATER placeholder image
   }
   _renderingRunning = false;
@@ -240,4 +226,22 @@ void GraphvizImageHttpHandler::readyReadStandardError() {
   QByteArray ba;
   while (!(ba = _process->read(1024)).isEmpty())
     _stderr.append(QString::fromUtf8(ba));
+}
+
+void GraphvizImageHttpHandler::setImageFormat(ImageFormat imageFormat) {
+  _imageFormat = imageFormat;
+  switch (_imageFormat) {
+  case Png:
+    _contentType = "image/png";
+    break;
+  case Svg:
+    _contentType = "image/svg+xml";
+    break;
+  case Svgz:
+    _contentType = "image/svg+xml";
+    break;
+  case Plain:
+    _contentType = "text/plain;charset=UTF-8";
+    break;
+  }
 }
