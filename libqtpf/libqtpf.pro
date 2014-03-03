@@ -1,4 +1,4 @@
-# Copyright 2012 Hallowyn and others.
+# Copyright 2012-2014 Hallowyn and others.
 # See the NOTICE file distributed with this work for additional information
 # regarding copyright ownership.  The ASF licenses this file to you under
 # the Apache License, Version 2.0 (the "License"); you may not use this
@@ -20,9 +20,9 @@ DEFINES += LIBQTPF_LIBRARY
 QMAKE_CXXFLAGS += -Wextra
 unix:debug:QMAKE_CXXFLAGS += -ggdb
 unix {
-  OBJECTS_DIR = ../build-pf-unix/obj
-  RCC_DIR = ../build-pf-unix/rcc
-  MOC_DIR = ../build-pf-unix/moc
+  OBJECTS_DIR = ../build-libqtpf-unix/obj
+  RCC_DIR = ../build-libqtpf-unix/rcc
+  MOC_DIR = ../build-libqtpf-unix/moc
 }
 
 SOURCES += \

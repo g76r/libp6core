@@ -1,3 +1,3 @@
 TEMPLATE = subdirs
 CONFIG += ordered
-SUBDIRS = pf pfsql
+SUBDIRS = libqtpf libqtpfsql
