@@ -1,4 +1,4 @@
-# Copyright 2012 Hallowyn and others.
+# Copyright 2012-2014 Hallowyn and others.
 # This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
 # Libqtssu is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -22,9 +22,9 @@ DEFINES += LIBQTSSU_LIBRARY
 QMAKE_CXXFLAGS += -Wextra
 unix:debug:QMAKE_CXXFLAGS += -ggdb
 unix {
-  OBJECTS_DIR = ../build-ssu-unix/obj
-  RCC_DIR = ../build-ssu-unix/rcc
-  MOC_DIR = ../build-ssu-unix/moc
+  OBJECTS_DIR = ../build-libqtssu-unix/obj
+  RCC_DIR = ../build-libqtssu-unix/rcc
+  MOC_DIR = ../build-libqtssu-unix/moc
 }
 
 SOURCES += \
