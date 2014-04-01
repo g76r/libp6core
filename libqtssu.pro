@@ -77,7 +77,9 @@ SOURCES += \
     httpd/imagehttphandler.cpp \
     httpd/graphvizimagehttphandler.cpp \
     textview/htmlitemdelegate.cpp \
-    textview/textviewitemdelegate.cpp
+    textview/textviewitemdelegate.cpp \
+    modelview/shareduiitem.cpp \
+    modelview/shareduiitemstablemodel.cpp
 
 
 HEADERS +=\
@@ -133,7 +135,9 @@ HEADERS +=\
     httpd/imagehttphandler.h \
     httpd/graphvizimagehttphandler.h \
     textview/htmlitemdelegate.h \
-    textview/textviewitemdelegate.h
+    textview/textviewitemdelegate.h \
+    modelview/shareduiitem.h \
+    modelview/shareduiitemstablemodel.h
 
 
 unix {

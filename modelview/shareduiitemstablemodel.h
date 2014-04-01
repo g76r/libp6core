@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,36 +11,35 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef TEXTMATRIXMODEL_H
-#define TEXTMATRIXMODEL_H
+#ifndef SHAREDUIITEMSTABLEMODEL_H
+#define SHAREDUIITEMSTABLEMODEL_H
 
-#include "libqtssu_global.h"
+#include "shareduiitem.h"
 #include <QAbstractTableModel>
-#include <QStringList>
-#include <QHash>
 
-// FIXME move to modelview
-/** Kind of 2-dimensions QStringListModel.
- * @brief The TextMatrixModel class */
-class LIBQTSSUSHARED_EXPORT TextMatrixModel : public QAbstractTableModel {
+/** Model holding AbstractUiItems, one item per line, one item section per
+ * column. */
+class LIBQTSSUSHARED_EXPORT SharedUiItemsTableModel
+    : public QAbstractTableModel {
   Q_OBJECT
-  QStringList _columnNames, _rowNames;
-  QHash<QString,QHash<QString,QString> > _values;
+  Q_DISABLE_COPY(SharedUiItemsTableModel)
+  QList<SharedUiItem> _items;
+  SharedUiItem _templateItem;
 
 public:
-  explicit TextMatrixModel(QObject *parent = 0);
+  explicit SharedUiItemsTableModel(SharedUiItem templateItem,
+                                   QObject *parent = 0);
+  explicit SharedUiItemsTableModel(QObject *parent = 0);
+  /** The template item is an empty item used to count columns and read column
+   * headers data. */
+  SharedUiItem templateItem() const { return _templateItem; }
+  void setTemplateItem(SharedUiItem templateItem) {
+    _templateItem = templateItem; }
   int rowCount(const QModelIndex &parent) const;
   int columnCount(const QModelIndex &parent) const;
   QVariant data(const QModelIndex &index, int role) const;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-  QString value(QString row, QString column) const;
-
-public slots:
-  /** Set a cell value.
-   * Row and/or column will be added if they do not yet exist. */
-  void setCellValue(QString row, QString column, QString value);
-  /** Remove any data. */
-  void clear();
+  void resetItems(QList<SharedUiItem> items);
 };
 
-#endif // TEXTMATRIXMODEL_H
+#endif // SHAREDUIITEMSTABLEMODEL_H
