@@ -57,7 +57,8 @@ ParamSet ParamSet::parent() const {
 void ParamSet::setParent(ParamSet parent) {
   if (!d)
     d = new ParamSetData();
-  d->_parent = parent;
+  if (d.constData() != parent.d.constData())
+    d->_parent = parent;
 }
 
 void ParamSet::setValue(QString key, QString value) {
