@@ -11,39 +11,4 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "shareduiitem.h"
-
-SharedUiItem::~SharedUiItem() {
-}
-
-SharedUiItemData::~SharedUiItemData() {
-}
-
-QVariant SharedUiItemData::uiData(int section, int role) const {
-  Q_UNUSED(section)
-  Q_UNUSED(role)
-  return QVariant();
-}
-
-
-QVariant SharedUiItem::uiHeaderData(int section, int role) const {
-  Q_UNUSED(section)
-  Q_UNUSED(role)
-  return QVariant();
-}
-
-QString SharedUiItemData::id() const {
-  return uiData(0, Qt::DisplayRole).toString();
-}
-
-int SharedUiItem::uiDataCount() const {
-  return 0;
-}
-
-bool SharedUiItem::operator==(const SharedUiItem &other) const {
-  return id() == other.id();
-}
-
-bool SharedUiItem::operator<(const SharedUiItem &other) const {
-  return id() < other.id();
-}
+#include "shareduiitemtreeitem.h"

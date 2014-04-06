@@ -79,7 +79,8 @@ SOURCES += \
     textview/htmlitemdelegate.cpp \
     textview/textviewitemdelegate.cpp \
     modelview/shareduiitem.cpp \
-    modelview/shareduiitemstablemodel.cpp
+    modelview/shareduiitemstablemodel.cpp \
+    modelview/shareduiitemtreeitem.cpp
 
 
 HEADERS +=\
@@ -137,7 +138,8 @@ HEADERS +=\
     textview/htmlitemdelegate.h \
     textview/textviewitemdelegate.h \
     modelview/shareduiitem.h \
-    modelview/shareduiitemstablemodel.h
+    modelview/shareduiitemstablemodel.h \
+    modelview/shareduiitemtreeitem.h
 
 
 unix {

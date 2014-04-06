@@ -40,6 +40,18 @@ public:
   QVariant data(const QModelIndex &index, int role) const;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
   void resetItems(QList<SharedUiItem> items);
+  template <class T> void resetItems(QList<T> items) {
+    // LATER try to find a more efficient cast method
+    QList<SharedUiItem> castedItems;
+    foreach (const SharedUiItem &i, items)
+      castedItems.append(i);
+    resetItems(castedItems);
+  }
+  void updateItem(SharedUiItem item);
+  void renameItem(SharedUiItem item, QString oldId);
+
+protected:
+  SharedUiItem item(int row) const { return _items.value(row); }
 };
 
 #endif // SHAREDUIITEMSTABLEMODEL_H

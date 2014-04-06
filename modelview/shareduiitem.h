@@ -23,7 +23,10 @@
 class LIBQTSSUSHARED_EXPORT SharedUiItemData : public QSharedData {
 public:
   virtual ~SharedUiItemData();
+  /** default: return QVariant() */
   virtual QVariant uiData(int section, int role) const;
+  /** default: return uiData(0, Qt::DisplayRole).toString() */
+  virtual QString id() const;
 };
 
 /** Parent class for implicitely shared data classes to be queried as a user
@@ -60,12 +63,18 @@ public:
   /** Syntaxic sugar. */
   QString uiString(int section, int role = Qt::DisplayRole) const {
     return d ? d->uiData(section, role).toString() : QString(); }
+  /** Item identifier. */
+  QString id() const { return d ? d->id() : QString(); }
+  bool operator==(const SharedUiItem &other) const;
+  bool operator<(const SharedUiItem &other) const;
 
 protected:
   const SharedUiItemData *constData() const { return d.constData(); }
   void setData(SharedUiItemData *data) { d = data; }
   template <class T> void detach() {
-    ((QSharedDataPointer<T>*)&d)->detach();
+    T *dummy;
+    Q_UNUSED(static_cast<SharedUiItemData*>(dummy)); // ensure T is a SharedUiItemData
+    reinterpret_cast<QSharedDataPointer<T>*>(&d)->detach();
   }
 };
 
