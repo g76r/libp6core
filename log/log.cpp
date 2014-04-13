@@ -21,6 +21,7 @@
 #include <QMutex>
 #include <QFile>
 #include "util/ioutils.h"
+#include "qtloglogger.h"
 
 static QList<Logger*> _loggers;
 static QMutex _loggersMutex;
@@ -29,6 +30,11 @@ void Log::addConsoleLogger(Severity severity, bool removable) {
   QFile *console = new QFile;
   console->open(1, QIODevice::WriteOnly|QIODevice::Unbuffered);
   FileLogger *logger = new FileLogger(console, severity);
+  Log::addLogger(logger, removable);
+}
+
+void Log::addQtLogger(Severity severity, bool removable) {
+  QtLogLogger *logger = new QtLogLogger(severity);
   Log::addLogger(logger, removable);
 }
 

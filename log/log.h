@@ -35,6 +35,9 @@ public:
   /** Add a logger to stdout. */
   static void addConsoleLogger(Log::Severity severity = Log::Warning,
                                bool removable = false);
+  /** Add a logger to Qt's log framework. */
+  static void addQtLogger(Log::Severity severity = Log::Warning,
+                          bool removable = false);
   /** Remove all loggers. */
   static void clearLoggers();
   /** Remove all loggers and replace them with a new one. */

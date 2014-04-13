@@ -80,7 +80,8 @@ SOURCES += \
     textview/textviewitemdelegate.cpp \
     modelview/shareduiitem.cpp \
     modelview/shareduiitemstablemodel.cpp \
-    modelview/shareduiitemtreeitem.cpp
+    modelview/shareduiitemtreeitem.cpp \
+    log/qtloglogger.cpp
 
 
 HEADERS +=\
@@ -139,7 +140,8 @@ HEADERS +=\
     textview/textviewitemdelegate.h \
     modelview/shareduiitem.h \
     modelview/shareduiitemstablemodel.h \
-    modelview/shareduiitemtreeitem.h
+    modelview/shareduiitemtreeitem.h \
+    log/qtloglogger.h
 
 
 unix {
