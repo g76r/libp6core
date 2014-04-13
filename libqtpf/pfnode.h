@@ -62,6 +62,9 @@ public:
   inline PfNode(QString name, QString content, bool isComment = false)
     : d(new PfNodeData(name, content, isComment)) { }
   inline PfNode &operator=(const PfNode &other) { d = other.d; return *this; }
+  /** Build a PfNode from PF external format.
+   * @return first encountered root node or PfNode() */
+  static PfNode fromPf(QByteArray source, PfOptions options = PfOptions());
 
   // Node related methods /////////////////////////////////////////////////////
 

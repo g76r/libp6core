@@ -16,6 +16,8 @@ under the License.
 #include <QtDebug>
 #include <QAtomicInt>
 #include <QStringList>
+#include "pfparser.h"
+#include "pfdomhandler.h"
 
 #define INDENTATION_STRING "  "
 #define INDENTATION_STRING_LENGTH 2
@@ -433,4 +435,14 @@ void PfNode::removeChildrenByName(QString name) {
     else
       ++i;
   }
+}
+
+PfNode PfNode::fromPf(QByteArray source, PfOptions options) {
+  PfDomHandler h;
+  PfParser p(&h);
+  if (p.parse(source, options)) {
+    if (h.roots().size() > 0)
+      return h.roots().at(0);
+  }
+  return PfNode();
 }
