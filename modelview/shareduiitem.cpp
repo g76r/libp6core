@@ -36,6 +36,10 @@ QString SharedUiItemData::id() const {
   return uiData(0, Qt::DisplayRole).toString();
 }
 
+QString SharedUiItemData::idQualifier() const {
+  return QString();
+}
+
 int SharedUiItem::uiDataCount() const {
   return 0;
 }

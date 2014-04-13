@@ -13,34 +13,12 @@
  */
 #include "shareduiitemstablemodel.h"
 
-SharedUiItemsTableModel::SharedUiItemsTableModel(
-    SharedUiItem templateItem, QObject *parent)
-  : QAbstractTableModel(parent), _templateItem(templateItem) {
-}
-
 SharedUiItemsTableModel::SharedUiItemsTableModel(QObject *parent)
-  : QAbstractTableModel(parent) {
+  : SharedUiItemsModel(parent) {
 }
 
 int SharedUiItemsTableModel::rowCount(const QModelIndex &parent) const {
   return parent.isValid() ? 0 : _items.size();
-}
-
-int SharedUiItemsTableModel::columnCount(const QModelIndex &parent) const {
-  Q_UNUSED(parent)
-  return _templateItem.uiDataCount();
-}
-
-QVariant SharedUiItemsTableModel::data(const QModelIndex &index, int role) const {
-  return index.isValid()
-      ? _items.value(index.row()).uiData(index.column(), role)
-      : QVariant();
-}
-
-QVariant SharedUiItemsTableModel::headerData(int section, Qt::Orientation orientation,
-                                int role) const {
-  return orientation == Qt::Horizontal
-      ? _templateItem.uiHeaderData(section, role) : QVariant();
 }
 
 void SharedUiItemsTableModel::resetItems(QList<SharedUiItem> items) {
@@ -67,4 +45,10 @@ void SharedUiItemsTableModel::renameItem(SharedUiItem item, QString oldId) {
       emit dataChanged(index(row, 0), index(row, rowCount(QModelIndex())));
     }
   }
+}
+
+SharedUiItem SharedUiItemsTableModel::itemAt(const QModelIndex &index) const {
+  if (index.isValid())
+    return _items.value(index.row());
+  return SharedUiItem();
 }

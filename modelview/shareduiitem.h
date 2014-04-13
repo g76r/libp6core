@@ -23,10 +23,16 @@
 class LIBQTSSUSHARED_EXPORT SharedUiItemData : public QSharedData {
 public:
   virtual ~SharedUiItemData();
-  /** default: return QVariant() */
+  /** default: return QVariant()
+   * Note that IdRole, IdQualifierRole and QualifiedIdRole won't be queried
+   * from SharedUiItemData::uiData() but are directly handled in
+   * SharedUiItem::uiData() as calls to SharedUiItemData::id() and
+   * SharedUiItemData::idQualifier() instead, regardless the section. */
   virtual QVariant uiData(int section, int role) const;
   /** default: return uiData(0, Qt::DisplayRole).toString() */
   virtual QString id() const;
+  /** default: return QString() */
+  virtual QString idQualifier() const;
 };
 
 /** Parent class for implicitely shared data classes to be queried as a user
@@ -39,12 +45,17 @@ public:
  * subclasses to re-implement a custom non-const data accessor of their own,
  * calling protected method detach<UiItemImplementation>() to have the implicit
  * sharing copy work.
- * @see UiItemsTableModel
- */
+ * @see UiItemsModel
+ * @see UiItemsTableModel */
 class LIBQTSSUSHARED_EXPORT SharedUiItem {
   QSharedDataPointer<SharedUiItemData> d;
 
 public:
+  enum SharedUiItemRole {
+    IdRole = Qt::UserRole+784,
+    IdQualifierRole,
+    QualifiedIdRole
+  };
   SharedUiItem() { }
   SharedUiItem(const SharedUiItem &other) : d(other.d) { }
   virtual ~SharedUiItem();
@@ -58,13 +69,46 @@ public:
   QString uiHeaderString(int section, int role = Qt::DisplayRole) const {
     return uiHeaderData(section, role).toString(); }
   virtual int uiDataCount() const;
+  /** Provides ui data for this item. */
   QVariant uiData(int section, int role = Qt::DisplayRole) const {
-    return d ? d->uiData(section, role) : QVariant(); }
+    if (d) {
+      switch (role) {
+      case IdRole:
+        return d->id();
+      case IdQualifierRole:
+        return d->idQualifier();
+      case QualifiedIdRole: {
+        QString qualifier = d->idQualifier();
+        return qualifier.isEmpty() ? d->id() : qualifier+":"+d->id();
+      }
+      default:
+        return d->uiData(section, role);
+      }
+    }
+    return QVariant();
+  }
   /** Syntaxic sugar. */
   QString uiString(int section, int role = Qt::DisplayRole) const {
     return d ? d->uiData(section, role).toString() : QString(); }
-  /** Item identifier. */
+  /** Item identifier.
+   * By convention, identifier must be unique for the same type of item within
+   * the same document. */
   QString id() const { return d ? d->id() : QString(); }
+  /** Item identifier qualifier, e.g. item type such as "invoice" for an
+   * invoice data ui object, maybe QString() depending on items */
+  QString idQualifier() const { return d ? d->idQualifier() : QString(); }
+  /** Qualified item identifier.
+   * By convention, qualified identifier must be unique for any type of item
+   * within the same document.
+   * @return idQualifier()+":"+id() if idQualifier is not empty, id() otherwise.
+   */
+  QString qualifiedId() const {
+    if (d) {
+      QString qualifier = d->idQualifier();
+      return qualifier.isEmpty() ? d->id() : qualifier+":"+d->id();
+    }
+    return QString();
+  }
   bool operator==(const SharedUiItem &other) const;
   bool operator<(const SharedUiItem &other) const;
 

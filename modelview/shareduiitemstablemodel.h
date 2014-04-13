@@ -15,30 +15,19 @@
 #define SHAREDUIITEMSTABLEMODEL_H
 
 #include "shareduiitem.h"
-#include <QAbstractTableModel>
+#include "shareduiitemsmodel.h"
 
 /** Model holding AbstractUiItems, one item per line, one item section per
  * column. */
 class LIBQTSSUSHARED_EXPORT SharedUiItemsTableModel
-    : public QAbstractTableModel {
+    : public SharedUiItemsModel {
   Q_OBJECT
   Q_DISABLE_COPY(SharedUiItemsTableModel)
   QList<SharedUiItem> _items;
-  SharedUiItem _templateItem;
 
 public:
-  explicit SharedUiItemsTableModel(SharedUiItem templateItem,
-                                   QObject *parent = 0);
   explicit SharedUiItemsTableModel(QObject *parent = 0);
-  /** The template item is an empty item used to count columns and read column
-   * headers data. */
-  SharedUiItem templateItem() const { return _templateItem; }
-  void setTemplateItem(SharedUiItem templateItem) {
-    _templateItem = templateItem; }
   int rowCount(const QModelIndex &parent) const;
-  int columnCount(const QModelIndex &parent) const;
-  QVariant data(const QModelIndex &index, int role) const;
-  QVariant headerData(int section, Qt::Orientation orientation, int role) const;
   void resetItems(QList<SharedUiItem> items);
   template <class T> void resetItems(QList<T> items) {
     // LATER try to find a more efficient cast method
@@ -51,7 +40,7 @@ public:
   void renameItem(SharedUiItem item, QString oldId);
 
 protected:
-  SharedUiItem item(int row) const { return _items.value(row); }
+  SharedUiItem itemAt(const QModelIndex &index) const;
 };
 
 #endif // SHAREDUIITEMSTABLEMODEL_H
