@@ -21,6 +21,18 @@ int SharedUiItemsTableModel::rowCount(const QModelIndex &parent) const {
   return parent.isValid() ? 0 : _items.size();
 }
 
+QModelIndex SharedUiItemsTableModel::index(int row, int column,
+                                           const QModelIndex &parent) const {
+  if (hasIndex(row, column, parent))
+    return createIndex(row, column);
+  return QModelIndex();
+}
+
+QModelIndex SharedUiItemsTableModel::parent(const QModelIndex &child) const {
+  Q_UNUSED(child)
+  return QModelIndex();
+}
+
 void SharedUiItemsTableModel::resetItems(QList<SharedUiItem> items) {
   beginResetModel();
   _items = items;

@@ -27,7 +27,10 @@ class LIBQTSSUSHARED_EXPORT SharedUiItemsTableModel
 
 public:
   explicit SharedUiItemsTableModel(QObject *parent = 0);
-  int rowCount(const QModelIndex &parent) const;
+  int rowCount(const QModelIndex &parent = QModelIndex()) const;
+  QModelIndex index(int row, int column,
+                    const QModelIndex &parent = QModelIndex()) const;
+  QModelIndex parent(const QModelIndex &child) const;
   void resetItems(QList<SharedUiItem> items);
   template <class T> void resetItems(QList<T> items) {
     // LATER try to find a more efficient cast method
