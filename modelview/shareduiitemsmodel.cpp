@@ -28,9 +28,9 @@ int SharedUiItemsModel::columnCount(const QModelIndex &parent) const {
 QVariant SharedUiItemsModel::data(const QModelIndex &index, int role) const {
   // LATER have an orientation parameter, do not assume item section == column
   if (index.isValid()) {
-    if (role == Qt::DecorationRole && index.column() == 0
+    /*if (role == Qt::DecorationRole && index.column() == 0
         && !_decorationAtColumn0.isNull())
-      return _decorationAtColumn0;
+      return _decorationAtColumn0;*/
     return itemAt(index).uiData(index.column(), role);
   }
   return QVariant();

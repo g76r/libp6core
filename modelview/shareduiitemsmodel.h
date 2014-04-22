@@ -24,7 +24,7 @@ class LIBQTSSUSHARED_EXPORT SharedUiItemsModel : public QAbstractItemModel {
   Q_DISABLE_COPY(SharedUiItemsModel)
   int _columnsCount;
   QHash<int,QHash<int,QVariant> > _mapRoleSectionHeader;
-  QVariant _decorationAtColumn0;
+  //QVariant _decorationAtColumn0;
 
 public:
   explicit SharedUiItemsModel(QObject *parent = 0);
@@ -36,10 +36,10 @@ public:
   void setHeaderDataFromTemplate(const SharedUiItem &templateItem,
                               int role = Qt::DisplayRole);
   void setColumnsCount(int columnsCount) { _columnsCount = columnsCount; }
-  /** Data returned for column 0 with Qt::DecorationRole */
-  QVariant decorationAtColumn0() const { return _decorationAtColumn0; }
+  /* Data returned for column 0 with Qt::DecorationRole */
+  /*QVariant decorationAtColumn0() const { return _decorationAtColumn0; }
   void setDecorationAtColumn0(QVariant decoration) {
-    _decorationAtColumn0 = decoration;  }
+    _decorationAtColumn0 = decoration;  }*/
   virtual SharedUiItem itemAt(const QModelIndex &index) const = 0;
   virtual void updateItem(SharedUiItem item) = 0;
   virtual void renameItem(SharedUiItem item, QString oldId) = 0;
