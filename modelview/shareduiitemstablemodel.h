@@ -14,7 +14,6 @@
 #ifndef SHAREDUIITEMSTABLEMODEL_H
 #define SHAREDUIITEMSTABLEMODEL_H
 
-#include "shareduiitem.h"
 #include "shareduiitemsmodel.h"
 
 /** Model holding AbstractUiItems, one item per line, one item section per

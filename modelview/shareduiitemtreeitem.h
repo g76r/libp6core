@@ -17,7 +17,8 @@
 #include "shareduiitem.h"
 #include <QList>
 
-class SharedUiItemTreeItem {
+/** Item used by SharedUiItemsTreeModel and subclasses. */
+class LIBQTSSUSHARED_EXPORT SharedUiItemTreeItem {
   SharedUiItem _item;
   int _row;
   SharedUiItemTreeItem *_parent;

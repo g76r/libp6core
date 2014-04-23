@@ -82,7 +82,8 @@ SOURCES += \
     modelview/shareduiitemstablemodel.cpp \
     modelview/shareduiitemtreeitem.cpp \
     modelview/shareduiitemsmodel.cpp \
-    log/qtloglogger.cpp
+    log/qtloglogger.cpp \
+    modelview/shareduiitemstreemodel.cpp
 
 
 HEADERS +=\
@@ -143,8 +144,8 @@ HEADERS +=\
     modelview/shareduiitemstablemodel.h \
     modelview/shareduiitemtreeitem.h \
     modelview/shareduiitemsmodel.h \
-    log/qtloglogger.h
-
+    log/qtloglogger.h \
+    modelview/shareduiitemstreemodel.h
 
 unix {
     target.path = /usr/lib
