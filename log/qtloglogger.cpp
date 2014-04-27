@@ -16,10 +16,12 @@
 
 QtLogLogger::QtLogLogger(QObject *parent)
   : Logger(0) {
+  Q_UNUSED(parent)
 }
 
 QtLogLogger::QtLogLogger(Log::Severity minSeverity, QObject *parent)
   : Logger(0, minSeverity) {
+  Q_UNUSED(parent)
 }
 
 void QtLogLogger::doLog(QDateTime timestamp, QString message,
