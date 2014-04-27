@@ -25,7 +25,6 @@ QVariant SharedUiItemData::uiData(int section, int role) const {
   return QVariant();
 }
 
-
 QVariant SharedUiItem::uiHeaderData(int section, int role) const {
   Q_UNUSED(section)
   Q_UNUSED(role)

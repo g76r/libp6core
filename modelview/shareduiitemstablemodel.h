@@ -31,11 +31,23 @@ public:
                     const QModelIndex &parent = QModelIndex()) const;
   QModelIndex parent(const QModelIndex &child) const;
   void resetItems(QList<SharedUiItem> items);
+  void sortAndResetItems(QList<SharedUiItem> items) {
+    qSort(items);
+    resetItems(items);
+  }
   template <class T> void resetItems(QList<T> items) {
     // LATER try to find a more efficient cast method
     QList<SharedUiItem> castedItems;
     foreach (const SharedUiItem &i, items)
       castedItems.append(i);
+    resetItems(castedItems);
+  }
+  template <class T> void sortAndResetItems(QList<T> items) {
+    // LATER try to find a more efficient cast method
+    QList<SharedUiItem> castedItems;
+    foreach (const SharedUiItem &i, items)
+      castedItems.append(i);
+    qSort(castedItems);
     resetItems(castedItems);
   }
   void updateItem(SharedUiItem item);
