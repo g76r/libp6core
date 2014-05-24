@@ -20,6 +20,8 @@
 #include <QSharedData>
 #include <QSharedDataPointer>
 
+class QDebug;
+
 class LIBQTSSUSHARED_EXPORT SharedUiItemData : public QSharedData {
 public:
   virtual ~SharedUiItemData();
@@ -121,5 +123,8 @@ protected:
     reinterpret_cast<QSharedDataPointer<T>*>(&d)->detach();
   }
 };
+
+inline uint qHash(const SharedUiItem &i) { return qHash(i.id()); }
+QDebug LIBQTSSUSHARED_EXPORT operator<<(QDebug dbg, const SharedUiItem &i);
 
 #endif // SHAREDUIITEM_H

@@ -12,6 +12,7 @@
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "shareduiitem.h"
+#include <QtDebug>
 
 SharedUiItem::~SharedUiItem() {
 }
@@ -49,4 +50,9 @@ bool SharedUiItem::operator==(const SharedUiItem &other) const {
 
 bool SharedUiItem::operator<(const SharedUiItem &other) const {
   return id() < other.id();
+}
+
+QDebug operator<<(QDebug dbg, const SharedUiItem &i) {
+  dbg.nospace() << i.id();
+  return dbg.space();
 }
