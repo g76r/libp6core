@@ -69,9 +69,17 @@ QVariant ParamSetModel::headerData(int section, Qt::Orientation orientation,
 }
 
 void ParamSetModel::paramsChanged(ParamSet params) {
-  beginResetModel();
-  _keys = params.keys(_inherit).toList();
-  _keys.sort();
-  _params = params;
-  endResetModel();
+  if (!_keys.isEmpty()) {
+    beginRemoveRows(QModelIndex(), 0, _keys.size()-1);
+    _keys.clear();
+    _params = ParamSet();
+    endRemoveRows();
+  }
+  if (!params.isEmpty()) {
+    beginInsertRows(QModelIndex(), 0, params.size()-1);
+    _keys = params.keys(_inherit).toList();
+    _keys.sort();
+    _params = params;
+    endInsertRows();
+  }
 }

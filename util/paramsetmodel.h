@@ -17,7 +17,7 @@
 #include <QAbstractListModel>
 #include "util/paramset.h"
 
-/** Model to display a ParamSet into a View.
+/** Model to display a ParamSet into a 2-columns (key, value) View.
  * @see ParamSet
  * @see QAbstractItemModel
  */

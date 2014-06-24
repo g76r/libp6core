@@ -30,25 +30,25 @@ public:
   QModelIndex index(int row, int column,
                     const QModelIndex &parent = QModelIndex()) const;
   QModelIndex parent(const QModelIndex &child) const;
-  void resetItems(QList<SharedUiItem> items);
-  void sortAndResetItems(QList<SharedUiItem> items) {
+  void setItems(QList<SharedUiItem> items);
+  void sortAndSetItems(QList<SharedUiItem> items) {
     qSort(items);
-    resetItems(items);
+    setItems(items);
   }
-  template <class T> void resetItems(QList<T> items) {
+  template <class T> void setItems(QList<T> items) {
     // LATER try to find a more efficient cast method
     QList<SharedUiItem> castedItems;
     foreach (const SharedUiItem &i, items)
       castedItems.append(i);
-    resetItems(castedItems);
+    setItems(castedItems);
   }
-  template <class T> void sortAndResetItems(QList<T> items) {
+  template <class T> void sortAndSetItems(QList<T> items) {
     // LATER try to find a more efficient cast method
     QList<SharedUiItem> castedItems;
     foreach (const SharedUiItem &i, items)
       castedItems.append(i);
     qSort(castedItems);
-    resetItems(castedItems);
+    setItems(castedItems);
   }
   void updateItem(SharedUiItem item);
   void renameItem(SharedUiItem item, QString oldId);

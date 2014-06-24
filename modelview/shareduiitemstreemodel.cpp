@@ -60,10 +60,16 @@ SharedUiItem SharedUiItemsTreeModel::itemAt(const QModelIndex &index) const {
 void SharedUiItemsTreeModel::setRoots(QList<SharedUiItemTreeItem*> roots) {
   // TODO rather determine what items must be deleted and what was kept
   if (_roots != roots) {
-    beginResetModel();
-    qDeleteAll(_roots);
-    _roots = roots;
-    endResetModel();
+    if (!_roots.isEmpty()) {
+      beginRemoveRows(QModelIndex(), 0, _roots.size()-1);
+      qDeleteAll(_roots);
+      _roots.clear();
+      endRemoveRows();
+    }
+    if (!roots.isEmpty()) {
+      beginInsertRows(QModelIndex(), 0, roots.size()-1);
+      _roots = roots;
+      endInsertRows();
+    }
   }
 }
-

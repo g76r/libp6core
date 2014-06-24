@@ -33,10 +33,17 @@ QModelIndex SharedUiItemsTableModel::parent(const QModelIndex &child) const {
   return QModelIndex();
 }
 
-void SharedUiItemsTableModel::resetItems(QList<SharedUiItem> items) {
-  beginResetModel();
-  _items = items;
-  endResetModel();
+void SharedUiItemsTableModel::setItems(QList<SharedUiItem> items) {
+  if (!_items.isEmpty()) {
+    beginRemoveRows(QModelIndex(), 0, _items.size()-1);
+    _items.clear();
+    endRemoveRows();
+  }
+  if (!items.isEmpty()) {
+    beginInsertRows(QModelIndex(), 0, items.size()-1);
+    _items = items;
+    endInsertRows();
+  }
 }
 
 void SharedUiItemsTableModel::updateItem(SharedUiItem item) {

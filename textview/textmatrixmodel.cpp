@@ -97,9 +97,11 @@ void TextMatrixModel::setCellValue(QString row, QString column, QString value) {
 
 void TextMatrixModel::clear() {
   //Log::fatal() << "TextMatrixModel::clear";
-  beginResetModel();
-  _rowNames.clear();
-  _columnNames.clear();
-  _values.clear();
-  endResetModel();
+  if (!_rowNames.isEmpty()) {
+    beginRemoveRows(QModelIndex(), 0, _rowNames.size()-1);
+    _rowNames.clear();
+    _columnNames.clear();
+    _values.clear();
+    endRemoveRows();
+  }
 }
