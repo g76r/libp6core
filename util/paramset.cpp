@@ -205,7 +205,7 @@ QStringList ParamSet::splitAndEvaluate(QString rawValue,
         appendVariableValue(value, variable, inherit, context);
       } else {
         // % is used as an escape character, for '%', a separator or anything
-        value.append('%').append(c);
+        value.append(c);
       }
     } else if (separator.contains(c)) {
       if (!value.isEmpty())
