@@ -17,6 +17,12 @@
 #include <QString>
 //#include "log/log.h"
 
+/*
+ Examples of encoded passwords:
+ MDP=test; SALT=greg; echo -n $MDP$SALT|sha1sum| cut -f1 -d' '|(xxd -p -r; echo -n $SALT) |base64
+ KUbmLRQlC8vtgAavqEbbr2RfAXVncmVn
+ */
+
 class InMemoryAuthenticator::User {
   class Data : public QSharedData {
   public:
