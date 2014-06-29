@@ -17,6 +17,7 @@
 #include <QString>
 #include <QDateTime>
 #include <QtDebug>
+#include "relativedatetime.h"
 
 class ParamSetData : public QSharedData {
 public:
@@ -97,38 +98,47 @@ QString ParamSet::evaluate(QString rawValue, bool inherit,
 }
 
 static inline QString automaticValue(QString key) {
+  static QRegExp dateFunctionRE("!date(?:!([^!]+)(?:!([^!]+)(?:!([^!]+))?)?)?");
   if (key.at(0) == '!') {
-    if (key == "!yyyy") {
-      return QDateTime::currentDateTime().toString("yyyy");
-    } else if (key == "!mm") {
-      return QDateTime::currentDateTime().toString("MM");
-    } else if (key == "!dd") {
-      return QDateTime::currentDateTime().toString("dd");
-    } else if (key == "!HH") {
-      return QDateTime::currentDateTime().toString("hh");
-    } else if (key == "!MM") {
-      return QDateTime::currentDateTime().toString("mm");
-    } else if (key == "!SS") {
-      return QDateTime::currentDateTime().toString("ss");
-    } else if (key == "!NNN") {
-      return QDateTime::currentDateTime().toString("zzz");
-    } else if (key == "!8601") {
-      return QDateTime::currentDateTime().toString("yyyy-MM-ddThh:mm:ss,zzz");
-    } else if (key == "!8601Z") {
-      return QDateTime::currentDateTimeUtc()
-          .toString("yyyy-MM-ddThh:mm:ss,zzzZ");
-    } else if (key == "!s1970") {
-      return QString::number(
-            QDateTime::currentDateTime().toMSecsSinceEpoch()/1000);
-    } else if (key == "!ms1970") {
-      return QString::number(
-            QDateTime::currentDateTime().toMSecsSinceEpoch());
-    } else if (key == "!s1970Z") {
-      return QString::number(
-            QDateTime::currentDateTimeUtc().toMSecsSinceEpoch()/1000);
-    } else if (key == "!ms1970Z") {
-      return QString::number(
-            QDateTime::currentDateTimeUtc().toMSecsSinceEpoch());
+    if (key.startsWith("!date")) {
+      /* %!date function: %!date!format!relativedatetime!timezone
+       * format defaults to pseudo-iso-8601 "yyyy-MM-dd hh:mm:ss,zzz"
+       * relativedatetime defaults to current date time
+       * timezone defaults to local time
+       *
+       * examples:
+       * %!date
+       * %{!date!yyyy-MM-dd}
+       * %{!date!!-2days}
+       * %{!date!!!UTC}
+       * %{!date!hh:mm:ss,zzz!01-01T20:02-2w+1d!GMT}
+       */
+      QRegExp re = dateFunctionRE;
+      if (re.exactMatch(key)) {
+        QString format = re.cap(1).trimmed();
+        QString date = re.cap(2).trimmed().toLower();
+        QString timezone = re.cap(3).trimmed().toUpper();
+        // LATER handle more timezones, such as GMT+05:30
+        QDateTime dt = (timezone == "Z" || timezone == "GMT"
+                        || timezone == "UTC")
+            ? QDateTime::currentDateTimeUtc()
+            : QDateTime::currentDateTime();
+        RelativeDateTime rdt(date);
+        dt = rdt.apply(dt);
+        if (format.isEmpty()) {
+          return dt.toString("yyyy-MM-dd hh:mm:ss,zzz");
+        } else {
+          if (format == "ms1970") {
+            return QString::number(dt.toMSecsSinceEpoch());
+          } else if (format == "s1970") {
+            return QString::number(dt.toMSecsSinceEpoch()/1000);
+          } else {
+            return dt.toString(format);
+          }
+        }
+      } else {
+        //qDebug() << "%!date function invalid syntax:" << key;
+      }
     }
   }
   return QString();

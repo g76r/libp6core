@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,16 +11,15 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#define STANDARDFORMATS_CPP
-#include "standardformats.h"
+#include "timeformats.h"
 #include <QHash>
 #include <QString>
 #include <QRegExp>
 #include "log/log.h"
 
-Q_GLOBAL_STATIC(StandardFormats, standardFormatsInstance)
+Q_GLOBAL_STATIC(TimeFormats, timeFormatsInstance)
 
-class StandardFormatsPrivate {
+class TimeFormatsPrivate {
 public:
   QHash<QString,int> _fromDaysOfWeek3;
   QHash<int,QString> _toDaysOfWeek3;
@@ -29,10 +28,11 @@ public:
   // [english-day-of-week3,] day-of-month english-month-name3 year4 hour24:min:sec { {+|-}0000 | zone-name3 }
   // Wed   ,   1  Jan   2013   23:59:62+0400
   // Wed, 01 Jan 2013 23:59:62 GMT
-  QRegExp _rfc2822DateTime;
+  QRegExp _rfc2822DateTimeRE;
+  QRegExp _minusExprRE, _minusTermRE;
 
-  StandardFormatsPrivate()
-    : _rfc2822DateTime("(\\s*([a-zA-Z]{3})\\s*,)?" // day of week
+  TimeFormatsPrivate()
+    : _rfc2822DateTimeRE("(\\s*([a-zA-Z]{3})\\s*,)?" // day of week
                        "\\s*(\\d{1,2})\\s+([a-zA-Z]{3})\\s+(\\d{4})" // date
                        "\\s+(\\d{2}):(\\d{2}):(\\d{2})" // time
                        "\\s*(([+-]\\d{4})|([A-Z]{1,4}))" // timezone
@@ -80,18 +80,18 @@ public:
   }
 };
 
-StandardFormats::StandardFormats() {
-  d = new StandardFormatsPrivate;
+TimeFormats::TimeFormats() {
+  d = new TimeFormatsPrivate;
 }
 
-StandardFormatsPrivate *StandardFormats::instance() {
-  return standardFormatsInstance()->d;
+TimeFormatsPrivate *TimeFormats::instance() {
+  return timeFormatsInstance()->d;
 }
 
 // [english-day-of-week3,] day-of-month english-month-name3 year4 hour24:min:sec { {+|-}0000 | zone-name3 }
 // Wed   ,   1  Jan   2013   23:59:62+0400
 // Wed, 01 Jan 2013 23:59:62 GMT
-QString StandardFormats::toRfc2822DateTime(QDateTime dt) {
+QString TimeFormats::toRfc2822DateTime(QDateTime dt) {
   if (dt.isValid()) {
     if (dt.timeSpec() != Qt::UTC)
       dt = dt.toUTC();
@@ -107,9 +107,9 @@ QString StandardFormats::toRfc2822DateTime(QDateTime dt) {
     return QString();
 }
 
-QDateTime StandardFormats::fromRfc2822DateTime(QString rfc2822DateTime,
+QDateTime TimeFormats::fromRfc2822DateTime(QString rfc2822DateTime,
                                                QString &errorString) {
-  QRegExp re(instance()->_rfc2822DateTime);
+  QRegExp re(instance()->_rfc2822DateTimeRE);
   if (re.exactMatch(rfc2822DateTime)) {
     QString s = re.cap(2);
     int day, month, year, hours, minutes, seconds, tz;
@@ -179,7 +179,7 @@ QDateTime StandardFormats::fromRfc2822DateTime(QString rfc2822DateTime,
   return QDateTime();
 }
 
-QString StandardFormats::toCoarseHumanReadableTimeInterval(
+QString TimeFormats::toCoarseHumanReadableTimeInterval(
     qint64 msecs, bool absolute) {
   QString s(msecs < 0 && !absolute ? "-" : "");
   // LATER i18n
@@ -201,7 +201,7 @@ QString StandardFormats::toCoarseHumanReadableTimeInterval(
   return s;
 }
 
-QString StandardFormats::toCoarseHumanReadableRelativeDate(
+QString TimeFormats::toCoarseHumanReadableRelativeDate(
     QDateTime dt, QDateTime reference) {
   // LATER i18n
   qint64 msecs = reference.msecsTo(dt);
@@ -216,30 +216,30 @@ QString StandardFormats::toCoarseHumanReadableRelativeDate(
 }
 
 /*
-#include "util/standardformats.h"
+#include "util/timeformats.h"
 #include "log/log.h"
 int main(int argc, char *argv[]) {
   QCoreApplication a(argc, argv);
   QThread::currentThread()->setObjectName("MainThread");
   Log::addConsoleLogger(Log::Debug);
-  Log::fatal() << "result: " << StandardFormats::fromRfc2822DateTime(QString())
-               << " " << StandardFormats::toRfc2822DateTime(StandardFormats::fromRfc2822DateTime(QString()));
-  Log::fatal() << "result: " << StandardFormats::fromRfc2822DateTime("")
-               << " " << StandardFormats::toRfc2822DateTime(StandardFormats::fromRfc2822DateTime(""));
-  Log::fatal() << "result: " << StandardFormats::fromRfc2822DateTime("garbage")
-               << " " << StandardFormats::toRfc2822DateTime(StandardFormats::fromRfc2822DateTime("garbage"));
-  Log::fatal() << "result: " << StandardFormats::fromRfc2822DateTime(" Wed   ,   1  Jan   2013   23:40:62+0400")
-               << " " << StandardFormats::toRfc2822DateTime(StandardFormats::fromRfc2822DateTime(" Wed   ,   1  Jan   2013   23:40:62+0400"));
-  Log::fatal() << "result: " << StandardFormats::fromRfc2822DateTime("Wed, 01 Jan 2013 23:59:62 GMT")
-               << " " << StandardFormats::toRfc2822DateTime(StandardFormats::fromRfc2822DateTime("Wed, 01 Jan 2013 23:59:62 GMT"));
-  Log::fatal() << "result: " << StandardFormats::fromRfc2822DateTime("01 Jan 2013 23:59:62 GMT")
-               << " " << StandardFormats::toRfc2822DateTime(StandardFormats::fromRfc2822DateTime("01 Jan 2013 23:59:62 GMT"));
-  Log::fatal() << "result: " << StandardFormats::fromRfc2822DateTime("wEd, 01 JaN 2013 23:59:62+1200")
-               << " " << StandardFormats::toRfc2822DateTime(StandardFormats::fromRfc2822DateTime("wEd, 01 JaN 2013 23:59:62+1200"));
-  Log::fatal() << "result: " << StandardFormats::fromRfc2822DateTime("wEd, 01 JaN 2013 23:59:62+1201")
-               << " " << StandardFormats::toRfc2822DateTime(StandardFormats::fromRfc2822DateTime("wEd, 01 JaN 2013 23:59:62+1201"));
-  Log::fatal() << "result: " << StandardFormats::fromRfc2822DateTime("wEd, 01 JaN 2013 23:99:62 GMT")
-               << " " << StandardFormats::toRfc2822DateTime(StandardFormats::fromRfc2822DateTime("wEd, 01 JaN 2013 23:99:62 GMT"));
+  Log::fatal() << "result: " << TimeFormats::fromRfc2822DateTime(QString())
+               << " " << TimeFormats::toRfc2822DateTime(TimeFormats::fromRfc2822DateTime(QString()));
+  Log::fatal() << "result: " << TimeFormats::fromRfc2822DateTime("")
+               << " " << TimeFormats::toRfc2822DateTime(TimeFormats::fromRfc2822DateTime(""));
+  Log::fatal() << "result: " << TimeFormats::fromRfc2822DateTime("garbage")
+               << " " << TimeFormats::toRfc2822DateTime(TimeFormats::fromRfc2822DateTime("garbage"));
+  Log::fatal() << "result: " << TimeFormats::fromRfc2822DateTime(" Wed   ,   1  Jan   2013   23:40:62+0400")
+               << " " << TimeFormats::toRfc2822DateTime(TimeFormats::fromRfc2822DateTime(" Wed   ,   1  Jan   2013   23:40:62+0400"));
+  Log::fatal() << "result: " << TimeFormats::fromRfc2822DateTime("Wed, 01 Jan 2013 23:59:62 GMT")
+               << " " << TimeFormats::toRfc2822DateTime(TimeFormats::fromRfc2822DateTime("Wed, 01 Jan 2013 23:59:62 GMT"));
+  Log::fatal() << "result: " << TimeFormats::fromRfc2822DateTime("01 Jan 2013 23:59:62 GMT")
+               << " " << TimeFormats::toRfc2822DateTime(TimeFormats::fromRfc2822DateTime("01 Jan 2013 23:59:62 GMT"));
+  Log::fatal() << "result: " << TimeFormats::fromRfc2822DateTime("wEd, 01 JaN 2013 23:59:62+1200")
+               << " " << TimeFormats::toRfc2822DateTime(TimeFormats::fromRfc2822DateTime("wEd, 01 JaN 2013 23:59:62+1200"));
+  Log::fatal() << "result: " << TimeFormats::fromRfc2822DateTime("wEd, 01 JaN 2013 23:59:62+1201")
+               << " " << TimeFormats::toRfc2822DateTime(TimeFormats::fromRfc2822DateTime("wEd, 01 JaN 2013 23:59:62+1201"));
+  Log::fatal() << "result: " << TimeFormats::fromRfc2822DateTime("wEd, 01 JaN 2013 23:99:62 GMT")
+               << " " << TimeFormats::toRfc2822DateTime(TimeFormats::fromRfc2822DateTime("wEd, 01 JaN 2013 23:99:62 GMT"));
   ::usleep(100000); // give a chance for last asynchronous log writing
   return 0;
 }
@@ -267,7 +267,7 @@ int main(int argc, char *argv[]) {
 */
 
 /*
-#include "util/standardformats.h"
+#include "util/timeformats.h"
 #include "log/log.h"
 #include <QThread>
 #include <QCoreApplication>
@@ -275,17 +275,17 @@ int main(int argc, char *argv[]) {
   QCoreApplication a(argc, argv);
   QThread::currentThread()->setObjectName("MainThread");
   Log::addConsoleLogger(Log::Debug);
-  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime());
-  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(70));
-  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-3200));
-  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-322983));
-  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-3229839));
-  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-32298397));
-  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-322983972));
-  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-3229839728LL));
-  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-32298397284LL));
-  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-322983972842LL));
-  Log::fatal() << StandardFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-3229839728423LL));
+  Log::fatal() << TimeFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime());
+  Log::fatal() << TimeFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(70));
+  Log::fatal() << TimeFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-3200));
+  Log::fatal() << TimeFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-322983));
+  Log::fatal() << TimeFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-3229839));
+  Log::fatal() << TimeFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-32298397));
+  Log::fatal() << TimeFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-322983972));
+  Log::fatal() << TimeFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-3229839728LL));
+  Log::fatal() << TimeFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-32298397284LL));
+  Log::fatal() << TimeFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-322983972842LL));
+  Log::fatal() << TimeFormats::toCoarseHumanReadableRelativeDate(QDateTime::currentDateTime().addMSecs(-3229839728423LL));
   ::usleep(100000); // give a chance for last asynchronous log writing
   return 0;
 }

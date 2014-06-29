@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,23 +11,24 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef STANDARDFORMATS_H
-#define STANDARDFORMATS_H
+#ifndef TIMEFORMATS_H
+#define TIMEFORMATS_H
 
 #include "libqtssu_global.h"
 #include <QString>
 #include <QDateTime>
 
-class StandardFormatsPrivate;
+class TimeFormatsPrivate;
 
-class LIBQTSSUSHARED_EXPORT StandardFormats {
+/** Utilites to handle date/time formats. */
+class LIBQTSSUSHARED_EXPORT TimeFormats {
 private:
-  StandardFormatsPrivate *d;
-  static inline StandardFormatsPrivate *instance();
+  TimeFormatsPrivate *d;
+  static inline TimeFormatsPrivate *instance();
 
 public:
   /** Should never be called directly (only used for singleton init) */
-  StandardFormats();
+  TimeFormats();
   static QString toRfc2822DateTime(QDateTime dt);
   static QDateTime fromRfc2822DateTime(QString rfc2822DateTime,
                                        QString &errorString);
@@ -44,4 +45,4 @@ public:
       QDateTime dt, QDateTime reference = QDateTime::currentDateTime());
 };
 
-#endif // STANDARDFORMATS_H
+#endif // TIMEFORMATS_H

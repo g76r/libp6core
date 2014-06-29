@@ -16,7 +16,7 @@
 #include <QDir>
 #include "util/ioutils.h"
 #include <QtDebug>
-#include "util/standardformats.h"
+#include "util/timeformats.h"
 
 FilesystemHttpHandler::FilesystemHttpHandler(
     QObject *parent, const QString urlPathPrefix, const QString documentRoot) :
@@ -134,9 +134,9 @@ bool FilesystemHttpHandler::handleCacheHeadersAndSend304(
     else
       lastModified = info.lastModified().toUTC();
     if (lastModified.isValid())
-      res.setHeader("Last-Modified", StandardFormats::toRfc2822DateTime(
+      res.setHeader("Last-Modified", TimeFormats::toRfc2822DateTime(
                       lastModified));
-    QDateTime ifModifiedSince(StandardFormats::fromRfc2822DateTime(
+    QDateTime ifModifiedSince(TimeFormats::fromRfc2822DateTime(
                                 req.header("If-Modified-Since")).toUTC());
     // compare to If-Modified-Since +1" against rounding issues
     if (ifModifiedSince.isValid() && lastModified.isValid()

@@ -63,7 +63,7 @@ SOURCES += \
     textview/texttableview.cpp \
     log/qterrorcodes.cpp \
     textview/textmatrixmodel.cpp \
-    util/standardformats.cpp \
+    util/timeformats.cpp \
     httpd/httprequestcontext.cpp \
     httpd/pipelinehttphandler.cpp \
     httpd/basicauthhttphandler.cpp \
@@ -83,7 +83,8 @@ SOURCES += \
     modelview/shareduiitemtreeitem.cpp \
     modelview/shareduiitemsmodel.cpp \
     log/qtloglogger.cpp \
-    modelview/shareduiitemstreemodel.cpp
+    modelview/shareduiitemstreemodel.cpp \
+    util/relativedatetime.cpp
 
 
 HEADERS +=\
@@ -124,7 +125,7 @@ HEADERS +=\
     httpd/httpcommon.h \
     log/qterrorcodes.h \
     textview/textmatrixmodel.h \
-    util/standardformats.h \
+    util/timeformats.h \
     httpd/httprequestcontext.h \
     httpd/pipelinehttphandler.h \
     httpd/basicauthhttphandler.h \
@@ -145,7 +146,8 @@ HEADERS +=\
     modelview/shareduiitemtreeitem.h \
     modelview/shareduiitemsmodel.h \
     log/qtloglogger.h \
-    modelview/shareduiitemstreemodel.h
+    modelview/shareduiitemstreemodel.h \
+    util/relativedatetime.h
 
 unix {
     target.path = /usr/lib
