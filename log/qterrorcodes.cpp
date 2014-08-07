@@ -55,9 +55,19 @@ QString networkErrorAsString(QNetworkReply::NetworkError code) {
   case QNetworkReply::AuthenticationRequiredError:
     return QObject::tr("authentication required");
   case QNetworkReply::ContentReSendError:
-    return QObject::tr("content resend");
+      return QObject::tr("content resend");
+  case QNetworkReply::ContentConflictError:
+      return QObject::tr("content conflict");
+  case QNetworkReply::ContentGoneError:
+      return QObject::tr("content gone");
+  case QNetworkReply::InternalServerError:
+      return QObject::tr("internal server error");
+  case QNetworkReply::OperationNotImplementedError:
+      return QObject::tr("operation not implemented");
+  case QNetworkReply::ServiceUnavailableError:
+      return QObject::tr("service unavailable");
   case QNetworkReply::ProtocolUnknownError:
-    return QObject::tr("protocol unknown");
+      return QObject::tr("protocol unknown");
   case QNetworkReply::ProtocolInvalidOperationError:
     return QObject::tr("protocol invalid operation");
   case QNetworkReply::UnknownNetworkError:
@@ -66,9 +76,10 @@ QString networkErrorAsString(QNetworkReply::NetworkError code) {
     return QObject::tr("unknown proxy error");
   case QNetworkReply::UnknownContentError:
     return QObject::tr("unknown content error");
-   /* protocol */
   case QNetworkReply::ProtocolFailure:
     return QObject::tr("protocol failure");
+  case QNetworkReply::UnknownServerError:
+      return QObject::tr("unknown server error");
   }
-  return QObject::tr("unknown error");
+  return QObject::tr("unknown error %d").arg(code);
 }
