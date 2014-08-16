@@ -147,7 +147,8 @@ HEADERS +=\
     modelview/shareduiitemsmodel.h \
     log/qtloglogger.h \
     modelview/shareduiitemstreemodel.h \
-    util/relativedatetime.h
+    util/relativedatetime.h \
+    util/twothreadscircularbuffer.h
 
 unix {
     target.path = /usr/lib
