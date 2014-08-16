@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,8 +23,8 @@ class QThread;
 
 class LIBQTSSUSHARED_EXPORT FileLogger : public Logger {
   Q_OBJECT
+  Q_DISABLE_COPY(FileLogger)
   QIODevice *_device;
-  QThread *_thread;
   QString _pathPattern, _currentPath;
   QDateTime _lastOpen;
   int _secondsReopenInterval;
@@ -44,8 +44,7 @@ public:
   QString pathPattern() const;
 
 protected:
-  void doLog(QDateTime timestamp, QString message, Log::Severity severity,
-             QString task, QString execId, QString sourceCode);
+  void doLog(const LogEntry entry);
 };
 
 #endif // FILELOGGER_H

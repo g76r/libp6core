@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,15 +11,17 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "memorylogger.h"
-#include "logmodel.h"
-#include <QMetaObject>
+#include "loggerthread.h"
 
-MemoryLogger::MemoryLogger(Log::Severity minSeverity, LogModel *logmodel)
-  : Logger(minSeverity, false), _model(logmodel) {
+LoggerThread::LoggerThread(QObject *parent, Logger *logger)
+  : QThread(parent), _logger(logger) {
 }
 
-void MemoryLogger::doLog(const LogEntry entry) {
-  QMetaObject::invokeMethod(_model, "prependLogEntry",
-                            Q_ARG(Logger::LogEntry, entry));
+void LoggerThread::run() {
+  forever {
+    Logger::LogEntry le = _logger->_buffer.get();
+    if (le.isNull()) // this is a stop message from producer thread
+      break;
+    _logger->doLog(le);
+  }
 }

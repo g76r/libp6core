@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -12,98 +12,57 @@
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "log.h"
-#include "filelogger.h"
+#include "multiplexerlogger.h"
 #include <QList>
 #include <QString>
 #include <QDateTime>
 #include <QRegExp>
 #include <QThread>
-#include <QMutex>
-#include <QFile>
-#include "util/ioutils.h"
-#include "qtloglogger.h"
 
-static QList<Logger*> _loggers;
-static QMutex _loggersMutex;
+Q_GLOBAL_STATIC(MultiplexerLogger, _rootLogger)
 
-void Log::addConsoleLogger(Severity severity, bool removable) {
-  QFile *console = new QFile;
-  console->open(1, QIODevice::WriteOnly|QIODevice::Unbuffered);
-  FileLogger *logger = new FileLogger(console, severity);
-  Log::addLogger(logger, removable);
+static inline MultiplexerLogger *rootLogger() { return _rootLogger(); }
+
+void Log::addLogger(Logger *logger, bool autoRemovable) {
+  rootLogger()->addLogger(logger, autoRemovable);
 }
 
-void Log::addQtLogger(Severity severity, bool removable) {
-  QtLogLogger *logger = new QtLogLogger(severity);
-  Log::addLogger(logger, removable);
+void Log::removeLogger(Logger *logger) {
+  rootLogger()->removeLogger(logger);
 }
 
-void Log::addLogger(Logger *logger, bool removable) {
-  QMutexLocker locker(&_loggersMutex);
-  if (logger) {
-    logger->_removable = removable;
-    // LATER provide an option to enable Qt's standard log interception
-    // drawbacks:
-    // - Qt's log is synchronous (no writer thread) and thus intercepting it
-    //   would change the behavior (log order, even missing log entries on
-    //   crash)
-    // - qFatal() expect the program to write a log and shutdown, which is not
-    //   easy to reproduce here
-    //if (_loggers.isEmpty())
-    //  qInstallMsgHandler(Log::logMessageHandler);
-    _loggers.append(logger);
-  }
+void Log::addConsoleLogger(Severity severity, bool autoRemovable) {
+  rootLogger()->addConsoleLogger(severity, autoRemovable);
 }
 
-void Log::clearLoggers() {
+void Log::addQtLogger(Severity severity, bool autoRemovable) {
+  rootLogger()->addQtLogger(severity, autoRemovable);
+}
+
+/*void Log::removeLoggers() {
   QMutexLocker locker(&_loggersMutex);
   foreach(Logger *logger, _loggers)
-    if (logger->_removable) {
+    if (logger->_autoRemovable) {
       logger->deleteLater();
       _loggers.removeOne(logger);
     }
-}
+}*/
 
 void Log::replaceLoggers(Logger *newLogger) {
-  QList<Logger*> newLoggers;
-  if (newLogger)
-    newLoggers.append(newLogger);
-  replaceLoggers(newLoggers);
+  rootLogger()->replaceLoggers(newLogger);
 }
 
 void Log::replaceLoggers(QList<Logger*> newLoggers) {
-  QMutexLocker locker(&_loggersMutex);
-  foreach(Logger *logger, _loggers)
-    if (logger->_removable) {
-      logger->deleteLater();
-      _loggers.removeOne(logger);
-    }
-  //if (newLoggers.isEmpty())
-  //  qInstallMsgHandler(0);
-  foreach (Logger *logger, newLoggers)
-    _loggers.append(logger);
+  rootLogger()->replaceLoggers(newLoggers);
 }
 
 void Log::replaceLoggersPlusConsole(Log::Severity consoleLoggerSeverity,
                                     QList<Logger*> newLoggers) {
-  QMutexLocker locker(&_loggersMutex);
-  foreach(Logger *logger, _loggers)
-    if (logger->_removable) {
-      logger->deleteLater();
-      _loggers.removeOne(logger);
-    }
-  QFile *console = new QFile;
-  console->open(1, QIODevice::WriteOnly|QIODevice::Unbuffered);
-  FileLogger *logger = new FileLogger(console, consoleLoggerSeverity);
-  logger->_removable = true;
-  _loggers.append(logger);
-  foreach (Logger *logger, newLoggers)
-    _loggers.append(logger);
+  rootLogger()->replaceLoggersPlusConsole(consoleLoggerSeverity, newLoggers);
 }
 
 void Log::log(QString message, Severity severity, QString task, QString execId,
               QString sourceCode) {
-  QDateTime now = QDateTime::currentDateTime();
   QString realTask(task);
   if (realTask.isNull()) {
     QThread *t(QThread::currentThread());
@@ -113,9 +72,9 @@ void Log::log(QString message, Severity severity, QString task, QString execId,
   realTask = realTask.isEmpty() ? "?" : sanitize(realTask);
   QString realExecId = execId.isEmpty() ? "0" : sanitize(execId);
   QString realSourceCode = sourceCode.isEmpty() ? ":" : sanitize(sourceCode);
-  QMutexLocker locker(&_loggersMutex);
-  foreach (Logger *logger, _loggers)
-    logger->log(now, message, severity, realTask, realExecId, realSourceCode);
+  QDateTime now = QDateTime::currentDateTime();
+  rootLogger()->log(Logger::LogEntry(now, message, severity, realTask,
+                                     realExecId, realSourceCode));
 }
 
 QString Log::severityToString(Severity severity) {
@@ -167,7 +126,7 @@ QString Log::sanitize(QString string) {
   return s;
 }
 
-void Log::logMessageHandler(QtMsgType type, const char *msg) {
+/*void Log::logMessageHandler(QtMsgType type, const char *msg) {
   switch (type) {
   case QtDebugMsg:
     Log::log(msg, Log::Debug);
@@ -182,55 +141,16 @@ void Log::logMessageHandler(QtMsgType type, const char *msg) {
     Log::log(msg, Log::Fatal);
     // LATER shutdown process because default Qt message handler does shutdown
   }
-}
+}*/
 
 QString Log::pathToLastFullestLog() {
-  // LATER avoid locking here whereas right logger won't change often
-  QMutexLocker locker(&_loggersMutex);
-  int severity = Fatal+1;
-  QString path;
-  foreach(Logger *logger, _loggers) {
-    if (logger->minSeverity() < severity) {
-      QString p = logger->currentPath();
-      if (!p.isEmpty()) {
-        if (severity == Debug)
-          return p;
-        path = p;
-        severity = logger->minSeverity();
-      }
-    }
-  }
-  return path;
+  return rootLogger()->pathToLastFullestLog();
 }
 
 QStringList Log::pathsToFullestLogs() {
-  // LATER avoid locking here whereas right logger won't change often
-  QMutexLocker locker(&_loggersMutex);
-  int severity = Fatal+1;
-  QString path;
-  foreach(Logger *logger, _loggers) {
-    if (logger->minSeverity() < severity) {
-      QString p = logger->pathMathchingPattern();
-      if (!p.isEmpty()) {
-        if (severity == Debug) {
-          return IOUtils::findFiles(p);
-        }
-        path = p;
-        severity = logger->minSeverity();
-      }
-    }
-  }
-  return IOUtils::findFiles(path);
+  return rootLogger()->pathsToFullestLogs();
 }
 
 QStringList Log::pathsToAllLogs() {
-  // LATER avoid locking here whereas loggers list won't change often
-  QMutexLocker locker(&_loggersMutex);
-  QStringList paths;
-  foreach(Logger *logger, _loggers) {
-    QString p = logger->pathMathchingPattern();
-    if (!p.isEmpty())
-      paths.append(p);
-  }
-  return IOUtils::findFiles(paths);
+  return rootLogger()->pathsToAllLogs();
 }

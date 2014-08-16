@@ -14,34 +14,27 @@
 #include "qtloglogger.h"
 #include <QtDebug>
 
-QtLogLogger::QtLogLogger(QObject *parent)
-  : Logger(0) {
-  Q_UNUSED(parent)
+QtLogLogger::QtLogLogger(Log::Severity minSeverity)
+  : Logger(minSeverity, false) {
 }
 
-QtLogLogger::QtLogLogger(Log::Severity minSeverity, QObject *parent)
-  : Logger(0, minSeverity) {
-  Q_UNUSED(parent)
-}
-
-void QtLogLogger::doLog(QDateTime timestamp, QString message,
-                        Log::Severity severity,
-                        QString task, QString execId,
-                        QString sourceCode) {
+void QtLogLogger::doLog(const LogEntry entry) {
   QString header = QString("%1 %2/%3 %4 %5")
-      .arg(timestamp.toString("yyyy-MM-ddThh:mm:ss,zzz")).arg(task)
-      .arg(execId).arg(sourceCode).arg(Log::severityToString(severity));
-  switch(severity) {
+      .arg(entry.timestamp().toString("yyyy-MM-ddThh:mm:ss,zzz"))
+      .arg(entry.task()).arg(entry.execId()).arg(entry.sourceCode())
+      .arg(entry.severityText());
+  // LATER try to use QLoggingCategory e.g. using task as a category
+  switch(entry.severity()) {
   case Log::Debug:
   case Log::Info:
-    qDebug() << header << message;
+    qDebug() << header << entry.message();
     break;
   case Log::Warning:
   case Log::Error:
-    qWarning() << header << message;
+    qWarning() << header << entry.message();
     break;
   case Log::Fatal:
-    qCritical() << header << message;
+    qCritical() << header << entry.message();
     break;
   }
 }

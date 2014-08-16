@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -12,72 +12,33 @@
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "logmodel.h"
-
-class LogModel::LogEntryData : public QSharedData {
-public:
-  QString _timestamp, _message;
-  Log::Severity _severity;
-  QString _task, _execId, _sourceCode;
-  LogEntryData(QDateTime timestamp, QString message, Log::Severity severity,
-               QString task, QString execId, QString sourceCode)
-    : _timestamp(timestamp.toString("yyyy-MM-dd hh:mm:ss,zzz")),
-      _message(message), _severity(severity), _task(task), _execId(execId),
-      _sourceCode(sourceCode) { }
-};
-
-LogModel::LogEntry::LogEntry(QDateTime timestamp, QString message,
-                             Log::Severity severity, QString task,
-                             QString execId, QString sourceCode)
-  : d(new LogEntryData(timestamp, message, severity, task, execId,
-                       sourceCode)) { }
-
-LogModel::LogEntry::LogEntry() {
-}
-
-LogModel::LogEntry::LogEntry(const LogModel::LogEntry &o) : d(o.d) {
-}
-
-LogModel::LogEntry::~LogEntry() {
-}
-
-LogModel::LogEntry &LogModel::LogEntry::operator=(const LogModel::LogEntry &o) {
-  d = o.d;
-  return *this;
-}
-
-QString LogModel::LogEntry::timestamp() const {
-  return d ? d->_timestamp : QString();
-}
-
-QString LogModel::LogEntry::message() const {
-  return d ? d->_message : QString();
-}
-
-Log::Severity LogModel::LogEntry::severity() const {
-  return d ? d->_severity : Log::Debug;
-}
-
-QString LogModel::LogEntry::severityText() const {
-  return Log::severityToString(d ? d->_severity : Log::Debug);
-}
-
-QString LogModel::LogEntry::task() const {
-  return d ? d->_task : QString();
-}
-
-QString LogModel::LogEntry::execId() const {
-  return d ? d->_execId : QString();
-}
-
-QString LogModel::LogEntry::sourceCode() const {
-  return d ? d->_sourceCode : QString();
-}
-
-LogModel::LogModel(QObject *parent, int maxrows) : QAbstractListModel(parent),
-  _maxrows(maxrows) {
-}
+#include "memorylogger.h"
 
 #define COLUMNS 6
+
+LogModel::LogModel(QObject *parent, Log::Severity minSeverity, int maxrows)
+  : QAbstractListModel(parent), _maxrows(maxrows),
+    _logger(new MemoryLogger(minSeverity, this)) {
+  Log::addLogger(_logger, false);
+}
+
+LogModel::LogModel(Log::Severity minSeverity, int maxrows)
+  : QAbstractListModel(0), _maxrows(maxrows),
+    _logger(new MemoryLogger(minSeverity, this)) {
+  Log::addLogger(_logger, false);
+}
+
+LogModel::LogModel(QObject *parent, int maxrows)
+  : QAbstractListModel(parent), _maxrows(maxrows), _logger(0) {
+}
+
+LogModel::LogModel(int maxrows) : QAbstractListModel(0), _maxrows(maxrows) {
+}
+
+LogModel::~LogModel() {
+  if (_logger)
+    Log::removeLogger(_logger);
+}
 
 int LogModel::rowCount(const QModelIndex &parent) const {
   Q_UNUSED(parent)
@@ -91,12 +52,12 @@ int LogModel::columnCount(const QModelIndex &parent) const {
 
 QVariant LogModel::data(const QModelIndex &index, int role) const {
   if (index.isValid() && index.row() >= 0 && index.row() < _log.size()) {
-    LogEntry le = _log[index.row()];
+    Logger::LogEntry le = _log[index.row()];
     switch(role) {
     case Qt::DisplayRole:
       switch(index.column()) {
       case 0:
-        return le.timestamp();
+        return le.timestamp().toString("yyyy-MM-dd hh:mm:ss,zzz");
       case 1:
         return le.task();
       case 2:
@@ -137,11 +98,9 @@ QVariant LogModel::headerData(int section, Qt::Orientation orientation,
   return QVariant();
 }
 
-void LogModel::log(QDateTime timestamp, QString message, Log::Severity severity,
-                   QString task, QString execId, QString sourceCode) {
+void LogModel::prependLogEntry(Logger::LogEntry entry) {
   beginInsertRows(QModelIndex(), 0, 0);
-  _log.prepend(LogEntry(timestamp, message, severity, task, execId,
-                        sourceCode));
+  _log.prepend(entry);
   endInsertRows();
   if (_log.size() > _maxrows) {
     beginRemoveRows(QModelIndex(), _maxrows, _maxrows);

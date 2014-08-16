@@ -84,7 +84,9 @@ SOURCES += \
     modelview/shareduiitemsmodel.cpp \
     log/qtloglogger.cpp \
     modelview/shareduiitemstreemodel.cpp \
-    util/relativedatetime.cpp
+    util/relativedatetime.cpp \
+    log/loggerthread.cpp \
+    log/multiplexerlogger.cpp
 
 
 HEADERS +=\
@@ -148,6 +150,8 @@ HEADERS +=\
     log/qtloglogger.h \
     modelview/shareduiitemstreemodel.h \
     util/relativedatetime.h \
+    log/loggerthread.h \
+    log/multiplexerlogger.h \
     util/twothreadscircularbuffer.h
 
 unix {

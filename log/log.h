@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -30,21 +30,33 @@ class LogHelper;
 class LIBQTSSUSHARED_EXPORT Log {
 public:
   enum Severity { Debug, Info, Warning, Error, Fatal };
-  /** Add a new logger. Takes the ownership of the logger (= will delete it). */
-  static void addLogger(Logger *logger, bool removable = true);
+  /** Add a new logger.
+   * Takes the ownership of the logger (= will delete it).
+   *
+   * Autoremovable loggers are loggers that will be automaticaly removed by
+   * methods such replaceLoggers(). It is convenient to mark as autoremovable
+   * the user-defined loggers and as non-autoremovable some hard-wired base
+   * loggers such as a ConsoleLogger, that way replaceLoggers() is able to
+   * change configuration on the fly without loosing any log entry on the
+   * hard-wired loggers and the configuration code does not have to recreate/
+   * remember the hard-wired loggers. */
+  static void addLogger(Logger *logger, bool autoRemovable = true);
+  /** Remove a logger (and delete it), even if it is not autoremovable. */
+  static void removeLogger(Logger *logger);
   /** Add a logger to stdout. */
   static void addConsoleLogger(Log::Severity severity = Log::Warning,
-                               bool removable = false);
+                               bool autoRemovable = false);
   /** Add a logger to Qt's log framework. */
   static void addQtLogger(Log::Severity severity = Log::Warning,
-                          bool removable = false);
-  /** Remove all loggers. */
-  static void clearLoggers();
-  /** Remove all loggers and replace them with a new one. */
+                          bool autoRemovable = false);
+  /** Remove loggers that are autoremovable. */
+  //static void removeLoggers();
+  /** Remove loggers that are autoremovable and replace them with a new one. */
   static void replaceLoggers(Logger *newLogger);
-  /** Remove all loggers and replace them with new ones. */
+  /** Remove loggers that are autoremovable and replace them with new ones. */
   static void replaceLoggers(QList<Logger*> newLoggers);
-  /** Remove all loggers and replace them with new ones plus a console logger.*/
+  /** Remove loggers that are autoremovable and replace them with new ones
+   * plus a console logger.*/
   static void replaceLoggersPlusConsole(Log::Severity consoleLoggerSeverity,
                                         QList<Logger*> newLoggers);
   static void log(QString message, Severity severity = Info,
@@ -58,7 +70,7 @@ public:
    * Unmatched letters ar interpreted as Log::Debug, therefore "D", "Debug",
    * or even "Global Warming" and "" are all interpreted as Log::Debug. */
   static Log::Severity severityFromString(QString string);
-  static void logMessageHandler(QtMsgType type, const char *msg);
+  //static void logMessageHandler(QtMsgType type, const char *msg);
   static inline LogHelper log(Log::Severity severity,
                               QString task = QString(),
                               QString execId = QString(),

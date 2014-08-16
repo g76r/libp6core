@@ -18,10 +18,10 @@
 
 class QtLogLogger : public Logger {
   Q_OBJECT
+  Q_DISABLE_COPY(QtLogLogger)
 public:
-  explicit QtLogLogger(QObject *parent = 0);
-  explicit QtLogLogger(Log::Severity minSeverity, QObject *parent = 0);
-  void doLog(QDateTime timestamp, QString message, Log::Severity severity, QString task, QString execId, QString sourceCode);
+  explicit QtLogLogger(Log::Severity minSeverity = Log::Info);
+  void doLog(const LogEntry entry);
 };
 
 #endif // QTLOGLOGGER_H

@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,24 +15,23 @@
 #define MEMORYLOGGER_H
 
 #include "logger.h"
-#include "logmodel.h"
 
-/** Logger logging into a LogModel
+class LogModel;
+
+/** Logger used internaly by LogModel.
  * @see LogModel */
 class LIBQTSSUSHARED_EXPORT MemoryLogger : public Logger {
+  friend class LogModel;
   Q_OBJECT
   Q_DISABLE_COPY(MemoryLogger)
   LogModel *_model;
 
-public:
-  explicit MemoryLogger(QObject *parent = 0,
-                        Log::Severity minSeverity = Log::Info,
-                        int maxrows = 100);
-  LogModel *model() { return _model; }
-  
+  // only LogModel can create a MemoryLogger object, ensuring they share the
+  // same thread, therefore the constructor must not be public
+  MemoryLogger(Log::Severity minSeverity, LogModel *logmodel);
+
 protected:
-  void doLog(QDateTime timestamp, QString message, Log::Severity severity,
-             QString task, QString execId, QString sourceCode);
+  void doLog(const LogEntry entry);
 };
 
 #endif // MEMORYLOGGER_H

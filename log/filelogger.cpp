@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,17 +20,12 @@
 
 FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity,
                        bool buffered)
-  : Logger(0, minSeverity), _device(0), _thread(new QThread),
-    _buffered(buffered) {
+  : Logger(minSeverity, true), _device(0), _buffered(buffered) {
   //qDebug() << "creating FileLogger from device" << device;
   _device = device;
-  _device->setParent(this);
-  connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
-  connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
-  _thread->setObjectName("FileLogger-"+Log::severityToString(minSeverity)
-                         +"-"+QString::number((long)this, 16));
-  _thread->start();
-  moveToThread(_thread);
+  /*qDebug() << "FileLogger::FileLoger" << this->thread() << _device->thread()
+           << QThread::currentThread();
+  qDebug() << "/FileLogger::setParent";*/
   if (!_device->isOpen()) {
     if (!_device->open(_buffered ? QIODevice::WriteOnly|QIODevice::Append
                        : QIODevice::WriteOnly|QIODevice::Append
@@ -45,19 +40,15 @@ FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity,
 
 FileLogger::FileLogger(QString pathPattern, Log::Severity minSeverity,
                        int secondsReopenInterval, bool buffered)
-  : Logger(0, minSeverity), _device(0), _thread(new QThread(0)),
+  : Logger(minSeverity, true), _device(0),
     _pathPattern(pathPattern), _lastOpen(QDateTime::currentDateTime()),
     _secondsReopenInterval(secondsReopenInterval), _buffered(buffered) {
-  connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
-  connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
-  _thread->setObjectName("FileLogger-"+Log::severityToString(minSeverity)
-                         +"-"+QString::number((long)this, 16));
-  _thread->start();
-  moveToThread(_thread);
   //qDebug() << "creating FileLogger from path" << path << _currentPath;
 }
 
 FileLogger::~FileLogger() {
+  if (_device)
+    delete _device;
 }
 
 QString FileLogger::currentPath() const {
@@ -68,10 +59,7 @@ QString FileLogger::pathPattern() const {
   return _pathPattern;
 }
 
-void FileLogger::doLog(QDateTime timestamp, QString message,
-                       Log::Severity severity,
-                       QString task, QString execId,
-                       QString sourceCode) {
+void FileLogger::doLog(const LogEntry entry) {
   if (!_pathPattern.isEmpty()
       && (_device == 0 || _lastOpen.secsTo(QDateTime::currentDateTime())
           > _secondsReopenInterval)) {
@@ -95,9 +83,9 @@ void FileLogger::doLog(QDateTime timestamp, QString message,
   }
   if (_device) {
     QString line = QString("%1 %2/%3 %4 %5 %6")
-        .arg(timestamp.toString("yyyy-MM-ddThh:mm:ss,zzz")).arg(task)
-        .arg(execId).arg(sourceCode).arg(Log::severityToString(severity))
-        .arg(message).append('\n');
+        .arg(entry.timestamp().toString("yyyy-MM-ddThh:mm:ss,zzz"))
+        .arg(entry.task()).arg(entry.execId()).arg(entry.sourceCode())
+        .arg(entry.severityText()).arg(entry.message()).append('\n');
     //qDebug() << "***log" << line;
     QByteArray ba = line.toUtf8();
     if (_device->write(ba) != ba.size()) {

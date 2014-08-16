@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,34 +18,95 @@
 #include "log.h"
 #include <QDateTime>
 #include "util/paramset.h"
+#include "util/twothreadscircularbuffer.h"
+#include <QThread>
 
+class MultiplexerLogger;
+class LoggerThread;
+
+/** Base class to be extended by logger implementations.
+ * Handle common behavior to all loggers, including optionnaly a
+ * queuing mechanism using a dedicated thread intended for loggers that
+ * may block (filesystem, network...). */
 class LIBQTSSUSHARED_EXPORT Logger : public QObject {
-  friend class Log;
-  Q_OBJECT
-  Q_DISABLE_COPY(Logger)
-  Log::Severity _minSeverity;
-  bool _removable;
+  friend class MultiplexerLogger;
+  friend class LoggerThread;
 
 public:
-  explicit Logger(QObject *parent = 0, Log::Severity minSeverity = Log::Info);
+  class LogEntryData;
+  class LogEntry {
+    QSharedPointer<LogEntryData> d;
+  public:
+    LogEntry(QDateTime timestamp, QString message, Log::Severity severity,
+             QString task, QString execId, QString sourceCode);
+    LogEntry();
+    LogEntry(const LogEntry &o);
+    ~LogEntry();
+    LogEntry &operator=(const LogEntry &o);
+    bool isNull() const;
+    QDateTime timestamp() const;
+    QString message() const;
+    Log::Severity severity() const;
+    QString severityText() const;
+    QString task() const;
+    QString execId() const;
+    QString sourceCode() const;
+  };
+
+private:
+  Q_OBJECT
+  Q_DISABLE_COPY(Logger)
+  QThread *_thread;
+  Log::Severity _minSeverity;
+  bool _autoRemovable;
+  QAtomicInt _bufferOverflown;
+  TwoThreadsCircularBuffer<LogEntry> _buffer;
+
+public:
+  // Loggers never have a parent (since they are owned and destroyed by Log
+  // static methods)
+  Logger(Log::Severity minSeverity, bool dedicatedThread);
   /** This method is thread-safe. */
-  void log(QDateTime timestamp, QString message, Log::Severity severity,
-           QString task, QString execId, QString sourceCode);
+  inline void log(LogEntry entry) {
+    // this method must be callable from any thread, whereas the logger
+    // implementation may not be threadsafe and/or may need a protection
+    // against i/o latency: slow disk, NFS stall (for those fool enough to
+    // write logs over NFS), etc.
+    if (entry.severity() >= _minSeverity) {
+      if (_thread) {
+        if (!_buffer.tryPut(entry)) {
+          // warn only once in the Logger lifetime
+          if (_bufferOverflown.fetchAndStoreOrdered(1) == 0)
+            qWarning() << "Logger::log discarded at less one log entry due to "
+                          "thread buffer full" << this;
+        }
+      } else
+        doLog(entry);
+    }
+  }
+  /** Return current logging path, e.g. "/var/log/qron-20181231.log"
+   * To be used by implementation only when relevant.
+   * Default: QString() */
   virtual QString currentPath() const;
-  /** Return the path pattern, e.g. "/var/log/qron-%!yyyy%!mm%!dd.log" */
+  /** Return the path pattern, e.g. "/var/log/qron-%!yyyy%!mm%!dd.log"
+   * To be used by implementation only when relevant.
+   * Default: same as currentPath() */
   virtual QString pathPattern() const;
   /** Return the path regexp pattern, e.g. "/var/log/qron-.*\\.log" */
-  inline QString pathMathchingPattern() const {
+  QString pathMathchingPattern() const {
     return ParamSet::matchingPattern(pathPattern()); }
   /** Return the path regexp pattern, e.g. "/var/log/qron-.*\\.log" */
-  inline QRegExp pathMatchingRegexp() const {
+  QRegExp pathMatchingRegexp() const {
     return ParamSet::matchingRegexp(pathPattern()); }
   Log::Severity minSeverity() const { return _minSeverity; }
+  void stopDedicatedThread();
 
 protected:
-  Q_INVOKABLE virtual void doLog(QDateTime timestamp, QString message,
-                                 Log::Severity severity, QString task,
-                                 QString execId, QString sourceCode) = 0;
+  /** Method to be implemented by the actual logger.
+   * Either the Logger must be created with dedicatedThread = true or this
+   * method must be threadsafe (= able to handle calls from any thread at any
+   * time). */
+  virtual void doLog(const LogEntry entry) = 0;
 };
 
 #endif // LOGGER_H
