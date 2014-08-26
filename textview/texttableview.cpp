@@ -33,6 +33,24 @@ void TextTableView::setModel(QAbstractItemModel *model) {
   resetAll();
 }
 
+void TextTableView::setItemDelegate(TextViewItemDelegate *delegate) {
+  TextView::setItemDelegate(delegate);
+  updateHeaderAndFooterCache();
+}
+
+void TextTableView::setItemDelegateForColumn(
+    int column, TextViewItemDelegate *delegate) {
+  TextView::setItemDelegateForColumn(column, delegate);
+  updateHeaderAndFooterCache();
+
+}
+
+void TextTableView::setItemDelegateForRow(
+    int row, TextViewItemDelegate *delegate) {
+  TextView::setItemDelegateForRow(row, delegate);
+  updateHeaderAndFooterCache();
+}
+
 QString TextTableView::text(ParamsProvider *params, QString scope) const {
   Q_UNUSED(scope)
   QString v;

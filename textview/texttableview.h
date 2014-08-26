@@ -69,6 +69,9 @@ public:
    * Default: "..." */
   virtual void setEllipsePlaceholder(QString rawText = "...");
   void setModel(QAbstractItemModel *model);
+  void setItemDelegate(TextViewItemDelegate *delegate);
+  void setItemDelegateForColumn(int column, TextViewItemDelegate *delegate);
+  void setItemDelegateForRow(int row, TextViewItemDelegate *delegate);
 
 protected:
   QList<int> effectiveColumnIndexes() const { return _effectiveColumnIndexes; }

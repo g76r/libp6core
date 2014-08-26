@@ -49,11 +49,11 @@ public slots:
   /** Connect to a given model */
   virtual void setModel(QAbstractItemModel *model);
   QAbstractItemModel *model() const { return _model; }
-  void setItemDelegate(TextViewItemDelegate *delegate);
+  virtual void setItemDelegate(TextViewItemDelegate *delegate);
   TextViewItemDelegate *itemDelegate() const;
-  void setItemDelegateForColumn(int column, TextViewItemDelegate *delegate);
+  virtual void setItemDelegateForColumn(int column, TextViewItemDelegate *delegate);
   TextViewItemDelegate *itemDelegateForColumn(int column) const;
-  void setItemDelegateForRow(int row, TextViewItemDelegate *delegate);
+  virtual void setItemDelegateForRow(int row, TextViewItemDelegate *delegate);
   TextViewItemDelegate *itemDelegateForRow(int row) const;
   /** Provide the text view of the model, e.g. a HTML string that can be pasted
    * within a HTML page body, a JSON document or an ASCII art string for a
