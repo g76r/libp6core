@@ -51,7 +51,7 @@ void SharedUiItemsTableModel::updateItem(SharedUiItem item) {
   for (int row = 0; row < _items.size(); ++row) {
     if (_items[row].id() == item.id()) {
       _items[row] = item;
-      emit dataChanged(index(row, 0), index(row, rowCount(QModelIndex())));
+      emit dataChanged(index(row, 0), index(row, columnCount(QModelIndex())-1));
     }
   }
 }
@@ -61,7 +61,7 @@ void SharedUiItemsTableModel::renameItem(SharedUiItem item, QString oldId) {
   for (int row = 0; row < _items.size(); ++row) {
     if (_items[row].id() == oldId) {
       _items[row] = item;
-      emit dataChanged(index(row, 0), index(row, rowCount(QModelIndex())));
+      emit dataChanged(index(row, 0), index(row, columnCount(QModelIndex())-1));
     }
   }
 }

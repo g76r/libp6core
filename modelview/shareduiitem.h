@@ -66,6 +66,7 @@ public:
       d = other.d;
     return *this; }
   bool isNull() const { return !d; }
+  // FIXME virtual outside shared = antipattern
   virtual QVariant uiHeaderData(int section, int role) const;
   /** Syntaxic sugar. */
   QString uiHeaderString(int section, int role = Qt::DisplayRole) const {
