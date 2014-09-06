@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -49,11 +49,26 @@ public slots:
   /** Connect to a given model */
   virtual void setModel(QAbstractItemModel *model);
   QAbstractItemModel *model() const { return _model; }
-  virtual void setItemDelegate(TextViewItemDelegate *delegate);
+  /** Set global (not row or column-related) item delegate.
+   * Any existing global delegate will be removed,
+   * but not deleted. Does not take ownership of delegate.
+   * @see QAbstractItemView::setItemDelegate() */
+  void setItemDelegate(TextViewItemDelegate *delegate);
+  /** @return delegate global delegate, or 0. */
   TextViewItemDelegate *itemDelegate() const;
-  virtual void setItemDelegateForColumn(int column, TextViewItemDelegate *delegate);
+  /** Set item delegate for a given column.
+   * Any existing delegate for this column will be removed,
+   * but not deleted. Does not take ownership of delegate.
+   * @see QAbstractItemView::setItemDelegateForColumn() */
+  void setItemDelegateForColumn(int column, TextViewItemDelegate *delegate);
+  /** @return delegate for this column, or 0. */
   TextViewItemDelegate *itemDelegateForColumn(int column) const;
-  virtual void setItemDelegateForRow(int row, TextViewItemDelegate *delegate);
+  /** Set item delegate for a given row.
+   * Any existing delegate for this row will be removed,
+   * but not deleted. Does not take ownership of delegate.
+   * @see QAbstractItemView::setItemDelegateForRow() */
+  void setItemDelegateForRow(int row, TextViewItemDelegate *delegate);
+  /** @return delegate for this row, or 0. */
   TextViewItemDelegate *itemDelegateForRow(int row) const;
   /** Provide the text view of the model, e.g. a HTML string that can be pasted
    * within a HTML page body, a JSON document or an ASCII art string for a
@@ -108,12 +123,16 @@ protected slots:
                             int destinationColumn);
 
 protected:
-  TextViewItemDelegate *cellItemDelegate(int row, int column) const {
+  /** @return delegate for this row, or this column, or global delegate, or 0 */
+  TextViewItemDelegate *itemDelegateForCellOrDefault(
+      int row, int column) const {
     TextViewItemDelegate *d = _rowDelegates.value(row);
     return d ? d : _columnDelegates.value(column, _defaultDelegate); }
-  TextViewItemDelegate *rowItemDelegate(int row) const {
+  /** @return delegate for this row, or global delegate, or 0 */
+  TextViewItemDelegate *itemDelegateForRowOrDefault(int row) const {
     return _rowDelegates.value(row, _defaultDelegate); }
-  TextViewItemDelegate *columnItemDelegate(int column) const {
+  /** @return delegate for this column, or global delegate, or 0 */
+  TextViewItemDelegate *itemDelegateForColumnOrDefault(int column) const {
     return _columnDelegates.value(column, _defaultDelegate); }
 };
 

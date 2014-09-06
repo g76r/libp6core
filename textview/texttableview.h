@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -69,9 +69,6 @@ public:
    * Default: "..." */
   virtual void setEllipsePlaceholder(QString rawText = "...");
   void setModel(QAbstractItemModel *model);
-  void setItemDelegate(TextViewItemDelegate *delegate);
-  void setItemDelegateForColumn(int column, TextViewItemDelegate *delegate);
-  void setItemDelegateForRow(int row, TextViewItemDelegate *delegate);
 
 protected:
   QList<int> effectiveColumnIndexes() const { return _effectiveColumnIndexes; }

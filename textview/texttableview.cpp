@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -31,24 +31,6 @@ void TextTableView::setEllipsePlaceholder(QString rawText) {
 void TextTableView::setModel(QAbstractItemModel *model) {
   TextView::setModel(model);
   resetAll();
-}
-
-void TextTableView::setItemDelegate(TextViewItemDelegate *delegate) {
-  TextView::setItemDelegate(delegate);
-  updateHeaderAndFooterCache();
-}
-
-void TextTableView::setItemDelegateForColumn(
-    int column, TextViewItemDelegate *delegate) {
-  TextView::setItemDelegateForColumn(column, delegate);
-  updateHeaderAndFooterCache();
-
-}
-
-void TextTableView::setItemDelegateForRow(
-    int row, TextViewItemDelegate *delegate) {
-  TextView::setItemDelegateForRow(row, delegate);
-  updateHeaderAndFooterCache();
 }
 
 QString TextTableView::text(ParamsProvider *params, QString scope) const {
@@ -88,7 +70,7 @@ QString TextTableView::text(ParamsProvider *params, QString scope) const {
 }
 
 void TextTableView::resetAll() {
-  //qDebug() << "TextTableView::resetAll";// << objectName();;// << metaObject()->className();
+  //qDebug() << "TextTableView::resetAll" << objectName() << metaObject()->className();
   layoutChanged();
   QAbstractItemModel *m = model();
   _rows.clear();

@@ -63,7 +63,8 @@ void HtmlTableView::updateHeaderAndFooterCache() {
       int displayedColumn = 0;
       foreach (int column, effectiveColumnIndexes()) {
         v.append("<th>");
-        TextViewItemDelegate *d = columnItemDelegate(displayedColumn);
+        TextViewItemDelegate *d =
+            itemDelegateForColumnOrDefault(displayedColumn);
         v.append(d ? d->headerText(column, Qt::Horizontal, m)
                    : HtmlUtils::htmlEncode(m->headerData(column, Qt::Horizontal)
                                            .toString(), true));
@@ -160,7 +161,7 @@ QString HtmlTableView::rowText(int row) {
   v.append(">");
   if (_rowHeaders) {
     v.append("<th>");
-    TextViewItemDelegate *d = rowItemDelegate(row);
+    TextViewItemDelegate *d = itemDelegateForRowOrDefault(row);
     v.append(d ? d->headerText(row, Qt::Vertical, m)
                : HtmlUtils::htmlEncode(
                    m->headerData(row, Qt::Vertical).toString(), true));
@@ -175,7 +176,7 @@ QString HtmlTableView::rowText(int row) {
       if (!id.isNull())
           v.append("<a name=\"").append(id).append("\"></a>");
     }
-    TextViewItemDelegate *d = cellItemDelegate(row, column);
+    TextViewItemDelegate *d = itemDelegateForCellOrDefault(row, column);
     v.append(d ? d->text(index)
                : HtmlUtils::htmlEncode(index.data().toString(), true));
     v.append("</td>");

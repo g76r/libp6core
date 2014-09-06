@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -124,4 +124,99 @@ QString HtmlItemDelegate::headerText(int section, Qt::Orientation orientation,
     break;
   }
   return data;
+}
+
+HtmlItemDelegate *HtmlItemDelegate::setTextConversion(
+    TextConversion conversion) {
+  _conversion = conversion;
+  emit textChanged();
+  return this;
+}
+
+void HtmlItemDelegate::setDefaultTextConversion(TextConversion conversion) {
+  _defaultConversion = conversion;
+}
+
+HtmlItemDelegate *HtmlItemDelegate::setPrefixForColumn(
+    int column, QString pattern, int argIndex,
+    QHash<QString,QString> transcodeMap) {
+  _columnPrefixes.insert(column, TextMapper(pattern, argIndex, transcodeMap));
+  emit textChanged();
+  return this;
+}
+
+HtmlItemDelegate *HtmlItemDelegate::setSuffixForColumn(
+    int column, QString pattern, int argIndex,
+    QHash<QString,QString> transcodeMap){
+  _columnSuffixes.insert(column, TextMapper(pattern, argIndex, transcodeMap));
+  emit textChanged();
+  return this;
+}
+
+HtmlItemDelegate *HtmlItemDelegate::setPrefixForRow(
+    int row, QString pattern, int argIndex,
+    QHash<QString,QString> transcodeMap){
+  _rowPrefixes.insert(row, TextMapper(pattern, argIndex, transcodeMap));
+  emit textChanged();
+  return this;
+}
+
+HtmlItemDelegate *HtmlItemDelegate::setSuffixForRow(
+    int row, QString pattern, int argIndex,
+    QHash<QString,QString> transcodeMap){
+  _rowSuffixes.insert(row, TextMapper(pattern, argIndex, transcodeMap));
+  emit textChanged();
+  return this;
+}
+
+HtmlItemDelegate *HtmlItemDelegate::setPrefixForColumnHeader(
+    int column, QString text) {
+  _columnHeaderPrefixes.insert(column, text);
+  emit textChanged();
+  return this;
+}
+
+HtmlItemDelegate *HtmlItemDelegate::setSuffixForColumnHeader(
+    int column, QString text) {
+  _columnHeaderSuffixes.insert(column, text);
+  emit textChanged();
+  return this;
+}
+
+HtmlItemDelegate *HtmlItemDelegate::setPrefixForRowHeader(
+    int row, QString pattern, int argIndex,
+    QHash<QString,QString> transcodeMap){
+  _rowHeaderPrefixes.insert(row, TextMapper(pattern, argIndex, transcodeMap));
+  emit textChanged();
+  return this;
+}
+
+HtmlItemDelegate *HtmlItemDelegate::setSuffixForRowHeader(
+    int row, QString pattern, int argIndex,
+    QHash<QString,QString> transcodeMap) {
+  _rowHeaderSuffixes.insert(row, TextMapper(pattern, argIndex, transcodeMap));
+  emit textChanged();
+  return this;
+}
+
+HtmlItemDelegate *HtmlItemDelegate::clearAffixes() {
+  _columnPrefixes.clear();
+  _columnSuffixes.clear();
+  _rowPrefixes.clear();
+  _rowSuffixes.clear();
+  _columnHeaderPrefixes.clear();
+  _columnHeaderSuffixes.clear();
+  _rowHeaderPrefixes.clear();
+  _rowHeaderSuffixes.clear();
+  emit textChanged();
+  return this;
+}
+
+void HtmlItemDelegate::setMaxCellContentLength(int maxCellContentLength) {
+  _maxCellContentLength = maxCellContentLength;
+  emit textChanged();
+}
+
+void HtmlItemDelegate::setDefaultMaxCellContentLength(int length) {
+  _defaultMaxCellContentLength = length;
 }

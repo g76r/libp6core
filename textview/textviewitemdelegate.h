@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -32,6 +32,11 @@ public:
   /** default: return model->headerData(section, orientation).toString() */
   virtual QString headerText(int section, Qt::Orientation orientation,
                              const QAbstractItemModel* model) const;
+signals:
+  /** An event (e.g. settings change) occured and any data previously returned
+   * by text() or headerText() is no longer valid, these methods should be
+   * called again for any data or header this delegate is responsible for. */
+  void textChanged();
 };
 
 #endif // TEXTVIEWITEMDELEGATE_H

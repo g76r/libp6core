@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,11 +14,11 @@
 #include "textview.h"
 
 TextView::TextView(QObject *parent)
-  : QObject(parent), _model(0) {
+  : QObject(parent), _model(0), _defaultDelegate(0) {
 }
 
 TextView::TextView(QObject *parent, QString objectName)
-  : QObject(parent), _model(0) {
+  : QObject(parent), _model(0), _defaultDelegate(0) {
   setObjectName(objectName);
 }
 
@@ -150,9 +150,14 @@ void TextView::columnsMoved(const QModelIndex &sourceParent,
 }
 
 void TextView::setItemDelegate(TextViewItemDelegate *delegate) {
+  if (_defaultDelegate) {
+    disconnect(_defaultDelegate, SIGNAL(textChanged()), this, SLOT(resetAll()));
+  }
   _defaultDelegate = delegate;
-  _columnDelegates.clear();
-  _rowDelegates.clear();
+  if (delegate) {
+    connect(delegate, SIGNAL(textChanged()), this, SLOT(resetAll()));
+  }
+  resetAll();
 }
 
 TextViewItemDelegate *TextView::itemDelegate() const {
@@ -161,17 +166,33 @@ TextViewItemDelegate *TextView::itemDelegate() const {
 
 void TextView::setItemDelegateForColumn(
     int column, TextViewItemDelegate *delegate) {
-  _columnDelegates.insert(column, delegate);
+  // LATER try to reset only affected column on textChanged()
+  TextViewItemDelegate *old = _columnDelegates.take(column);
+  if (old)
+    disconnect(old, SIGNAL(textChanged()), this, SLOT(resetAll()));
+  if (delegate) {
+    _columnDelegates.insert(column, delegate);
+    connect(delegate, SIGNAL(textChanged()), this, SLOT(resetAll()));
+  }
+  resetAll();
 }
 
 TextViewItemDelegate *TextView::itemDelegateForColumn(int column) const {
-  return _columnDelegates.value(column);
+  return _columnDelegates.value(column, 0);
 }
 
 void TextView::setItemDelegateForRow(int row, TextViewItemDelegate *delegate) {
-  _rowDelegates.insert(row, delegate);
+  // LATER try to reset only affected row on textChanged()
+  TextViewItemDelegate *old = _rowDelegates.take(row);
+  if (old)
+    disconnect(old, SIGNAL(textChanged()), this, SLOT(resetAll()));
+  if (delegate) {
+    _rowDelegates.insert(row, delegate);
+    connect(delegate, SIGNAL(textChanged()), this, SLOT(resetAll()));
+  }
+  resetAll();
 }
 
 TextViewItemDelegate *TextView::itemDelegateForRow(int row) const {
-  return _rowDelegates.value(row);
+  return _rowDelegates.value(row, 0);
 }

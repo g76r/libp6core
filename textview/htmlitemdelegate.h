@@ -61,13 +61,11 @@ public:
    * </ul>
    * default: HtmlEscapingWithUrlAsLinks */
   HtmlItemDelegate *setTextConversion(
-      TextConversion conversion = HtmlEscapingWithUrlAsLinks) {
-    _conversion = conversion; return this; }
+      TextConversion conversion = HtmlEscapingWithUrlAsLinks);
   TextConversion textConversion() const { return _conversion; }
   /** @see setTextConversion(). */
-  HtmlItemDelegate *setDefaultTextConversion(
-      TextConversion conversion = HtmlEscapingWithUrlAsLinks) {
-    _defaultConversion = conversion; return this; }
+  static void setDefaultTextConversion(
+      TextConversion conversion = HtmlEscapingWithUrlAsLinks);
   /** All data in column column will be prefixed with raw (= copied as is,
    * without text conversion) html pattern that can optionnaly contain a
    * variable part that is defined by a given model column for the same row
@@ -93,9 +91,7 @@ public:
    */
   HtmlItemDelegate *setPrefixForColumn(
       int column, QString pattern, int argIndex,
-      QHash<QString,QString> transcodeMap) {
-    _columnPrefixes.insert(column, TextMapper(pattern, argIndex, transcodeMap));
-    return this; }
+      QHash<QString,QString> transcodeMap);
   /** syntaxic sugar */
   HtmlItemDelegate *setPrefixForColumn(
       int column, QString pattern, int argIndex = None) {
@@ -104,9 +100,7 @@ public:
   /** @see setPrefixForColumn() */
   HtmlItemDelegate *setSuffixForColumn(
       int column, QString pattern, int argIndex,
-      QHash<QString,QString> transcodeMap){
-    _columnSuffixes.insert(column, TextMapper(pattern, argIndex, transcodeMap));
-    return this; }
+      QHash<QString,QString> transcodeMap);
   /** syntaxic sugar */
   HtmlItemDelegate *setSuffixForColumn(
       int column, QString pattern, int argIndex = None) {
@@ -115,9 +109,7 @@ public:
   /** @see setPrefixForColumn() */
   HtmlItemDelegate *setPrefixForRow(
       int row, QString pattern, int argIndex,
-      QHash<QString,QString> transcodeMap){
-    _rowPrefixes.insert(row, TextMapper(pattern, argIndex, transcodeMap));
-    return this; }
+      QHash<QString,QString> transcodeMap);
   /** syntaxic sugar */
   HtmlItemDelegate *setPrefixForRow(
       int row, QString pattern, int argIndex = None) {
@@ -126,28 +118,20 @@ public:
   /** @see setPrefixForColumn() */
   HtmlItemDelegate *setSuffixForRow(
       int row, QString pattern, int argIndex,
-      QHash<QString,QString> transcodeMap){
-    _rowSuffixes.insert(row, TextMapper(pattern, argIndex, transcodeMap));
-    return this; }
+      QHash<QString,QString> transcodeMap);
   /** syntaxic sugar */
   HtmlItemDelegate *setSuffixForRow(
       int row, QString pattern, int argIndex = None) {
     return setSuffixForRow(
           row, pattern, argIndex, QHash<QString,QString>()); }
   /** @see setPrefixForColumn() */
-  HtmlItemDelegate *setPrefixForColumnHeader(int column, QString text) {
-    _columnHeaderPrefixes.insert(column, text);
-    return this; }
+  HtmlItemDelegate *setPrefixForColumnHeader(int column, QString text);
   /** @see setPrefixForColumn() */
-  HtmlItemDelegate *setSuffixForColumnHeader(int column, QString text) {
-    _columnHeaderSuffixes.insert(column, text);
-    return this; }
+  HtmlItemDelegate *setSuffixForColumnHeader(int column, QString text);
   /** @see setPrefixForColumn() */
   HtmlItemDelegate *setPrefixForRowHeader(
       int row, QString pattern, int argIndex,
-      QHash<QString,QString> transcodeMap){
-    _rowHeaderPrefixes.insert(row, TextMapper(pattern, argIndex, transcodeMap));
-    return this; }
+      QHash<QString,QString> transcodeMap);
   /** syntaxic sugar */
   HtmlItemDelegate *setPrefixForRowHeader(
       int row, QString pattern, int argIndex = None){
@@ -156,33 +140,20 @@ public:
   /** @see setPrefixForColumn() */
   HtmlItemDelegate *setSuffixForRowHeader(
       int row, QString pattern, int argIndex,
-      QHash<QString,QString> transcodeMap) {
-    _rowHeaderSuffixes.insert(row, TextMapper(pattern, argIndex, transcodeMap));
-    return this; }
+      QHash<QString,QString> transcodeMap);
   /** syntaxic sugar */
   HtmlItemDelegate *setSuffixForRowHeader(
       int row, QString pattern, int argIndex = None){
     return setSuffixForRowHeader(
           row, pattern, argIndex, QHash<QString,QString>()); }
   /** Clear any previous suffix or prefix definition. */
-  HtmlItemDelegate *clearAffixes() {
-    _columnPrefixes.clear();
-    _columnSuffixes.clear();
-    _rowPrefixes.clear();
-    _rowSuffixes.clear();
-    _columnHeaderPrefixes.clear();
-    _columnHeaderSuffixes.clear();
-    _rowHeaderPrefixes.clear();
-    _rowHeaderSuffixes.clear();
-    return this; }
+  HtmlItemDelegate *clearAffixes();
   /** Maximum length of text inside a cell, measured before HTML encoding if
    * any. Default: 200. */
-  void setMaxCellContentLength(int maxCellContentLength = 200) {
-    _maxCellContentLength = maxCellContentLength; }
+  void setMaxCellContentLength(int maxCellContentLength = 200);
   /** Maximum length of text inside a cell, measured before HTML encoding if
    * any. Default: 200. */
-  static void setDefaultMaxCellContentLength(int length) {
-    _defaultMaxCellContentLength = length; }
+  static void setDefaultMaxCellContentLength(int length);
 
 private:
   inline void convertData(QString &data) const;
