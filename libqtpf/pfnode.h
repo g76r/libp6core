@@ -49,6 +49,10 @@ private:
   //inline void buildChildrenFromArray() const;
   inline qint64 internalWritePf(QIODevice *target, QString indent,
                                 PfOptions options) const;
+  inline qint64 internalWritePfSubNodes(QIODevice *target, QString indent,
+                                        PfOptions options) const;
+  inline qint64 internalWritePfContent(QIODevice *target, QString indent,
+                                       PfOptions options) const;
 };
 
 class LIBQTPFSHARED_EXPORT PfNode {

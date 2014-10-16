@@ -19,8 +19,8 @@ under the License.
 #include "pfparser.h"
 #include "pfdomhandler.h"
 
+#define INDENTATION_EOL_STRING "\n"
 #define INDENTATION_STRING "  "
-#define INDENTATION_STRING_LENGTH 2
 
 static int staticInit() {
   qRegisterMetaType<PfNode>("PfNode");
@@ -159,7 +159,6 @@ qint64 PfNodeData::writeFlatXml(QIODevice *target,
 
 qint64 PfNodeData::internalWritePf(QIODevice *target, QString indent,
                                    PfOptions options) const {
-  // LATER indent
   qint64 total = 0, r;
   if (isComment()) {
     // comment node
@@ -198,71 +197,27 @@ qint64 PfNodeData::internalWritePf(QIODevice *target, QString indent,
     if ((r = target->write(pfescape(_name).toUtf8())) < 0)
       return -1;
     total += r;
-    if (_content.isArray()) {
-      if ((r = target->write("\n")) < 0)
+    // subnodes & content
+    if (options.shouldWriteContentBeforeSubnodes() && !_content.isArray()) {
+      if ((r = internalWritePfContent(target, indent, options)) < 0)
+        return -1;
+      total += r;
+      if ((r = internalWritePfSubNodes(target, indent, options)) < 0)
         return -1;
       total += r;
     } else {
-      if (indent.isNull()) {
-        // no indentation but single space when content and no child
-        if (_children.size() == 0 && !_content.isEmpty()) {
-          if ((r = target->write(" ")) < 0)
-            return -1;
-          total += r;
-        }
-      } else {
-        // indentation
-        if (_children.size() > 0) {
-          if ((r = target->write("\n")) < 0)
-            return -1;
-          total += r;
-        } else if (!_content.isEmpty() && !_content.isArray()) {
-          if ((r = target->write(" ")) < 0)
-            return -1;
-          total += r;
-        }
-      }
-    }
-    // subnodes
-    if(_children.size()) {
-      if (!indent.isNull())
-        indent.append(INDENTATION_STRING);
-      for (int i = 0; i < _children.size(); ++i) {
-        if ((r = _children.at(i).d->internalWritePf(target, indent,
-                                                    options)) < 0)
-          return -1;
-        total += r;
-      }
-      if (!indent.isNull())
-        indent.chop(INDENTATION_STRING_LENGTH);
-    }
-    // content
-    if (_content.isArray()) {
-      // array content
-      if ((r = _content.writePf(target, options)) < 0)
+      if ((r = internalWritePfSubNodes(target, indent, options)) < 0)
         return -1;
       total += r;
-      if (!indent.isNull()) {
-        if ((r = target->write(indent.toUtf8())) < 0)
-          return -1;
-        total += r;
-      }
-    } else if (!_content.isEmpty()){
-      // regular content
-      if (!indent.isNull() && _children.size() > 0) {
-        if ((r = target->write(indent.toUtf8())) < 0)
-          return -1;
-        total += r;
-        if ((r = target->write(INDENTATION_STRING)) < 0)
-          return -1;
-        total += r;
-      }
-      if ((r = _content.writePf(target, options)) < 0)
+      if ((r = internalWritePfContent(target, indent, options)) < 0)
         return -1;
       total += r;
     }
     // closing parenthesis
     if (!indent.isNull() && _children.size()) {
+      if ((r = target->write(INDENTATION_EOL_STRING)) < 0)
+        return -1;
+      total += r;
       if ((r = target->write(indent.toUtf8())) < 0)
         return -1;
       total += r;
@@ -270,11 +225,74 @@ qint64 PfNodeData::internalWritePf(QIODevice *target, QString indent,
     if ((r = target->write(")")) < 0)
       return -1;
     total += r;
-    if (!indent.isNull()) {
-      if ((r = target->write("\n")) < 0)
+    // end of line at end of toplevel node
+    if (!indent.isNull() && indent.isEmpty()) {
+      if ((r = target->write(INDENTATION_EOL_STRING)) < 0)
         return -1;
       total += r;
     }
+  }
+  return total;
+}
+
+qint64 PfNodeData::internalWritePfSubNodes(QIODevice *target, QString indent,
+                                       PfOptions options) const {
+  qint64 total = 0, r;
+  if(_children.size()) {
+    if (!indent.isNull())
+      indent.append(INDENTATION_STRING);
+    for (int i = 0; i < _children.size(); ++i) {
+      if (!indent.isNull()) {
+        if ((r = target->write(INDENTATION_EOL_STRING)) < 0)
+          return -1;
+        total += r;
+      }
+      if ((r = _children.at(i).d->internalWritePf(target, indent, options)) < 0)
+        return -1;
+      total += r;
+    }
+    if (!indent.isNull())
+      indent.chop(sizeof INDENTATION_STRING - 1);
+  }
+  return total;
+}
+
+qint64 PfNodeData::internalWritePfContent(QIODevice *target, QString indent,
+                                      PfOptions options) const {
+  qint64 total = 0, r;
+  if (_content.isArray()) {
+    if ((r = target->write("\n")) < 0)
+      return -1;
+    total += r;
+    // array content
+    if ((r = _content.writePf(target, options)) < 0)
+      return -1;
+    total += r;
+    if (!indent.isNull()) {
+      if ((r = target->write(indent.toUtf8())) < 0)
+        return -1;
+      total += r;
+    }
+  } else if (!_content.isEmpty()){
+    // regular content
+    if (options.shouldWriteContentBeforeSubnodes() || _children.size() == 0) {
+      if ((r = target->write(" ")) < 0)
+        return -1;
+      total += r;
+    } else if (!indent.isNull()) {
+      if ((r = target->write(INDENTATION_EOL_STRING)) < 0)
+        return -1;
+      total += r;
+      if ((r = target->write(indent.toUtf8())) < 0)
+        return -1;
+      total += r;
+      if ((r = target->write(INDENTATION_STRING)) < 0)
+        return -1;
+      total += r;
+    }
+    if ((r = _content.writePf(target, options)) < 0)
+      return -1;
+    total += r;
   }
   return total;
 }

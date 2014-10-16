@@ -24,13 +24,15 @@ class LIBQTPFSHARED_EXPORT PfOptionsData : public QSharedData {
   bool _shouldTranslateArrayIntoTree;
   bool _shouldIndent;
   bool _shouldIgnoreComment;
-  QString _outputSurface;
+  bool _shouldWriteContentBeforeSubnodes;
   // LATER maxBinaryFragmentSize (then split them into several fragments)
+  QString _outputSurface;
 
 public:
-  inline PfOptionsData() : _shouldLazyLoadBinaryFragments(false),
+  PfOptionsData() : _shouldLazyLoadBinaryFragments(false),
     _shouldTranslateArrayIntoTree(false), _shouldIndent(false),
-    _shouldIgnoreComment(true) { }
+    _shouldIgnoreComment(true), _shouldWriteContentBeforeSubnodes(false) {
+  }
 };
 
 class LIBQTPFSHARED_EXPORT PfOptions {
@@ -65,6 +67,13 @@ public:
   inline bool shouldIgnoreComment() const { return d->_shouldIgnoreComment; }
   inline PfOptions &setShouldIgnoreComment(bool value = true) {
     d->_shouldIgnoreComment = value; return *this; }
+  /** Writing methods should write node content before subnodes, which is not
+   * done by default because parsing such a document consumes more memory if
+   * nodes have large content. */
+  inline bool shouldWriteContentBeforeSubnodes() const {
+    return d->_shouldWriteContentBeforeSubnodes; }
+  inline PfOptions &setShouldWriteContentBeforeSubnodes(bool value = true) {
+    d->_shouldWriteContentBeforeSubnodes = value; return *this; }
   /** Surface used by writing methods to write for binary fragments. If
     * isNull() then the surface found when parsing will be used when writing
     * back (or no surface if the binary fragment wasn't parsed but created
