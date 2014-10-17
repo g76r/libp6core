@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -19,7 +19,7 @@ under the License.
  * user code.
  */
 
-#include "libqtpf_global.h"
+#include "pfutils.h"
 #include <QObject>
 #include <QString>
 #include <QChar>
@@ -65,22 +65,6 @@ inline QString pfquotechar(unsigned char c) {
     return QString(c);
   return QString("\\x").append("0123456789abcdef"[(c&0xf0)>>4])
       .append("0123456789abcdef"[c&0xf]);
-}
-
-/** Return a string with all PF special chars escaped, e.g.
-  * foo 'bar      ->      foo\ \'bar
-  * foo\\bar      ->      foo\\\\bar
-  * "foo"(|       ->      \"foo\"\(\|
-  */
-inline QString pfescape(QString string) {
-  QString s;
-  for (int i = 0; i < string.size(); ++i) {
-    QChar c = string.at(i);
-    if (pfisspecial(c.toLatin1()))
-      s.append(PF_ESCAPE);
-    s.append(c);
-  }
-  return s;
 }
 
 inline QString pftoxmlname(QString string) {

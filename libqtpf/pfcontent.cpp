@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -167,7 +167,7 @@ qint64 PfFragmentData::write(QIODevice *target, Format format,
     case Raw:
       return target->write(_text.toUtf8());
     case Pf:
-      return target->write(pfescape(_text).toUtf8());
+      return target->write(PfUtils::escape(_text).toUtf8());
     case XmlBase64:
       return target->write(pftoxmltext(_text).toUtf8());
     }
