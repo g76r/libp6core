@@ -274,7 +274,7 @@ qint64 PfNodeData::internalWritePfContent(QIODevice *target, QString indent,
       total += r;
     }
   } else if (!_content.isEmpty()){
-    // regular content
+    // text or binary content
     if (options.shouldWriteContentBeforeSubnodes() || _children.size() == 0) {
       if ((r = target->write(" ")) < 0)
         return -1;

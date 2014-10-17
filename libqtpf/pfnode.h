@@ -40,7 +40,10 @@ public:
 
 private:
   inline PfNodeData(QString name, QString content, bool isComment = false)
-    : _name(name), _isComment(isComment) { _content.append(content); }
+    : _name(name), _isComment(isComment) {
+    if (!content.isEmpty())
+      _content.append(content);
+  }
   inline bool isNull() const { return _name.isNull(); }
   inline bool isComment() const { return _isComment; }
   qint64 writePf(QIODevice *target, PfOptions options) const;
