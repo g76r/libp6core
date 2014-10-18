@@ -23,7 +23,20 @@ class QFile;
 
 /** Simple static web resource handler.
  * Can serve files from local filesystem or Qt resources pseudo-filesystem.
+ *
+ * Will map an url path prefix (e.g. "/my/site", default "") to a files under
+ * a given local document root (e.g. "/var/www", default ":docroot/" which are
+ * embeded Qt resources). For instance it would handle "/my/site/foo/bar.png"
+ * by sending "/var/www/foo/bar.png".
+ *
+ * Content type header is set based on file suffix, not content.
+ *
+ * Handle HTTP/304 through Last-Modified/If-Modified-Since, using local files
+ * timestamps (or program start time for Qt resources since they don't have
+ * timestamps). ETag handling is not implemented.
  */
+// LATER accept several document roots to enable e.g. overriding embeded
+// resources with real local files
 class LIBQTSSUSHARED_EXPORT FilesystemHttpHandler : public HttpHandler {
   Q_OBJECT
   Q_DISABLE_COPY(FilesystemHttpHandler)
