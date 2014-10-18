@@ -31,6 +31,8 @@ public:
    * SharedUiItem::uiData() as calls to SharedUiItemData::id() and
    * SharedUiItemData::idQualifier() instead, regardless the section. */
   virtual QVariant uiData(int section, int role) const;
+  virtual QVariant uiHeaderData(int section, int role) const;
+  virtual int uiDataCount() const;
   /** default: return uiData(0, Qt::DisplayRole).toString() */
   virtual QString id() const;
   /** default: return QString() */
@@ -52,6 +54,9 @@ public:
 class LIBQTSSUSHARED_EXPORT SharedUiItem {
   QSharedDataPointer<SharedUiItemData> d;
 
+protected:
+  explicit SharedUiItem(SharedUiItemData *data) : d(data) { }
+
 public:
   enum SharedUiItemRole {
     IdRole = Qt::UserRole+784,
@@ -60,18 +65,17 @@ public:
   };
   SharedUiItem() { }
   SharedUiItem(const SharedUiItem &other) : d(other.d) { }
-  virtual ~SharedUiItem();
   SharedUiItem &operator=(const SharedUiItem &other) {
     if (this != &other)
       d = other.d;
     return *this; }
   bool isNull() const { return !d; }
-  // FIXME virtual outside shared = antipattern
-  virtual QVariant uiHeaderData(int section, int role) const;
+  QVariant uiHeaderData(int section, int role) const {
+    return d ? d->uiHeaderData(section, role) : QVariant() ; }
   /** Syntaxic sugar. */
   QString uiHeaderString(int section, int role = Qt::DisplayRole) const {
     return uiHeaderData(section, role).toString(); }
-  virtual int uiDataCount() const;
+  int uiDataCount() const { return d ? d->uiDataCount() : 0; }
   /** Provides ui data for this item. */
   QVariant uiData(int section, int role = Qt::DisplayRole) const {
     if (d) {

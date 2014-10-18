@@ -14,9 +14,6 @@
 #include "shareduiitem.h"
 #include <QtDebug>
 
-SharedUiItem::~SharedUiItem() {
-}
-
 SharedUiItemData::~SharedUiItemData() {
 }
 
@@ -26,7 +23,7 @@ QVariant SharedUiItemData::uiData(int section, int role) const {
   return QVariant();
 }
 
-QVariant SharedUiItem::uiHeaderData(int section, int role) const {
+QVariant SharedUiItemData::uiHeaderData(int section, int role) const {
   Q_UNUSED(section)
   Q_UNUSED(role)
   return QVariant();
@@ -40,7 +37,7 @@ QString SharedUiItemData::idQualifier() const {
   return QString();
 }
 
-int SharedUiItem::uiDataCount() const {
+int SharedUiItemData::uiDataCount() const {
   return 0;
 }
 
