@@ -59,6 +59,10 @@ public:
                        const ParamsProvider *context = 0) const {
     return evaluate(rawValue(key, QString(defaultValue), inherit), inherit,
                     context); }
+  inline QString value(QString key, const char *defaultValue,
+                       const ParamsProvider *context) const {
+    return evaluate(rawValue(key, QString(defaultValue), true), true,
+                    context); }
   inline QString value(QString key, bool inherit,
                        const ParamsProvider *context = 0) const {
     return evaluate(rawValue(key, QString(), inherit), inherit, context); }
