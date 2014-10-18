@@ -82,8 +82,12 @@ public:
   // Children related methods /////////////////////////////////////////////////
 
   inline const QList<PfNode> children() const { return d->_children; }
-  inline void prependChild(PfNode child) { d->_children.prepend(child); }
-  inline void appendChild(PfNode child) { d->_children.append(child); }
+  /** prepend a child to existing children (do nothing if child.isNull()) */
+  inline void prependChild(PfNode child) {
+    if (!child.isNull()) d->_children.prepend(child); }
+  /** append a child to existing children (do nothing if child.isNull()) */
+  inline void appendChild(PfNode child) {
+    if (!child.isNull()) d->_children.append(child); }
   /** @return first text child by name
    * Most of the time one will use attribute() and xxxAttribute() methods rather
    * than directly calling firstTextChildByName(). */
