@@ -82,6 +82,7 @@ public:
   // Children related methods /////////////////////////////////////////////////
 
   inline const QList<PfNode> children() const { return d->_children; }
+  inline void prependChild(PfNode child) { d->_children.prepend(child); }
   inline void appendChild(PfNode child) { d->_children.append(child); }
   /** @return first text child by name
    * Most of the time one will use attribute() and xxxAttribute() methods rather
