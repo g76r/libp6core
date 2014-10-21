@@ -29,6 +29,7 @@ static int staticInit() {
 Q_CONSTRUCTOR_FUNCTION(staticInit)
 
 static QRegExp whitespace("\\s");
+static QRegExp leadingwhitespace("^\\s+");
 
 qint64 PfNodeData::writePf(QIODevice *target, PfOptions options) const {
   if (options.shouldIndent())
@@ -332,10 +333,10 @@ QList<QPair<QString,QString> > PfNode::stringsPairChildrenByName(
   QList<QPair<QString,QString> > l;
   foreach (PfNode child, children())
     if (child.d->_name == name && child.contentIsText()) {
-      QString s = child.contentAsString().trimmed();
+      QString s = child.contentAsString().remove(leadingwhitespace);
       int i = s.indexOf(whitespace);
       if (i >= 0)
-        l.append(QPair<QString,QString>(s.left(i), s.mid(i).trimmed()));
+        l.append(QPair<QString,QString>(s.left(i), s.mid(i+1)));
       else
         l.append(QPair<QString,QString>(s, QString()));
     }
@@ -347,7 +348,7 @@ QList<QPair<QString, qint64> > PfNode::stringLongPairChildrenByName(
   QList<QPair<QString,qint64> > l;
   foreach (PfNode child, children())
     if (child.d->_name == name && child.contentIsText()) {
-      QString s = child.contentAsString().trimmed();
+      QString s = child.contentAsString().remove(leadingwhitespace);
       int i = s.indexOf(whitespace);
       if (i >= 0)
         l.append(QPair<QString,qint64>(s.left(i),
@@ -389,7 +390,7 @@ bool PfNode::contentAsBool(bool defaultValue, bool *ok) const {
 }
 
 QStringList PfNode::contentAsStringList() const {
-  QString v = d->_content.toString().trimmed(), s;
+  QString v = d->_content.toString(), s;
   QStringList l;
   for (int i = 0; i < v.size(); ++i) {
     const QChar &c = v[i];
@@ -397,15 +398,9 @@ QStringList PfNode::contentAsStringList() const {
       if (++i < v.size())
         s.append(v[i]);
     } else if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
-      l.append(s);
-      s.clear();
-      while (++i < v.size()) {
-        const QChar &c = v[i];
-        if (c != ' ' || c != '\t' || c != '\r' || c != '\n') {
-          --i;
-          break;
-        }
-      }
+      if (!s.isNull())
+        l.append(s);
+      s = QString();
     } else
       s.append(c);
   }
