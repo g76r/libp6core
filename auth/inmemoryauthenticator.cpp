@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -173,3 +173,42 @@ InMemoryAuthenticator &InMemoryAuthenticator::clearUsers() {
   return *this;
 }
 
+InMemoryAuthenticator::Encoding InMemoryAuthenticator::encodingFromString(
+    QString text) {
+  text = text.trimmed().toLower();
+  if (text == "password" || text == "plain") {
+    return Plain;
+  } else if (text == "md5hex") {
+    return Md5Hex;
+  } else if (text == "md5" || text == "md5b64") {
+    return Md5Base64;
+  } else if (text == "sha1" || text == "sha1hex") {
+    return Sha1Hex;
+  } else if (text == "sha1b64") {
+    return Sha1Base64;
+  } else if (text == "ldap") {
+    return OpenLdapStyle;
+  } else {
+    return Unknown;
+  }
+}
+
+QString InMemoryAuthenticator::encodingToString(
+    InMemoryAuthenticator::Encoding encoding) {
+  switch(encoding) {
+  case Plain:
+    return "plain";
+  case Md5Hex:
+    return "md5hex";
+  case Md5Base64:
+    return "md5b64";
+  case Sha1Hex:
+    return "sha1hex";
+  case Sha1Base64:
+    return "sha1b64";
+  case OpenLdapStyle:
+    return "ldap";
+  case Unknown:
+    return QString();
+  }
+}

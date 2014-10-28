@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -44,6 +44,8 @@ public:
       QString userId, QString encodedPassword, Encoding encoding);
   /** This method is thread-safe */
   InMemoryAuthenticator &clearUsers();
+  static InMemoryAuthenticator::Encoding encodingFromString(QString text);
+  static QString encodingToString(InMemoryAuthenticator::Encoding encoding);
 };
 
 #endif // INMEMORYAUTHENTICATOR_H
