@@ -69,10 +69,12 @@ void Log::log(QString message, Severity severity, QString task, QString execId,
     if (t)
       realTask = t->objectName();
   }
-  realTask = realTask.isEmpty() ? "?" : sanitize(realTask);
-  QString realExecId = execId.isEmpty() ? "0" : sanitize(execId);
-  QString realSourceCode = sourceCode.isEmpty() ? ":" : sanitize(sourceCode);
+  realTask = realTask.isEmpty() ? "?" : sanitizeField(realTask);
+  QString realExecId = execId.isEmpty() ? "0" : sanitizeField(execId);
+  QString realSourceCode
+      = sourceCode.isEmpty() ? ":" : sanitizeField(sourceCode);
   QDateTime now = QDateTime::currentDateTime();
+  message = sanitizeMessage(message);
   rootLogger()->log(Logger::LogEntry(now, message, severity, realTask,
                                      realExecId, realSourceCode));
 }
@@ -118,12 +120,16 @@ Log::Severity Log::severityFromString(QString string) {
   return Debug;
 }
 
-QString Log::sanitize(QString string) {
-  static const QRegExp whitespace("\\s");
+QString Log::sanitizeField(QString string) {
+  static const QRegExp whitespace("\\s+");
   QString s(string);
   // LATER optimize: avoid using a regexp 3 times per log line
   s.replace(whitespace, "_");
   return s;
+}
+
+QString Log::sanitizeMessage(QString string) {
+  return string.replace('\n', "\n  ");
 }
 
 /*void Log::logMessageHandler(QtMsgType type, const char *msg) {

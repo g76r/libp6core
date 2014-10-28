@@ -109,7 +109,8 @@ public:
 
 private:
   Log() { }
-  static inline QString sanitize(QString string);
+  static inline QString sanitizeField(QString string);
+  static inline QString sanitizeMessage(QString string);
 };
 
 class LIBQTSSUSHARED_EXPORT LogHelper {
