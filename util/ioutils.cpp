@@ -108,6 +108,38 @@ qint64 IOUtils::grep(QIODevice *dest, QIODevice *src,
   return total;
 }
 
+qint64 IOUtils::grepWithContinuation(
+    QIODevice *dest, QIODevice *src, QRegExp regexp,
+    QString continuationLinePrefix, qint64 max, qint64 bufsize) {
+  if (!dest || !src)
+    return -1;
+  char buf[bufsize];
+  int total = 0, n, m;
+  bool continuation = false;
+  while (total < max) {
+    if (src->bytesAvailable() < 1)
+      src->waitForReadyRead(30000);
+    n = src->readLine(buf, std::min(bufsize, max-total));
+    if (n < 0)
+      return -1;
+    if (n == 0)
+      break;
+    QString line = QString::fromUtf8(buf);
+    if ((continuation && line.startsWith(continuationLinePrefix))
+        || regexp.indexIn(line) >= 0) {
+      m = dest->write(buf, n);
+      if (m != n)
+        return -1;
+      if (dest->bytesToWrite() > bufsize)
+        while (dest->waitForBytesWritten(30000) > bufsize);
+      total += n;
+      continuation = true;
+    } else
+      continuation = false;
+  }
+  return total;
+}
+
 static void findFiles(QDir dir, QStringList &files, const QRegExp pattern) {
   //qDebug() << "findFiles:" << dir.path() << dir.entryInfoList().size() << files.size() << pattern.pattern();
   foreach (const QFileInfo fi,

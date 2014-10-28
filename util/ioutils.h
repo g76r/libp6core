@@ -44,6 +44,15 @@ public:
    * Filter may mismatch lines if they are longer than bufsize-1. */
   static qint64 grep(QIODevice *dest, QIODevice *src, QRegExp regexp,
                      qint64 max = LLONG_MAX, qint64 maxLineSize = 65535);
+  /** Copy at most max bytes from dest to src, copying only lines that match
+   * regexp and those that follow it and begin with the continuationLinePrefix.
+   * Convenient for greping logfiles which continuation lines begin with "  ".
+   * Filter may mismatch lines if they are longer than bufsize-1. */
+  static qint64 grepWithContinuation(
+      QIODevice *dest, QIODevice *src, QRegExp regexp,
+      QString continuationLinePrefix, qint64 max = LLONG_MAX,
+      qint64 bufsize = 65536);
+
   /** Convert QUrl object to local path usable with e.g. QFile
     * Only support "file" and "qrc" schemes.
     * @return path, QString::isNull() if URL not supported (e.g. its scheme)
