@@ -182,6 +182,10 @@ InMemoryAuthenticator::Encoding InMemoryAuthenticator::encodingFromString(
     return Md5Hex;
   } else if (text == "md5" || text == "md5b64") {
     return Md5Base64;
+  } else if (text == "md4hex") {
+    return Md5Hex;
+  } else if (text == "md4b64") {
+    return Md5Base64;
   } else if (text == "sha1" || text == "sha1hex") {
     return Sha1Hex;
   } else if (text == "sha1b64") {
@@ -202,6 +206,10 @@ QString InMemoryAuthenticator::encodingToString(
     return "md5hex";
   case Md5Base64:
     return "md5b64";
+  case Md4Hex:
+    return "md4hex";
+  case Md4Base64:
+    return "md4b64";
   case Sha1Hex:
     return "sha1hex";
   case Sha1Base64:
@@ -209,6 +217,7 @@ QString InMemoryAuthenticator::encodingToString(
   case OpenLdapStyle:
     return "ldap";
   case Unknown:
-    return QString();
+    ;
   }
+  return QString();
 }
