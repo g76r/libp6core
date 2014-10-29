@@ -20,7 +20,8 @@
 
 FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity,
                        bool buffered)
-  : Logger(minSeverity, true), _device(0), _buffered(buffered) {
+  : Logger(minSeverity, Logger::DedicatedThread), _device(0),
+    _buffered(buffered) {
   //qDebug() << "creating FileLogger from device" << device;
   _device = device;
   /*qDebug() << "FileLogger::FileLoger" << this->thread() << _device->thread()
@@ -40,7 +41,7 @@ FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity,
 
 FileLogger::FileLogger(QString pathPattern, Log::Severity minSeverity,
                        int secondsReopenInterval, bool buffered)
-  : Logger(minSeverity, true), _device(0),
+  : Logger(minSeverity, Logger::DedicatedThread), _device(0),
     _pathPattern(pathPattern), _lastOpen(QDateTime::currentDateTime()),
     _secondsReopenInterval(secondsReopenInterval), _buffered(buffered) {
   //qDebug() << "creating FileLogger from path" << path << _currentPath;

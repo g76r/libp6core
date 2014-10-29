@@ -152,7 +152,8 @@ HEADERS +=\
     util/relativedatetime.h \
     log/loggerthread.h \
     log/multiplexerlogger.h \
-    util/twothreadscircularbuffer.h
+    util/twothreadscircularbuffer.h \
+    util/threadsafecircularbuffer.h
 
 unix {
     target.path = /usr/lib

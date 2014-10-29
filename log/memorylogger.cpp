@@ -16,7 +16,7 @@
 #include <QMetaObject>
 
 MemoryLogger::MemoryLogger(Log::Severity minSeverity, LogModel *logmodel)
-  : Logger(minSeverity, false), _model(logmodel) {
+  : Logger(minSeverity, Logger::DirectCall), _model(logmodel) {
 }
 
 void MemoryLogger::doLog(const LogEntry entry) {

@@ -17,8 +17,10 @@
 #include <QFile>
 #include "util/ioutils.h"
 
-MultiplexerLogger::MultiplexerLogger(Log::Severity minSeverity)
-  : Logger(minSeverity, true) {
+MultiplexerLogger::MultiplexerLogger(
+    Log::Severity minSeverity, bool isRootLogger)
+  : Logger(minSeverity, isRootLogger ? Logger::RootLogger
+                                     : Logger::DirectCall) {
 }
 
 void MultiplexerLogger::addLogger(Logger *logger, bool autoRemovable) {

@@ -20,6 +20,7 @@
 #include "util/paramset.h"
 #include "util/twothreadscircularbuffer.h"
 #include <QThread>
+#include <QMutex>
 
 class MultiplexerLogger;
 class LoggerThread;
@@ -52,6 +53,11 @@ public:
     QString execId() const;
     QString sourceCode() const;
   };
+  enum ThreadModel {
+    DirectCall, // the logger is already thread-safe and cannot block
+    DedicatedThread, // the logger needs a dedicated thread in case it blocks
+    RootLogger // root logger needs a dedicated thread and an input mutex
+  };
 
 private:
   Q_OBJECT
@@ -61,11 +67,12 @@ private:
   bool _autoRemovable;
   QAtomicInt _bufferOverflown;
   TwoThreadsCircularBuffer<LogEntry> _buffer;
+  QMutex *_mutex;
 
 public:
   // Loggers never have a parent (since they are owned and destroyed by Log
   // static methods)
-  Logger(Log::Severity minSeverity, bool dedicatedThread);
+  Logger(Log::Severity minSeverity, ThreadModel threadModel);
   /** This method is thread-safe. */
   inline void log(LogEntry entry) {
     // this method must be callable from any thread, whereas the logger
@@ -74,16 +81,21 @@ public:
     // write logs over NFS), etc.
     if (entry.severity() >= _minSeverity) {
       if (_thread) {
+        if (_mutex)
+          _mutex->lock();
         if (!_buffer.tryPut(entry)) {
           // warn only once in the Logger lifetime
           if (_bufferOverflown.fetchAndStoreOrdered(1) == 0)
             qWarning() << "Logger::log discarded at less one log entry due to "
                           "thread buffer full" << this;
         }
+        if (_mutex)
+          _mutex->unlock();
       } else
         doLog(entry);
     }
   }
+  ~Logger();
   /** Return current logging path, e.g. "/var/log/qron-20181231.log"
    * To be used by implementation only when relevant.
    * Default: QString() */

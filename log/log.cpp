@@ -19,7 +19,7 @@
 #include <QRegExp>
 #include <QThread>
 
-Q_GLOBAL_STATIC(MultiplexerLogger, _rootLogger)
+Q_GLOBAL_STATIC_WITH_ARGS(MultiplexerLogger, _rootLogger, (Log::Debug, true))
 
 static inline MultiplexerLogger *rootLogger() { return _rootLogger(); }
 
@@ -75,6 +75,8 @@ void Log::log(QString message, Severity severity, QString task, QString execId,
       = sourceCode.isEmpty() ? ":" : sanitizeField(sourceCode);
   QDateTime now = QDateTime::currentDateTime();
   message = sanitizeMessage(message);
+  static QMutex mutex;
+  QMutexLocker ml(&mutex);
   rootLogger()->log(Logger::LogEntry(now, message, severity, realTask,
                                      realExecId, realSourceCode));
 }
@@ -129,7 +131,9 @@ QString Log::sanitizeField(QString string) {
 }
 
 QString Log::sanitizeMessage(QString string) {
-  return string.replace('\n', "\n  ");
+  QString s(string);
+  s.replace('\n', "\n  ");
+  return s;
 }
 
 /*void Log::logMessageHandler(QtMsgType type, const char *msg) {

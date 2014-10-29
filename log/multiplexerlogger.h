@@ -28,7 +28,8 @@ class LIBQTSSUSHARED_EXPORT MultiplexerLogger : public Logger {
   QMutex _loggersMutex;
 
 public:
-  explicit MultiplexerLogger(Log::Severity minSeverity = Log::Debug);
+  explicit MultiplexerLogger(Log::Severity minSeverity = Log::Debug,
+                             bool isRootLogger = false);
   void addLogger(Logger *logger, bool autoRemovable);
   void removeLogger(Logger *logger);
   void addConsoleLogger(Log::Severity severity, bool autoRemovable);

@@ -15,7 +15,7 @@
 #include <QtDebug>
 
 QtLogLogger::QtLogLogger(Log::Severity minSeverity)
-  : Logger(minSeverity, false) {
+  : Logger(minSeverity, Logger::DirectCall) {
 }
 
 void QtLogLogger::doLog(const LogEntry entry) {

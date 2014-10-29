@@ -81,10 +81,13 @@ QString Logger::LogEntry::sourceCode() const {
   return d ? d->_sourceCode : QString();
 }
 
-Logger::Logger(Log::Severity minSeverity, bool dedicatedThread)
-  : QObject(0), _thread(dedicatedThread ? new LoggerThread(0, this) : 0),
+Logger::Logger(Log::Severity minSeverity, ThreadModel threadModel)
+  : QObject(0),
+    _thread(threadModel != DirectCall ? new LoggerThread(0, this) : 0),
     _minSeverity(minSeverity), _autoRemovable(true), _bufferOverflown(0),
-    _buffer(dedicatedThread ? 10 : 0) { // LATER make buffer size parametrable
+    _buffer(threadModel != DirectCall ? 10 : 0),
+    _mutex(threadModel == RootLogger ? new QMutex : 0) {
+  // LATER make buffer size parametrable
   //Log::fatal() << "*** Logger::Logger " << this << " " << minSeverity
   //             << " " << dedicatedThread;
   if (_thread) {
@@ -97,6 +100,11 @@ Logger::Logger(Log::Severity minSeverity, bool dedicatedThread)
   }
   qRegisterMetaType<Log::Severity>("Log::Severity");
   qRegisterMetaType<Logger::LogEntry>("Logger::LogEntry");
+}
+
+Logger::~Logger() {
+  if (_mutex)
+    delete _mutex;
 }
 
 QString Logger::currentPath() const {
