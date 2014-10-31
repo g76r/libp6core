@@ -75,8 +75,6 @@ void Log::log(QString message, Severity severity, QString task, QString execId,
       = sourceCode.isEmpty() ? ":" : sanitizeField(sourceCode);
   QDateTime now = QDateTime::currentDateTime();
   message = sanitizeMessage(message);
-  static QMutex mutex;
-  QMutexLocker ml(&mutex);
   rootLogger()->log(Logger::LogEntry(now, message, severity, realTask,
                                      realExecId, realSourceCode));
 }
