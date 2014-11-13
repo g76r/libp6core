@@ -36,7 +36,7 @@ class LIBQTSSUSHARED_EXPORT ParamsProviderList : public ParamsProvider {
 public:
   ParamsProviderList() { }
   ParamsProviderList(const ParamsProviderList &other)
-    : _list(other._list) { }
+    : ParamsProvider(), _list(other._list) { }
   ParamsProviderList(ParamsProvider *provider) {
     append(provider); }
   ParamsProviderList &append(ParamsProvider *provider) {
