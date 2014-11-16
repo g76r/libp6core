@@ -51,6 +51,8 @@ public:
   /** Set HTTP status code. Default is 200.
    * Must be called before output(). */
   void setStatus(int status);
+  /** Current http status, as set by last setStatus() call */
+  int status() const;
   /** Replace any header of this name by one header with this value.
    * Must be called before output(). */
   void setHeader(QString name, QString value);

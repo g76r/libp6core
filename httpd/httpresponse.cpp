@@ -74,6 +74,10 @@ void HttpResponse::setStatus(int status) {
     qWarning() << "HttpResponse: cannot set status after writing data";
 }
 
+int HttpResponse::status() const {
+  return d ? d->_status : 0;
+}
+
 void HttpResponse::setHeader(QString name, QString value) {
   // LATER handle case sensitivity in header names
   if (d && !d->_headersSent) {
