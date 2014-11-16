@@ -146,6 +146,9 @@ QString HtmlTableView::rowText(int row) {
         + m->data(m->index(row, _rowAnchorColumn, QModelIndex()))
         .toString().replace(notName, "_");
   v.append("<tr");
+  // TODO trClassMapper should go to HtmlItemDelegate (but not TextItemDelegate)
+  // the HtmlTableView::setTrClass should stay has wrapper to item delegate
+  // we even should add HtmlTableView::setPrefix() and so on as syntactic sugar
   if (!_trClassMapper._text.isEmpty()) {
     QString trClass = _trClassMapper._text;
     if (_trClassMapper._argIndex >= 0) {
