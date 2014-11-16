@@ -29,18 +29,22 @@ class LIBQTSSUSHARED_EXPORT LogModel : public QAbstractListModel {
   QList<Logger::LogEntry> _log;
   int _maxrows; // LATER remove log entries depending on their age too
   MemoryLogger *_logger;
+  QString _prefixFilter;
 
 public:
   /** Create a model that collects log entries with severity >= minSeverity. */
-  LogModel(QObject *parent, Log::Severity minSeverity, int maxrows = 100);
+  LogModel(QObject *parent, Log::Severity minSeverity, int maxrows = 100,
+           QString prefixFilter = QString());
   /** Create a model that collects log entries with severity >= minSeverity. */
-  explicit LogModel(Log::Severity minSeverity, int maxrows = 100);
+  explicit LogModel(Log::Severity minSeverity, int maxrows = 100,
+                    QString prefixFilter = QString());
   /** Create a model that do not collect any log entry (prependLogEntry() must
    * be called to fill-in the model by hand). */
-  explicit LogModel(QObject *parent, int maxrows = 100);
+  explicit LogModel(QObject *parent, int maxrows = 100,
+                    QString prefixFilter = QString());
   /** Create a model that do not collect any log entry (prependLogEntry() must
    * be called to fill-in the model by hand). */
-  explicit LogModel(int maxrows = 100);
+  explicit LogModel(int maxrows = 100, QString prefixFilter = QString());
   ~LogModel();
   int rowCount(const QModelIndex &parent) const;
   int columnCount(const QModelIndex &parent) const;

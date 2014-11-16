@@ -16,23 +16,27 @@
 
 #define COLUMNS 6
 
-LogModel::LogModel(QObject *parent, Log::Severity minSeverity, int maxrows)
+LogModel::LogModel(QObject *parent, Log::Severity minSeverity, int maxrows,
+                   QString prefixFilter)
   : QAbstractListModel(parent), _maxrows(maxrows),
-    _logger(new MemoryLogger(minSeverity, this)) {
+    _logger(new MemoryLogger(minSeverity, this)), _prefixFilter(prefixFilter) {
   Log::addLogger(_logger, false);
 }
 
-LogModel::LogModel(Log::Severity minSeverity, int maxrows)
+LogModel::LogModel(Log::Severity minSeverity, int maxrows, QString prefixFilter)
   : QAbstractListModel(0), _maxrows(maxrows),
-    _logger(new MemoryLogger(minSeverity, this)) {
+    _logger(new MemoryLogger(minSeverity, this)), _prefixFilter(prefixFilter) {
   Log::addLogger(_logger, false);
 }
 
-LogModel::LogModel(QObject *parent, int maxrows)
-  : QAbstractListModel(parent), _maxrows(maxrows), _logger(0) {
+LogModel::LogModel(QObject *parent, int maxrows, QString prefixFilter)
+  : QAbstractListModel(parent), _maxrows(maxrows), _logger(0),
+    _prefixFilter(prefixFilter) {
 }
 
-LogModel::LogModel(int maxrows) : QAbstractListModel(0), _maxrows(maxrows) {
+LogModel::LogModel(int maxrows, QString prefixFilter)
+  : QAbstractListModel(0), _maxrows(maxrows), _logger(0),
+    _prefixFilter(prefixFilter) {
 }
 
 LogModel::~LogModel() {
@@ -99,6 +103,8 @@ QVariant LogModel::headerData(int section, Qt::Orientation orientation,
 }
 
 void LogModel::prependLogEntry(Logger::LogEntry entry) {
+  if (!_prefixFilter.isNull() && !entry.message().startsWith(_prefixFilter))
+    return;
   beginInsertRows(QModelIndex(), 0, 0);
   _log.prepend(entry);
   endInsertRows();
