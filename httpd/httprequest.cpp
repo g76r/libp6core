@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,15 +16,17 @@
 #include <QRegExp>
 #include "httpcommon.h"
 #include <QSharedData>
+#include <QHostAddress>
 
 class HttpRequestData : public QSharedData {
 public:
   QAbstractSocket *_input;
   HttpRequest::HttpRequestMethod _method;
-  QMultiMap<QString,QString> _headers;
+  QMultiHash<QString,QString> _headers;
   QHash<QString,QString> _cookies, _paramsCache;
   QUrl _url;
   QUrlQuery _query;
+  QStringList _clientAdresses;
   explicit HttpRequestData(QAbstractSocket *input) : _input(input),
     _method(HttpRequest::NONE) { }
 };
@@ -81,6 +83,7 @@ bool HttpRequest::parseAndAddHeader(QString rawHeader) {
   // MAYDO remove special chars from keys and values?
   // TODO support multi-line headers
   QString key = rawHeader.left(i).trimmed();
+  // TODO normalize key case
   QString value = rawHeader.right(rawHeader.size()-i-1).trimmed();
   //qDebug() << "header:" << rawHeader << key << value;
   d->_headers.insertMulti(key, value);
@@ -201,20 +204,20 @@ HttpRequest::HttpRequestMethod HttpRequest::method() const {
 }
 
 QString HttpRequest::header(QString name, QString defaultValue) const {
+  // LATER handle case insensitivity in header names
   if (!d)
     return defaultValue;
   const QString v = d->_headers.value(name);
   return v.isNull() ? defaultValue : v;
-  // if multiple, the last one is returned
-  // whereas in the J2EE API it's the first one
 }
 
 QStringList HttpRequest::headers(QString name) const {
+  // LATER handle case insensitivity in header names
   return d ? d->_headers.values(name) : QStringList();
 }
 
-QMultiMap<QString,QString> HttpRequest::headers() const {
-  return d ? d->_headers : QMultiMap<QString,QString>();
+QMultiHash<QString, QString> HttpRequest::headers() const {
+  return d ? d->_headers : QMultiHash<QString,QString>();
 }
 
 QString HttpRequest::cookie(QString name, QString defaultValue) const {
@@ -239,4 +242,23 @@ QByteArray HttpRequest::base64BinaryCookie(QString name,
   const QString v = d->_cookies.value(name);
   return v.isNull() ? defaultValue
                     : QByteArray::fromBase64(cookie(name).toLatin1());
+}
+
+QStringList HttpRequest::clientAdresses() const {
+  static QRegExp xffSeparator("\\s*,\\s*");
+  if (!d)
+    return QStringList();
+  if (d->_clientAdresses.isEmpty()) {
+    QStringList xff = headers("X-Forwarded-For");
+    if (!xff.isEmpty())
+      d->_clientAdresses.append(xff.last().split(xffSeparator));
+    QHostAddress peerAddress = d->_input->peerAddress();
+    if (peerAddress.isNull()) {
+      Log::debug() << "HttpRequest::clientAdresses() cannot find socket peer "
+                      "address";
+      d->_clientAdresses.append("0.0.0.0");
+    } else
+      d->_clientAdresses.append(peerAddress.toString());
+  }
+  return d->_clientAdresses;
 }

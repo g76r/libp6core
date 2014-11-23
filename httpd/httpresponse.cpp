@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,7 +17,7 @@
 #include <QRegExp>
 #include "log/log.h"
 #include <QSharedData>
-#include <QMultiMap>
+#include <QMultiHash>
 #include "util/timeformats.h"
 
 class HttpResponseData : public QSharedData {
@@ -25,7 +25,7 @@ public:
   QAbstractSocket *_output;
   int _status;
   bool _headersSent;
-  QMultiMap<QString,QString> _headers;
+  QMultiHash<QString,QString> _headers;
   explicit HttpResponseData(QAbstractSocket *output) : _output(output),
     _status(200), _headersSent(false) { }
 };
@@ -59,7 +59,7 @@ QAbstractSocket *HttpResponse::output() {
     foreach (QString name, d->_headers.keys().toSet())
       foreach (QString value, d->_headers.values(name))
         ts << name << ": " << value << "\r\n";
-    if (!d->_headers.contains("Content-Type"))
+    if (header("Content-Type").isEmpty())
       ts << "Content-Type: text/plain;charset=UTF-8\r\n";
     ts << "\r\n";
     d->_headersSent = true;
@@ -79,7 +79,7 @@ int HttpResponse::status() const {
 }
 
 void HttpResponse::setHeader(QString name, QString value) {
-  // LATER handle case sensitivity in header names
+  // LATER handle case insensitivity in header names
   if (d && !d->_headersSent) {
     d->_headers.remove(name);
     d->_headers.insert(name, value);
@@ -88,7 +88,7 @@ void HttpResponse::setHeader(QString name, QString value) {
 }
 
 void HttpResponse::addHeader(QString name, QString value) {
-  // LATER handle case sensitivity in header names
+  // LATER handle case insensitivity in header names
   if (d && !d->_headersSent) {
     d->_headers.insertMulti(name, value);
   } else
@@ -153,6 +153,19 @@ void HttpResponse::setCookie(QString name, QString value,
   addHeader("Set-Cookie", s);
 }
 
-QMultiMap<QString,QString> HttpResponse::headers() const {
-  return d ? d->_headers : QMultiMap<QString,QString>();
+QString HttpResponse::header(QString name, QString defaultValue) const {
+  // LATER handle case insensitivity in header names
+  if (!d)
+    return defaultValue;
+  const QString v = d->_headers.value(name);
+  return v.isNull() ? defaultValue : v;
+}
+
+QStringList HttpResponse::headers(QString name) const {
+  // LATER handle case insensitivity in header names
+  return d ? d->_headers.values(name) : QStringList();
+}
+
+QMultiHash<QString,QString> HttpResponse::headers() const {
+  return d ? d->_headers : QMultiHash<QString,QString>();
 }

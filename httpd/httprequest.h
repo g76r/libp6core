@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,7 +15,7 @@
 #define HTTPREQUEST_H
 
 #include <QStringList>
-#include <QMultiMap>
+#include <QMultiHash>
 #include <QUrl>
 #include <QUrlQuery>
 #include <QAbstractSocket>
@@ -53,11 +53,20 @@ public:
   /** @return protocol and human readable string, e.g. "GET" */
   static QString methodName(HttpRequestMethod method);
   bool parseAndAddHeader(QString rawHeader);
+  /** Value associated to a request header.
+   * If the header is found several time, last value is returned. */
   QString header(QString name, QString defaultValue = QString()) const;
+  /** Values associated to a request header, last occurrence first. */
   QStringList headers(QString name) const;
-  QMultiMap<QString,QString> headers() const;
+  /** Full header hash */
+  QMultiHash<QString,QString> headers() const;
+  /* Value of a given cookie, as is. */
   QString cookie(QString name, QString defaultValue = QString()) const;
+  /* Value of a given cookie, decoded from base64 (implies that the cookie
+   * content was encoded using base64 and utf-8). */
   QString base64Cookie(QString name, QString defaultValue = QString()) const;
+  /* Value of a given cookie, decoded from base64 (implies that the cookie
+   * content was encoded using base64). */
   QByteArray base64BinaryCookie(QString name,
                                 QByteArray defaultValue = QByteArray()) const;
   /** Replace url. If params have already been queried and new url has
@@ -76,7 +85,13 @@ public:
    * Only first value of multi-valued parameters is kept. */
   ParamSet paramsAsParamSet() const;
   operator QString() const;
-  // LATER handle cookies and sessions
+  /** Client addresses.
+   * Contains only one address for direct connection, or several when acceeded
+   * through (reverse) proxies.
+   * Same as X-Forwarded-For content, plus socket peer address at the end of
+   * the list. */
+  QStringList clientAdresses() const;
+  // LATER handle sessions
 
 private:
   void parseAndAddCookie(QString rawHeaderValue);

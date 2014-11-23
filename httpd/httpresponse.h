@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -59,7 +59,13 @@ public:
   /** Append a header regardless one already exists with the same name.
    * Must be called before output(). */
   void addHeader(QString name, QString value);
-  QMultiMap<QString,QString> headers() const;
+  /** Value associated to a response header.
+   * If the header is found several time, last value is returned. */
+  QString header(QString name, QString defaultValue = QString()) const;
+  /** Values associated to a response header, last occurrence first. */
+  QStringList headers(QString name) const;
+  /** Full header hash */
+  QMultiHash<QString,QString> headers() const;
   /** Respond with a temporary moved page (302).
    * Must be called before output(). */
   void redirect(QString location);
@@ -71,23 +77,22 @@ public:
       QString domain = QString(), bool secure = false, bool httponly = false) {
     setCookie(name, value, QDateTime(), path, domain, secure, httponly);
   }
-  /** Set a session cookie
-   * Any Unicode character is allowed in value. */
+  /** Set a session cookie, encoding its value using base64 and utf-8. */
   inline void setBase64SessionCookie(
       QString name, QString value, QString path = QString(),
       QString domain = QString(), bool secure = false, bool httponly = false) {
     setCookie(name, value.toUtf8().toBase64().constData(), QDateTime(), path,
               domain, secure, httponly);
   }
-  /** Set a session cookie
-   * Any Unicode character is allowed in value. */
+  /** Set a session cookie, encoding its value using base64 and assuming char*
+   * array is already encoded using utf-8 (or of course 7 bits ascii). */
   inline void setBase64SessionCookie(
       QString name, const char *value, QString path = QString(),
       QString domain = QString(), bool secure = false, bool httponly = false) {
     setCookie(name, QByteArray(value).toBase64().constData(), QDateTime(), path,
               domain, secure, httponly);
   }
-  /** Set a session cookie */
+  /** Set a session cookie, encoding its value using base64 */
   inline void setBase64SessionCookie(
       QString name, QByteArray value, QString path = QString(),
       QString domain = QString(), bool secure = false, bool httponly = false) {
@@ -116,8 +121,7 @@ public:
     setCookie(name, value, QDateTime::currentDateTime().addSecs(seconds),
               path, domain, secure, httponly);
   }
-  /** Set a persistent cookie.
-   * Any Unicode character is allowed in value.
+  /** Set a persistent cookie, encoding its value using base64 and utf-8.
    * @param expires defaults to now + 1 day */
   inline void setBase64PersistentCookie(
       QString name, QString value, QDateTime expires = QDateTime(),
@@ -128,8 +132,8 @@ public:
                                : expires,
               path, domain, secure, httponly);
   }
-  /** Set a persistent cookie.
-   * Any Unicode character is allowed in value.
+  /** Set a persistent cookie, encoding its value using base64 and assuming char*
+   * array is already encoded using utf-8 (or of course 7 bits ascii).
    * @param expires defaults to now + 1 day */
   inline void setBase64PersistentCookie(
       QString name, const char *value, QDateTime expires = QDateTime(),
@@ -140,7 +144,7 @@ public:
                                : expires,
               path, domain, secure, httponly);
   }
-  /** Set a persistent cookie.
+  /** Set a persistent cookie, encoding its value using base64.
    * @param expires defaults to now + 1 day */
   inline void setBase64PersistentCookie(
       QString name, QByteArray value, QDateTime expires = QDateTime(),
@@ -151,8 +155,7 @@ public:
                                : expires,
               path, domain, secure, httponly);
   }
-  /** Set a persistent cookie.
-   * Any Unicode character is allowed in value. */
+  /** Set a persistent cookie, encoding its value using base64 and utf-8. */
   inline void setBase64PersistentCookie(
       QString name, QString value, int seconds, QString path = QString(),
       QString domain = QString(), bool secure = false, bool httponly = false) {
@@ -160,8 +163,8 @@ public:
               QDateTime::currentDateTime().addSecs(seconds),
               path, domain, secure, httponly);
   }
-  /** Set a persistent cookie.
-   * Any Unicode character is allowed in value. */
+  /** Set a persistent cookie, encoding its value using base64 and assuming
+   * char* array is already encoded using utf-8 (or of course 7 bits ascii). */
   inline void setBase64PersistentCookie(
       QString name, const char *value, int seconds, QString path = QString(),
       QString domain = QString(), bool secure = false, bool httponly = false) {
@@ -169,7 +172,7 @@ public:
               QDateTime::currentDateTime().addSecs(seconds),
               path, domain, secure, httponly);
   }
-  /** Set a persistent cookie. */
+  /** Set a persistent cookie, encoding its value using base64. */
   inline void setBase64PersistentCookie(
       QString name, QByteArray value, int seconds, QString path = QString(),
       QString domain = QString(), bool secure = false, bool httponly = false) {
