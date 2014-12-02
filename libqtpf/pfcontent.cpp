@@ -167,7 +167,7 @@ qint64 PfFragmentData::write(QIODevice *target, Format format,
     case Raw:
       return target->write(_text.toUtf8());
     case Pf:
-      return target->write(PfUtils::escape(_text).toUtf8());
+      return target->write(PfUtils::escape(_text, options).toUtf8());
     case XmlBase64:
       return target->write(pftoxmltext(_text).toUtf8());
     }

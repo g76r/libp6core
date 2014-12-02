@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -18,6 +18,10 @@ under the License.
 #include <QString>
 #include <QSharedData>
 
+enum PfPreferedCharactersProtection {
+  PfBackslashProtection, PfDoubleQuoteProtection, PfSimpleQuoteProtection
+};
+
 class LIBQTPFSHARED_EXPORT PfOptionsData : public QSharedData {
   friend class PfOptions;
   bool _shouldLazyLoadBinaryFragments;
@@ -27,11 +31,13 @@ class LIBQTPFSHARED_EXPORT PfOptionsData : public QSharedData {
   bool _shouldWriteContentBeforeSubnodes;
   // LATER maxBinaryFragmentSize (then split them into several fragments)
   QString _outputSurface;
+  PfPreferedCharactersProtection _preferedCharactersProtection;
 
 public:
   PfOptionsData() : _shouldLazyLoadBinaryFragments(false),
     _shouldTranslateArrayIntoTree(false), _shouldIndent(false),
-    _shouldIgnoreComment(true), _shouldWriteContentBeforeSubnodes(false) {
+    _shouldIgnoreComment(true), _shouldWriteContentBeforeSubnodes(false),
+    _preferedCharactersProtection(PfDoubleQuoteProtection) {
   }
 };
 
@@ -89,6 +95,16 @@ public:
     * This method is rather intended for internal use by the PF library but it
     * is part of the public API and can be used by any user code. */
   static QString normalizeSurface(QString surface);
+  /** Prefered method to protect special characters.
+    * default: PfDoubleQuoteProtection. */
+  inline PfPreferedCharactersProtection preferedCharactersProtection() const {
+    return d->_preferedCharactersProtection; }
+  inline PfOptions &preferBackslashCharactersProtection() {
+    d->_preferedCharactersProtection = PfBackslashProtection; return *this; }
+  inline PfOptions &preferDoubleQuoteCharactersProtection() {
+    d->_preferedCharactersProtection = PfDoubleQuoteProtection; return *this; }
+  inline PfOptions &preferSimpleQuoteCharactersProtection() {
+    d->_preferedCharactersProtection = PfSimpleQuoteProtection; return *this; }
 };
 
 #endif // PFOPTIONS_H

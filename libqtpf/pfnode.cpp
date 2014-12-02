@@ -195,7 +195,7 @@ qint64 PfNodeData::internalWritePf(QIODevice *target, QString indent,
     if ((r = target->write("(")) < 0)
       return -1;
     total += r;
-    if ((r = target->write(PfUtils::escape(_name, true).toUtf8())) < 0)
+    if ((r = target->write(PfUtils::escape(_name, options, true).toUtf8())) < 0)
       return -1;
     total += r;
     // subnodes & content

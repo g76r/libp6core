@@ -16,6 +16,7 @@ under the License.
 
 #include "libqtpf_global.h"
 #include <QString>
+#include "pfoptions.h"
 
 class LIBQTPFSHARED_EXPORT PfUtils {
 public:
@@ -29,7 +30,8 @@ public:
     * Set escapeEvenSingleSpaces to true to escape every spaces, which is useful
     * e.g. for node names containing spaces.
     */
-  static QString escape(QString string, bool escapeEvenSingleSpaces = false);
+  static QString escape(QString string, PfOptions options,
+                        bool escapeEvenSingleSpaces = false);
 
 public:
   inline PfUtils() {}

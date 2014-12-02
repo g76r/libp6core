@@ -14,16 +14,49 @@ under the License.
 #include "pfutils.h"
 #include "pfinternals.h"
 
-QString PfUtils::escape(QString string, bool escapeEvenSingleSpaces) {
+QString PfUtils::escape(QString string, PfOptions options,
+                        bool escapeEvenSingleSpaces) {
   QString s;
   int imax = string.size()-1;
+  PfPreferedCharactersProtection protection
+      = options.preferedCharactersProtection();
+  bool protectionUsed = false;
   for (int i = 0; i <= imax; ++i) {
     QChar c = string.at(i);
     if (pfisspecial(c.toLatin1())
         && (escapeEvenSingleSpaces || c != ' ' || i == 0 || i == imax
-            || string.at(i+1) == ' '))
-      s.append(PF_ESCAPE);
-    s.append(c);
+            || string.at(i+1) == ' ')) {
+      switch (protection) {
+      case PfBackslashProtection:
+        s.append(PF_ESCAPE);
+        s.append(c);
+        break;
+      case PfDoubleQuoteProtection:
+        if (c == '"')
+          s.append("\"\\\"\"");
+        else
+          s.append(c);
+        protectionUsed = true;
+        break;
+      case PfSimpleQuoteProtection:
+        if (c == '\'')
+          s.append("'\\''");
+        else
+          s.append(c);
+        protectionUsed = true;
+        break;
+      }
+    } else {
+      s.append(c);
+    }
   }
-  return s;
+  switch (protection) {
+  case PfBackslashProtection:
+    return s;
+  case PfDoubleQuoteProtection:
+    return protectionUsed ? "\""+s+"\"" : s;
+  case PfSimpleQuoteProtection:
+    return protectionUsed ? "'"+s+"'" : s;
+  }
+  return s; // should never happen
 }

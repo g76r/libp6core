@@ -28,7 +28,7 @@ qint64 PfArray::writePf(QIODevice *target, PfOptions options) const {
       first = false;
     else
       line.append(";");
-    line.append(PfUtils::escape(header));
+    line.append(PfUtils::escape(header, options));
   }
   line.append("\n");
   if ((r = target->write(line.toUtf8())) < 0)
@@ -42,7 +42,7 @@ qint64 PfArray::writePf(QIODevice *target, PfOptions options) const {
         first = false;
       else
         line.append(";");
-      line.append(PfUtils::escape(cell));
+      line.append(PfUtils::escape(cell, options));
     }
     line.append("\n");
     if ((r = target->write(line.toUtf8())) < 0)
