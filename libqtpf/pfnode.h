@@ -238,6 +238,8 @@ public:
    * strings list. Backspaces and spaces inside strings are escaped with
    * backslash */
   void setContent(QList<QString> strings);
+  /** Remove current content and make the node content empty (and thus text). */
+  inline void clearContent() { d->_content.clear(); }
 
   // Output methods ///////////////////////////////////////////////////////////
 
