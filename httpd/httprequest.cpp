@@ -93,6 +93,7 @@ bool HttpRequest::parseAndAddHeader(QString rawHeader) {
 }
 
 void HttpRequest::parseAndAddCookie(QString rawHeaderValue) {
+  // LATER use QNetworkCookie::parseCookies
   // LATER ensure that utf8 is supported as specified in RFC6265
   if (!d)
     return;

@@ -71,7 +71,7 @@ void HttpResponse::setStatus(int status) {
   if (d && !d->_headersSent) {
     d->_status = status;
   } else
-    qWarning() << "HttpResponse: cannot set status after writing data";
+    Log::warning() << "HttpResponse: cannot set status after writing data";
 }
 
 int HttpResponse::status() const {
@@ -84,7 +84,7 @@ void HttpResponse::setHeader(QString name, QString value) {
     d->_headers.remove(name);
     d->_headers.insert(name, value);
   } else
-    qWarning() << "HttpResponse: cannot set header after writing data";
+    Log::warning() << "HttpResponse: cannot set header after writing data";
 }
 
 void HttpResponse::addHeader(QString name, QString value) {
@@ -92,7 +92,7 @@ void HttpResponse::addHeader(QString name, QString value) {
   if (d && !d->_headersSent) {
     d->_headers.insertMulti(name, value);
   } else
-    qWarning() << "HttpResponse: cannot set header after writing data";
+    Log::warning() << "HttpResponse: cannot set header after writing data";
 }
 
 void HttpResponse::redirect(QString location) {
