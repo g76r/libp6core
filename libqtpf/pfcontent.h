@@ -164,20 +164,23 @@ public:
   inline void append(QString text) {
     d->_array.clear();
     // LATER merge fragments if previous one is text
-    d->_fragments.append(PfFragment(text));
+    if (!text.isEmpty())
+      d->_fragments.append(PfFragment(text));
   }
   /** Append lazy-loaded binary content (and remove array if any). */
   inline void append(QIODevice *device, qint64 length, qint64 offset,
                      QString surface = QString()) {
     d->_array.clear();
-    d->_fragments.append(PfFragment(device, length, offset, surface));
+    if (device && length > 0)
+      d->_fragments.append(PfFragment(device, length, offset, surface));
   }
   /** Append in-memory binary content (and remove array if any). */
   inline void append(QByteArray data, QString surface = QString()) {
     d->_array.clear();
     // Merging fragments if previous is in-memory binary is probably a bad idea
     // because it would prevent Qt's implicite sharing to work.
-    d->_fragments.append(PfFragment(data, surface));
+    if (!data.isEmpty())
+      d->_fragments.append(PfFragment(data, surface));
   }
   /** Replace current content with array. */
   inline void set(PfArray array) {
