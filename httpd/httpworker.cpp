@@ -29,11 +29,12 @@
 #define MAXIMUM_READ_WAIT 30000
 #define MAXIMUM_WRITE_WAIT 10000
 
+static QAtomicInt _workersCounter(1);
+
 HttpWorker::HttpWorker(HttpServer *server)
   : _server(server), _thread(new QThread()) {
   _thread->setObjectName(QString("HttpWorker-%1")
-                         .arg((long)_thread, sizeof(long)*2, 16,
-                              QLatin1Char('0')));
+                         .arg(_workersCounter.fetchAndAddOrdered(1)));
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();
