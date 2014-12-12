@@ -53,7 +53,8 @@ QAbstractSocket *HttpResponse::output() {
   if (d && !d->_headersSent) {
     QTextStream ts(d->_output);
     // LATER give a label for each well known status codes
-    ts << "HTTP/1.0 " << d->_status << " Status " << d->_status << "\r\n";
+    ts << "HTTP/1.0 " << d->_status << " " << statusAsString(d->_status)
+       << "\r\n";
     // LATER sanitize well-known headers (Content-Type...) values
     // LATER handle multi-line headers and special chars
     foreach (QString name, d->_headers.keys().toSet())
@@ -168,4 +169,62 @@ QStringList HttpResponse::headers(QString name) const {
 
 QMultiHash<QString,QString> HttpResponse::headers() const {
   return d ? d->_headers : QMultiHash<QString,QString>();
+}
+
+QString HttpResponse::statusAsString(int status) {
+  switch(status) {
+  // LATER other statuses
+  case 200:
+    return "Ok";
+  case 201:
+    return "Created";
+  case 202:
+    return "Accepted";
+  case 300:
+    return "Multiple choices";
+  case 301:
+    return "Moving permantently";
+  case 302:
+    return "Found";
+  case 303:
+    return "See other";
+  case 304:
+    return "Not modified";
+  case 305:
+    return "Use proxy";
+  case 306:
+    return "Switch proxy";
+  case 307:
+    return "Temporary redirect";
+  case 308:
+    return "Permanent redirect";
+  case 400:
+    return "Bad request";
+  case 401:
+    return "Authentication required";
+  case 402:
+    return "Insert coin";
+  case 403:
+    return "Forbidden";
+  case 404:
+    return "Not Found";
+  case 405:
+    return "Method not allowed";
+  case 408:
+    return "Request timeout";
+  case 413:
+    return "Request entity too large";
+  case 414:
+    return "Request URI too large";
+  case 415:
+    return "Unsupported media type";
+  case 418:
+    return "I'm a teapot";
+  case 500:
+    return "Internal server error";
+  case 501:
+    return "Not implemented";
+  default:
+    return QString("Status %1").arg(status);
+  }
 }

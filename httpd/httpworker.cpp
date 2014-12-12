@@ -90,7 +90,7 @@ void HttpWorker::handleConnection(int socketDescriptor) {
   else if (method == "DELETE")
     req.setMethod(HttpRequest::DELETE);
   else {
-    out << "HTTP/1.0 405 Method not allowed: \r\n\r\n"+method;
+    out << "HTTP/1.0 405 Method not allowed\r\n";
     Log::error() << "HTTP/1.0 405 Method not allowed, starting with: "
                  << method.left(200);
     goto finally;

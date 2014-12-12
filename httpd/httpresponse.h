@@ -187,6 +187,8 @@ public:
               path, domain, false, false);
   }
   // LATER session
+  QString statusAsString() { return statusAsString(status()); }
+  static QString statusAsString(int status);
 
 private:
   void setCookie(QString name, QString value, QDateTime expires, QString path,
