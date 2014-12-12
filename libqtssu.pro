@@ -86,7 +86,8 @@ SOURCES += \
     modelview/shareduiitemstreemodel.cpp \
     util/relativedatetime.cpp \
     log/loggerthread.cpp \
-    log/multiplexerlogger.cpp
+    log/multiplexerlogger.cpp \
+    httpd/uploadhttphandler.cpp
 
 
 HEADERS +=\
@@ -153,7 +154,8 @@ HEADERS +=\
     log/loggerthread.h \
     log/multiplexerlogger.h \
     util/twothreadscircularbuffer.h \
-    util/threadsafecircularbuffer.h
+    util/threadsafecircularbuffer.h \
+    httpd/uploadhttphandler.h
 
 unix {
     target.path = /usr/lib
