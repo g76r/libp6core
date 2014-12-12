@@ -25,25 +25,31 @@ class LIBQTSSUSHARED_EXPORT IOUtils {
 public:
   /** Copy content of src into dest until max bytes or src's end is reached. */
   static qint64 copy(QIODevice *dest, QIODevice *src, qint64 max = LLONG_MAX,
-                     qint64 bufsize = 65536);
+                     qint64 bufsize = 65536, int readTimeout = 30000,
+                     int writeTimeout = 30000);
   /** Copy at most max bytes from dest to src, copying only lines that match
    * pattern.
    * Filter may mismatch lines if they are longer than bufsize-1.
    * @param useRegexp otherwise pattern is plain text */
   static qint64 grep(QIODevice *dest, QIODevice *src, QString pattern,
                      bool useRegexp = false, qint64 max = LLONG_MAX,
-                     qint64 bufsize = 65535);
+                     qint64 bufsize = 65535, int readTimeout = 30000,
+                     int writeTimeout = 30000);
   /** Syntaxic sugar */
   inline static qint64 grep(QIODevice *dest, QIODevice *src,
                             const char *pattern, bool useRegexp = false,
-                            qint64 max = LLONG_MAX, qint64 bufsize = 65535) {
-    return useRegexp ? grep(dest, src, QRegExp(pattern), max, bufsize)
-        : grep(dest, src, QString(pattern), false, max, bufsize); }
+                            qint64 max = LLONG_MAX, qint64 bufsize = 65535,
+                            int readTimeout = 30000, int writeTimeout = 30000) {
+    return useRegexp ? grep(dest, src, QRegExp(pattern), max, bufsize,
+                            readTimeout, writeTimeout)
+                     : grep(dest, src, QString(pattern), false, max, bufsize,
+                            readTimeout, writeTimeout); }
   /** Copy at most max bytes from dest to src, copying only lines that match
    * regexp.
    * Filter may mismatch lines if they are longer than bufsize-1. */
   static qint64 grep(QIODevice *dest, QIODevice *src, QRegExp regexp,
-                     qint64 max = LLONG_MAX, qint64 maxLineSize = 65535);
+                     qint64 max = LLONG_MAX, qint64 maxLineSize = 65535,
+                     int readTimeout = 30000, int writeTimeout = 30000);
   /** Copy at most max bytes from dest to src, copying only lines that match
    * regexp and those that follow it and begin with the continuationLinePrefix.
    * Convenient for greping logfiles which continuation lines begin with "  ".
@@ -51,8 +57,8 @@ public:
   static qint64 grepWithContinuation(
       QIODevice *dest, QIODevice *src, QRegExp regexp,
       QString continuationLinePrefix, qint64 max = LLONG_MAX,
-      qint64 bufsize = 65536);
-
+      qint64 bufsize = 65536, int readTimeout = 30000,
+      int writeTimeout = 30000);
   /** Convert QUrl object to local path usable with e.g. QFile
     * Only support "file" and "qrc" schemes.
     * @return path, QString::isNull() if URL not supported (e.g. its scheme)
