@@ -95,6 +95,6 @@ void PfHandler::error(int line, int column) {
   _errorLine = line;
   _errorColumn = column;
   _errorOccured = true;
-  qWarning() << "PfHandler::error line" << line << "column" << column << ":"
-      << errorString();
+  //qWarning() << "PfHandler::error line" << line << "column" << column << ":"
+  //    << errorString();
 }
