@@ -46,6 +46,8 @@ public:
 protected:
   void sendLocalResource(HttpRequest req, HttpResponse res, QFile *file,
                          HttpRequestContext ctxt);
+  void applyTemplateFile(HttpRequest req, HttpResponse res, QFile *file,
+                           HttpRequestContext ctxt, QString *output);
 };
 
 #endif // TEMPLATINGHTTPHANDLER_H

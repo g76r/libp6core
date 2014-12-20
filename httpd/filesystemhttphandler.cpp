@@ -49,6 +49,11 @@ bool FilesystemHttpHandler::acceptRequest(HttpRequest req) {
 
 bool FilesystemHttpHandler::handleRequest(
     HttpRequest req, HttpResponse res, HttpRequestContext ctxt) {
+  if (_documentRoot.isEmpty()) {
+    res.setStatus(500);
+    res.output()->write("No document root.");
+    return true;
+  }
   QString path = req.url().path();
   path.remove(0, _urlPathPrefix.length());
   while (path.size() && path.at(path.size()-1) == '/')
@@ -82,13 +87,13 @@ bool FilesystemHttpHandler::handleRequest(
     sendLocalResource(req, res, &file, ctxt);
     return true;
   }
-  int status = file.error() == QFile::PermissionsError ? 403 : 404;
-  //qDebug() << "failure" << status;
-  res.setStatus(status);
-  res.output()->write(status == 403 ? "Permission denied."
-                                    : "Document not found.");
-  //qDebug() << "Cannot serve HTTP static resource" << req.url()
-  //         << file.fileName() << status;
+  if (file.error() == QFile::PermissionsError) {
+    res.setStatus(403);
+    res.output()->write("Permission denied.");
+  } else {
+    res.setStatus(404);
+    res.output()->write("Document not found.");
+  }
   return true;
 }
 
