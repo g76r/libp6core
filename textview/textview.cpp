@@ -71,8 +71,12 @@ void TextView::setModel(QAbstractItemModel *model) {
   emit modelChanged();
 }
 
-void TextView::resetAll() {
+void TextView::invalidateCache() {
+  resetAll();
 }
+
+/*void TextView::resetAll() {
+}*/
 
 void TextView::layoutChanged() {
   resetAll();

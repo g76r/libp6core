@@ -29,3 +29,6 @@ QString ClockView::text(ParamsProvider *params, QString scope) const {
       ? QDateTime::currentDateTime().toString(_dateFormat)
       : QDateTime::currentDateTime().toString(_textFormat);
 }
+
+void ClockView::resetAll() {
+}

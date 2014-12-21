@@ -83,11 +83,13 @@ public slots:
   /** Syntaxic sugar. */
   inline QString text(ParamSet params, QString scope = QString()) {
     return text(&params, scope); }
+  /** Invalidate all cached data.
+   * Default: call resetAll() */
+  virtual void invalidateCache();
 
 protected slots:
-  /** Recompute the whole view: headers, data, layout...
-   * Default: do nothing */
-  virtual void resetAll();
+  /** Recompute the whole view: headers, data, layout... */
+  virtual void resetAll() = 0;
   /** Recompute the view part impacted by a layout change.
    * Default: call resetAll(). */
   virtual void layoutChanged();

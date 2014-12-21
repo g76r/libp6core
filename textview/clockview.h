@@ -32,6 +32,7 @@ public:
   void setFormat(QString format) { _textFormat = format; }
   void setFormat(Qt::DateFormat format) {
     _dateFormat = format; _textFormat = QString(); }
+  void resetAll();
 };
 
 #endif // CLOCKVIEW_H

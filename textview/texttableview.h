@@ -69,6 +69,8 @@ public:
    * Default: "..." */
   virtual void setEllipsePlaceholder(QString rawText = "...");
   void setModel(QAbstractItemModel *model);
+  /** Calls dataChanged() with whole table range. */
+  void invalidateCache();
 
 protected:
   QList<int> effectiveColumnIndexes() const { return _effectiveColumnIndexes; }

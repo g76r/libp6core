@@ -69,6 +69,16 @@ QString TextTableView::text(ParamsProvider *params, QString scope) const {
       +v+footer(currentPage, maxPage, pageVariableName);
 }
 
+void TextTableView::invalidateCache() {
+  QAbstractItemModel *m = model();
+  if (!m)
+    return;
+  int rows = m->rowCount(), columns = m->columnCount();
+  if (rows < 1 || columns < 1)
+    return;
+  dataChanged(m->index(0, 0), m->index(rows-1, columns-1));
+}
+
 void TextTableView::resetAll() {
   //qDebug() << "TextTableView::resetAll" << objectName() << metaObject()->className();
   layoutChanged();
