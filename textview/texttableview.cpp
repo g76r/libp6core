@@ -86,6 +86,7 @@ void TextTableView::dataChanged(const QModelIndex &topLeft,
   //             << "," << bottomRight.column();
   QAbstractItemModel *m = model();
   int start = topLeft.row(), end = bottomRight.row();
+  //qDebug() << "TextTableView::dataChanged" << start << end;
   if (!topLeft.isValid() || !bottomRight.isValid() || topLeft.parent().isValid()
       || bottomRight.parent().isValid() || !m || start >= _rows.size())
     return;

@@ -52,9 +52,22 @@ public:
   }
   void updateItem(SharedUiItem item);
   void renameItem(SharedUiItem item, QString oldId);
+  /** Insert an item before row 'row', or append it at the end if
+   * row == rowCount().
+   * @see QAbstractItemModel::insertRow */
+  virtual void insertItem(int row, SharedUiItem item);
+  virtual void removeItems(int first, int last);
 
 protected:
   SharedUiItem itemAt(const QModelIndex &index) const;
+  /** Convenience method */
+  SharedUiItem itemAt(int row) const;
+
+private:
+  using QAbstractItemModel::removeRows;
+  using QAbstractItemModel::removeRow;
+  using QAbstractItemModel::insertRows;
+  using QAbstractItemModel::insertRow;
 };
 
 #endif // SHAREDUIITEMSTABLEMODEL_H

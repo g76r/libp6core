@@ -66,8 +66,31 @@ void SharedUiItemsTableModel::renameItem(SharedUiItem item, QString oldId) {
   }
 }
 
+void SharedUiItemsTableModel::insertItem(int row, SharedUiItem item) {
+  if (row < 0 || row > rowCount())
+    return;
+  beginInsertRows(QModelIndex(), row, row);
+  _items.insert(row, item);
+  endInsertRows();
+}
+
+void SharedUiItemsTableModel::removeItems(int first, int last) {
+  if (first < 0 || last >= rowCount() || last < first)
+    return;
+  beginRemoveRows(QModelIndex(), first, last);
+  while (first <= last--)
+    _items.removeAt(first);
+  endRemoveRows();
+}
+
 SharedUiItem SharedUiItemsTableModel::itemAt(const QModelIndex &index) const {
   if (index.isValid())
     return _items.value(index.row());
+  return SharedUiItem();
+}
+
+SharedUiItem SharedUiItemsTableModel::itemAt(int row) const {
+  if (row > 0 && row < _items.size())
+    return _items.value(row);
   return SharedUiItem();
 }
