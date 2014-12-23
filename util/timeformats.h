@@ -29,6 +29,7 @@ private:
 public:
   /** Should never be called directly (only used for singleton init) */
   TimeFormats();
+  // TODO switch to QDateTime::toString(Qt::RFC2822Date) now that it exists
   static QString toRfc2822DateTime(QDateTime dt);
   static QDateTime fromRfc2822DateTime(QString rfc2822DateTime,
                                        QString &errorString);
