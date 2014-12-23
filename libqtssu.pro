@@ -87,7 +87,9 @@ SOURCES += \
     util/relativedatetime.cpp \
     log/loggerthread.cpp \
     log/multiplexerlogger.cpp \
-    httpd/uploadhttphandler.cpp
+    httpd/uploadhttphandler.cpp \
+    csv/csvfile.cpp \
+    csv/csvfilemodel.cpp
 
 
 HEADERS +=\
@@ -155,7 +157,9 @@ HEADERS +=\
     log/multiplexerlogger.h \
     util/twothreadscircularbuffer.h \
     util/threadsafecircularbuffer.h \
-    httpd/uploadhttphandler.h
+    httpd/uploadhttphandler.h \
+    csv/csvfile.h \
+    csv/csvfilemodel.h
 
 unix {
     target.path = /usr/lib
