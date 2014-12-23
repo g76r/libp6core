@@ -76,6 +76,7 @@ public:
   // Node related methods /////////////////////////////////////////////////////
 
   inline QString name() const { return d->_name; }
+  inline void setName(QString name) { d->_name = name; }
   inline bool isNull() const { return d->isNull(); }
   inline bool isComment() const { return d->isComment(); }
 
