@@ -56,7 +56,7 @@ bool UploadHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
     return true;
   }
   QTemporaryFile *file = _tempFileTemplate.isEmpty()
-      ? new QTemporaryFile(this) : new QTemporaryFile(_tempFileTemplate, this);
+      ? new QTemporaryFile : new QTemporaryFile(_tempFileTemplate);
   if (!file->open()) {
     Log::warning() << "failed to create temporary file "
                    << file->fileTemplate() << " : " << file->errorString();
