@@ -141,13 +141,23 @@ bool FilesystemHttpHandler::handleCacheHeadersAndSend304(
     if (lastModified.isValid())
       res.setHeader("Last-Modified", TimeFormats::toRfc2822DateTime(
                       lastModified));
-    QDateTime ifModifiedSince(TimeFormats::fromRfc2822DateTime(
-                                req.header("If-Modified-Since")).toUTC());
-    // compare to If-Modified-Since +1" against rounding issues
-    if (ifModifiedSince.isValid() && lastModified.isValid()
-        && lastModified <= ifModifiedSince.addSecs(1)) {
-      res.setStatus(304);
-      return true;
+    QString ifModifiedSinceString = req.header("If-Modified-Since");
+    if (!ifModifiedSinceString.isEmpty() && lastModified.isValid()) {
+      QString errorString;
+      QDateTime ifModifiedSince(
+            TimeFormats::fromRfc2822DateTime(ifModifiedSinceString,
+                                             &errorString).toUTC());
+      if (ifModifiedSince.isValid()) {
+        // compare to If-Modified-Since +1" against rounding issues
+        if (lastModified <= ifModifiedSince.addSecs(1)) {
+          res.setStatus(304);
+          return true;
+        }
+      } else {
+        // LATER remove this debug trace
+        qDebug() << "Cannot parse If-Modified-Since header timestamp:"
+                 << ifModifiedSinceString << ":" << errorString;
+      }
     }
     return false;
   }

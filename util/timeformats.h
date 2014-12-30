@@ -32,10 +32,7 @@ public:
   // TODO switch to QDateTime::toString(Qt::RFC2822Date) now that it exists
   static QString toRfc2822DateTime(QDateTime dt);
   static QDateTime fromRfc2822DateTime(QString rfc2822DateTime,
-                                       QString &errorString);
-  static QDateTime fromRfc2822DateTime(QString rfc2822DateTime) {
-    QString s;
-    return fromRfc2822DateTime(rfc2822DateTime, s); }
+                                       QString *errorString = 0);
   /** e.g. "1.250 seconds", "10 months and 3 days", "-10 months and 3 days"
    * @param absolute if false, add initial "-" if msec < 0 */
   static QString toCoarseHumanReadableTimeInterval(

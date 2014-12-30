@@ -108,7 +108,7 @@ QString TimeFormats::toRfc2822DateTime(QDateTime dt) {
 }
 
 QDateTime TimeFormats::fromRfc2822DateTime(QString rfc2822DateTime,
-                                               QString &errorString) {
+                                           QString *errorString) {
   QRegExp re(instance()->_rfc2822DateTimeRE);
   if (re.exactMatch(rfc2822DateTime)) {
     QString s = re.cap(2);
@@ -116,44 +116,51 @@ QDateTime TimeFormats::fromRfc2822DateTime(QString rfc2822DateTime,
     bool ok;
     if (!s.isEmpty()
         && instance()->_fromDaysOfWeek3.value(s.toLower(), -1) == -1) {
-      errorString = "invalid rfc2822 day of week: '"+s+"'";
-      Log::debug() << errorString; // LATER remove all these debug traces
+      if (errorString)
+        *errorString = "invalid rfc2822 day of week: '"+s+"'";
+      //Log::debug() << errorString;
       return QDateTime();
     }
     day = re.cap(3).toInt(&ok);
     if (!ok) {
-      errorString = "invalid rfc2822 day of month: '"+re.cap(3)+"'";
-      Log::debug() << errorString;
+      if (errorString)
+        *errorString = "invalid rfc2822 day of month: '"+re.cap(3)+"'";
+      //Log::debug() << errorString;
       return QDateTime();
     }
     s = re.cap(4);
     if ((month = instance()->_fromMonth3.value(s.toLower(), -1)) == -1) {
-      errorString = "invalid rfc2822 month: '"+s+"'";
-      Log::debug() << errorString;
+      if (errorString)
+        *errorString = "invalid rfc2822 month: '"+s+"'";
+      //Log::debug() << errorString;
       return QDateTime();
     }
     year = re.cap(5).toInt(&ok);
     if (!ok) {
-      errorString = "invalid rfc2822 day of year: '"+re.cap(5)+"'";
-      Log::debug() << errorString;
+      if (errorString)
+        *errorString = "invalid rfc2822 day of year: '"+re.cap(5)+"'";
+      //Log::debug() << errorString;
       return QDateTime();
     }
     hours = re.cap(6).toInt(&ok);
     if (!ok || hours > 23 || hours < 0) {
-      errorString = "invalid rfc2822 hours: '"+re.cap(6)+"'";
-      Log::debug() << errorString;
+      if (errorString)
+        *errorString = "invalid rfc2822 hours: '"+re.cap(6)+"'";
+      //Log::debug() << errorString;
       return QDateTime();
     }
     minutes = re.cap(7).toInt(&ok);
     if (!ok || minutes > 59 || minutes < 0) {
-      errorString = "invalid rfc2822 minutes: '"+re.cap(7)+"'";
-      Log::debug() << errorString;
+      if (errorString)
+        *errorString = "invalid rfc2822 minutes: '"+re.cap(7)+"'";
+      //Log::debug() << errorString;
       return QDateTime();
     }
     seconds = re.cap(8).toInt(&ok);
     if (!ok || seconds > 62 || seconds < 0) {
-      errorString = "invalid rfc2822 seconds: '"+re.cap(8)+"'";
-      Log::debug() << errorString;
+      if (errorString)
+        *errorString = "invalid rfc2822 seconds: '"+re.cap(8)+"'";
+      //Log::debug() << errorString;
       return QDateTime();
     }
     if (seconds > 59)
@@ -163,8 +170,9 @@ QDateTime TimeFormats::fromRfc2822DateTime(QString rfc2822DateTime,
     if (!ok && ((s = re.cap(11)) == "Z" || s == "GMT" || s == "UTC"))
       tz = 0;
     if (tz < -2400 || tz > 2400) {
-      errorString = "invalid rfc2822 timezone: '"+re.cap(9)+"'";
-      Log::debug() << errorString;
+      if (errorString)
+        *errorString = "invalid rfc2822 timezone: '"+re.cap(9)+"'";
+      //Log::debug() << errorString;
       return QDateTime();
     }
     //Log::fatal() << "timezone: " << tz << " with: " << re.cap(9) << "|"
@@ -174,8 +182,9 @@ QDateTime TimeFormats::fromRfc2822DateTime(QString rfc2822DateTime,
     return QDateTime(QDate(year, month, day), QTime(hours, minutes, seconds),
                      Qt::UTC).addSecs(-60*(tz%100)-3600*(tz/100));
   }
-  errorString = "invalid rfc2822 timestamp: '"+rfc2822DateTime+"'";
-  Log::debug() << errorString;
+  if (errorString)
+    *errorString = "invalid rfc2822 timestamp: '"+rfc2822DateTime+"'";
+  //Log::debug() << errorString;
   return QDateTime();
 }
 
