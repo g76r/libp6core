@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,7 +18,8 @@
 #include "shareduiitem.h"
 #include "libqtssu_global.h"
 
-/** Base class for model holding AbstractUiItems. */
+/** Base class for model holding SharedUiItems, being them table or
+ * tree-oriented they provides one item section per column. */
 class LIBQTSSUSHARED_EXPORT SharedUiItemsModel : public QAbstractItemModel {
   Q_OBJECT
   Q_DISABLE_COPY(SharedUiItemsModel)
@@ -28,21 +29,33 @@ class LIBQTSSUSHARED_EXPORT SharedUiItemsModel : public QAbstractItemModel {
 
 public:
   explicit SharedUiItemsModel(QObject *parent = 0);
-  QVariant data(const QModelIndex &index, int role) const;
-  int columnCount(const QModelIndex &parent) const;
+  QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+  int columnCount(const QModelIndex &parent = QModelIndex()) const;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
   /** Set header according to what template item returns.
    * Also set columns count. */
   void setHeaderDataFromTemplate(const SharedUiItem &templateItem,
-                              int role = Qt::DisplayRole);
-  void setColumnsCount(int columnsCount) { _columnsCount = columnsCount; }
+                                 int role = Qt::DisplayRole);
   /* Data returned for column 0 with Qt::DecorationRole */
   /*QVariant decorationAtColumn0() const { return _decorationAtColumn0; }
   void setDecorationAtColumn0(QVariant decoration) {
     _decorationAtColumn0 = decoration;  }*/
   virtual SharedUiItem itemAt(const QModelIndex &index) const = 0;
-  virtual void updateItem(SharedUiItem item) = 0;
-  virtual void renameItem(SharedUiItem item, QString oldId) = 0;
+  virtual QModelIndex indexOf(SharedUiItem item) const = 0;
+  Qt::ItemFlags	flags(const QModelIndex & index) const;
+
+public slots:
+  /** Notify a change on an item concerning this model.
+   * Ready to connect to DocumentManager::itemChanged() signal, or any more
+   * precise signals (kind of FoobarDocumentManager::foobarItemChanged(
+   * Foobar newFoobar, Foobar oldFoobar)). */
+  virtual void changeItem(SharedUiItem newItem, SharedUiItem oldItem) = 0;
+
+signals:
+  /** Emited whenever an item is created, renamed, updated or deleted,
+   * being it through setData(), changeItem(). */
+  // TODO not sure this is usefull
+  //void itemChanged(SharedUiItem newItem, SharedUiItem oldItem);
 };
 
 #endif // SHAREDUIITEMSMODEL_H

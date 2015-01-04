@@ -80,7 +80,6 @@ SOURCES += \
     textview/textviewitemdelegate.cpp \
     modelview/shareduiitem.cpp \
     modelview/shareduiitemstablemodel.cpp \
-    modelview/shareduiitemtreeitem.cpp \
     modelview/shareduiitemsmodel.cpp \
     log/qtloglogger.cpp \
     modelview/shareduiitemstreemodel.cpp \
@@ -148,7 +147,6 @@ HEADERS +=\
     textview/textviewitemdelegate.h \
     modelview/shareduiitem.h \
     modelview/shareduiitemstablemodel.h \
-    modelview/shareduiitemtreeitem.h \
     modelview/shareduiitemsmodel.h \
     log/qtloglogger.h \
     modelview/shareduiitemstreemodel.h \

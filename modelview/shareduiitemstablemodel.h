@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,12 +16,14 @@
 
 #include "shareduiitemsmodel.h"
 
-/** Model holding AbstractUiItems, one item per line, one item section per
+/** Model holding SharedUiItems, one item per line, one item section per
  * column. */
 class LIBQTSSUSHARED_EXPORT SharedUiItemsTableModel
     : public SharedUiItemsModel {
   Q_OBJECT
   Q_DISABLE_COPY(SharedUiItemsTableModel)
+
+protected:
   QList<SharedUiItem> _items;
 
 public:
@@ -50,20 +52,19 @@ public:
     qSort(castedItems);
     setItems(castedItems);
   }
-  void updateItem(SharedUiItem item);
-  void renameItem(SharedUiItem item, QString oldId);
   /** Insert an item before row 'row', or append it at the end if
    * row == rowCount().
    * @see QAbstractItemModel::insertRow */
-  virtual void insertItem(int row, SharedUiItem item);
+  virtual void insertItemAt(int row, SharedUiItem item);
   virtual void removeItems(int first, int last);
-
-protected:
   SharedUiItem itemAt(const QModelIndex &index) const;
   /** Convenience method */
   SharedUiItem itemAt(int row) const;
+  QModelIndex indexOf(SharedUiItem item) const;
+  void changeItem(SharedUiItem newItem, SharedUiItem oldItem);
 
 private:
+  // hide functions that would bypass our items list if they were called
   using QAbstractItemModel::removeRows;
   using QAbstractItemModel::removeRow;
   using QAbstractItemModel::insertRows;

@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -45,9 +45,14 @@ QVariant SharedUiItemsModel::headerData(int section, Qt::Orientation orientation
 
 void SharedUiItemsModel::setHeaderDataFromTemplate(
     const SharedUiItem &templateItem, int role) {
-  _columnsCount = templateItem.uiDataCount();
+  _columnsCount = templateItem.uiSectionCount();
   QHash<int,QVariant> mapSectionHeader;
   for (int section = 0; section < _columnsCount; ++section)
     mapSectionHeader.insert(section, templateItem.uiHeaderData(section, role));
   _mapRoleSectionHeader.insert(role, mapSectionHeader);
+}
+
+Qt::ItemFlags	SharedUiItemsModel::flags(const QModelIndex & index) const {
+  // LATER have an orientation parameter, do not assume item section == column
+  return itemAt(index).uiFlags(index.column());
 }

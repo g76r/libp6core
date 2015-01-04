@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -46,40 +46,23 @@ void SharedUiItemsTableModel::setItems(QList<SharedUiItem> items) {
   }
 }
 
-void SharedUiItemsTableModel::updateItem(SharedUiItem item) {
-  // LATER improve performance
-  for (int row = 0; row < _items.size(); ++row) {
-    if (_items[row].id() == item.id()) {
-      _items[row] = item;
-      emit dataChanged(index(row, 0), index(row, columnCount(QModelIndex())-1));
-    }
-  }
-}
-
-void SharedUiItemsTableModel::renameItem(SharedUiItem item, QString oldId) {
-  // LATER improve performance
-  for (int row = 0; row < _items.size(); ++row) {
-    if (_items[row].id() == oldId) {
-      _items[row] = item;
-      emit dataChanged(index(row, 0), index(row, columnCount(QModelIndex())-1));
-    }
-  }
-}
-
-void SharedUiItemsTableModel::insertItem(int row, SharedUiItem item) {
+void SharedUiItemsTableModel::insertItemAt(int row, SharedUiItem item) {
   if (row < 0 || row > rowCount())
     return;
   beginInsertRows(QModelIndex(), row, row);
   _items.insert(row, item);
   endInsertRows();
+  //emit itemChanged(item, SharedUiItem());
 }
 
 void SharedUiItemsTableModel::removeItems(int first, int last) {
   if (first < 0 || last >= rowCount() || last < first)
     return;
   beginRemoveRows(QModelIndex(), first, last);
-  while (first <= last--)
+  while (first <= last--) {
+    //emit itemChanged(SharedUiItem(), _items.value(first));
     _items.removeAt(first);
+  }
   endRemoveRows();
 }
 
@@ -93,4 +76,27 @@ SharedUiItem SharedUiItemsTableModel::itemAt(int row) const {
   if (row > 0 && row < _items.size())
     return _items.value(row);
   return SharedUiItem();
+}
+
+void SharedUiItemsTableModel::changeItem(SharedUiItem newItem,
+                                         SharedUiItem oldItem) {
+  QModelIndex oldIndex = indexOf(oldItem);
+  if (newItem.isNull()) {
+    if (oldIndex.isValid())
+      removeItems(oldIndex.row(), oldIndex.row());
+  } else if (oldItem.isNull() || !oldIndex.isValid()) {
+    insertItemAt(rowCount(), newItem);
+  } else {
+    _items[oldIndex.row()] = newItem;
+    emit dataChanged(oldIndex, index(oldIndex.row(), columnCount()-1));
+  }
+}
+
+QModelIndex SharedUiItemsTableModel::indexOf(SharedUiItem item) const {
+  // MAYDO add index to improve lookup performance
+  if (!item.isNull())
+    for (int row = 0; row < _items.size(); ++row)
+      if (_items[row] == item)
+        return createIndex(row, 0);
+  return QModelIndex();
 }

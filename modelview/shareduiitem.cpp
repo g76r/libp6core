@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,6 +23,18 @@ QVariant SharedUiItemData::uiData(int section, int role) const {
   return QVariant();
 }
 
+bool SharedUiItemData::setUiData(int section, const QVariant &value, int role) {
+  Q_UNUSED(section)
+  Q_UNUSED(role)
+  Q_UNUSED(value)
+  return false;
+}
+
+Qt::ItemFlags SharedUiItemData::uiFlags(int section) const {
+  Q_UNUSED(section)
+  return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
+}
+
 QVariant SharedUiItemData::uiHeaderData(int section, int role) const {
   Q_UNUSED(section)
   Q_UNUSED(role)
@@ -37,16 +49,8 @@ QString SharedUiItemData::idQualifier() const {
   return QString();
 }
 
-int SharedUiItemData::uiDataCount() const {
+int SharedUiItemData::uiSectionCount() const {
   return 0;
-}
-
-bool SharedUiItem::operator==(const SharedUiItem &other) const {
-  return id() == other.id();
-}
-
-bool SharedUiItem::operator<(const SharedUiItem &other) const {
-  return id() < other.id();
 }
 
 QDebug operator<<(QDebug dbg, const SharedUiItem &i) {
