@@ -124,9 +124,10 @@ protected:
  * - There MUST NOT be several level of subclasses, i.e. you must not subclass
  *   SharedUiItem subclasses.
  *
- * @see UiItemsModel
- * @see UiItemsTableModel
- * @see UiItemWidgetMapper
+ * @see SharedUiItemsModel
+ * @see SharedUiItemsTableModel
+ * @see SharedUiItemsTreeModel
+ * @see SharedUiItemWidgetMapper
  * @see QStandardItem
  * @see SharedUiItemData */
 //
