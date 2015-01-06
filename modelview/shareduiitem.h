@@ -75,7 +75,8 @@ public:
    * after user edition.
    * Default: return false
    * @return true on success, false otherwise */
-  virtual bool setUiData(int section, const QVariant &value, int role);
+  virtual bool setUiData(int section, const QVariant &value,
+                         QString *errorString, int role);
 
 protected:
   // both default and copy constructor are declared protected to avoid being
@@ -99,6 +100,13 @@ protected:
  * - A subclass SHOULD implement operator=() for its own type
  * - A subclass MUST NOT access d in non-const methods since SharedUiItemData's
  *   copy constructor is not able to copy the real object.
+ * - Often, a subclass SHOULD implement a detach() method, in such a way:
+ *     // in .h
+ *     void detach();
+ *     // in .cpp
+ *     void Foobar::detach() {
+ *       SharedUiItem::detach<FoobarData>();
+ *     }
  * - Therefore, as soon as at less one non-const method has to access data,
  *   a subclass MUST implement d accessors such as these and every non-const
  *   method must use them instead of d.data():
@@ -107,19 +115,22 @@ protected:
  *     const FoobarData *fd() const { return (const FoobarData*)constData(); }
  *     // in .cpp
  *     FoobarData *Foobar::fd() {
- *       detach<FoobarData>();
+ *       SharedUiItem::detach<FoobarData>();
  *       return (FoobarData*)constData();
  *     }
  * - When planning to have generic UI edition features, a subclass MUST
  *   reimplement setUiData() method, in such a way:
  *     // in .h
- *     bool setUiData(int section, const QVariant &value, int role);
+ *     bool setUiData(int section, const QVariant &value, QString *errorString,
+ *                    int role);
  *     // in .cpp
- *     bool Foobar::setUiData(int section, const QVariant &value, int role) {
+ *     bool Foobar::setUiData(int section, const QVariant &value,
+ *                            QString *errorString = 0, int role) {
  *       if (isNull())
  *         return false;
- *       detach<FoobarData>();
- *       return ((FoobarData*)constData())->setUiData(section, value, role);
+ *       SharedUiItem::detach<FoobarData>();
+ *       return ((FoobarData*)constData())->setUiData(section, value,
+ *                                                    errorString, role);
  *     }
  * - There MUST NOT be several level of subclasses, i.e. you must not subclass
  *   SharedUiItem subclasses.
@@ -246,7 +257,8 @@ protected:
    * It cannot be done in a generic manner in base class because non-const
    * access to d mustn't be performed in base class.
    * @return true on success, false otherwise */
-  bool setUiData(int section, const QVariant &value, int role = Qt::EditRole);
+  bool setUiData(int section, const QVariant &value, QString *errorString = 0,
+                 int role = Qt::EditRole);
 };
 
 inline uint qHash(const SharedUiItem &i) { return qHash(i.id()); }

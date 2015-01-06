@@ -23,10 +23,13 @@ QVariant SharedUiItemData::uiData(int section, int role) const {
   return QVariant();
 }
 
-bool SharedUiItemData::setUiData(int section, const QVariant &value, int role) {
+bool SharedUiItemData::setUiData(int section, const QVariant &value,
+                                 QString *errorString, int role) {
   Q_UNUSED(section)
   Q_UNUSED(role)
   Q_UNUSED(value)
+  if (errorString)
+    *errorString = "setUiData() not implemented (called on base class)";
   return false;
 }
 
