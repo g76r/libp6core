@@ -14,7 +14,9 @@
 #include "shareduiitemstablemodel.h"
 
 SharedUiItemsTableModel::SharedUiItemsTableModel(QObject *parent)
-  : SharedUiItemsModel(parent) {
+  : SharedUiItemsModel(parent),
+    _defaultInsertionPoint(SharedUiItemsTableModel::LastItem),
+    _maxrows(INT_MAX) {
 }
 
 int SharedUiItemsTableModel::rowCount(const QModelIndex &parent) const {
@@ -52,6 +54,14 @@ void SharedUiItemsTableModel::insertItemAt(int row, SharedUiItem item) {
   beginInsertRows(QModelIndex(), row, row);
   _items.insert(row, item);
   endInsertRows();
+  int toBeRemoved = _items.size() - _maxrows;
+  if (toBeRemoved > 0) {
+    int deletionPoint = _defaultInsertionPoint == FirstItem ? _maxrows : 0;
+    beginRemoveRows(QModelIndex(), deletionPoint, toBeRemoved);
+    for (; toBeRemoved; --toBeRemoved)
+      _items.removeAt(deletionPoint);
+    endRemoveRows();
+  }
   //emit itemChanged(item, SharedUiItem());
 }
 
@@ -73,9 +83,7 @@ SharedUiItem SharedUiItemsTableModel::itemAt(const QModelIndex &index) const {
 }
 
 SharedUiItem SharedUiItemsTableModel::itemAt(int row) const {
-  if (row > 0 && row < _items.size())
-    return _items.value(row);
-  return SharedUiItem();
+  return _items.value(row); // construct SharedUiItem() if out of bounds
 }
 
 void SharedUiItemsTableModel::changeItem(SharedUiItem newItem,
@@ -85,7 +93,7 @@ void SharedUiItemsTableModel::changeItem(SharedUiItem newItem,
     if (oldIndex.isValid())
       removeItems(oldIndex.row(), oldIndex.row());
   } else if (oldItem.isNull() || !oldIndex.isValid()) {
-    insertItemAt(rowCount(), newItem);
+    insertItemAt(_defaultInsertionPoint == FirstItem ? 0 : rowCount(), newItem);
   } else {
     _items[oldIndex.row()] = newItem;
     emit dataChanged(oldIndex, index(oldIndex.row(), columnCount()-1));

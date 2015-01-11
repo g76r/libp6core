@@ -50,6 +50,12 @@ public slots:
    * precise signals (kind of FoobarDocumentManager::foobarItemChanged(
    * Foobar newFoobar, Foobar oldFoobar)). */
   virtual void changeItem(SharedUiItem newItem, SharedUiItem oldItem) = 0;
+  /** Short for changeItem(newItem, SharedUiItem()). */
+  void createItem(SharedUiItem newItem);
+  /** Short for changeItem(newItem, newItem). */
+  void createOrUpdateItem(SharedUiItem newItem);
+  /** Short for changeItem(SharedUiItem(), oldItem). */
+  void deleteItem(SharedUiItem oldItem);
 
 signals:
   /** Emited whenever an item is created, renamed, updated or deleted,

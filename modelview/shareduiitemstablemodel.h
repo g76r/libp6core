@@ -23,6 +23,13 @@ class LIBQTSSUSHARED_EXPORT SharedUiItemsTableModel
   Q_OBJECT
   Q_DISABLE_COPY(SharedUiItemsTableModel)
 
+public:
+  enum DefaultInsertionPoint { LastItem, FirstItem };
+
+private:
+  DefaultInsertionPoint _defaultInsertionPoint;
+  int _maxrows;
+
 protected:
   QList<SharedUiItem> _items;
 
@@ -32,6 +39,18 @@ public:
   QModelIndex index(int row, int column,
                     const QModelIndex &parent = QModelIndex()) const;
   QModelIndex parent(const QModelIndex &child) const;
+  DefaultInsertionPoint defaultInsertionPoint() const {
+    return _defaultInsertionPoint; }
+  /** Set where changeItem() should add an new item.
+   * Default: LastItem. */
+  void setDefaultInsertionPoint(DefaultInsertionPoint defaultInsertionPoint) {
+    _defaultInsertionPoint = defaultInsertionPoint; }
+  int maxrows() const { return _maxrows; }
+  /** Set maximum rows, when reached "older" rows will be removed by
+   * changeItem() at the time a new item is inserted.
+   * "Older" rows are determined as opposite sides from defaultInsertionPoint().
+   * Default: INT_MAX */
+  void setMaxrows(int maxrows) { _maxrows = maxrows; }
   void setItems(QList<SharedUiItem> items);
   void sortAndSetItems(QList<SharedUiItem> items) {
     qSort(items);

@@ -56,3 +56,15 @@ Qt::ItemFlags	SharedUiItemsModel::flags(const QModelIndex & index) const {
   // LATER have an orientation parameter, do not assume item section == column
   return itemAt(index).uiFlags(index.column());
 }
+
+void SharedUiItemsModel::createItem(SharedUiItem newItem) {
+  changeItem(newItem, SharedUiItem());
+}
+
+void SharedUiItemsModel::createOrUpdateItem(SharedUiItem newItem) {
+  changeItem(newItem, newItem);
+}
+
+void SharedUiItemsModel::deleteItem(SharedUiItem oldItem) {
+  changeItem(SharedUiItem(), oldItem);
+}
