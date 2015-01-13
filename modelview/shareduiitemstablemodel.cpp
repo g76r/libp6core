@@ -90,11 +90,15 @@ void SharedUiItemsTableModel::changeItem(SharedUiItem newItem,
                                          SharedUiItem oldItem) {
   QModelIndex oldIndex = indexOf(oldItem);
   if (newItem.isNull()) {
-    if (oldIndex.isValid())
+    if (oldIndex.isValid()) {
+      // delete
       removeItems(oldIndex.row(), oldIndex.row());
+    }
   } else if (oldItem.isNull() || !oldIndex.isValid()) {
+    // create
     insertItemAt(_defaultInsertionPoint == FirstItem ? 0 : rowCount(), newItem);
   } else {
+    // update
     _items[oldIndex.row()] = newItem;
     emit dataChanged(oldIndex, index(oldIndex.row(), columnCount()-1));
   }
@@ -102,6 +106,8 @@ void SharedUiItemsTableModel::changeItem(SharedUiItem newItem,
 
 QModelIndex SharedUiItemsTableModel::indexOf(SharedUiItem item) const {
   // MAYDO add index to improve lookup performance
+  // see SharedUiItemsTreeModel for index example
+  // don't forget to update index changeItem when id changes (= item renamed)
   if (!item.isNull())
     for (int row = 0; row < _items.size(); ++row)
       if (_items[row] == item)

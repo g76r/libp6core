@@ -31,16 +31,14 @@ QModelIndex SharedUiItemsTreeModel::index(int row, int column,
   if (hasIndex(row, column, parent))
     return parent.isValid()
         ? createIndex(row, column,
-                      ((SharedUiItemsTreeModelItem*)parent.internalPointer())
-                      ->child(row))
+                      ((TreeItem*)parent.internalPointer())->child(row))
         : createIndex(row, column, _roots.value(row));
   return QModelIndex();
 }
 
 QModelIndex SharedUiItemsTreeModel::parent(const QModelIndex &child) const {
   if (child.isValid()) {
-    SharedUiItemsTreeModelItem *c
-        = ((SharedUiItemsTreeModelItem*)child.internalPointer());
+    TreeItem *c = ((TreeItem*)child.internalPointer());
     if (c && c->parent())
       return createIndex(c->row(), 0, c->parent());
   }
@@ -48,16 +46,12 @@ QModelIndex SharedUiItemsTreeModel::parent(const QModelIndex &child) const {
 }
 
 int SharedUiItemsTreeModel::rowCount(const QModelIndex &parent) const {
-  //qDebug() << "rowCount:" << parent.isValid() << parent.parent().isValid();
   if (parent.isValid()) {
-    SharedUiItemsTreeModelItem *p
-        = ((SharedUiItemsTreeModelItem*)parent.internalPointer());
+    TreeItem *p = ((TreeItem*)parent.internalPointer());
     if (p) { // null p is theorically impossible
-      //qDebug() << "->" << p->childrenCount();
       return p->childrenCount();
     }
   } else {
-    //qDebug() << "->" << _roots.size();
     return _roots.size();
   }
   return 0;
@@ -65,16 +59,14 @@ int SharedUiItemsTreeModel::rowCount(const QModelIndex &parent) const {
 
 SharedUiItem SharedUiItemsTreeModel::itemAt(const QModelIndex &index) const {
   if (index.isValid()) {
-    SharedUiItemsTreeModelItem *i
-        = ((SharedUiItemsTreeModelItem*)index.internalPointer());
+    TreeItem *i = ((TreeItem*)index.internalPointer());
     if (i)
       return i->item();
   }
   return SharedUiItem();
 }
 
-void SharedUiItemsTreeModel::setRoots(
-    QList<SharedUiItemsTreeModelItem*> roots) {
+void SharedUiItemsTreeModel::setRoots(QList<TreeItem*> roots) {
   // TODO rather determine what items must be deleted and what was kept
   if (_roots != roots) {
     if (!_roots.isEmpty()) {
@@ -92,32 +84,42 @@ void SharedUiItemsTreeModel::setRoots(
 }
 
 QModelIndex SharedUiItemsTreeModel::indexOf(SharedUiItem item) const {
-  // MAYDO add index to improve lookup performance
-  // FIXME
-  SharedUiItemsTreeModelItem *foo;
-  return QModelIndex();
+  TreeItem *treeItem = _itemsIndex.value(item.qualifiedId());
+  return treeItem ? createIndex(treeItem->row(), 0, treeItem) : QModelIndex();
 }
 
 void SharedUiItemsTreeModel::changeItem(SharedUiItem newItem,
                                         SharedUiItem oldItem) {
   if (newItem.isNull()) {
-    if (!oldItem.isNull()) {
+    if (!oldItem.isNull()) { // delete
       QModelIndex index = indexOf(oldItem);
       if (index.isValid())
         removeRow(index.row(), index.parent());
     }
-  } else if (oldItem.isNull()) {
-    // FIXME find a way to let subclasses choose insert position depending on item
-    beginInsertRows(QModelIndex(), _roots.size(), _roots.size());
-    _roots.append(new SharedUiItemsTreeModelItem(newItem, _roots.size()));
+  } else if (oldItem.isNull()) { // create
+    QModelIndex parent;
+    int row = _roots.size();
+    setNewItemInsertionPoint(newItem, &parent, &row);
+    beginInsertRows(parent, row, row);
+    _roots.append(new TreeItem(this, newItem, _roots.size()));
     endInsertRows();
-  } else {
+  } else { // update
     QModelIndex index = indexOf(oldItem);
-    SharedUiItemsTreeModelItem *ti
-        = ((SharedUiItemsTreeModelItem*)index.internalPointer());
+    TreeItem *ti = ((TreeItem*)index.internalPointer());
     if (ti) {
       ti->item() = newItem;
+      // update index, in case id has changed
+      _itemsIndex.remove(oldItem.qualifiedId());
+      _itemsIndex.insert(newItem.qualifiedId(), ti);
       emit dataChanged(index, index);
     }
   }
+}
+
+void SharedUiItemsTreeModel::setNewItemInsertionPoint(
+    SharedUiItem newItem, QModelIndex *parent, int *row) {
+  Q_UNUSED(newItem)
+  Q_UNUSED(parent)
+  Q_UNUSED(row)
+  // do nothing since we leave default value as is
 }

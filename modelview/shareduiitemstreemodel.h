@@ -18,54 +18,78 @@
 #include "shareduiitem.h"
 #include <QList>
 
-/** Item used by SharedUiItemsTreeModel and subclasses. */
-class LIBQTSSUSHARED_EXPORT SharedUiItemsTreeModelItem {
-  SharedUiItem _item;
-  int _row;
-  SharedUiItemsTreeModelItem *_parent;
-  QList<SharedUiItemsTreeModelItem*> _children;
-
-public:
-  /** Constructor for root items. */
-  SharedUiItemsTreeModelItem(SharedUiItem item, int row)
-    : _item(item), _row(row), _parent(0) { }
-  /** Constructor for non-root items. */
-  SharedUiItemsTreeModelItem(
-      SharedUiItem item, SharedUiItemsTreeModelItem *parent)
-    : _item(item), _row(parent->childrenCount()), _parent(parent) {
-    parent->_children.append(this);
-  }
-  ~SharedUiItemsTreeModelItem() {
-    qDeleteAll(_children);
-  }
-  SharedUiItem &item() { return _item; }
-  int row() const { return _row; }
-  SharedUiItemsTreeModelItem *parent() const { return _parent; }
-  int childrenCount() const { return _children.size(); }
-  SharedUiItemsTreeModelItem *child(int row) const {
-    return row >= 0 && row < _children.size() ? _children[row] : 0;
-  }
-};
-
 /** Model holding SharedUiItems, one item per line within a tree, one item
  * section per column. */
 class LIBQTSSUSHARED_EXPORT SharedUiItemsTreeModel : public SharedUiItemsModel {
   Q_OBJECT
   Q_DISABLE_COPY(SharedUiItemsTreeModel)
-  QList<SharedUiItemsTreeModelItem*> _roots;
+
+protected:
+  /** Item used by SharedUiItemsTreeModel and subclasses. */
+  class LIBQTSSUSHARED_EXPORT TreeItem {
+    SharedUiItemsTreeModel *_model; // kind of java non-static inner class
+    SharedUiItem _item;
+    int _row;
+    TreeItem *_parent;
+    QList<TreeItem*> _children;
+
+  public:
+    /** Constructor for root items. */
+    TreeItem(SharedUiItemsTreeModel *model, SharedUiItem item, int row)
+      : _model(model), _item(item), _row(row), _parent(0) {
+      QString id = item.qualifiedId();
+      if (!id.isEmpty())
+        _model->_itemsIndex.insert(id, this);
+    }
+    /** Constructor for non-root items. */
+    TreeItem(SharedUiItemsTreeModel *model, SharedUiItem item, TreeItem *parent)
+      : _model(model), _item(item), _row(parent->childrenCount()),
+        _parent(parent) {
+      parent->_children.append(this);
+      QString id = item.qualifiedId();
+      if (!id.isEmpty())
+        _model->_itemsIndex.insert(id, this);
+    }
+    ~TreeItem() {
+      _model->_itemsIndex.remove(_item.qualifiedId());
+      qDeleteAll(_children);
+    }
+    SharedUiItem &item() { return _item; }
+    int row() const { return _row; }
+    TreeItem *parent() const { return _parent; }
+    int childrenCount() const { return _children.size(); }
+    TreeItem *child(int row) const {
+      return row >= 0 && row < _children.size() ? _children[row] : 0;
+    }
+  };
+  friend class TreeItem;
+
+private:
+  QList<TreeItem*> _roots;
+  QHash<QString,TreeItem*> _itemsIndex; // key: qualified id
 
 public:
   explicit SharedUiItemsTreeModel(QObject *parent = 0);
   ~SharedUiItemsTreeModel();
-  QModelIndex index(int row, int column, const QModelIndex &parent) const;
+  QModelIndex index(int row, int column,
+                    const QModelIndex &parent = QModelIndex()) const;
   QModelIndex parent(const QModelIndex &child) const;
-  int rowCount(const QModelIndex &parent) const;
+  int rowCount(const QModelIndex &parent = QModelIndex()) const;
   SharedUiItem itemAt(const QModelIndex &index) const;
   QModelIndex indexOf(SharedUiItem item) const;
   void changeItem(SharedUiItem newItem, SharedUiItem oldItem);
-  QList<SharedUiItemsTreeModelItem*> roots() const { return _roots; }
-  void setRoots(QList<SharedUiItemsTreeModelItem*> roots);
-  void clearRoots() { setRoots(QList<SharedUiItemsTreeModelItem*>()); }
+
+protected:
+  QList<TreeItem*> roots() const { return _roots; }
+  void setRoots(QList<TreeItem*> roots);
+  void clearRoots() { setRoots(QList<TreeItem*>()); }
+  /** This method is called to choose where in the tree changeItem() inserts
+   * a new item (when oldItem.isNull()).
+   * Subclasses should override this method to choose another place than
+   * default one (after last row of root item, i.e. *parent = QModelIndex()
+   * and *row = rowCount()). */
+  virtual void setNewItemInsertionPoint(
+      SharedUiItem newItem, QModelIndex *parent, int *row);
 };
 
 #endif // SHAREDUIITEMSTREEMODEL_H
