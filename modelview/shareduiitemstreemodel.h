@@ -34,25 +34,23 @@ protected:
     QList<TreeItem*> _children;
 
   public:
-    /** Constructor for root items. */
-    TreeItem(SharedUiItemsTreeModel *model, SharedUiItem item, int row)
-      : _model(model), _item(item), _row(row), _parent(0) {
+    TreeItem(SharedUiItemsTreeModel *model, SharedUiItem item, TreeItem *parent,
+             int row) : _model(model), _item(item), _row(row), _parent(parent) {
       QString id = item.qualifiedId();
-      if (!id.isEmpty())
-        _model->_itemsIndex.insert(id, this);
-    }
-    /** Constructor for non-root items. */
-    TreeItem(SharedUiItemsTreeModel *model, SharedUiItem item, TreeItem *parent)
-      : _model(model), _item(item), _row(parent->childrenCount()),
-        _parent(parent) {
-      parent->_children.append(this);
-      QString id = item.qualifiedId();
+      if (parent)
+        parent->_children.insert(row, this);
+      else
+        _model->_roots.insert(row, this);
       if (!id.isEmpty())
         _model->_itemsIndex.insert(id, this);
     }
     ~TreeItem() {
       _model->_itemsIndex.remove(_item.qualifiedId());
-      qDeleteAll(_children);
+      if (_parent)
+        _parent->_children.removeOne(this);
+      else
+        _model->_roots.removeOne(this);
+      qDeleteAll(_children); // FIXME is this ok since children wil remove themselves from _children meanwhile ?
     }
     SharedUiItem &item() { return _item; }
     int row() const { return _row; }
@@ -60,6 +58,13 @@ protected:
     int childrenCount() const { return _children.size(); }
     TreeItem *child(int row) const {
       return row >= 0 && row < _children.size() ? _children[row] : 0;
+    }
+    void deleteChild(int row) {
+      if (row < _children.size() && row >= 0) {
+        TreeItem *child = _children[row];
+        _children.removeAt(row);
+        delete child;
+      }
     }
   };
   friend class TreeItem;
@@ -76,18 +81,19 @@ public:
   QModelIndex parent(const QModelIndex &child) const;
   int rowCount(const QModelIndex &parent = QModelIndex()) const;
   SharedUiItem itemAt(const QModelIndex &index) const;
-  QModelIndex indexOf(SharedUiItem item) const;
+  using SharedUiItemsModel::indexOf;
+  QModelIndex indexOf(QString qualifiedId) const;
   void changeItem(SharedUiItem newItem, SharedUiItem oldItem);
+  bool removeRows(int row, int count, const QModelIndex &parent);
 
 protected:
-  QList<TreeItem*> roots() const { return _roots; }
-  void setRoots(QList<TreeItem*> roots);
-  void clearRoots() { setRoots(QList<TreeItem*>()); }
+  void clear();
   /** This method is called to choose where in the tree changeItem() inserts
    * a new item (when oldItem.isNull()).
    * Subclasses should override this method to choose another place than
    * default one (after last row of root item, i.e. *parent = QModelIndex()
-   * and *row = rowCount()). */
+   * which means "root" and *row = -1 which means "last position of selected
+   * parent"). */
   virtual void setNewItemInsertionPoint(
       SharedUiItem newItem, QModelIndex *parent, int *row);
 };

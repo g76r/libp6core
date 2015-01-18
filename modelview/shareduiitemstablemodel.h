@@ -75,17 +75,18 @@ public:
    * row == rowCount().
    * @see QAbstractItemModel::insertRow */
   virtual void insertItemAt(int row, SharedUiItem item);
-  virtual void removeItems(int first, int last);
+  virtual bool removeItems(int first, int last);
   SharedUiItem itemAt(const QModelIndex &index) const;
   /** Convenience method */
   SharedUiItem itemAt(int row) const;
-  QModelIndex indexOf(SharedUiItem item) const;
+  using SharedUiItemsModel::indexOf;
+  QModelIndex indexOf(QString qualifiedId) const;
   void changeItem(SharedUiItem newItem, SharedUiItem oldItem);
+  bool removeRows(int row, int count, const QModelIndex &parent);
 
 private:
+  // TODO should remimplement these methods rather than naively hiding them
   // hide functions that would bypass our items list if they were called
-  using QAbstractItemModel::removeRows;
-  using QAbstractItemModel::removeRow;
   using QAbstractItemModel::insertRows;
   using QAbstractItemModel::insertRow;
 };

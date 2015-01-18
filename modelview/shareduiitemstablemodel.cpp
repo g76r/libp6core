@@ -65,15 +65,19 @@ void SharedUiItemsTableModel::insertItemAt(int row, SharedUiItem item) {
   //emit itemChanged(item, SharedUiItem());
 }
 
-void SharedUiItemsTableModel::removeItems(int first, int last) {
-  if (first < 0 || last >= rowCount() || last < first)
-    return;
+bool SharedUiItemsTableModel::removeItems(int first, int last) {
+  int rowCount = _items.size();
+  if (first < 0 || last < first || first >= rowCount)
+    return false;
+  if (last >= rowCount)
+    last = rowCount-1;
   beginRemoveRows(QModelIndex(), first, last);
   while (first <= last--) {
     //emit itemChanged(SharedUiItem(), _items.value(first));
     _items.removeAt(first);
   }
   endRemoveRows();
+  return true;
 }
 
 SharedUiItem SharedUiItemsTableModel::itemAt(const QModelIndex &index) const {
@@ -104,13 +108,18 @@ void SharedUiItemsTableModel::changeItem(SharedUiItem newItem,
   }
 }
 
-QModelIndex SharedUiItemsTableModel::indexOf(SharedUiItem item) const {
-  // MAYDO add index to improve lookup performance
+QModelIndex SharedUiItemsTableModel::indexOf(QString qualifiedId) const {
+  // TODO add index to improve lookup performance
   // see SharedUiItemsTreeModel for index example
   // don't forget to update index changeItem when id changes (= item renamed)
-  if (!item.isNull())
+  if (!qualifiedId.isNull())
     for (int row = 0; row < _items.size(); ++row)
-      if (_items[row] == item)
+      if (_items[row].qualifiedId() == qualifiedId)
         return createIndex(row, 0);
   return QModelIndex();
+}
+
+bool SharedUiItemsTableModel::removeRows(
+    int row, int count, const QModelIndex &parent) {
+  return parent.isValid() ? false : removeItems(row, row+count-1);
 }

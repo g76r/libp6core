@@ -68,3 +68,11 @@ void SharedUiItemsModel::createOrUpdateItem(SharedUiItem newItem) {
 void SharedUiItemsModel::deleteItem(SharedUiItem oldItem) {
   changeItem(SharedUiItem(), oldItem);
 }
+
+QModelIndex SharedUiItemsModel::indexOf(SharedUiItem item) const {
+  return indexOf(item.qualifiedId());
+}
+
+QModelIndex SharedUiItemsModel::indexOf(QString idQualifier, QString id) const {
+  return indexOf(idQualifier+":"+id);
+}

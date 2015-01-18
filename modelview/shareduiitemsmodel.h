@@ -41,8 +41,10 @@ public:
   void setDecorationAtColumn0(QVariant decoration) {
     _decorationAtColumn0 = decoration;  }*/
   virtual SharedUiItem itemAt(const QModelIndex &index) const = 0;
-  virtual QModelIndex indexOf(SharedUiItem item) const = 0;
-  Qt::ItemFlags	flags(const QModelIndex & index) const;
+  virtual QModelIndex indexOf(SharedUiItem item) const;
+  virtual QModelIndex indexOf(QString idQualifier, QString id) const;
+  virtual QModelIndex indexOf(QString qualifiedId) const = 0;
+  Qt::ItemFlags	flags(const QModelIndex &index) const;
 
 public slots:
   /** Notify a change on an item concerning this model.
