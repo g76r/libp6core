@@ -13,57 +13,50 @@
  */
 #include "shareduiitemstreemodel.h"
 
+// LATER add optimization methods such as sibling() and hasChildren()
+
 SharedUiItemsTreeModel::SharedUiItemsTreeModel(QObject *parent)
-  : SharedUiItemsModel(parent) {
+  : SharedUiItemsModel(parent), _root(this, SharedUiItem(), 0, 0) {
 }
 
 SharedUiItemsTreeModel::~SharedUiItemsTreeModel() {
-  qDeleteAll(_roots);
 }
 
-QModelIndex SharedUiItemsTreeModel::index(int row, int column,
-                                    const QModelIndex &parent) const {
-  // note: hasIndex() checks row and columns boundaries by calling rowCount()
-  // and columnCount() for parent, therefore also indirectly checking that
-  // parent.internalPointer() is not null
-  //qDebug() << "GroupsTasksModel::index" << row << column << parent.isValid()
-  //         << hasIndex(row, column, parent) << parent.parent().isValid();
-  if (hasIndex(row, column, parent))
-    return parent.isValid()
-        ? createIndex(row, column,
-                      ((TreeItem*)parent.internalPointer())->child(row))
-        : createIndex(row, column, _roots.value(row));
+QModelIndex SharedUiItemsTreeModel::index(
+    int row, int column, const QModelIndex &parent) const {
+  if (hasIndex(row, column, parent)) {
+    const TreeItem *parentTreeItem = (TreeItem*)parent.internalPointer();
+    if (!parentTreeItem) // this should never happen since no valid index points to _root
+      parentTreeItem = &_root;
+    return createIndex(row, column, parentTreeItem->child(row));
+  }
   return QModelIndex();
 }
 
 QModelIndex SharedUiItemsTreeModel::parent(const QModelIndex &child) const {
   if (child.isValid()) {
-    TreeItem *c = ((TreeItem*)child.internalPointer());
-    if (c && c->parent())
-      return createIndex(c->row(), 0, c->parent());
+    TreeItem *childTreeItem = ((TreeItem*)child.internalPointer());
+    TreeItem *parentTreeItem = childTreeItem ? childTreeItem->parent() : 0;
+    if (parentTreeItem) // this should always happen since no valid index points to _root
+      if (parentTreeItem != &_root)
+        return createIndex(parentTreeItem->row(), 0, parentTreeItem);
   }
   return QModelIndex();
 }
 
 int SharedUiItemsTreeModel::rowCount(const QModelIndex &parent) const {
-  if (parent.isValid()) {
-    TreeItem *p = ((TreeItem*)parent.internalPointer());
-    if (p) { // null p is theorically impossible
-      return p->childrenCount();
-    }
-  } else {
-    return _roots.size();
-  }
-  return 0;
+  TreeItem *parentTreeItem = ((TreeItem*)parent.internalPointer());
+  //  if (parentTreeItem)
+  //    qDebug() << "SharedUiItemsTreeModel::rowCount"
+  //             << parentTreeItem->item().qualifiedId()
+  //             << parentTreeItem->childrenCount();
+  return parentTreeItem ? parentTreeItem->childrenCount()
+                        : _root.childrenCount();
 }
 
 SharedUiItem SharedUiItemsTreeModel::itemAt(const QModelIndex &index) const {
-  if (index.isValid()) {
-    TreeItem *i = ((TreeItem*)index.internalPointer());
-    if (i)
-      return i->item();
-  }
-  return SharedUiItem();
+  TreeItem *treeItem = ((TreeItem*)index.internalPointer());
+  return treeItem ? treeItem->item() : SharedUiItem();
 }
 
 QModelIndex SharedUiItemsTreeModel::indexOf(QString qualifiedId) const {
@@ -71,38 +64,41 @@ QModelIndex SharedUiItemsTreeModel::indexOf(QString qualifiedId) const {
   return treeItem ? createIndex(treeItem->row(), 0, treeItem) : QModelIndex();
 }
 
-#include <QtDebug>
 void SharedUiItemsTreeModel::changeItem(SharedUiItem newItem,
                                         SharedUiItem oldItem) {
+  //qDebug() << "SharedUiItemsTreeModel::changeItem" << newItem.qualifiedId()
+  //         << oldItem.qualifiedId();
   if (newItem.isNull()) {
     if (!oldItem.isNull()) { // delete
       QModelIndex index = indexOf(oldItem);
-      if (index.isValid())
-        removeRow(index.row(), index.parent());
+      TreeItem *treeItem = ((TreeItem*)index.internalPointer());
+      if (treeItem)
+        removeRows(treeItem->row(), 1, index.parent());
     }
   } else if (oldItem.isNull()) { // create
     QModelIndex parent;
     int row = -1; // will be replaced by size() a few lines below
     setNewItemInsertionPoint(newItem, &parent, &row);
     TreeItem *parentTreeItem = ((TreeItem*)parent.internalPointer());
-    int rowCount = parentTreeItem ? parentTreeItem->childrenCount()
-                                  : _roots.size();
+    if (!parentTreeItem)
+      parentTreeItem = &_root;
+    int rowCount = parentTreeItem->childrenCount();
     if (row < 0 || row > rowCount)
       row = rowCount;
-    qDebug() << "SharedUiItemsTreeModel::changeItem: beginInsertRows"
-             << parent << row << row;
+    //qDebug() << "   SharedUiItemsTreeModel::changeItem: beginInsertRows"
+    //         << parent << row << row;
     beginInsertRows(parent, row, row);
     new TreeItem(this, newItem, parentTreeItem, row);
-    qDebug() << "SharedUiItemsTreeModel::changeItem: endInsertRows";
+    //qDebug() << "SharedUiItemsTreeModel::changeItem: endInsertRows";
     endInsertRows();
   } else { // update
     QModelIndex index = indexOf(oldItem);
-    TreeItem *ti = ((TreeItem*)index.internalPointer());
-    if (ti) {
-      ti->item() = newItem;
+    TreeItem *treeItem = ((TreeItem*)index.internalPointer());
+    if (treeItem) {
+      treeItem->item() = newItem;
       // update index, in case id has changed
       _itemsIndex.remove(oldItem.qualifiedId());
-      _itemsIndex.insert(newItem.qualifiedId(), ti);
+      _itemsIndex.insert(newItem.qualifiedId(), treeItem);
       emit dataChanged(index, index);
     }
   }
@@ -118,22 +114,23 @@ void SharedUiItemsTreeModel::setNewItemInsertionPoint(
 
 void SharedUiItemsTreeModel::clear() {
   _itemsIndex.clear();
-  if (_roots.size() > 0) {
-    beginRemoveRows(QModelIndex(), 0, _roots.size()-1);
-    qDeleteAll(_roots);
-    _roots.clear();
+  int rowCount = _root.childrenCount();
+  if (rowCount > 0) {
+    beginRemoveRows(QModelIndex(), 0, rowCount-1);
+    while (rowCount--)
+      _root.deleteChild(0);
     endRemoveRows();
   }
 }
 
-#include <QtDebug>
 bool SharedUiItemsTreeModel::removeRows(
     int row, int count, const QModelIndex &parent) {
   if (row < 0 || count < 0)
     return false;
   TreeItem *parentTreeItem = ((TreeItem*)parent.internalPointer());
-  int rowCount = parentTreeItem ? parentTreeItem->childrenCount()
-                                : _roots.size();
+  if (!parentTreeItem)
+    parentTreeItem = &_root;
+  int rowCount = parentTreeItem->childrenCount();
   int last = row+count-1;
   if (row >= rowCount)
     return true;
@@ -141,12 +138,11 @@ bool SharedUiItemsTreeModel::removeRows(
     last = rowCount-1;
     count = last-row+1;
   }
-  qDebug() << "SharedUiItemsTreeModel::removeRows"
-           << parent << row << last << count << parent.data();
+  //qDebug() << "SharedUiItemsTreeModel::removeRows"
+  //         << parent << row << last << count << parent.data();
   beginRemoveRows(parent, row, last);
   while (count--)
     parentTreeItem->deleteChild(row);
   endRemoveRows();
   return true;
 }
-

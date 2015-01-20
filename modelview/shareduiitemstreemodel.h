@@ -39,8 +39,6 @@ protected:
       QString id = item.qualifiedId();
       if (parent)
         parent->_children.insert(row, this);
-      else
-        _model->_roots.insert(row, this);
       if (!id.isEmpty())
         _model->_itemsIndex.insert(id, this);
     }
@@ -48,9 +46,8 @@ protected:
       _model->_itemsIndex.remove(_item.qualifiedId());
       if (_parent)
         _parent->_children.removeOne(this);
-      else
-        _model->_roots.removeOne(this);
-      qDeleteAll(_children); // FIXME is this ok since children wil remove themselves from _children meanwhile ?
+      QList<TreeItem*> tmp = _children;
+      qDeleteAll(tmp);
     }
     SharedUiItem &item() { return _item; }
     int row() const { return _row; }
@@ -70,7 +67,7 @@ protected:
   friend class TreeItem;
 
 private:
-  QList<TreeItem*> _roots;
+  TreeItem _root;
   QHash<QString,TreeItem*> _itemsIndex; // key: qualified id
 
 public:
