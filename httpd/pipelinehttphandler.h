@@ -61,7 +61,11 @@ public:
     }
     return *this; }
   inline PipelineHttpHandler &clearHandlers() {
-    qDeleteAll(_handlers); _handlers.clear(); return *this; }
+    foreach (HttpHandler *handler, _handlers)
+      delete handler;
+    _handlers.clear();
+    return *this;
+  }
   bool acceptRequest(HttpRequest req);
   bool handleRequest(HttpRequest req, HttpResponse res,
                      HttpRequestContext ctxt);
