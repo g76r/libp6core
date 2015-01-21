@@ -46,8 +46,9 @@ protected:
       _model->_itemsIndex.remove(_item.qualifiedId());
       if (_parent)
         _parent->_children.removeOne(this);
-      QList<TreeItem*> tmp = _children;
-      qDeleteAll(tmp);
+      // must not use qDeleteAll since ~child modifies its parent's _children
+      foreach(TreeItem *child, _children)
+        delete child;
     }
     SharedUiItem &item() { return _item; }
     int row() const { return _row; }
@@ -59,7 +60,7 @@ protected:
     void deleteChild(int row) {
       if (row < _children.size() && row >= 0) {
         TreeItem *child = _children[row];
-        _children.removeAt(row);
+        _children.removeAt(row); // FIXME double remove ?
         delete child;
       }
     }
@@ -67,7 +68,7 @@ protected:
   friend class TreeItem;
 
 private:
-  TreeItem _root;
+  TreeItem *_root;
   QHash<QString,TreeItem*> _itemsIndex; // key: qualified id
 
 public:
