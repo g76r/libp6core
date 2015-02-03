@@ -21,6 +21,7 @@
 #include <QSharedDataPointer>
 
 class QDebug;
+class SharedUiItemDocumentManager;
 
 /** Parent class for SharedUiItem implementation data classes.
  *
@@ -76,7 +77,8 @@ public:
    * Default: return false
    * @return true on success, false otherwise */
   virtual bool setUiData(int section, const QVariant &value,
-                         QString *errorString, int role);
+                         QString *errorString, int role,
+                         const SharedUiItemDocumentManager *dm);
 
 protected:
   // both default and copy constructor are declared protected to avoid being
@@ -122,15 +124,16 @@ protected:
  *   reimplement setUiData() method, in such a way:
  *     // in .h
  *     bool setUiData(int section, const QVariant &value, QString *errorString,
- *                    int role);
+ *                    int role, const SharedUiItemDocumentManager *dm);
  *     // in .cpp
  *     bool Foobar::setUiData(int section, const QVariant &value,
- *                            QString *errorString = 0, int role) {
+ *                            QString *errorString = 0, int role,
+ *                            const SharedUiItemDocumentManager *dm) {
  *       if (isNull())
  *         return false;
  *       SharedUiItem::detach<FoobarData>();
  *       return ((FoobarData*)constData())->setUiData(section, value,
- *                                                    errorString, role);
+ *                                                    errorString, role, dm);
  *     }
  * - There MUST NOT be several level of subclasses, i.e. you must not subclass
  *   SharedUiItem subclasses.
@@ -258,7 +261,8 @@ protected:
    * access to d mustn't be performed in base class.
    * @return true on success, false otherwise */
   bool setUiData(int section, const QVariant &value, QString *errorString = 0,
-                 int role = Qt::EditRole);
+                 int role = Qt::EditRole,
+                 const SharedUiItemDocumentManager *dm = 0);
 };
 
 inline uint qHash(const SharedUiItem &i) { return qHash(i.id()); }

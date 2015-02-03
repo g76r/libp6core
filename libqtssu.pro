@@ -88,7 +88,8 @@ SOURCES += \
     log/multiplexerlogger.cpp \
     httpd/uploadhttphandler.cpp \
     csv/csvfile.cpp \
-    csv/csvfilemodel.cpp
+    csv/csvfilemodel.cpp \
+    modelview/shareduiitemdocumentmanager.cpp
 
 
 HEADERS +=\
@@ -157,7 +158,8 @@ HEADERS +=\
     util/threadsafecircularbuffer.h \
     httpd/uploadhttphandler.h \
     csv/csvfile.h \
-    csv/csvfilemodel.h
+    csv/csvfilemodel.h \
+    modelview/shareduiitemdocumentmanager.h
 
 unix {
     target.path = /usr/lib
