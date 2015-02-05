@@ -99,7 +99,10 @@ protected:
  *
  * Subclassing guidelines:
  * - A subclass MUST implement default and copy constructors
- * - A subclass SHOULD implement operator=() for its own type
+ * - A subclass SHOULD implement operator=(const Foobar&) for its own type
+ * - A subclass SHOULD implement operator==(const SharedUiItem&) wrapping
+ *   SharedUiItem::operator== and operator<(const SharedUiItem&) wrapping
+ *   SharedUiItem::operator<
  * - A subclass MUST NOT access d in non-const methods since SharedUiItemData's
  *   copy constructor is not able to copy the real object.
  * - Often, a subclass SHOULD implement a detach() method, in such a way:
