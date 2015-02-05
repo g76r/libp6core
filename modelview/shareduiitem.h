@@ -114,14 +114,15 @@ protected:
  *     }
  * - Therefore, as soon as at less one non-const method has to access data,
  *   a subclass MUST implement d accessors such as these and every non-const
- *   method must use them instead of d.data():
+ *   method must use them instead of _data.data():
  *     // in .h
- *     FoobarData *fd();
- *     const FoobarData *fd() const { return (const FoobarData*)constData(); }
+ *     FoobarData *data();
+ *     const FoobarData *data() const {
+ *       return (const FoobarData*)SharedUiItem::data(); }
  *     // in .cpp
- *     FoobarData *Foobar::fd() {
+ *     FoobarData *Foobar::data() {
  *       SharedUiItem::detach<FoobarData>();
- *       return (FoobarData*)constData();
+ *       return (FoobarData*)SharedUiItem::data();
  *     }
  * - When planning to have generic UI edition features, a subclass MUST
  *   reimplement setUiData() method, in such a way:
@@ -151,21 +152,21 @@ protected:
 // TODO provides guidelines for building template objects for models init
 // (such as Task::templateTask or TaskGroup::TaskGroup(QString))
 //
-// This class must have no method that calls d.detach(), therefore no
+// This class must have no method that calls _data.detach(), therefore no
 // non-const method that accesses d, apart from operator=() and constructors,
 // otherwise SharedUiItemData would be copied by QSharedData::clone() instead
 // of a relevant subclass.
 //
-// This class must have no virtual method, since it would prevent polymorphism
-// to be handled by SharedUiItemData subclasses instead (e.g. given FooItem a
-// subclass of SharedUiItem, SharedUiItem(aFooItem).aVirtualMethod() would not
-// call FooItem::aVirtualMethod() but SharedUiItem::aVirtualMethod()).
+// This class has no virtual method and cannot have any, since it would prevent
+// polymorphism to be handled by SharedUiItemData subclasses instead (e.g. given
+// FooItem a subclass of SharedUiItem, SharedUiItem(aFooItem).aVirtualMethod()
+// would not call FooItem::aVirtualMethod() but SharedUiItem::aVirtualMethod()).
 //
 class LIBQTSSUSHARED_EXPORT SharedUiItem {
-  QSharedDataPointer<SharedUiItemData> d;
+  QSharedDataPointer<SharedUiItemData> _data;
 
 protected:
-  explicit SharedUiItem(SharedUiItemData *data) : d(data) { }
+  explicit SharedUiItem(SharedUiItemData *data) : _data(data) { }
 
 public:
   enum SharedUiItemRole {
@@ -175,10 +176,10 @@ public:
   };
 
   SharedUiItem() { }
-  SharedUiItem(const SharedUiItem &other) : d(other.d) { }
+  SharedUiItem(const SharedUiItem &other) : _data(other._data) { }
   SharedUiItem &operator=(const SharedUiItem &other) {
     if (this != &other)
-      d = other.d;
+      _data = other._data;
     return *this; }
   /** Compares identifers (idQualifier() then id()), not full content, therefore
    * two versions of an object with same identifiers will be equal. */
@@ -188,73 +189,73 @@ public:
    * two versions of an object with same identifiers will have same order. */
   bool operator<(const SharedUiItem &other) const {
     return idQualifier() < other.idQualifier() || id() < other.id(); }
-  bool isNull() const { return !d; }
+  bool isNull() const { return !_data; }
   /** Item identifier.
    * By convention, identifier must be unique for the same type of item within
    * the same document. */
-  QString id() const { return d ? d->id() : QString(); }
+  QString id() const { return _data ? _data->id() : QString(); }
   /** Item identifier qualifier, e.g. item type such as "invoice" for an
    * invoice data ui object, maybe QString() depending on items */
-  QString idQualifier() const { return d ? d->idQualifier() : QString(); }
+  QString idQualifier() const { return _data ? _data->idQualifier() : QString(); }
   /** Qualified item identifier.
    * By convention, qualified identifier must be unique for any type of item
    * within the same document.
    * @return idQualifier()+":"+id() if idQualifier is not empty, id() otherwise.
    */
   QString qualifiedId() const {
-    if (d) {
-      QString qualifier = d->idQualifier();
-      return qualifier.isEmpty() ? d->id() : qualifier+":"+d->id();
+    if (_data) {
+      QString qualifier = _data->idQualifier();
+      return qualifier.isEmpty() ? _data->id() : qualifier+":"+_data->id();
     }
     return QString();
   }
   /** Return UI sections count, like QAbstractItemModel::columnCount() does for
    * columns (anyway SharedUiItem sections are likely to be presented as
    * columns by a Model and displayed aas columns by a View). */
-  int uiSectionCount() const { return d ? d->uiSectionCount() : 0; }
+  int uiSectionCount() const { return _data ? _data->uiSectionCount() : 0; }
   /** Return UI data, like QAbstractItemModel::data().
    * Using IdRole, IdQualifierRole and QualifiedIdRole make query to
    * SharedUiItemData::id() and/or SharedUiItemData::idQualifier() instead
    * of SharedUiItem::uiData(), regardless the section. */
   QVariant uiData(int section, int role = Qt::DisplayRole) const {
-    if (d) {
+    if (_data) {
       switch (role) {
       case IdRole:
-        return d->id();
+        return _data->id();
       case IdQualifierRole:
-        return d->idQualifier();
+        return _data->idQualifier();
       case QualifiedIdRole: {
-        QString qualifier = d->idQualifier();
-        return qualifier.isEmpty() ? d->id() : qualifier+":"+d->id();
+        QString qualifier = _data->idQualifier();
+        return qualifier.isEmpty() ? _data->id() : qualifier+":"+_data->id();
       }
       default:
-        return d->uiData(section, role);
+        return _data->uiData(section, role);
       }
     }
     return QVariant();
   }
   /** Convenience method for uiData(...).toString(). */
   QString uiString(int section, int role = Qt::DisplayRole) const {
-    return d ? d->uiData(section, role).toString() : QString(); }
+    return _data ? _data->uiData(section, role).toString() : QString(); }
   /** Return UI header data, like QAbstractItemModel::headerData(). */
   QVariant uiHeaderData(int section, int role) const {
-    return d ? d->uiHeaderData(section, role) : QVariant() ; }
+    return _data ? _data->uiHeaderData(section, role) : QVariant() ; }
   /** Convenience method for uiHeaderData(...).toString(). */
   QString uiHeaderString(int section, int role = Qt::DisplayRole) const {
     return uiHeaderData(section, role).toString(); }
   /** Return UI item flags, like QAbstractItemModel::flags().
    * Default: return Qt::ItemIsEnabled | Qt::ItemIsSelectable */
   Qt::ItemFlags uiFlags(int section) const {
-    return d ? d->uiFlags(section) : Qt::NoItemFlags; }
+    return _data ? _data->uiFlags(section) : Qt::NoItemFlags; }
 
 protected:
-  const SharedUiItemData *constData() const { return d.constData(); }
-  void setData(SharedUiItemData *data) { d = data; }
+  const SharedUiItemData *data() const { return _data.data(); }
+  void setData(SharedUiItemData *data) { _data = data; }
   template <class T>
   void detach() {
     T *dummy;
     Q_UNUSED(static_cast<SharedUiItemData*>(dummy)); // ensure T is a SharedUiItemData
-    reinterpret_cast<QSharedDataPointer<T>*>(&d)->detach();
+    reinterpret_cast<QSharedDataPointer<T>*>(&_data)->detach();
   }
   /** Set data from a UI point of view, i.e. called by a QAbstractItemModel
    * after user edition.
