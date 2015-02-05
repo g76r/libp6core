@@ -12,6 +12,7 @@
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "shareduiitemstreemodel.h"
+#include <QtDebug>
 
 // LATER add optimization methods such as sibling() and hasChildren()
 
@@ -68,8 +69,6 @@ QModelIndex SharedUiItemsTreeModel::indexOf(QString qualifiedId) const {
 
 void SharedUiItemsTreeModel::changeItem(SharedUiItem newItem,
                                         SharedUiItem oldItem) {
-  //qDebug() << "SharedUiItemsTreeModel::changeItem" << newItem.qualifiedId()
-  //         << oldItem.qualifiedId();
   if (newItem.isNull()) {
     if (!oldItem.isNull()) { // delete
       QModelIndex index = indexOf(oldItem);
@@ -79,34 +78,69 @@ void SharedUiItemsTreeModel::changeItem(SharedUiItem newItem,
     }
   } else if (oldItem.isNull()) { // create
     QModelIndex parent;
-    int row = -1; // will be replaced by size() a few lines below
-    setNewItemInsertionPoint(newItem, &parent, &row);
+    int row = -1; // -1 will be replaced by size() in adjustTreeItemAndRow()
+    determineItemPlaceInTree(newItem, &parent, &row);
     TreeItem *parentTreeItem = ((TreeItem*)parent.internalPointer());
-    if (!parentTreeItem)
-      parentTreeItem = _root;
-    int rowCount = parentTreeItem->childrenCount();
-    if (row < 0 || row > rowCount)
-      row = rowCount;
-    //qDebug() << "   SharedUiItemsTreeModel::changeItem: beginInsertRows"
-    //         << parent << row << row;
+    adjustTreeItemAndRow(&parentTreeItem, &row);
     beginInsertRows(parent, row, row);
     new TreeItem(this, newItem, parentTreeItem, row);
-    //qDebug() << "SharedUiItemsTreeModel::changeItem: endInsertRows";
     endInsertRows();
-  } else { // update
+  } else { // update (or rename)
     QModelIndex index = indexOf(oldItem);
     TreeItem *treeItem = ((TreeItem*)index.internalPointer());
     if (treeItem) {
+      QModelIndex oldParent = index.parent(), newParent = oldParent;
+      QString newId = newItem.qualifiedId(), oldId = oldItem.qualifiedId();
+      int row = -1; // -1 will be replaced by size() in adjustTreeItemAndRow()
+      determineItemPlaceInTree(newItem, &newParent, &row);
+      if (newParent != oldParent) { // parent in tree model changed
+        TreeItem *oldParentTreeItem = ((TreeItem*)oldParent.internalPointer());
+        if (!oldParentTreeItem)
+          oldParentTreeItem = _root;
+        TreeItem *newParentTreeItem = ((TreeItem*)newParent.internalPointer());
+        adjustTreeItemAndRow(&newParentTreeItem, &row);
+        if (beginMoveRows(oldParent, treeItem->row(), treeItem->row(),
+                          newParent, row)) {
+          newParentTreeItem->adoptChild(treeItem);
+          updateIndexIfIdChanged(newId, oldId, treeItem);
+          endMoveRows();
+          goto end;
+        } else {
+          qDebug() << QString("ignoring result of ")
+                      +this->metaObject()->className()
+                      +"::determineItemPlaceInTree() since it was rejected by "
+                      "QAbstractItemModel::beginMoveRows()";
+        }
+      }
+      // the following is executed if either parent in tree model did not
+      // change or the change was refused by beginMoveRows() because it was
+      // found inconsistent
       treeItem->item() = newItem;
-      // update index, in case id has changed
-      _itemsIndex.remove(oldItem.qualifiedId());
-      _itemsIndex.insert(newItem.qualifiedId(), treeItem);
+      updateIndexIfIdChanged(newId, oldId, treeItem);
       emit dataChanged(index, index);
     }
   }
+end:
+  emit itemChanged(newItem, oldItem);
 }
 
-void SharedUiItemsTreeModel::setNewItemInsertionPoint(
+void SharedUiItemsTreeModel::updateIndexIfIdChanged(
+    QString newId, QString oldId, TreeItem *newTreeItem) {
+  if (newId != oldId) {
+    _itemsIndex.remove(oldId);
+    _itemsIndex.insert(newId, newTreeItem);
+  }
+}
+
+void SharedUiItemsTreeModel::adjustTreeItemAndRow(TreeItem **item, int *row) {
+  if (!*item)
+    *item = _root;
+  int rowCount = (*item)->childrenCount();
+  if (*row < 0 || *row > rowCount)
+    *row = rowCount;
+}
+
+void SharedUiItemsTreeModel::determineItemPlaceInTree(
     SharedUiItem newItem, QModelIndex *parent, int *row) {
   Q_UNUSED(newItem)
   Q_UNUSED(parent)

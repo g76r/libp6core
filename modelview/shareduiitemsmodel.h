@@ -45,12 +45,17 @@ public:
   virtual QModelIndex indexOf(QString idQualifier, QString id) const;
   virtual QModelIndex indexOf(QString qualifiedId) const = 0;
   Qt::ItemFlags	flags(const QModelIndex &index) const;
+  /** Return model casted to SharedUiItemsModel if possible, or walk through
+   * one or several QAbstractProxyModel to find it if needed.
+   * Otherwise return 0. */
+  static SharedUiItemsModel *castEvenThroughProxies(QAbstractItemModel *model);
 
 public slots:
   /** Notify a change on an item concerning this model.
    * Ready to connect to DocumentManager::itemChanged() signal, or any more
    * precise signals (kind of FoobarDocumentManager::foobarItemChanged(
-   * Foobar newFoobar, Foobar oldFoobar)). */
+   * Foobar newFoobar, Foobar oldFoobar)).
+   * Must emit itemChanged() after having updated data. */
   virtual void changeItem(SharedUiItem newItem, SharedUiItem oldItem) = 0;
   /** Short for changeItem(newItem, SharedUiItem()). */
   void createItem(SharedUiItem newItem);
@@ -60,10 +65,11 @@ public slots:
   void deleteItem(SharedUiItem oldItem);
 
 signals:
-  /** Emited whenever an item is created, renamed, updated or deleted,
-   * being it through setData(), changeItem(). */
-  // TODO not sure this is usefull
-  //void itemChanged(SharedUiItem newItem, SharedUiItem oldItem);
+  /** Emited by changeItem, after it performed model changes.
+   * This is a way for SharedUiItem-aware views to subscribe to changes that
+   * this model also subscribe for without connecting to relevant document
+   * manager signals by itself. */
+  void itemChanged(SharedUiItem newItem, SharedUiItem oldItem);
 };
 
 #endif // SHAREDUIITEMSMODEL_H

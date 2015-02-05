@@ -106,6 +106,7 @@ void SharedUiItemsTableModel::changeItem(SharedUiItem newItem,
     _items[oldIndex.row()] = newItem;
     emit dataChanged(oldIndex, index(oldIndex.row(), columnCount()-1));
   }
+  emit itemChanged(newItem, oldItem);
 }
 
 QModelIndex SharedUiItemsTableModel::indexOf(QString qualifiedId) const {

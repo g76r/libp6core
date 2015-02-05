@@ -76,3 +76,18 @@ QModelIndex SharedUiItemsModel::indexOf(SharedUiItem item) const {
 QModelIndex SharedUiItemsModel::indexOf(QString idQualifier, QString id) const {
   return indexOf(idQualifier+":"+id);
 }
+
+SharedUiItemsModel *SharedUiItemsModel::castEvenThroughProxies(
+    QAbstractItemModel *model) {
+  SharedUiItemsModel *source = qobject_cast<SharedUiItemsModel*>(model);
+  if (source)
+    return source;
+  QAbstractProxyModel *proxy = qobject_cast<QAbstractProxyModel*>(model);
+  while (proxy) {
+    source = qobject_cast<SharedUiItemsModel*>(proxy->sourceModel());
+    if (source)
+      return source;
+    proxy = qobject_cast<QAbstractProxyModel*>(proxy->sourceModel());
+  }
+  return 0;
+}

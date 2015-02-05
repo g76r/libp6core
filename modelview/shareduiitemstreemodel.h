@@ -45,7 +45,7 @@ protected:
     ~TreeItem() {
       _model->_itemsIndex.remove(_item.qualifiedId());
       if (_parent)
-        _parent->_children.removeOne(this);
+        _parent->_children.removeAt(_row);
       // must not use qDeleteAll since ~child modifies its parent's _children
       foreach(TreeItem *child, _children)
         delete child;
@@ -55,14 +55,29 @@ protected:
     TreeItem *parent() const { return _parent; }
     int childrenCount() const { return _children.size(); }
     TreeItem *child(int row) const {
-      return row >= 0 && row < _children.size() ? _children[row] : 0;
+      return row >= 0 && row < _children.size() ? _children[row] : 0; }
+    void deleteChild(int row) { removeChild(row, true); }
+    void adoptChild(TreeItem *child) {
+      if (!child)
+        return;
+      if (child->_parent)
+        child->_parent->removeChild(child->_row, false);
+      child->_parent = this;
+      child->_row = _children.size();
+      _children.append(child);
     }
-    void deleteChild(int row) {
-      if (row < _children.size() && row >= 0) {
-        TreeItem *child = _children[row];
-        _children.removeAt(row); // FIXME double remove ?
-        delete child;
-      }
+
+  private:
+    void removeChild(int row, bool shouldDelete) {
+      if (row >= _children.size() || row < 0)
+        return;
+      TreeItem *child = _children[row];
+      if (shouldDelete)
+        delete child; // destructor will call _children.removeAt() on its parent
+      else
+        _children.removeAt(row);
+      for (; row < _children.size(); ++row)
+        _children[row]->_row = row;
     }
   };
   friend class TreeItem;
@@ -86,14 +101,23 @@ public:
 
 protected:
   void clear();
-  /** This method is called to choose where in the tree changeItem() inserts
-   * a new item (when oldItem.isNull()).
-   * Subclasses should override this method to choose another place than
-   * default one (after last row of root item, i.e. *parent = QModelIndex()
-   * which means "root" and *row = -1 which means "last position of selected
-   * parent"). */
-  virtual void setNewItemInsertionPoint(
+  /** This method is called by changeItem() when a new item is inserted, to
+   * choose where in the tree it should be added, and, when an item is updated,
+   * to check wether it should change parent or not.
+   * Subclasses should override this method to define where an item should be
+   * attached in the tree.
+   * The implementation can set the parent (default: root item) and the row
+   * (default: after last row). Row == -1 means "last row for selected parent",
+   * actual row will be computed by caller.
+   * Limit: on update, row is currently ignored if parent does not change. */
+  virtual void determineItemPlaceInTree(
       SharedUiItem newItem, QModelIndex *parent, int *row);
+
+private:
+  /** *item = _root if null, row = (*item)->size() if < 0 or > count() */
+  inline void adjustTreeItemAndRow(TreeItem **item, int *row);
+  inline void updateIndexIfIdChanged(QString newId, QString oldId,
+                                     TreeItem *newTreeItem);
 };
 
 #endif // SHAREDUIITEMSTREEMODEL_H
