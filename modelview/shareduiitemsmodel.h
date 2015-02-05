@@ -18,6 +18,8 @@
 #include "shareduiitem.h"
 #include "libqtssu_global.h"
 
+class QAbstractProxyModel;
+
 /** Base class for model holding SharedUiItems, being them table or
  * tree-oriented they provides one item section per column. */
 class LIBQTSSUSHARED_EXPORT SharedUiItemsModel : public QAbstractItemModel {
@@ -45,10 +47,6 @@ public:
   virtual QModelIndex indexOf(QString idQualifier, QString id) const;
   virtual QModelIndex indexOf(QString qualifiedId) const = 0;
   Qt::ItemFlags	flags(const QModelIndex &index) const;
-  /** Return model casted to SharedUiItemsModel if possible, or walk through
-   * one or several QAbstractProxyModel to find it if needed.
-   * Otherwise return 0. */
-  static SharedUiItemsModel *castEvenThroughProxies(QAbstractItemModel *model);
 
 public slots:
   /** Notify a change on an item concerning this model.
@@ -70,6 +68,37 @@ signals:
    * this model also subscribe for without connecting to relevant document
    * manager signals by itself. */
   void itemChanged(SharedUiItem newItem, SharedUiItem oldItem);
+};
+
+/** Helper class to access a SharedUiItemsModel and its specific methods
+ * through a several QAbstractProxyModel.
+ * This class is needed because QAbstractProxyModel maps standard Qt features
+ * but not specific SharedUiItem ones (such as indexOf(SharedUiItem) or signal
+ * itemChanged()).
+ */
+class LIBQTSSUSHARED_EXPORT SharedUiItemsProxyModelHelper {
+  SharedUiItemsModel *_realModel;
+  QList <QAbstractProxyModel*> _proxies;
+
+public:
+  SharedUiItemsProxyModelHelper() : _realModel(0) { }
+  SharedUiItemsProxyModelHelper(QAbstractItemModel *model) {
+    setApparentModel(model); }
+  void setApparentModel(QAbstractItemModel *model);
+  SharedUiItemsModel *realModel() const { return _realModel; }
+  QModelIndex mapFromReal(QModelIndex realIndex) const;
+  QModelIndex mapToReal(QModelIndex realIndex) const;
+  QModelIndex indexOf(SharedUiItem item) const {
+    return _realModel ? mapFromReal(_realModel->indexOf(item))
+                      : QModelIndex(); }
+  QModelIndex indexOf(QString idQualifier, QString id) const {
+    return _realModel ? mapFromReal(_realModel->indexOf(idQualifier, id))
+                      : QModelIndex(); }
+  QModelIndex indexOf(QString qualifiedId) const {
+    return _realModel ? mapFromReal(_realModel->indexOf(qualifiedId))
+                      : QModelIndex(); }
+  SharedUiItem itemAt(const QModelIndex &index) const {
+    return _realModel ? _realModel->itemAt(mapToReal(index)) : SharedUiItem(); }
 };
 
 #endif // SHAREDUIITEMSMODEL_H

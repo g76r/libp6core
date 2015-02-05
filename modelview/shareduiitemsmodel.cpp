@@ -77,17 +77,30 @@ QModelIndex SharedUiItemsModel::indexOf(QString idQualifier, QString id) const {
   return indexOf(idQualifier+":"+id);
 }
 
-SharedUiItemsModel *SharedUiItemsModel::castEvenThroughProxies(
+void SharedUiItemsProxyModelHelper::setApparentModel(
     QAbstractItemModel *model) {
-  SharedUiItemsModel *source = qobject_cast<SharedUiItemsModel*>(model);
-  if (source)
-    return source;
-  QAbstractProxyModel *proxy = qobject_cast<QAbstractProxyModel*>(model);
-  while (proxy) {
-    source = qobject_cast<SharedUiItemsModel*>(proxy->sourceModel());
-    if (source)
-      return source;
-    proxy = qobject_cast<QAbstractProxyModel*>(proxy->sourceModel());
+  _realModel = qobject_cast<SharedUiItemsModel*>(model);
+  _proxies.clear();
+  if (!_realModel) {
+    QAbstractProxyModel *proxy = qobject_cast<QAbstractProxyModel*>(model);
+    while (proxy && !_realModel) {
+      _proxies.prepend(proxy);
+      _realModel = qobject_cast<SharedUiItemsModel*>(proxy->sourceModel());
+      proxy = qobject_cast<QAbstractProxyModel*>(proxy->sourceModel());
+    }
   }
-  return 0;
+}
+
+QModelIndex SharedUiItemsProxyModelHelper::mapFromReal(
+    QModelIndex realIndex) const {
+  foreach(QAbstractProxyModel *proxy, _proxies)
+    realIndex = proxy->mapFromSource(realIndex);
+  return realIndex;
+}
+
+QModelIndex SharedUiItemsProxyModelHelper::mapToReal(
+    QModelIndex realIndex) const {
+  for (int i = _proxies.size()-1; i >= 0; --i)
+    realIndex = _proxies[i]->mapToSource(realIndex);
+  return realIndex;
 }
