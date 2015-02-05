@@ -59,6 +59,6 @@ int SharedUiItemData::uiSectionCount() const {
 }
 
 QDebug operator<<(QDebug dbg, const SharedUiItem &i) {
-  dbg.nospace() << i.id();
+  dbg.nospace() << i.qualifiedId();
   return dbg.space();
 }

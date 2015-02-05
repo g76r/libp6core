@@ -30,6 +30,9 @@ class SharedUiItemDocumentManager;
  * - As soon as it contains data and wants it displayed, which is very likely,
  *   a subclass MUST implement uiData() and uiSectionCount() and SHOULD
  *   implement uiHeaderData().
+ * - uiData() MUST handle Qt::EditRole and Qt::DisplayRole. When planning to
+ *   have only read-only UI features, Qt::EditRole SHOULD be treated as a strict
+ *   equivalent of Qt::DisplayRole.
  * - When planning to have generic UI edition features, a subclass MUST
  *   implement uiFlags() (to add Qt::ItemIsEditable flag for editable sections)
  *   and setUiData().
