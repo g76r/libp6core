@@ -27,6 +27,8 @@ class SharedUiItemDocumentManager;
  *
  * Subclassing guidelines:
  * - A subclass MUST implement id() and idQualifier().
+ * - The id MUST be unique in the scope of the document/document manager for a
+ *   given id qualifier
  * - As soon as it contains data and wants it displayed, which is very likely,
  *   a subclass MUST implement uiData() and uiSectionCount() and SHOULD
  *   implement uiHeaderData().
@@ -265,7 +267,7 @@ protected:
    * This method must be reimplemented and made public by subclasses in order
    * to be usable.
    * It cannot be done in a generic manner in base class because non-const
-   * access to d mustn't be performed in base class.
+   * access to data mustn't be performed in base class.
    * @return true on success, false otherwise */
   bool setUiData(int section, const QVariant &value, QString *errorString = 0,
                  int role = Qt::EditRole,
