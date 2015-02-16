@@ -195,6 +195,8 @@ public:
   bool operator<(const SharedUiItem &other) const {
     return idQualifier() < other.idQualifier() || id() < other.id(); }
   bool isNull() const { return !_data; }
+  /** @return !isNull() */
+  operator bool() const { return !!_data; }
   /** Item identifier.
    * By convention, identifier must be unique for the same type of item within
    * the same document. */
