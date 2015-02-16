@@ -166,6 +166,8 @@ public:
     _message.append(QString::number(o)); return *this; }
   inline LogHelper &operator<<(double o) {
     _message.append(QString::number(o)); return *this; }
+  inline LogHelper &operator<<(bool o) {
+    _message.append(o ? "true" : "false"); return *this; }
   inline LogHelper &operator<<(const QVariant &o) {
     _message.append(o.toString()); return *this; }
   inline LogHelper &operator<<(const QList<QString> &o) {
