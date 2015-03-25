@@ -89,7 +89,8 @@ SOURCES += \
     httpd/uploadhttphandler.cpp \
     csv/csvfile.cpp \
     csv/csvfilemodel.cpp \
-    modelview/shareduiitemdocumentmanager.cpp
+    modelview/shareduiitemdocumentmanager.cpp \
+    modelview/shareduiitemlist.cpp
 
 
 HEADERS +=\
@@ -159,7 +160,8 @@ HEADERS +=\
     httpd/uploadhttphandler.h \
     csv/csvfile.h \
     csv/csvfilemodel.h \
-    modelview/shareduiitemdocumentmanager.h
+    modelview/shareduiitemdocumentmanager.h \
+    modelview/shareduiitemlist.h
 
 unix {
     target.path = /usr/lib

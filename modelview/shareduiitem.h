@@ -104,7 +104,11 @@ protected:
  *
  * Subclassing guidelines:
  * - A subclass MUST implement default and copy constructors
- * - A subclass SHOULD implement operator=(const Foobar&) for its own type
+ * - A subclass SHOULD implement operator=(const Foobar&) for its own type, in
+ *   such a way:
+ *     // in .h
+ *     Foobar &operator=(const Foobar &other) {
+ *       SharedUiItem::operator=(other); return *this; }
  * - A subclass SHOULD implement operator==(const SharedUiItem&) wrapping
  *   SharedUiItem::operator== and operator<(const SharedUiItem&) wrapping
  *   SharedUiItem::operator<
