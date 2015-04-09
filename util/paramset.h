@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -127,13 +127,17 @@ public:
   bool contains(QString key, bool inherit = true) const;
   /** Perform parameters substitution within the string. */
   QString evaluate(QString rawValue, bool inherit = true,
-                   const ParamsProvider *context = 0) const;
+                   const ParamsProvider *context = 0) const {
+    return evaluate(rawValue, inherit, context, QSet<QString>()); }
   QString evaluate(QString rawValue, const ParamsProvider *context) const {
     return evaluate(rawValue, true, context); }
   /** Split string and perform parameters substitution. */
-  QStringList splitAndEvaluate(QString rawValue, QString separator = " ",
-                               bool inherit = true,
-                               const ParamsProvider *context = 0) const;
+  QStringList splitAndEvaluate(
+      QString rawValue, QString separator = " ", bool inherit = true,
+      const ParamsProvider *context = 0) const {
+    return splitAndEvaluate(rawValue, separator, inherit, context,
+                            QSet<QString>());
+  }
   QStringList splitAndEvaluate(QString rawValue,
                                const ParamsProvider *context) const {
     return splitAndEvaluate(rawValue, " ", true, context); }
@@ -146,7 +150,8 @@ public:
     return QRegExp(matchingPattern(rawValue), Qt::CaseSensitive,
                    QRegExp::Wildcard);
   }
-  QVariant paramValue(QString key, QVariant defaultValue) const;
+  QVariant paramValue(QString key, QVariant defaultValue = QVariant(),
+                      QSet<QString> alreadyEvaluated = QSet<QString>()) const;
   bool isNull() const;
   int size() const;
   bool isEmpty() const;
@@ -158,9 +163,19 @@ public:
   ParamSet createChild() const;
 
 private:
-  inline void appendVariableValue(QString &value, QString &variable,
-                                  bool inherit,
-                                  const ParamsProvider *context) const;
+  inline bool appendVariableValue(
+      QString *value, QString variable, bool inherit,
+      const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+      bool logIfVariableNotFound) const;
+  inline QString evaluateImplicitVariable(
+      QString key, bool inherit, const ParamsProvider *context,
+      QSet<QString> alreadyEvaluated) const;
+  QString evaluate(QString rawValue, bool inherit,
+                   const ParamsProvider *context,
+                   QSet<QString> alreadyEvaluated) const;
+  QStringList splitAndEvaluate(
+      QString rawValue, QString separator, bool inherit,
+      const ParamsProvider *context, QSet<QString> alreadyEvaluated) const;
 };
 
 QDebug LIBQTSSUSHARED_EXPORT operator<<(QDebug dbg, const ParamSet &params);

@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -36,8 +36,9 @@ public:
   HttpRequestContext &operator=(const HttpRequestContext &other);
   bool operator==(const HttpRequestContext &other) const {
     return d == other.d; }
-  QVariant paramValue(QString key,
-                      QVariant defaultValue = QVariant()) const;
+  QVariant paramValue(
+      QString key, QVariant defaultValue = QVariant(),
+      QSet<QString> alreadyEvaluated = QSet<QString>()) const;
   /** Parameters set through overrideParamValue() will override any
    * ParamsProvider, even those prepended. */
   HttpRequestContext &overrideParamValue(QString key, QString value);

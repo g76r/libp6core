@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -88,17 +88,22 @@ QString ParamSet::rawValue(QString key, QString defaultValue,
   return value.isNull() ? defaultValue : value;
 }
 
-QString ParamSet::evaluate(QString rawValue, bool inherit,
-                           const ParamsProvider *context) const {
+QString ParamSet::evaluate(
+    QString rawValue, bool inherit, const ParamsProvider *context,
+    QSet<QString> alreadyEvaluated) const {
   //Log::debug() << "evaluate " << rawValue << " " << QString::number((qint64)context, 16);
-  QStringList values = splitAndEvaluate(rawValue, QString(), inherit, context);
+  QStringList values = splitAndEvaluate(rawValue, QString(), inherit, context,
+                                        alreadyEvaluated);
   if (values.isEmpty())
     return rawValue.isNull() ? QString() : "";
   return values.first();
 }
 
-static inline QString automaticValue(QString key) {
+QString ParamSet::evaluateImplicitVariable(
+    QString key, bool inherit, const ParamsProvider *context,
+    QSet<QString> alreadyEvaluated) const {
   static QRegExp dateFunctionRE("!date(?:!([^!]+)(?:!([^!]+)(?:!([^!]+))?)?)?");
+  static QRegExp defaultFunctionRE("!default!([^!]+)(?:!(.*))?");
   if (key.at(0) == '!') {
     if (key.startsWith("!date")) {
       /* %!date function: %!date!format!relativedatetime!timezone
@@ -139,58 +144,92 @@ static inline QString automaticValue(QString key) {
       } else {
         //qDebug() << "%!date function invalid syntax:" << key;
       }
+    } else if (key.startsWith("!default")) {
+      /* %!default function: %!default!variable!value_if_not_set
+       * value_if_not_set defaults to an empty string (the whole expression
+       * being equivalent to %variable apart of the absence of warning due to
+       * undefined variable evaluation)
+       * it works like %{variable:-value_if_not_set} in shell scripts and almost
+       * like nvl/ifnull functions in sql
+       *
+       * examples:
+       * %{!default!foo!null}
+       * %{!default!foo!foo not set}
+       * %{!default!foo!foo not set!!!}
+       * %{!default!foo!%bar}
+       * %{!default!foo}
+       */
+      QRegExp re = defaultFunctionRE;
+      if (re.exactMatch(key)) {
+        QString variable = re.cap(1);
+        QString valueIfNotSet = re.cap(2);
+        QString value;
+        if (!appendVariableValue(&value, variable, inherit, context,
+                                alreadyEvaluated, false)) {
+          value = evaluate(valueIfNotSet, inherit, context, alreadyEvaluated);
+          //qDebug() << "!default:" << key << valueIfNotSet << value;
+        }
+        return value;
+      } else {
+        //qDebug() << "%!default function invalid syntax:" << key;
+      }
     }
   }
   return QString();
 }
 
-void ParamSet::appendVariableValue(QString &value, QString &variable,
-                                   bool inherit,
-                                   const ParamsProvider *context) const {
-  if (!variable.isEmpty()) {
-    QString s = automaticValue(variable);
-    if (!s.isNull())
-      value.append(s);
-    else {
-      if (context)
-        s = context->paramValue(variable).toString();
-      if (!s.isNull())
-        value.append(s);
-      else {
-        s = this->rawValue(variable, inherit);
-        if (!s.isNull())
-          value.append(s);
-        else {
-          //Log::warning() << "unsupported variable substitution: %{" << variable
-          //               << "} " << QString::number((qint64)context, 16);
-          Log::debug()
-              << "unsupported variable substitution: variable not found: "
-                 "%{" << variable << "} in paramset " << toString(false)
-              << " " << d.constData() << " parent "
-              << parent().toString(false);
-        }
-      }
-    }
-  } else {
+bool ParamSet::appendVariableValue(
+    QString *value, QString variable, bool inherit,
+    const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+    bool logIfVariableNotFound) const {
+  if (variable.isEmpty()) {
     Log::warning() << "unsupported variable substitution: empty variable name";
+    return false;
+  } else if (alreadyEvaluated.contains(variable)) {
+    Log::warning() << "unsupported variable substitution: loop detected with "
+                      "variable \"" << variable << "\"";
+    return false;
   }
-  variable.clear();
+  QString s = evaluateImplicitVariable(
+        variable, inherit, context, alreadyEvaluated);
+  if (!s.isNull()) {
+    value->append(s);
+    return true;
+  }
+  if (context) {
+    s = context->paramValue(variable, QVariant(), alreadyEvaluated).toString();
+    if (!s.isNull()) {
+      value->append(s);
+      return true;
+    }
+  }
+  s = this->rawValue(variable, inherit);
+  if (!s.isNull()) {
+    value->append(s);
+    return true;
+  }
+  if (logIfVariableNotFound) {
+    Log::debug()
+        << "unsupported variable substitution: variable not found: "
+           "%{" << variable << "} in paramset " << toString(false)
+        << " " << d.constData() << " parent "
+        << parent().toString(false);
+  }
+  return false;
 }
 
-QStringList ParamSet::splitAndEvaluate(QString rawValue,
-                                       QString separator,
-                                       bool inherit,
-                                       const ParamsProvider *context) const {
+QStringList ParamSet::splitAndEvaluate(
+    QString rawValue, QString separator, bool inherit,
+    const ParamsProvider *context, QSet<QString> alreadyEvaluated) const {
   QStringList values;
   QString value, variable;
   int i = 0;
   while (i < rawValue.size()) {
     QChar c = rawValue.at(i++);
     if (c == '%') {
+      QSet<QString> nowEvaluated = alreadyEvaluated;
       c = rawValue.at(i++);
       if (c == '{') {
-        // LATER support imbrication in parameters substitution
-        // LATER support shell-like ${:-} and so on substitution
         while (i < rawValue.size()) {
           c = rawValue.at(i++);
           if (c == '}')
@@ -198,7 +237,11 @@ QStringList ParamSet::splitAndEvaluate(QString rawValue,
           else
             variable.append(c);
         }
-        appendVariableValue(value, variable, inherit, context);
+        appendVariableValue(&value, variable, inherit, context,
+                            alreadyEvaluated, true);
+        nowEvaluated.insert(variable);
+        value = evaluate(value, inherit, context, nowEvaluated);
+        variable.clear();
       } else if (c == '!' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
                  || c == '_') {
         variable.append(c);
@@ -212,7 +255,11 @@ QStringList ParamSet::splitAndEvaluate(QString rawValue,
             break;
           }
         }
-        appendVariableValue(value, variable, inherit, context);
+        appendVariableValue(&value, variable, inherit, context,
+                            alreadyEvaluated, true);
+        nowEvaluated.insert(variable);
+        value = evaluate(value, inherit, context, nowEvaluated);
+        variable.clear();
       } else {
         // % is used as an escape character, for '%', a separator or anything
         value.append(c);
@@ -311,9 +358,10 @@ bool ParamSet::isEmpty() const {
   return d ? d->_params.isEmpty() : true;
 }
 
-QVariant ParamSet::paramValue(QString key,
-                              QVariant defaultValue) const{
-  return value(key, defaultValue.toString(), true);
+QVariant ParamSet::paramValue(
+    QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
+  return evaluate(rawValue(key, defaultValue.toString(), true),
+                  true, 0, alreadyEvaluated);
 }
 
 QString ParamSet::toString(bool inherit, bool decorate) const {

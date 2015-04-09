@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,9 +17,9 @@ ParamsProvider::~ParamsProvider() {
 }
 
 QVariant ParamsProviderList::paramValue(
-    QString key, QVariant defaultValue) const {
+    QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
   foreach (ParamsProvider *provider, _list) {
-    QVariant v = provider->paramValue(key);
+    QVariant v = provider->paramValue(key, QVariant(), alreadyEvaluated);
     if (!v.isNull())
       return v;
   }

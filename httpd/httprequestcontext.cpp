@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -50,14 +50,14 @@ HttpRequestContext &HttpRequestContext::operator=(
   return *this;
 }
 
-QVariant HttpRequestContext::paramValue(QString key,
-                                        QVariant defaultValue) const {
+QVariant HttpRequestContext::paramValue(
+    QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
   QString s = d->_localParams.rawValue(key);
   if (!s.isNull())
     return s;
   foreach (ParamsProvider *params, d->_params)
     if (params) {
-      QVariant v = params->paramValue(key);
+      QVariant v = params->paramValue(key, QVariant(), alreadyEvaluated);
       if (v.isValid())
         return v;
     }

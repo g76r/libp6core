@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,6 +16,7 @@
 
 #include <QVariant>
 #include <QList>
+#include <QSet>
 #include "libqtssu_global.h"
 
 /** Base class for any class that may provide key/value parameters.
@@ -24,8 +25,9 @@ class LIBQTSSUSHARED_EXPORT ParamsProvider {
 public:
   virtual ~ParamsProvider();
   /** Return a parameter value. */
-  virtual QVariant paramValue(QString key,
-                              QVariant defaultValue = QVariant()) const = 0;
+  virtual QVariant paramValue(
+      QString key, QVariant defaultValue = QVariant(),
+      QSet<QString> alreadyEvaluated = QSet<QString>()) const = 0;
 };
 
 /** This class builds up several ParamsProvider into only one, chaining
@@ -59,7 +61,8 @@ public:
     return *this; }
   operator const QList<ParamsProvider*>() const { return _list; }
   operator QList<ParamsProvider*>() { return _list; }
-  QVariant paramValue(QString key, QVariant defaultValue = QVariant()) const;
+  QVariant paramValue(QString key, QVariant defaultValue = QVariant(),
+                      QSet<QString> alreadyEvaluated = QSet<QString>()) const;
 };
 
 #endif // PARAMSPROVIDER_H
