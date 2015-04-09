@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,6 +17,8 @@
 #include "libqtssu_global.h"
 #include <QString>
 #include <QDateTime>
+#include <QTimeZone>
+#include "relativedatetime.h"
 
 class TimeFormatsPrivate;
 
@@ -41,6 +43,37 @@ public:
     * invalid QDateTime gives null QString */
   static QString toCoarseHumanReadableRelativeDate(
       QDateTime dt, QDateTime reference = QDateTime::currentDateTime());
+  /** Format a given timestamp using given format and RelativeDateTime shift.
+   *
+   * Supported format strings are those supported by QDateTime::toString() plus:
+   * - "s1970" : seconds since 1970-01-01 00:00:00
+   * - "ms1970" : milliseconds since 1970-01-01 00:00:00
+   * - empty string defaults to pseudo-iso8601: yyyy-MM-dd hh:mm:ss,zzz
+   */
+  static QString toCustomTimestamp(
+      QDateTime dt, QString format = QString(),
+      RelativeDateTime relativeDateTime = RelativeDateTime());
+  /** Syntactic sugar over toCustomTimestamp with an exclamationMarkFormat
+   * parameter of the form !format!relativedatetime!timezone
+   *
+   * format defaults to pseudo-iso-8601 "yyyy-MM-dd hh:mm:ss,zzz"
+   * relativedatetime defaults to plain QDateTime date
+   * timezone defaults to the one holded by QDateTime
+   *
+   * examples:
+   * %!date
+   * %{!date!yyyy-MM-dd}
+   * %{!date!!-2days}
+   * %{!date!!!UTC}
+   * %{!date!hh:mm:ss,zzz!01-01T20:02-2w+1d!GMT}
+   *
+   * This method is used by ParamSet for its %!date function:
+   * %!date!format!relativedatetime!timezone
+   * and is usable by any other kind of timestamp formating within a
+   * ParamsProvider.
+   */
+  static QString toExclamationMarkCustomTimestamp(
+      QDateTime dt, QString exclamationMarkFormat);
 };
 
 #endif // TIMEFORMATS_H

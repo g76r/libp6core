@@ -17,13 +17,51 @@
 #include <QSharedData>
 #include <QList>
 #include <QStringList>
+#include <QRegularExpression>
 #include "log/log.h"
 #include "paramsprovider.h"
 
 class ParamSetData;
 
 /** String key-value parameter set with inheritance, substitution macro-language
- * and syntaxic sugar for converting values to non-string types. */
+ * and syntaxic sugar for converting values to non-string types.
+ *
+ * Substitution macro-language supports these kinds of variable evaluation:
+ * %variable
+ * %{variable}
+ * %{variable with spaces or special chars ,!?%}
+ *
+ * It also supports functions in the form or special variable names:
+ *
+ * %!date function: %{!date!format!relativedatetime!timezone}
+ *
+ * format defaults to pseudo-iso-8601 "yyyy-MM-dd hh:mm:ss,zzz"
+ * relativedatetime defaults to current date time
+ * timezone defaults to local time, if specified it must follow IANA's timezone
+ *   format, see http://www.iana.org/time-zones
+ *
+ * examples:
+ * %!date
+ * %{!date!yyyy-MM-dd}
+ * %{!date!!-2days}
+ * %{!date!!!UTC}
+ * %{!date!hh:mm:ss,zzz!01-01T20:02-2w+1d!GMT}
+ *
+ * %!default function: %{!default!variable!value_if_not_set}
+ *
+ * value_if_not_set defaults to an empty string (the whole expression
+ * being equivalent to %variable apart of the absence of warning due to
+ * undefined variable evaluation)
+ * it works like %{variable:-value_if_not_set} in shell scripts and almost
+ * like nvl/ifnull functions in sql
+ *
+ * examples:
+ * %{!default!foo!null}
+ * %{!default!foo!foo not set}
+ * %{!default!foo!foo not set!!!}
+ * %{!default!foo!%bar}
+ * %{!default!foo}
+ */
 class LIBQTSSUSHARED_EXPORT ParamSet : public ParamsProvider {
   QSharedDataPointer<ParamSetData> d;
 public:
@@ -145,6 +183,7 @@ public:
    * in evaluation of the rawValue (@see QRegExp::Wildcard).
    * For instance "foo%!yyyy-%{bar}" is converted into "foo????-*" or
    * into "foo*-*". */
+  // TODO change for QRegularExpresion
   static QString matchingPattern(QString rawValue);
   inline static QRegExp matchingRegexp(QString rawValue) {
     return QRegExp(matchingPattern(rawValue), Qt::CaseSensitive,

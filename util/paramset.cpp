@@ -17,7 +17,7 @@
 #include <QString>
 #include <QDateTime>
 #include <QtDebug>
-#include "relativedatetime.h"
+#include "timeformats.h"
 
 class ParamSetData : public QSharedData {
 public:
@@ -102,70 +102,20 @@ QString ParamSet::evaluate(
 QString ParamSet::evaluateImplicitVariable(
     QString key, bool inherit, const ParamsProvider *context,
     QSet<QString> alreadyEvaluated) const {
-  static QRegExp dateFunctionRE("!date(?:!([^!]+)(?:!([^!]+)(?:!([^!]+))?)?)?");
-  static QRegExp defaultFunctionRE("!default!([^!]+)(?:!(.*))?");
+  static QRegularExpression defaultFunctionRE("!([^!]+)(?:!(.*))?");
   if (key.at(0) == '!') {
     if (key.startsWith("!date")) {
-      /* %!date function: %!date!format!relativedatetime!timezone
-       * format defaults to pseudo-iso-8601 "yyyy-MM-dd hh:mm:ss,zzz"
-       * relativedatetime defaults to current date time
-       * timezone defaults to local time
-       *
-       * examples:
-       * %!date
-       * %{!date!yyyy-MM-dd}
-       * %{!date!!-2days}
-       * %{!date!!!UTC}
-       * %{!date!hh:mm:ss,zzz!01-01T20:02-2w+1d!GMT}
-       */
-      QRegExp re = dateFunctionRE;
-      if (re.exactMatch(key)) {
-        QString format = re.cap(1).trimmed();
-        QString date = re.cap(2).trimmed().toLower();
-        QString timezone = re.cap(3).trimmed().toUpper();
-        // LATER handle more timezones, such as GMT+05:30
-        QDateTime dt = (timezone == "Z" || timezone == "GMT"
-                        || timezone == "UTC")
-            ? QDateTime::currentDateTimeUtc()
-            : QDateTime::currentDateTime();
-        RelativeDateTime rdt(date);
-        dt = rdt.apply(dt);
-        if (format.isEmpty()) {
-          return dt.toString("yyyy-MM-dd hh:mm:ss,zzz");
-        } else {
-          if (format == "ms1970") {
-            return QString::number(dt.toMSecsSinceEpoch());
-          } else if (format == "s1970") {
-            return QString::number(dt.toMSecsSinceEpoch()/1000);
-          } else {
-            return dt.toString(format);
-          }
-        }
-      } else {
-        //qDebug() << "%!date function invalid syntax:" << key;
-      }
+      return TimeFormats::toExclamationMarkCustomTimestamp(
+            QDateTime::currentDateTime(), key.mid(5));
     } else if (key.startsWith("!default")) {
-      /* %!default function: %!default!variable!value_if_not_set
-       * value_if_not_set defaults to an empty string (the whole expression
-       * being equivalent to %variable apart of the absence of warning due to
-       * undefined variable evaluation)
-       * it works like %{variable:-value_if_not_set} in shell scripts and almost
-       * like nvl/ifnull functions in sql
-       *
-       * examples:
-       * %{!default!foo!null}
-       * %{!default!foo!foo not set}
-       * %{!default!foo!foo not set!!!}
-       * %{!default!foo!%bar}
-       * %{!default!foo}
-       */
-      QRegExp re = defaultFunctionRE;
-      if (re.exactMatch(key)) {
-        QString variable = re.cap(1);
-        QString valueIfNotSet = re.cap(2);
+      QRegularExpressionMatch match = defaultFunctionRE.match(key, 8);
+      //qDebug() << "!default:" << key << key.mid(8) << match.hasMatch() << match.captured(1);
+      if (match.hasMatch()) {
+        QString variable = match.captured(1);
+        QString valueIfNotSet = match.captured(2);
         QString value;
         if (!appendVariableValue(&value, variable, inherit, context,
-                                alreadyEvaluated, false)) {
+                                 alreadyEvaluated, false)) {
           value = evaluate(valueIfNotSet, inherit, context, alreadyEvaluated);
           //qDebug() << "!default:" << key << valueIfNotSet << value;
         }
@@ -279,7 +229,7 @@ QStringList ParamSet::splitAndEvaluate(
 
 QPair<QString,QString> ParamSet::valueAsStringsPair(
     QString key, bool inherit, const ParamsProvider *context) const {
-  static QRegExp whitespace("\\s");
+  static QRegularExpression whitespace("\\s");
   QString v = rawValue(key, inherit).trimmed();
   int i = v.indexOf(whitespace);
   if (i == -1)

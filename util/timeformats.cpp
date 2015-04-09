@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,6 +16,7 @@
 #include <QString>
 #include <QRegExp>
 #include "log/log.h"
+#include <QRegularExpression>
 
 Q_GLOBAL_STATIC(TimeFormats, timeFormatsInstance)
 
@@ -312,3 +313,37 @@ int main(int argc, char *argv[]) {
 2013-10-25T20:20:05,859 MainThread/0 : FATAL 219 years 88 days ago
 2013-10-25T20:20:05,859 MainThread/0 : FATAL 2195 years 152 days ago
 */
+
+QString TimeFormats::toCustomTimestamp(
+    QDateTime dt, QString format, RelativeDateTime relativeDateTime) {
+  dt = relativeDateTime.apply(dt);
+  if (format.isEmpty()) {
+    return dt.toString("yyyy-MM-dd hh:mm:ss,zzz");
+  } else {
+    if (format == "ms1970") {
+      return QString::number(dt.toMSecsSinceEpoch());
+    } else if (format == "s1970") {
+      return QString::number(dt.toMSecsSinceEpoch()/1000);
+    } else {
+      return dt.toString(format);
+    }
+  }
+}
+
+QString TimeFormats::toExclamationMarkCustomTimestamp(
+    QDateTime dt, QString exclamationMarkFormat) {
+  static QRegularExpression dateFunctionRE(
+        "(?:!([^!]*)(?:!([^!]*)(?:!([^!]*))?)?)?");
+  QRegularExpressionMatch match = dateFunctionRE.match(exclamationMarkFormat);
+  if (match.hasMatch()) {
+    QString format = match.captured(1).trimmed();
+    QString relativedatetime = match.captured(2).trimmed().toLower();
+    QTimeZone timezone(match.captured(3).trimmed().toUtf8());
+    if (timezone.isValid())
+      dt = dt.toTimeZone(timezone);
+    return toCustomTimestamp(dt, format, RelativeDateTime(relativedatetime));
+  } else {
+    //qDebug() << "%!date function invalid syntax:" << key;
+  }
+  return QString();
+}
