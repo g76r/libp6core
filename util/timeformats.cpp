@@ -17,6 +17,7 @@
 #include <QRegExp>
 #include "log/log.h"
 #include <QRegularExpression>
+#include "characterseparatedexpression.h"
 
 Q_GLOBAL_STATIC(TimeFormats, timeFormatsInstance)
 
@@ -330,20 +331,16 @@ QString TimeFormats::toCustomTimestamp(
   }
 }
 
-QString TimeFormats::toExclamationMarkCustomTimestamp(
-    QDateTime dt, QString exclamationMarkFormat) {
-  static QRegularExpression dateFunctionRE(
-        "(?:!([^!]*)(?:!([^!]*)(?:!([^!]*))?)?)?");
-  QRegularExpressionMatch match = dateFunctionRE.match(exclamationMarkFormat);
-  if (match.hasMatch()) {
-    QString format = match.captured(1).trimmed();
-    QString relativedatetime = match.captured(2).trimmed().toLower();
-    QTimeZone timezone(match.captured(3).trimmed().toUtf8());
-    if (timezone.isValid())
-      dt = dt.toTimeZone(timezone);
-    return toCustomTimestamp(dt, format, RelativeDateTime(relativedatetime));
-  } else {
-    //qDebug() << "%!date function invalid syntax:" << key;
-  }
+QString TimeFormats::toMultifieldSpecifiedCustomTimestamp(
+    QDateTime dt, QString multifieldSpecifiedFormat) {
+  CharacterSeparatedExpression params(multifieldSpecifiedFormat);
+  //qDebug() << "TimeFormats::toMultifieldSpecifiedCustomTimestamp"
+  //         << multifieldSpecifiedFormat << params.size() << params;
+  QString format = params.value(0).trimmed();
+  QString relativedatetime = params.value(1).trimmed().toLower();
+  QTimeZone timezone(params.value(2).trimmed().toUtf8());
+  if (timezone.isValid())
+    dt = dt.toTimeZone(timezone);
+  return toCustomTimestamp(dt, format, RelativeDateTime(relativedatetime));
   return QString();
 }

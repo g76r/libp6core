@@ -53,27 +53,32 @@ public:
   static QString toCustomTimestamp(
       QDateTime dt, QString format = QString(),
       RelativeDateTime relativeDateTime = RelativeDateTime());
-  /** Syntactic sugar over toCustomTimestamp with an exclamationMarkFormat
+  /** Syntactic sugar over toCustomTimestamp with an multifieldSpecifiedFormat
    * parameter of the form !format!relativedatetime!timezone
    *
    * format defaults to pseudo-iso-8601 "yyyy-MM-dd hh:mm:ss,zzz"
    * relativedatetime defaults to plain QDateTime date
    * timezone defaults to the one holded by QDateTime
    *
-   * examples:
-   * %!date
-   * %{!date!yyyy-MM-dd}
-   * %{!date!!-2days}
-   * %{!date!!!UTC}
-   * %{!date!hh:mm:ss,zzz!01-01T20:02-2w+1d!GMT}
+   * Any other character than ! can be used (the same way that sed s command
+   * accepts any character beside / as a regular expression separator).
    *
-   * This method is used by ParamSet for its %!date function:
-   * %!date!format!relativedatetime!timezone
+   * examples:
+   * %=date
+   * %{=date!yyyy-MM-dd}
+   * %{=date,yyyy-MM-dd}
+   * %{=date!!-2days}
+   * %{=date::-2days}
+   * %{=date!!!UTC}
+   * %{=date!hh:mm:ss,zzz!01-01T20:02-2w+1d!GMT}
+   *
+   * This method is used by ParamSet for its %=date function:
+   * %=date!format!relativedatetime!timezone
    * and is usable by any other kind of timestamp formating within a
    * ParamsProvider.
    */
-  static QString toExclamationMarkCustomTimestamp(
-      QDateTime dt, QString exclamationMarkFormat);
+  static QString toMultifieldSpecifiedCustomTimestamp(
+      QDateTime dt, QString multifieldSpecifiedFormat);
 };
 
 #endif // TIMEFORMATS_H

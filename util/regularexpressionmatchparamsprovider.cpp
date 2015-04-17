@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 Hallowyn and others.
+/* Copyright 2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,17 +11,21 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "paramsprovider.h"
+#include "regularexpressionmatchparamsprovider.h"
+#include <QRegularExpression>
 
-ParamsProvider::~ParamsProvider() {
-}
-
-QVariant ParamsProviderList::paramValue(
+QVariant RegularExpressionMatchParamsProvider::paramValue(
     QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
-  foreach (const ParamsProvider *provider, _list) {
-    QVariant v = provider->paramValue(key, QVariant(), alreadyEvaluated);
-    if (!v.isNull())
-      return v;
+  Q_UNUSED(alreadyEvaluated)
+  static QRegularExpression integerRE("^\\d+$");
+  QString value = _match.captured(key);
+  if (!value.isNull())
+    return value;
+  QRegularExpressionMatch match = integerRE.match(key);
+  if (match.hasMatch()) {
+    value = _match.captured(match.captured().toInt());
+    if (!value.isNull())
+      return value;
   }
   return defaultValue;
 }

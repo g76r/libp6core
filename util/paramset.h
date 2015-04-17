@@ -30,10 +30,12 @@ class ParamSetData;
  * %variable
  * %{variable}
  * %{variable with spaces or special chars ,!?%}
+ * %!variable_with_only_one_leading_special_char
  *
- * It also supports functions in the form or special variable names:
+ * It also supports functions in the form or special variable names starting
+ * with an equal sign:
  *
- * %!date function: %{!date!format!relativedatetime!timezone}
+ * %=date function: %{!date!format!relativedatetime!timezone}
  *
  * format defaults to pseudo-iso-8601 "yyyy-MM-dd hh:mm:ss,zzz"
  * relativedatetime defaults to current date time
@@ -41,13 +43,15 @@ class ParamSetData;
  *   format, see http://www.iana.org/time-zones
  *
  * examples:
- * %!date
- * %{!date!yyyy-MM-dd}
- * %{!date!!-2days}
- * %{!date!!!UTC}
- * %{!date!hh:mm:ss,zzz!01-01T20:02-2w+1d!GMT}
+ * %=date
+ * %{=date!yyyy-MM-dd}
+ * %{=date,yyyy-MM-dd}
+ * %{=date!!-2days}
+ * %{=date!!!UTC}
+ * %{=date,,,UTC}
+ * %{=date!hh:mm:ss,zzz!01-01T20:02-2w+1d!GMT}
  *
- * %!default function: %{!default!variable!value_if_not_set}
+ * %=default function: %{!default!variable!value_if_not_set}
  *
  * value_if_not_set defaults to an empty string (the whole expression
  * being equivalent to %variable apart of the absence of warning due to
@@ -56,11 +60,29 @@ class ParamSetData;
  * like nvl/ifnull functions in sql
  *
  * examples:
- * %{!default!foo!null}
- * %{!default!foo!foo not set}
- * %{!default!foo!foo not set!!!}
- * %{!default!foo!%bar}
- * %{!default!foo}
+ * %{=default!foo!null}
+ * %{=default!foo!foo not set}
+ * %{=default!foo!foo not set!!!}
+ * %{=default!foo!%bar}
+ * %{=default!foo}
+ *
+ * %=sub function: %{!sub!input!s-expression!...}
+ *
+ * input is the data to transform, it is evaluated (%foo become the content of
+ *   foo param)
+ * s-expression is a substitution expression like those taken by sed's s
+ *   command, e.g. /foo/bar/gi or ,.*,,
+ *   replacement par is evaluated and both regular params substitution and
+ *   regexp substitution are available, e.g. %1 will be replaced by first
+ *   capture group and %name will be replaced by named capture group if
+ *   availlable or param
+ *   regular expression are those supported by Qt's QRegularExpression, which
+ *   are almost identical to Perl's regexps
+ *
+ * examples:
+ * %{=sub!foo!/o/O}
+ * %{=sub;%foo;/a/b/g;/([a-z]+)[0-9]/%1%bar/g}"
+ * %{=sub;2015-04-17;~.*-(?<month>[0-9]+)-.*~%month}
  */
 class LIBQTSSUSHARED_EXPORT ParamSet : public ParamsProvider {
   QSharedDataPointer<ParamSetData> d;
@@ -181,8 +203,8 @@ public:
     return splitAndEvaluate(rawValue, " ", true, context); }
   /** Return a globing expression that matches any string that can result
    * in evaluation of the rawValue (@see QRegExp::Wildcard).
-   * For instance "foo%!yyyy-%{bar}" is converted into "foo????-*" or
-   * into "foo*-*". */
+   * For instance "foo%{=date:yyyy}-%{bar}.log" is converted into
+   * "foo????-*.log" or into "foo*-*.log". */
   // TODO change for QRegularExpresion
   static QString matchingPattern(QString rawValue);
   inline static QRegExp matchingRegexp(QString rawValue) {

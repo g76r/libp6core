@@ -90,7 +90,9 @@ SOURCES += \
     csv/csvfile.cpp \
     csv/csvfilemodel.cpp \
     modelview/shareduiitemdocumentmanager.cpp \
-    modelview/shareduiitemlist.cpp
+    modelview/shareduiitemlist.cpp \
+    util/characterseparatedexpression.cpp \
+    util/regularexpressionmatchparamsprovider.cpp
 
 
 HEADERS +=\
@@ -161,7 +163,9 @@ HEADERS +=\
     csv/csvfile.h \
     csv/csvfilemodel.h \
     modelview/shareduiitemdocumentmanager.h \
-    modelview/shareduiitemlist.h
+    modelview/shareduiitemlist.h \
+    util/characterseparatedexpression.h \
+    util/regularexpressionmatchparamsprovider.h
 
 unix {
     target.path = /usr/lib

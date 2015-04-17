@@ -18,6 +18,8 @@
 #include <QDateTime>
 #include <QtDebug>
 #include "timeformats.h"
+#include "characterseparatedexpression.h"
+#include "regularexpressionmatchparamsprovider.h"
 
 class ParamSetData : public QSharedData {
 public:
@@ -102,27 +104,74 @@ QString ParamSet::evaluate(
 QString ParamSet::evaluateImplicitVariable(
     QString key, bool inherit, const ParamsProvider *context,
     QSet<QString> alreadyEvaluated) const {
-  static QRegularExpression defaultFunctionRE("!([^!]+)(?:!(.*))?");
-  if (key.at(0) == '!') {
-    if (key.startsWith("!date")) {
-      return TimeFormats::toExclamationMarkCustomTimestamp(
+  if (key.at(0) == '=') {
+    if (key.startsWith("=date")) {
+      return TimeFormats::toMultifieldSpecifiedCustomTimestamp(
             QDateTime::currentDateTime(), key.mid(5));
-    } else if (key.startsWith("!default")) {
-      QRegularExpressionMatch match = defaultFunctionRE.match(key, 8);
-      //qDebug() << "!default:" << key << key.mid(8) << match.hasMatch() << match.captured(1);
-      if (match.hasMatch()) {
-        QString variable = match.captured(1);
-        QString valueIfNotSet = match.captured(2);
+    } else if (key.startsWith("=default")) {
+      CharacterSeparatedExpression params(key, 8);
+      if (params.size() >= 1) {
+        QString variable = params.value(0);
+        QString valueIfNotSet = params.value(1);
         QString value;
         if (!appendVariableValue(&value, variable, inherit, context,
                                  alreadyEvaluated, false)) {
           value = evaluate(valueIfNotSet, inherit, context, alreadyEvaluated);
-          //qDebug() << "!default:" << key << valueIfNotSet << value;
+          //qDebug() << "%=default:" << key << valueIfNotSet << value;
         }
         return value;
       } else {
-        //qDebug() << "%!default function invalid syntax:" << key;
+        //qDebug() << "%=default function invalid syntax:" << key;
       }
+    } else if (key.startsWith("=sub")) {
+      CharacterSeparatedExpression params(key, 4);
+      //qDebug() << "%=sub:" << key << params.size() << params;
+      QString value = evaluate(params.value(0), inherit, context,
+                               alreadyEvaluated);
+      for (int i = 1; i < params.size(); ++i) {
+        CharacterSeparatedExpression sFields(params[i]);
+        //qDebug() << "pattern" << i << params[i] << sFields.size() << sFields;
+        QString optionsString = sFields.value(2);
+        QRegularExpression::PatternOption patternOptions
+            = QRegularExpression::NoPatternOption;
+        if (optionsString.contains('i'))
+          patternOptions = QRegularExpression::CaseInsensitiveOption;
+        QRegularExpression re(sFields.value(0), patternOptions);
+        if (!re.isValid()) {
+          qDebug() << "%=sub with invalid regular expression: "
+                   << sFields.value(0);
+          continue;
+        }
+        bool repeat = optionsString.contains('g');
+        int offset = 0;
+        QString transformed;
+        do {
+          QRegularExpressionMatch match = re.match(value, offset);
+          if (match.hasMatch()) {
+            //qDebug() << "match:" << match.captured()
+            //         << value.mid(offset, match.capturedStart()-offset);
+            // append text between previous match and start of this match
+            transformed += value.mid(offset, match.capturedStart()-offset);
+            // replace current match with (evaluated) replacement string
+            RegularExpressionMatchParamsProvider repp(match);
+            ParamsProviderList reContext = ParamsProviderList(&repp)(context);
+            transformed += evaluate(sFields.value(1), inherit, &reContext,
+                                    alreadyEvaluated);
+            // skip current match for next iteration
+            offset = match.capturedEnd();
+          } else {
+            //qDebug() << "no more match:" << value.mid(offset);
+            // append text between previous match and end of value
+            transformed += value.mid(offset);
+            // stop matching
+            repeat = false;
+          }
+          //qDebug() << "transformed:" << transformed;
+        } while(repeat);
+        value = transformed;
+      }
+      //qDebug() << "value:" << value;
+      return value;
     }
   }
   return QString();
@@ -180,20 +229,34 @@ QStringList ParamSet::splitAndEvaluate(
       QSet<QString> nowEvaluated = alreadyEvaluated;
       c = rawValue.at(i++);
       if (c == '{') {
+        // '{' and '}' are used as variable name delimiters, the way a Unix
+        // shell use them along with $
+        // e.g. "%{name.with#strange|characters}"
+        int depth = 1;
         while (i < rawValue.size()) {
           c = rawValue.at(i++);
-          if (c == '}')
+          // LATER provide a way to escape { and }
+          if (c == '{')
+            ++depth;
+          else if (c == '}')
+            --depth;
+          if (depth == 0)
             break;
-          else
-            variable.append(c);
+          variable.append(c);
         }
         appendVariableValue(&value, variable, inherit, context,
                             alreadyEvaluated, true);
         nowEvaluated.insert(variable);
         value = evaluate(value, inherit, context, nowEvaluated);
         variable.clear();
-      } else if (c == '!' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-                 || c == '_') {
+      } else if (c == '%') {
+        // % is used as an escape character for itself
+        value.append(c);
+      } else {
+        // any other character, e.g. '=', is interpreted as the first
+        // character of a variable name that will continue with letters
+        // digits and underscores
+        // e.g. "=date" in "=date-foo"
         variable.append(c);
         while (i < rawValue.size()) {
           c = rawValue.at(i++);
@@ -210,9 +273,6 @@ QStringList ParamSet::splitAndEvaluate(
         nowEvaluated.insert(variable);
         value = evaluate(value, inherit, context, nowEvaluated);
         variable.clear();
-      } else {
-        // % is used as an escape character, for '%', a separator or anything
-        value.append(c);
       }
     } else if (separator.contains(c)) {
       if (!value.isEmpty())
@@ -247,6 +307,7 @@ QString ParamSet::matchingPattern(QString rawValue) {
     if (c == '%') {
       variable.clear();
       c = rawValue.at(i++);
+      // FIXME support for { imbrication
       if (c == '{') {
         while (i < rawValue.size()) {
           c = rawValue.at(i++);
@@ -255,7 +316,6 @@ QString ParamSet::matchingPattern(QString rawValue) {
           else
             variable.append(c);
         }
-        // LATER handle ! variables in a specific manner, e.g. !yyyy -> ????
         value.append("*");
       } else if (c == '!' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
                  || c == '_') {
@@ -270,7 +330,6 @@ QString ParamSet::matchingPattern(QString rawValue) {
             break;
           }
         }
-        // LATER handle ! variables in a specific manner, e.g. !yyyy -> ????
         value.append("*");
       } else {
         value.append(specialChars.contains(c) ? '?' : c);
