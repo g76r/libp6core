@@ -83,6 +83,39 @@ class ParamSetData;
  * %{=sub!foo!/o/O}
  * %{=sub;%foo;/a/b/g;/([a-z]+)[0-9]/%1%bar/g}"
  * %{=sub;2015-04-17;~.*-(?<month>[0-9]+)-.*~%month}
+ *
+ * %=left function: %{=left:input:length}
+ *
+ * input is the data to transform, it is evaluated (%foo become the content of
+ *   foo param)
+ * length is the number of character to keep from the input, if negative or
+ *   invalid, the whole input is kept
+ *
+ * examples:
+ * %{=left:%foo:4}
+ *
+ * %=right function: %{=right:input:length}
+ *
+ * input is the data to transform, it is evaluated (%foo become the content of
+ *   foo param)
+ * length is the number of character to keep from the input, if negative or
+ *   invalid, the whole input is kept
+ *
+ * examples:
+ * %{=right:%foo:4}
+ *
+ * %=mid function: %{=mid:input:position[:length]}
+ *
+ * input is the data to transform, it is evaluated (%foo become the content of
+ *   foo param)
+ * position is the starting offset, 0 is first character, negatives values mean
+ *   0, values larger than the input size will produce an empty output
+ * length is the number of character to keep from the input, if negative or
+ *   invalid, or omitted, the whole input is kept
+ *
+ * examples:
+ * %{=mid:%foo:4:5}
+ * %{=mid:%foo:4}
  */
 class LIBQTSSUSHARED_EXPORT ParamSet : public ParamsProvider {
   QSharedDataPointer<ParamSetData> d;

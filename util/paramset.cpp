@@ -172,6 +172,31 @@ QString ParamSet::evaluateImplicitVariable(
       }
       //qDebug() << "value:" << value;
       return value;
+    } else if (key.startsWith("=left")) {
+      CharacterSeparatedExpression params(key, 5);
+      QString value = evaluate(params.value(0), inherit, context,
+                               alreadyEvaluated);
+      bool ok;
+      int i = params.value(1).toInt(&ok);
+      return ok ? value.left(i) : QString();
+    } else if (key.startsWith("=right")) {
+      CharacterSeparatedExpression params(key, 6);
+      QString value = evaluate(params.value(0), inherit, context,
+                               alreadyEvaluated);
+      bool ok;
+      int i = params.value(1).toInt(&ok);
+      return ok ? value.right(i) : QString();
+    } else if (key.startsWith("=mid")) {
+      CharacterSeparatedExpression params(key, 4);
+      QString value = evaluate(params.value(0), inherit, context,
+                               alreadyEvaluated);
+      bool ok;
+      int i = params.value(1).toInt(&ok);
+      if (ok) {
+        int j = params.value(2).toInt(&ok);
+        return value.mid(i, ok ? j : -1);
+      }
+      return QString();
     }
   }
   return QString();
