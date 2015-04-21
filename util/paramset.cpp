@@ -124,6 +124,22 @@ QString ParamSet::evaluateImplicitVariable(
       } else {
         //qDebug() << "%=default function invalid syntax:" << key;
       }
+    } else if (key.startsWith("=ifempty")) {
+      CharacterSeparatedExpression params(key, 8);
+      if (params.size() >= 1) {
+        QString value;
+        if (appendVariableValue(&value, params.value(0), inherit, context,
+                                 alreadyEvaluated, false)) {
+          if (params.size() >= 3)
+            value = evaluate(params.value(2), inherit, context,
+                             alreadyEvaluated);
+        } else {
+          value = evaluate(params.value(1), inherit, context, alreadyEvaluated);
+        }
+        return value;
+      } else {
+        //qDebug() << "%=default function invalid syntax:" << key;
+      }
     } else if (key.startsWith("=sub")) {
       CharacterSeparatedExpression params(key, 4);
       //qDebug() << "%=sub:" << key << params.size() << params;

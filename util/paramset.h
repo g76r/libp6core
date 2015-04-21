@@ -35,7 +35,7 @@ class ParamSetData;
  * It also supports functions in the form or special variable names starting
  * with an equal sign:
  *
- * %=date function: %{!date!format!relativedatetime!timezone}
+ * %=date function: %{=date!format!relativedatetime!timezone}
  *
  * format defaults to pseudo-iso-8601 "yyyy-MM-dd hh:mm:ss,zzz"
  * relativedatetime defaults to current date time
@@ -51,13 +51,14 @@ class ParamSetData;
  * %{=date,,,UTC}
  * %{=date!hh:mm:ss,zzz!01-01T20:02-2w+1d!GMT}
  *
- * %=default function: %{!default!variable!value_if_not_set}
+ * %=default function: %{=default!variable!value_if_not_set}
  *
+ * the function works like %{variable:-value_if_not_set} in shell scripts and
+ * almost like nvl/ifnull functions in sql
  * value_if_not_set defaults to an empty string (the whole expression
  * being equivalent to %variable apart of the absence of warning due to
- * undefined variable evaluation)
- * it works like %{variable:-value_if_not_set} in shell scripts and almost
- * like nvl/ifnull functions in sql
+ * undefined variable evaluation), it is evaluated hence %foo is replaced by
+ * foo's value
  *
  * examples:
  * %{=default!foo!null}
@@ -66,7 +67,20 @@ class ParamSetData;
  * %{=default!foo!%bar}
  * %{=default!foo}
  *
- * %=sub function: %{!sub!input!s-expression!...}
+ * %=ifempty function: %{=ifempty!variable!value_if_empty[!value_if_not_empty]}
+ *
+ * the function is a combination of %{variable:-value_if_empty} and
+ * %{variable:+value_if_not_empty} in shell scripts
+ * value_if_empty defaults to an empty string, it is evaluated hence %foo is
+ * replaced by foo's value
+ * value_if_not_empty defaults to the variable value, it is evaluated hence
+ * %foo is replaced by foo's value
+ *
+ * examples:
+ * %{=ifempty:foo:foo is empty}
+ * %{=ifempty:foo::<a href="bar?p=%foo">%foo</a>}
+ *
+ * %=sub function: %{=sub!input!s-expression!...}
  *
  * input is the data to transform, it is evaluated (%foo become the content of
  *   foo param)
