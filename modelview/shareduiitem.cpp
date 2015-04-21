@@ -63,3 +63,16 @@ QDebug operator<<(QDebug dbg, const SharedUiItem &i) {
   dbg.nospace() << i.qualifiedId();
   return dbg.space();
 }
+
+QVariant SharedUiItemParamsProvider::paramValue(
+    QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
+  Q_UNUSED(alreadyEvaluated)
+  bool ok;
+  int section = key.toInt(&ok);
+  if (ok) {
+    QVariant value = _item.uiData(section, _role);
+    if (value.isValid())
+      return value;
+  }
+  return defaultValue;
+}

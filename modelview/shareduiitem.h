@@ -14,7 +14,7 @@
 #ifndef SHAREDUIITEM_H
 #define SHAREDUIITEM_H
 
-#include "libqtssu_global.h"
+#include "util/paramsprovider.h"
 #include <QVariant>
 #include <QString>
 #include <QSharedData>
@@ -22,6 +22,7 @@
 
 class QDebug;
 class SharedUiItemDocumentManager;
+class SharedUiItemParamsProvider;
 
 /** Parent class for SharedUiItem implementation data classes.
  *
@@ -278,9 +279,32 @@ protected:
   bool setUiData(int section, const QVariant &value, QString *errorString = 0,
                  int role = Qt::EditRole,
                  const SharedUiItemDocumentManager *dm = 0);
+  /** Make uiData() available through ParamsProvider interface.
+   * @see SharedUiItemParamsProvider */
+  inline SharedUiItemParamsProvider toParamsProvider() const;
 };
 
+/** ParamsProvider wrapper for SharedUiItem.
+ * Its paramValue() implementation returns uiData(key.toInt()).
+ */
+class LIBQTSSUSHARED_EXPORT SharedUiItemParamsProvider : public ParamsProvider {
+  SharedUiItem _item;
+  int _role;
+
+public:
+  inline SharedUiItemParamsProvider(
+      SharedUiItem item, int role = Qt::DisplayRole)
+    : _item(item), _role(role) { }
+  QVariant paramValue(QString key, QVariant defaultValue = QVariant(),
+                      QSet<QString> alreadyEvaluated = QSet<QString>()) const;
+};
+
+inline SharedUiItemParamsProvider SharedUiItem::toParamsProvider() const {
+  return SharedUiItemParamsProvider(*this);
+}
+
 inline uint qHash(const SharedUiItem &i) { return qHash(i.id()); }
+
 QDebug LIBQTSSUSHARED_EXPORT operator<<(QDebug dbg, const SharedUiItem &i);
 
 #endif // SHAREDUIITEM_H
