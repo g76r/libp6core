@@ -92,7 +92,8 @@ SOURCES += \
     modelview/shareduiitemdocumentmanager.cpp \
     modelview/shareduiitemlist.cpp \
     util/characterseparatedexpression.cpp \
-    util/regularexpressionmatchparamsprovider.cpp
+    util/regularexpressionmatchparamsprovider.cpp \
+    util/paramsproviderlist.cpp
 
 
 HEADERS +=\
@@ -165,7 +166,8 @@ HEADERS +=\
     modelview/shareduiitemdocumentmanager.h \
     modelview/shareduiitemlist.h \
     util/characterseparatedexpression.h \
-    util/regularexpressionmatchparamsprovider.h
+    util/regularexpressionmatchparamsprovider.h \
+    util/paramsproviderlist.h
 
 unix {
     target.path = /usr/lib

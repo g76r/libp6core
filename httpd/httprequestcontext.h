@@ -30,7 +30,7 @@ class LIBQTSSUSHARED_EXPORT HttpRequestContext : public ParamsProvider {
 public:
   HttpRequestContext();
   HttpRequestContext(const HttpRequestContext &other);
-  explicit HttpRequestContext(QString scope);
+  //explicit HttpRequestContext(QString scope);
   explicit HttpRequestContext(ParamsProvider *params);
   ~HttpRequestContext();
   HttpRequestContext &operator=(const HttpRequestContext &other);
@@ -52,8 +52,11 @@ public:
     return overrideParamValue(key, QString(value)); }
   HttpRequestContext &appendParamsProvider(ParamsProvider *params);
   HttpRequestContext &prependParamsProvider(ParamsProvider *params);
-  QString scope() const;
-  HttpRequestContext &setScope(QString scope);
+  /** Convenience operator for appendParamsProvider() */
+  HttpRequestContext &operator()(ParamsProvider *params) {
+      return appendParamsProvider(params); }
+  /*QString scope() const;
+  HttpRequestContext &setScope(QString scope);*/
 };
 
 #endif // HTTPREQUESTCONTEXT_H

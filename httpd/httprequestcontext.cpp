@@ -13,15 +13,17 @@
  */
 #include "httprequestcontext.h"
 #include "util/paramset.h"
+#include "util/paramsproviderlist.h"
 
 class HttpRequestContextData : public QSharedData {
   Q_DISABLE_COPY(HttpRequestContextData)
+
 public:
-  QString _scope;
+  //QString _scope;
   ParamSet _localParams;
-  QList<ParamsProvider*> _params;
+  ParamsProviderList _params;
   HttpRequestContextData() { }
-  HttpRequestContextData(QString scope) : _scope(scope) { }
+  //HttpRequestContextData(QString scope) : _scope(scope) { }
   HttpRequestContextData(ParamsProvider *params) { _params.append(params); }
 };
 
@@ -32,9 +34,9 @@ HttpRequestContext::HttpRequestContext(const HttpRequestContext &other)
   : d(other.d) {
 }
 
-HttpRequestContext::HttpRequestContext(QString scope)
+/*HttpRequestContext::HttpRequestContext(QString scope)
   : d(new HttpRequestContextData(scope)) {
-}
+}*/
 
 HttpRequestContext::HttpRequestContext(ParamsProvider *params)
   : d(new HttpRequestContextData(params)) {
@@ -52,16 +54,11 @@ HttpRequestContext &HttpRequestContext::operator=(
 
 QVariant HttpRequestContext::paramValue(
     QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
-  QString s = d->_localParams.rawValue(key);
-  if (!s.isNull())
-    return s;
-  foreach (ParamsProvider *params, d->_params)
-    if (params) {
-      QVariant v = params->paramValue(key, QVariant(), alreadyEvaluated);
-      if (v.isValid())
-        return v;
-    }
-  return defaultValue;
+  Q_UNUSED(alreadyEvaluated)
+  QVariant v = d->_localParams.paramValue(key, QVariant(), alreadyEvaluated);
+  if (v.isNull())
+    v = d->_params.paramValue(key, defaultValue, alreadyEvaluated);
+  return v;
 }
 
 HttpRequestContext &HttpRequestContext::overrideParamValue(QString key,
@@ -82,11 +79,11 @@ HttpRequestContext &HttpRequestContext::prependParamsProvider(
   return *this;
 }
 
-QString HttpRequestContext::scope() const {
+/*QString HttpRequestContext::scope() const {
   return d->_scope;
 }
 
 HttpRequestContext &HttpRequestContext::setScope(QString scope) {
   d->_scope = scope;
   return *this;
-}
+}*/

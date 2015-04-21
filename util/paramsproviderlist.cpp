@@ -11,7 +11,16 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "paramsprovider.h"
+#include "paramsproviderlist.h"
 
-ParamsProvider::~ParamsProvider() {
+QVariant ParamsProviderList::paramValue(
+    QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
+  foreach (const ParamsProvider *provider, _list) {
+    if (provider) {
+      QVariant v = provider->paramValue(key, QVariant(), alreadyEvaluated);
+      if (!v.isNull())
+        return v;
+    }
+  }
+  return defaultValue;
 }

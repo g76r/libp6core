@@ -30,43 +30,4 @@ public:
       QSet<QString> alreadyEvaluated = QSet<QString>()) const = 0;
 };
 
-/** This class builds up several ParamsProvider into only one, chaining
- * calls to paramValue() */
-class LIBQTSSUSHARED_EXPORT ParamsProviderList : public ParamsProvider {
-  QList<const ParamsProvider*> _list;
-
-public:
-  ParamsProviderList() { }
-  ParamsProviderList(const ParamsProviderList &other)
-    : ParamsProvider(), _list(other._list) { }
-  ParamsProviderList(const ParamsProvider *provider) {
-    append(provider); }
-  ParamsProviderList &append(const ParamsProvider *provider) {
-    if (provider)
-      _list.append(provider);
-    return *this; }
-  ParamsProviderList &append(const ParamsProviderList *providerList) {
-    if (providerList)
-      _list.append(providerList->_list);
-    return *this; }
-  ParamsProviderList &append(const ParamsProviderList &providerList) {
-    _list.append(providerList._list);
-    return *this; }
-  ParamsProviderList &prepend(const ParamsProvider *provider) {
-    if (provider)
-      _list.prepend(provider);
-    return *this; }
-  ParamsProviderList &clear() {
-    _list.clear();
-    return *this; }
-  operator QList<const ParamsProvider*>() const { return _list; }
-  /** Convenience operator for append() */
-  ParamsProviderList &operator()(const ParamsProvider *provider) {
-    if (provider)
-      _list.append(provider);
-    return *this; }
-  QVariant paramValue(QString key, QVariant defaultValue = QVariant(),
-                      QSet<QString> alreadyEvaluated = QSet<QString>()) const;
-};
-
 #endif // PARAMSPROVIDER_H

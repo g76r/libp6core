@@ -20,6 +20,7 @@
 #include "timeformats.h"
 #include "characterseparatedexpression.h"
 #include "regularexpressionmatchparamsprovider.h"
+#include "paramsproviderlist.h"
 
 class ParamSetData : public QSharedData {
 public:
