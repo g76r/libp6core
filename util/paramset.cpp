@@ -102,6 +102,7 @@ QString ParamSet::evaluate(
   return values.first();
 }
 
+// LATER add functions: %=htmlencode
 QString ParamSet::evaluateImplicitVariable(
     QString key, bool inherit, const ParamsProvider *context,
     QSet<QString> alreadyEvaluated) const {
