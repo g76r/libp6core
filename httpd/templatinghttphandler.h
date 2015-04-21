@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,6 +18,8 @@
 #include "textview/textview.h"
 #include <QPointer>
 
+// LATER try to factorize code with HtmlItemDelegate
+// TODO document other markups than value and view
 /** HttpHandler which serves filesystem or Qt resources files parsing some of
  * them for special markups such as <?value:foo?> or <?view:bar?> to replace
  * these markups with dynamic content.
@@ -28,8 +30,17 @@ class LIBQTSSUSHARED_EXPORT TemplatingHttpHandler
     : public FilesystemHttpHandler {
   Q_OBJECT
   Q_DISABLE_COPY(TemplatingHttpHandler)
+
+public:
+  enum TextConversion { AsIs, HtmlEscaping, HtmlEscapingWithUrlAsLinks };
+
+private:
   QHash<QString,QPointer<TextView> > _views;
   QSet<QString> _filters;
+  TextConversion _textConversion;
+  static TextConversion _defaultTextConversion;
+  int _maxValueLength;
+  static int _defaultMaxValueLength;
 
 public:
   explicit TemplatingHttpHandler(QObject *parent = 0,
@@ -42,12 +53,25 @@ public:
   TemplatingHttpHandler *addFilter(QString regexp) {
     _filters.insert(regexp);
     return this; }
+  void setTextConversion(TemplatingHttpHandler::TextConversion textConversion) {
+    _textConversion = textConversion; }
+  static void setDefaultTextConversion(
+      TemplatingHttpHandler::TextConversion defaultTextConversion) {
+    _defaultTextConversion = defaultTextConversion; }
+  /** Maximum length of text inside a cell, measured before HTML encoding if
+   * any. Default: 200. */
+  void setMaxValuetLength(int length = 200) { _maxValueLength = length; }
+  /** Maximum length of text inside a cell, measured before HTML encoding if
+   * any. Default: 200. */
+  static void setDefaultMaxValueLength(int length = 200) {
+    _defaultMaxValueLength = length; }
 
 protected:
   void sendLocalResource(HttpRequest req, HttpResponse res, QFile *file,
                          HttpRequestContext ctxt);
   void applyTemplateFile(HttpRequest req, HttpResponse res, QFile *file,
                            HttpRequestContext ctxt, QString *output);
+  void convertData(QString *data, bool disableTextConversion) const;
 };
 
 #endif // TEMPLATINGHTTPHANDLER_H

@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,10 +19,18 @@
 #include "util/ioutils.h"
 #include "log/log.h"
 #include <QtDebug>
+#include "util/characterseparatedexpression.h"
+#include <QRegularExpression>
+#include "util/htmlutils.h"
+
+int TemplatingHttpHandler::_defaultMaxValueLength(200);
+TemplatingHttpHandler::TextConversion
+TemplatingHttpHandler::_defaultTextConversion(HtmlEscapingWithUrlAsLinks);
 
 TemplatingHttpHandler::TemplatingHttpHandler(
     QObject *parent, QString urlPathPrefix, QString documentRoot)
-  : FilesystemHttpHandler(parent, urlPathPrefix, documentRoot) {
+  : FilesystemHttpHandler(parent, urlPathPrefix, documentRoot),
+    _textConversion(_defaultTextConversion) {
 }
 
 void TemplatingHttpHandler::sendLocalResource(
@@ -52,66 +60,84 @@ void TemplatingHttpHandler::sendLocalResource(
 void TemplatingHttpHandler::applyTemplateFile(
     HttpRequest req, HttpResponse res, QFile *file, HttpRequestContext ctxt,
     QString *output) {
+  static QRegularExpression templateMarkupIdentifierEndRE("[^a-z]");
+  static QRegularExpression directorySeparatorRE("[/:]");
   QBuffer buf;
   buf.open(QIODevice::WriteOnly);
   IOUtils::copy(&buf, file);
   buf.close();
   QString input = QString::fromUtf8(buf.data());
-  int pos = 0, markup;
-  while ((markup = input.indexOf("<?", pos)) >= 0) {
-    output->append(input.mid(pos, markup-pos));
-    pos = markup+2;
-    markup = input.indexOf("?>", pos);
-    QString label = input.mid(pos, markup-pos).trimmed();
-    int colon = label.indexOf(":");
-    if (colon < 0) {
+  int pos = 0, markupPos;
+  while ((markupPos = input.indexOf("<?", pos)) >= 0) {
+    output->append(input.mid(pos, markupPos-pos));
+    pos = markupPos+2;
+    markupPos = input.indexOf("?>", pos);
+    QString markupContent = input.mid(pos, markupPos-pos).trimmed();
+    int separatorPos = markupContent.indexOf(templateMarkupIdentifierEndRE);
+    if (separatorPos < 0) {
       Log::warning() << "TemplatingHttpHandler found incorrect markup '"
-                     << label << "'";
+                     << markupContent << "'";
       output->append("?");
     } else {
-      QString data = label.mid(colon+1);
-      label = label.left(colon);
-      if (label == "view") {
-        QPointer<TextView> view = _views.value(data);
+      QString markupId = markupContent.left(separatorPos);
+      if (markupContent.at(0) == '=') {
+        // syntax: <?=paramset_evaluable_expression?>
+        output->append(ParamSet().evaluate(markupContent.mid(1), &ctxt));
+      } else if (markupId == "view") {
+        // syntax: <?view:viewname?>
+        QString markupData = markupContent.mid(separatorPos+1);
+        QPointer<TextView> view = _views.value(markupData);
         if (view)
           output->append(view.data()->text(&ctxt, req.url().toString()));
         else {
           Log::warning() << "TemplatingHttpHandler did not find view '"
-                         << data << "' among " << _views.keys();
+                         << markupData << "' among " << _views.keys();
           output->append("?");
         }
-      } else if (label == "value") {
-        QString value = ctxt.paramValue(data).toString();
-        if (!value.isNull())
-          output->append(value);
-        else {
-          Log::warning() << "TemplatingHttpHandler did not find value: '"
-                         << data << "' in context 0x"
+      } else if (markupId == "value" || markupId == "rawvalue") {
+        // syntax: <?[raw]value:variablename[:valueifnotdef[:valueifdef]]?>
+        // value is htmlencoded provided textConversion != AsIs
+        // rawvalue is not htmlencoded regardless textConversion setting
+        CharacterSeparatedExpression markupParams(markupContent, separatorPos);
+        QString value = ctxt.paramValue(markupParams.value(0)).toString();
+        if (!value.isNull()) {
+          value = markupParams.value(2, value);
+        } else {
+          if (markupParams.size() < 2) {
+            Log::debug() << "TemplatingHttpHandler did not find value: '"
+                         << markupParams.value(0) << "' in context 0x"
                          << QString::number((long long)&ctxt, 16);
-          output->append("?");
+            value = "?";
+          } else {
+            value = markupParams.value(1);
+          }
         }
-      } else if (label == "include") {
+        convertData(&value, markupId == "rawvalue");
+        output->append(value);
+      } else if (markupId == "include") {
+        // syntax: <?include:path_relative_to_current_file_dir?>
+        QString markupData = markupContent.mid(separatorPos+1);
         QString includePath = file->fileName();
-        QRegularExpression dirSep("[/:]");
-        includePath = includePath.left(includePath.lastIndexOf(dirSep));
-        QFile included(includePath+"/"+data);
+        includePath =
+            includePath.left(includePath.lastIndexOf(directorySeparatorRE));
+        QFile included(includePath+"/"+markupData);
         if (included.open(QIODevice::ReadOnly)) {
           applyTemplateFile(req, res, &included, ctxt, output);
         } else {
           Log::warning() << "TemplatingHttpHandler couldn't include file: '"
-                         << data << "' as '" << included.fileName()
+                         << markupData << "' as '" << included.fileName()
                          << "' in context 0x"
                          << QString::number((long long)&ctxt, 16)
                          << " : " << included.errorString();
           output->append("?");
         }
       } else {
-        Log::warning() << "TemplatingHttpHandler found incorrect markup: <?"
-                       << label << ":" << data << "?>";
+        Log::warning() << "TemplatingHttpHandler found unsupported markup: <?"
+                       << markupContent << "?>";
         output->append("?");
       }
     }
-    pos = markup+2;
+    pos = markupPos+2;
   }
   output->append(input.right(input.size()-pos));
   return;
@@ -125,4 +151,26 @@ TemplatingHttpHandler *TemplatingHttpHandler::addView(TextView *view) {
   else
     _views.insert(label, QPointer<TextView>(view));
   return this;
+}
+
+void TemplatingHttpHandler::convertData(
+    QString *data, bool disableTextConversion) const {
+  if (!data)
+    return;
+  if (_maxValueLength > 0 && data->size() > _maxValueLength) {
+    *data = data->left(_maxValueLength/2-1) + "..."
+        + data->right(_maxValueLength/2-2);
+  }
+  if (disableTextConversion)
+    return;
+  switch (_textConversion) {
+  case HtmlEscaping:
+    *data = HtmlUtils::htmlEncode(*data, false, false);
+    break;
+  case HtmlEscapingWithUrlAsLinks:
+    *data = HtmlUtils::htmlEncode(*data, true, true);
+    break;
+  case AsIs:
+    ;
+  }
 }

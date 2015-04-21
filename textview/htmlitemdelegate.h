@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,6 +16,7 @@
 
 #include "textviewitemdelegate.h"
 
+// LATER try to factorize code with TemplatingHttpHandler
 class LIBQTSSUSHARED_EXPORT HtmlItemDelegate : public TextViewItemDelegate {
   Q_OBJECT
   Q_DISABLE_COPY(HtmlItemDelegate)
@@ -156,7 +157,7 @@ public:
   static void setDefaultMaxCellContentLength(int length);
 
 private:
-  inline void convertData(QString &data) const;
+  inline void convertData(QString *data) const;
   inline QString dataAffix(const TextMapper &m, const QModelIndex &index) const;
   inline QString rowHeaderAffix(
       const TextMapper &m, const QAbstractItemModel* model, int row) const;
