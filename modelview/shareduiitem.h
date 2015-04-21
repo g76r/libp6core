@@ -182,7 +182,8 @@ public:
   enum SharedUiItemRole {
     IdRole = Qt::UserRole+784,
     IdQualifierRole,
-    QualifiedIdRole
+    QualifiedIdRole,
+    HeaderDisplayRole
   };
 
   SharedUiItem() { }
@@ -226,9 +227,12 @@ public:
    * columns by a Model and displayed aas columns by a View). */
   int uiSectionCount() const { return _data ? _data->uiSectionCount() : 0; }
   /** Return UI data, like QAbstractItemModel::data().
-   * Using IdRole, IdQualifierRole and QualifiedIdRole make query to
-   * SharedUiItemData::id() and/or SharedUiItemData::idQualifier() instead
-   * of SharedUiItem::uiData(), regardless the section. */
+   * Using IdRole, IdQualifierRole and QualifiedIdRole query
+   * SharedUiItemData::id() and/or SharedUiItemData::idQualifier() instead of
+   * SharedUiItem::uiData(), regardless the section.
+   * Using HeaderDisplayRole query
+   * SharedUiItemData::uiHeaderData(section, Qt::DisplayRole) instead of
+   * SharedUiItem::uiData(). */
   QVariant uiData(int section, int role = Qt::DisplayRole) const {
     if (_data) {
       switch (role) {
@@ -240,6 +244,8 @@ public:
         QString qualifier = _data->idQualifier();
         return qualifier.isEmpty() ? _data->id() : qualifier+":"+_data->id();
       }
+      case HeaderDisplayRole:
+        return _data->uiHeaderData(section, Qt::DisplayRole);
       default:
         return _data->uiData(section, role);
       }
