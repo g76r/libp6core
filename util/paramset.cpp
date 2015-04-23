@@ -102,7 +102,7 @@ QString ParamSet::evaluate(
   return values.first();
 }
 
-// LATER add functions: %=htmlencode
+// LATER add functions: %=htmlencode %=ifgt %=ifgte %=iflt %=iflte
 QString ParamSet::evaluateImplicitVariable(
     QString key, bool inherit, const ParamsProvider *context,
     QSet<QString> alreadyEvaluated) const {
@@ -125,21 +125,39 @@ QString ParamSet::evaluateImplicitVariable(
       } else {
         //qDebug() << "%=default function invalid syntax:" << key;
       }
-    } else if (key.startsWith("=ifempty")) {
-      CharacterSeparatedExpression params(key, 8);
-      if (params.size() >= 1) {
-        QString value;
-        if (appendVariableValue(&value, params.value(0), inherit, context,
-                                 alreadyEvaluated, false)) {
-          if (params.size() >= 3)
-            value = evaluate(params.value(2), inherit, context,
-                             alreadyEvaluated);
+    } else if (key.startsWith("=ifeq")) {
+      CharacterSeparatedExpression params(key, 5);
+      if (params.size() >= 3) {
+        QString input = evaluate(params.value(0), inherit, context,
+                                 alreadyEvaluated);
+        QString ref = evaluate(params.value(1), inherit, context,
+                               alreadyEvaluated);
+        if (input == ref) {
+          return evaluate(params.value(2), inherit, context, alreadyEvaluated);
         } else {
-          value = evaluate(params.value(1), inherit, context, alreadyEvaluated);
+          return params.size() >= 4
+              ? evaluate(params.value(3), inherit, context, alreadyEvaluated)
+              : input;
         }
-        return value;
       } else {
-        //qDebug() << "%=default function invalid syntax:" << key;
+        //qDebug() << "%=ifeq function invalid syntax:" << key;
+      }
+    } else if (key.startsWith("=ifneq")) {
+      CharacterSeparatedExpression params(key, 6);
+      if (params.size() >= 3) {
+        QString input = evaluate(params.value(0), inherit, context,
+                                 alreadyEvaluated);
+        QString ref = evaluate(params.value(1), inherit, context,
+                               alreadyEvaluated);
+        if (input != ref) {
+          return evaluate(params.value(2), inherit, context, alreadyEvaluated);
+        } else {
+          return params.size() >= 4
+              ? evaluate(params.value(3), inherit, context, alreadyEvaluated)
+              : input;
+        }
+      } else {
+        //qDebug() << "%=ifneq function invalid syntax:" << key;
       }
     } else if (key.startsWith("=sub")) {
       CharacterSeparatedExpression params(key, 4);

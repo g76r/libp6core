@@ -56,9 +56,9 @@ class ParamSetData;
  * the function works like %{variable:-value_if_not_set} in shell scripts and
  * almost like nvl/ifnull functions in sql
  * value_if_not_set defaults to an empty string (the whole expression
- * being equivalent to %variable apart of the absence of warning due to
- * undefined variable evaluation), it is evaluated hence %foo is replaced by
- * foo's value
+ *   being equivalent to %variable apart of the absence of warning due to
+ *   undefined variable evaluation), it is evaluated hence %foo is replaced by
+ *   foo's value
  *
  * examples:
  * %{=default!foo!null}
@@ -67,18 +67,19 @@ class ParamSetData;
  * %{=default!foo!%bar}
  * %{=default!foo}
  *
- * %=ifempty function: %{=ifempty!variable!value_if_empty[!value_if_not_empty]}
+ * %=ifeq function: %{=ifeq!input!reference!value_if_equal[!value_else]}
+ * %=ifneq function: %{=ifneq!input!reference!value_if_not_equal[!value_else]}
  *
- * the function is a combination of %{variable:-value_if_empty} and
- * %{variable:+value_if_not_empty} in shell scripts
- * value_if_empty defaults to an empty string, it is evaluated hence %foo is
- * replaced by foo's value
- * value_if_not_empty defaults to the variable value, it is evaluated hence
- * %foo is replaced by foo's value
+ * the functions test (in)equality of an input and replace it with another
+ * depending on the result of the test
+ * all parameters are evaluated, hence %foo is replaced by foo's value
  *
  * examples:
- * %{=ifempty:foo:foo is empty}
- * %{=ifempty:foo::<a href="bar?p=%foo">%foo</a>}
+ * %{=ifeq:%foo:0:} -> if %foo is 0, empty string, else %foo
+ * %{=ifeq:%foo:0::%foo} -> same
+ * %{=ifeq:%foo::empty} -> if %foo is empty, "empty", else %foo
+ * %{=ifeq:%foo::empty:%foo} -> same
+ * %{=ifneq:%foo::<a href="page?param=%foo>%foo</a>} -> html link if %foo is set
  *
  * %=sub function: %{=sub!input!s-expression!...}
  *
