@@ -19,8 +19,8 @@ bool PipelineHttpHandler::acceptRequest(HttpRequest req) {
       || req.url().path().startsWith(_urlPathPrefix);
 }
 
-bool PipelineHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
-                                        HttpRequestContext ctxt) {
+bool PipelineHttpHandler::handleRequest(
+    HttpRequest req, HttpResponse res, ParamsProviderMerger *processingContext) {
   if (_handlers.isEmpty()) {
     res.setStatus(404);
     res.output()->write("Error 404 - Not found");
@@ -33,7 +33,7 @@ bool PipelineHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
       Log::error() << "PipelineHttpHandler containing a null handler";
       return false;
     }
-    if (!handler->handleRequest(req, res, ctxt))
+    if (!handler->handleRequest(req, res, processingContext))
       return false;
   }
   return true;

@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -26,9 +26,9 @@ bool ImageHttpHandler::acceptRequest(HttpRequest req) {
 }
 
 bool ImageHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
-                                     HttpRequestContext ctxt) {
+                                     ParamsProviderMerger *processingContext) {
   Q_UNUSED(req)
-  Q_UNUSED(ctxt)
+  Q_UNUSED(processingContext)
   // TODO handle HTTP/304
   // LATER content type and content should be retrieve at once atomicaly
   // LATER pass params from request

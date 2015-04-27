@@ -45,8 +45,8 @@ bool UploadHttpHandler::acceptRequest(HttpRequest req) {
           || req.method() == HttpRequest::PUT);
 }
 
-bool UploadHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
-                                      HttpRequestContext ctxt) {
+bool UploadHttpHandler::handleRequest(
+    HttpRequest req, HttpResponse res, ParamsProviderMerger *processingContext) {
   _maxSimultaneousUploads.acquire(1);
   if (req.header("Content-Length").toULongLong() > _maxBytesPerUpload) {
     Log::warning() << "data too large when uploading data at "
@@ -77,7 +77,7 @@ bool UploadHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
     res.setStatus(413); // Request entity too large
   } else {
     file->seek(0);
-    processUploadedFile(req, res, ctxt, file);
+    processUploadedFile(req, res, processingContext, file);
   }
   delete file;
   _maxSimultaneousUploads.release(1);

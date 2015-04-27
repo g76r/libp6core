@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -37,7 +37,7 @@ public:
   ~BasicAuthHttpHandler();
   bool acceptRequest(HttpRequest req);
   bool handleRequest(HttpRequest req, HttpResponse res,
-                     HttpRequestContext ctxt);
+                     ParamsProviderMerger *processingContext);
   BasicAuthHttpHandler &setAuthenticator(Authenticator *authenticator,
                                          bool takeOwnership);
   BasicAuthHttpHandler &setRealm(QString realm) {

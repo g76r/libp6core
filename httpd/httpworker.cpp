@@ -53,6 +53,7 @@ void HttpWorker::handleConnection(int socketDescriptor) {
   QStringList args;
   HttpRequest req(socket);
   HttpResponse res(socket);
+  ParamsProviderMerger processingContext;
   HttpHandler *handler = 0;
   QUrl url;
   //qDebug() << "new client socket" << socket->peerAddress();
@@ -135,7 +136,7 @@ void HttpWorker::handleConnection(int socketDescriptor) {
   url = QUrl::fromEncoded(args[1].toLatin1()/*, QUrl::StrictMode */);
   req.overrideUrl(url);
   handler = _server->chooseHandler(req);
-  handler->handleRequest(req, res, HttpRequestContext());
+  handler->handleRequest(req, res, &processingContext);
   res.output()->flush(); // calling output() ensures that header was sent
   //qDebug() << req;
 finally:

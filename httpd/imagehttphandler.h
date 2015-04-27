@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -27,7 +27,7 @@ public:
   explicit ImageHttpHandler(QString urlPathPrefix, QObject *parent = 0);
   bool acceptRequest(HttpRequest req);
   bool handleRequest(HttpRequest req, HttpResponse res,
-                     HttpRequestContext ctxt);
+                     ParamsProviderMerger *processingContext);
   /** This method must be thread-safe for the same reasons than
    * handleRequest()
    * @param timeoutMillis maximum acceptable time if the image rendering is

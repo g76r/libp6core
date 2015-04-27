@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,7 +16,7 @@
 
 #include "httprequest.h"
 #include "httpresponse.h"
-#include "httprequestcontext.h"
+#include "util/paramsprovidermerger.h"
 #include <QObject>
 
 /** HttpHandler is responsible for handling every HTTP request the server
@@ -46,9 +46,12 @@ public:
   virtual bool acceptRequest(HttpRequest req) = 0;
   /** Handle the request.
    * Thread-safe (called by several HttpWorker threads at the same time).
-   * @return false if a failure should interrupt the pipeline */
+   * @param processingContext is shared accross the whole processing of the
+   *   request (i.e. if the process is a pipeline, each step will be able to
+   *   modify the context for the next one)
+   * @return false if a failure should interrupt the process */
   virtual bool handleRequest(HttpRequest req, HttpResponse res,
-                             HttpRequestContext ctxt) = 0;
+                             ParamsProviderMerger *processingContext) = 0;
 };
 
 #endif // HTTPHANDLER_H

@@ -46,7 +46,7 @@ public:
   void setMaxBytesPerUpload(quint64 maxBytesPerUpload);
   bool acceptRequest(HttpRequest req);
   bool handleRequest(HttpRequest req, HttpResponse res,
-                     HttpRequestContext ctxt);
+                     ParamsProviderMerger *processingContext);
   /** Perform processing of file after upload succeeded.
    * As long as maxSimultaneousUploads is set to 1 (which is the default),
    * this method implementation is not required to be thread-safe. However, if
@@ -55,8 +55,8 @@ public:
    * @param file opened, seeked at begin temporary file, caller will close and
    *   delete the object (thus removing the file) */
   virtual void processUploadedFile(
-      HttpRequest req, HttpResponse res, HttpRequestContext ctxt,
-      QFile *file) = 0;
+      HttpRequest req, HttpResponse res,
+      ParamsProviderMerger *processingContext, QFile *file) = 0;
 };
 
 #endif // UPLOADHTTPHANDLER_H

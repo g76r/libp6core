@@ -64,7 +64,6 @@ SOURCES += \
     log/qterrorcodes.cpp \
     textview/textmatrixmodel.cpp \
     util/timeformats.cpp \
-    httpd/httprequestcontext.cpp \
     httpd/pipelinehttphandler.cpp \
     httpd/basicauthhttphandler.cpp \
     auth/authenticator.cpp \
@@ -93,7 +92,7 @@ SOURCES += \
     modelview/shareduiitemlist.cpp \
     util/characterseparatedexpression.cpp \
     util/regularexpressionmatchparamsprovider.cpp \
-    util/paramsproviderlist.cpp
+    util/paramsprovidermerger.cpp
 
 
 HEADERS +=\
@@ -135,7 +134,6 @@ HEADERS +=\
     log/qterrorcodes.h \
     textview/textmatrixmodel.h \
     util/timeformats.h \
-    httpd/httprequestcontext.h \
     httpd/pipelinehttphandler.h \
     httpd/basicauthhttphandler.h \
     auth/authenticator.h \
@@ -167,7 +165,7 @@ HEADERS +=\
     modelview/shareduiitemlist.h \
     util/characterseparatedexpression.h \
     util/regularexpressionmatchparamsprovider.h \
-    util/paramsproviderlist.h
+    util/paramsprovidermerger.h
 
 unix {
     target.path = /usr/lib

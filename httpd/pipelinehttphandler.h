@@ -68,7 +68,7 @@ public:
   }
   bool acceptRequest(HttpRequest req);
   bool handleRequest(HttpRequest req, HttpResponse res,
-                     HttpRequestContext ctxt);
+                     ParamsProviderMerger *processingContext);
 };
 
 #endif // PIPELINEHTTPHANDLER_H

@@ -35,13 +35,13 @@ TemplatingHttpHandler::TemplatingHttpHandler(
 
 void TemplatingHttpHandler::sendLocalResource(
     HttpRequest req, HttpResponse res, QFile *file,
-    HttpRequestContext ctxt) {
+    ParamsProviderMerger *processingContext) {
   setMimeTypeByName(file->fileName(), res);
   foreach (QString filter, _filters) {
     QRegExp re(filter);
     if (re.indexIn(file->fileName()) >= 0) {
       QString output;
-      applyTemplateFile(req, res, file, ctxt, &output);
+      applyTemplateFile(req, res, file, processingContext, &output);
       QByteArray ba = output.toUtf8();
       res.setContentLength(ba.size());
       QBuffer buf(&ba);
@@ -58,7 +58,8 @@ void TemplatingHttpHandler::sendLocalResource(
 }
 
 void TemplatingHttpHandler::applyTemplateFile(
-    HttpRequest req, HttpResponse res, QFile *file, HttpRequestContext ctxt,
+    HttpRequest req, HttpResponse res, QFile *file,
+    ParamsProviderMerger *processingContext,
     QString *output) {
   static QRegularExpression templateMarkupIdentifierEndRE("[^a-z]");
   static QRegularExpression directorySeparatorRE("[/:]");
@@ -82,13 +83,15 @@ void TemplatingHttpHandler::applyTemplateFile(
       QString markupId = markupContent.left(separatorPos);
       if (markupContent.at(0) == '=') {
         // syntax: <?=paramset_evaluable_expression?>
-        output->append(ParamSet().evaluate(markupContent.mid(1), &ctxt));
+        output->append(
+              ParamSet().evaluate(markupContent.mid(1), processingContext));
       } else if (markupId == "view") {
         // syntax: <?view:viewname?>
         QString markupData = markupContent.mid(separatorPos+1);
         QPointer<TextView> view = _views.value(markupData);
         if (view)
-          output->append(view.data()->text(&ctxt, req.url().toString()));
+          output->append(view.data()
+                         ->text(processingContext, req.url().toString()));
         else {
           Log::warning() << "TemplatingHttpHandler did not find view '"
                          << markupData << "' among " << _views.keys();
@@ -99,14 +102,15 @@ void TemplatingHttpHandler::applyTemplateFile(
         // value is htmlencoded provided textConversion != AsIs
         // rawvalue is not htmlencoded regardless textConversion setting
         CharacterSeparatedExpression markupParams(markupContent, separatorPos);
-        QString value = ctxt.paramValue(markupParams.value(0)).toString();
+        QString value = processingContext
+            ->paramValue(markupParams.value(0)).toString();
         if (!value.isNull()) {
           value = markupParams.value(2, value);
         } else {
           if (markupParams.size() < 2) {
             Log::debug() << "TemplatingHttpHandler did not find value: '"
                          << markupParams.value(0) << "' in context 0x"
-                         << QString::number((long long)&ctxt, 16);
+                         << QString::number((long long)processingContext, 16);
             value = "?";
           } else {
             value = markupParams.value(1);
@@ -121,13 +125,14 @@ void TemplatingHttpHandler::applyTemplateFile(
         includePath =
             includePath.left(includePath.lastIndexOf(directorySeparatorRE));
         QFile included(includePath+"/"+markupData);
+        // LATER detect include loops
         if (included.open(QIODevice::ReadOnly)) {
-          applyTemplateFile(req, res, &included, ctxt, output);
+          applyTemplateFile(req, res, &included, processingContext, output);
         } else {
           Log::warning() << "TemplatingHttpHandler couldn't include file: '"
                          << markupData << "' as '" << included.fileName()
                          << "' in context 0x"
-                         << QString::number((long long)&ctxt, 16)
+                         << QString::number((long long)processingContext, 16)
                          << " : " << included.errorString();
           output->append("?");
         }

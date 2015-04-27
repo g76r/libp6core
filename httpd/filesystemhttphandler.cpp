@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -48,7 +48,8 @@ bool FilesystemHttpHandler::acceptRequest(HttpRequest req) {
 }
 
 bool FilesystemHttpHandler::handleRequest(
-    HttpRequest req, HttpResponse res, HttpRequestContext ctxt) {
+    HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext) {
   if (_documentRoot.isEmpty()) {
     res.setStatus(500);
     res.output()->write("No document root.");
@@ -84,7 +85,7 @@ bool FilesystemHttpHandler::handleRequest(
     res.output()->write("Directory list denied.");
   }
   if (file.open(QIODevice::ReadOnly)) {
-    sendLocalResource(req, res, &file, ctxt);
+    sendLocalResource(req, res, &file, processingContext);
     return true;
   }
   if (file.error() == QFile::PermissionsError) {
@@ -99,9 +100,9 @@ bool FilesystemHttpHandler::handleRequest(
 
 void FilesystemHttpHandler::sendLocalResource(
     HttpRequest req, HttpResponse res, QFile *file,
-    HttpRequestContext ctxt) {
+    ParamsProviderMerger *processingContext) {
   Q_UNUSED(req)
-  Q_UNUSED(ctxt)
+  Q_UNUSED(processingContext)
   //qDebug() << "success";
   QString filename(file->fileName());
   if (!handleCacheHeadersAndSend304(file, req, res)) {

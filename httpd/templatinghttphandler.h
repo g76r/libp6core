@@ -68,9 +68,10 @@ public:
 
 protected:
   void sendLocalResource(HttpRequest req, HttpResponse res, QFile *file,
-                         HttpRequestContext ctxt);
+                         ParamsProviderMerger *processingContext);
   void applyTemplateFile(HttpRequest req, HttpResponse res, QFile *file,
-                           HttpRequestContext ctxt, QString *output);
+                         ParamsProviderMerger *processingContext,
+                         QString *output);
   void convertData(QString *data, bool disableTextConversion) const;
 };
 

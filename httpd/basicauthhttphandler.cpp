@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -27,9 +27,8 @@ bool BasicAuthHttpHandler::acceptRequest(HttpRequest req) {
   return true;
 }
 
-bool BasicAuthHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
-                                         HttpRequestContext ctxt) {
-  Q_UNUSED(ctxt)
+bool BasicAuthHttpHandler::handleRequest(
+    HttpRequest req, HttpResponse res, ParamsProviderMerger *processingContext) {
   static QRegExp headerRe("\\s*Basic\\s+(\\S+)\\s*");
   static QRegExp tokenRe("([^:]+):([^:]+)");
   QString header = req.header("Authorization"), token;
@@ -44,7 +43,8 @@ bool BasicAuthHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
                                                       _authContext);
         if (!userId.isEmpty()) {
           if (!_userIdContextParamName.isEmpty())
-            ctxt.overrideParamValue(_userIdContextParamName, userId);
+            processingContext
+                ->overrideParamValue(_userIdContextParamName, userId);
           return true;
         }
       }

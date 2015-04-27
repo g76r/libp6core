@@ -20,7 +20,7 @@
 #include "timeformats.h"
 #include "characterseparatedexpression.h"
 #include "regularexpressionmatchparamsprovider.h"
-#include "paramsproviderlist.h"
+#include "paramsprovidermerger.h"
 
 class ParamSetData : public QSharedData {
 public:
@@ -190,7 +190,8 @@ QString ParamSet::evaluateImplicitVariable(
             transformed += value.mid(offset, match.capturedStart()-offset);
             // replace current match with (evaluated) replacement string
             RegularExpressionMatchParamsProvider repp(match);
-            ParamsProviderList reContext = ParamsProviderList(&repp)(context);
+            ParamsProviderMerger reContext =
+                ParamsProviderMerger(&repp)(context);
             transformed += evaluate(sFields.value(1), inherit, &reContext,
                                     alreadyEvaluated);
             // skip current match for next iteration
