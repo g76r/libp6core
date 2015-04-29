@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -151,6 +151,9 @@ void HttpResponse::setCookie(QString name, QString value,
     s.append("; Secure");
   if (httponly)
     s.append("; HttpOnly");
+  // LATER maintain a memory map of set cookies and write them only when starting the response write
+  // this would enable to write only the last same cookie value
+  // LATER update qron's webconsole to use such a feature to clearCookie("message") at start, knowning that a later setCookie("message") will prevent the clearCookie to output a Set-Cookie header
   addHeader("Set-Cookie", s);
 }
 
