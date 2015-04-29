@@ -51,19 +51,18 @@ class ParamSetData;
  * %{=date,,,UTC}
  * %{=date!hh:mm:ss,zzz!01-01T20:02-2w+1d!GMT}
  *
- * %=default function: %{=default!variable!value_if_not_set}
+ * %=default function: %{=default!variable1[!variable2[...]]!value_if_not_set}
  *
  * the function works like %{variable:-value_if_not_set} in shell scripts and
  * almost like nvl/ifnull functions in sql
- * value_if_not_set defaults to an empty string (the whole expression
- *   being equivalent to %variable apart of the absence of warning due to
- *   undefined variable evaluation), it is evaluated hence %foo is replaced by
- *   foo's value
+ * value_if_not_set is evaluated hence %foo is replaced by foo's value
+ * variable1..n are of course not evaluated since foo is already replaced by foo's value if foo is set
  *
  * examples:
  * %{=default!foo!null}
  * %{=default!foo!foo not set}
- * %{=default!foo!foo not set!!!}
+ * %{=default:foo:foo not set!!!}
+ * %{=default:foo:bar:neither foo nor bar are set!!!}
  * %{=default!foo!%bar}
  * %{=default!foo}
  *
@@ -144,6 +143,16 @@ class ParamSetData;
  * examples:
  * %{=mid:%foo:4:5}
  * %{=mid:%foo:4}
+ *
+ * %=htmlencode function: %{=htmlencode:input}
+ *
+ * input is the data to transform, it is evaluated (%foo become the content of
+ *   foo param) and can contain the separator character (e.g. :)
+ *
+ * examples:
+ * %{=htmlencode:1 < 2} -> 1 &lt; 2
+ * %{=htmlencode:http://wwww.google.com/} -> <a href="http://wwww.google.com/">http://wwww.google.com/</a>
+ * %{=htmlencode http://wwww.google.com/} -> same
  */
 class LIBQTSSUSHARED_EXPORT ParamSet : public ParamsProvider {
   QSharedDataPointer<ParamSetData> d;

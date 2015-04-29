@@ -21,6 +21,7 @@
 #include "characterseparatedexpression.h"
 #include "regularexpressionmatchparamsprovider.h"
 #include "paramsprovidermerger.h"
+#include "htmlutils.h"
 
 class ParamSetData : public QSharedData {
 public:
@@ -102,7 +103,7 @@ QString ParamSet::evaluate(
   return values.first();
 }
 
-// LATER add functions: %=htmlencode %=ifgt %=ifgte %=iflt %=iflte
+// LATER add functions: %=ifgt %=ifgte %=iflt %=iflte
 QString ParamSet::evaluateImplicitVariable(
     QString key, bool inherit, const ParamsProvider *context,
     QSet<QString> alreadyEvaluated) const {
@@ -112,19 +113,19 @@ QString ParamSet::evaluateImplicitVariable(
             QDateTime::currentDateTime(), key.mid(5));
     } else if (key.startsWith("=default")) {
       CharacterSeparatedExpression params(key, 8);
+      QString value;
       if (params.size() >= 1) {
-        QString variable = params.value(0);
-        QString valueIfNotSet = params.value(1);
-        QString value;
-        if (!appendVariableValue(&value, variable, inherit, context,
-                                 alreadyEvaluated, false)) {
-          value = evaluate(valueIfNotSet, inherit, context, alreadyEvaluated);
-          //qDebug() << "%=default:" << key << valueIfNotSet << value;
+        for (int i = 0; i < params.size()-1; ++i) {
+          if (appendVariableValue(&value, params.value(i), inherit, context,
+                                  alreadyEvaluated, false))
+            return value;
         }
+        if (params.size() >= 2)
+          value = evaluate(params.value(params.size()-1), inherit, context,
+                           alreadyEvaluated);
         return value;
-      } else {
-        //qDebug() << "%=default function invalid syntax:" << key;
       }
+      return value;
     } else if (key.startsWith("=ifneq")) {
       CharacterSeparatedExpression params(key, 6);
       if (params.size() >= 3) {
@@ -218,29 +219,34 @@ QString ParamSet::evaluateImplicitVariable(
       return value;
     } else if (key.startsWith("=left")) {
       CharacterSeparatedExpression params(key, 5);
-      QString value = evaluate(params.value(0), inherit, context,
+      QString input = evaluate(params.value(0), inherit, context,
                                alreadyEvaluated);
       bool ok;
       int i = params.value(1).toInt(&ok);
-      return ok ? value.left(i) : QString();
+      return ok ? input.left(i) : QString();
     } else if (key.startsWith("=right")) {
       CharacterSeparatedExpression params(key, 6);
-      QString value = evaluate(params.value(0), inherit, context,
+      QString input = evaluate(params.value(0), inherit, context,
                                alreadyEvaluated);
       bool ok;
       int i = params.value(1).toInt(&ok);
-      return ok ? value.right(i) : QString();
+      return ok ? input.right(i) : QString();
     } else if (key.startsWith("=mid")) {
       CharacterSeparatedExpression params(key, 4);
-      QString value = evaluate(params.value(0), inherit, context,
+      QString input = evaluate(params.value(0), inherit, context,
                                alreadyEvaluated);
       bool ok;
       int i = params.value(1).toInt(&ok);
       if (ok) {
         int j = params.value(2).toInt(&ok);
-        return value.mid(i, ok ? j : -1);
+        return input.mid(i, ok ? j : -1);
       }
       return QString();
+    } else if (key.startsWith("=htmlencode")) {
+      // LATER provide more options such as encoding <br> or links, through e.g. and =htmlencodeext function
+      QString input = evaluate(key.mid(12), inherit, context,
+                               alreadyEvaluated);
+      return HtmlUtils::htmlEncode(input, false, false);
     }
   }
   return QString();
