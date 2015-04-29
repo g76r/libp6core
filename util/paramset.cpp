@@ -125,23 +125,6 @@ QString ParamSet::evaluateImplicitVariable(
       } else {
         //qDebug() << "%=default function invalid syntax:" << key;
       }
-    } else if (key.startsWith("=ifeq")) {
-      CharacterSeparatedExpression params(key, 5);
-      if (params.size() >= 3) {
-        QString input = evaluate(params.value(0), inherit, context,
-                                 alreadyEvaluated);
-        QString ref = evaluate(params.value(1), inherit, context,
-                               alreadyEvaluated);
-        if (input == ref) {
-          return evaluate(params.value(2), inherit, context, alreadyEvaluated);
-        } else {
-          return params.size() >= 4
-              ? evaluate(params.value(3), inherit, context, alreadyEvaluated)
-              : input;
-        }
-      } else {
-        //qDebug() << "%=ifeq function invalid syntax:" << key;
-      }
     } else if (key.startsWith("=ifneq")) {
       CharacterSeparatedExpression params(key, 6);
       if (params.size() >= 3) {
@@ -158,6 +141,30 @@ QString ParamSet::evaluateImplicitVariable(
         }
       } else {
         //qDebug() << "%=ifneq function invalid syntax:" << key;
+      }
+    } else if (key.startsWith("=switch")) {
+      CharacterSeparatedExpression params(key, 7);
+      if (params.size() >= 1) {
+        QString input = evaluate(params.value(0), inherit, context,
+                                 alreadyEvaluated);
+        // evaluating :case:value params, if any
+        int n = (params.size() - 1) / 2;
+        for (int i = 0; i < n; ++i) {
+          QString ref = evaluate(params.value(1+i*2), inherit, context,
+                                 alreadyEvaluated);
+          if (input == ref)
+            return evaluate(params.value(1+i*2+1), inherit, context,
+                            alreadyEvaluated);
+        }
+        // evaluating :default param, if any
+        if (params.size() % 2 == 0) {
+          return evaluate(params.value(params.size()-1), inherit, context,
+                          alreadyEvaluated);
+        }
+        // otherwise left input as is
+        return input;
+      } else {
+        //qDebug() << "%=switch function invalid syntax:" << key;
       }
     } else if (key.startsWith("=sub")) {
       CharacterSeparatedExpression params(key, 4);

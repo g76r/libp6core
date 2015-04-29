@@ -67,19 +67,32 @@ class ParamSetData;
  * %{=default!foo!%bar}
  * %{=default!foo}
  *
- * %=ifeq function: %{=ifeq!input!reference!value_if_equal[!value_else]}
  * %=ifneq function: %{=ifneq!input!reference!value_if_not_equal[!value_else]}
  *
- * the functions test (in)equality of an input and replace it with another
+ * test inequality of an input and replace it with another
  * depending on the result of the test
  * all parameters are evaluated, hence %foo is replaced by foo's value
  *
  * examples:
- * %{=ifeq:%foo:0:} -> if %foo is 0, empty string, else %foo
- * %{=ifeq:%foo:0::%foo} -> same
- * %{=ifeq:%foo::empty} -> if %foo is empty, "empty", else %foo
- * %{=ifeq:%foo::empty:%foo} -> same
+ * %{=ifneq:%foo:0:true:false} -> "true" if not null, else "false"
+ * %{=ifneq:%foo::notempty} -> "notempty" if not empty, else ""
  * %{=ifneq:%foo::<a href="page?param=%foo>%foo</a>} -> html link if %foo is set
+ *
+ * %=switch function: %{=switch:value[:case1:value1[:case2:value2[...]]][:default_value]}
+ * test an input against different reference values and replace it according to
+ * matching case
+ * all parameters are evaluated, hence %foo is replaced by foo's value
+ * if default_value is not specified, left input as is if no case matches
+ *
+ * %=switch can be used as would be an %=ifeq function since those two lines
+ * are strictly equivalent:
+ * %{=switch:value:case1:value1[:default_value]}
+ * %{=switch:value:reference:value_if_equal[:value_if_not_equal]}
+ *
+ * examples:
+ * %{=switch:%loglevel:E:error:W:warning:I:info:debug}
+ * %{=switch:%foo:0:false:true} -> if 0: false else: true
+ * %{=switch:%foo:0:false} -> if 0: false else: %foo
  *
  * %=sub function: %{=sub!input!s-expression!...}
  *
