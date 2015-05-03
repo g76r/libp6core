@@ -38,8 +38,8 @@ class LIBQTSSUSHARED_EXPORT Logger : public QObject {
 
 public:
   class LogEntryData;
-  class LogEntry {
-    QSharedPointer<LogEntryData> d;
+  class LogEntry { // TODO LogEntry should inherit from SharedUiItem
+    QSharedDataPointer<LogEntryData> d;
   public:
     LogEntry(QDateTime timestamp, QString message, Log::Severity severity,
              QString task, QString execId, QString sourceCode);
