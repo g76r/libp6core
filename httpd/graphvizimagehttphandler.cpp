@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -74,6 +74,7 @@ QString GraphvizImageHttpHandler::contentType(ParamsProvider *params) const {
 QString GraphvizImageHttpHandler::contentEncoding(
     ParamsProvider *params) const {
   Q_UNUSED(params)
+  QMutexLocker ml(&_mutex);
   return (_imageFormat == Svgz) ? "gzip" : QString();
 }
 
@@ -175,12 +176,12 @@ void GraphvizImageHttpHandler::processError(QProcess::ProcessError error) {
 
 void GraphvizImageHttpHandler::processFinished(
     int exitCode, QProcess::ExitStatus exitStatus) {
+  QMutexLocker ml(&_mutex);
   if (!_renderingRunning)
     return; // avoid double execution of processFinished in OnDemand strategy
   readyReadStandardError();
   readyReadStandardOutput();
   bool success = (exitStatus == QProcess::NormalExit && exitCode == 0);
-  QMutexLocker ml(&_mutex);
   if (success) {
     Log::debug() << "graphviz rendering process successful with return code "
                  << exitCode << " and QProcess::ExitStatus " << exitStatus
@@ -229,6 +230,7 @@ void GraphvizImageHttpHandler::readyReadStandardError() {
 }
 
 void GraphvizImageHttpHandler::setImageFormat(ImageFormat imageFormat) {
+  QMutexLocker ml(&_mutex);
   _imageFormat = imageFormat;
   switch (_imageFormat) {
   case Png:
