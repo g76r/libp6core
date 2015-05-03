@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,35 +21,35 @@
  * producer and one consummer thread. */
 template <class T>
 class LIBQTSSUSHARED_EXPORT TwoThreadsCircularBuffer {
-  long _size, _putCounter, _getCounter;
+  long _sizeMinusOne, _putCounter, _getCounter;
   QSemaphore _free, _used;
   T *_buffer;
 
 public:
   inline TwoThreadsCircularBuffer(int sizePowerOf2)
-    : _size(1 << sizePowerOf2), _putCounter(0), _getCounter(0), _free(_size),
-      _used(0), _buffer(new T[_size]) {
+    : _sizeMinusOne((1 << sizePowerOf2) - 1), _putCounter(0), _getCounter(0),
+      _free(_sizeMinusOne+1), _used(0), _buffer(new T[_sizeMinusOne+1]) {
   }
   inline ~TwoThreadsCircularBuffer() {
     delete[] _buffer;
   }
   inline void put(T data) {
     _free.acquire();
-    // since _size is a power of 2, %_size == &(_size-1)
-    _buffer[_putCounter++ & (_size-1)] = data;
+    // since size is a power of 2, % size === &(size-1)
+    _buffer[_putCounter++ & (_sizeMinusOne)] = data;
     _used.release();
   }
   inline T get() {
     _used.acquire();
-    // since _size is a power of 2, %_size == &(_size-1)
-    T t = _buffer[_getCounter++ & (_size-1)];
+    // since size is a power of 2, % size === &(size-1)
+    T t = _buffer[_getCounter++ & (_sizeMinusOne)];
     _free.release();
     return t;
   }
   inline bool tryPut(T data) {
     if (_free.tryAcquire()) {
-      // since _size is a power of 2, %_size == &(_size-1)
-      _buffer[_putCounter++ & (_size-1)] = data;
+      // since size is a power of 2, % size === &(size-1)
+      _buffer[_putCounter++ & (_sizeMinusOne)] = data;
       _used.release();
       return true;
     }
@@ -58,15 +58,15 @@ public:
   /** @return T() if there is no available data */
   inline T tryGet() {
     if (_used.tryAcquire()) {
-      // since _size is a power of 2, %_size == &(_size-1)
-      T t = _buffer[_getCounter++ & (_size-1)];
+      // since size is a power of 2, % size === &(size-1)
+      T t = _buffer[_getCounter++ & (_sizeMinusOne)];
       _free.release();
       return t;
     }
     return T();
   }
   // LATER add method for puting or geting several data items at a time
-  inline long size() const { return _size; }
+  inline long size() const { return _sizeMinusOne+1; }
   inline long free() const { return _free.available(); }
   inline long used() const { return _used.available(); }
 };
