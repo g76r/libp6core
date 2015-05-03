@@ -165,7 +165,8 @@ HEADERS +=\
     modelview/shareduiitemlist.h \
     util/characterseparatedexpression.h \
     util/regularexpressionmatchparamsprovider.h \
-    util/paramsprovidermerger.h
+    util/paramsprovidermerger.h \
+    util/atomicvalue.h
 
 unix {
     target.path = /usr/lib
