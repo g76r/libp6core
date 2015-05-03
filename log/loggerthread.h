@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,7 +24,8 @@ class LoggerThread : public QThread {
   Logger *_logger;
 
 public:
-  LoggerThread(QObject *parent, Logger *logger);
+  LoggerThread(Logger *logger);
+  ~LoggerThread();
   void run();
 };
 

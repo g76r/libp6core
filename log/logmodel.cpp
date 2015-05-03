@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,13 +20,13 @@ LogModel::LogModel(QObject *parent, Log::Severity minSeverity, int maxrows,
                    QString prefixFilter)
   : QAbstractListModel(parent), _maxrows(maxrows),
     _logger(new MemoryLogger(minSeverity, this)), _prefixFilter(prefixFilter) {
-  Log::addLogger(_logger, false);
+  Log::addLogger(_logger, false, false);
 }
 
 LogModel::LogModel(Log::Severity minSeverity, int maxrows, QString prefixFilter)
   : QAbstractListModel(0), _maxrows(maxrows),
     _logger(new MemoryLogger(minSeverity, this)), _prefixFilter(prefixFilter) {
-  Log::addLogger(_logger, false);
+  Log::addLogger(_logger, false, false);
 }
 
 LogModel::LogModel(QObject *parent, int maxrows, QString prefixFilter)

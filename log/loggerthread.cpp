@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,8 +13,18 @@
  */
 #include "loggerthread.h"
 
-LoggerThread::LoggerThread(QObject *parent, Logger *logger)
-  : QThread(parent), _logger(logger) {
+LoggerThread::LoggerThread(Logger *logger)
+  : QThread(0), _logger(logger) {
+  //qDebug() << "LoggerThread" << QString::number((long)_logger, 16) << _logger->metaObject()->className();
+}
+
+LoggerThread::~LoggerThread() {
+  //qDebug() << "~LoggerThread" << QString::number((long)_logger, 16) << _logger->metaObject()->className();
+  // deleting Logger is safe because LoggerThread::deleteLater is called from
+  // within Logger::deleteLater() which is itself called from within
+  // MultiplexerLogger::replaceLogger*() only when removing the Logger from
+  // loggers list, therefore no log entry can be added to the Logger after that
+  delete _logger;
 }
 
 void LoggerThread::run() {
@@ -24,4 +34,5 @@ void LoggerThread::run() {
       break;
     _logger->doLog(le);
   }
+  deleteLater();
 }

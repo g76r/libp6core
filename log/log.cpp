@@ -23,8 +23,8 @@ Q_GLOBAL_STATIC_WITH_ARGS(MultiplexerLogger, _rootLogger, (Log::Debug, true))
 
 static inline MultiplexerLogger *rootLogger() { return _rootLogger(); }
 
-void Log::addLogger(Logger *logger, bool autoRemovable) {
-  rootLogger()->addLogger(logger, autoRemovable);
+void Log::addLogger(Logger *logger, bool autoRemovable, bool takeOwnership) {
+  rootLogger()->addLogger(logger, autoRemovable, takeOwnership);
 }
 
 void Log::removeLogger(Logger *logger) {
@@ -39,26 +39,18 @@ void Log::addQtLogger(Severity severity, bool autoRemovable) {
   rootLogger()->addQtLogger(severity, autoRemovable);
 }
 
-/*void Log::removeLoggers() {
-  QMutexLocker locker(&_loggersMutex);
-  foreach(Logger *logger, _loggers)
-    if (logger->_autoRemovable) {
-      logger->deleteLater();
-      _loggers.removeOne(logger);
-    }
-}*/
-
-void Log::replaceLoggers(Logger *newLogger) {
-  rootLogger()->replaceLoggers(newLogger);
+void Log::replaceLoggers(Logger *newLogger, bool takeOwnership) {
+  rootLogger()->replaceLoggers(newLogger, takeOwnership);
 }
 
-void Log::replaceLoggers(QList<Logger*> newLoggers) {
-  rootLogger()->replaceLoggers(newLoggers);
+void Log::replaceLoggers(QList<Logger*> newLoggers, bool takeOwnership) {
+  rootLogger()->replaceLoggers(newLoggers, takeOwnership);
 }
 
 void Log::replaceLoggersPlusConsole(Log::Severity consoleLoggerSeverity,
-                                    QList<Logger*> newLoggers) {
-  rootLogger()->replaceLoggersPlusConsole(consoleLoggerSeverity, newLoggers);
+                                    QList<Logger*> newLoggers, bool takeOwnership) {
+  rootLogger()->replaceLoggersPlusConsole(
+        consoleLoggerSeverity, newLoggers, takeOwnership);
 }
 
 void Log::log(QString message, Severity severity, QString task, QString execId,
@@ -133,23 +125,6 @@ QString Log::sanitizeMessage(QString string) {
   s.replace('\n', "\n  ");
   return s;
 }
-
-/*void Log::logMessageHandler(QtMsgType type, const char *msg) {
-  switch (type) {
-  case QtDebugMsg:
-    Log::log(msg, Log::Debug);
-    break;
-  case QtWarningMsg:
-    Log::log(msg, Log::Warning);
-    break;
-  case QtCriticalMsg:
-    Log::log(msg, Log::Error);
-    break;
-  case QtFatalMsg:
-    Log::log(msg, Log::Fatal);
-    // LATER shutdown process because default Qt message handler does shutdown
-  }
-}*/
 
 QString Log::pathToLastFullestLog() {
   return rootLogger()->pathToLastFullestLog();

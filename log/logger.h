@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -28,7 +28,10 @@ class LoggerThread;
 /** Base class to be extended by logger implementations.
  * Handle common behavior to all loggers, including optionnaly a
  * queuing mechanism using a dedicated thread intended for loggers that
- * may block (filesystem, network...). */
+ * may block (filesystem, network...).
+ * One must never delete a Logger, he must always call Logger::deleteLater()
+ * instead.
+ */
 class LIBQTSSUSHARED_EXPORT Logger : public QObject {
   friend class MultiplexerLogger;
   friend class LoggerThread;
@@ -67,6 +70,7 @@ private:
   bool _autoRemovable;
   QAtomicInt _bufferOverflown;
   TwoThreadsCircularBuffer<LogEntry> _buffer;
+  //ThreadSafeCircularBuffer<LogEntry> _buffer;
   QMutex *_mutex;
 
 public:
@@ -111,7 +115,8 @@ public:
   QRegExp pathMatchingRegexp() const {
     return ParamSet::matchingRegexp(pathPattern()); }
   Log::Severity minSeverity() const { return _minSeverity; }
-  void stopDedicatedThread();
+  /** Delete later both this and, if any, its dedicated thread. */
+  void deleteLater();
 
 protected:
   /** Method to be implemented by the actual logger.

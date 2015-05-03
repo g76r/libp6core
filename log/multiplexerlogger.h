@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,26 +25,40 @@ class LIBQTSSUSHARED_EXPORT MultiplexerLogger : public Logger {
   Q_OBJECT
   Q_DISABLE_COPY(MultiplexerLogger)
   QList<Logger*> _loggers;
+  QSet<Logger*> _ownedLoggers;
   QMutex _loggersMutex;
 
 public:
   explicit MultiplexerLogger(Log::Severity minSeverity = Log::Debug,
                              bool isRootLogger = false);
-  void addLogger(Logger *logger, bool autoRemovable);
+  /** Add logger to loggers list and optionaly take ownership of it, i.e. will
+   * delete it on removal. */
+  void addLogger(Logger *logger, bool autoRemovable, bool takeOwnership);
+  /** Remove and delete a logger. Will only delete the object if it is currently
+   * registred in the logger list, otherwise the method does nothing. */
   void removeLogger(Logger *logger);
   void addConsoleLogger(Log::Severity severity, bool autoRemovable);
   void addQtLogger(Log::Severity severity, bool autoRemovable);
-  //void removeAutoRemovableLoggers();
-  void replaceLoggers(Logger *newLogger);
-  void replaceLoggers(QList<Logger*> newLoggers);
+  /** Replace current auto-removable loggers with a new one.
+   * This method is thread-safe and switches loggers in an atomic way. */
+  void replaceLoggers(Logger *newLogger, bool takeOwnership);
+  /** Replace current auto-removable loggers with new ones.
+   * This method is thread-safe and switches loggers in an atomic way. */
+  void replaceLoggers(QList<Logger*> newLoggers, bool takeOwnership);
+  /** Replace current auto-removable loggers with new ones plus a new
+   * console logger with given logger severity.
+   * This method is thread-safe and switches loggers in an atomic way. */
   void replaceLoggersPlusConsole(Log::Severity consoleLoggerSeverity,
-                                 QList<Logger*> newLoggers);
+                                 QList<Logger*> newLoggers, bool takeOwnership);
   QString pathToLastFullestLog();
   QStringList pathsToFullestLogs();
   QStringList pathsToAllLogs();
 
 protected:
   void doLog(const LogEntry entry);
+
+private:
+  inline void doReplaceLoggers(QList<Logger*> newLoggers, bool takeOwnership);
 };
 
 #endif // MULTIPLEXERLOGGER_H

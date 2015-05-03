@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,7 +23,8 @@ MultiplexerLogger::MultiplexerLogger(
                                      : Logger::DirectCall) {
 }
 
-void MultiplexerLogger::addLogger(Logger *logger, bool autoRemovable) {
+void MultiplexerLogger::addLogger(
+    Logger *logger, bool autoRemovable, bool takeOwnership) {
   QMutexLocker locker(&_loggersMutex);
   if (logger) {
     // LATER provide an option to enable Qt's standard log interception
@@ -37,6 +38,8 @@ void MultiplexerLogger::addLogger(Logger *logger, bool autoRemovable) {
     //  qInstallMsgHandler(Log::logMessageHandler);
     logger->_autoRemovable = autoRemovable;
     _loggers.append(logger);
+    if (takeOwnership)
+      _ownedLoggers.insert(logger);
   }
 }
 
@@ -44,8 +47,11 @@ void MultiplexerLogger::removeLogger(Logger *logger) {
   QMutexLocker locker(&_loggersMutex);
   foreach(Logger *l, _loggers)
     if (l == logger) {
-      l->deleteLater();
-      _loggers.removeAll(l);
+      if (_ownedLoggers.contains(logger)) {
+        logger->deleteLater();
+        _ownedLoggers.remove(logger);
+      }
+      _loggers.removeAll(logger);
       break;
     }
 }
@@ -55,59 +61,56 @@ void MultiplexerLogger::addConsoleLogger(Log::Severity severity,
   QFile *console = new QFile;
   console->open(1, QIODevice::WriteOnly|QIODevice::Unbuffered);
   FileLogger *logger = new FileLogger(console, severity);
-  addLogger(logger, autoRemovable);
+  addLogger(logger, autoRemovable, true);
 }
 
 void MultiplexerLogger::addQtLogger(Log::Severity severity,
                                     bool autoRemovable) {
   QtLogLogger *logger = new QtLogLogger(severity);
-  addLogger(logger, autoRemovable);
+  addLogger(logger, autoRemovable, true);
 }
 
-/*void MultiplexerLogger::removeAutoRemovableLoggers() {
-  QMutexLocker locker(&_loggersMutex);
-  foreach(Logger *logger, _loggers)
-    if (logger->_autoRemovable) {
-      logger->deleteLater();
-      _loggers.removeOne(logger);
-    }
-}*/
-
-void MultiplexerLogger::replaceLoggers(Logger *newLogger) {
+void MultiplexerLogger::replaceLoggers(Logger *newLogger, bool takeOwnership) {
   QList<Logger*> newLoggers;
   if (newLogger)
     newLoggers.append(newLogger);
-  replaceLoggers(newLoggers);
+  replaceLoggers(newLoggers, takeOwnership);
 }
 
-void MultiplexerLogger::replaceLoggers(QList<Logger*> newLoggers) {
+void MultiplexerLogger::replaceLoggers(
+    QList<Logger*> newLoggers, bool takeOwnership) {
   QMutexLocker locker(&_loggersMutex);
-  foreach(Logger *logger, _loggers)
-    if (logger->_autoRemovable) {
-      logger->deleteLater();
-      _loggers.removeOne(logger);
-    }
-  //if (newLoggers.isEmpty())
-  //  qInstallMsgHandler(0);
-  foreach (Logger *logger, newLoggers)
-    _loggers.append(logger);
+  doReplaceLoggers(newLoggers, takeOwnership);
 }
 
 void MultiplexerLogger::replaceLoggersPlusConsole(
-    Log::Severity consoleLoggerSeverity, QList<Logger*> newLoggers) {
-  QMutexLocker locker(&_loggersMutex);
-  foreach(Logger *logger, _loggers)
-    if (logger->_autoRemovable) {
-      logger->deleteLater();
-      _loggers.removeOne(logger);
-    }
+    Log::Severity consoleLoggerSeverity, QList<Logger*> newLoggers,
+    bool takeOwnership) {
   QFile *console = new QFile;
   console->open(1, QIODevice::WriteOnly|QIODevice::Unbuffered);
-  FileLogger *logger = new FileLogger(console, consoleLoggerSeverity);
-  logger->_autoRemovable = true;
-  _loggers.append(logger);
-  foreach (Logger *logger, newLoggers)
+  FileLogger *consoleLogger = new FileLogger(console, consoleLoggerSeverity);
+  newLoggers.prepend(consoleLogger);
+  QMutexLocker locker(&_loggersMutex);
+  // own console logger regardless taking ownership of other loggers
+  _ownedLoggers.insert(consoleLogger);
+  doReplaceLoggers(newLoggers, takeOwnership);
+}
+
+void MultiplexerLogger::doReplaceLoggers(
+    QList<Logger*> newLoggers, bool takeOwnership) {
+  foreach(Logger *logger, _loggers)
+    if (logger->_autoRemovable) {
+      if (!newLoggers.contains(logger) && _ownedLoggers.contains(logger)) {
+        logger->deleteLater();
+        _ownedLoggers.remove(logger);
+      }
+      _loggers.removeAll(logger);
+    }
+  foreach (Logger *logger, newLoggers) {
     _loggers.append(logger);
+    if (takeOwnership)
+      _ownedLoggers.insert(logger);
+  }
 }
 
 QString MultiplexerLogger::pathToLastFullestLog() {
