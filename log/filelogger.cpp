@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -61,17 +61,18 @@ QString FileLogger::pathPattern() const {
 }
 
 void FileLogger::doLog(const LogEntry entry) {
+  QDateTime now = QDateTime::currentDateTime();
   if (!_pathPattern.isEmpty()
-      && (_device == 0 || _lastOpen.secsTo(QDateTime::currentDateTime())
+      && (_device == 0 || _lastOpen.secsTo(now)
           > _secondsReopenInterval)) {
     //qDebug() << "*******************************************************"
     //         << _patternPath << _lastOpen << timestamp;
     if (_device)
-      _lastOpen = _lastOpen.addSecs(_secondsReopenInterval);
+      _lastOpen = now.addSecs(_secondsReopenInterval);
     if (_device)
       delete _device;
     _currentPath = ParamSet().evaluate(_pathPattern);
-    _device = new QFile(_currentPath, this);
+    _device = new QFile(_currentPath);
     if (!_device->open(_buffered ? QIODevice::WriteOnly|QIODevice::Append
                        : QIODevice::WriteOnly|QIODevice::Append
                        |QIODevice::Unbuffered)) {
