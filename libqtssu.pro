@@ -166,7 +166,8 @@ HEADERS +=\
     util/characterseparatedexpression.h \
     util/regularexpressionmatchparamsprovider.h \
     util/paramsprovidermerger.h \
-    util/atomicvalue.h
+    util/atomicvalue.h \
+    util/circularbuffer.h
 
 unix {
     target.path = /usr/lib

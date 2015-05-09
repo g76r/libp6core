@@ -14,13 +14,13 @@
 #ifndef TWOTHREADSCIRCULARBUFFER_H
 #define TWOTHREADSCIRCULARBUFFER_H
 
-#include "libqtssu_global.h"
+#include "circularbuffer.h"
 #include <QSemaphore>
 
 /** Circular buffer which stays thread-safe as long as there is only one
  * producer and one consummer thread. */
 template <class T>
-class LIBQTSSUSHARED_EXPORT TwoThreadsCircularBuffer {
+class TwoThreadsCircularBuffer : public CircularBuffer<T> {
   long _sizeMinusOne, _putCounter, _getCounter;
   QSemaphore _free, _used;
   T *_buffer;
@@ -30,23 +30,23 @@ public:
     : _sizeMinusOne((1 << sizePowerOf2) - 1), _putCounter(0), _getCounter(0),
       _free(_sizeMinusOne+1), _used(0), _buffer(new T[_sizeMinusOne+1]) {
   }
-  inline ~TwoThreadsCircularBuffer() {
+  ~TwoThreadsCircularBuffer() {
     delete[] _buffer;
   }
-  inline void put(T data) {
+  void put(T data) {
     _free.acquire();
     // since size is a power of 2, % size === &(size-1)
     _buffer[_putCounter++ & (_sizeMinusOne)] = data;
     _used.release();
   }
-  inline T get() {
+  T get() {
     _used.acquire();
     // since size is a power of 2, % size === &(size-1)
     T t = _buffer[_getCounter++ & (_sizeMinusOne)];
     _free.release();
     return t;
   }
-  inline bool tryPut(T data) {
+  bool tryPut(T data) {
     if (_free.tryAcquire()) {
       // since size is a power of 2, % size === &(size-1)
       _buffer[_putCounter++ & (_sizeMinusOne)] = data;
@@ -55,8 +55,7 @@ public:
     }
     return false;
   }
-  /** @return T() if there is no available data */
-  inline T tryGet() {
+  T tryGet() {
     if (_used.tryAcquire()) {
       // since size is a power of 2, % size === &(size-1)
       T t = _buffer[_getCounter++ & (_sizeMinusOne)];
@@ -65,10 +64,9 @@ public:
     }
     return T();
   }
-  // LATER add method for puting or geting several data items at a time
-  inline long size() const { return _sizeMinusOne+1; }
-  inline long free() const { return _free.available(); }
-  inline long used() const { return _used.available(); }
+  long size() const { return _sizeMinusOne+1; }
+  long free() const { return _free.available(); }
+  long used() const { return _used.available(); }
 };
 
 #endif // TWOTHREADSCIRCULARBUFFER_H
