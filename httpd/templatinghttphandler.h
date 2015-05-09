@@ -19,6 +19,7 @@
 #include <QPointer>
 
 // LATER try to factorize code with HtmlItemDelegate
+// LATER make all method thread-safe, incl. setters
 // TODO document other markups than value and view
 /** HttpHandler which serves filesystem or Qt resources files parsing some of
  * them for special markups such as <?value:foo?> or <?view:bar?> to replace
@@ -60,7 +61,7 @@ public:
     _defaultTextConversion = defaultTextConversion; }
   /** Maximum length of text inside a cell, measured before HTML encoding if
    * any. Default: 200. */
-  void setMaxValuetLength(int length = 200) { _maxValueLength = length; }
+  void setMaxValueLength(int length = 200) { _maxValueLength = length; }
   /** Maximum length of text inside a cell, measured before HTML encoding if
    * any. Default: 200. */
   static void setDefaultMaxValueLength(int length = 200) {
@@ -69,6 +70,8 @@ public:
 protected:
   void sendLocalResource(HttpRequest req, HttpResponse res, QFile *file,
                          ParamsProviderMerger *processingContext);
+
+private:
   void applyTemplateFile(HttpRequest req, HttpResponse res, QFile *file,
                          ParamsProviderMerger *processingContext,
                          QString *output);

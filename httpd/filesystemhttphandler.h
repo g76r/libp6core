@@ -72,6 +72,7 @@ public:
                      ParamsProviderMerger *processingContext);
 
 protected:
+  /** Thread-safe (called by several HttpWorker threads at the same time). */
   virtual void sendLocalResource(HttpRequest req, HttpResponse res, QFile *file,
                                  ParamsProviderMerger *processingContext);
 
