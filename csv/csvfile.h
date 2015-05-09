@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,6 +19,7 @@
 #include <QFile>
 #include <QSaveFile>
 
+// LATER implement auto-truncating / rows-count-caped mechanism
 // LATER propose a non-all-in-memory mechanism
 // LATER support for error() errorString() error reporting
 // LATER implement quoting
@@ -50,6 +51,9 @@ public:
   bool open(QString filename, QIODevice::OpenMode mode);
   void close();
   QIODevice::OpenMode openMode() const { return _openMode; }
+  bool isOpen() const { return _openMode != QIODevice::NotOpen; }
+  bool isReadable() const { return _openMode & QIODevice::ReadOnly; }
+  bool isWritable() const { return _openMode & QIODevice::WriteOnly; }
   QString filename() const { return _filename; }
   QChar fieldSeparator() const { return _fieldSeparator; }
   /** Default: , (comma) */
