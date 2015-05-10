@@ -156,8 +156,6 @@ HEADERS +=\
     util/relativedatetime.h \
     log/loggerthread.h \
     log/multiplexerlogger.h \
-    util/twothreadscircularbuffer.h \
-    util/threadsafecircularbuffer.h \
     httpd/uploadhttphandler.h \
     csv/csvfile.h \
     csv/csvfilemodel.h \
@@ -166,8 +164,8 @@ HEADERS +=\
     util/characterseparatedexpression.h \
     util/regularexpressionmatchparamsprovider.h \
     util/paramsprovidermerger.h \
-    util/atomicvalue.h \
-    util/circularbuffer.h
+    thread/atomicvalue.h \
+    thread/circularbuffer.h
 
 unix {
     target.path = /usr/lib
