@@ -18,9 +18,8 @@
 #include "log.h"
 #include <QDateTime>
 #include "util/paramset.h"
-#include "util/twothreadscircularbuffer.h"
+#include "thread/circularbuffer.h"
 #include <QThread>
-#include <QMutex>
 
 class MultiplexerLogger;
 class LoggerThread;
@@ -69,9 +68,7 @@ private:
   Log::Severity _minSeverity;
   bool _autoRemovable;
   QAtomicInt _bufferOverflown;
-  TwoThreadsCircularBuffer<LogEntry> _buffer;
-  //ThreadSafeCircularBuffer<LogEntry> _buffer;
-  QMutex *_mutex;
+  CircularBuffer<LogEntry> *_buffer;
 
 public:
   // Loggers never have a parent (since they are owned and destroyed by Log
@@ -85,18 +82,15 @@ public:
     // write logs over NFS), etc.
     if (entry.severity() >= _minSeverity) {
       if (_thread) {
-        if (_mutex)
-          _mutex->lock();
-        if (!_buffer.tryPut(entry)) {
+        if (!_buffer->tryPut(entry)) {
           // warn only once in the Logger lifetime
           if (_bufferOverflown.fetchAndStoreOrdered(1) == 0)
             qWarning() << "Logger::log discarded at less one log entry due to "
-                          "thread buffer full" << this;
+                          "thread buffer full" << this << entry.message();
         }
-        if (_mutex)
-          _mutex->unlock();
-      } else
+      } else {
         doLog(entry);
+      }
     }
   }
   ~Logger();

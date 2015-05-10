@@ -84,6 +84,7 @@ void FileLogger::doLog(const LogEntry entry) {
       //qDebug() << "opened log file" << _currentPath;
   }
   if (_device) {
+    // TODO move this to LogEntry::asLogLine()
     QString line = QString("%1 %2/%3 %4 %5 %6")
         .arg(entry.timestamp().toString("yyyy-MM-ddThh:mm:ss,zzz"))
         .arg(entry.task()).arg(entry.execId()).arg(entry.sourceCode())

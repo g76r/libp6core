@@ -82,18 +82,25 @@ QString Logger::LogEntry::sourceCode() const {
 }
 
 Logger::Logger(Log::Severity minSeverity, ThreadModel threadModel)
-  : QObject(0),
-    _thread(threadModel != DirectCall ? new LoggerThread(this) : 0),
-    _minSeverity(minSeverity), _autoRemovable(true), _bufferOverflown(0),
-    _buffer(threadModel != DirectCall ? 10 : 0),
-    _mutex(threadModel == RootLogger ? new QMutex : 0) {
+  : QObject(0), _thread(0), _minSeverity(minSeverity), _autoRemovable(true),
+    _bufferOverflown(0), _buffer(0) {
   // LATER make buffer size parametrable
   //Log::fatal() << "*** Logger::Logger " << this << " " << minSeverity
   //             << " " << dedicatedThread;
   //qDebug() << "Logger" << QString::number((long)this, 16);
+  switch(threadModel) {
+  case DirectCall:
+    break;
+  case DedicatedThread:
+    _thread = new LoggerThread(this);
+    _buffer = new CircularBuffer<LogEntry>(10);
+    break;
+  case RootLogger:
+    _thread = new LoggerThread(this);
+    _buffer = new CircularBuffer<LogEntry>(10);
+    break;
+  }
   if (_thread) {
-    //connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
-    //connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
     _thread->setObjectName("Logger-"+Log::severityToString(minSeverity)
                            +"-"+QString::number((long)this, 16));
     _thread->start();
@@ -105,20 +112,14 @@ Logger::Logger(Log::Severity minSeverity, ThreadModel threadModel)
 
 Logger::~Logger() {
   //qDebug() << "~Logger" << QString::number((long)this, 16);
-  if (_mutex)
-    delete _mutex;
+  if (_buffer)
+    delete _buffer;
 }
 
 void Logger::deleteLater() {
   if (_thread) {
-    if (!_buffer.tryPut(LogEntry())) { // special message to stop the thread
-      qWarning() << "Logger::stopDedicatedThread forced to call "
-                    "QThread::terminate due to full thread buffer" << this;
-      _thread->terminate();
-      if (_thread->wait(10000)) // wait only 10', otherwise won't delete neither thread nor logger
-        _thread->deleteLater();
-    }
-    // cannot access or modify any member data after _buffer.tryPut(LogEntry())
+    _thread->requestInterruption();
+    // cannot access or modify any member data after _thread->requestInterruption()
     // since *this can have been deleted meanwhile (it would create a race
     // condition)
   } else {

@@ -28,11 +28,14 @@ LoggerThread::~LoggerThread() {
 }
 
 void LoggerThread::run() {
-  forever {
-    Logger::LogEntry le = _logger->_buffer.get();
-    if (le.isNull()) // this is a stop message from producer thread
-      break;
-    _logger->doLog(le);
+  while (!isInterruptionRequested()) {
+    Logger::LogEntry le;
+    if (_logger->_buffer->tryGet(&le, 500))
+      _logger->doLog(le);
   }
-  deleteLater();
+  //qDebug() << "LoggerThread received stop message" << this << _logger;
+  // only connect deleteLater() now because in case of unwanted thread stop,
+  // i.e. before Logger calls QThread::requestInterruption(), deleting QThread
+  // object would lead to dandling pointer on it in Logger object
+  connect(this, SIGNAL(finished()), this, SLOT(deleteLater()));
 }
