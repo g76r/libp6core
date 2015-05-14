@@ -112,7 +112,7 @@ public:
    * @return true on success */
   inline bool tryGet(T *data, int timeout) {
     QMutexLocker locker(&_mutex);
-    if (!data || _used == 0 || !_notEmpty.wait(&_mutex, timeout))
+    if (!data || (_used == 0 && !_notEmpty.wait(&_mutex, timeout)))
       return false;
     // since size is a power of 2, % size === &(size-1)
     *data = _buffer[_getCounter++ & (_sizeMinusOne)];
