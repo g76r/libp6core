@@ -142,6 +142,7 @@ QStringList MultiplexerLogger::pathsToFullestLogs() {
       QString p = logger->pathMathchingPattern();
       if (!p.isEmpty()) {
         if (severity == Log::Debug) {
+          locker.unlock();
           return IOUtils::findFiles(p);
         }
         path = p;
@@ -149,6 +150,7 @@ QStringList MultiplexerLogger::pathsToFullestLogs() {
       }
     }
   }
+  locker.unlock();
   return IOUtils::findFiles(path);
 }
 
@@ -161,6 +163,7 @@ QStringList MultiplexerLogger::pathsToAllLogs() {
     if (!p.isEmpty())
       paths.append(p);
   }
+  locker.unlock();
   return IOUtils::findFiles(paths);
 }
 
