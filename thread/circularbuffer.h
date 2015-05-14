@@ -52,7 +52,8 @@ public:
     if (_free == 0)
       _notFull.wait(&_mutex);
     // since size is a power of 2, % size === &(size-1)
-    _buffer[_putCounter++ & (_sizeMinusOne)] = data;
+    _buffer[_putCounter & (_sizeMinusOne)] = data;
+    ++_putCounter;
     --_free;
     ++_used;
     _notEmpty.wakeAll();
@@ -64,7 +65,8 @@ public:
     if (_free == 0)
       return false;
     // since size is a power of 2, % size === &(size-1)
-    _buffer[_putCounter++ & (_sizeMinusOne)] = data;
+    _buffer[_putCounter & (_sizeMinusOne)] = data;
+    ++_putCounter;
     --_free;
     ++_used;
     _notEmpty.wakeAll();
@@ -77,7 +79,8 @@ public:
     if (_free == 0 && !_notFull.wait(&_mutex, timeout))
       return false;
     // since size is a power of 2, % size === &(size-1)
-    _buffer[_putCounter++ & (_sizeMinusOne)] = data;
+    _buffer[_putCounter & (_sizeMinusOne)] = data;
+    ++_putCounter;
     --_free;
     ++_used;
     _notEmpty.wakeAll();
@@ -89,7 +92,9 @@ public:
     if (_used == 0)
       _notEmpty.wait(&_mutex);
     // since size is a power of 2, % size === &(size-1)
-    T t = _buffer[_getCounter++ & (_sizeMinusOne)];
+    T t = _buffer[_getCounter & (_sizeMinusOne)];
+    _buffer[_getCounter & (_sizeMinusOne)] = T();
+    ++_getCounter;
     --_used;
     ++_free;
     _notFull.wakeAll();
@@ -102,7 +107,9 @@ public:
     if (!data || _used == 0)
       return false;
     // since size is a power of 2, % size === &(size-1)
-    *data = _buffer[_getCounter++ & (_sizeMinusOne)];
+    *data = _buffer[_getCounter & (_sizeMinusOne)];
+    _buffer[_getCounter & (_sizeMinusOne)] = T();
+    ++_getCounter;
     --_used;
     ++_free;
     _notFull.wakeAll();
@@ -115,7 +122,9 @@ public:
     if (!data || (_used == 0 && !_notEmpty.wait(&_mutex, timeout)))
       return false;
     // since size is a power of 2, % size === &(size-1)
-    *data = _buffer[_getCounter++ & (_sizeMinusOne)];
+    *data = _buffer[_getCounter & (_sizeMinusOne)];
+    _buffer[_getCounter & (_sizeMinusOne)] = T();
+    ++_getCounter;
     --_used;
     ++_free;
     _notFull.wakeAll();
@@ -129,6 +138,12 @@ public:
   /** Currently used size of buffer.
    * Beware that this value is not consistent from thread to thread. */
   inline long used() const { return _used; }
+  /** Number of successful put so far.
+   * This method is only usefull for testing or benchmarking this class. */
+  inline long putCounter() const { return _putCounter; }
+  /** Number of successful get so far.
+   * This method is only usefull for testing or benchmarking this class. */
+  inline long getCounter() const { return _getCounter; }
 };
 
 #endif // CIRCULARBUFFER_H
