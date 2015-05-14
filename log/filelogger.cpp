@@ -63,12 +63,11 @@ QString FileLogger::pathPattern() const {
 void FileLogger::doLog(const LogEntry entry) {
   QDateTime now = QDateTime::currentDateTime();
   if (!_pathPattern.isEmpty()
-      && (_device == 0 || _lastOpen.secsTo(now)
-          > _secondsReopenInterval)) {
+      && (_device == 0
+          || (_secondsReopenInterval >= 0
+              && _lastOpen.secsTo(now) > _secondsReopenInterval))) {
     //qDebug() << "*******************************************************"
-    //         << _patternPath << _lastOpen << timestamp;
-    if (_device)
-      _lastOpen = now.addSecs(_secondsReopenInterval);
+    //         << _pathPattern << _lastOpen << now << _secondsReopenInterval;
     if (_device)
       delete _device;
     _currentPath = ParamSet().evaluate(_pathPattern);
@@ -76,12 +75,15 @@ void FileLogger::doLog(const LogEntry entry) {
     if (!_device->open(_buffered ? QIODevice::WriteOnly|QIODevice::Append
                        : QIODevice::WriteOnly|QIODevice::Append
                        |QIODevice::Unbuffered)) {
+      // TODO warn, but only once
       //qWarning() << "cannot open log file" << _currentPath << ":"
       //           << _device->errorString();
       delete _device;
       _device = 0;
-    } //else
+    } else {
+      _lastOpen = now;
       //qDebug() << "opened log file" << _currentPath;
+    }
   }
   if (_device) {
     // TODO move this to LogEntry::asLogLine()
@@ -92,11 +94,13 @@ void FileLogger::doLog(const LogEntry entry) {
     //qDebug() << "***log" << line;
     QByteArray ba = line.toUtf8();
     if (_device->write(ba) != ba.size()) {
+      // TODO warn, but only once
       //qWarning() << "error while writing log:" << _device
       //           << _device->errorString();
       //qWarning() << line;
     }
   } else {
+    // TODO warn, but only once
     //qWarning() << "error while writing log: null log device";
     //qWarning() << line;
   }
