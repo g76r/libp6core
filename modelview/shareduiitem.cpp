@@ -14,6 +14,13 @@
 #include "shareduiitem.h"
 #include <QtDebug>
 
+static class SharedUiItemRegisterMetatype {
+public:
+  SharedUiItemRegisterMetatype() {
+    qRegisterMetaType<SharedUiItem>("SharedUiItem");
+  }
+} _registerMetatype;
+
 SharedUiItemData::~SharedUiItemData() {
 }
 
