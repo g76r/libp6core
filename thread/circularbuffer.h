@@ -22,9 +22,15 @@
 // MAYDO add method for puting or geting several data items at a time
 
 /** Thread-safe circular buffer.
+ *
  * Usable as a multithreading queue communication mechanism.
+ *
  * Can hold any data with operator=().
+ *
  * The datatype is not required to be thread-safe, even its operator=().
+ * Therefore Qt's implicitly shared data classes can be sent through a
+ * CircularBuffer exactly as then can through an queued signal/slot connection
+ * or a queued QMetaObject::invokeMethod() call.
  */
 template <class T>
 class LIBQTSSUSHARED_EXPORT CircularBuffer {

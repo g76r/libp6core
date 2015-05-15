@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,8 +20,7 @@
 #include <QHash>
 
 // FIXME move to modelview
-/** Kind of 2-dimensions QStringListModel.
- * @brief The TextMatrixModel class */
+/** Kind of 2-dimensions QStringListModel. */
 class LIBQTSSUSHARED_EXPORT TextMatrixModel : public QAbstractTableModel {
   Q_OBJECT
   QStringList _columnNames, _rowNames;

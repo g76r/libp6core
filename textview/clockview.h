@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,7 +18,7 @@
 #include <QDateTime>
 
 /** Whereas TextView is intended to be used with Qt's Model/View framework,
- * this view is an example of a view fully independent of any model.
+ * this view is a (trivial) example of a view fully independent of any model.
  */
 class LIBQTSSUSHARED_EXPORT ClockView : public TextView {
   Q_OBJECT

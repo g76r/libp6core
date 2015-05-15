@@ -21,7 +21,16 @@
 class QAbstractProxyModel;
 
 /** Base class for model holding SharedUiItems, being them table or
- * tree-oriented they provides one item section per column. */
+ * tree-oriented they provides one item section per column.
+ *
+ * Beware that, like any QAbstractItemModel, this class is not thread-safe
+ * and that most of its methods must never be called from another thread than
+ * the main thread. If triggered from another thread, changeItem() must be
+ * called through signal/slot connection or using QMetaObject::invokeMethod().
+ * If data has to be read from another thread, this must be done through a
+ * thread-safe view which is connected to this model and offer thread-safe read
+ * methods, like TextTableView.
+ */
 class LIBQTSSUSHARED_EXPORT SharedUiItemsModel : public QAbstractItemModel {
   Q_OBJECT
   Q_DISABLE_COPY(SharedUiItemsModel)
