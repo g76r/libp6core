@@ -22,7 +22,7 @@ void QtLogLogger::doLog(const LogEntry entry) {
   QString header = QString("%1 %2/%3 %4 %5")
       .arg(entry.timestamp().toString("yyyy-MM-ddThh:mm:ss,zzz"))
       .arg(entry.task()).arg(entry.execId()).arg(entry.sourceCode())
-      .arg(entry.severityText());
+      .arg(entry.severityToString());
   // LATER try to use QLoggingCategory e.g. using task as a category
   switch(entry.severity()) {
   case Log::Debug:

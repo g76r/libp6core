@@ -90,7 +90,7 @@ void FileLogger::doLog(const LogEntry entry) {
     QString line = QString("%1 %2/%3 %4 %5 %6")
         .arg(entry.timestamp().toString("yyyy-MM-ddThh:mm:ss,zzz"))
         .arg(entry.task()).arg(entry.execId()).arg(entry.sourceCode())
-        .arg(entry.severityText()).arg(entry.message()).append('\n');
+        .arg(entry.severityToString()).arg(entry.message()).append('\n');
     //qDebug() << "***log" << line;
     QByteArray ba = line.toUtf8();
     if (_device->write(ba) != ba.size()) {

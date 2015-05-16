@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,11 +24,13 @@ class LIBQTSSUSHARED_EXPORT MemoryLogger : public Logger {
   friend class LogModel;
   Q_OBJECT
   Q_DISABLE_COPY(MemoryLogger)
+  QString _prefixFilter;
   LogModel *_model;
 
   // only LogModel can create a MemoryLogger object, ensuring they share the
   // same thread, therefore the constructor must not be public
-  MemoryLogger(Log::Severity minSeverity, LogModel *logmodel);
+  MemoryLogger(Log::Severity minSeverity, QString prefixFilter,
+               LogModel *logmodel);
 
 protected:
   void doLog(const LogEntry entry);

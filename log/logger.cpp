@@ -14,71 +14,112 @@
 #include "logger.h"
 #include "loggerthread.h"
 
-class Logger::LogEntryData : public QSharedData {
+static QString _uiHeaderNames[] = {
+  "Timestamp", // 0
+  "Task",
+  "Execution id",
+  "Source",
+  "Severity",
+  "Message" // 5
+};
+
+static QAtomicInt _sequence;
+
+class Logger::LogEntryData : public SharedUiItemData {
 public:
+  QString _id;
   QDateTime _timestamp;
   QString _message;
   Log::Severity _severity;
   QString _task, _execId, _sourceCode;
   LogEntryData(QDateTime timestamp, QString message, Log::Severity severity,
                QString task, QString execId, QString sourceCode)
-    : _timestamp(timestamp),
-      _message(message), _severity(severity), _task(task), _execId(execId),
-      _sourceCode(sourceCode) { }
+    : _id(QString::number(_sequence.fetchAndAddOrdered(1))),
+      _timestamp(timestamp), _message(message), _severity(severity),
+      _task(task), _execId(execId), _sourceCode(sourceCode) { }
+  QVariant uiData(int section, int role) const;
+  QVariant uiHeaderData(int section, int role) const;
+  int uiSectionCount() const;
+  QString id() const { return _id; }
+  QString idQualifier() const { return "logentry"; }
 };
 
 Logger::LogEntry::LogEntry(QDateTime timestamp, QString message,
                            Log::Severity severity, QString task,
                            QString execId, QString sourceCode)
-  : d(new LogEntryData(timestamp, message, severity, task, execId,
-                       sourceCode)) {
+  : SharedUiItem(new LogEntryData(timestamp, message, severity, task, execId,
+                                  sourceCode)) {
 
 }
 
 Logger::LogEntry::LogEntry() {
 }
 
-Logger::LogEntry::LogEntry(const Logger::LogEntry &o) : d(o.d) {
-}
-
-Logger::LogEntry::~LogEntry() {
-}
-
-Logger::LogEntry &Logger::LogEntry::operator=(const Logger::LogEntry &o) {
-  d = o.d;
-  return *this;
-}
-
-bool Logger::LogEntry::isNull() const {
-  return !d;
+Logger::LogEntry::LogEntry(const Logger::LogEntry &other)
+  : SharedUiItem(other) {
 }
 
 QDateTime Logger::LogEntry::timestamp() const {
-  return d ? d->_timestamp : QDateTime();
+  return isNull() ? QDateTime() : data()->_timestamp;
 }
 
 QString Logger::LogEntry::message() const {
-  return d ? d->_message : QString();
+  return isNull() ? QString() : data()->_message;
 }
 
 Log::Severity Logger::LogEntry::severity() const {
-  return d ? d->_severity : Log::Debug;
+  return isNull() ? Log::Debug : data()->_severity;
 }
 
-QString Logger::LogEntry::severityText() const {
-  return Log::severityToString(d ? d->_severity : Log::Debug);
+QString Logger::LogEntry::severityToString() const {
+  return Log::severityToString(isNull() ? Log::Debug : data()->_severity);
 }
 
 QString Logger::LogEntry::task() const {
-  return d ? d->_task : QString();
+  return isNull() ? QString() : data()->_task;
 }
 
 QString Logger::LogEntry::execId() const {
-  return d ? d->_execId : QString();
+  return isNull() ? QString() : data()->_execId;
 }
 
 QString Logger::LogEntry::sourceCode() const {
-  return d ? d->_sourceCode : QString();
+  return isNull() ? QString() : data()->_sourceCode;
+}
+
+QVariant Logger::LogEntryData::uiData(int section, int role) const {
+  switch(role) {
+  case Qt::DisplayRole:
+  case Qt::EditRole:
+    switch(section) {
+    case 0:
+      return _timestamp.toString("yyyy-MM-dd hh:mm:ss,zzz");
+    case 1:
+      return _task;
+    case 2:
+      return _execId;
+    case 3:
+      return _sourceCode;
+    case 4:
+      return Log::severityToString(_severity);
+    case 5:
+      return _message;
+    }
+    break;
+  default:
+    ;
+  }
+  return QVariant();
+}
+
+QVariant Logger::LogEntryData::uiHeaderData(int section, int role) const {
+  return role == Qt::DisplayRole && section >= 0
+      && (unsigned)section < sizeof _uiHeaderNames
+      ? _uiHeaderNames[section] : QVariant();
+}
+
+int Logger::LogEntryData::uiSectionCount() const {
+  return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
 }
 
 Logger::Logger(Log::Severity minSeverity, ThreadModel threadModel)
@@ -93,16 +134,17 @@ Logger::Logger(Log::Severity minSeverity, ThreadModel threadModel)
     break;
   case DedicatedThread:
     _thread = new LoggerThread(this);
+    _thread->setObjectName("Logger-"+Log::severityToString(minSeverity)
+                           +"-"+QString::number((long)this, 16));
     _buffer = new CircularBuffer<LogEntry>(10);
     break;
   case RootLogger:
     _thread = new LoggerThread(this);
+    _thread->setObjectName("RootLogger-"+QString::number((long)this, 16));
     _buffer = new CircularBuffer<LogEntry>(10);
     break;
   }
   if (_thread) {
-    _thread->setObjectName("Logger-"+Log::severityToString(minSeverity)
-                           +"-"+QString::number((long)this, 16));
     _thread->start();
     moveToThread(_thread);
   }

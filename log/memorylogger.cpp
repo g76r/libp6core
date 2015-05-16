@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,11 +15,16 @@
 #include "logmodel.h"
 #include <QMetaObject>
 
-MemoryLogger::MemoryLogger(Log::Severity minSeverity, LogModel *logmodel)
-  : Logger(minSeverity, Logger::DirectCall), _model(logmodel) {
+MemoryLogger::MemoryLogger(
+    Log::Severity minSeverity, QString prefixFilter, LogModel *logmodel)
+  : Logger(minSeverity, Logger::DirectCall), _prefixFilter(prefixFilter),
+    _model(logmodel) {
 }
 
 void MemoryLogger::doLog(const LogEntry entry) {
-  QMetaObject::invokeMethod(_model, "prependLogEntry",
-                            Q_ARG(Logger::LogEntry, entry));
+  if (!_prefixFilter.isNull() && !entry.message().startsWith(_prefixFilter))
+    return;
+  QMetaObject::invokeMethod(_model, "changeItem",
+                            Q_ARG(SharedUiItem, entry),
+                            Q_ARG(SharedUiItem, SharedUiItem()));
 }

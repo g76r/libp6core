@@ -20,6 +20,7 @@
 #include "util/paramset.h"
 #include "thread/circularbuffer.h"
 #include <QThread>
+#include "modelview/shareduiitem.h"
 
 class MultiplexerLogger;
 class LoggerThread;
@@ -37,23 +38,25 @@ class LIBQTSSUSHARED_EXPORT Logger : public QObject {
 
 public:
   class LogEntryData;
-  class LogEntry { // TODO LogEntry should inherit from SharedUiItem
-    QSharedDataPointer<LogEntryData> d;
+  class LogEntry : public SharedUiItem {
   public:
+    LogEntry();
     LogEntry(QDateTime timestamp, QString message, Log::Severity severity,
              QString task, QString execId, QString sourceCode);
-    LogEntry();
-    LogEntry(const LogEntry &o);
-    ~LogEntry();
-    LogEntry &operator=(const LogEntry &o);
-    bool isNull() const;
+    LogEntry(const LogEntry &other);
+    LogEntry &operator=(const LogEntry &other) {
+      SharedUiItem::operator=(other); return *this; }
     QDateTime timestamp() const;
     QString message() const;
     Log::Severity severity() const;
-    QString severityText() const;
+    QString severityToString() const;
     QString task() const;
     QString execId() const;
     QString sourceCode() const;
+
+  private:
+    const LogEntryData *data() const {
+      return (const LogEntryData*)SharedUiItem::data(); }
   };
   enum ThreadModel {
     DirectCall, // the logger is already thread-safe and cannot block
@@ -85,8 +88,11 @@ public:
         if (!_buffer->tryPut(entry)) {
           // warn only once in the Logger lifetime
           if (_bufferOverflown.fetchAndStoreOrdered(1) == 0)
-            qWarning() << "Logger::log discarded at less one log entry due to "
+            qWarning() << QDateTime::currentDateTime()
+                          .toString("yyyy-MM-dd hh:mm:ss,zzz")
+                       << "Logger::log discarded at less one log entry due to "
                           "thread buffer full" << this << entry.message();
+          // LATER have a way to reset flag after a while, to warn again if needed
         }
       } else {
         doLog(entry);
