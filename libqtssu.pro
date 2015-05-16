@@ -40,12 +40,9 @@ SOURCES += \
     thread/blockingtimer.cpp \
     textview/htmltableview.cpp \
     textview/textview.cpp \
-    textview/asynctextview.cpp \
-    textview/htmllistview.cpp \
     httpd/filesystemhttphandler.cpp \
     util/ioutils.cpp \
     httpd/templatinghttphandler.cpp \
-    textview/htmlsetview.cpp \
     mail/mailsender.cpp \
     util/timerwitharguments.cpp \
     textview/clockview.cpp \
@@ -57,8 +54,6 @@ SOURCES += \
     log/filelogger.cpp \
     util/paramsprovider.cpp \
     util/paramsetmodel.cpp \
-    textview/htmltreeview.cpp \
-    textview/csvtreeview.cpp \
     textview/csvtableview.cpp \
     textview/texttableview.cpp \
     log/qterrorcodes.cpp \
@@ -109,12 +104,9 @@ HEADERS +=\
     thread/blockingtimer.h \
     textview/htmltableview.h \
     textview/textview.h \
-    textview/asynctextview.h \
-    textview/htmllistview.h \
     httpd/filesystemhttphandler.h \
     util/ioutils.h \
     httpd/templatinghttphandler.h \
-    textview/htmlsetview.h \
     mail/mailsender.h \
     util/timerwitharguments.h \
     textview/clockview.h \
@@ -126,8 +118,6 @@ HEADERS +=\
     log/filelogger.h \
     util/paramsprovider.h \
     util/paramsetmodel.h \
-    textview/htmltreeview.h \
-    textview/csvtreeview.h \
     textview/csvtableview.h \
     textview/texttableview.h \
     httpd/httpcommon.h \

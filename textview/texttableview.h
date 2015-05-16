@@ -14,7 +14,7 @@
 #ifndef TEXTTABLEVIEW_H
 #define TEXTTABLEVIEW_H
 
-#include "asynctextview.h"
+#include "textview.h"
 
 /** Base class for text table views.
  * @see HtmlTableView
