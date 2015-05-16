@@ -16,6 +16,8 @@
 
 #include "shareduiitemsmodel.h"
 
+// LATER provides a circular buffer implementation, in addition to QList
+
 /** Model holding SharedUiItems, one item per line, one item section per
  * column. */
 class LIBQTSSUSHARED_EXPORT SharedUiItemsTableModel

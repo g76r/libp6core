@@ -72,10 +72,12 @@ public slots:
   void deleteItem(SharedUiItem oldItem);
 
 signals:
-  /** Emited by changeItem, after it performed model changes.
+  /** Emited by changeItem(), after it performed model changes.
    * This is a way for SharedUiItem-aware views to subscribe to changes that
    * this model also subscribe for without connecting to relevant document
-   * manager signals by itself. */
+   * manager signals by itself.
+   * Only changeItem() emits this signal, other methods that may change items,
+   * like deleteItem() don't emit this signal. */
   void itemChanged(SharedUiItem newItem, SharedUiItem oldItem);
 };
 
