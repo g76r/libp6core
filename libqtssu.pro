@@ -57,7 +57,7 @@ SOURCES += \
     textview/csvtableview.cpp \
     textview/texttableview.cpp \
     log/qterrorcodes.cpp \
-    textview/textmatrixmodel.cpp \
+    modelview/textmatrixmodel.cpp \
     util/timeformats.cpp \
     httpd/pipelinehttphandler.cpp \
     httpd/basicauthhttphandler.cpp \
@@ -122,7 +122,7 @@ HEADERS +=\
     textview/texttableview.h \
     httpd/httpcommon.h \
     log/qterrorcodes.h \
-    textview/textmatrixmodel.h \
+    modelview/textmatrixmodel.h \
     util/timeformats.h \
     httpd/pipelinehttphandler.h \
     httpd/basicauthhttphandler.h \

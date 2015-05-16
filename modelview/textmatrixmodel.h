@@ -19,7 +19,6 @@
 #include <QStringList>
 #include <QHash>
 
-// FIXME move to modelview
 /** Kind of 2-dimensions QStringListModel. */
 class LIBQTSSUSHARED_EXPORT TextMatrixModel : public QAbstractTableModel {
   Q_OBJECT
