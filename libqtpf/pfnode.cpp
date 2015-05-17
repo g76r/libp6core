@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -167,7 +167,7 @@ qint64 PfNodeData::internalWritePf(QIODevice *target, QString indent,
       return 0;
     // must split content on \n because whereas it is not allowed in the on-disk
     // format, it can be added through the API
-    QList<QString> lines = _content.toString().split("\n");
+    QStringList lines = _content.toString().split("\n");
     foreach (const QString line, lines) {
       if (!indent.isNull()) {
         if ((r = target->write(indent.toUtf8())) < 0)
@@ -248,8 +248,10 @@ qint64 PfNodeData::internalWritePfSubNodes(QIODevice *target, QString indent,
           return -1;
         total += r;
       }
-      if ((r = _children.at(i).d->internalWritePf(target, indent, options)) < 0)
-        return -1;
+      const PfNode &child = _children[i];
+      if (!child.isNull())
+        if ((r = child.d->internalWritePf(target, indent, options)) < 0)
+          return -1;
       total += r;
     }
     if (!indent.isNull())
@@ -300,30 +302,34 @@ qint64 PfNodeData::internalWritePfContent(QIODevice *target, QString indent,
 
 const QList<PfNode> PfNode::childrenByName(QString name) const {
   QList<PfNode> list;
-  foreach (PfNode child, children())
-    if (child.d->_name == name)
-      list.append(child);
+  if (!name.isEmpty())
+    foreach (PfNode child, children())
+      if (!child.isNull() && child.d->_name == name)
+        list.append(child);
   return list;
 }
 
 bool PfNode::hasChild(QString name) const {
-  foreach (PfNode child, children())
-    if (child.d->_name == name)
-      return true;
+  if (!name.isEmpty())
+    foreach (PfNode child, children())
+      if (!child.isNull() && child.d->_name == name)
+        return true;
   return false;
 }
 
 PfNode PfNode::firstTextChildByName(QString name) const {
-  foreach (PfNode child, children())
-    if (child.d->_name == name && child.contentIsText())
+  if (!name.isEmpty())
+    foreach (PfNode child, children())
+      if (!child.isNull() && child.d->_name == name && child.contentIsText())
         return child;
   return PfNode();
 }
 
 QStringList PfNode::stringChildrenByName(QString name) const {
   QStringList sl;
-  foreach (PfNode child, children())
-    if (child.d->_name == name && child.contentIsText())
+  if (!name.isEmpty())
+    foreach (PfNode child, children())
+      if (!child.isNull() && child.d->_name == name && child.contentIsText())
         sl.append(child.contentAsString());
   return sl;
 }
@@ -331,35 +337,39 @@ QStringList PfNode::stringChildrenByName(QString name) const {
 QList<QPair<QString,QString> > PfNode::stringsPairChildrenByName(
     QString name) const {
   QList<QPair<QString,QString> > l;
-  foreach (PfNode child, children())
-    if (child.d->_name == name && child.contentIsText()) {
-      QString s = child.contentAsString().remove(leadingwhitespace);
-      int i = s.indexOf(whitespace);
-      if (i >= 0)
-        l.append(QPair<QString,QString>(s.left(i), s.mid(i+1)));
-      else
-        l.append(QPair<QString,QString>(s, QString()));
-    }
+  if (!name.isEmpty())
+    foreach (PfNode child, children())
+      if (!child.isNull() && child.d->_name == name && child.contentIsText()) {
+        QString s = child.contentAsString().remove(leadingwhitespace);
+        int i = s.indexOf(whitespace);
+        if (i >= 0)
+          l.append(QPair<QString,QString>(s.left(i), s.mid(i+1)));
+        else
+          l.append(QPair<QString,QString>(s, QString()));
+      }
   return l;
 }
 
 QList<QPair<QString, qint64> > PfNode::stringLongPairChildrenByName(
     QString name) const {
   QList<QPair<QString,qint64> > l;
-  foreach (PfNode child, children())
-    if (child.d->_name == name && child.contentIsText()) {
-      QString s = child.contentAsString().remove(leadingwhitespace);
-      int i = s.indexOf(whitespace);
-      if (i >= 0)
-        l.append(QPair<QString,qint64>(s.left(i),
-                                       s.mid(i).trimmed().toLongLong(0, 0)));
-      else
-        l.append(QPair<QString,qint64>(s, 0));
-    }
+  if (!name.isEmpty())
+    foreach (PfNode child, children())
+      if (!child.isNull() && child.d->_name == name && child.contentIsText()) {
+        QString s = child.contentAsString().remove(leadingwhitespace);
+        int i = s.indexOf(whitespace);
+        if (i >= 0)
+          l.append(QPair<QString,qint64>(s.left(i),
+                                         s.mid(i).trimmed().toLongLong(0, 0)));
+        else
+          l.append(QPair<QString,qint64>(s, 0));
+      }
   return l;
 }
 
 qint64 PfNode::contentAsLong(qint64 defaultValue, bool *ok) const {
+  if (!d)
+    return defaultValue;
   bool myok;
   qint64 v = d->_content.toString().trimmed().toLongLong(&myok, 0);
   if (ok)
@@ -368,6 +378,8 @@ qint64 PfNode::contentAsLong(qint64 defaultValue, bool *ok) const {
 }
 
 double PfNode::contentAsDouble(double defaultValue, bool *ok) const {
+  if (!d)
+    return defaultValue;
   bool myok;
   double v = d->_content.toString().trimmed().toDouble(&myok);
   if (ok)
@@ -376,6 +388,8 @@ double PfNode::contentAsDouble(double defaultValue, bool *ok) const {
 }
 
 bool PfNode::contentAsBool(bool defaultValue, bool *ok) const {
+  if (!d)
+    return defaultValue;
   QString s = d->_content.toString().trimmed();
   bool myok = true, v;
   if (s.compare("true", Qt::CaseInsensitive))
@@ -390,7 +404,7 @@ bool PfNode::contentAsBool(bool defaultValue, bool *ok) const {
 }
 
 QStringList PfNode::contentAsStringList() const {
-  QString v = d->_content.toString(), s;
+  QString v = (d ? d->_content.toString() : QString()), s;
   QStringList l;
   for (int i = 0; i < v.size(); ++i) {
     const QChar &c = v[i];
@@ -411,17 +425,17 @@ QStringList PfNode::contentAsStringList() const {
 
 void PfNode::setAttribute(QString name, QString content) {
   removeChildrenByName(name);
-  d->_children.append(PfNode(name, content));
+  appendChild(PfNode(name, content));
 }
 
-void PfNode::setAttribute(QString name, QList<QString> content) {
+void PfNode::setAttribute(QString name, QStringList content) {
   removeChildrenByName(name);
   PfNode child(name);
   child.setContent(content);
   appendChild(child);
 }
 
-void PfNode::setContent(QList<QString> strings) {
+void PfNode::setContent(QStringList strings) {
   QString v;
   foreach(QString s, strings) {
     s.replace('\\', "\\\\").replace(' ', "\\ ");
@@ -441,13 +455,14 @@ QByteArray PfNode::toPf(PfOptions options) const {
 }
 
 void PfNode::removeChildrenByName(QString name) {
-  for (int i = 0; i < d->_children.size(); ) {
-    PfNode child = d->_children.at(i);
-    if (child.name() == name)
-      d->_children.removeAt(i);
-    else
-      ++i;
-  }
+  if (d)
+    for (int i = 0; i < d->_children.size(); ) {
+      PfNode child = d->_children.at(i);
+      if (child.name() == name)
+        d->_children.removeAt(i);
+      else
+        ++i;
+    }
 }
 
 PfNode PfNode::fromPf(QByteArray source, PfOptions options) {

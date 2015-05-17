@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -15,7 +15,7 @@ under the License.
 #define PFARRAY_H
 
 #include "libqtpf_global.h"
-#include <QString>
+#include <QStringList>
 #include <QList>
 #include <QSharedData>
 #include "pfoptions.h"
@@ -26,8 +26,8 @@ class PfNode;
 class LIBQTPFSHARED_EXPORT PfArrayData : public QSharedData {
   friend class PfArray;
 private:
-  QList<QString> _headers;
-  QList<QList<QString> > _rows;
+  QStringList _headers;
+  QList<QStringList> _rows;
 
 public:
   inline PfArrayData() { }
@@ -38,31 +38,34 @@ private:
   QSharedDataPointer<PfArrayData> d;
 
 public:
-  inline PfArray() : d(new PfArrayData()) {  }
+  inline PfArray() {  }
   inline PfArray(const PfArray &other) : d(other.d) { }
+  PfArray &operator=(const PfArray &other) { d = other.d; return *this; }
   /** @return true if null-size array (0 rows 0 columns 0 headers) */
-  inline bool isNull() const { return d->_headers.isEmpty(); }
+  inline bool isNull() const { return !d; }
   /** @return true if no data (0 rows but maybe some headers defined) */
-  inline bool isEmpty() const { return d->_rows.isEmpty(); }
-  int columnsCount() const { return d->_headers.size(); }
+  inline bool isEmpty() const { return d ? d->_rows.isEmpty() : true; }
+  int columnsCount() const { return d ? d->_headers.size() : 0; }
   /** do not include headers */
-  int rowsCount() const { return d->_rows.size(); }
-  const QList<QString> headers() const { return d->_headers; }
+  int rowsCount() const { return d ? d->_rows.size() : 0; }
+  QStringList headers() const { return d ? d->_headers : QStringList(); }
   /** @param column 0 for first column */
   QString header(int column) const {
-    return column < d->_headers.size() ? d->_headers.at(column) : QString(); }
+    return d && column < d->_headers.size()
+        ? d->_headers.at(column) : QString(); }
   /** do not include headers */
-  const QList<QList<QString> > rows() const { return d->_rows; }
+  QList<QStringList> rows() const {
+    return d ? d->_rows : QList<QStringList>(); }
   /** @param row 0 for first row, not including headers */
-  const QList<QString> row(int row) const {
-    return row < d->_rows.size() ? d->_rows.at(row) : QList<QString>(); }
+  const QStringList row(int row) const {
+    return d && row < d->_rows.size() ? d->_rows.at(row) : QStringList(); }
   /** @param row 0 for first row, not including headers
     * @param column 0 for first column
     * @return QString() if indexes are out of range, QString("") if empty */
   const QString cell(int row, int column) const {
-    if (row >= d->_rows.size())
+    if (!d || row >= d->_rows.size())
       return QString();
-    const QList<QString> &r(d->_rows.at(row));
+    const QStringList &r(d->_rows.at(row));
     if (column >= r.size())
       return "";
     return r.at(column);
@@ -71,24 +74,32 @@ public:
     * @param row 0 for first row, not including headers
     * @param column 0 for first column */
   void setCell(int row, int column, QString value) {
+    if (!d)
+      d = new PfArrayData();
     for (int i = d->_headers.size(); i < column; ++i)
       d->_headers.append(QString::number(i));
     for (int i = d->_rows.size(); i < row; ++i)
-      d->_rows.append(QList<QString>());
-    QList<QString> &r(d->_rows[row]);
+      d->_rows.append(QStringList());
+    QStringList &r(d->_rows[row]);
     for (int i = r.size(); i < column; ++i)
       r.append(QString());
     r[column] = value;
   }
   inline void appendHeader(QString value) {
+    if (!d)
+      d = new PfArrayData();
     d->_headers.append(value);
   }
-  inline void appendRow(QList<QString> values = QList<QString>()) {
+  inline void appendRow(QStringList values = QStringList()) {
+    if (!d)
+      d = new PfArrayData();
     d->_rows.append(values);
     for (int i = d->_headers.size(); i < values.size(); ++i)
       d->_headers.append(QString::number(i));
   }
   inline void appendCell(QString value) {
+    if (!d)
+      d = new PfArrayData();
     if (d->_rows.size() == 0)
       appendRow();
     for (int i = d->_headers.size(); i <= d->_rows.last().size(); ++i)
@@ -97,12 +108,14 @@ public:
   }
   /** convenience method for parser */
   inline void removeLastRowIfEmpty() {
-    if (d->_rows.size() && d->_rows.last().isEmpty())
+    if (d && d->_rows.size() && d->_rows.last().isEmpty())
       d->_rows.removeLast();
   }
   inline void clear() {
-    d->_headers.clear();
-    d->_rows.clear();
+    if (d) {
+      d->_headers.clear();
+      d->_rows.clear();
+    }
   }
   /** Write array content in PF CSV-like format, escaping PF special characters.
     */

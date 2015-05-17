@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -65,7 +65,10 @@ private:
   QSharedDataPointer<PfNodeData> d;
 
 public:
-  explicit inline PfNode(QString name = QString()) : d(new PfNodeData(name)) { }
+  inline PfNode() { }
+  inline PfNode(const PfNode &other) : d(other.d) { }
+  explicit inline PfNode(QString name)
+    : d(name.isEmpty() ? 0 : new PfNodeData(name)) { }
   inline PfNode(QString name, QString content, bool isComment = false)
     : d(new PfNodeData(name, content, isComment)) { }
   inline PfNode &operator=(const PfNode &other) { d = other.d; return *this; }
@@ -75,20 +78,39 @@ public:
 
   // Node related methods /////////////////////////////////////////////////////
 
-  inline QString name() const { return d->_name; }
-  inline void setName(QString name) { d->_name = name; }
-  inline bool isNull() const { return d->isNull(); }
-  inline bool isComment() const { return d->isComment(); }
+  inline QString name() const { return d ? d->_name : QString(); }
+  inline void setName(QString name) {
+    if (name.isEmpty())
+      d = 0;
+    else {
+      if (!d)
+        d = new PfNodeData();
+      d->_name = name;
+    }
+  }
+  inline bool isNull() const { return !d; }
+  inline bool isComment() const { return d && d->isComment(); }
 
   // Children related methods /////////////////////////////////////////////////
 
-  inline const QList<PfNode> children() const { return d->_children; }
+  inline const QList<PfNode> children() const {
+    return d ? d->_children : QList<PfNode>(); }
   /** prepend a child to existing children (do nothing if child.isNull()) */
   inline void prependChild(PfNode child) {
-    if (!child.isNull()) d->_children.prepend(child); }
+    if (!child.isNull()) {
+      if (!d)
+        d = new PfNodeData();
+      d->_children.prepend(child);
+    }
+  }
   /** append a child to existing children (do nothing if child.isNull()) */
   inline void appendChild(PfNode child) {
-    if (!child.isNull()) d->_children.append(child); }
+    if (!child.isNull()) {
+      if (!d)
+        d = new PfNodeData();
+      d->_children.append(child);
+    }
+  }
   /** @return first text child by name
    * Most of the time one will use attribute() and xxxAttribute() methods rather
    * than directly calling firstTextChildByName(). */
@@ -151,8 +173,8 @@ public:
   /** Convenience method (assume content is UTF-8 encoded) */
   inline void setAttribute(QString name, const char *content) {
     setAttribute(name, QString::fromUtf8(content)); }
-  // LATER setAttribute() for QDateTime, QDate, QTime and QList<QString>/QSet<QString>
-  void setAttribute(QString name, QList<QString> content);
+  // LATER setAttribute() for QDateTime, QDate, QTime and QStringList/QSet<QString>
+  void setAttribute(QString name, QStringList content);
   //  /** Syntaxic sugar. */
   //  inline void setAttribute(QString name, qint64 integer) {
   //    setAttribute(name, QString::number(integer));
@@ -164,26 +186,28 @@ public:
   /** Construct a list of all children named 'name'. */
   const QList<PfNode> childrenByName(QString name) const;
   bool hasChild(QString name) const;
-  bool isLeaf() const { return d->_children.size() == 0; }
-  void removeAllChildren() { d->_children.clear(); }
+  /** This PfNode has no children. Null nodes are leaves */
+  bool isLeaf() const { return !d || d->_children.size() == 0; }
+  void removeAllChildren() { if (d) d->_children.clear(); }
   void removeChildrenByName(QString name);
 
   // Content related methods //////////////////////////////////////////////////
 
   /** @return true when there is no content */
-  inline bool contentIsEmpty() const { return d->_content.isEmpty(); }
+  inline bool contentIsEmpty() const { return !d || d->_content.isEmpty(); }
   /** @return true if the content consist only of text data (no binary or
-   * array) or is empty */
-  inline bool contentIsText() const { return d->_content.isText(); }
+   * array) or is empty (or null) */
+  inline bool contentIsText() const { return !d || d->_content.isText(); }
   /** @return true if the content is (fully or partly) binary data, therefore
    * false when empty */
-  inline bool contentIsBinary() const { return d->_content.isBinary(); }
+  inline bool contentIsBinary() const { return d && d->_content.isBinary(); }
   /** @return true if the content is an array
     */
-  inline bool contentIsArray() const { return d->_content.isArray(); }
+  inline bool contentIsArray() const { return d && d->_content.isArray(); }
   /** @return QString() if contentIsBinary() or contentIsArray(), and
    * QString("") if contentIsEmpty() */
-  inline QString contentAsString() const { return d->_content.toString(); }
+  inline QString contentAsString() const {
+    return d ? d->_content.toString() : QString(); }
   /** @return integer value if the string content is a valid C-like integer */
   qint64 contentAsLong(qint64 defaultValue = 0, bool *ok = 0) const;
   /** @return decimal value if the string content is a valid E notation number
@@ -206,48 +230,69 @@ public:
   /** @return QByteArray() if contentIsEmpty() otherwise raw content (no escape
    * for PF special characters) */
   inline QByteArray contentAsByteArray() const {
-    return d->_content.toByteArray(); }
+    return d ? d->_content.toByteArray() : QByteArray(); }
   /** @return PfArray() if not contentIsArray() */
-  PfArray contentAsArray() const { return d->_content.array(); }
+  PfArray contentAsArray() const { return d ? d->_content.array() : PfArray(); }
   /** Append text fragment to context (and remove array if any). */
-  inline void appendContent(const QString text) { d->_content.append(text); }
+  inline void appendContent(const QString text) {
+    if (!d)
+      d = new PfNodeData();
+    d->_content.append(text); }
   /** Append text fragment to context (and remove array if any). */
   inline void appendContent(const char *utf8text) {
+    if (!d)
+      d = new PfNodeData();
     appendContent(QString::fromUtf8(utf8text)); }
   /** Append in-memory binary fragment to context (and remove array if any). */
   inline void appendContent(QByteArray data, QString surface = QString()) {
+    if (!d)
+      d = new PfNodeData();
     d->_content.append(data, surface); }
   /** Append lazy-loaded binary fragment to context (and remove array if any) */
   inline void appendContent(QIODevice *device, qint64 length, qint64 offset,
                             QString surface = QString()) {
+    if (!d)
+      d = new PfNodeData();
     d->_content.append(device, length, offset, surface); }
   /** Replace current content with text fragment. */
   inline void setContent(QString text) {
-    d->_content.clear(); appendContent(text); }
+    if (!d)
+      d = new PfNodeData();
+    d->_content.clear();
+    appendContent(text); }
   /** Replace current content with text fragment. */
   inline void setContent(const char *utf8text) {
     setContent(QString::fromUtf8(utf8text)); }
   /** Replace current content with in-memory binary fragment. */
   inline void setContent(QByteArray data) {
-    d->_content.clear(); appendContent(data); }
+    if (!d)
+      d = new PfNodeData();
+    d->_content.clear();
+    appendContent(data); }
   /** Replace current content with lazy-loaded binary fragment. */
   inline void setContent(QIODevice *device, qint64 length, qint64 offset) {
-    d->_content.clear(); appendContent(device, length, offset); }
+    if (!d)
+      d = new PfNodeData();
+    d->_content.clear();
+    appendContent(device, length, offset); }
   /** Replace current content with an array. */
-  inline void setContent(PfArray array) { d->_content.set(array); }
+  inline void setContent(PfArray array) {
+    if (!d)
+      d = new PfNodeData();
+    d->_content.set(array); }
   /** Replace current content with a text content containing a space separated
    * strings list. Backspaces and spaces inside strings are escaped with
    * backslash */
-  void setContent(QList<QString> strings);
+  void setContent(QStringList strings);
   /** Remove current content and make the node content empty (and thus text). */
-  inline void clearContent() { d->_content.clear(); }
+  inline void clearContent() { if (d) d->_content.clear(); }
 
   // Output methods ///////////////////////////////////////////////////////////
 
   /** Write the whole PfNode tree in PF file format. */
   inline qint64 writePf(QIODevice *target,
                         PfOptions options = PfOptions()) const {
-    return d->writePf(target, options); }
+    return d ? d->writePf(target, options) : 0; }
   /** Convert the whole PfNode tree to PF in a byte array. */
   QByteArray toPf(PfOptions options = PfOptions()) const;
   /** Convert the whole PfNode tree to PF in a characters string.
@@ -269,7 +314,7 @@ public:
     * Base64 text. Encoding is always UTF-8. */
   inline qint64 writeFlatXml(QIODevice *target,
                              PfOptions options = PfOptions()) const {
-    return d->writeFlatXml(target, options); }
+    return d ? d->writeFlatXml(target, options) : 0; }
   // LATER test, debug and uncomment method
   /* Write node and whole tree (children recursively) in compatible XML format.
     * Compatible XML format is a format where every subnode with no subnode
@@ -286,13 +331,13 @@ public:
     * with no escape for PF special chars and so on. */
   inline qint64 writeRawContent(QIODevice *target,
                                 PfOptions options = PfOptions()) const {
-    return d->_content.writeRaw(target, options); }
+    return d ? d->_content.writeRaw(target, options) : 0; }
   /** Write the node content (without node structure and children tree)
     * in PF syntax (escaping special chars and adding binary fragment headers).
     */
   inline qint64 writeContentAsPf(QIODevice *target,
                                  PfOptions options = PfOptions()) const {
-    return d->_content.writePf(target, options); }
+    return d ? d->_content.writePf(target, options) : 0; }
 };
 
 #endif // PFNODE_H

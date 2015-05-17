@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -19,6 +19,7 @@ under the License.
 #include "pfoptions.h"
 
 class LIBQTPFSHARED_EXPORT PfUtils {
+  Q_DISABLE_COPY(PfUtils)
 public:
   /** Return a string with all PF special chars escaped excepted single spaces
     * in the middle of the string, e.g.
@@ -32,9 +33,6 @@ public:
     */
   static QString escape(QString string, PfOptions options,
                         bool escapeEvenSingleSpaces = false);
-
-public:
-  inline PfUtils() {}
 };
 
 #endif // PFUTILS_H

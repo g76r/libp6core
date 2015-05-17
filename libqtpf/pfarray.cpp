@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -23,6 +23,8 @@ qint64 PfArray::writePf(QIODevice *target, PfOptions options) const {
   qint64 total = 0, r;
   QString line;
   bool first = true;
+  if (isNull())
+    return 0;
   foreach (const QString header, d->_headers) {
     if (first)
       first = false;
@@ -34,7 +36,7 @@ qint64 PfArray::writePf(QIODevice *target, PfOptions options) const {
   if ((r = target->write(line.toUtf8())) < 0)
     return -1;
   total += r;
-  foreach (const QList<QString> row, d->_rows) {
+  foreach (const QStringList row, d->_rows) {
     line.clear();
     first = true;
     foreach (const QString cell, row) {
@@ -56,6 +58,8 @@ qint64 PfArray::writeTrTd(QIODevice *target, bool withHeaders,
                           PfOptions options) const {
   Q_UNUSED(options)
   qint64 total = 0, r;
+  if (isNull())
+    return 0;
   QString line("<table>\n");
   if (withHeaders) {
     line.append("<tr>");
@@ -66,7 +70,7 @@ qint64 PfArray::writeTrTd(QIODevice *target, bool withHeaders,
       return -1;
     total += r;
   }
-  foreach (const QList<QString> row, d->_rows) {
+  foreach (const QStringList row, d->_rows) {
     line = "<tr>";
     foreach (const QString cell, row)
       line.append("<td>").append(pftoxmltext(cell)).append("</td>");
@@ -101,7 +105,7 @@ void PfArray::convertToChildrenTree(PfNode *target,
       target->removeChildrenByName(QString::number(r));
   }
   int r = 0;
-  foreach (const QList<QString> row, rows()) {
+  foreach (const QStringList row, rows()) {
     PfNode n(QString::number(r++));
     int c = 0;
     foreach (const QString cell, row) {
