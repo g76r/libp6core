@@ -38,7 +38,7 @@ bool PfDomHandler::text(QString text) {
     setErrorString(tr("text data before root node"));
     return false;
   }
-  if (!_path.last().contentIsEmpty())
+  if (!_path.last().isEmpty())
     _path.last().appendContent(QString(" ")+text);
   else
     _path.last().appendContent(text);
@@ -90,7 +90,7 @@ bool PfDomHandler::endNode(QList<QString> names) {
 }
 
 bool PfDomHandler::comment(QString content) {
-  PfNode node("", content, true);
+  PfNode node = PfNode::createCommentNode(content);
   if (_path.size())
     _path.last().appendChild(node);
   else

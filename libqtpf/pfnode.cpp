@@ -18,6 +18,7 @@ under the License.
 #include <QStringList>
 #include "pfparser.h"
 #include "pfdomhandler.h"
+#include <QRegExp>
 
 #define INDENTATION_EOL_STRING "\n"
 #define INDENTATION_STRING "  "
@@ -68,7 +69,7 @@ qint64 PfNodeData::writeFlatXml(QIODevice *target,
     total += r;
   }
   // content
-  if ((r = _content.writeXmlUsingBase64(target, options)) < 0)
+  if ((r = writeXmlUsingBase64Content(target, options)) < 0)
     return -1;
   total += r;
   // closing tag
@@ -167,7 +168,7 @@ qint64 PfNodeData::internalWritePf(QIODevice *target, QString indent,
       return 0;
     // must split content on \n because whereas it is not allowed in the on-disk
     // format, it can be added through the API
-    QStringList lines = _content.toString().split("\n");
+    QStringList lines = contentAsString().split("\n");
     foreach (const QString line, lines) {
       if (!indent.isNull()) {
         if ((r = target->write(indent.toUtf8())) < 0)
@@ -199,7 +200,7 @@ qint64 PfNodeData::internalWritePf(QIODevice *target, QString indent,
       return -1;
     total += r;
     // subnodes & content
-    if (options.shouldWriteContentBeforeSubnodes() && !_content.isArray()) {
+    if (options.shouldWriteContentBeforeSubnodes() && !isArray()) {
       if ((r = internalWritePfContent(target, indent, options)) < 0)
         return -1;
       total += r;
@@ -249,10 +250,11 @@ qint64 PfNodeData::internalWritePfSubNodes(QIODevice *target, QString indent,
         total += r;
       }
       const PfNode &child = _children[i];
-      if (!child.isNull())
+      if (!child.isNull()) {
         if ((r = child.d->internalWritePf(target, indent, options)) < 0)
           return -1;
-      total += r;
+        total += r;
+      }
     }
     if (!indent.isNull())
       indent.chop(sizeof INDENTATION_STRING - 1);
@@ -263,12 +265,12 @@ qint64 PfNodeData::internalWritePfSubNodes(QIODevice *target, QString indent,
 qint64 PfNodeData::internalWritePfContent(QIODevice *target, QString indent,
                                       PfOptions options) const {
   qint64 total = 0, r;
-  if (_content.isArray()) {
+  if (isArray()) {
     if ((r = target->write("\n")) < 0)
       return -1;
     total += r;
     // array content
-    if ((r = _content.writePf(target, options)) < 0)
+    if ((r = writePfContent(target, options)) < 0)
       return -1;
     total += r;
     if (!indent.isNull()) {
@@ -276,7 +278,7 @@ qint64 PfNodeData::internalWritePfContent(QIODevice *target, QString indent,
         return -1;
       total += r;
     }
-  } else if (!_content.isEmpty()){
+  } else if (!isEmpty()){
     // text or binary content
     if (options.shouldWriteContentBeforeSubnodes() || _children.size() == 0) {
       if ((r = target->write(" ")) < 0)
@@ -293,7 +295,7 @@ qint64 PfNodeData::internalWritePfContent(QIODevice *target, QString indent,
         return -1;
       total += r;
     }
-    if ((r = _content.writePf(target, options)) < 0)
+    if ((r = writePfContent(target, options)) < 0)
       return -1;
     total += r;
   }
@@ -320,7 +322,7 @@ bool PfNode::hasChild(QString name) const {
 PfNode PfNode::firstTextChildByName(QString name) const {
   if (!name.isEmpty())
     foreach (PfNode child, children())
-      if (!child.isNull() && child.d->_name == name && child.contentIsText())
+      if (!child.isNull() && child.d->_name == name && child.isText())
         return child;
   return PfNode();
 }
@@ -329,7 +331,7 @@ QStringList PfNode::stringChildrenByName(QString name) const {
   QStringList sl;
   if (!name.isEmpty())
     foreach (PfNode child, children())
-      if (!child.isNull() && child.d->_name == name && child.contentIsText())
+      if (!child.isNull() && child.d->_name == name && child.isText())
         sl.append(child.contentAsString());
   return sl;
 }
@@ -339,7 +341,7 @@ QList<QPair<QString,QString> > PfNode::stringsPairChildrenByName(
   QList<QPair<QString,QString> > l;
   if (!name.isEmpty())
     foreach (PfNode child, children())
-      if (!child.isNull() && child.d->_name == name && child.contentIsText()) {
+      if (!child.isNull() && child.d->_name == name && child.isText()) {
         QString s = child.contentAsString().remove(leadingwhitespace);
         int i = s.indexOf(whitespace);
         if (i >= 0)
@@ -355,7 +357,7 @@ QList<QPair<QString, qint64> > PfNode::stringLongPairChildrenByName(
   QList<QPair<QString,qint64> > l;
   if (!name.isEmpty())
     foreach (PfNode child, children())
-      if (!child.isNull() && child.d->_name == name && child.contentIsText()) {
+      if (!child.isNull() && child.d->_name == name && child.isText()) {
         QString s = child.contentAsString().remove(leadingwhitespace);
         int i = s.indexOf(whitespace);
         if (i >= 0)
@@ -368,29 +370,23 @@ QList<QPair<QString, qint64> > PfNode::stringLongPairChildrenByName(
 }
 
 qint64 PfNode::contentAsLong(qint64 defaultValue, bool *ok) const {
-  if (!d)
-    return defaultValue;
   bool myok;
-  qint64 v = d->_content.toString().trimmed().toLongLong(&myok, 0);
+  qint64 v = contentAsString().trimmed().toLongLong(&myok, 0);
   if (ok)
     *ok = myok;
   return myok ? v : defaultValue;
 }
 
 double PfNode::contentAsDouble(double defaultValue, bool *ok) const {
-  if (!d)
-    return defaultValue;
   bool myok;
-  double v = d->_content.toString().trimmed().toDouble(&myok);
+  double v = contentAsString().trimmed().toDouble(&myok);
   if (ok)
     *ok = myok;
   return myok ? v : defaultValue;
 }
 
 bool PfNode::contentAsBool(bool defaultValue, bool *ok) const {
-  if (!d)
-    return defaultValue;
-  QString s = d->_content.toString().trimmed();
+  QString s = contentAsString().trimmed();
   bool myok = true, v;
   if (s.compare("true", Qt::CaseInsensitive))
     v = true;
@@ -404,7 +400,7 @@ bool PfNode::contentAsBool(bool defaultValue, bool *ok) const {
 }
 
 QStringList PfNode::contentAsStringList() const {
-  QString v = (d ? d->_content.toString() : QString()), s;
+  QString v = contentAsString(), s;
   QStringList l;
   for (int i = 0; i < v.size(); ++i) {
     const QChar &c = v[i];
@@ -474,3 +470,330 @@ PfNode PfNode::fromPf(QByteArray source, PfOptions options) {
   }
   return PfNode();
 }
+
+qint64 PfNodeData::writePfContent(QIODevice *target, PfOptions options) const {
+  if (isArray()) {
+    if (options.shouldTranslateArrayIntoTree()) {
+      PfNode tmp;
+      _array.convertToChildrenTree(&tmp);
+      qint64 total = 0, r;
+      foreach (PfNode child, tmp.children()) {
+        r = child.writePf(target, options);
+        if (r == -1)
+          return -1;
+        total += r;
+      }
+      return total;
+    } else
+      return _array.writePf(target, options);
+  }
+  qint64 total = 0, r;
+  foreach (const PfFragment f, _fragments) {
+    r = f.writePf(target, options);
+    if (r < 0)
+      return -1;
+    total += r;
+  }
+  return total;
+}
+
+qint64 PfNodeData::writeRawContent(QIODevice *target, PfOptions options) const {
+  if (isArray())
+    return _array.writePf(target, options);
+  qint64 total = 0, r;
+  foreach (const PfFragment f, _fragments) {
+    r = f.writeRaw(target, options);
+    if (r < 0)
+      return -1;
+    total += r;
+  }
+  return total;
+}
+
+qint64 PfNodeData::writeXmlUsingBase64Content(
+    QIODevice *target, PfOptions options) const {
+  if (isArray()) {
+    if (options.shouldTranslateArrayIntoTree()) {
+      PfNode tmp;
+      _array.convertToChildrenTree(&tmp);
+      qint64 total = 0, r;
+      foreach (PfNode child, tmp.children()) {
+        r = child.writeFlatXml(target, options);
+        if (r == -1)
+          return -1;
+        total += r;
+      }
+      return total;
+    } else
+      return _array.writeTrTd(target, true, options);
+  }
+  qint64 total = 0, r;
+  foreach (const PfFragment f, _fragments) {
+    r = f.writeXmlUsingBase64(target, options);
+    if (r < 0)
+      return -1;
+    total += r;
+  }
+  return total;
+}
+
+QByteArray PfNodeData::contentAsByteArray() const {
+  QBuffer buf;
+  buf.open(QIODevice::WriteOnly);
+  writeRawContent(&buf, PfOptions());
+  return buf.data();
+}
+
+inline QString PfNodeData::PfFragmentData::takeFirstLayer(QString &surface) {
+  QRegExp head("^([^:]*)(:|$).*");
+  if (!head.exactMatch(surface))
+    return surface = QString();
+  QString first = head.cap(1);
+  surface.remove(0, first.size()+1);
+  return first;
+}
+
+inline bool PfNodeData::PfFragmentData::removeSurface(
+    QByteArray &data, QString surface) const {
+  QString layer = takeFirstLayer(surface);
+  if (layer.isEmpty() || layer == "null") {
+    // do nothing
+  } else if (layer == "zlib") {
+    QByteArray a = qUncompress((const uchar *)data.constData()+4,
+                               data.size()-4);
+    if (a.isNull()) {
+      qWarning("PF: cannot remove zlib surface");
+      return false;
+    }
+    data = a;
+  } else if (layer == "hex") {
+    QByteArray a = QByteArray::fromHex(data);
+    if (a.isNull()) {
+      qWarning("PF: cannot remove hex surface");
+      return false;
+    }
+    data = a;
+  } else if (layer == "base64") {
+    QByteArray a = QByteArray::fromBase64(data);
+    if (a.isNull()) {
+      qWarning("PF: cannot remove base64 surface");
+      return false;
+    }
+    data = a;
+  } else {
+    qWarning() << "PF: cannot remove unknown surface" << layer;
+    return false;
+  }
+  if (!surface.isEmpty())
+    return removeSurface(data, surface);
+  return true;
+}
+
+inline bool PfNodeData::PfFragmentData::applySurface(
+    QByteArray &data, QString surface) const {
+  QString layer = takeFirstLayer(surface);
+  if (!surface.isEmpty())
+    if (!applySurface(data, surface))
+      return false;
+  if (layer.isEmpty() || layer == "null") {
+    // do nothing
+  } else if (layer == "zlib") {
+    QByteArray a = qCompress(data);
+    if (a.isNull()) {
+      qWarning("PF: cannot apply zlib surface");
+      return false;
+    }
+    data = QByteArray("\0\0\0\0", 4).append(a);
+  } else if (layer == "hex") {
+    data = data.toHex();
+  } else if (layer == "base64") {
+    data = data.toBase64();
+  } else {
+    qWarning() << "PF: cannot apply unknown surface" << layer;
+    return false;
+  }
+  return true;
+}
+
+inline qint64 PfNodeData::PfFragmentData::measureSurface(
+    QByteArray data, QString surface) const {
+  QString layer = takeFirstLayer(surface);
+  if (layer.isEmpty() || layer == "null") {
+    // do nothing
+  } else if (layer == "zlib") {
+    if (surface.isEmpty()) {
+      if (data.size() > 8) {
+        qint64 l;
+        l = (quint64)data.at(0)
+            + ((quint64)data.at(1)<<8)
+            + ((quint64)data.at(2)<<16)
+            + ((quint64)data.at(3)<<24)
+            + ((quint64)data.at(4)<<32)
+            + ((quint64)data.at(5)<<40)
+            + ((quint64)data.at(6)<<48)
+            + ((quint64)data.at(7)<<56);
+        return l < 0 ? 0 : l;
+      } else {
+        qWarning("PF: cannot measure zlib surface");
+        return 0;
+      }
+    } else
+      return measureSurface(qUncompress((const uchar *)data.constData()+4,
+                                        data.size()-4), surface);
+  } else if (layer == "hex") {
+    if (surface.isEmpty())
+      return data.size()/2;
+    else
+      return measureSurface(QByteArray::fromHex(data), surface);
+  } else if (layer == "base64") {
+    if (surface.isEmpty()) {
+      qint64 l = data.size()*3/4;
+      if (data.at(data.size()-2) == '=') {
+        --l;
+        if (data.at(data.size()-3) == '=')
+          --l;
+      }
+      return l;
+    } else
+      return measureSurface(QByteArray::fromBase64(data), surface);
+  } else {
+    qWarning() << "PF: cannot measure unknown surface" << layer;
+  }
+  return true;
+}
+
+void PfNodeData::PfFragmentData::setSurface(
+    QString surface, bool shouldAdjustSize) {
+  _surface = PfOptions::normalizeSurface(surface);
+  if (shouldAdjustSize && !_surface.isNull()) {
+    QByteArray data = _data;
+    if (data.isNull()) {
+      qint64 pos = _device->pos();
+      if (!_device->seek(_offset))
+        goto error;
+      data = _device->read(_length);
+      if (_length != data.size()) {
+error:
+        qDebug() << "PfFragment::setSurface error (lazy-loaded binary fragment)"
+                 << _device->errorString();
+        _device->seek(pos);
+        _size = 0;
+        return;
+      }
+      _device->seek(pos);
+    }
+    _size = measureSurface(data, _surface);
+  }
+}
+
+qint64 PfNodeData::PfFragmentData::write(
+    QIODevice *target, Format format, PfOptions options) const {
+  if (isEmpty())
+    return 0;
+  if (isText()) {
+    switch (format) {
+    case Raw:
+      return target->write(_text.toUtf8());
+    case Pf:
+      return target->write(PfUtils::escape(_text, options).toUtf8());
+    case XmlBase64:
+      return target->write(pftoxmltext(_text).toUtf8());
+    }
+    return -1;
+  }
+  QString surface = options.outputSurface();
+  if (surface.isNull())
+    surface = _surface;
+  QByteArray data = _data;
+  qint64 total = 0, pos = _device ? _device->pos() : 0;
+  QString step = "begin(surface)";
+  // handling surfaces
+  if (!_surface.isNull() || !surface.isNull()) {
+    // surface cannot (yet?) be applyed to lazy-loaded fragments, therefore they
+    // must be loaded in memory now
+    if (data.isNull()) {
+      if (!_device->seek(_offset))
+        goto error;
+      step = "seeked(surface)";
+      data = _device->read(_length);
+      if (_length != data.size())
+        goto error;
+      _device->seek(pos);
+    }
+    step = "read(surface)";
+    // decoding input surface, i.e. surface of in-memory or lazy-loaded document
+    if (!removeSurface(data, _surface))
+      return -1;
+    // for PF, encoding output surface, i.e. surface of document being written
+    if (format == Pf && !applySurface(data, surface))
+      return -1;
+  }
+  if (data.isNull()){
+    // unsurfaced lazy-loaded binary
+    step = "begin(lazy)";
+    if (!_device)
+      return -1;
+    qint64 r, remaining = _length;
+    if (!_device->seek(_offset))
+      goto error;
+    step = "seeked(lazy)";
+    if (format == Pf) {
+      QString header = QString("|%1|%2\n").arg(_surface).arg(_length);
+      if ((r = target->write(header.toUtf8())) < 0)
+        goto error;
+      total += r;
+    }
+    step = "headerwritten(lazy)";
+    char buf[65536];
+    while (remaining) {
+      r = _device->read(buf, std::min(remaining, qint64(sizeof(buf))));
+      if (r < 0)
+        goto error;
+      step = "read(lazy)";
+      if (format == XmlBase64) {
+        r = target->write(QByteArray(buf, r).toBase64());
+      } else
+        r = target->write(buf, r);
+      if (r < 0)
+        goto error;
+      step = "written(lazy)";
+      total += r;
+      remaining -= r;
+    }
+    step = "datawritten(lazy)";
+    if (!_device->seek(pos))
+      goto error;
+  } else {
+    // in-memory binary or surfaced lazy-loaded binary
+    step = "begin(in-memory)";
+    qint64 total = 0, r;
+    if (format == Pf) {
+      QString header = QString("|%1|%2\n").arg(surface).arg(data.size());
+      if ((r = target->write(header.toUtf8())) < 0)
+        goto error;
+      total += r;
+    }
+    step = "headerwritten(in-memory)";
+    if (format == XmlBase64) {
+      QByteArray ba(data.toBase64());
+      r = target->write(ba);
+      if (r != ba.size())
+        goto error;
+    } else {
+      r = target->write(data);
+      if (r != data.size())
+        goto error;
+    }
+    total += r;
+    step = "datawritten(in-memory)";
+  }
+  return total;
+error:
+  qDebug() << "PfFragment::write error" << step << total
+           << (_device ? _device->errorString() : "")
+           << target->errorString();
+  if (_device)
+    _device->seek(pos);
+  return -1;
+}
+

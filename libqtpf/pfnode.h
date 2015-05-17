@@ -18,34 +18,142 @@ under the License.
 #include <QString>
 #include <QList>
 #include <QIODevice>
-#include "pfcontent.h"
 #include <QVariant>
 #include <QSharedData>
 #include "pfoptions.h"
 #include <QStringList>
+#include <QBuffer>
+#include "pfarray.h"
 
 class PfNode;
 
 class LIBQTPFSHARED_EXPORT PfNodeData : public QSharedData {
   friend class PfNode;
 
+  class PfFragment;
+
+  /** Internal class for Qt's implicit sharing idiom.
+    * @see PfFragment */
+  class LIBQTPFSHARED_EXPORT PfFragmentData : public QSharedData {
+    friend class PfNodeData::PfFragment;
+
+    enum Format {Raw, Pf, XmlBase64 };
+
+    QString _text;
+    qint64 _size;
+    mutable QIODevice *_device;
+    qint64 _length;
+    qint64 _offset;
+    QByteArray _data;
+    QString _surface;
+
+    explicit inline PfFragmentData(QString text = QString())
+      : _text(text.isNull() ? "" : text), _size(_text.toUtf8().size()),
+        _device(0), _length(0), _offset(0) { }
+    inline PfFragmentData(QIODevice *device, qint64 length, qint64 offset,
+                          QString surface) : _size(0), _device(device),
+      _length(length), _offset(offset) { setSurface(surface, true); }
+    inline PfFragmentData(QByteArray data, QString surface)
+      : _size(0), _device(0), _length(data.length()), _offset(0), _data(data) {
+      setSurface(surface, true); }
+    qint64 write(QIODevice *target, Format format, PfOptions options) const;
+    inline bool isText() const { return !isBinary(); }
+    inline bool isEmpty() const { return isText() && _text.isEmpty(); }
+    inline bool isBinary() const { return _length > 0 || _device; }
+    inline bool isLazyBinary() const { return _device; }
+    void setSurface(QString surface, bool shouldAdjustSize);
+    inline qint64 measureSurface(QByteArray data, QString surface) const;
+    inline bool removeSurface(QByteArray &data, QString surface) const;
+    inline bool applySurface(QByteArray &data, QString surface) const;
+    inline static QString takeFirstLayer(QString &surface);
+  };
+
+  /** Fragment of PF node content, this class is only for internal use of
+    * implementation, mainly PfContent. It should not be used directly by
+    * application code.
+    *
+    * A fragment is either text or binary or array.
+    * A binary fragment can be lazy or not.
+    * There is no difference between a null or empty fragment.
+    * An empty fragment is a text fragment.
+    */
+  class LIBQTPFSHARED_EXPORT PfFragment {
+  private:
+    QSharedDataPointer<PfFragmentData> d;
+
+  public:
+    inline PfFragment() { }
+    explicit inline PfFragment(QString text)
+      : d(new PfFragmentData(text)) { }
+    inline PfFragment(QIODevice *device, qint64 length, qint64 offset,
+                      QString surface)
+      : d(new PfFragmentData(device, length, offset, surface)) { }
+    inline PfFragment(QByteArray data, QString surface)
+      : d(new PfFragmentData(data, surface)) { }
+    inline PfFragment(const PfFragment &other) : d(other.d) { }
+    PfFragment &operator =(const PfFragment &other) { d = other.d; return *this; }
+    inline bool isEmpty() const { return d ? d->isEmpty() : true; }
+    inline bool isText() const { return d ? d->isText() : true; }
+    inline bool isBinary() const { return d ? d->isBinary() : false; }
+    inline bool isLazyBinary() const { return d ? d->isLazyBinary() : false; }
+    /** binary size (for text: size of text in UTF-8) */
+    inline qint64 size() const { return d ? d->_size : 0; }
+    /** .isNull() if binary fragment */
+    inline QString text() const { return d ? d->_text : QString(); }
+    /** Write content as PF-escaped string or binary with header. */
+    inline qint64 writePf(QIODevice *target, PfOptions options) const {
+      return d ? d->write(target, PfFragmentData::Pf, options) : 0;
+    }
+    /** Write actual content in unescaped format. */
+    inline qint64 writeRaw(QIODevice *target, PfOptions options) const {
+      return d ? d->write(target, PfFragmentData::Raw, options) : 0;
+    }
+    /** Write content as XML string, using base64 encoding for binary fragments */
+    inline qint64 writeXmlUsingBase64(QIODevice *target,
+                                      PfOptions options) const {
+      return d ? d->write(target, PfFragmentData::XmlBase64, options) : 0;
+    }
+  };
+
   QString _name;
   QList<PfNode> _children;
   bool _isComment;
-  PfContent _content;
+  QList<PfFragment> _fragments;
+  PfArray _array;
 
 public:
   explicit inline PfNodeData(QString name = QString()) : _name(name),
     _isComment(false) { }
 
 private:
-  inline PfNodeData(QString name, QString content, bool isComment = false)
+  inline PfNodeData(QString name, QString content, bool isComment)
     : _name(name), _isComment(isComment) {
     if (!content.isEmpty())
-      _content.append(content);
+      _fragments.append(PfFragment(content));
   }
-  inline bool isNull() const { return _name.isNull(); }
   inline bool isComment() const { return _isComment; }
+  inline bool isEmpty() const {
+    return !_fragments.size() && _array.isNull(); }
+  inline bool isArray() const { return !_array.isNull(); }
+  inline bool isText() const {
+    return !isArray() && !isBinary(); }
+  inline bool isBinary() const {
+    foreach (const PfFragment &f, _fragments)
+      if (f.isBinary())
+        return true;
+    return false;
+  }
+  inline QString contentAsString() const {
+    if (isArray())
+      return QString();
+    QString s("");
+    foreach (const PfFragment &f, _fragments) {
+      if (f.isBinary())
+        return QString();
+      s.append(f.text());
+    }
+    return s;
+  }
   qint64 writePf(QIODevice *target, PfOptions options) const;
   qint64 writeFlatXml(QIODevice *target, PfOptions options) const;
   //qint64 writeCompatibleXml(QIODevice &target) const;
@@ -56,6 +164,23 @@ private:
                                         PfOptions options) const;
   inline qint64 internalWritePfContent(QIODevice *target, QString indent,
                                        PfOptions options) const;
+  /** Provide the content as a byte array.
+    * If there are lazy-loaded binary fragments, they are loaded into memory,
+    * in the returned QByteArray but do not keep them cached inside PfContent
+    * structures, therefore the memory will be freed when the QByteArray is
+    * discarded and if toByteArray() is called again, the data will be
+    * loaded again. */
+  QByteArray contentAsByteArray() const;
+  /** Write content to target device in PF format (with escape sequences and
+    * binary headers). */
+  qint64 writePfContent(QIODevice *target, PfOptions options) const;
+  /** Write content to target device in raw data format (no PF escape sequences
+    * but actual content). */
+  qint64 writeRawContent(QIODevice *target, PfOptions options) const;
+  /** Write content to target device in XML format, embeding binary fragments
+    * using base64 encoding. */
+  qint64 writeXmlUsingBase64Content(QIODevice *target, PfOptions options) const;
+
 };
 
 class LIBQTPFSHARED_EXPORT PfNode {
@@ -64,13 +189,21 @@ class LIBQTPFSHARED_EXPORT PfNode {
 private:
   QSharedDataPointer<PfNodeData> d;
 
+  inline PfNode(PfNodeData *data) : d(data) { }
+
 public:
+  /** Create a null node. */
   inline PfNode() { }
   inline PfNode(const PfNode &other) : d(other.d) { }
+  /** If name is empty, the node will be null. */
   explicit inline PfNode(QString name)
-    : d(name.isEmpty() ? 0 : new PfNodeData(name)) { }
-  inline PfNode(QString name, QString content, bool isComment = false)
-    : d(new PfNodeData(name, content, isComment)) { }
+      : d(name.isEmpty() ? 0 : new PfNodeData(name)) { }
+  /** If name is empty, the node will be null. */
+  inline PfNode(QString name, QString content)
+    : d(name.isEmpty() ? 0 : new PfNodeData(name, content, false)) { }
+  /** Create a comment node. */
+  static inline PfNode createCommentNode(QString comment) {
+    return PfNode(new PfNodeData("comment", comment, true)); }
   inline PfNode &operator=(const PfNode &other) { d = other.d; return *this; }
   /** Build a PfNode from PF external format.
    * @return first encountered root node or PfNode() */
@@ -78,7 +211,9 @@ public:
 
   // Node related methods /////////////////////////////////////////////////////
 
+  /** A node has an empty string name if and only if the node is null. */
   inline QString name() const { return d ? d->_name : QString(); }
+  /** Replace node name. If name is empty, the node will become null. */
   inline void setName(QString name) {
     if (name.isEmpty())
       d = 0;
@@ -193,22 +328,22 @@ public:
 
   // Content related methods //////////////////////////////////////////////////
 
-  /** @return true when there is no content */
-  inline bool contentIsEmpty() const { return !d || d->_content.isEmpty(); }
-  /** @return true if the content consist only of text data (no binary or
-   * array) or is empty (or null) */
-  inline bool contentIsText() const { return !d || d->_content.isText(); }
+  /** @return true when there is no content (neither text or binary fragment or
+   * array content) */
+  inline bool isEmpty() const { return !d || d->isEmpty(); }
+  /** @return true if the content is an array */
+  inline bool isArray() const { return d && d->isArray(); }
+  /** @return true if the content consist only of text data (no binary no array)
+   * or is empty or the node is null */
+  inline bool isText() const { return !d || d->isText(); }
   /** @return true if the content is (fully or partly) binary data, therefore
    * false when empty */
-  inline bool contentIsBinary() const { return d && d->_content.isBinary(); }
-  /** @return true if the content is an array
-    */
-  inline bool contentIsArray() const { return d && d->_content.isArray(); }
-  /** @return QString() if contentIsBinary() or contentIsArray(), and
-   * QString("") if contentIsEmpty() */
+  inline bool isBinary() const { return d && d->isBinary(); }
+  /** @return QString() if isBinary() or isArray() or isNull(), and QString("")
+   * if isText() even if isEmpty() */
   inline QString contentAsString() const {
-    return d ? d->_content.toString() : QString(); }
-  /** @return integer value if the string content is a valid C-like integer */
+    return d ? d->contentAsString() : QString(); }
+  /** @return integer value if the string content T a valid C-like integer */
   qint64 contentAsLong(qint64 defaultValue = 0, bool *ok = 0) const;
   /** @return decimal value if the string content is a valid E notation number
    * the implementation does not fully support the PF specications since it
@@ -227,65 +362,76 @@ public:
    * doubled since it's already an escape character in PF syntax (e.g.
    * "foo\\ 1 bar baz" first element is "foo 1"). */
   QStringList contentAsStringList() const;
-  /** @return QByteArray() if contentIsEmpty() otherwise raw content (no escape
+  /** @return QByteArray() if isEmpty() otherwise raw content (no escape
    * for PF special characters) */
   inline QByteArray contentAsByteArray() const {
-    return d ? d->_content.toByteArray() : QByteArray(); }
-  /** @return PfArray() if not contentIsArray() */
-  PfArray contentAsArray() const { return d ? d->_content.array() : PfArray(); }
+    return d ? d->contentAsByteArray() : QByteArray(); }
+  /** @return PfArray() if not isArray() */
+  PfArray contentAsArray() const { return d ? d->_array : PfArray(); }
   /** Append text fragment to context (and remove array if any). */
   inline void appendContent(const QString text) {
     if (!d)
       d = new PfNodeData();
-    d->_content.append(text); }
+    d->_array.clear();
+    // LATER merge fragments if previous one is text
+    if (!text.isEmpty())
+      d->_fragments.append(PfNodeData::PfFragment(text));
+  }
   /** Append text fragment to context (and remove array if any). */
   inline void appendContent(const char *utf8text) {
-    if (!d)
-      d = new PfNodeData();
     appendContent(QString::fromUtf8(utf8text)); }
   /** Append in-memory binary fragment to context (and remove array if any). */
   inline void appendContent(QByteArray data, QString surface = QString()) {
     if (!d)
       d = new PfNodeData();
-    d->_content.append(data, surface); }
+    d->_array.clear();
+    // Merging fragments if previous is in-memory binary is probably a bad idea
+    // because it would prevent Qt's implicite sharing to work.
+    if (!data.isEmpty())
+      d->_fragments.append(PfNodeData::PfFragment(data, surface));
+  }
   /** Append lazy-loaded binary fragment to context (and remove array if any) */
   inline void appendContent(QIODevice *device, qint64 length, qint64 offset,
                             QString surface = QString()) {
     if (!d)
       d = new PfNodeData();
-    d->_content.append(device, length, offset, surface); }
+    d->_array.clear();
+    if (device && length > 0)
+      d->_fragments
+          .append(PfNodeData::PfFragment(device, length, offset, surface));
+  }
   /** Replace current content with text fragment. */
   inline void setContent(QString text) {
-    if (!d)
-      d = new PfNodeData();
-    d->_content.clear();
+    clearContent();
     appendContent(text); }
   /** Replace current content with text fragment. */
   inline void setContent(const char *utf8text) {
     setContent(QString::fromUtf8(utf8text)); }
   /** Replace current content with in-memory binary fragment. */
   inline void setContent(QByteArray data) {
-    if (!d)
-      d = new PfNodeData();
-    d->_content.clear();
+    clearContent();
     appendContent(data); }
   /** Replace current content with lazy-loaded binary fragment. */
   inline void setContent(QIODevice *device, qint64 length, qint64 offset) {
-    if (!d)
-      d = new PfNodeData();
-    d->_content.clear();
+    clearContent();
     appendContent(device, length, offset); }
   /** Replace current content with an array. */
   inline void setContent(PfArray array) {
     if (!d)
       d = new PfNodeData();
-    d->_content.set(array); }
+    d->_fragments.clear();
+    d->_array = array; }
   /** Replace current content with a text content containing a space separated
    * strings list. Backspaces and spaces inside strings are escaped with
    * backslash */
   void setContent(QStringList strings);
   /** Remove current content and make the node content empty (and thus text). */
-  inline void clearContent() { if (d) d->_content.clear(); }
+  inline void clearContent() {
+    if (d) {
+      d->_array.clear();
+      d->_fragments.clear();
+    }
+  }
 
   // Output methods ///////////////////////////////////////////////////////////
 
@@ -331,13 +477,13 @@ public:
     * with no escape for PF special chars and so on. */
   inline qint64 writeRawContent(QIODevice *target,
                                 PfOptions options = PfOptions()) const {
-    return d ? d->_content.writeRaw(target, options) : 0; }
+    return d ? d->writeRawContent(target, options) : 0; }
   /** Write the node content (without node structure and children tree)
     * in PF syntax (escaping special chars and adding binary fragment headers).
     */
   inline qint64 writeContentAsPf(QIODevice *target,
                                  PfOptions options = PfOptions()) const {
-    return d ? d->_content.writePf(target, options) : 0; }
+    return d ? d->writePfContent(target, options) : 0; }
 };
 
 #endif // PFNODE_H

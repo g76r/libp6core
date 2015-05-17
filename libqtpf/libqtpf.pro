@@ -32,7 +32,6 @@ SOURCES += \
     pfnode.cpp \
     pfhandler.cpp \
     pfdomhandler.cpp \
-    pfcontent.cpp \
     pfarray.cpp
 
 HEADERS +=\
@@ -44,7 +43,6 @@ HEADERS +=\
     pfinternals.h \
     pfhandler.h \
     pfdomhandler.h \
-    pfcontent.h \
     pfarray.h
 
 unix {
