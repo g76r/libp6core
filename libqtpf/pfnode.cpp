@@ -544,7 +544,8 @@ QByteArray PfNodeData::contentAsByteArray() const {
   return buf.data();
 }
 
-inline QString PfNodeData::PfFragmentData::takeFirstLayer(QString &surface) {
+QString PfNodeData::PfAbstractBinaryFragmentData::takeFirstLayer(
+    QString &surface) const {
   QRegExp head("^([^:]*)(:|$).*");
   if (!head.exactMatch(surface))
     return surface = QString();
@@ -553,7 +554,7 @@ inline QString PfNodeData::PfFragmentData::takeFirstLayer(QString &surface) {
   return first;
 }
 
-inline bool PfNodeData::PfFragmentData::removeSurface(
+bool PfNodeData::PfAbstractBinaryFragmentData::removeSurface(
     QByteArray &data, QString surface) const {
   QString layer = takeFirstLayer(surface);
   if (layer.isEmpty() || layer == "null") {
@@ -589,7 +590,7 @@ inline bool PfNodeData::PfFragmentData::removeSurface(
   return true;
 }
 
-inline bool PfNodeData::PfFragmentData::applySurface(
+bool PfNodeData::PfAbstractBinaryFragmentData::applySurface(
     QByteArray &data, QString surface) const {
   QString layer = takeFirstLayer(surface);
   if (!surface.isEmpty())
@@ -615,7 +616,7 @@ inline bool PfNodeData::PfFragmentData::applySurface(
   return true;
 }
 
-inline qint64 PfNodeData::PfFragmentData::measureSurface(
+qint64 PfNodeData::PfAbstractBinaryFragmentData::measureSurface(
     QByteArray data, QString surface) const {
   QString layer = takeFirstLayer(surface);
   if (layer.isEmpty() || layer == "null") {
@@ -662,138 +663,201 @@ inline qint64 PfNodeData::PfFragmentData::measureSurface(
   return true;
 }
 
-void PfNodeData::PfFragmentData::setSurface(
+void PfNodeData::PfBinaryFragmentData::setSurface(
     QString surface, bool shouldAdjustSize) {
   _surface = PfOptions::normalizeSurface(surface);
   if (shouldAdjustSize && !_surface.isNull()) {
     QByteArray data = _data;
-    if (data.isNull()) {
-      qint64 pos = _device->pos();
-      if (!_device->seek(_offset))
-        goto error;
-      data = _device->read(_length);
-      if (_length != data.size()) {
-error:
-        qDebug() << "PfFragment::setSurface error (lazy-loaded binary fragment)"
-                 << _device->errorString();
-        _device->seek(pos);
-        _size = 0;
-        return;
-      }
-      _device->seek(pos);
-    }
     _size = measureSurface(data, _surface);
   }
 }
 
-qint64 PfNodeData::PfFragmentData::write(
-    QIODevice *target, Format format, PfOptions options) const {
-  if (isEmpty())
-    return 0;
-  if (isText()) {
-    switch (format) {
-    case Raw:
-      return target->write(_text.toUtf8());
-    case Pf:
-      return target->write(PfUtils::escape(_text, options).toUtf8());
-    case XmlBase64:
-      return target->write(pftoxmltext(_text).toUtf8());
+void PfNodeData::PfLazyBinaryFragmentData::setSurface(
+    QString surface, bool shouldAdjustSize) {
+  _surface = PfOptions::normalizeSurface(surface);
+  if (shouldAdjustSize && !_surface.isNull()) {
+    qint64 pos = _device->pos();
+    QByteArray data;
+    if (!_device->seek(_offset))
+      goto error;
+    // LATER avoid loading in memory the full data at a whole
+    data = _device->read(_length);
+    if (_length != data.size()) {
+error:
+      qDebug() << "PfFragment::setSurface error (lazy-loaded binary fragment)"
+               << _device->errorString();
+      _device->seek(pos);
+      _size = 0;
+      return;
     }
-    return -1;
+    _device->seek(pos);
+    _size = measureSurface(data, _surface);
   }
-  QString surface = options.outputSurface();
-  if (surface.isNull())
-    surface = _surface;
-  QByteArray data = _data;
-  qint64 total = 0, pos = _device ? _device->pos() : 0;
-  QString step = "begin(surface)";
-  // handling surfaces
-  if (!_surface.isNull() || !surface.isNull()) {
+}
+
+#include <stdlib.h>
+PfNodeData::PfFragmentData::~PfFragmentData() {
+  /*if (random() % 7824 == 0) {
+    char *ptr = 0;
+    *ptr = '0';
+  }*/
+}
+
+bool PfNodeData::PfFragmentData::isText() const {
+  return false;
+}
+
+QString PfNodeData::PfFragmentData::text() const {
+  return QString();
+}
+
+bool PfNodeData::PfFragmentData::isEmpty() const {
+  return false;
+}
+
+bool PfNodeData::PfFragmentData::isBinary() const {
+  return false;
+}
+
+bool PfNodeData::PfFragmentData::isLazyBinary() const {
+  return false;
+}
+
+qint64 PfNodeData::PfTextFragmentData::write(
+    QIODevice *target, Format format, PfOptions options) const {
+  switch (format) {
+  case Raw:
+    return target->write(_text.toUtf8());
+  case Pf:
+    return target->write(PfUtils::escape(_text, options).toUtf8());
+  case XmlBase64:
+    return target->write(pftoxmltext(_text).toUtf8());
+  }
+  return -1;
+}
+
+bool PfNodeData::PfTextFragmentData::isText() const {
+  return true;
+}
+
+QString PfNodeData::PfTextFragmentData::text() const {
+  return _text;
+}
+
+bool PfNodeData::PfAbstractBinaryFragmentData::isBinary() const {
+  return true;
+}
+
+qint64 PfNodeData::PfBinaryFragmentData::write(
+    QIODevice *target, Format format, PfOptions options) const {
+  return writeDataApplyingSurface(target, format, options, _data);
+}
+
+qint64 PfNodeData::PfLazyBinaryFragmentData::write(
+    QIODevice *target, Format format, PfOptions options) const {
+  qint64 total = 0, pos;
+  if (!_device || !target)
+    goto error;
+  pos = _device->pos();
+  if (!_surface.isEmpty()) {
     // surface cannot (yet?) be applyed to lazy-loaded fragments, therefore they
     // must be loaded in memory now
-    if (data.isNull()) {
-      if (!_device->seek(_offset))
-        goto error;
-      step = "seeked(surface)";
-      data = _device->read(_length);
-      if (_length != data.size())
-        goto error;
-      _device->seek(pos);
-    }
-    step = "read(surface)";
-    // decoding input surface, i.e. surface of in-memory or lazy-loaded document
-    if (!removeSurface(data, _surface))
-      return -1;
-    // for PF, encoding output surface, i.e. surface of document being written
-    if (format == Pf && !applySurface(data, surface))
-      return -1;
-  }
-  if (data.isNull()){
+    QByteArray data;
+    if (!_device->seek(_offset))
+      goto error;
+    data = _device->read(_length);
+    if (_length != data.size())
+      goto error;
+    _device->seek(pos);
+    return writeDataApplyingSurface(target, format, options, data);
+  } else {
     // unsurfaced lazy-loaded binary
-    step = "begin(lazy)";
     if (!_device)
       return -1;
     qint64 r, remaining = _length;
     if (!_device->seek(_offset))
       goto error;
-    step = "seeked(lazy)";
     if (format == Pf) {
       QString header = QString("|%1|%2\n").arg(_surface).arg(_length);
       if ((r = target->write(header.toUtf8())) < 0)
         goto error;
       total += r;
     }
-    step = "headerwritten(lazy)";
     char buf[65536];
     while (remaining) {
       r = _device->read(buf, std::min(remaining, qint64(sizeof(buf))));
       if (r < 0)
         goto error;
-      step = "read(lazy)";
       if (format == XmlBase64) {
         r = target->write(QByteArray(buf, r).toBase64());
       } else
         r = target->write(buf, r);
       if (r < 0)
         goto error;
-      step = "written(lazy)";
       total += r;
       remaining -= r;
     }
-    step = "datawritten(lazy)";
     if (!_device->seek(pos))
       goto error;
-  } else {
-    // in-memory binary or surfaced lazy-loaded binary
-    step = "begin(in-memory)";
-    qint64 total = 0, r;
-    if (format == Pf) {
-      QString header = QString("|%1|%2\n").arg(surface).arg(data.size());
-      if ((r = target->write(header.toUtf8())) < 0)
-        goto error;
-      total += r;
-    }
-    step = "headerwritten(in-memory)";
-    if (format == XmlBase64) {
-      QByteArray ba(data.toBase64());
-      r = target->write(ba);
-      if (r != ba.size())
-        goto error;
-    } else {
-      r = target->write(data);
-      if (r != data.size())
-        goto error;
-    }
-    total += r;
-    step = "datawritten(in-memory)";
   }
   return total;
+
 error:
-  qDebug() << "PfFragment::write error" << step << total
-           << (_device ? _device->errorString() : "")
-           << target->errorString();
+  qDebug() << "PfFragment::write() error: target device error:"
+           << (target ? target->errorString() : "device is null")
+           << " read (lazy) device error: "
+           << (_device ? _device->errorString() : "device is null")
+           << " bytes read so far: " << total;
   if (_device)
     _device->seek(pos);
   return -1;
 }
 
+bool PfNodeData::PfLazyBinaryFragmentData::isLazyBinary() const {
+  return true;
+}
+
+qint64 PfNodeData::PfAbstractBinaryFragmentData::writeDataApplyingSurface(
+    QIODevice *target, Format format, PfOptions options,
+    QByteArray data) const {
+  QString outputSurface = options.outputSurface();
+  if (outputSurface.isNull() && format == Pf)
+    outputSurface = _surface; // for PF, default output surface is original one
+  // handling surfaces
+  if ((!_surface.isNull() || !outputSurface.isNull())
+      && _surface != outputSurface) {
+    // decoding input surface, i.e. surface of in-memory or lazy-loaded document
+    if (!removeSurface(data, _surface))
+      return -1;
+    // encoding output surface, i.e. surface of document being written
+    if (!applySurface(data, outputSurface))
+      return -1;
+  }
+
+  // writing data
+  qint64 total = 0, r;
+  if (format == Pf) {
+    QString header = QString("|%1|%2\n").arg(outputSurface).arg(data.size());
+    if ((r = target->write(header.toUtf8())) < 0)
+      goto error;
+    total += r;
+  }
+  if (format == XmlBase64) {
+    QByteArray ba(data.toBase64());
+    r = target->write(ba);
+    if (r != ba.size())
+      goto error;
+  } else {
+    r = target->write(data);
+    if (r != data.size())
+      goto error;
+  }
+  total += r;
+  return total;
+
+error:
+  qDebug() << "PfFragment::write() error: target device error:"
+           << (target ? target->errorString() : "device is null")
+           << " bytes read so far: " << total << "/" << data.size();
+  return -1;
+}
