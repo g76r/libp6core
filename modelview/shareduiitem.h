@@ -98,10 +98,25 @@ protected:
 };
 
 /** Parent class for implicitely shared data classes to be queried as a user
- * interface item, i.e. an object with uiDataCount() sections that can be
- * queried as QVariant via uiData() and uiHeaderData().
- * This is usefull used both in QAbstractItemModel implementation as data items
- * and in custom forms.
+ * interface item consisting of numbered sections.
+ *
+ * This is usefull used as data items:
+ * - in QAbstractItemModel implementations targeted at table or tree views by
+ *   mapping sections to columns (using one of SharedUiItemsModel
+ *   implementations),
+ * - in custom forms by mapping sections to widgets (using
+ *   SharedUiItemWidgetMapper),
+ * - in QGraphicsScene with a custom QGraphicsItem that maps sections to
+ *   graphics elements, e.g. section 0 to a label title, section 3 to a
+ *   subtitle, background color depending on section 7 being equal to "foo"...
+ *
+ * The main concept is to have all data object providing user interface info
+ * through a unique contract consisting of uiDataCount() sections that can be
+ * queried as QVariant through uiData() and uiHeaderData(), and, optionaly,
+ * that can be user-edited through setUiData().
+ *
+ * SharedUiItem can be regarded as an alternative to Qt's generic UI items like
+ * QTreeWidgetItem or QStandardItem, in a more model-oriented design.
  *
  * Subclassing guidelines:
  * - A subclass MUST implement default and copy constructors
@@ -157,6 +172,7 @@ protected:
  * @see SharedUiItemsTreeModel
  * @see SharedUiItemWidgetMapper
  * @see QStandardItem
+ * @see QTreeWidgetItem
  * @see SharedUiItemData */
 //
 // TODO provides guidelines for building template objects for models init
