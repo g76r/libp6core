@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -53,6 +53,10 @@ void Log::replaceLoggersPlusConsole(Log::Severity consoleLoggerSeverity,
         consoleLoggerSeverity, newLoggers, takeOwnership);
 }
 
+static const QString defaultTask("?");
+static const QString defaultExecid("0");
+static const QString defaultSourceCode(":");
+
 void Log::log(QString message, Severity severity, QString task, QString execId,
               QString sourceCode) {
   QString realTask(task);
@@ -61,23 +65,24 @@ void Log::log(QString message, Severity severity, QString task, QString execId,
     if (t)
       realTask = t->objectName();
   }
-  realTask = realTask.isEmpty() ? "?" : sanitizeField(realTask);
-  QString realExecId = execId.isEmpty() ? "0" : sanitizeField(execId);
+  realTask = realTask.isEmpty() ? defaultTask : sanitizeField(realTask);
+  QString realExecId = execId.isEmpty() ? defaultExecid : sanitizeField(execId);
   QString realSourceCode
-      = sourceCode.isEmpty() ? ":" : sanitizeField(sourceCode);
+      = sourceCode.isEmpty() ? defaultSourceCode : sanitizeField(sourceCode);
   QDateTime now = QDateTime::currentDateTime();
   message = sanitizeMessage(message);
   rootLogger()->log(Logger::LogEntry(now, message, severity, realTask,
                                      realExecId, realSourceCode));
 }
 
+static const QString severityDebug("DEBUG");
+static const QString severityInfo("INFO");
+static const QString severityWarning("WARNING");
+static const QString severityError("ERROR");
+static const QString severityFatal("FATAL");
+static const QString severityUnknown("UNKNOWN");
+
 QString Log::severityToString(Severity severity) {
-  static const QString severityDebug("DEBUG");
-  static const QString severityInfo("INFO");
-  static const QString severityWarning("WARNING");
-  static const QString severityError("ERROR");
-  static const QString severityFatal("FATAL");
-  static const QString severityUnknown("UNKNOWN");
   switch (severity) {
   case Debug:
     return severityDebug;
@@ -112,17 +117,20 @@ Log::Severity Log::severityFromString(QString string) {
   return Debug;
 }
 
+static const QRegExp whitespace("\\s+");
+
 QString Log::sanitizeField(QString string) {
-  static const QRegExp whitespace("\\s+");
   QString s(string);
   // LATER optimize: avoid using a regexp 3 times per log line
   s.replace(whitespace, "_");
   return s;
 }
 
+static const QString lineContinuation("\n  ");
+
 QString Log::sanitizeMessage(QString string) {
   QString s(string);
-  s.replace('\n', "\n  ");
+  s.replace('\n', lineContinuation);
   return s;
 }
 

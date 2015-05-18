@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -167,29 +167,33 @@ public:
   inline LogHelper &operator<<(double o) {
     _message.append(QString::number(o)); return *this; }
   inline LogHelper &operator<<(bool o) {
-    _message.append(o ? "true" : "false"); return *this; }
+    _message.append(o ? QStringLiteral("true") : QStringLiteral("false"));
+    return *this; }
   inline LogHelper &operator<<(const QVariant &o) {
     _message.append(o.toString()); return *this; }
   inline LogHelper &operator<<(const QList<QString> &o) {
-    _message.append("{ ");
+    _message.append(QStringLiteral("{ "));
     foreach (const QString &s, o)
-      _message.append("\"").append(s).append("\" ");
-    _message.append("}");
+      _message.append(QStringLiteral("\"")).append(s)
+          .append(QStringLiteral("\" "));
+    _message.append(QStringLiteral("}"));
     return *this; }
   inline LogHelper &operator<<(const QSet<QString> &o) {
-    _message.append("{ ");
+    _message.append(QStringLiteral("{ "));
     foreach (const QString &s, o)
-      _message.append("\"").append(s).append("\" ");
-    _message.append("}");
+      _message.append(QStringLiteral("\"")).append(s)
+          .append(QStringLiteral("\" "));
+    _message.append(QStringLiteral("}"));
     return *this; }
   inline LogHelper &operator<<(const QObject *o) {
     const QMetaObject *mo = o ? o->metaObject() : 0;
     if (mo)
-      _message.append(mo->className()).append("(0x")
+      _message.append(mo->className()).append(QStringLiteral("(0x"))
           .append(QString::number(reinterpret_cast<qintptr>(o), 16))
-          .append(", \"").append(o->objectName()).append("\")");
+          .append(QStringLiteral(", \"")).append(o->objectName())
+          .append(QStringLiteral("\")"));
     else
-      _message.append("QObject(0x0)");
+      _message.append(QStringLiteral("QObject(0x0)"));
     return *this; }
   inline LogHelper &operator<<(const QObject &o) {
     return operator<<(&o); }
