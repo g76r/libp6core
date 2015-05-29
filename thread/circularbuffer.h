@@ -20,6 +20,15 @@
 #include <QtDebug>
 
 // MAYDO add method for puting or geting several data items at a time
+// QList<T> tryGetAll() : get all data currently available, or an empty list
+// QList<T> tryGetAll(int timeout) : get all data as soon as there is at less 1 available within timeout ms
+// QList<T> getAll() : get all data currently available, or wait until there is at less 1
+// QList<T> waitAndGetAll(int interval) : get all data received within interval ms, maybe more than the buffer size, maybe an empty list
+// bool tryPutAll(QList<T>) : put all data if there is enough room for the whole list
+// bool tryPutAll(QList<T>, int timeout) : put all data as a whole if there is enough room within timeout ms
+// void putAll(QList<T>) : put data for which there are enough room, then wait and do it again until all data has been put
+// int putAsManyAsPossible(QList<T>) : put as many items as possible and return their count
+// int putAsManyAsPossible(QList<T>, int timeout) : same but wait timeout ms if needed to put more data if possible
 
 /** Thread-safe circular buffer.
  *
