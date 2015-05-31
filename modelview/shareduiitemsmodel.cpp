@@ -44,7 +44,7 @@ QVariant SharedUiItemsModel::headerData(int section, Qt::Orientation orientation
 }
 
 void SharedUiItemsModel::setHeaderDataFromTemplate(
-    const SharedUiItem &templateItem, int role) {
+    SharedUiItem templateItem, int role) {
   _columnsCount = templateItem.uiSectionCount();
   QHash<int,QVariant> mapSectionHeader;
   for (int section = 0; section < _columnsCount; ++section)
@@ -55,26 +55,6 @@ void SharedUiItemsModel::setHeaderDataFromTemplate(
 Qt::ItemFlags	SharedUiItemsModel::flags(const QModelIndex & index) const {
   // LATER have an orientation parameter, do not assume item section == column
   return itemAt(index).uiFlags(index.column());
-}
-
-void SharedUiItemsModel::createItem(SharedUiItem newItem) {
-  changeItem(newItem, SharedUiItem());
-}
-
-void SharedUiItemsModel::createOrUpdateItem(SharedUiItem newItem) {
-  changeItem(newItem, newItem);
-}
-
-void SharedUiItemsModel::deleteItem(SharedUiItem oldItem) {
-  changeItem(SharedUiItem(), oldItem);
-}
-
-QModelIndex SharedUiItemsModel::indexOf(SharedUiItem item) const {
-  return indexOf(item.qualifiedId());
-}
-
-QModelIndex SharedUiItemsModel::indexOf(QString idQualifier, QString id) const {
-  return indexOf(idQualifier+":"+id);
 }
 
 void SharedUiItemsProxyModelHelper::setApparentModel(

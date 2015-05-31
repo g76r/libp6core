@@ -87,7 +87,8 @@ SOURCES += \
     modelview/shareduiitemlist.cpp \
     util/characterseparatedexpression.cpp \
     util/regularexpressionmatchparamsprovider.cpp \
-    util/paramsprovidermerger.cpp
+    util/paramsprovidermerger.cpp \
+    modelview/shareduiitemslogmodel.cpp
 
 
 HEADERS +=\
@@ -155,7 +156,8 @@ HEADERS +=\
     util/regularexpressionmatchparamsprovider.h \
     util/paramsprovidermerger.h \
     thread/atomicvalue.h \
-    thread/circularbuffer.h
+    thread/circularbuffer.h \
+    modelview/shareduiitemslogmodel.h
 
 unix {
     target.path = /usr/lib

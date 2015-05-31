@@ -229,15 +229,17 @@ public:
   /** Qualified item identifier.
    * By convention, qualified identifier must be unique for any type of item
    * within the same document.
-   * @return idQualifier()+":"+id() if idQualifier is not empty, id() otherwise.
+   * @return idQualifier+':'+id if idQualifier is not empty, id otherwise.
+   */
+  static QString qualifiedId(QString idQualifier, QString id) {
+    return idQualifier.isEmpty() ? id : idQualifier+':'+id; }
+  /** Qualified item identifier.
+   * By convention, qualified identifier must be unique for any type of item
+   * within the same document.
+   * @return idQualifier()+':'+id() if idQualifier is not empty, id() otherwise.
    */
   QString qualifiedId() const {
-    if (_data) {
-      QString qualifier = _data->idQualifier();
-      return qualifier.isEmpty() ? _data->id() : qualifier+":"+_data->id();
-    }
-    return QString();
-  }
+    return _data ? qualifiedId(_data->idQualifier(), _data->id()) : QString(); }
   /** Return UI sections count, like QAbstractItemModel::columnCount() does for
    * columns (anyway SharedUiItem sections are likely to be presented as
    * columns by a Model and displayed aas columns by a View). */

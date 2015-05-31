@@ -48,11 +48,11 @@ void SharedUiItemsTableModel::setItems(QList<SharedUiItem> items) {
   }
 }
 
-void SharedUiItemsTableModel::insertItemAt(int row, SharedUiItem item) {
+void SharedUiItemsTableModel::insertItemAt(int row, SharedUiItem newItem) {
   if (row < 0 || row > rowCount())
     return;
   beginInsertRows(QModelIndex(), row, row);
-  _items.insert(row, item);
+  _items.insert(row, newItem);
   endInsertRows();
   int toBeRemoved = _items.size() - _maxrows;
   if (toBeRemoved > 0) {

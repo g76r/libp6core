@@ -45,15 +45,17 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
   /** Set header according to what template item returns.
    * Also set columns count. */
-  void setHeaderDataFromTemplate(const SharedUiItem &templateItem,
-                                 int role = Qt::DisplayRole);
+  virtual void setHeaderDataFromTemplate(SharedUiItem templateItem,
+                                         int role = Qt::DisplayRole);
   /* Data returned for column 0 with Qt::DecorationRole */
   /*QVariant decorationAtColumn0() const { return _decorationAtColumn0; }
   void setDecorationAtColumn0(QVariant decoration) {
     _decorationAtColumn0 = decoration;  }*/
   virtual SharedUiItem itemAt(const QModelIndex &index) const = 0;
-  virtual QModelIndex indexOf(SharedUiItem item) const;
-  virtual QModelIndex indexOf(QString idQualifier, QString id) const;
+  QModelIndex indexOf(SharedUiItem item) const {
+    return indexOf(item.qualifiedId()); }
+  QModelIndex indexOf(QString idQualifier, QString id) const {
+    return indexOf(SharedUiItem::qualifiedId(idQualifier, id)); }
   virtual QModelIndex indexOf(QString qualifiedId) const = 0;
   Qt::ItemFlags	flags(const QModelIndex &index) const;
 
@@ -65,11 +67,12 @@ public slots:
    * Must emit itemChanged() after having updated data. */
   virtual void changeItem(SharedUiItem newItem, SharedUiItem oldItem) = 0;
   /** Short for changeItem(newItem, SharedUiItem()). */
-  void createItem(SharedUiItem newItem);
+  void createItem(SharedUiItem newItem) { changeItem(newItem, SharedUiItem()); }
   /** Short for changeItem(newItem, newItem). */
-  void createOrUpdateItem(SharedUiItem newItem);
+  void createOrUpdateItem(SharedUiItem newItem) {
+    changeItem(newItem, newItem); }
   /** Short for changeItem(SharedUiItem(), oldItem). */
-  void deleteItem(SharedUiItem oldItem);
+  void deleteItem(SharedUiItem oldItem) { changeItem(SharedUiItem(), oldItem); }
 
 signals:
   /** Emited by changeItem(), after it performed model changes.

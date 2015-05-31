@@ -53,7 +53,7 @@ public:
    * "Older" rows are determined as opposite sides from defaultInsertionPoint().
    * Default: INT_MAX */
   void setMaxrows(int maxrows) { _maxrows = maxrows; }
-  void setItems(QList<SharedUiItem> items);
+  virtual void setItems(QList<SharedUiItem> items);
   void sortAndSetItems(QList<SharedUiItem> items) {
     qSort(items);
     setItems(items);
@@ -76,7 +76,7 @@ public:
   /** Insert an item before row 'row', or append it at the end if
    * row == rowCount().
    * @see QAbstractItemModel::insertRow */
-  virtual void insertItemAt(int row, SharedUiItem item);
+  virtual void insertItemAt(int row, SharedUiItem newItem);
   virtual bool removeItems(int first, int last);
   SharedUiItem itemAt(const QModelIndex &index) const;
   /** Convenience method */
