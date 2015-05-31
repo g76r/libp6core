@@ -26,7 +26,8 @@
  * 15 sections, the 15th one being the timestamp when logItem() was called.
  * @brief The SharedUiItemsLogModel class
  */
-class SharedUiItemsLogModel : public SharedUiItemsTableModel {
+class LIBQTSSUSHARED_EXPORT SharedUiItemsLogModel
+    : public SharedUiItemsTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(SharedUiItemsLogModel)
   int _timestampColumn;

@@ -15,7 +15,8 @@
 #include <QDateTime>
 #include "modelview/shareduiitem.h"
 
-class SharedUiItemLogWrapperData : public SharedUiItemData {
+class LIBQTSSUSHARED_EXPORT SharedUiItemLogWrapperData
+    : public SharedUiItemData {
 public:
   SharedUiItem _wrapped;
   QDateTime _timestamp;
@@ -43,7 +44,7 @@ public:
   //  return _wrapped.setUiData(section, value, errorString, role, dm); }
 };
 
-class SharedUiItemLogWrapper : public SharedUiItem {
+class LIBQTSSUSHARED_EXPORT SharedUiItemLogWrapper : public SharedUiItem {
 public:
   SharedUiItemLogWrapper(SharedUiItem wrapped)
     : SharedUiItem(new SharedUiItemLogWrapperData(
