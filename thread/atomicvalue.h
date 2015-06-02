@@ -20,9 +20,18 @@
 /** Class that protect access to a value object with a mutex providing the same
  * kind of protection than e.g. a QAtomicInteger despite using a less scalable
  * mean (QMutex + copying the value object for every access).
+ *
  * Usable with cheap copyable objets that are not thread-safe themselves, like
  * 64 bits integers on 32 bits platforms or implicitly shared objects (e.g.
  * QString, QDateTime).
+ *
+ * Usage example:
+ * AtomicValue<QString> threadSafeString;
+ * ...
+ * QString string = threadSafeString; // a mutex protects the (shallow) copy
+ * string.replace("foo", "bar");
+ * threadSafeString = string; // the same mutex protects the (deep) copy
+ *
  * @see QAtomicInteger
  * @see QMutex
  */
@@ -35,30 +44,31 @@ public:
   AtomicValue() {}
   explicit AtomicValue(T data) : _data(data) { }
   explicit AtomicValue(const AtomicValue<T> &other) : _data(other.data()) { }
+  /** Get (take a copy of) holded data.
+   * This method is thread-safe. */
   T data() const {
-      QMutexLocker ml(&_mutex);
-      return _data;
+    QMutexLocker ml(&_mutex);
+    return _data;
   }
-  /** Convenience operator for value() */
+  /** Convenience operator for data() */
   T operator*() const { return this->data(); }
-  /** Convenience operator for value() */
+  /** Convenience operator for data() */
   operator T() const { return this->data(); }
+  /** Set (overwrite) holded data.
+   * This method is thread-safe. */
   void setData(T other) {
-      QMutexLocker ml(&_mutex);
-      _data = other;
+    QMutexLocker ml(&_mutex);
+    _data = other;
   }
-  /** Convenience operator for setValue() */
+  /** Convenience operator for setData() */
   AtomicValue<T> &operator=(T other) { setData(other); return *this; }
-  void setData(const AtomicValue<T> &other) {
-      QMutexLocker ml(&_mutex);
-      _data = other.data();
-  }
-  /** Convenience operator for setValue() */
+  /** Convenience method for setData(other.data()) */
+  void setData(const AtomicValue<T> &other) { setData(other.data()); }
+  /** Convenience operator for setData() */
   AtomicValue<T> &operator=(const AtomicValue<T> &other) {
-      setData(other);
-      return *this;
+    setData(other);
+    return *this;
   }
 };
 
 #endif // ATOMICVALUE_H
-
