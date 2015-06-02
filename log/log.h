@@ -152,8 +152,6 @@ public:
     _message.append(o); return *this; }
   inline LogHelper &operator<<(const QChar &o) {
     _message.append(o); return *this; }
-  inline LogHelper &operator<<(const char *o) {
-    _message.append(o); return *this; }
   inline LogHelper &operator<<(char o) {
     _message.append(o); return *this; }
   inline LogHelper &operator<<(qint64 o) {
@@ -172,28 +170,25 @@ public:
   inline LogHelper &operator<<(const QVariant &o) {
     _message.append(o.toString()); return *this; }
   inline LogHelper &operator<<(const QList<QString> &o) {
-    _message.append(QStringLiteral("{ "));
+    _message.append("{ ");
     foreach (const QString &s, o)
-      _message.append(QStringLiteral("\"")).append(s)
-          .append(QStringLiteral("\" "));
-    _message.append(QStringLiteral("}"));
+      _message.append("\"").append(s).append("\" ");
+    _message.append("}");
     return *this; }
   inline LogHelper &operator<<(const QSet<QString> &o) {
-    _message.append(QStringLiteral("{ "));
+    _message.append("{ ");
     foreach (const QString &s, o)
-      _message.append(QStringLiteral("\"")).append(s)
-          .append(QStringLiteral("\" "));
-    _message.append(QStringLiteral("}"));
+      _message.append("\"").append(s).append("\" ");
+    _message.append("}");
     return *this; }
   inline LogHelper &operator<<(const QObject *o) {
     const QMetaObject *mo = o ? o->metaObject() : 0;
     if (mo)
-      _message.append(mo->className()).append(QStringLiteral("(0x"))
+      _message.append(mo->className()).append("(0x")
           .append(QString::number(reinterpret_cast<qintptr>(o), 16))
-          .append(QStringLiteral(", \"")).append(o->objectName())
-          .append(QStringLiteral("\")"));
+          .append(", \"").append(o->objectName()).append("\")");
     else
-      _message.append(QStringLiteral("QObject(0x0)"));
+      _message.append("QObject(0x0)");
     return *this; }
   inline LogHelper &operator<<(const QObject &o) {
     return operator<<(&o); }

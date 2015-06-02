@@ -373,10 +373,12 @@ QPair<QString,QString> ParamSet::valueAsStringsPair(
                                 evaluate(v.mid(i+1).trimmed(), context));
 }
 
+static const char matchingPatternSpecialChars[] = "*?[]\\";
+#define CONTAINS(array, item) (::memchr((array), (item), sizeof(array)/sizeof(*(array))))
+
 QString ParamSet::matchingPattern(QString rawValue) {
   int i = 0;
   QString value, variable;
-  QString specialChars("*?[]\\");
   while (i < rawValue.size()) {
     QChar c = rawValue.at(i++);
     if (c == '%') {
@@ -407,10 +409,12 @@ QString ParamSet::matchingPattern(QString rawValue) {
         }
         value.append("*");
       } else {
-        value.append(specialChars.contains(c) ? '?' : c);
+        value.append(CONTAINS(matchingPatternSpecialChars, c.toLatin1())
+                     ? '?' : c);
       }
     } else {
-      value.append(specialChars.contains(c) ? '?' : c);
+      value.append(CONTAINS(matchingPatternSpecialChars, c.toLatin1())
+                   ? '?' : c);
     }
   }
   return value;
