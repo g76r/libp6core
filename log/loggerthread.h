@@ -21,6 +21,7 @@
  * @see Logger */
 class LoggerThread : public QThread {
   Q_OBJECT
+  Q_DISABLE_COPY(LoggerThread)
   Logger *_logger;
 
 public:

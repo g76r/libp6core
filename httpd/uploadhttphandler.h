@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,6 +21,7 @@
 /** HttpHandler to deal with uploading files or data. */
 class LIBQTSSUSHARED_EXPORT UploadHttpHandler : public HttpHandler {
   Q_OBJECT
+  Q_DISABLE_COPY(UploadHttpHandler)
   QString _urlPathPrefix;
   QString _tempFileTemplate;
   quint64 _maxBytesPerUpload;

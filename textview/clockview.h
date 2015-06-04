@@ -22,6 +22,8 @@
  */
 class LIBQTSSUSHARED_EXPORT ClockView : public TextView {
   Q_OBJECT
+  Q_DISABLE_COPY(ClockView)
+
   QString _textFormat;
   Qt::DateFormat _dateFormat;
 

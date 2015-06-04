@@ -22,6 +22,8 @@
 /** Kind of 2-dimensions QStringListModel. */
 class LIBQTSSUSHARED_EXPORT TextMatrixModel : public QAbstractTableModel {
   Q_OBJECT
+  Q_DISABLE_COPY(TextMatrixModel)
+
   QStringList _columnNames, _rowNames;
   QHash<QString,QHash<QString,QString> > _values;
 

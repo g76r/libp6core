@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -33,6 +33,8 @@
  * using cached content. */
 class LIBQTSSUSHARED_EXPORT TextView : public QObject {
   Q_OBJECT
+  Q_DISABLE_COPY(TextView)
+
   QAbstractItemModel *_model;
   TextViewItemDelegate *_defaultDelegate;
   QHash<int,TextViewItemDelegate*> _columnDelegates, _rowDelegates;

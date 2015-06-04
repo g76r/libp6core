@@ -21,6 +21,8 @@
 
 class LIBQTSSUSHARED_EXPORT GraphvizImageHttpHandler : public ImageHttpHandler {
   Q_OBJECT
+  Q_DISABLE_COPY(GraphvizImageHttpHandler)
+
 public:
   enum GraphvizRenderer { Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage };
   enum RefreshStrategy { OnChange, OnDemandWithCache };
