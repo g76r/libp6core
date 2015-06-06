@@ -152,6 +152,8 @@ public:
     _message.append(o); return *this; }
   inline LogHelper &operator<<(const QChar &o) {
     _message.append(o); return *this; }
+  inline LogHelper &operator<<(const char *o) {
+    _message.append(o); return *this; }
   inline LogHelper &operator<<(char o) {
     _message.append(o); return *this; }
   inline LogHelper &operator<<(qint64 o) {
