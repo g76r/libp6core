@@ -755,7 +755,7 @@ qint64 PfNodeData::PfBinaryFragmentData::write(
 
 qint64 PfNodeData::PfLazyBinaryFragmentData::write(
     QIODevice *target, Format format, PfOptions options) const {
-  qint64 total = 0, pos;
+  qint64 total = 0, pos = 0;
   if (!_device || !target)
     goto error;
   pos = _device->pos();

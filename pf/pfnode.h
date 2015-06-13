@@ -340,6 +340,7 @@ public:
   inline void setAttribute(QString name, const char *content) {
     setAttribute(name, QString::fromUtf8(content)); }
   // LATER setAttribute() for QDateTime, QDate, QTime and QStringList/QSet<QString>
+  // TODO document behaviour
   void setAttribute(QString name, QStringList content);
   //  /** Syntaxic sugar. */
   //  inline void setAttribute(QString name, qint64 integer) {
