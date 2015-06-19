@@ -24,13 +24,13 @@
 #include "util/paramset.h"
 
 class HttpRequestData;
+class HttpRequestPseudoParamsProvider;
 
 /** Class holding all information and actions about an HTTP incoming request.
  * This class uses Qt explicit sharing idiom, i.e. it can be copied for a
  * very low cost in thread-safe manner, however it must not be accessed from
  * several threads at a time.
  */
-// LATER implement ParamsProviders, giving either queryItems or cookies values
 class LIBQTSSUSHARED_EXPORT HttpRequest {
 public:
   enum HttpRequestMethod { NONE = 0, HEAD = 1, GET = 2, POST = 4, PUT = 8,
@@ -75,14 +75,18 @@ public:
   void overrideUrl(QUrl url);
   QUrl url() const;
   QUrlQuery urlQuery() const;
+  /** Return an url param (query item) value.
+   * Only first value of multi-valued items is kept. */
+  // LATER manage to keep last value instead
   QString param(QString key) const;
   void overrideParam(QString key, QString value);
   void overrideUnsetParam(QString key);
   /** Discard params cache built by calls to param(). These also discard any
    * overiding done on params. */
   void discardParamsCache();
-  /** Retrieve request parameters as a ParamSet.
-   * Only first value of multi-valued parameters is kept. */
+  /** Retrieve url params (query items) as a ParamSet.
+   * Only first value of multi-valued items is kept. */
+  // LATER manage to keep last value instead
   ParamSet paramsAsParamSet() const;
   operator QString() const;
   /** Client addresses.
@@ -91,11 +95,31 @@ public:
    * Same as X-Forwarded-For content, plus socket peer address at the end of
    * the list. */
   QStringList clientAdresses() const;
+  /** Create a ParamsProvider wrapper object to give access to ! pseudo params,
+   * url params (query items) and base64 cookies, in this order (url params hide
+   * cookies). */
+  inline HttpRequestPseudoParamsProvider pseudoParams() const;
   // LATER handle sessions
 
 private:
   void parseAndAddCookie(QString rawHeaderValue);
   void cacheAllParams() const;
 };
+
+/** ParamsProvider wrapper for pseudo params. */
+class LIBQTSSUSHARED_EXPORT HttpRequestPseudoParamsProvider
+    : public ParamsProvider {
+  HttpRequest _request;
+
+public:
+  inline HttpRequestPseudoParamsProvider(HttpRequest request)
+    : _request(request) { }
+  QVariant paramValue(QString key, QVariant defaultValue = QVariant(),
+                      QSet<QString> alreadyEvaluated = QSet<QString>()) const;
+};
+
+inline HttpRequestPseudoParamsProvider HttpRequest::pseudoParams() const {
+  return HttpRequestPseudoParamsProvider(*this);
+}
 
 #endif // HTTPREQUEST_H

@@ -57,12 +57,15 @@ void TemplatingHttpHandler::sendLocalResource(
 
 }
 
+static QRegularExpression templateMarkupIdentifierEndRE("[^a-z]");
+static QRegularExpression directorySeparatorRE("[/:]");
+
 void TemplatingHttpHandler::applyTemplateFile(
     HttpRequest req, HttpResponse res, QFile *file,
     ParamsProviderMerger *processingContext,
     QString *output) {
-  static QRegularExpression templateMarkupIdentifierEndRE("[^a-z]");
-  static QRegularExpression directorySeparatorRE("[/:]");
+  HttpRequestPseudoParamsProvider hrpp = req.pseudoParams();
+  processingContext->append(&hrpp);
   QBuffer buf;
   buf.open(QIODevice::WriteOnly);
   IOUtils::copy(&buf, file);
@@ -145,7 +148,7 @@ void TemplatingHttpHandler::applyTemplateFile(
     pos = markupPos+2;
   }
   output->append(input.right(input.size()-pos));
-  return;
+  processingContext->remove(&hrpp);
 }
 
 TemplatingHttpHandler *TemplatingHttpHandler::addView(TextView *view) {

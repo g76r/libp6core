@@ -263,3 +263,25 @@ QStringList HttpRequest::clientAdresses() const {
   }
   return d->_clientAdresses;
 }
+
+QVariant HttpRequestPseudoParamsProvider::paramValue(
+    QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
+  Q_UNUSED(alreadyEvaluated)
+  if (key.startsWith('!')) {
+    if (key == "!url") {
+      return _request.url().toString(QUrl::RemovePassword);
+    } else if (key == "!method") {
+      return _request.methodName();
+    } else if (key == "!clientaddresses") {
+      return _request.clientAdresses().join(' ');
+    }
+    // LATER !header !cookie !param
+  }
+  QString value = _request.param(key);
+  if (!value.isNull())
+    return value;
+  value = _request.base64Cookie(key);
+  if (!value.isNull())
+    return value;
+  return defaultValue;
+}
