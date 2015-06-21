@@ -31,7 +31,7 @@ public:
     * Set escapeEvenSingleSpaces to true to escape every spaces, which is useful
     * e.g. for node names containing spaces.
     */
-  static QString escape(QString string, PfOptions options,
+  static QString escape(QString string, PfOptions options = PfOptions(),
                         bool escapeEvenSingleSpaces = false);
 };
 
