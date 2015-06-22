@@ -167,7 +167,7 @@ private:
     return !_fragments.size() && _array.isNull(); }
   inline bool isArray() const { return !_array.isNull(); }
   inline bool isText() const {
-    return !isArray() && !isBinary(); }
+    return !isArray() && !isBinary() && !isComment(); }
   inline bool isBinary() const {
     foreach (const PfFragment &f, _fragments)
       if (f.isBinary())
@@ -277,6 +277,12 @@ public:
       d->_children.append(child);
     }
   }
+  inline void prependCommentChild(QString comment) {
+    prependChild(createCommentNode(comment));
+  }
+  inline void appendCommentChild(QString comment) {
+    appendChild(createCommentNode(comment));
+  }
   /** @return first text child by name
    * Most of the time one will use attribute() and xxxAttribute() methods rather
    * than directly calling firstTextChildByName(). */
@@ -366,7 +372,7 @@ public:
   /** @return true if the content is an array */
   inline bool isArray() const { return d && d->isArray(); }
   /** @return true if the content consist only of text data (no binary no array)
-   * or is empty or the node is null */
+   * or is empty or the node is null, false for comment nodes */
   inline bool isText() const { return !d || d->isText(); }
   /** @return true if the content is (fully or partly) binary data, therefore
    * false when empty */
