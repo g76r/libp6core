@@ -12,6 +12,7 @@
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "paramsprovidermerger.h"
+#include <QtDebug>
 
 QVariant ParamsProviderMerger::paramValue(
     QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
@@ -26,4 +27,21 @@ QVariant ParamsProviderMerger::paramValue(
     }
   }
   return defaultValue;
+}
+
+void ParamsProviderMerger::save() {
+  _providersStack.prepend(_providers);
+  _overridingParamsStack.prepend(_overridingParams);
+}
+
+void ParamsProviderMerger::restore() {
+  if (!_providersStack.isEmpty() && !_overridingParamsStack.isEmpty()) {
+    _providers = _providersStack.first();
+    _providersStack.removeFirst();
+    _overridingParams = _overridingParamsStack.first();
+    _overridingParamsStack.removeFirst();
+  } else {
+    qDebug() << "calling ParamsProviderMerger::restore() without previously "
+                "calling ParamsProviderMerger::save()";
+  }
 }

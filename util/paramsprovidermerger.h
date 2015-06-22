@@ -27,6 +27,8 @@
 class LIBQTSSUSHARED_EXPORT ParamsProviderMerger : public ParamsProvider {
   QList<const ParamsProvider*> _providers;
   ParamSet _overridingParams;
+  QList<QList<const ParamsProvider*> > _providersStack;
+  QList<ParamSet> _overridingParamsStack;
 
 public:
   ParamsProviderMerger() { }
@@ -80,6 +82,10 @@ public:
     _overridingParams.clear();
     return *this;
   }
+   /** Saves the current state (pushes the state onto a stack). */
+  void save();
+  /** Restores the current state (pops a saved state off the stack). */
+  void restore();
   QVariant paramValue(QString key, QVariant defaultValue = QVariant(),
                       QSet<QString> alreadyEvaluated = QSet<QString>()) const;
 };
