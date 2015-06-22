@@ -244,7 +244,7 @@ qint64 PfNodeData::internalWritePfSubNodes(QIODevice *target, QString indent,
     if (!indent.isNull())
       indent.append(INDENTATION_STRING);
     for (int i = 0; i < _children.size(); ++i) {
-      if (!indent.isNull()) {
+      if (!indent.isNull() && (i == 0 || !_children[i-1].isComment())) {
         if ((r = target->write(INDENTATION_EOL_STRING)) < 0)
           return -1;
         total += r;
