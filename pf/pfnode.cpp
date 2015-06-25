@@ -217,9 +217,11 @@ qint64 PfNodeData::internalWritePf(QIODevice *target, QString indent,
     }
     // closing parenthesis
     if (!indent.isNull() && _children.size()) {
-      if ((r = target->write(INDENTATION_EOL_STRING)) < 0)
-        return -1;
-      total += r;
+      if (!_children.last().isComment()) {
+        if ((r = target->write(INDENTATION_EOL_STRING)) < 0)
+          return -1;
+        total += r;
+      }
       if ((r = target->write(indent.toUtf8())) < 0)
         return -1;
       total += r;
