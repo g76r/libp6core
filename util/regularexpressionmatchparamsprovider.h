@@ -29,8 +29,8 @@ public:
     : _match(match) { }
   QRegularExpressionMatch match() const { return _match; }
   void setMatch(QRegularExpressionMatch  match) { _match = match; }
-  QVariant paramValue(QString key, QVariant defaultValue,
-                      QSet<QString> alreadyEvaluated) const;
+  QVariant paramValue(QString key, QVariant defaultValue = QVariant(),
+                      QSet<QString> alreadyEvaluated = QSet<QString>()) const;
 };
 
 #endif // REGULAREXPRESSIONMATCHPARAMSPROVIDER_H
