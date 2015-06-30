@@ -69,6 +69,32 @@ public:
     setData(other);
     return *this;
   }
+  /** Lock and get (take a copy of) holded data, which disable any read and
+   * write access until unlocked with unlockData().
+   * Use with caution, since accessing through data() enable achieving shorter
+   * lock durations. */
+  T &lockData() {
+    _mutex.lock();
+    return _data;
+  }
+  /** Lock and get (take a copy of) holded data, which disable any read and
+   * write access until unlocked with unlockData().
+   * Use with caution, since accessing through data() enable achieving shorter
+   * lock durations.
+   * Never try to access data through returned reference on failure.
+   * @param success *success is set to true on succes */
+  T &tryLockData(bool *success, int timeout = 0) {
+    if (success) {
+      *success = _mutex.tryLock(timeout);
+      if (*success)
+        return _data;
+    }
+    return *(T*)0;
+  }
+  /** Unlock when previously locked by lockData() or tryLockData(). */
+  void unlockData() {
+    _mutex.unlock();
+  }
 };
 
 #endif // ATOMICVALUE_H
