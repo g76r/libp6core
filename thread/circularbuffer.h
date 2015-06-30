@@ -145,6 +145,14 @@ public:
     _notFull.wakeAll();
     return true;
   }
+  /** Discard all data. If needed, wait until it become available. */
+  void clear() {
+    QMutexLocker locker(&_mutex);
+    _getCounter = _putCounter;
+    _used = 0;
+    _free = _sizeMinusOne+1;
+    _notFull.wakeAll();
+  }
   /** Total size of buffer. */
   inline long size() const { return _sizeMinusOne+1; }
   /** Currently free size of buffer.
