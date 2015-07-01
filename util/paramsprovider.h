@@ -28,6 +28,11 @@ public:
   virtual QVariant paramValue(
       QString key, QVariant defaultValue = QVariant(),
       QSet<QString> alreadyEvaluated = QSet<QString>()) const = 0;
+  /** Convenience method converting QVariant to QString. */
+  QString paramString(QString key, QVariant defaultValue = QVariant(),
+                      QSet<QString> alreadyEvaluated = QSet<QString>()) const {
+    return paramValue(key, defaultValue, alreadyEvaluated).toString();
+  }
 };
 
 #endif // PARAMSPROVIDER_H
