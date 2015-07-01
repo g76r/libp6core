@@ -90,7 +90,8 @@ SOURCES += \
     util/characterseparatedexpression.cpp \
     util/regularexpressionmatchparamsprovider.cpp \
     util/paramsprovidermerger.cpp \
-    modelview/shareduiitemslogmodel.cpp
+    modelview/shareduiitemslogmodel.cpp \
+    util/stringsparamsprovider.cpp
 
 
 HEADERS +=\
@@ -159,7 +160,8 @@ HEADERS +=\
     util/paramsprovidermerger.h \
     thread/atomicvalue.h \
     thread/circularbuffer.h \
-    modelview/shareduiitemslogmodel.h
+    modelview/shareduiitemslogmodel.h \
+    util/stringsparamsprovider.h
 
 unix {
     target.path = /usr/lib
