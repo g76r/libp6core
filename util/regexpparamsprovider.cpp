@@ -11,12 +11,12 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "regularexpressionmatchparamsprovider.h"
+#include "regexpparamsprovider.h"
 #include <QRegularExpression>
 
 static QRegularExpression integerRE("^\\d+$");
 
-QVariant RegularExpressionMatchParamsProvider::paramValue(
+QVariant RegexpParamsProvider::paramValue(
     QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
   Q_UNUSED(alreadyEvaluated)
   QString value = _match.captured(key);

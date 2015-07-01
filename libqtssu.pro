@@ -88,10 +88,10 @@ SOURCES += \
     modelview/shareduiitemdocumentmanager.cpp \
     modelview/shareduiitemlist.cpp \
     util/characterseparatedexpression.cpp \
-    util/regularexpressionmatchparamsprovider.cpp \
     util/paramsprovidermerger.cpp \
     modelview/shareduiitemslogmodel.cpp \
-    util/stringsparamsprovider.cpp
+    util/stringsparamsprovider.cpp \
+    util/regexpparamsprovider.cpp
 
 
 HEADERS +=\
@@ -156,12 +156,12 @@ HEADERS +=\
     modelview/shareduiitemdocumentmanager.h \
     modelview/shareduiitemlist.h \
     util/characterseparatedexpression.h \
-    util/regularexpressionmatchparamsprovider.h \
     util/paramsprovidermerger.h \
     thread/atomicvalue.h \
     thread/circularbuffer.h \
     modelview/shareduiitemslogmodel.h \
-    util/stringsparamsprovider.h
+    util/stringsparamsprovider.h \
+    util/regexpparamsprovider.h
 
 unix {
     target.path = /usr/lib

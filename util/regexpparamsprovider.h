@@ -11,20 +11,20 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef REGULAREXPRESSIONMATCHPARAMSPROVIDER_H
-#define REGULAREXPRESSIONMATCHPARAMSPROVIDER_H
+#ifndef REGEXPPARAMSPROVIDER_H
+#define REGEXPPARAMSPROVIDER_H
 
 #include "paramsprovider.h"
 #include <QRegularExpressionMatch>
 
 /** ParamsProvider evaluating QRegularExpressionMatch's catpure groups, both
  * numerical and named ones, as params. */
-class LIBQTSSUSHARED_EXPORT RegularExpressionMatchParamsProvider
+class LIBQTSSUSHARED_EXPORT RegexpParamsProvider
     : public ParamsProvider {
   QRegularExpressionMatch _match;
 
 public:
-  RegularExpressionMatchParamsProvider(
+  RegexpParamsProvider(
       QRegularExpressionMatch match = QRegularExpressionMatch())
     : _match(match) { }
   QRegularExpressionMatch match() const { return _match; }
@@ -33,4 +33,4 @@ public:
                       QSet<QString> alreadyEvaluated = QSet<QString>()) const;
 };
 
-#endif // REGULAREXPRESSIONMATCHPARAMSPROVIDER_H
+#endif // REGEXPPARAMSPROVIDER_H

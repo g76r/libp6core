@@ -19,7 +19,7 @@
 #include <QtDebug>
 #include "timeformats.h"
 #include "characterseparatedexpression.h"
-#include "regularexpressionmatchparamsprovider.h"
+#include "regexpparamsprovider.h"
 #include "paramsprovidermerger.h"
 #include "htmlutils.h"
 
@@ -197,7 +197,7 @@ QString ParamSet::evaluateImplicitVariable(
             // append text between previous match and start of this match
             transformed += value.mid(offset, match.capturedStart()-offset);
             // replace current match with (evaluated) replacement string
-            RegularExpressionMatchParamsProvider repp(match);
+            RegexpParamsProvider repp(match);
             ParamsProviderMerger reContext =
                 ParamsProviderMerger(&repp)(context);
             transformed += evaluate(sFields.value(1), inherit, &reContext,
