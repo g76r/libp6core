@@ -14,10 +14,11 @@
 #include "regularexpressionmatchparamsprovider.h"
 #include <QRegularExpression>
 
+static QRegularExpression integerRE("^\\d+$");
+
 QVariant RegularExpressionMatchParamsProvider::paramValue(
     QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
   Q_UNUSED(alreadyEvaluated)
-  static QRegularExpression integerRE("^\\d+$");
   QString value = _match.captured(key);
   if (!value.isNull())
     return value;
