@@ -298,6 +298,11 @@ QStringList ParamSet::splitAndEvaluate(
   QStringList values;
   QString value, variable;
   int i = 0;
+  bool isToplevelEvaluation = false;
+  if (!alreadyEvaluated.contains(QStringLiteral("%"))) {
+    alreadyEvaluated.insert(QStringLiteral("%"));
+    isToplevelEvaluation = true;
+  }
   while (i < rawValue.size()) {
     QChar c = rawValue.at(i++);
     if (c == '%') {
@@ -325,8 +330,12 @@ QStringList ParamSet::splitAndEvaluate(
         value = evaluate(value, inherit, context, nowEvaluated);
         variable.clear();
       } else if (c == '%') {
-        // % is used as an escape character for itself
-        value.append(c);
+        // %% is used as an escape sequence for %
+        // but must not be replaced with % during recursive evaluation
+        if (isToplevelEvaluation)
+          value.append(c);
+        else
+          value.append(QStringLiteral("%%"));
       } else {
         // any other character, e.g. '=', is interpreted as the first
         // character of a variable name that will continue with letters
