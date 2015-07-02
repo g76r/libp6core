@@ -155,6 +155,7 @@ class ParamSetData;
  * %{=htmlencode http://wwww.google.com/} -> same
  */
 class LIBQTSSUSHARED_EXPORT ParamSet : public ParamsProvider {
+  friend class ParamsProviderMerger;
   QSharedDataPointer<ParamSetData> d;
 public:
   ParamSet();
@@ -307,6 +308,10 @@ private:
   QStringList splitAndEvaluate(
       QString rawValue, QString separator, bool inherit,
       const ParamsProvider *context, QSet<QString> alreadyEvaluated) const;
+  inline QString value(QString key, bool inherit, const ParamsProvider *context,
+                       QSet<QString> alreadyEvaluated) const {
+    return evaluate(rawValue(key, inherit), inherit, context, alreadyEvaluated);
+  }
 };
 
 QDebug LIBQTSSUSHARED_EXPORT operator<<(QDebug dbg, const ParamSet &params);

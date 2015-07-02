@@ -25,9 +25,27 @@
  * Therefore ParamsProviderMerger should only be used as a temporary object
  * around a call to some method taking a ParamsProvider as a parameter. */
 class LIBQTSSUSHARED_EXPORT ParamsProviderMerger : public ParamsProvider {
-  QList<const ParamsProvider*> _providers;
+  class ProviderData : public QSharedData {
+  public:
+    const ParamsProvider *_paramsProvider;
+    ParamSet _paramset;
+    ProviderData(const ParamsProvider *paramsProvider = 0)
+      : _paramsProvider(paramsProvider) { }
+    ProviderData(ParamSet paramset)
+      : _paramsProvider(0), _paramset(paramset) { }
+  };
+
+  class Provider {
+  public:
+    QSharedDataPointer<ProviderData> d;
+    Provider(const ParamsProvider *paramsProvider = 0)
+      : d(new ProviderData(paramsProvider)) { }
+    Provider(ParamSet paramset) : d(new ProviderData(paramset)) { }
+  };
+
+  QList<Provider> _providers;
   ParamSet _overridingParams;
-  QList<QList<const ParamsProvider*> > _providersStack;
+  QList<QList<Provider> > _providersStack;
   QList<ParamSet> _overridingParamsStack;
 
 public:
@@ -38,9 +56,18 @@ public:
   ParamsProviderMerger(const ParamsProvider *provider) {
     append(provider);
   }
+  ParamsProviderMerger(ParamSet provider) {
+    append(provider);
+  }
   /** Add a ParamsProvider that will be evaluated after those already added. */
   ParamsProviderMerger &append(const ParamsProvider *provider) {
     if (provider)
+      _providers.append(provider);
+    return *this;
+  }
+  /** Add a ParamsProvider that will be evaluated after those already added. */
+  ParamsProviderMerger &append(ParamSet provider) {
+    if (!provider.isNull())
       _providers.append(provider);
     return *this;
   }
@@ -51,14 +78,22 @@ public:
       _providers.prepend(provider);
     return *this;
   }
-  /** Remove any occurence of a ParamsProvider in the providers list. */
-  ParamsProviderMerger &remove(const ParamsProvider *provider) {
-    _providers.removeAll(provider);
+  /** Add a ParamsProvider that will be evaluated before those already added but
+   * after parameters set with overrideParamValue(). */
+  ParamsProviderMerger &prepend(ParamSet provider) {
+    if (!provider.isNull())
+      _providers.prepend(provider);
     return *this;
   }
   /** Convenience operator for append() */
   ParamsProviderMerger &operator()(const ParamsProvider *provider) {
     if (provider)
+      _providers.append(provider);
+    return *this;
+  }
+  /** Convenience operator for append() */
+  ParamsProviderMerger &operator()(ParamSet provider) {
+    if (!provider.isNull())
       _providers.append(provider);
     return *this;
   }

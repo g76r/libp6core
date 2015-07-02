@@ -19,11 +19,22 @@ QVariant ParamsProviderMerger::paramValue(
   QVariant v = _overridingParams.paramValue(key, QVariant(), alreadyEvaluated);
   if (!v.isNull())
     return v;
-  foreach (const ParamsProvider *provider, _providers) {
-    if (provider) {
-      QVariant v = provider->paramValue(key, QVariant(), alreadyEvaluated);
+  foreach (const Provider &provider, _providers) {
+    if (provider.d->_paramsProvider) {
+      QVariant v = provider.d->_paramsProvider
+          ->paramValue(key, QVariant(), alreadyEvaluated);
       if (!v.isNull())
         return v;
+    } else {
+      // ParamSet is a special case since it is able to use the whole
+      // ParamsProviderMerger as an evaluation context instead of staying local
+      // to itself
+      // e.g. %foo can be evaluated even if foo is defined in another params
+      // provider of the ParamsProviderMerger than the current one
+      QString s = provider.d->_paramset
+          .value(key, true, this, alreadyEvaluated);
+      if (!s.isNull())
+        return s;
     }
   }
   return defaultValue;
