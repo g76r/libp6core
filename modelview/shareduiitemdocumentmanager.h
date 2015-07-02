@@ -37,6 +37,7 @@ public:
 
 signals:
   /** Emited whenever an item changes.
+   *
    * When an item is created oldItem.isNull().
    * When an item is destroyed newItem.isNull().
    * When an item is renamed (changes id) newItem.id() != oldItem.id().

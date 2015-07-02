@@ -60,11 +60,28 @@ public:
   Qt::ItemFlags	flags(const QModelIndex &index) const;
 
 public slots:
-  /** Notify a change on an item concerning this model.
-   * Ready to connect to DocumentManager::itemChanged() signal, or any more
-   * precise signals (kind of FoobarDocumentManager::foobarItemChanged(
-   * Foobar newFoobar, Foobar oldFoobar)).
-   * Must emit itemChanged() after having updated data. */
+  /** Operate a change on an item within this model.
+   *
+   * If oldItem is found in the model and newItem.isNull(), remove old item from
+   * the model.
+   * If oldItem is found in the model and newItem is not null, update the item,
+   * taking care that old and new item ids may be different is the item is
+   * being renamed.
+   * If oldItem is not found in the model and new item is not null, create it,
+   * regardless oldItem is null or garbage or equals to newItem.
+   *
+   * If relevant this method can filter which items are actually handled or not,
+   * for example depending on newItem.idQualifier(). If so, some of the calls to
+   * changeItem() may be ignored.
+   *
+   * This slot can be connected to SharedUiItemDocumentManager::itemChanged()
+   * signal, or any more precise signals (kind of
+   * FoobarDocumentManager::foobarItemChanged(Foobar newFoobar,
+   * Foobar oldFoobar)).
+   *
+   * Must emit itemChanged() after having updated data.
+   * @see SharedUiItemDocumentManager::itemChanged()
+   */
   virtual void changeItem(SharedUiItem newItem, SharedUiItem oldItem) = 0;
   /** Short for changeItem(newItem, SharedUiItem()). */
   void createItem(SharedUiItem newItem) { changeItem(newItem, SharedUiItem()); }
