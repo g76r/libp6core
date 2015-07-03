@@ -19,6 +19,7 @@ under the License.
 #include "pfparser.h"
 #include "pfdomhandler.h"
 #include <QRegExp>
+#include <QRegularExpression>
 
 #define INDENTATION_EOL_STRING "\n"
 #define INDENTATION_STRING "  "
@@ -419,6 +420,12 @@ QStringList PfNode::contentAsStringList() const {
   if (!s.isEmpty())
     l.append(s);
   return l;
+}
+
+QRegularExpression twoStringsListRegexp("^\\s*(\\S+)\\s*(.*)$");
+
+QStringList PfNode::contentAsTwoStringsList() const {
+  return twoStringsListRegexp.match(contentAsString()).capturedTexts();
 }
 
 PfNode &PfNode::setAttribute(QString name, QString content) {

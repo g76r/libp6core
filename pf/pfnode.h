@@ -386,12 +386,17 @@ public:
    * "false" regardless of case and 0 are regarded as false
    * any other text is regarded as invalid */
   bool contentAsBool(bool defaultValue = false, bool *ok = 0) const;
-  /** Split text content into strings on whitespace (e.g. "foo bar baz",
+  /** Split text content into strings on whitespace (e.g. "foo bar baz" and
    * "    foo  bar\nbaz" are both interpreted as the same 3 items list).
    * Whitespace can be escaped with backspaces. Actually backspace must be
    * doubled since it's already an escape character in PF syntax (e.g.
    * "foo\\ 1 bar baz" first element is "foo 1"). */
   QStringList contentAsStringList() const;
+  /** Split text content into two strings on first non-leading whitespace.
+   * e.g. "foo bar baz" and "    foo  bar baz" are both interpreted as the same
+   * 2 items list: { "foo", "bar baz" }.
+   * Whitespace cannot be escaped. */
+  QStringList contentAsTwoStringsList() const;
   /** @return QByteArray() if isEmpty() otherwise raw content (no escape
    * for PF special characters) */
   inline QByteArray contentAsByteArray() const {
