@@ -216,7 +216,6 @@ private:
 
 class LIBQTPFSHARED_EXPORT PfNode {
   friend class PfNodeData;
-  // LATER return PfNode& from currently void-returning inline methods
 private:
   QSharedDataPointer<PfNodeData> d;
 
@@ -245,7 +244,7 @@ public:
   /** A node has an empty string name if and only if the node is null. */
   inline QString name() const { return d ? d->_name : QString(); }
   /** Replace node name. If name is empty, the node will become null. */
-  inline void setName(QString name) {
+  inline PfNode &setName(QString name) {
     if (name.isEmpty())
       d = 0;
     else {
@@ -253,6 +252,7 @@ public:
         d = new PfNodeData();
       d->_name = name;
     }
+    return *this;
   }
   inline bool isNull() const { return !d; }
   inline bool isComment() const { return d && d->isComment(); }
@@ -262,27 +262,27 @@ public:
   inline const QList<PfNode> children() const {
     return d ? d->_children : QList<PfNode>(); }
   /** prepend a child to existing children (do nothing if child.isNull()) */
-  inline void prependChild(PfNode child) {
+  inline PfNode &prependChild(PfNode child) {
     if (!child.isNull()) {
       if (!d)
         d = new PfNodeData();
       d->_children.prepend(child);
     }
+    return *this;
   }
   /** append a child to existing children (do nothing if child.isNull()) */
-  inline void appendChild(PfNode child) {
+  inline PfNode &appendChild(PfNode child) {
     if (!child.isNull()) {
       if (!d)
         d = new PfNodeData();
       d->_children.append(child);
     }
+    return *this;
   }
-  inline void prependCommentChild(QString comment) {
-    prependChild(createCommentNode(comment));
-  }
-  inline void appendCommentChild(QString comment) {
-    appendChild(createCommentNode(comment));
-  }
+  inline PfNode &prependCommentChild(QString comment) {
+    return prependChild(createCommentNode(comment)); }
+  inline PfNode &appendCommentChild(QString comment) {
+    return appendChild(createCommentNode(comment)); }
   /** @return first text child by name
    * Most of the time one will use attribute() and xxxAttribute() methods rather
    * than directly calling firstTextChildByName(). */
@@ -338,31 +338,23 @@ public:
     return firstTextChildByName(name).contentAsStringList(); }
   /** Set a child named 'name' with 'content' content and remove any other
     * child named 'name'. */
-  void setAttribute(QString name, QString content);
+  PfNode &setAttribute(QString name, QString content);
   /** Convenience method */
-  inline void setAttribute(QString name, QVariant content) {
-    setAttribute(name, content.toString()); }
+  inline PfNode &setAttribute(QString name, QVariant content) {
+    return setAttribute(name, content.toString()); }
   /** Convenience method (assume content is UTF-8 encoded) */
-  inline void setAttribute(QString name, const char *content) {
-    setAttribute(name, QString::fromUtf8(content)); }
+  inline PfNode &setAttribute(QString name, const char *content) {
+    return setAttribute(name, QString::fromUtf8(content)); }
   // LATER setAttribute() for QDateTime, QDate, QTime and QStringList/QSet<QString>
   // TODO document behaviour
-  void setAttribute(QString name, QStringList content);
-  //  /** Syntaxic sugar. */
-  //  inline void setAttribute(QString name, qint64 integer) {
-  //    setAttribute(name, QString::number(integer));
-  //  }
-  //  /** Syntaxic sugar. */
-  //  inline void setAttribute(QString name, double integer) {
-  //    setAttribute(name, QString::number(integer));
-  //  }
+  PfNode &setAttribute(QString name, QStringList content);
   /** Construct a list of all children named 'name'. */
   const QList<PfNode> childrenByName(QString name) const;
   bool hasChild(QString name) const;
   /** This PfNode has no children. Null nodes are leaves */
   bool isLeaf() const { return !d || d->_children.size() == 0; }
-  void removeAllChildren() { if (d) d->_children.clear(); }
-  void removeChildrenByName(QString name);
+  PfNode &removeAllChildren() { if (d) d->_children.clear(); return *this; }
+  PfNode &removeChildrenByName(QString name);
 
   // Content related methods //////////////////////////////////////////////////
 
@@ -407,19 +399,20 @@ public:
   /** @return PfArray() if not isArray() */
   PfArray contentAsArray() const { return d ? d->_array : PfArray(); }
   /** Append text fragment to context (and remove array if any). */
-  inline void appendContent(const QString text) {
+  inline PfNode &appendContent(const QString text) {
     if (!d)
       d = new PfNodeData();
     d->_array.clear();
     // LATER merge fragments if previous one is text
     if (!text.isEmpty())
       d->_fragments.append(PfNodeData::PfFragment(text));
+    return *this;
   }
   /** Append text fragment to context (and remove array if any). */
-  inline void appendContent(const char *utf8text) {
-    appendContent(QString::fromUtf8(utf8text)); }
+  inline PfNode &appendContent(const char *utf8text) {
+    return appendContent(QString::fromUtf8(utf8text)); }
   /** Append in-memory binary fragment to context (and remove array if any). */
-  inline void appendContent(QByteArray data, QString surface = QString()) {
+  inline PfNode &appendContent(QByteArray data, QString surface = QString()) {
     if (!d)
       d = new PfNodeData();
     d->_array.clear();
@@ -427,48 +420,50 @@ public:
     // because it would prevent Qt's implicite sharing to work.
     if (!data.isEmpty())
       d->_fragments.append(PfNodeData::PfFragment(data, surface));
+    return *this;
   }
   /** Append lazy-loaded binary fragment to context (and remove array if any) */
-  inline void appendContent(QIODevice *device, qint64 length, qint64 offset,
-                            QString surface = QString()) {
+  inline PfNode &appendContent(QIODevice *device, qint64 length, qint64 offset,
+                               QString surface = QString()) {
     if (!d)
       d = new PfNodeData();
     d->_array.clear();
     if (device && length > 0)
       d->_fragments
           .append(PfNodeData::PfFragment(device, length, offset, surface));
+    return *this;
   }
   /** Replace current content with text fragment. */
-  inline void setContent(QString text) {
-    clearContent();
-    appendContent(text); }
+  inline PfNode &setContent(QString text) {
+    clearContent(); appendContent(text); return *this; }
   /** Replace current content with text fragment. */
-  inline void setContent(const char *utf8text) {
-    setContent(QString::fromUtf8(utf8text)); }
+  inline PfNode &setContent(const char *utf8text) {
+    setContent(QString::fromUtf8(utf8text)); return *this; }
   /** Replace current content with in-memory binary fragment. */
-  inline void setContent(QByteArray data) {
-    clearContent();
-    appendContent(data); }
+  inline PfNode &setContent(QByteArray data) {
+    clearContent(); appendContent(data); return *this; }
   /** Replace current content with lazy-loaded binary fragment. */
-  inline void setContent(QIODevice *device, qint64 length, qint64 offset) {
-    clearContent();
-    appendContent(device, length, offset); }
+  inline PfNode &setContent(QIODevice *device, qint64 length, qint64 offset) {
+    clearContent(); appendContent(device, length, offset); return *this; }
   /** Replace current content with an array. */
-  inline void setContent(PfArray array) {
+  inline PfNode &setContent(PfArray array) {
     if (!d)
       d = new PfNodeData();
     d->_fragments.clear();
-    d->_array = array; }
+    d->_array = array;
+    return *this;
+  }
   /** Replace current content with a text content containing a space separated
    * strings list. Backspaces and spaces inside strings are escaped with
    * backslash */
-  void setContent(QStringList strings);
+  PfNode &setContent(QStringList strings);
   /** Remove current content and make the node content empty (and thus text). */
-  inline void clearContent() {
+  inline PfNode &clearContent() {
     if (d) {
       d->_array.clear();
       d->_fragments.clear();
     }
+    return *this;
   }
 
   // Output methods ///////////////////////////////////////////////////////////

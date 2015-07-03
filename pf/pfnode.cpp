@@ -421,19 +421,21 @@ QStringList PfNode::contentAsStringList() const {
   return l;
 }
 
-void PfNode::setAttribute(QString name, QString content) {
+PfNode &PfNode::setAttribute(QString name, QString content) {
   removeChildrenByName(name);
   appendChild(PfNode(name, content));
+  return *this;
 }
 
-void PfNode::setAttribute(QString name, QStringList content) {
+PfNode &PfNode::setAttribute(QString name, QStringList content) {
   removeChildrenByName(name);
   PfNode child(name);
   child.setContent(content);
   appendChild(child);
+  return *this;
 }
 
-void PfNode::setContent(QStringList strings) {
+PfNode &PfNode::setContent(QStringList strings) {
   QString v;
   foreach(QString s, strings) {
     s.replace('\\', "\\\\").replace(' ', "\\ ");
@@ -441,7 +443,7 @@ void PfNode::setContent(QStringList strings) {
   }
   if (!v.isEmpty())
     v.chop(1);
-  setContent(v);
+  return setContent(v);
 }
 
 QByteArray PfNode::toPf(PfOptions options) const {
@@ -452,7 +454,7 @@ QByteArray PfNode::toPf(PfOptions options) const {
   return ba;
 }
 
-void PfNode::removeChildrenByName(QString name) {
+PfNode &PfNode::removeChildrenByName(QString name) {
   if (d)
     for (int i = 0; i < d->_children.size(); ) {
       PfNode child = d->_children.at(i);
@@ -461,6 +463,7 @@ void PfNode::removeChildrenByName(QString name) {
       else
         ++i;
     }
+  return *this;
 }
 
 PfNode PfNode::fromPf(QByteArray source, PfOptions options) {
