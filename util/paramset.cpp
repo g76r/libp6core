@@ -404,7 +404,7 @@ QString ParamSet::matchingPattern(QString rawValue) {
         }
         value.append("*");
       } else if (c == '!' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-                 || c == '_') {
+                 || (c >= '0' && c <= '9') || c == '_') {
         variable.append(c);
         while (i < rawValue.size()) {
           c = rawValue.at(i++);
