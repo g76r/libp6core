@@ -20,6 +20,7 @@ CONFIG -= app_bundle
 INCLUDEPATH += ../..
 
 exists(/usr/bin/ccache):QMAKE_CXX = ccache g++
+exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always
 QMAKE_CXXFLAGS += -Wextra
 
 #unix:debug:QMAKE_CXXFLAGS += -ggdb
