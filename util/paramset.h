@@ -66,6 +66,13 @@ class ParamSetData;
  * %{=default!foo!%bar}
  * %{=default!foo}
  *
+ * %=rawvalue function: %{=rawvalue!variable}
+ *
+ * the function return unevaluated value of a variable
+ *
+ * example:
+ * %{rawvalue!foo}
+ *
  * %=ifneq function: %{=ifneq!input!reference!value_if_not_equal[!value_else]}
  *
  * test inequality of an input and replace it with another
@@ -272,6 +279,9 @@ public:
   QStringList splitAndEvaluate(QString rawValue,
                                const ParamsProvider *context) const {
     return splitAndEvaluate(rawValue, " ", true, context); }
+  /** Escape all characters in string so that they no longer have speciale
+   * meaning for evaluate() and splitAndEvaluate() methods. */
+  static QString escape(QString string);
   /** Return a globing expression that matches any string that can result
    * in evaluation of the rawValue (@see QRegExp::Wildcard).
    * For instance "foo%{=date:yyyy}-%{bar}.log" is converted into

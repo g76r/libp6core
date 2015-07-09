@@ -126,6 +126,9 @@ QString ParamSet::evaluateImplicitVariable(
         return value;
       }
       return value;
+    } else if (key.startsWith("=rawvalue")) {
+      CharacterSeparatedExpression params(key, 9);
+      return params.size() >= 1 ? rawValue(params.value(0)) : QString();
     } else if (key.startsWith("=ifneq")) {
       CharacterSeparatedExpression params(key, 6);
       if (params.size() >= 3) {
@@ -498,4 +501,8 @@ ParamSet ParamSet::createChild() const {
   ParamSet params;
   params.setParent(*this);
   return params;
+}
+
+QString ParamSet::escape(QString string) {
+  return string.replace(QStringLiteral("%"), QStringLiteral("%%"));
 }
