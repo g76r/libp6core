@@ -107,13 +107,15 @@ void HttpResponse::redirect(QString location) {
                   "\">this link</a>").arg(location).toUtf8().constData());
 }
 
+// LATER convert to QRegularExpression, but not without regression/unit testing
+static const QRegExp nameRegexp(RFC2616_TOKEN_OCTET_RE "+");
+static const QRegExp valueRegexp(RFC6265_COOKIE_OCTET_RE "*");
+static const QRegExp pathRegexp(RFC6265_PATH_VALUE_RE);
+static const QRegExp domainRegexp(INTERNET_DOMAIN_RE);
+
 void HttpResponse::setCookie(QString name, QString value,
                              QDateTime expires, QString path,
                              QString domain, bool secure, bool httponly) {
-  static const QRegExp nameRegexp(RFC2616_TOKEN_OCTET_RE "+");
-  static const QRegExp valueRegexp(RFC6265_COOKIE_OCTET_RE "*");
-  static const QRegExp pathRegexp(RFC6265_PATH_VALUE_RE);
-  static const QRegExp domainRegexp(INTERNET_DOMAIN_RE);
   if (!QRegExp(nameRegexp).exactMatch(name)) {
     Log::warning() << "HttpResponse: incorrect name when setting cookie: "
                    << name;

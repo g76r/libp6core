@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -92,15 +92,17 @@ bool HttpRequest::parseAndAddHeader(QString rawHeader) {
   return true;
 }
 
+// TODO use QRegularExpression instead, but not without regression/unit testing
+static const QRegExp cookieHeaderValue(
+      "\\s*;?\\s*(" RFC2616_TOKEN_OCTET_RE "*)\\s*=\\s*(("
+      RFC6265_COOKIE_OCTET_RE "*|\"" RFC6265_COOKIE_OCTET_RE
+      "+\"))\\s*;?\\s*");
+
 void HttpRequest::parseAndAddCookie(QString rawHeaderValue) {
   // LATER use QNetworkCookie::parseCookies
   // LATER ensure that utf8 is supported as specified in RFC6265
   if (!d)
     return;
-  static const QRegExp cookieHeaderValue(
-        "\\s*;?\\s*(" RFC2616_TOKEN_OCTET_RE "*)\\s*=\\s*(("
-        RFC6265_COOKIE_OCTET_RE "*|\"" RFC6265_COOKIE_OCTET_RE
-        "+\"))\\s*;?\\s*");
   QRegExp re(cookieHeaderValue);
   int pos = 0;
   //qDebug() << "parseAndAddCookie" << rawHeaderValue;
@@ -245,8 +247,9 @@ QByteArray HttpRequest::base64BinaryCookie(QString name,
                     : QByteArray::fromBase64(cookie(name).toLatin1());
 }
 
+static QRegExp xffSeparator("\\s*,\\s*");
+
 QStringList HttpRequest::clientAdresses() const {
-  static QRegExp xffSeparator("\\s*,\\s*");
   if (!d)
     return QStringList();
   if (d->_clientAdresses.isEmpty()) {

@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,6 +15,18 @@
 #include <QDateTime>
 #include <unistd.h>
 #include <QCoreApplication>
+
+#if QT_VERSION < 0x040700
+static QDateTime epoch(QDate(1970, 1, 1), QTime(0, 0));
+#endif
+
+static inline quint64 msecSince1970() {
+#if QT_VERSION >= 0x040700
+  return QDateTime::currentMSecsSinceEpoch();
+#else
+  return epoch.secsTo(QDateTime::currentDateTime())*1000;
+#endif
+}
 
 BlockingTimer::BlockingTimer(quint32 intervalMsec,
                              quint32 processEventsIntervalMsec)
@@ -43,13 +55,4 @@ void BlockingTimer::wait() {
       QCoreApplication::processEvents();
   }
   _lasttick = now;
-}
-
-quint64 BlockingTimer::msecSince1970() {
-#if QT_VERSION >= 0x040700
-  return QDateTime::currentMSecsSinceEpoch();
-#else
-  static QDateTime epoch(QDate(1970, 1, 1), QTime(0, 0));
-  return epoch.secsTo(QDateTime::currentDateTime())*1000;
-#endif
 }

@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,20 +13,21 @@
  */
 #include "ioutils.h"
 #include <QIODevice>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QDir>
 #include <QtDebug>
+
+static QRegularExpression slashBeforeDriveLetterRE{"^/[A-Z]:/"};
 
 QString IOUtils::url2path(QUrl url) {
   if (url.scheme() == "file") {
     QString path = url.path();
-    QRegExp rx("/[A-Z]:/.*");
-    if (rx.exactMatch(path))
+    if (slashBeforeDriveLetterRE.match(path).hasMatch())
       return path.mid(1); // remove leading "/" in "/C:/path/to/file.jpg"
     return path;
   }
   if (url.scheme() == "qrc")
-    return QString(":%1").arg(url.path());
+    return ':'+url.path();
   return QString();
 }
 
@@ -160,11 +161,12 @@ static void findFiles(QDir dir, QStringList &files, const QRegExp pattern) {
   }
 }
 
+static const QRegularExpression slashFollowedByWildcard("/[^/]*[*?[]|\\]");
+
 QStringList IOUtils::findFiles(QString pattern) {
   QStringList files;
   QString pat = QDir().absoluteFilePath(QDir::fromNativeSeparators(pattern));
-  static const QRegExp slashFollowedByWildcard("/[^/]*[*?[]|\\]");
-  int i = pat.indexOf(QRegExp(slashFollowedByWildcard));
+  int i = pat.indexOf(slashFollowedByWildcard);
   QString dir = i >= 0 ? pat.left(i+1) : pat;
   QRegExp re(pat, Qt::CaseSensitive, QRegExp::Wildcard);
   ::findFiles(QDir(dir), files, re);

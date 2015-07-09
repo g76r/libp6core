@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -49,10 +49,6 @@ public:
     * If wait() is not running, then this method has no effect.
     */
   inline void stopWaiting() { _shouldStop = true; }
-  /** Return current date in millisecondes since 1970-01-01 00:00:00.
-    * With Qt >= 4.7 this is the same as QDateTime::currentMSecsSinceEpoch().
-    */
-  static quint64 msecSince1970();
 };
 
 #endif // BLOCKINGTIMER_H

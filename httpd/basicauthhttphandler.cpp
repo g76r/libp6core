@@ -27,10 +27,11 @@ bool BasicAuthHttpHandler::acceptRequest(HttpRequest req) {
   return true;
 }
 
+static QRegExp headerRe("\\s*Basic\\s+(\\S+)\\s*");
+static QRegExp tokenRe("([^:]+):([^:]+)");
+
 bool BasicAuthHttpHandler::handleRequest(
     HttpRequest req, HttpResponse res, ParamsProviderMerger *processingContext) {
-  static QRegExp headerRe("\\s*Basic\\s+(\\S+)\\s*");
-  static QRegExp tokenRe("([^:]+):([^:]+)");
   QString header = req.header("Authorization"), token;
   QRegExp re = headerRe;
   if (re.exactMatch(header)) {

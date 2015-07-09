@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,6 +23,8 @@
  KUbmLRQlC8vtgAavqEbbr2RfAXVncmVn
  */
 
+static QRegExp openLdapHashFormat{"\\s*\\{([^\\}]+)\\}(\\S*)\\s*"};
+
 class InMemoryAuthenticator::User {
   class Data : public QSharedData {
   public:
@@ -42,7 +44,6 @@ public:
   User(QString userId, QString encodedPassword,
        InMemoryAuthenticator::Encoding encoding) {
     if (encoding == OpenLdapStyle) {
-      static QRegExp openLdapHashFormat("\\s*\\{([^\\}]+)\\}(\\S*)\\s*");
       QRegExp re = openLdapHashFormat;
       if (re.exactMatch(encodedPassword) != -1) {
         QString algo = re.cap(1).trimmed().toUpper();

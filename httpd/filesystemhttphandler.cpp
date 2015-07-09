@@ -127,16 +127,17 @@ void FilesystemHttpHandler::setMimeTypeByName(QString name, HttpResponse res) {
   }
 }
 
+static QDateTime startTimeUTC(QDateTime::currentDateTimeUtc());
+
 // LATER handle ETag / If-None-Match
 bool FilesystemHttpHandler::handleCacheHeadersAndSend304(
     QFile *file, HttpRequest req, HttpResponse res) {
-  static QDateTime startTime(QDateTime::currentDateTimeUtc());
   if (file) {
     QString filename(file->fileName());
     QFileInfo info(*file);
     QDateTime lastModified;
     if (filename.startsWith("qrc:") || filename.startsWith(":"))
-      lastModified = startTime;
+      lastModified = startTimeUTC;
     else
       lastModified = info.lastModified().toUTC();
     if (lastModified.isValid())

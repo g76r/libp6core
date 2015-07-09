@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,6 +14,7 @@
 #include "htmltableview.h"
 #include "util/htmlutils.h"
 #include "htmlitemdelegate.h"
+#include <QRegularExpression>
 
 QString HtmlTableView::_defaultTableClass;
 
@@ -135,8 +136,9 @@ QString HtmlTableView::footer(int currentPage, int lastPage,
   return "</tbody></table>\n"+pagebar(currentPage, lastPage, pageVariableName, false);
 }
 
+static QRegularExpression notNameRE{"[^a-zA-Z0-9\\_]+"};
+
 QString HtmlTableView::rowText(int row) {
-  static QRegExp notName("[^a-zA-Z0-9\\_]+");
   QAbstractItemModel *m = model();
   if (!m)
     return QString();
@@ -144,7 +146,7 @@ QString HtmlTableView::rowText(int row) {
   if (!_rowAnchorPrefix.isNull())
     id = _rowAnchorPrefix
         + m->data(m->index(row, _rowAnchorColumn, QModelIndex()))
-        .toString().replace(notName, "_");
+        .toString().replace(notNameRE, QStringLiteral("_"));
   v.append("<tr");
   // TODO trClassMapper should go to HtmlItemDelegate (but not TextItemDelegate)
   // the HtmlTableView::setTrClass should stay has wrapper to item delegate

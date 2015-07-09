@@ -18,6 +18,13 @@
 #include <QRegExp>
 #include <QtDebug>
 
+#define TERM_RE "([+-][0-9]+)(ms|mil|s|min|h|d|w|mon|y)[a-z]*"
+static QRegExp wholeDateRE("(?:([0-9][0-9 t:,-]*[0-9])|([a-z]+))?((?:" TERM_RE ")*)");
+static QRegExp termRE(TERM_RE);
+static QRegExp weekdayRE("(mon|tue|wed|thu|fri|sat|sun)[a-z]*");
+static QRegExp isoLikeDateRE("(?:(?:(?:([0-9]{4})-)?(?:([0-9]{2})-))?([0-9]{2}))?");
+static QRegExp isoLikeTimeRE("([0-9]{2}):([0-9]{2})(?::([0-9]{2})(?:,([0-9]{3}))?)?");
+
 class RelativeDateTimeData : public QSharedData {
   enum ReferenceMethod { Today = 0, DayOfWeek = 1, DayOfMonth, MonthAndDay,
                          ExactDate };
@@ -29,12 +36,6 @@ public:
   RelativeDateTimeData() : _delta(0), _method(Today) { }
 
   RelativeDateTimeData(QString pattern) : _delta(0), _method(Today) {
-#define TERM_RE "([+-][0-9]+)(ms|mil|s|min|h|d|w|mon|y)[a-z]*"
-    static QRegExp wholeDateRE("(?:([0-9][0-9 t:,-]*[0-9])|([a-z]+))?((?:" TERM_RE ")*)");
-    static QRegExp termRE(TERM_RE);
-    static QRegExp weekdayRE("(mon|tue|wed|thu|fri|sat|sun)[a-z]*");
-    static QRegExp isoLikeDateRE("(?:(?:(?:([0-9]{4})-)?(?:([0-9]{2})-))?([0-9]{2}))?");
-    static QRegExp isoLikeTimeRE("([0-9]{2}):([0-9]{2})(?::([0-9]{2})(?:,([0-9]{3}))?)?");
     QRegExp re = wholeDateRE;
     if (!pattern.isEmpty()) {
       //qDebug() << "RelativeDateTimeData" << pattern;
@@ -165,9 +166,10 @@ public:
 RelativeDateTime::RelativeDateTime() {
 }
 
+static QMutex mutex;
+static QHash<QString, RelativeDateTime> cache;
+
 RelativeDateTime::RelativeDateTime(QString pattern) {
-  static QMutex mutex;
-  static QHash<QString, RelativeDateTime> cache;
   if (!pattern.isEmpty()) {
     pattern = pattern.trimmed().toLower();
     QMutexLocker locker(&mutex);

@@ -371,9 +371,10 @@ QStringList ParamSet::splitAndEvaluate(
   return values;
 }
 
+static QRegularExpression whitespace("\\s");
+
 QPair<QString,QString> ParamSet::valueAsStringsPair(
     QString key, bool inherit, const ParamsProvider *context) const {
-  static QRegularExpression whitespace("\\s");
   QString v = rawValue(key, inherit).trimmed();
   int i = v.indexOf(whitespace);
   if (i == -1)
