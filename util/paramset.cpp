@@ -99,7 +99,7 @@ QString ParamSet::evaluate(
   QStringList values = splitAndEvaluate(rawValue, QString(), inherit, context,
                                         alreadyEvaluated);
   if (values.isEmpty())
-    return rawValue.isNull() ? QString() : "";
+    return rawValue.isNull() ? QString() : QStringLiteral("");
   return values.first();
 }
 
@@ -262,8 +262,7 @@ QString ParamSet::evaluateImplicitVariable(
       return QString();
     } else if (key.startsWith("=htmlencode")) {
       // LATER provide more options such as encoding <br> or links, through e.g. and =htmlencodeext function
-      QString input = evaluate(key.mid(12), inherit, context,
-                               alreadyEvaluated);
+      QString input = evaluate(key.mid(12), inherit, context, alreadyEvaluated);
       return HtmlUtils::htmlEncode(input, false, false);
     }
   }
@@ -295,7 +294,7 @@ bool ParamSet::appendVariableValue(
       return true;
     }
   }
-  s = this->rawValue(variable, inherit);
+  s = this->value(variable, inherit, context, alreadyEvaluated);
   if (!s.isNull()) {
     value->append(s);
     return true;
@@ -316,15 +315,9 @@ QStringList ParamSet::splitAndEvaluate(
   QStringList values;
   QString value, variable;
   int i = 0;
-  bool isToplevelEvaluation = false;
-  if (!alreadyEvaluated.contains(QStringLiteral("%"))) {
-    alreadyEvaluated.insert(QStringLiteral("%"));
-    isToplevelEvaluation = true;
-  }
   while (i < rawValue.size()) {
     QChar c = rawValue.at(i++);
     if (c == '%') {
-      QSet<QString> nowEvaluated = alreadyEvaluated;
       c = rawValue.at(i++);
       if (c == '{') {
         // '{' and '}' are used as variable name delimiters, the way a Unix
@@ -344,16 +337,10 @@ QStringList ParamSet::splitAndEvaluate(
         }
         appendVariableValue(&value, variable, inherit, context,
                             alreadyEvaluated, true);
-        nowEvaluated.insert(variable);
-        value = evaluate(value, inherit, context, nowEvaluated);
         variable.clear();
       } else if (c == '%') {
         // %% is used as an escape sequence for %
-        // but must not be replaced with % during recursive evaluation
-        if (isToplevelEvaluation)
-          value.append(c);
-        else
-          value.append(QStringLiteral("%%"));
+        value.append(c);
       } else {
         // any other character, e.g. '=', is interpreted as the first
         // character of a variable name that will continue with letters
@@ -372,8 +359,6 @@ QStringList ParamSet::splitAndEvaluate(
         }
         appendVariableValue(&value, variable, inherit, context,
                             alreadyEvaluated, true);
-        nowEvaluated.insert(variable);
-        value = evaluate(value, inherit, context, nowEvaluated);
         variable.clear();
       }
     } else if (separator.contains(c)) {
