@@ -128,7 +128,22 @@ QString ParamSet::evaluateImplicitVariable(
       return value;
     } else if (key.startsWith("=rawvalue")) {
       CharacterSeparatedExpression params(key, 9);
-      return params.size() >= 1 ? rawValue(params.value(0)) : QString();
+      if (params.size() < 1)
+        return QString();
+      QString value = rawValue(params.value(0));
+      if (params.size() >= 2) {
+        QString flags = params.value(1);
+        if (flags.contains('e')) { // %-escape
+          value = escape(value);
+        }
+        if (flags.contains('h')) { // htmlencode
+          value = HtmlUtils::htmlEncode(
+                value, flags.contains('u'), // url as links
+                flags.contains('n')); // newline as <br>
+        }
+      }
+      qDebug() << "%=rawvalue" << key << params.value(0) << value;
+      return value;
     } else if (key.startsWith("=ifneq")) {
       CharacterSeparatedExpression params(key, 6);
       if (params.size() >= 3) {

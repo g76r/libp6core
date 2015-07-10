@@ -66,12 +66,18 @@ class ParamSetData;
  * %{=default!foo!%bar}
  * %{=default!foo}
  *
- * %=rawvalue function: %{=rawvalue!variable}
+ * %=rawvalue function: %{=rawvalue!variable[!flags]}
  *
  * the function return unevaluated value of a variable
+ * flags is a combination of letters with the following meaning:
+ * e %-escape value (in case it will be further %-evaluated)
+ * h html encode value
+ * u html encode try to detect urls and to transform them into a links
+ * n html encode add br whenever it founds a newline
  *
  * example:
- * %{rawvalue!foo}
+ * %{=rawvalue!foo}
+ * %{=rawvalue!foo!hun}
  *
  * %=ifneq function: %{=ifneq!input!reference!value_if_not_equal[!value_else]}
  *
