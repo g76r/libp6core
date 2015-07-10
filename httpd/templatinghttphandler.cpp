@@ -88,7 +88,8 @@ void TemplatingHttpHandler::applyTemplateFile(
       if (markupContent.at(0) == '=') {
         // syntax: <?=paramset_evaluable_expression?>
         output->append(
-              ParamSet().evaluate(markupContent.mid(1), &processingContext));
+              processingContext.overridingParams()
+              .evaluate(markupContent.mid(1), &processingContext));
       } else if (markupId == "view") {
         // syntax: <?view:viewname?>
         QString markupData = markupContent.mid(separatorPos+1);
