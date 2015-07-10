@@ -123,6 +123,8 @@ public:
   void restore();
   QVariant paramValue(QString key, QVariant defaultValue = QVariant(),
                       QSet<QString> alreadyEvaluated = QSet<QString>()) const;
+  /** Give access to currently overriding params. */
+  ParamSet overridingParams() const { return _overridingParams; }
 };
 
 #endif // PARAMSPROVIDERMERGER_H
