@@ -142,7 +142,6 @@ QString ParamSet::evaluateImplicitVariable(
                 flags.contains('n')); // newline as <br>
         }
       }
-      qDebug() << "%=rawvalue" << key << params.value(0) << value;
       return value;
     } else if (key.startsWith("=ifneq")) {
       CharacterSeparatedExpression params(key, 6);
