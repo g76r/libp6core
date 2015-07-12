@@ -14,9 +14,10 @@
 #include "shareduiitemsmodel.h"
 #include <QtDebug>
 #include <QAbstractProxyModel>
+#include "shareduiitemdocumentmanager.h"
 
 SharedUiItemsModel::SharedUiItemsModel(QObject *parent)
-  : QAbstractItemModel(parent), _columnsCount(0) {
+  : QAbstractItemModel(parent), _columnsCount(0), _documentManager(0) {
 }
 
 int SharedUiItemsModel::columnCount(const QModelIndex &parent) const {
@@ -54,7 +55,22 @@ void SharedUiItemsModel::setHeaderDataFromTemplate(
 
 Qt::ItemFlags	SharedUiItemsModel::flags(const QModelIndex & index) const {
   // LATER have an orientation parameter, do not assume item section == column
+  // LATER modify flags on the fly if dm is not set ?
   return itemAt(index).uiFlags(index.column());
+}
+
+bool SharedUiItemsModel::setData(
+    const QModelIndex &index, const QVariant &value, int role) {
+  qDebug() << "SharedUiItemsModel::setData index:" << index << "value:"
+           << value << "role:" << role << "model(this):" << this
+           << "dm:" << _documentManager;
+  SharedUiItem oldItem = itemAt(index);
+  qDebug() << "oldItem:" << oldItem.qualifiedId();
+  return role == Qt::EditRole
+      && index.isValid()
+      && !oldItem.isNull()
+      && _documentManager
+      && _documentManager->changeItemByUiData(oldItem, index.column(), value);
 }
 
 void SharedUiItemsProxyModelHelper::setApparentModel(

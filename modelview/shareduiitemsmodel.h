@@ -36,6 +36,7 @@ class LIBQTSSUSHARED_EXPORT SharedUiItemsModel : public QAbstractItemModel {
   Q_DISABLE_COPY(SharedUiItemsModel)
   int _columnsCount;
   QHash<int,QHash<int,QVariant> > _mapRoleSectionHeader;
+  SharedUiItemDocumentManager *_documentManager;
   //QVariant _decorationAtColumn0;
 
 public:
@@ -58,6 +59,12 @@ public:
     return indexOf(SharedUiItem::qualifiedId(idQualifier, id)); }
   virtual QModelIndex indexOf(QString qualifiedId) const = 0;
   Qt::ItemFlags	flags(const QModelIndex &index) const;
+  bool setData(const QModelIndex &index, const QVariant &value,
+               int role = Qt::EditRole);
+  SharedUiItemDocumentManager *documentManager() const {
+    return _documentManager; }
+  void setDocumentManager(SharedUiItemDocumentManager *documentManager) {
+    _documentManager = documentManager; }
 
 public slots:
   /** Operate a change on an item within this model.
