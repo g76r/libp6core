@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -53,7 +53,7 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
   char digit;
   State state = TopLevel, nextState = TopLevel;
   QByteArray content, comment, surface;
-  QList<QString> names;
+  QStringList names;
   PfArray array;
   if (!source->isOpen() && !source->open(QIODevice::ReadOnly)) {
     _handler->setErrorString(tr("cannot open document : %1")
@@ -563,7 +563,7 @@ bool PfParser::readAndFinishBinaryFragment(QIODevice *source,
   return true;
 }
 
-bool PfParser::finishArray(PfArray *array, QList<QString> *names) {
+bool PfParser::finishArray(PfArray *array, QStringList *names) {
   if (!(_handler->array(*array))) {
     array->clear();
     _handler->setErrorString(tr("cannot handle array fragment"));

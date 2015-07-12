@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -52,7 +52,7 @@ public:
     *        in the list
     * @return must return false iff an error occur (and optionaly set
     * errorString before) */
-  virtual bool startNode(QList<QString> names);
+  virtual bool startNode(QStringList names);
   /** Event method called each time a text fragment is encountered.
     * @return must return false iff an error occur (and optionaly set
     * errorString before) */
@@ -82,7 +82,7 @@ public:
     * @param names names of nodes path to current node, same as with startNode()
     * @return must return false iff an error occur (and optionaly set
     * errorString before) */
-  virtual bool endNode(QList<QString> names);
+  virtual bool endNode(QStringList names);
   /** Event method called each time a comment is encountered, but if
     * ignoreComments is set to true.
     * @return must return false iff an error occur (and optionaly set

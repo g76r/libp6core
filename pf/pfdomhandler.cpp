@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -27,7 +27,7 @@ bool PfDomHandler::startDocument(PfOptions options) {
   return true;
 }
 
-bool PfDomHandler::startNode(QList<QString> names) {
+bool PfDomHandler::startNode(QStringList names) {
   PfNode node(names.last());
   _path.append(node);
   return true;
@@ -79,7 +79,7 @@ bool PfDomHandler::array(PfArray array) {
   return true;
 }
 
-bool PfDomHandler::endNode(QList<QString> names) {
+bool PfDomHandler::endNode(QStringList names) {
   Q_UNUSED(names);
   PfNode node(_path.takeLast());
   if (!_path.isEmpty())
