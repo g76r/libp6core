@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,7 +25,7 @@ class LIBQTSSUSHARED_EXPORT TextTableView : public TextView {
 
   int _cachedRows, _rowsPerPage;
   QList<int> _columnIndexes, _effectiveColumnIndexes;
-  QList<QString> _rows;
+  QStringList _rows;
   QString _emptyPlaceholder, _ellipsePlaceholder;
 
 public:

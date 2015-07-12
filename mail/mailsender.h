@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -28,23 +28,23 @@ public:
   explicit MailSender(QUrl url);
   explicit MailSender(QString url);
   /** @return true only if SMTP server accepted to queue the mail */
-  bool send(QString sender, QList<QString> recipients, QVariant body,
+  bool send(QString sender, QStringList recipients, QVariant body,
             QHash<QString, QString> headers, QList<QVariant> attachments,
             QString &errorString);
-  inline bool send(QString sender, QList<QString> recipients, QVariant body,
+  inline bool send(QString sender, QStringList recipients, QVariant body,
                    QHash<QString, QString> headers,
                    QList<QVariant> attachments) {
     QString errorString;
     return send(sender, recipients, body, headers, attachments, errorString);
   }
-  inline bool send(const QString sender, const QList<QString> recipients,
-                   const QVariant body, const QHash<QString, QString> headers) {
+  inline bool send(QString sender, QStringList recipients,
+                   QVariant body, QHash<QString, QString> headers) {
     QString errorString;
     return send(sender, recipients, body, headers, QList<QVariant>(),
                 errorString);
   }
-  inline bool send(const QString sender, const QList<QString> recipients,
-                   const QVariant body) {
+  inline bool send(QString sender, QStringList recipients,
+                   QVariant body) {
     QString errorString;
     return send(sender, recipients, body, QHash<QString,QString>(),
                 QList<QVariant>(), errorString);
