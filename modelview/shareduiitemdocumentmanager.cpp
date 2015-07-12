@@ -17,7 +17,7 @@ SharedUiItemDocumentManager::SharedUiItemDocumentManager(QObject *parent)
   : QObject(parent) {
 }
 
-bool SharedUiItemDocumentManager::changeItemByUiData(
+/*bool SharedUiItemDocumentManager::changeItemByUiData(
     SharedUiItem oldItem, int section, const QVariant &value) {
   Q_UNUSED(oldItem)
   Q_UNUSED(section)
@@ -31,6 +31,12 @@ SharedUiItem SharedUiItemDocumentManager::itemById(
   Q_UNUSED(id)
   return SharedUiItem();
 }
+
+SharedUiItem SharedUiItemDocumentManager::createNewItem(
+    QString idQualifier) {
+  Q_UNUSED(idQualifier)
+  return SharedUiItem();
+} */
 
 SharedUiItem SharedUiItemDocumentManager::itemById(QString qualifiedId) const {
   int pos = qualifiedId.indexOf(':');

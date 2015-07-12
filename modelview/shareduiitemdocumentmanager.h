@@ -26,12 +26,13 @@ class LIBQTSSUSHARED_EXPORT SharedUiItemDocumentManager : public QObject {
 
 public:
   explicit SharedUiItemDocumentManager(QObject *parent = 0);
-  /** Method that user interface should call to change an item.
-   * Default: do nothing and return false. */
+  /** Method that user interface should call to create a new default item with
+   * an automatically generated unique id.  */
+  virtual SharedUiItem createNewItem(QString idQualifier) = 0;
+  /** Method that user interface should call to change an item. */
   virtual bool changeItemByUiData(SharedUiItem oldItem, int section,
-                                  const QVariant &value);
-  /** Default: return SharedUiItem(). */
-  virtual SharedUiItem itemById(QString idQualifier, QString id) const;
+                                  const QVariant &value) = 0;
+  virtual SharedUiItem itemById(QString idQualifier, QString id) const = 0;
   /** Default: parses qualifiedId and calls itemById(QString,QString). */
   virtual SharedUiItem itemById(QString qualifiedId) const;
 
