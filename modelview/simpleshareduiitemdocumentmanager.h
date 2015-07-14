@@ -47,8 +47,19 @@ public:
   bool changeItemByUiData(
       SharedUiItem oldItem, int section, const QVariant &value) override;
   SharedUiItem itemById(QString idQualifier, QString id) const override;
+  /** This method must be called for every item type the document manager will
+   * hold, to enable it to create and modify such items. */
   SimpleSharedUiItemDocumentManager &registerItemType(
       QString idQualifier, Setter setter, Creator creator);
+  /** This method build a list of every item currently holded, given it class
+   * (T) and qualifierId. */
+  template<class T = SharedUiItem>
+  QList<T> itemsByQualifierId(QString qualifierId) const {
+    QList<T> list;
+    foreach (SharedUiItem item, _repository.value(qualifierId))
+      list.append(*static_cast<T*>(&item));
+    return list;
+  }
 };
 
 #endif // SIMPLESHAREDUIITEMDOCUMENTMANAGER_H
