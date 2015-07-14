@@ -29,9 +29,15 @@ public:
   /** Method that user interface should call to create a new default item with
    * an automatically generated unique id.  */
   virtual SharedUiItem createNewItem(QString idQualifier) = 0;
-  /** Method that user interface should call to change an item. */
+  /** Method that user interface should call to change an item, one field at a
+   * time.
+   *
+   * Suited for model/view edition. */
   virtual bool changeItemByUiData(SharedUiItem oldItem, int section,
                                   const QVariant &value) = 0;
+  /** Method that user interface or non-interactive code should call to change
+   * an item at a whole. */
+  virtual bool changeItem(SharedUiItem newItem, SharedUiItem oldItem) = 0;
   virtual SharedUiItem itemById(QString idQualifier, QString id) const = 0;
   /** Default: parses qualifiedId and calls itemById(QString,QString). */
   virtual SharedUiItem itemById(QString qualifiedId) const;
@@ -52,6 +58,12 @@ signals:
    * where Customer is a SharedUiItem.
    */
   void itemChanged(SharedUiItem newItem, SharedUiItem oldItem);
+
+protected:
+  /** Can be called by createNewItem() implementations to generate a new id not
+   * currently in use for the given idQualifier item type.
+   * Generate id of the form idQualifier+number (e.g. "foobar1"). */
+  QString genererateNewId(QString idQualifier);
 };
 
 #endif // SHAREDUIITEMDOCUMENTMANAGER_H

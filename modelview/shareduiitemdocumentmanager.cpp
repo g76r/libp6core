@@ -17,29 +17,22 @@ SharedUiItemDocumentManager::SharedUiItemDocumentManager(QObject *parent)
   : QObject(parent) {
 }
 
-/*bool SharedUiItemDocumentManager::changeItemByUiData(
-    SharedUiItem oldItem, int section, const QVariant &value) {
-  Q_UNUSED(oldItem)
-  Q_UNUSED(section)
-  Q_UNUSED(value)
-  return false;
-}
-
-SharedUiItem SharedUiItemDocumentManager::itemById(
-    QString idQualifier, QString id) const {
-  Q_UNUSED(idQualifier)
-  Q_UNUSED(id)
-  return SharedUiItem();
-}
-
-SharedUiItem SharedUiItemDocumentManager::createNewItem(
-    QString idQualifier) {
-  Q_UNUSED(idQualifier)
-  return SharedUiItem();
-} */
-
 SharedUiItem SharedUiItemDocumentManager::itemById(QString qualifiedId) const {
   int pos = qualifiedId.indexOf(':');
   return (pos == -1) ? itemById(QString(), qualifiedId)
                      : itemById(qualifiedId.left(pos), qualifiedId.mid(pos+1));
+}
+
+QString SharedUiItemDocumentManager::genererateNewId(QString idQualifier) {
+  QString id;
+  for (int i = 1; i < 1000; ++i) {
+    id = idQualifier+QString::number(i);
+    if (itemById(idQualifier, id).isNull())
+      return id;
+  }
+  forever {
+    id = idQualifier+QString::number(qrand());
+    if (itemById(idQualifier, id).isNull())
+      return id;
+  }
 }

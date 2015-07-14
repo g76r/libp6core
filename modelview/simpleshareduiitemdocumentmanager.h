@@ -43,6 +43,7 @@ private:
 public:
   explicit SimpleSharedUiItemDocumentManager(QObject *parent = 0);
   SharedUiItem createNewItem(QString idQualifier) override;
+  bool changeItem(SharedUiItem newItem, SharedUiItem oldItem);
   bool changeItemByUiData(
       SharedUiItem oldItem, int section, const QVariant &value) override;
   SharedUiItem itemById(QString idQualifier, QString id) const override;

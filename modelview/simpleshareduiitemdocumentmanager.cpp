@@ -23,20 +23,23 @@ SharedUiItem SimpleSharedUiItemDocumentManager::createNewItem(
   Creator creator = _creators.value(idQualifier);
   SharedUiItem newItem;
   if (creator) {
-    QString id;
-    for (int i = 1; i < 10000; ++i) {
-      id = idQualifier+QString::number(i);
-      if (itemById(idQualifier, id).isNull())
-        goto found;
-    }
-    return newItem;
-found:
+    QString id = genererateNewId(idQualifier);
     newItem = (*creator)(id);
-    _repository[newItem.idQualifier()][newItem.id()] = newItem;
+    _repository[idQualifier][id] = newItem;
     emit itemChanged(newItem, SharedUiItem());
     //qDebug() << "created";
   }
   return newItem;
+}
+
+bool SimpleSharedUiItemDocumentManager::changeItem(
+    SharedUiItem newItem, SharedUiItem oldItem) {
+  if (newItem != oldItem) // renamed
+    _repository[oldItem.idQualifier()].remove(oldItem.id());
+  _repository[newItem.idQualifier()][newItem.id()] = newItem;
+  emit itemChanged(newItem, oldItem);
+  //qDebug() << "changed";
+  return true;
 }
 
 bool SimpleSharedUiItemDocumentManager::changeItemByUiData(
@@ -45,14 +48,8 @@ bool SimpleSharedUiItemDocumentManager::changeItemByUiData(
   Setter setter = _setters.value(oldItem.idQualifier());
   //qDebug() << "changeItemByUiData" << oldItem.qualifiedId() << section
   //         << value << setter;
-  if (setter && (newItem.*setter)(section, value, 0, Qt::EditRole, this)) {
-    if (newItem != oldItem) // renamed
-      _repository[oldItem.idQualifier()].remove(oldItem.id());
-    _repository[newItem.idQualifier()][newItem.id()] = newItem;
-    emit itemChanged(newItem, oldItem);
-    //qDebug() << "changed";
-    return true;
-  }
+  if (setter && (newItem.*setter)(section, value, 0, Qt::EditRole, this))
+    return changeItem(newItem, oldItem);
   return false;
 }
 
