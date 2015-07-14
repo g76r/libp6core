@@ -77,6 +77,8 @@ public:
    * row == rowCount().
    * @see QAbstractItemModel::insertRow */
   virtual void insertItemAt(int row, SharedUiItem newItem);
+  // LATER add insertItemsAt(int row, QList<SharedUiItem> newItems)
+  // or even template<class T> insertItemsAt(int row, QList<T> newItems)
   virtual bool removeItems(int first, int last);
   SharedUiItem itemAt(const QModelIndex &index) const;
   /** Convenience method */
@@ -84,7 +86,8 @@ public:
   using SharedUiItemsModel::indexOf;
   QModelIndex indexOf(QString qualifiedId) const;
   void changeItem(SharedUiItem newItem, SharedUiItem oldItem);
-  bool removeRows(int row, int count, const QModelIndex &parent);
+  bool removeRows(int row, int count,
+                  const QModelIndex &parent = QModelIndex());
 
 private:
   // TODO should remimplement these methods rather than naively hiding them
