@@ -93,7 +93,8 @@ SOURCES += \
     modelview/shareduiitemslogmodel.cpp \
     util/stringsparamsprovider.cpp \
     util/regexpparamsprovider.cpp \
-    modelview/simpleshareduiitemdocumentmanager.cpp
+    modelview/simpleshareduiitemdocumentmanager.cpp \
+    modelview/genericshareduiitem.cpp
 
 
 HEADERS +=\
@@ -164,7 +165,8 @@ HEADERS +=\
     modelview/shareduiitemslogmodel.h \
     util/stringsparamsprovider.h \
     util/regexpparamsprovider.h \
-    modelview/simpleshareduiitemdocumentmanager.h
+    modelview/simpleshareduiitemdocumentmanager.h \
+    modelview/genericshareduiitem.h
 
 unix {
     target.path = /usr/lib
