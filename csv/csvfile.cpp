@@ -15,7 +15,7 @@
 
 CsvFile::CsvFile(QObject *parent)
   : QObject(parent), _openMode(QIODevice::NotOpen),
-    _fieldSeparator(','), _escapeChar('\\'), //_quoteChar('"'),
+    _fieldSeparator(','), _escapeChar('\\'), _quoteChar('"'),
     _areHeadersPresent(true), _columnCount(0) {
 }
 
@@ -130,6 +130,7 @@ bool CsvFile::readRow(QIODevice *input, QStringList *row, bool *atEnd) {
   QByteArray data;
   forever {
     char c;
+    bool quoting = false;
     switch (input->read(&c, 1)) {
     case 0: // end of file
       *atEnd = true;
@@ -146,13 +147,14 @@ bool CsvFile::readRow(QIODevice *input, QStringList *row, bool *atEnd) {
         default: // error
           return false;
         }
-      //} else if (c == _quoteChar) {
-      } else if (c == _fieldSeparator) {
+      } else if (c == _quoteChar) {
+        quoting = !quoting;
+      } else if (!quoting && c == _fieldSeparator) {
         row->append(QString::fromUtf8(data));
         data.clear();
       } else if (c == '\r') {
         // silently ignore \r
-      } else if (c == '\n') {
+      } else if (!quoting && c == '\n') {
         if (!data.isEmpty())
           row->append(QString::fromUtf8(data));
         return true;
@@ -171,8 +173,8 @@ bool CsvFile::writeAll() {
     QSaveFile file(_filename);
     if (file.open(QIODevice::WriteOnly)) {
       QString specialChars("\r\n");
-      specialChars.append(_fieldSeparator).append(_escapeChar);
-      //.append(_quoteChar);
+      specialChars.append(_fieldSeparator).append(_escapeChar)
+          .append(_quoteChar);
       if (_areHeadersPresent)
         if (!writeRow(&file, _headers, specialChars))
           return false;

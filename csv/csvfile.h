@@ -32,7 +32,7 @@ class LIBQTSSUSHARED_EXPORT CsvFile : public QObject {
   QIODevice::OpenMode _openMode;
   QList<QStringList> _rows;
   QStringList _headers;
-  QChar _fieldSeparator, _escapeChar; //, _quoteChar;
+  QChar _fieldSeparator, _escapeChar, _quoteChar;
   bool _areHeadersPresent;
   int _columnCount;
 
@@ -67,10 +67,10 @@ public:
   /** Default: \ (backslash) */
   CsvFile &setEscapeChar(QChar escapeChar) {
     _escapeChar = escapeChar; return *this; }
-  //QChar quoteChar() const { return _quoteChar; }
-  //* Default: " (double quote) */
-  //CsvFile &setQuoteChar(QChar quoteChar) {
-  //  _quoteChar = quoteChar; return *this; }
+  QChar quoteChar() const { return _quoteChar; }
+  /** Default: " (double quote) */
+  CsvFile &setQuoteChar(QChar quoteChar) {
+    _quoteChar = quoteChar; return *this; }
   bool areHeadersPresent() const { return _areHeadersPresent; }
   /** Default: true (first file line contains headers rather than data) */
   CsvFile &setAreHeadersPresent(bool areHeadersPresent = true) {
