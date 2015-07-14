@@ -20,9 +20,13 @@ CsvFile::CsvFile(QObject *parent)
 }
 
 CsvFile::CsvFile(QObject *parent, QString filename)
-  : QObject(parent), _filename(filename), _openMode(QIODevice::NotOpen),
-    _fieldSeparator(','), _escapeChar('\\'), //_quoteChar('"'),
-    _areHeadersPresent(true), _columnCount(0) {
+  : CsvFile(parent) {
+  _filename = filename;
+}
+
+CsvFile::CsvFile(QObject *parent, QIODevice *input)
+  : CsvFile(parent) {
+  openReadonly(input);
 }
 
 bool CsvFile::open(QIODevice::OpenMode mode) {
@@ -41,6 +45,13 @@ bool CsvFile::open(QIODevice::OpenMode mode) {
 bool CsvFile::open(QString filename, QIODevice::OpenMode mode) {
   _filename = filename;
   return open(mode);
+}
+
+bool CsvFile::openReadonly(QIODevice *input) {
+  close();
+  _filename = QString();
+  _openMode = QIODevice::ReadOnly;
+  return readAll(input);
 }
 
 void CsvFile::close() {
@@ -97,15 +108,15 @@ bool CsvFile::removeRows(int first, int last) {
   return false;
 }
 
-bool CsvFile::readAll(QFile *file) {
+bool CsvFile::readAll(QIODevice *input) {
   bool atEnd = false;
   if (_areHeadersPresent) {
-    if (!readRow(file, &_headers, &atEnd))
+    if (!readRow(input, &_headers, &atEnd))
       return false;
   }
   while (!atEnd) {
     QStringList row;
-    if (!readRow(file, &row, &atEnd))
+    if (!readRow(input, &row, &atEnd))
       return false;
     if (!atEnd || !row.isEmpty())
       _rows.append(row);
@@ -113,19 +124,19 @@ bool CsvFile::readAll(QFile *file) {
   return true;
 }
 
-bool CsvFile::readRow(QFile *file, QStringList *row, bool *atEnd) {
+bool CsvFile::readRow(QIODevice *input, QStringList *row, bool *atEnd) {
   row->clear();
   // LATER call waitForReadyRead() with a parametrized timeout (named pipes...)
   QByteArray data;
   forever {
     char c;
-    switch (file->read(&c, 1)) {
+    switch (input->read(&c, 1)) {
     case 0: // end of file
       *atEnd = true;
       return true;
     case 1:
       if (c == _escapeChar) {
-        switch (file->read(&c, 1)) {
+        switch (input->read(&c, 1)) {
         case 0:
           *atEnd = true;
           break; // ignore lone \ at end of file

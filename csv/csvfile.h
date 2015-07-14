@@ -38,7 +38,10 @@ class LIBQTSSUSHARED_EXPORT CsvFile : public QObject {
 
 public:
   explicit CsvFile(QObject *parent = 0);
-  explicit CsvFile(QObject *parent, QString filename);
+  CsvFile(QObject *parent, QString filename);
+  explicit CsvFile(QString filename) : CsvFile(0, filename) { }
+  CsvFile(QObject *parent, QIODevice *input);
+  explicit CsvFile(QIODevice *input) : CsvFile(0, input) { }
   QStringList headers() const { return _headers; }
   QString header(int column) const { return headers().value(column); }
   QList<QStringList> rows() const { return _rows; }
@@ -49,6 +52,7 @@ public:
   int rowCount() const { return _rows.size(); }
   bool open(QIODevice::OpenMode mode);
   bool open(QString filename, QIODevice::OpenMode mode);
+  bool openReadonly(QIODevice *input);
   void close();
   QIODevice::OpenMode openMode() const { return _openMode; }
   bool isOpen() const { return _openMode != QIODevice::NotOpen; }
@@ -80,8 +84,8 @@ public slots:
   bool removeRows(int first, int last);
 
 private:
-  bool readAll(QFile *file);
-  inline bool readRow(QFile *file, QStringList *row, bool *atEnd);
+  bool readAll(QIODevice *input);
+  inline bool readRow(QIODevice *input, QStringList *row, bool *atEnd);
   bool writeAll();
   inline bool writeRow(QSaveFile *file, QStringList row, QString specialChars);
 };
