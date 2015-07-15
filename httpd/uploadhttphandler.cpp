@@ -62,8 +62,10 @@ bool UploadHttpHandler::handleRequest(
                    << file->fileTemplate() << " : " << file->errorString();
     res.setStatus(500);
   }
+  // LATER avoid DoS by setting a maximum *total* read time out
+  // LATER also stop copying or waiting when Content-Length is reached
   qint64 result = IOUtils::copy(file, req.input(), _maxBytesPerUpload,
-                                65536, 100, 100);
+                                65536, 1000, 100);
   if (result < 0) {
     Log::warning() << "failed uploading data at "
                    << req.url().toString(QUrl::RemovePassword)
