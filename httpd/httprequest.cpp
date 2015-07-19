@@ -277,14 +277,11 @@ QVariant HttpRequestPseudoParamsProvider::paramValue(
       return _request.methodName();
     } else if (key == "!clientaddresses") {
       return _request.clientAdresses().join(' ');
+    } else if (key.startsWith("!cookie")) {
+      return _request.base64Cookie(key.mid(8));
+    } else if (key.startsWith("!param")) {
+      return _request.param(key.mid(7));
     }
-    // LATER !header !cookie !param
   }
-  QString value = _request.param(key);
-  if (!value.isNull())
-    return value;
-  value = _request.base64Cookie(key);
-  if (!value.isNull())
-    return value;
   return defaultValue;
 }
