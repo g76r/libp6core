@@ -44,8 +44,7 @@ bool SharedUiItemData::setUiData(int section, const QVariant &value,
 
 Qt::ItemFlags SharedUiItemData::uiFlags(int section) const {
   Q_UNUSED(section)
-  return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled
-      | Qt::ItemIsDropEnabled;
+  return Qt::ItemIsEnabled;
 }
 
 QVariant SharedUiItemData::uiHeaderData(int section, int role) const {

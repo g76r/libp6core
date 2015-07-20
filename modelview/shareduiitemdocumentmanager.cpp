@@ -36,3 +36,7 @@ QString SharedUiItemDocumentManager::genererateNewId(QString idQualifier) {
       return id;
   }
 }
+
+void SharedUiItemDocumentManager::reorderedItems(QList<SharedUiItem> items) {
+  Q_UNUSED(items)
+}

@@ -182,3 +182,12 @@ bool SharedUiItemsTreeModel::removeRows(
   endRemoveRows();
   return true;
 }
+
+Qt::ItemFlags SharedUiItemsTreeModel::flags(const QModelIndex &index) const {
+  return SharedUiItemsModel::flags(index)
+      // add selectable flag to all items by default, some models may hold
+      // unselectable (structure) items
+      | Qt::ItemIsSelectable
+      // add drag and drop flags to enable internal dnd
+      | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled;
+}

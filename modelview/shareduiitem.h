@@ -50,14 +50,22 @@ public:
   virtual ~SharedUiItemData();
   /** Return a string identifying the object among all other SharedUiItems
    * sharing the same idQualifier().
+   *
    * The id SHOULD be unique, if it is not, keep in mind that many algorithms
    * will assume that it is, such as searching, sorting, etc. Especially within
    * Model/View classes.
+   *
+   * Id must not contains whitespace (regular space, newline, etc.).
+   *
    * Default: return uiData(0, Qt::DisplayRole).toString() */
   virtual QString id() const;
   /** Return a string identifiying the data type represented within the
    * application, e.g. "student", "calendar", "quote".
+   *
    * SHOULD be directly related to the class name, e.g. "foobar" for FoobarData.
+   *
+   * Id qualifier MUST only contains ascii letters, digits and underscore (_).
+   *
    * Default: return QString() */
   virtual QString idQualifier() const;
   /** Return UI sections count, like QAbstractItemModel::columnCount() does for
@@ -280,7 +288,18 @@ public:
   QString uiHeaderString(int section, int role = Qt::DisplayRole) const {
     return uiHeaderData(section, role).toString(); }
   /** Return UI item flags, like QAbstractItemModel::flags().
-   * Default: return Qt::ItemIsEnabled | Qt::ItemIsSelectable */
+   *
+   * Apart from very special cases, item should only set following flags:
+   * Qt::ItemIsEnabled, Qt::ItemIsEditable, Qt::ItemIsUserCheckable,
+   * Qt::ItemIsTristate.
+   *
+   * Following flags should not be set, since its the responsibility of model
+   * (e.g. SharedUiItemsTableModel) to set them depending on the meaning or
+   * place of the item within the model or on the capabilities of the model
+   * itself: Qt::ItemNeverHasChildren, Qt::ItemIsSelectable,
+   * Qt::ItemIsDragEnabled, Qt::ItemIsDropEnabled.
+   *
+   * Default: return Qt::ItemIsEnabled */
   Qt::ItemFlags uiFlags(int section) const {
     return _data ? _data->uiFlags(section) : Qt::NoItemFlags; }
 

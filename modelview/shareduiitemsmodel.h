@@ -36,8 +36,10 @@ class LIBQTSSUSHARED_EXPORT SharedUiItemsModel : public QAbstractItemModel {
   Q_DISABLE_COPY(SharedUiItemsModel)
   int _columnsCount;
   QHash<int,QHash<int,QVariant> > _mapRoleSectionHeader;
-  SharedUiItemDocumentManager *_documentManager;
   //QVariant _decorationAtColumn0;
+
+protected:
+  SharedUiItemDocumentManager *_documentManager;
 
 public:
   explicit SharedUiItemsModel(QObject *parent = 0);

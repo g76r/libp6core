@@ -41,6 +41,15 @@ public:
   virtual SharedUiItem itemById(QString idQualifier, QString id) const = 0;
   /** Default: parses qualifiedId and calls itemById(QString,QString). */
   virtual SharedUiItem itemById(QString qualifiedId) const;
+  /** Notify document manager of a change in items order.
+   *
+   * Items list may contain a mix of several items type (i.e. with different
+   * id qualifiers) and may be partial (i.e. not contains all items of a given
+   * type).
+   * In most cases items order are not significant.
+   * Default implementation does nothing.
+   */
+  virtual void reorderedItems(QList<SharedUiItem> items);
 
 signals:
   /** Emited whenever an item changes.

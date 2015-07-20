@@ -18,7 +18,7 @@
 #include "shareduiitem.h"
 #include <QList>
 
-/** Model holding SharedUiItems, one item per line within a tree, one item
+/** Model holding SharedUiItems, one item per row within a tree, one item
  * section per column. */
 class LIBQTSSUSHARED_EXPORT SharedUiItemsTreeModel : public SharedUiItemsModel {
   Q_OBJECT
@@ -90,14 +90,15 @@ public:
   explicit SharedUiItemsTreeModel(QObject *parent = 0);
   ~SharedUiItemsTreeModel();
   QModelIndex index(int row, int column,
-                    const QModelIndex &parent = QModelIndex()) const;
-  QModelIndex parent(const QModelIndex &child) const;
-  int rowCount(const QModelIndex &parent = QModelIndex()) const;
-  SharedUiItem itemAt(const QModelIndex &index) const;
+                    const QModelIndex &parent = QModelIndex()) const override;
+  QModelIndex parent(const QModelIndex &child) const override;
+  int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+  SharedUiItem itemAt(const QModelIndex &index) const override;
   using SharedUiItemsModel::indexOf;
-  QModelIndex indexOf(QString qualifiedId) const;
-  void changeItem(SharedUiItem newItem, SharedUiItem oldItem);
-  bool removeRows(int row, int count, const QModelIndex &parent);
+  QModelIndex indexOf(QString qualifiedId) const override;
+  void changeItem(SharedUiItem newItem, SharedUiItem oldItem) override;
+  bool removeRows(int row, int count, const QModelIndex &parent) override;
+  Qt::ItemFlags flags(const QModelIndex &index) const override;
 
 protected:
   void clear();
@@ -118,6 +119,14 @@ private:
   inline void adjustTreeItemAndRow(TreeItem **item, int *row);
   inline void updateIndexIfIdChanged(QString newId, QString oldId,
                                      TreeItem *newTreeItem);
+  // hide functions that cannot work with SharedUiItem paradigm to avoid
+  // misunderstanding
+  using QAbstractItemModel::insertRows;
+  using QAbstractItemModel::insertRow;
+  using QAbstractItemModel::insertColumns;
+  using QAbstractItemModel::insertColumn;
+  using QAbstractItemModel::removeColumns;
+  using QAbstractItemModel::removeColumn;
 };
 
 #endif // SHAREDUIITEMSTREEMODEL_H

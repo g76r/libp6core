@@ -18,7 +18,7 @@
 
 // LATER provides a circular buffer implementation, in addition to QList
 
-/** Model holding SharedUiItems, one item per line, one item section per
+/** Model holding SharedUiItems, one item per row, one item section per
  * column. */
 class LIBQTSSUSHARED_EXPORT SharedUiItemsTableModel
     : public SharedUiItemsModel {
@@ -37,10 +37,10 @@ protected:
 
 public:
   explicit SharedUiItemsTableModel(QObject *parent = 0);
-  int rowCount(const QModelIndex &parent = QModelIndex()) const;
+  int rowCount(const QModelIndex &parent = QModelIndex()) const override;
   QModelIndex index(int row, int column,
-                    const QModelIndex &parent = QModelIndex()) const;
-  QModelIndex parent(const QModelIndex &child) const;
+                    const QModelIndex &parent = QModelIndex()) const override;
+  QModelIndex parent(const QModelIndex &child) const override;
   DefaultInsertionPoint defaultInsertionPoint() const {
     return _defaultInsertionPoint; }
   /** Set where changeItem() should add an new item.
@@ -80,20 +80,29 @@ public:
   // LATER add insertItemsAt(int row, QList<SharedUiItem> newItems)
   // or even template<class T> insertItemsAt(int row, QList<T> newItems)
   virtual bool removeItems(int first, int last);
-  SharedUiItem itemAt(const QModelIndex &index) const;
-  /** Convenience method */
-  SharedUiItem itemAt(int row) const;
+  SharedUiItem itemAt(const QModelIndex &index) const override;
+  SharedUiItem itemAt(int row) const { return itemAt(index(row, 0)); }
   using SharedUiItemsModel::indexOf;
-  QModelIndex indexOf(QString qualifiedId) const;
-  void changeItem(SharedUiItem newItem, SharedUiItem oldItem);
+  QModelIndex indexOf(QString qualifiedId) const override;
+  void changeItem(SharedUiItem newItem, SharedUiItem oldItem) override;
   bool removeRows(int row, int count,
-                  const QModelIndex &parent = QModelIndex());
+                  const QModelIndex &parent = QModelIndex()) override;
+  Qt::ItemFlags flags(const QModelIndex &index) const override;
+  QMimeData *mimeData(const QModelIndexList &indexes) const override;
+  Qt::DropActions supportedDropActions() const override;
+  QStringList mimeTypes() const override;
+  bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row,
+                    int column, const QModelIndex &parent) override;
 
 private:
-  // TODO should remimplement these methods rather than naively hiding them
-  // hide functions that would bypass our items list if they were called
+  // hide functions that cannot work with SharedUiItem paradigm to avoid
+  // misunderstanding
   using QAbstractItemModel::insertRows;
   using QAbstractItemModel::insertRow;
+  using QAbstractItemModel::insertColumns;
+  using QAbstractItemModel::insertColumn;
+  using QAbstractItemModel::removeColumns;
+  using QAbstractItemModel::removeColumn;
 };
 
 #endif // SHAREDUIITEMSTABLEMODEL_H
