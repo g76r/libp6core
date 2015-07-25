@@ -36,10 +36,18 @@ class LIBQTSSUSHARED_EXPORT SharedUiItemsModel : public QAbstractItemModel {
   Q_DISABLE_COPY(SharedUiItemsModel)
   int _columnsCount;
   QHash<int,QHash<int,QVariant> > _mapRoleSectionHeader;
-  //QVariant _decorationAtColumn0;
 
 protected:
   SharedUiItemDocumentManager *_documentManager;
+  /** Mime type for space-separated list of qualified ids, for drag'n drop */
+  static const QString suiQualifiedIdsListMimeType;
+  /** Mime type for space-separated list of places of item, for drag'n drop,
+   * especially internal drag'n drop used to reorder items.
+   * In same order than qualified ids list. Place can be e.g. rownum for table
+   * models or paths to id for tree models. */
+  static const QString suiPlacesMimeType;
+  /** List of previous mime types. */
+  static const QStringList suiMimeTypes;
 
 public:
   explicit SharedUiItemsModel(QObject *parent = 0);
@@ -50,10 +58,6 @@ public:
    * Also set columns count. */
   virtual void setHeaderDataFromTemplate(SharedUiItem templateItem,
                                          int role = Qt::DisplayRole);
-  /* Data returned for column 0 with Qt::DecorationRole */
-  /*QVariant decorationAtColumn0() const { return _decorationAtColumn0; }
-  void setDecorationAtColumn0(QVariant decoration) {
-    _decorationAtColumn0 = decoration;  }*/
   virtual SharedUiItem itemAt(const QModelIndex &index) const = 0;
   QModelIndex indexOf(SharedUiItem item) const {
     return indexOf(item.qualifiedId()); }
@@ -63,6 +67,12 @@ public:
   Qt::ItemFlags	flags(const QModelIndex &index) const;
   bool setData(const QModelIndex &index, const QVariant &value,
                int role = Qt::EditRole);
+  /** Insert an item before row 'row', or append it at the end if
+   * row == rowCount().
+   * @see QAbstractItemModel::insertRow */
+  virtual void insertItemAt(SharedUiItem newItem, int row,
+                            QModelIndex parent = QModelIndex()) = 0;
+  Qt::DropActions supportedDropActions() const override;
   SharedUiItemDocumentManager *documentManager() const {
     return _documentManager; }
   void setDocumentManager(SharedUiItemDocumentManager *documentManager) {
@@ -108,6 +118,17 @@ signals:
    * Only changeItem() emits this signal, other methods that may change items,
    * like deleteItem() don't emit this signal. */
   void itemChanged(SharedUiItem newItem, SharedUiItem oldItem);
+
+protected:
+  /** Move children rows just before a given target row.
+   * Generic method callable by model implementations, especially to
+   * implement rows reordering.
+   * @param parent common parent of rows to be moved
+   * @param sourceRows rows to be moved
+   * @param targetRow row before which to move,
+   *   0 <= targetRow <= rowCount(parent) */
+  void moveRowsByRownums(QModelIndex parent, QList<int> sourceRows,
+                         int targetRow);
 };
 
 /** Helper class to access a SharedUiItemsModel and its specific methods

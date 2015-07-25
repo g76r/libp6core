@@ -15,6 +15,20 @@
 #include <QtDebug>
 #include <QAbstractProxyModel>
 #include "shareduiitemdocumentmanager.h"
+#include "shareduiitemlist.h"
+#include <QtDebug>
+const QString SharedUiItemsModel::suiQualifiedIdsListMimeType {
+  "application/shareduiitem-qualifiedid-list"
+};
+
+const QString SharedUiItemsModel::suiPlacesMimeType {
+  "application/shareduiitem-places"
+};
+
+const QStringList SharedUiItemsModel::suiMimeTypes {
+  SharedUiItemsModel::suiQualifiedIdsListMimeType,
+  SharedUiItemsModel::suiPlacesMimeType
+};
 
 SharedUiItemsModel::SharedUiItemsModel(QObject *parent)
   : QAbstractItemModel(parent), _columnsCount(0), _documentManager(0) {
@@ -61,9 +75,9 @@ Qt::ItemFlags	SharedUiItemsModel::flags(const QModelIndex & index) const {
 
 bool SharedUiItemsModel::setData(
     const QModelIndex &index, const QVariant &value, int role) {
-  qDebug() << "SharedUiItemsModel::setData index:" << index << "value:"
-           << value << "role:" << role << "model(this):" << this
-           << "dm:" << _documentManager;
+  //qDebug() << "SharedUiItemsModel::setData index:" << index << "value:"
+  //         << value << "role:" << role << "model(this):" << this
+  //         << "dm:" << _documentManager;
   SharedUiItem oldItem = itemAt(index);
   qDebug() << "oldItem:" << oldItem.qualifiedId();
   return role == Qt::EditRole
@@ -71,6 +85,51 @@ bool SharedUiItemsModel::setData(
       && !oldItem.isNull()
       && _documentManager
       && _documentManager->changeItemByUiData(oldItem, index.column(), value);
+}
+
+void SharedUiItemsModel::moveRowsByRownums(
+    QModelIndex parent, QList<int> sourceRows, int targetRow) {
+  SharedUiItemList items;
+  for (int rownum : sourceRows)
+    items.append(itemAt(index(rownum, 0, parent)));
+  //qDebug() << "  list:" << items.join(' ', true);
+  //qDebug() << "  target params:" << parent << parent.isValid()
+  //         << parent.row() << targetRow << rowCount(parent);
+  if (targetRow < 0 || targetRow > rowCount(parent)) {
+    qDebug() << "SharedUiItemsModel::moveRowsByRownums: targetRownum out of "
+                "bounds:" << targetRow;
+    return;
+  }
+  //qDebug() << "  target:" << targetRow << " i.e. just after:"
+  //         << parent.child(targetRow-1, 0).data()
+  //         << "under:" << parent.data();
+  // remove source rows
+  qSort(sourceRows);
+  int rowsBeforeTarget = 0;
+  for (int i = 0; i < sourceRows.size(); ++i) {
+    if (sourceRows[i] < targetRow) {
+      ++rowsBeforeTarget;
+    }
+    removeRow(sourceRows[i]-i, // deduce already removed rows from rownum
+              parent);
+  }
+  targetRow -= rowsBeforeTarget; // deduce rows before target row
+  //qDebug() << "  target (after remove):" << targetRow << rowCount(parent);
+  // insert target rows
+  for (int i = 0; i < items.size(); ++i) {
+    // add already inserted rows to target rownum
+    insertItemAt(items[i], targetRow+i, parent);
+  }
+  if (_documentManager)
+    _documentManager->reorderedItems(items);
+}
+
+Qt::DropActions SharedUiItemsModel::supportedDropActions() const {
+  // support MoveAction in addition to CopyAction to make drag'n drop eordering
+  // work for views in InternalMove mode, since when in InternalMove, the view
+  // will force MoveAction if supported and do nothing if not supported,
+  // regardless its default action
+  return Qt::CopyAction | Qt::MoveAction;
 }
 
 void SharedUiItemsProxyModelHelper::setApparentModel(

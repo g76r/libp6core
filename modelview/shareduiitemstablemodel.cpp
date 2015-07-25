@@ -52,8 +52,9 @@ void SharedUiItemsTableModel::setItems(QList<SharedUiItem> items) {
   }
 }
 
-void SharedUiItemsTableModel::insertItemAt(int row, SharedUiItem newItem) {
-  if (row < 0 || row > rowCount())
+void SharedUiItemsTableModel::insertItemAt(SharedUiItem newItem,
+    int row, QModelIndex parent) {
+  if (row < 0 || row > rowCount() || parent.isValid())
     return;
   beginInsertRows(QModelIndex(), row, row);
   _items.insert(row, newItem);
@@ -103,7 +104,7 @@ void SharedUiItemsTableModel::changeItem(SharedUiItem newItem,
     }
   } else if (oldItem.isNull() || !oldIndex.isValid()) {
     // create
-    insertItemAt(_defaultInsertionPoint == FirstItem ? 0 : rowCount(), newItem);
+    insertItemAt(newItem, _defaultInsertionPoint == FirstItem ? 0 : rowCount());
   } else {
     // update
     _items[oldIndex.row()] = newItem;
@@ -129,7 +130,11 @@ bool SharedUiItemsTableModel::removeRows(
 }
 
 Qt::ItemFlags SharedUiItemsTableModel::flags(const QModelIndex &index) const {
+  if (!index.isValid())
+    return Qt::ItemIsDropEnabled;
   return SharedUiItemsModel::flags(index)
+      // the table topology is caracterized by only root having children
+      | Qt::ItemNeverHasChildren
       // add selectable flag to all items by default, some models may hold
       // unselectable (structure) items
       | Qt::ItemIsSelectable
@@ -137,36 +142,27 @@ Qt::ItemFlags SharedUiItemsTableModel::flags(const QModelIndex &index) const {
       | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled;
 }
 
-static QString suiqlMimeType { "application/shareduiitem-qualifiedid-list" };
-static QString suirMimeType { "application/shareduiitem-rownum" };
-static QStringList suiMimeTypes { suiqlMimeType, suirMimeType };
-
 QMimeData *SharedUiItemsTableModel::mimeData(
     const QModelIndexList &indexes) const {
   //qDebug() << "mimeData" << indexes.size() << indexes;
   if (indexes.isEmpty())
     return 0;
   QMimeData *md = new QMimeData;
-  QSet<int> rows;
+  QSet<int> rowsSet;
   QStringList ids;
-  QStringList rownums;
+  QStringList rows;
   foreach (const QModelIndex &index, indexes) {
     int row = index.row();
-    if (!rows.contains(row)) {
+    if (!rowsSet.contains(row)) {
       ids.append(itemAt(row).qualifiedId());
-      rownums.append(QString::number(row));
-      rows.insert(row);
+      rows.append(QString::number(row));
+      rowsSet.insert(row);
     }
   }
-  //qDebug() << "  list:" << ids << rownums;
-  md->setData(suiqlMimeType, ids.join(' ').toUtf8());
-  md->setData(suirMimeType, rownums.join(' ').toUtf8());
+  //qDebug() << "  list:" << ids << rows;
+  md->setData(suiQualifiedIdsListMimeType, ids.join(' ').toUtf8());
+  md->setData(suiPlacesMimeType, rows.join(' ').toUtf8());
   return md;
-}
-
-Qt::DropActions SharedUiItemsTableModel::supportedDropActions() const {
-  //qDebug() << "SharedUiItemsTableModel::supportedDropActions";
-  return Qt::MoveAction;
 }
 
 QStringList SharedUiItemsTableModel::mimeTypes() const {
@@ -174,62 +170,58 @@ QStringList SharedUiItemsTableModel::mimeTypes() const {
 }
 
 bool SharedUiItemsTableModel::dropMimeData(
-    const QMimeData *data, Qt::DropAction action, int row, int column,
-    const QModelIndex &parent) {
+    const QMimeData *data, Qt::DropAction action, int targetRow,
+    int targetColumn, const QModelIndex &droppedParent) {
+  // Support for moving rows by internal drag'n drop within the same view.
+  // Note that the implementation is different from the one done by
+  // QAbstractItemModel: there is no need that the action be MoveAction, which
+  // make it possible for the internal move to work even if the view is in
+  // DragAndDrop mode, not only in InternalMove, and therefore it is possible to
+  // mix with external drag'n drop; as a consequence, it is possible, although
+  // hard to do on purpose, to trigger strange drag'n drop move by draging items
+  // from a view and dropping them onto another one, provided dragged items are
+  // found too in both view at the same time.
+  // Since we may accept drop from other views, we need to strongly check that
+  // every dropped item belong to this model. And otherwise do nothing.
+  Q_UNUSED(action)
+  Q_UNUSED(targetColumn)
   if (!data)
     return false;
-  if (action == Qt::MoveAction) { // moving rows through internal drag'n drop
-    QList<QByteArray> idsArrays = data->data(suiqlMimeType).split(' ');
-    QList<QByteArray> rownumsArrays = data->data(suirMimeType).split(' ');
-    SharedUiItemList items;
-    QList<int> rownums;
-    if (idsArrays.size() != rownumsArrays.size()) {
+  //qDebug() << "SharedUiItemsTableModel::dropMimeData" << action;
+  QList<QByteArray> idsArrays =
+      data->data(suiQualifiedIdsListMimeType).split(' ');
+  QList<QByteArray> rowsArrays = data->data(suiPlacesMimeType).split(' ');
+  SharedUiItemList items;
+  QList<int> rows;
+  if (droppedParent.isValid()) {
+    // tree views will try to drop as child of hovered item
+    // to preserve flat topology, drop after the item rather than as a child
+    targetRow = droppedParent.row();
+  }
+  if (targetRow == -1) {
+    // dropping outside any item, therefore append as last child
+    targetRow = rowCount();
+  }
+  if (idsArrays.size() != rowsArrays.size()) {
+    qDebug() << "SharedUiItemsTableModel::dropMimeData() received an "
+                "inconsistent drop unusable for internal move";
+    return false;
+  }
+  for (int i = 0; i < idsArrays.size(); ++ i) {
+    QString qualifiedId = QString::fromUtf8(idsArrays[i]);
+    int row = QString::fromLatin1(rowsArrays[i]).toInt();
+    if (!qualifiedId.isEmpty() && row >= 0 && row < _items.size()
+        && _items[row].qualifiedId() == qualifiedId) {
+      items.append(_items[row]);
+      rows.append(row);
+    } else {
       qDebug() << "SharedUiItemsTableModel::dropMimeData() received an "
-                  "inconsistent drop unusable for internal move";
+                  "external drop unusable for internal move";
+      //qDebug() << "  " << !qualifiedId.isEmpty() << row << _items.size()
+      //         << _items[row].qualifiedId() << qualifiedId;
       return false;
     }
-    for (int i = 0; i < idsArrays.size(); ++ i) {
-      QString qualifiedId = QString::fromUtf8(idsArrays[i]);
-      int rownum = QString::fromLatin1(rownumsArrays[i]).toInt();
-      if (!qualifiedId.isEmpty() && rownum >= 0 && rownum < _items.size()
-          && _items[rownum].qualifiedId() == qualifiedId) {
-        items.append(_items[rownum]);
-        rownums.append(rownum);
-      } else {
-        qDebug() << "SharedUiItemsTableModel::dropMimeData() received an "
-                    "external drop unusable for internal move";
-        return false;
-      }
-    }
-    //qDebug() << "  list:" << items.join(' ', true);
-    //qDebug() << "  target params:" << parent << parent.isValid() << parent.row()
-    //         << row;
-    int targetRow;
-    // tree views will try to drop as childre of hovered item
-    if (parent.isValid())
-      targetRow = parent.row()+1; // move after hovered item
-    // if row == -1 and !parent.isValid(), we're outside any item
-    else if (row < 0)
-      targetRow = rowCount(); // move at the end
-    // FIXME likely that table views always give root parent
-    else
-      targetRow = row+1; // move after hovered item
-    //qDebug() << "  target:" << targetRow << " i.e. just after:"
-    //         << _items.value(targetRow-1).id();
-    // remove source rows
-    qSort(rownums);
-    for (int i = 0; i < rownums.size(); ++i) {
-      if (rownums[i] <= targetRow) {
-        --targetRow; // deduce rows before target row from target row
-      }
-      removeRow(rownums[i]-i); // deduce already removed rows from rownum
-    }
-    // insert target rows
-    for (int i = 0; i < items.size(); ++i)
-      insertItemAt(targetRow+i, items[i]); // add already inserted rows
-    if (_documentManager)
-      _documentManager->reorderedItems(_items);
-    return true;
   }
-  return false;
+  moveRowsByRownums(QModelIndex(), rows, targetRow);
+  return true;
 }

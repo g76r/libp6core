@@ -37,8 +37,11 @@ protected:
     TreeItem(SharedUiItemsTreeModel *model, SharedUiItem item, TreeItem *parent,
              int row) : _model(model), _item(item), _row(row), _parent(parent) {
       QString id = item.qualifiedId();
-      if (parent)
+      if (parent) {
         parent->_children.insert(row, this);
+        for (++row; row < parent->_children.size(); ++row)
+          _parent->_children[row]->_row = row;
+      }
       if (!id.isEmpty())
         _model->_itemsIndex.insert(id, this);
     }
@@ -66,6 +69,8 @@ protected:
       child->_row = _children.size();
       _children.append(child);
     }
+    //void dumpForDebug(QString indentation = QString(),
+    //                  const TreeItem *parent = 0) const;
 
   private:
     void removeChild(int row, bool shouldDelete) {
@@ -98,7 +103,14 @@ public:
   QModelIndex indexOf(QString qualifiedId) const override;
   void changeItem(SharedUiItem newItem, SharedUiItem oldItem) override;
   bool removeRows(int row, int count, const QModelIndex &parent) override;
+  void insertItemAt(SharedUiItem newItem, int row,
+                    QModelIndex parent = QModelIndex()) override;
   Qt::ItemFlags flags(const QModelIndex &index) const override;
+  QMimeData *mimeData(const QModelIndexList &indexes) const override;
+  QStringList mimeTypes() const override;
+  bool dropMimeData(
+      const QMimeData *data, Qt::DropAction action, int targetRow,
+      int targetColumn, const QModelIndex &droppedParent) override;
 
 protected:
   void clear();
@@ -113,12 +125,22 @@ protected:
    * Limit: on update, row is currently ignored if parent does not change. */
   virtual void determineItemPlaceInTree(
       SharedUiItem newItem, QModelIndex *parent, int *row);
+  /** Build a tree path string from index, e.g. "0.2.1" for second child of
+   * third child of first child of root.
+   * Usefull to serialize item position in tree e.g. for drag'n drop. */
+  static inline QString itemPath(const QModelIndex &index);
+  /** Return parent path and set rownum to rightmost index in path, if rownum
+   * != 0. */
+  static inline QString splitPath(QString path, int *rownum = 0);
+  /** Create index knowing path string, as given by itemPath. */
+  inline QModelIndex indexFromPath(QString path);
 
 private:
   /** *item = _root if null, row = (*item)->size() if < 0 or > count() */
   inline void adjustTreeItemAndRow(TreeItem **item, int *row);
   inline void updateIndexIfIdChanged(QString newId, QString oldId,
                                      TreeItem *newTreeItem);
+  inline TreeItem *treeItemByIndex(const QModelIndex &index) const;
   // hide functions that cannot work with SharedUiItem paradigm to avoid
   // misunderstanding
   using QAbstractItemModel::insertRows;
@@ -127,6 +149,7 @@ private:
   using QAbstractItemModel::insertColumn;
   using QAbstractItemModel::removeColumns;
   using QAbstractItemModel::removeColumn;
+  //void dumpForDebug() const;
 };
 
 #endif // SHAREDUIITEMSTREEMODEL_H

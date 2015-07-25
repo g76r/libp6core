@@ -73,10 +73,8 @@ public:
     qSort(castedItems);
     setItems(castedItems);
   }
-  /** Insert an item before row 'row', or append it at the end if
-   * row == rowCount().
-   * @see QAbstractItemModel::insertRow */
-  virtual void insertItemAt(int row, SharedUiItem newItem);
+  void insertItemAt(SharedUiItem newItem, int row,
+                    QModelIndex parent = QModelIndex()) override;
   // LATER add insertItemsAt(int row, QList<SharedUiItem> newItems)
   // or even template<class T> insertItemsAt(int row, QList<T> newItems)
   virtual bool removeItems(int first, int last);
@@ -89,10 +87,10 @@ public:
                   const QModelIndex &parent = QModelIndex()) override;
   Qt::ItemFlags flags(const QModelIndex &index) const override;
   QMimeData *mimeData(const QModelIndexList &indexes) const override;
-  Qt::DropActions supportedDropActions() const override;
   QStringList mimeTypes() const override;
-  bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row,
-                    int column, const QModelIndex &parent) override;
+  bool dropMimeData(
+      const QMimeData *data, Qt::DropAction action, int targetRow,
+      int targetColumn, const QModelIndex &droppedParent) override;
 
 private:
   // hide functions that cannot work with SharedUiItem paradigm to avoid
