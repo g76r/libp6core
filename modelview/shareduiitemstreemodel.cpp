@@ -319,6 +319,8 @@ bool SharedUiItemsTreeModel::dropMimeData(
         != firstParentPath)
       return false;
     TreeItem *ti = treeItemByIndex(index(row, 0, sourceParent));
+    if (ti->childrenCount())
+      return false; // LATER learn to move non-leaves items
     if (!qualifiedId.isEmpty() && ti
         && ti->item().qualifiedId() == qualifiedId) {
       rows.append(row);
