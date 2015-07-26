@@ -56,7 +56,7 @@ QString TextTableView::text(ParamsProvider *params, QString scope) const {
   else {
     int min, max;
     // TODO read uncached data if needed
-    if (_rowsPerPage > 0 && !pageVariableValue.isNull()) {
+    if (_rowsPerPage > 0) {
       maxPage = rowsCount/_rowsPerPage
           + (rowsCount%_rowsPerPage || !rowsCount ? 1 : 0);
       if (currentPage > maxPage)
