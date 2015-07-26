@@ -108,6 +108,7 @@ public:
   Qt::ItemFlags flags(const QModelIndex &index) const override;
   QMimeData *mimeData(const QModelIndexList &indexes) const override;
   QStringList mimeTypes() const override;
+  // LATER implement canDropMimeData() to make the user know where he can drop
   bool dropMimeData(
       const QMimeData *data, Qt::DropAction action, int targetRow,
       int targetColumn, const QModelIndex &droppedParent) override;

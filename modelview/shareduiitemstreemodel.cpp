@@ -248,22 +248,22 @@ QStringList SharedUiItemsTreeModel::mimeTypes() const {
   return suiMimeTypes;
 }
 
+// Support for moving rows by internal drag'n drop within the same view.
+// Note that the implementation is different from the one done by
+// QAbstractItemModel: there is no need that the action be MoveAction, which
+// make it possible for the internal move to work even if the view is in
+// DragAndDrop mode, not only in InternalMove, and therefore it is possible to
+// mix with external drag'n drop; as a consequence, it is possible, although
+// hard to do on purpose, to trigger strange drag'n drop move by draging items
+// from a view and dropping them onto another one, provided dragged items are
+// found too in both view at the same time.
+// Since we may accept drop from other views, we need to strongly check that
+// every dropped item belong to this model. And otherwise do nothing.
+// Only support moving rows if they all belong to the same parent, and their
+// target parent is the same than their source parent.
 bool SharedUiItemsTreeModel::dropMimeData(
     const QMimeData *data, Qt::DropAction action, int targetRow,
     int targetColumn, const QModelIndex &droppedParent) {
-  // Support for moving rows by internal drag'n drop within the same view.
-  // Note that the implementation is different from the one done by
-  // QAbstractItemModel: there is no need that the action be MoveAction, which
-  // make it possible for the internal move to work even if the view is in
-  // DragAndDrop mode, not only in InternalMove, and therefore it is possible to
-  // mix with external drag'n drop; as a consequence, it is possible, although
-  // hard to do on purpose, to trigger strange drag'n drop move by draging items
-  // from a view and dropping them onto another one, provided dragged items are
-  // found too in both view at the same time.
-  // Since we may accept drop from other views, we need to strongly check that
-  // every dropped item belong to this model. And otherwise do nothing.
-  // Only support moving rows if they all belong to the same parent, and their
-  // target parent is the same than their source parent.
   Q_UNUSED(action)
   Q_UNUSED(targetColumn)
   if (!data)
@@ -272,7 +272,8 @@ bool SharedUiItemsTreeModel::dropMimeData(
   //         << "pos:" << targetRow << targetColumn << droppedParent.data() << "data:"
   //         << QString::fromUtf8(data->data(suiQualifiedIdsListMimeType))
   //         << QString::fromUtf8(data->data(suiPlacesMimeType));
-  QList<QByteArray> idsArrays = data->data(suiQualifiedIdsListMimeType).split(' ');
+  QList<QByteArray> idsArrays =
+      data->data(suiQualifiedIdsListMimeType).split(' ');
   QList<QByteArray> pathsArrays = data->data(suiPlacesMimeType).split(' ');
   QString firstParentPath = splitPath(pathsArrays.value(0));
   QModelIndex sourceParent = indexFromPath(firstParentPath);
