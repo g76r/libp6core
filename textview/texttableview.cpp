@@ -38,10 +38,17 @@ QString TextTableView::text(ParamsProvider *params, QString scope) const {
   QString v;
   QStringList rows = _rows;
   int rowsCount = rows.size();
-  QString pageVariableName(objectName().isEmpty() ? "page"
-                                                  : objectName()+"-page");
-  QString pageVariableValue(
-        params ? params->paramValue(pageVariableName).toString() : "disabled");
+  QString pageVariableName =
+      objectName().isEmpty() ? QStringLiteral("page") : objectName()+"-page";
+  QString pageVariableValue;
+  if (params) {
+    QVariant v = params->paramValue(pageVariableName);
+    if (v.isNull())
+      v = params->paramValue("!cookie:"+pageVariableName);
+    if (v.isNull())
+      v = params->paramValue("!param:"+pageVariableName);
+    pageVariableValue = v.toString();
+  }
   int currentPage = qMax(1, pageVariableValue.toInt());
   int maxPage = currentPage;
   if (rowsCount == 0)
@@ -49,7 +56,7 @@ QString TextTableView::text(ParamsProvider *params, QString scope) const {
   else {
     int min, max;
     // TODO read uncached data if needed
-    if (_rowsPerPage > 0 && pageVariableValue != "disabled") {
+    if (_rowsPerPage > 0 && !pageVariableValue.isNull()) {
       maxPage = rowsCount/_rowsPerPage
           + (rowsCount%_rowsPerPage || !rowsCount ? 1 : 0);
       if (currentPage > maxPage)
