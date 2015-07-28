@@ -30,12 +30,15 @@
  */
 class LIBQTSSUSHARED_EXPORT SimpleSharedUiItemDocumentManager
     : public SharedUiItemDocumentManager {
+  Q_OBJECT
+  Q_DISABLE_COPY(SimpleSharedUiItemDocumentManager)
+
 public:
   using Setter = bool (SharedUiItem::*)(int, const QVariant &, QString *, int,
   const SharedUiItemDocumentManager *);
   using Creator = SharedUiItem (*)(QString id);
 
-private:
+protected:
   QHash<QString,QHash<QString,SharedUiItem>> _repository;
   QHash<QString,Setter> _setters;
   QHash<QString,Creator> _creators;
@@ -43,7 +46,7 @@ private:
 public:
   explicit SimpleSharedUiItemDocumentManager(QObject *parent = 0);
   SharedUiItem createNewItem(QString idQualifier) override;
-  bool changeItem(SharedUiItem newItem, SharedUiItem oldItem);
+  bool changeItem(SharedUiItem newItem, SharedUiItem oldItem) override;
   bool changeItemByUiData(
       SharedUiItem oldItem, int section, const QVariant &value) override;
   SharedUiItem itemById(QString idQualifier, QString id) const override;

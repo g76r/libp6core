@@ -12,7 +12,7 @@
 # along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
 
 QT -= gui
-QT += network
+QT += network sql
 CONFIG += c++11
 
 TARGET = qtssu
@@ -94,7 +94,8 @@ SOURCES += \
     util/stringsparamsprovider.cpp \
     util/regexpparamsprovider.cpp \
     modelview/simpleshareduiitemdocumentmanager.cpp \
-    modelview/genericshareduiitem.cpp
+    modelview/genericshareduiitem.cpp \
+    sql/simpledatabasedocumentmanager.cpp
 
 
 HEADERS +=\
@@ -166,7 +167,8 @@ HEADERS +=\
     util/stringsparamsprovider.h \
     util/regexpparamsprovider.h \
     modelview/simpleshareduiitemdocumentmanager.h \
-    modelview/genericshareduiitem.h
+    modelview/genericshareduiitem.h \
+    sql/simpledatabasedocumentmanager.h
 
 unix {
     target.path = /usr/lib

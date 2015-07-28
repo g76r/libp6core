@@ -22,7 +22,7 @@
 // LATER implement auto-truncating / rows-count-caped mechanism
 // LATER propose a non-all-in-memory mechanism
 // LATER support for error() errorString() error reporting
-// LATER implement quoting
+// LATER implement quoting on write
 
 /** Give read/write access to a CSV file content. */
 class LIBQTSSUSHARED_EXPORT CsvFile : public QObject {
