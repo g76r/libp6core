@@ -49,6 +49,7 @@ public:
   bool changeItem(SharedUiItem newItem, SharedUiItem oldItem) override;
   bool changeItemByUiData(
       SharedUiItem oldItem, int section, const QVariant &value) override;
+  using SharedUiItemDocumentManager::itemById;
   SharedUiItem itemById(QString idQualifier, QString id) const override;
   /** This method must be called for every item type the document manager will
    * hold, to enable it to create and modify such items. */

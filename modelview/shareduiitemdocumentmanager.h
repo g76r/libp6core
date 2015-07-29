@@ -41,6 +41,18 @@ public:
   virtual SharedUiItem itemById(QString idQualifier, QString id) const = 0;
   /** Default: parses qualifiedId and calls itemById(QString,QString). */
   virtual SharedUiItem itemById(QString qualifiedId) const;
+  /** Convenience template performing downcast. */
+  template<class T>
+  T itemById(QString idQualifier, QString id) const {
+    SharedUiItem item = itemById(idQualifier, id);
+    return static_cast<T&>(item);
+  }
+  /** Convenience template performing downcast. */
+  template<class T>
+  T itemById(QString qualifierId) const {
+    SharedUiItem item = itemById(qualifierId);
+    return static_cast<T&>(item);
+  }
   /** Notify document manager of a change in items order.
    *
    * Items list may contain a mix of several items type (i.e. with different
