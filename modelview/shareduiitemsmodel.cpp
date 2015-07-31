@@ -79,7 +79,7 @@ bool SharedUiItemsModel::setData(
   //         << value << "role:" << role << "model(this):" << this
   //         << "dm:" << _documentManager;
   SharedUiItem oldItem = itemAt(index);
-  qDebug() << "oldItem:" << oldItem.qualifiedId();
+  //qDebug() << "oldItem:" << oldItem.qualifiedId();
   return role == Qt::EditRole
       && index.isValid()
       && !oldItem.isNull()

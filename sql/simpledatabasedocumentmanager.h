@@ -33,6 +33,9 @@
  * create one table per registred item type and will manage (insert and delete)
  * one row per item.
  *
+ * All items must support SharedUiItem::ExternalDataRole role in their
+ * uiData() and setUiData() implementation.
+ *
  * To enable holding items, registerItemType() must be called for every
  * idQualifier, in such a way:
  *   dm->registerItemType(

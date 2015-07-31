@@ -31,11 +31,11 @@ class SharedUiItemParamsProvider;
  * - The id MUST be unique in the scope of the document/document manager for a
  *   given id qualifier.
  * - One of the section SHOULD represent the id for both Qt::DisplayRole and
- *   Qt::EditRole roles (this is e.g. mandatory to use
- *   SimpleDatabaseDocumentManager). It is convenient to use section 0 as id
- *   because in many case section 0 will be displayed by default (e.g. that's
- *   what QListView does) or as first value (e.g. QTreeView, QTableView,
- *   QColumnView).
+ *   SharedUiItem::ExternalDataRole roles (this is e.g. mandatory to use
+ *   SimpleDatabaseDocumentManager but is usefull in many other cases).
+ *   It is convenient to use section 0 as id because in many case section 0 will
+ *   be displayed by default (e.g. that's what QListView does) or as first value
+ *   (e.g. QTreeView, QTableView, QColumnView).
  * - The idQualifier MUST only contains ascii letters, digits and underscore (_)
  *   and MUST start with a letter. It SHOULD be directly related to the class
  *   name, e.g. "foobar" for FoobarData. Within a given application, all
@@ -44,12 +44,18 @@ class SharedUiItemParamsProvider;
  * - As soon as it contains data and wants it displayed, which is very likely,
  *   a subclass MUST implement uiData() and uiSectionCount() and SHOULD
  *   implement uiHeaderData().
- * - uiData() MUST handle Qt::EditRole and Qt::DisplayRole. When planning to
- *   have only read-only UI features, Qt::EditRole SHOULD be treated as a strict
- *   equivalent of Qt::DisplayRole.
+ * - uiData() MUST handle Qt::EditRole, Qt::DisplayRole and
+ *   SharedUiItem::ExternalDataRole.
+ *   When planning to have only read-only UI features, Qt::EditRole SHOULD be
+ *   treated as a strict equivalent of Qt::DisplayRole.
+ *   Most of the time, SharedUiItem::ExternalDataRole SHOULD be treated as a
+ *   strict equivalent to Qt::EditRole, however there are cases where a
+ *   different format is needed for external API format (storage, transfer...)
+ *   than for user interface edition.
  * - When planning to have generic UI edition features, a subclass MUST
  *   implement uiFlags() (to add Qt::ItemIsEditable flag for editable sections)
- *   and setUiData().
+ *   and setUiData() and setUiData() MUST handle Qt::EditRole and
+ *   SharedUiItem::ExternalDataRole.
  * - There MUST NOT be several level of subclasses, i.e. you must not subclass
  *   SharedUiItemData subclasses.
  * @see SharedUiItem */
@@ -213,7 +219,8 @@ public:
     IdRole = Qt::UserRole+784,
     IdQualifierRole,
     QualifiedIdRole,
-    HeaderDisplayRole
+    HeaderDisplayRole,
+    ExternalDataRole // for file/database storage or network transfer
   };
 
   SharedUiItem() { }

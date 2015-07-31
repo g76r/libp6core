@@ -103,7 +103,7 @@ bool SimpleDatabaseDocumentManager::insertItem(SharedUiItem newItem) {
   query.prepare("insert into "+idQualifier+" ("+protectedColumnNames.join(',')
                 +") values ("+placeholders.join(',')+") ");
   for (int i = 0; i < newItem.uiSectionCount(); ++i)
-    query.bindValue(i, newItem.uiData(i, Qt::EditRole));
+    query.bindValue(i, newItem.uiData(i, SharedUiItem::ExternalDataRole));
   if (!query.exec()) {
     qDebug() << "SimpleDatabaseDocumentManager cannot insert into table"
              << idQualifier << newItem.id() << query.lastError().text();
@@ -153,6 +153,15 @@ void SimpleDatabaseDocumentManager::createTableAndSelectData(
     }
   }
   // TODO alter table, if needed, @see QSqlDatabase::record()
+  /*
+sqlite> alter table connection rename to foo;
+sqlite> create table connection as select Id,Url,Login,Password,'' as Proxy_Id from foo;
+sqlite> .h on
+sqlite> select * from connection;
+Id|URL|Login|Password|Proxy_Id
+connection4||||
+sqlite> drop table foo;
+   */
   query.exec("select "+protectedColumnNames.join(',')+" from "+idQualifier);
   if (query.lastError().type() != QSqlError::NoError) {
     qWarning() << "SimpleDatabaseDocumentManager cannot select from table"
@@ -164,14 +173,12 @@ void SimpleDatabaseDocumentManager::createTableAndSelectData(
     item = creator(QStringLiteral("dummy"));
     for (int i = 0; i < item.uiSectionCount(); ++i) {
       QString errorString;
-      if (!(item.uiFlags(i) & Qt::ItemIsEditable))
-        continue;
-      bool ok = (item.*setter)(i, query.value(i), &errorString, Qt::EditRole,
-                               this);
+      bool ok = (item.*setter)(i, query.value(i), &errorString,
+                               SharedUiItem::ExternalDataRole, this);
       if (!ok) {
+        // TODO do not log this
         qDebug() << "SimpleDatabaseDocumentManager cannot set value for item"
                  << item.qualifiedId() << errorString;
-        goto ignore_item;
       }
     }
     //qDebug() << "  have item:" << item.qualifiedId();
