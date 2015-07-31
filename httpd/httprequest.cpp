@@ -255,7 +255,21 @@ QStringList HttpRequest::clientAdresses() const {
   if (d->_clientAdresses.isEmpty()) {
     QStringList xff = headers("X-Forwarded-For");
     if (!xff.isEmpty())
-      d->_clientAdresses.append(xff.last().split(xffSeparator));
+      d->_clientAdresses.append(xff.last().split(xffSeparator)); // FIXME: not last, every one
+    /*
+
+RFC2616 is clear on how headers should be combined so order is retained. In short
+...
+X-Forwarded-For : A, B
+...
+X-Forwarded-For : C
+...
+X-Forwarded-For : D, E
+
+must be treated exactly the same way as:
+X-Forwarded-For: A, B, C, D, E
+
+*/
     QHostAddress peerAddress = d->_input->peerAddress();
     if (peerAddress.isNull()) {
       Log::debug() << "HttpRequest::clientAdresses() cannot find socket peer "
