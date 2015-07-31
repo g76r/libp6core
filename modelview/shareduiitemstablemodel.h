@@ -78,6 +78,7 @@ public:
   // LATER add insertItemsAt(int row, QList<SharedUiItem> newItems)
   // or even template<class T> insertItemsAt(int row, QList<T> newItems)
   virtual bool removeItems(int first, int last);
+  using SharedUiItemsModel::itemAt;
   SharedUiItem itemAt(const QModelIndex &index) const override;
   SharedUiItem itemAt(int row) const { return itemAt(index(row, 0)); }
   using SharedUiItemsModel::indexOf;

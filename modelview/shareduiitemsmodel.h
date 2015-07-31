@@ -17,6 +17,7 @@
 #include <QAbstractItemModel>
 #include "shareduiitem.h"
 #include "libqtssu_global.h"
+#include <QString>
 
 class QAbstractProxyModel;
 
@@ -59,6 +60,36 @@ public:
   virtual void setHeaderDataFromTemplate(SharedUiItem templateItem,
                                          int role = Qt::DisplayRole);
   virtual SharedUiItem itemAt(const QModelIndex &index) const = 0;
+  inline SharedUiItem itemAt(int row, int column,
+                      const QModelIndex &parent = QModelIndex()) const {
+    return itemAt(index(row, column, parent));
+  }
+  /** Convenience template performing downcast. */
+  template<class T>
+  inline T itemAt(QString qualifier, const QModelIndex &index) const {
+    SharedUiItem item = itemAt(index);
+    return item.idQualifier() == qualifier ? static_cast<T&>(item) : T();
+  }
+  /** Convenience template performing downcast. */
+  template<class T>
+  inline T itemAt(const char *qualifier, const QModelIndex &index) const {
+    SharedUiItem item = itemAt(index);
+    return item.idQualifier() == qualifier ? static_cast<T&>(item) : T();
+  }
+  /** Convenience template performing downcast. */
+  template<class T>
+  inline T itemAt(QString qualifier, int row, int column,
+           const QModelIndex &parent = QModelIndex()) const {
+    SharedUiItem item = itemAt(row, column, parent);
+    return item.idQualifier() == qualifier ? static_cast<T&>(item) : T();
+  }
+  /** Convenience template performing downcast. */
+  template<class T>
+  inline T itemAt(const char *qualifier, int row, int column,
+           const QModelIndex &parent = QModelIndex()) const {
+    SharedUiItem item = itemAt(row, column, parent);
+    return item.idQualifier() == qualifier ? static_cast<T&>(item) : T();
+  }
   QModelIndex indexOf(SharedUiItem item) const {
     return indexOf(item.qualifiedId()); }
   QModelIndex indexOf(QString idQualifier, QString id) const {

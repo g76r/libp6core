@@ -98,6 +98,7 @@ public:
                     const QModelIndex &parent = QModelIndex()) const override;
   QModelIndex parent(const QModelIndex &child) const override;
   int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+  using SharedUiItemsModel::itemAt;
   SharedUiItem itemAt(const QModelIndex &index) const override;
   using SharedUiItemsModel::indexOf;
   QModelIndex indexOf(QString qualifiedId) const override;
