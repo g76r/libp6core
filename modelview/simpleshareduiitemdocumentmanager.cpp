@@ -67,3 +67,11 @@ SimpleSharedUiItemDocumentManager &SimpleSharedUiItemDocumentManager
   //qDebug() << "registered" << idQualifier;
   return *this;
 }
+
+SharedUiItemList<SharedUiItem> SimpleSharedUiItemDocumentManager
+::itemsByIdQualifier(QString idQualifier) const {
+  SharedUiItemList<SharedUiItem> list;
+  foreach (SharedUiItem item, _repository.value(idQualifier))
+    list.append(item);
+  return list;
+}

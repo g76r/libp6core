@@ -17,6 +17,7 @@
 #include <QObject>
 #include "libqtssu_global.h"
 #include "modelview/shareduiitem.h"
+#include "shareduiitemlist.h"
 
 /** Base class for SharedUiItem-based document managers.
  * @see SharedUiItem */
@@ -52,6 +53,25 @@ public:
   T itemById(QString qualifierId) const {
     SharedUiItem item = itemById(qualifierId);
     return static_cast<T&>(item);
+  }
+  /** This method build a list of every item currently holded, given their
+   * qualifierId. */
+  virtual SharedUiItemList<SharedUiItem> itemsByIdQualifier(
+      QString idQualifier) const = 0;
+  /** This method build a list of every item currently holded, given their class
+   * (T) and qualifierId. */
+  template<class T>
+  SharedUiItemList<T> itemsByIdQualifier(QString idQualifier) const {
+    T *dummy;
+    Q_UNUSED(static_cast<SharedUiItem*>(dummy)); // ensure T is a SharedUiItem
+    SharedUiItemList<SharedUiItem> list = itemsByIdQualifier(idQualifier);
+    if (!list.isEmpty() && list[0].idQualifier() != idQualifier) {
+      // LATER output warning
+      //qWarning() << "SharedUiItemList<T>::itemsByIdQualifier called with "
+      //              "inconsistent types and qualifier";
+      return SharedUiItemList<T>();
+    }
+    return *reinterpret_cast<SharedUiItemList<T>*>(&list);
   }
   /** Notify document manager of a change in items order.
    *

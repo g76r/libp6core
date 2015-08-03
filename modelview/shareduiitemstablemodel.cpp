@@ -191,7 +191,7 @@ bool SharedUiItemsTableModel::dropMimeData(
   QList<QByteArray> idsArrays =
       data->data(suiQualifiedIdsListMimeType).split(' ');
   QList<QByteArray> rowsArrays = data->data(suiPlacesMimeType).split(' ');
-  SharedUiItemList items;
+  SharedUiItemList<> items;
   QList<int> rows;
   if (droppedParent.isValid()) {
     // tree views will try to drop as child of hovered item

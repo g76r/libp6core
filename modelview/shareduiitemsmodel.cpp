@@ -89,7 +89,7 @@ bool SharedUiItemsModel::setData(
 
 void SharedUiItemsModel::moveRowsByRownums(
     QModelIndex parent, QList<int> sourceRows, int targetRow) {
-  SharedUiItemList items;
+  SharedUiItemList<> items;
   for (int rownum : sourceRows)
     items.append(itemAt(index(rownum, 0, parent)));
   //qDebug() << "  list:" << items.join(' ', true);

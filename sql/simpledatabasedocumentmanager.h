@@ -19,9 +19,6 @@
 #include <QList>
 #include <QSqlDatabase>
 
-/**
- * inefficient for large databases (all mapped objects in memory, auto create un-indexed schemas...)
- */
 /** Simple generic implementation of SharedUiItemDocumentManager holding in
  * memory a repository of items by idQualifier and id, with database
  * persistence.

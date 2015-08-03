@@ -23,19 +23,37 @@
 class SharedUiItem;
 
 /** Specializing QList for SharedUiItems, the same way QStringList does. */
-class LIBQTSSUSHARED_EXPORT SharedUiItemList : public QList<SharedUiItem> {
+template <class T = SharedUiItem>
+class LIBQTSSUSHARED_EXPORT SharedUiItemList : public QList<T> {
 public:
-  inline SharedUiItemList() { }
-  inline SharedUiItemList(const SharedUiItemList &other)
-    : QList<SharedUiItem>(other) { }
-  template <class T>
-  inline SharedUiItemList(const QList<T> &other)
-    : QList<SharedUiItem>(reinterpret_cast<const QList<SharedUiItem>&>(other)) {
+  inline SharedUiItemList() {
     T *dummy;
     Q_UNUSED(static_cast<SharedUiItem*>(dummy)); // ensure T is a SharedUiItem
   }
-  QString join(const QString &separator, bool qualified) const;
-  QString join(const QChar separator, bool qualified) const;
+  inline SharedUiItemList(const SharedUiItemList<T> &other)
+    : QList<T>(other) {
+    T *dummy;
+    Q_UNUSED(static_cast<SharedUiItem*>(dummy)); // ensure T is a SharedUiItem
+  }
+  inline SharedUiItemList(const QList<T> &other) : QList<T>(other) {
+    T *dummy;
+    Q_UNUSED(static_cast<SharedUiItem*>(dummy)); // ensure T is a SharedUiItem
+  }
+  //QString join<SharedUiItem>(const QString &separator, bool qualified) const;
+  //QString join<SharedUiItem>(const QChar separator, bool qualified) const;
+  QString join(const QString &separator, bool qualified) const {
+    SharedUiItemList<SharedUiItem> *upcasted =
+        (SharedUiItemList<SharedUiItem>*)this;
+    return upcasted->join(separator, qualified);
+  }
+  QString join(const QChar separator, bool qualified) const {
+    SharedUiItemList<SharedUiItem> *upcasted =
+        (SharedUiItemList<SharedUiItem>*)this;
+    return upcasted->join(separator, qualified);
+  }
+  operator SharedUiItemList<SharedUiItem>() const {
+    return static_cast<SharedUiItemList<SharedUiItem>>(*this);
+  }
   // TODO add features
   //SharedUiItemList filterByQualifier(QString qualifier) const;
   //SharedUiItemList filterByQualifier(QRegularExpression qualifier) const;
@@ -44,5 +62,23 @@ public:
   //operator<<(QList<SharedUiItem>)
   //operator+=
 };
+
+template<>
+QString LIBQTSSUSHARED_EXPORT SharedUiItemList<SharedUiItem>::join(
+    const QString &separator, bool qualified) const;
+
+template<>
+QString LIBQTSSUSHARED_EXPORT SharedUiItemList<SharedUiItem>::join(
+    const QChar separator, bool qualified) const;
+
+// LATER find a way to convert QList<T> to SharedUiItemList<SharedUiItem> with any T : SharedUiItem
+/**
+template <class T>
+inline operator SharedUiItemList<SharedUiItem>(QList<T> &other) {
+  T *dummy;
+  Q_UNUSED(static_cast<SharedUiItem*>(dummy)); // ensure T is a SharedUiItem
+  return SharedUiItemList<SharedUiItem>(
+        reinterpret_cast<const QList<SharedUiItem>&>(other));
+}*/
 
 #endif // SHAREDUIITEMLIST_H

@@ -125,6 +125,7 @@ SimpleDatabaseDocumentManager &SimpleDatabaseDocumentManager::setDatabase(
 
 void SimpleDatabaseDocumentManager::createTableAndSelectData(
     QString idQualifier, Setter setter, Creator creator, int idSection) {
+  Q_UNUSED(idSection)
   if (!creator || !setter) // should never happen
     return;
   QStringList columnNames, protectedColumnNames;
@@ -183,7 +184,6 @@ sqlite> drop table foo;
     }
     //qDebug() << "  have item:" << item.qualifiedId();
     SimpleSharedUiItemDocumentManager::changeItem(item, SharedUiItem());
-ignore_item:;
   }
 }
 

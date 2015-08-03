@@ -14,9 +14,9 @@
 #include "shareduiitemlist.h"
 #include "shareduiitem.h"
 
-template <class T>
+template <class S>
 inline static QString generic_join(
-    const QList<SharedUiItem> *list, const T &separator, bool qualified) {
+    const QList<SharedUiItem> *list, const S &separator, bool qualified) {
   QString s;
   bool first = true;
   foreach (const SharedUiItem &item, *list) {
@@ -34,11 +34,14 @@ inline static QString generic_join(
   return s;
 }
 
-QString SharedUiItemList::join(const QString &separator, bool qualified) const {
+template<>
+QString SharedUiItemList<SharedUiItem>::join(
+    const QString &separator, bool qualified) const {
   return generic_join(this, separator, qualified);
 }
 
-QString SharedUiItemList::join(const QChar separator, bool qualified) const {
+template<>
+QString SharedUiItemList<SharedUiItem>::join(
+    const QChar separator, bool qualified) const {
   return generic_join(this, separator, qualified);
 }
-
