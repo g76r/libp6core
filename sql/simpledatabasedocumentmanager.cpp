@@ -51,8 +51,12 @@ bool SimpleDatabaseDocumentManager::changeItem(
   if (!_db.transaction()) {
     qDebug() << "SimpleDatabaseDocumentManager cannot start transaction"
              << _db.lastError().text();
-    return false;
+    goto failed;
   }
+  // resolve oldItem from repository, to handle case where oldItem is just a
+  // GenericSharedUiItem placeholder with ids but no data and to handle case
+  // where oldItem does not actualy exist
+  oldItem = itemById(oldItem.idQualifier(), oldItem.id());
   if (!oldItem.isNull()) {
     QString idQualifier = oldItem.idQualifier();
     QSqlQuery query(_db);
@@ -65,25 +69,28 @@ bool SimpleDatabaseDocumentManager::changeItem(
       qDebug() << "SimpleDatabaseDocumentManager cannot delete from table"
                << idQualifier << oldItem.id() << query.lastError().text()
                << query.executedQuery();
-      return false;
+      goto failed;
     }
   } else if (newItem.isNull()) {
-    return false; // called with null,null : should never happen
+    goto failed; // called with null,null : should never happen
   }
-  if (!insertItem(newItem)) {
+  if (!newItem.isNull() && !insertItem(newItem)) {
     if (!_db.rollback()) {
       qDebug() << "SimpleDatabaseDocumentManager cannot rollback transaction"
                << _db.lastError().text();
     }
-    return false;
+    goto failed;
   }
   if (!_db.commit()) {
     qDebug() << "SimpleDatabaseDocumentManager cannot commit transaction"
              << _db.lastError().text();
-    return false;
+    goto failed;
   }
   SimpleSharedUiItemDocumentManager::changeItem(newItem, oldItem);
   return true;
+failed:;
+  _db.rollback();
+  return false;
 }
 
 bool SimpleDatabaseDocumentManager::insertItem(SharedUiItem newItem) {
