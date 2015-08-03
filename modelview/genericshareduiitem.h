@@ -33,6 +33,10 @@ public:
     : GenericSharedUiItem(QStringLiteral("generic"),
                           values.size() > 0 ? values[0].toString() : QString(),
                           headers, values) { }
+  /** Create empty item, without data or headers. */
+  GenericSharedUiItem(QString idQualifier, QString id);
+  /** Create empty item, without data or headers, by parsing qualifiedId. */
+  explicit GenericSharedUiItem(QString qualifiedId);
   GenericSharedUiItem &operator=(const GenericSharedUiItem &other) {
     SharedUiItem::operator=(other); return *this; }
   static QList<GenericSharedUiItem> fromCsv(

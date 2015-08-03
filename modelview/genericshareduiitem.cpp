@@ -23,6 +23,18 @@ public:
       QString idQualifier, QString id, QVariantList headers,
       QVariantList values)
     : _idQualifier(idQualifier), _id(id), _headers(headers), _values(values) { }
+  GenericSharedUiItemData(QString idQualifier, QString id)
+    : _idQualifier(idQualifier), _id(id) { }
+  explicit GenericSharedUiItemData(QString qualifiedId) {
+    int i = qualifiedId.indexOf(':');
+    if (i < 0) {
+      _idQualifier = QStringLiteral("generic");
+      _id = qualifiedId;
+    } else {
+      _idQualifier = qualifiedId.left(i);
+      _id = qualifiedId.mid(i+1);
+    }
+  }
   QString id() const { return _id; }
   QString idQualifier() const { return _idQualifier; }
   int uiSectionCount() const { return qMax(_headers.size(), _values.size()); }
@@ -51,8 +63,16 @@ GenericSharedUiItem::GenericSharedUiItem(
     QVariantList values)
   : SharedUiItem(new GenericSharedUiItemData(idQualifier, id, headers,
                                              values)) {
-
 }
+
+GenericSharedUiItem::GenericSharedUiItem(QString idQualifier, QString id)
+  : SharedUiItem(new GenericSharedUiItemData(idQualifier, id)) {
+}
+
+GenericSharedUiItem::GenericSharedUiItem(QString qualifiedId)
+  : SharedUiItem(new GenericSharedUiItemData(qualifiedId)) {
+}
+
 
 QList<GenericSharedUiItem> GenericSharedUiItem::fromCsv(
     CsvFile *csvFile, int idColumn, QString idQualifier) {
