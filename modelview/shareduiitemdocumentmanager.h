@@ -37,7 +37,7 @@ public:
   virtual bool changeItemByUiData(SharedUiItem oldItem, int section,
                                   const QVariant &value) = 0;
   /** Method that user interface or non-interactive code should call to change
-   * an item at a whole. */
+   * an item at whole. */
   virtual bool changeItem(SharedUiItem newItem, SharedUiItem oldItem) = 0;
   virtual SharedUiItem itemById(QString idQualifier, QString id) const = 0;
   /** Default: parses qualifiedId and calls itemById(QString,QString). */
