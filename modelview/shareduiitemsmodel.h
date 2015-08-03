@@ -106,8 +106,7 @@ public:
   Qt::DropActions supportedDropActions() const override;
   SharedUiItemDocumentManager *documentManager() const {
     return _documentManager; }
-  void setDocumentManager(SharedUiItemDocumentManager *documentManager) {
-    _documentManager = documentManager; }
+  virtual void setDocumentManager(SharedUiItemDocumentManager *documentManager);
 
 public slots:
   /** Operate a change on an item within this model.

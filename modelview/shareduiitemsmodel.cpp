@@ -132,6 +132,19 @@ Qt::DropActions SharedUiItemsModel::supportedDropActions() const {
   return Qt::CopyAction | Qt::MoveAction;
 }
 
+void SharedUiItemsModel::setDocumentManager(
+    SharedUiItemDocumentManager *documentManager) {
+  if (_documentManager) {
+    disconnect(_documentManager, &SharedUiItemDocumentManager::itemChanged,
+               this, &SharedUiItemsModel::changeItem);
+  }
+  _documentManager = documentManager;
+  if (_documentManager) {
+    connect(_documentManager, &SharedUiItemDocumentManager::itemChanged,
+            this, &SharedUiItemsModel::changeItem);
+  }
+}
+
 void SharedUiItemsProxyModelHelper::setApparentModel(
     QAbstractItemModel *model) {
   _realModel = qobject_cast<SharedUiItemsModel*>(model);
