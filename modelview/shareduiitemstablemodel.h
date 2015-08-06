@@ -39,6 +39,12 @@ protected:
 
 public:
   explicit SharedUiItemsTableModel(QObject *parent = 0);
+  explicit SharedUiItemsTableModel(
+      SharedUiItem templateItem,
+      DefaultInsertionPoint defaultInsertionPoint = LastItem,
+      QObject *parent = 0);
+  explicit SharedUiItemsTableModel(SharedUiItem templateItem, QObject *parent)
+    : SharedUiItemsTableModel(templateItem, LastItem, parent) { }
   int rowCount(const QModelIndex &parent = QModelIndex()) const override;
   QModelIndex index(int row, int column,
                     const QModelIndex &parent = QModelIndex()) const override;

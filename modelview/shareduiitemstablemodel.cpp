@@ -23,6 +23,15 @@ SharedUiItemsTableModel::SharedUiItemsTableModel(QObject *parent)
     _maxrows(INT_MAX) {
 }
 
+SharedUiItemsTableModel::SharedUiItemsTableModel(
+    SharedUiItem templateItem, DefaultInsertionPoint defaultInsertionPoint,
+    QObject *parent)
+  : SharedUiItemsModel(parent),
+    _defaultInsertionPoint(SharedUiItemsTableModel::LastItem),
+    _maxrows(INT_MAX) {
+  setHeaderDataFromTemplate(templateItem);
+}
+
 int SharedUiItemsTableModel::rowCount(const QModelIndex &parent) const {
   return parent.isValid() ? 0 : _items.size();
 }
