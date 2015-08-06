@@ -51,8 +51,13 @@ public:
         (SharedUiItemList<SharedUiItem>*)this;
     return upcasted->join(separator, qualified);
   }
-  operator SharedUiItemList<SharedUiItem>() const {
-    return static_cast<SharedUiItemList<SharedUiItem>>(*this);
+  // conversion operator to enable upcasting an list to to SharedUiItem list
+  operator SharedUiItemList<SharedUiItem> &() {
+    return reinterpret_cast<SharedUiItemList<SharedUiItem>&>(*this);
+  }
+  // conversion operator to enable upcasting an list to to SharedUiItem list
+  operator const SharedUiItemList<SharedUiItem> &() const {
+    return reinterpret_cast<const SharedUiItemList<SharedUiItem>&>(*this);
   }
   // TODO add features
   //SharedUiItemList filterByQualifier(QString qualifier) const;
