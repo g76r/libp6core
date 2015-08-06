@@ -15,6 +15,7 @@
 #define SHAREDUIITEMSTABLEMODEL_H
 
 #include "shareduiitemsmodel.h"
+#include <QSet>
 
 // LATER provides a circular buffer implementation, in addition to QList
 
@@ -31,6 +32,7 @@ public:
 private:
   DefaultInsertionPoint _defaultInsertionPoint;
   int _maxrows;
+  QSet<QString> _changeItemQualifierFilter;
 
 protected:
   QList<SharedUiItem> _items;
@@ -83,7 +85,8 @@ public:
   SharedUiItem itemAt(int row) const { return itemAt(index(row, 0)); }
   using SharedUiItemsModel::indexOf;
   QModelIndex indexOf(QString qualifiedId) const override;
-  void changeItem(SharedUiItem newItem, SharedUiItem oldItem) override;
+  void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
+                  QString idQualifier) override;
   bool removeRows(int row, int count,
                   const QModelIndex &parent = QModelIndex()) override;
   Qt::ItemFlags flags(const QModelIndex &index) const override;
@@ -92,6 +95,15 @@ public:
   bool dropMimeData(
       const QMimeData *data, Qt::DropAction action, int targetRow,
       int targetColumn, const QModelIndex &droppedParent) override;
+  void setChangeItemQualifierFilter(QSet<QString> acceptedQualifiers) {
+    _changeItemQualifierFilter = acceptedQualifiers; }
+  void setChangeItemQualifierFilter(QList<QString> acceptedQualifiers) {
+    _changeItemQualifierFilter = QSet<QString>::fromList(acceptedQualifiers); }
+  void setChangeItemQualifierFilter(QString acceptedQualifier) {
+    _changeItemQualifierFilter.clear();
+    _changeItemQualifierFilter.insert(acceptedQualifier); }
+  void clearChangeItemQualifierFilter() {
+    _changeItemQualifierFilter.clear(); }
 
 private:
   // hide functions that cannot work with SharedUiItem paradigm to avoid

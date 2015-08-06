@@ -94,8 +94,11 @@ SharedUiItem SharedUiItemsTableModel::itemAt(const QModelIndex &index) const {
   return SharedUiItem();
 }
 
-void SharedUiItemsTableModel::changeItem(SharedUiItem newItem,
-                                         SharedUiItem oldItem) {
+void SharedUiItemsTableModel::changeItem(
+    SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
+  if (!_changeItemQualifierFilter.isEmpty()
+      && !_changeItemQualifierFilter.contains(idQualifier))
+    return;
   QModelIndex oldIndex = indexOf(oldItem);
   if (newItem.isNull()) {
     if (oldIndex.isValid()) {

@@ -133,16 +133,15 @@ Qt::DropActions SharedUiItemsModel::supportedDropActions() const {
 }
 
 void SharedUiItemsModel::setDocumentManager(
-    SharedUiItemDocumentManager *documentManager) {
-  if (_documentManager) {
-    disconnect(_documentManager, &SharedUiItemDocumentManager::itemChanged,
-               this, &SharedUiItemsModel::changeItem);
-  }
+    SharedUiItemDocumentManager *documentManager, QStringList idQualifiers) {
+  if (_documentManager)
+    disconnect(_documentManager, 0, this, 0);
   _documentManager = documentManager;
-  if (_documentManager) {
-    connect(_documentManager, &SharedUiItemDocumentManager::itemChanged,
-            this, &SharedUiItemsModel::changeItem);
-  }
+  SharedUiItem nullitem;
+  foreach (QString idQualifier, idQualifiers)
+    foreach (SharedUiItem item,
+             _documentManager->itemsByIdQualifier(idQualifier))
+      changeItem(item, nullitem, idQualifier);
 }
 
 void SharedUiItemsProxyModelHelper::setApparentModel(

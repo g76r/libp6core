@@ -106,7 +106,10 @@ public:
   Qt::DropActions supportedDropActions() const override;
   SharedUiItemDocumentManager *documentManager() const {
     return _documentManager; }
-  virtual void setDocumentManager(SharedUiItemDocumentManager *documentManager);
+  /** Set document manager and populate model with its items matching qualifier
+   * ids in idQualifiers. */
+  virtual void setDocumentManager(SharedUiItemDocumentManager *documentManager,
+                                  QStringList idQualifiers = QStringList());
 
 public slots:
   /** Operate a change on an item within this model.
@@ -131,14 +134,17 @@ public slots:
    * Must emit itemChanged() after having updated data.
    * @see SharedUiItemDocumentManager::itemChanged()
    */
-  virtual void changeItem(SharedUiItem newItem, SharedUiItem oldItem) = 0;
-  /** Short for changeItem(newItem, SharedUiItem()). */
-  void createItem(SharedUiItem newItem) { changeItem(newItem, SharedUiItem()); }
-  /** Short for changeItem(newItem, newItem). */
+  virtual void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
+                          QString idQualifier) = 0;
+  /** Short for changeItem(newItem, SharedUiItem(), newItem.idQualifier()). */
+  void createItem(SharedUiItem newItem) {
+    changeItem(newItem, SharedUiItem(), newItem.idQualifier()); }
+  /** Short for changeItem(newItem, newItem, newItem.idQualifier()). */
   void createOrUpdateItem(SharedUiItem newItem) {
-    changeItem(newItem, newItem); }
-  /** Short for changeItem(SharedUiItem(), oldItem). */
-  void deleteItem(SharedUiItem oldItem) { changeItem(SharedUiItem(), oldItem); }
+    changeItem(newItem, newItem, newItem.idQualifier()); }
+  /** Short for changeItem(SharedUiItem(), oldItem, oldItem.idQualifier()). */
+  void deleteItem(SharedUiItem oldItem) {
+    changeItem(SharedUiItem(), oldItem, oldItem.idQualifier()); }
 
 signals:
   /** Emited by changeItem(), after it performed model changes.

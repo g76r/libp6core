@@ -66,5 +66,7 @@ void SharedUiItemsLogModel::setHeaderDataFromTemplate(
 
 void SharedUiItemsLogModel::logItem(SharedUiItem newItem) {
   if (newItem)
-    SharedUiItemsTableModel::changeItem(SharedUiItemLogWrapper(newItem), SharedUiItem());
+    SharedUiItemsTableModel::changeItem(
+          SharedUiItemLogWrapper(newItem), SharedUiItem(),
+          newItem.idQualifier());
 }

@@ -17,6 +17,7 @@
 #include "shareduiitemsmodel.h"
 #include "shareduiitem.h"
 #include <QList>
+#include <QSet>
 
 /** Model holding SharedUiItems, one item per row within a tree, one item
  * section per column. */
@@ -90,6 +91,7 @@ protected:
 private:
   TreeItem *_root;
   QHash<QString,TreeItem*> _itemsIndex; // key: qualified id
+  QSet<QString> _changeItemQualifierFilter;
 
 public:
   explicit SharedUiItemsTreeModel(QObject *parent = 0);
@@ -102,7 +104,8 @@ public:
   SharedUiItem itemAt(const QModelIndex &index) const override;
   using SharedUiItemsModel::indexOf;
   QModelIndex indexOf(QString qualifiedId) const override;
-  void changeItem(SharedUiItem newItem, SharedUiItem oldItem) override;
+  void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
+                  QString idQualifier) override;
   bool removeRows(int row, int count, const QModelIndex &parent) override;
   void insertItemAt(SharedUiItem newItem, int row,
                     QModelIndex parent = QModelIndex()) override;
@@ -113,6 +116,15 @@ public:
   bool dropMimeData(
       const QMimeData *data, Qt::DropAction action, int targetRow,
       int targetColumn, const QModelIndex &droppedParent) override;
+  void setChangeItemQualifierFilter(QSet<QString> acceptedQualifiers) {
+    _changeItemQualifierFilter = acceptedQualifiers; }
+  void setChangeItemQualifierFilter(QList<QString> acceptedQualifiers) {
+    _changeItemQualifierFilter = QSet<QString>::fromList(acceptedQualifiers); }
+  void setChangeItemQualifierFilter(QString acceptedQualifier) {
+    _changeItemQualifierFilter.clear();
+    _changeItemQualifierFilter.insert(acceptedQualifier); }
+  void clearChangeItemQualifierFilter() {
+    _changeItemQualifierFilter.clear(); }
 
 protected:
   void clear();

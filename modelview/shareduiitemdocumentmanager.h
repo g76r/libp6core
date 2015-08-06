@@ -98,7 +98,8 @@ signals:
    * types, e.g. "void customerChanged(Customer newItem, Customer oldItem)"
    * where Customer is a SharedUiItem.
    */
-  void itemChanged(SharedUiItem newItem, SharedUiItem oldItem);
+  void itemChanged(SharedUiItem newItem, SharedUiItem oldItem,
+                   QString idQualifier);
 
 protected:
   /** Can be called by createNewItem() implementations to generate a new id not

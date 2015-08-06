@@ -26,7 +26,7 @@ SharedUiItem SimpleSharedUiItemDocumentManager::createNewItem(
     QString id = genererateNewId(idQualifier);
     newItem = (*creator)(id);
     _repository[idQualifier][id] = newItem;
-    emit itemChanged(newItem, SharedUiItem());
+    emit itemChanged(newItem, SharedUiItem(), idQualifier);
     //qDebug() << "created";
   }
   return newItem;
@@ -34,11 +34,17 @@ SharedUiItem SimpleSharedUiItemDocumentManager::createNewItem(
 
 bool SimpleSharedUiItemDocumentManager::changeItem(
     SharedUiItem newItem, SharedUiItem oldItem) {
-  if (newItem != oldItem) // renamed
-    _repository[oldItem.idQualifier()].remove(oldItem.id());
-  _repository[newItem.idQualifier()][newItem.id()] = newItem;
-  emit itemChanged(newItem, oldItem);
-  //qDebug() << "changed";
+  QString idQualifier;
+  if (newItem != oldItem && !oldItem.isNull()) { // renamed or deleted
+    idQualifier = oldItem.idQualifier();
+    _repository[idQualifier].remove(oldItem.id());
+  }
+  if (!newItem.isNull()) {
+    idQualifier = newItem.idQualifier();
+    _repository[idQualifier][newItem.id()] = newItem;
+  }
+  if (!idQualifier.isEmpty())
+    emit itemChanged(newItem, oldItem, idQualifier);
   return true;
 }
 
