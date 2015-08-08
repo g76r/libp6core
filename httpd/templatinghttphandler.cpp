@@ -93,10 +93,9 @@ void TemplatingHttpHandler::applyTemplateFile(
       } else if (markupId == "view") {
         // syntax: <?view:viewname?>
         QString markupData = markupContent.mid(separatorPos+1);
-        QPointer<TextView> view = _views.value(markupData);
+        TextView *view = _views.value(markupData);
         if (view)
-          output->append(view.data()
-                         ->text(&processingContext, req.url().toString()));
+          output->append(view->text(&processingContext, req.url().toString()));
         else {
           Log::warning() << "TemplatingHttpHandler did not find view '"
                          << markupData << "' among " << _views.keys();
@@ -160,7 +159,7 @@ TemplatingHttpHandler *TemplatingHttpHandler::addView(TextView *view) {
     qWarning() << "TemplatingHttpHandler::addView(TextView*) called with empty "
                   "TextView::objectName():" << view;
   else
-    _views.insert(label, QPointer<TextView>(view));
+    _views.insert(label, view);
   return this;
 }
 

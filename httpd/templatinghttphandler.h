@@ -48,8 +48,7 @@ public:
                                  QString urlPathPrefix = "",
                                  QString documentRoot = ":docroot/");
   TemplatingHttpHandler *addView(QString label, TextView *view) {
-    _views.insert(label, QPointer<TextView>(view));
-    return this; }
+    _views.insert(label, view); return this; }
   TemplatingHttpHandler *addView(TextView *view);
   TemplatingHttpHandler *addFilter(QString regexp) {
     _filters.insert(regexp);

@@ -56,7 +56,7 @@ public:
                          QVariant arg6 = QVariant(), QVariant arg7 = QVariant(),
                          QVariant arg8 = QVariant(),
                          QVariant arg9 = QVariant());
-  // FIXME
+  // LATER
   //Qt::TimerType	timerType() const;
   //void	setTimerType(Qt::TimerType atype);
 
