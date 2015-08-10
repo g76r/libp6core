@@ -17,6 +17,63 @@
 
 // LATER add optimization methods such as sibling() and hasChildren()
 
+SharedUiItemsTreeModel::TreeItem::TreeItem(
+    SharedUiItemsTreeModel *model, SharedUiItem item, TreeItem *parent,
+    int row) : _model(model), _item(item), _row(row), _parent(parent) {
+  QString id = item.qualifiedId();
+  if (parent) {
+    parent->_children.insert(row, this);
+    for (++row; row < parent->_children.size(); ++row)
+      _parent->_children[row]->_row = row;
+  }
+  if (!id.isEmpty())
+    _model->_itemsIndex.insert(id, this);
+}
+
+SharedUiItemsTreeModel::TreeItem::~TreeItem() {
+  _model->_itemsIndex.remove(_item.qualifiedId());
+  qDeleteAll(_children);
+}
+
+void SharedUiItemsTreeModel::TreeItem::adoptChild(TreeItem *child, int newRow) {
+  //qDebug() << "adoptChild" << this << child << newRow << "/" << _children.size();
+  Q_ASSERT_X(child, "SharedUiItemsTreeModel::TreeItem::adoptChild()",
+             "null child");
+  Q_ASSERT_X(!isDescendantOf(child),
+             "SharedUiItemsTreeModel::TreeItem::adoptChild()",
+             "cannot adopt an ancestor");
+  Q_ASSERT_X((newRow >= 0 && newRow <= _children.size()),
+             "SharedUiItemsTreeModel::TreeItem::adoptChild()",
+             "inconsistent row number");
+  if (child->_parent)
+    child->_parent->removeChild(child->_row, false);
+  child->_parent = this;
+  child->_row = newRow;
+  _children.insert(newRow, child);
+}
+
+bool SharedUiItemsTreeModel::TreeItem::isDescendantOf(TreeItem *ancestor) const {
+  if (!ancestor)
+    return false;
+  if (ancestor == this)
+    return true;
+  for (TreeItem *ti = _parent; ti; ti = ti->_parent)
+    if (ti == ancestor)
+      return true;
+  return false;
+}
+
+void SharedUiItemsTreeModel::TreeItem::removeChild(int row, bool shouldDelete) {
+  Q_ASSERT_X((row >= 0 && row < _children.size()),
+             "SharedUiItemsTreeModel::TreeItem::removeChild",
+             "inconsistent row number");
+  if (shouldDelete)
+    delete _children[row];
+  _children.removeAt(row);
+  for (; row < _children.size(); ++row)
+    _children[row]->_row = row;
+}
+
 SharedUiItemsTreeModel::SharedUiItemsTreeModel(QObject *parent)
   : SharedUiItemsModel(parent),
     _root(new TreeItem(this, SharedUiItem(), 0, 0)) {
@@ -29,9 +86,8 @@ SharedUiItemsTreeModel::~SharedUiItemsTreeModel() {
 QModelIndex SharedUiItemsTreeModel::index(
     int row, int column, const QModelIndex &parent) const {
   if (hasIndex(row, column, parent)) {
-    const TreeItem *parentTreeItem = treeItemByIndex(parent);
-    if (!parentTreeItem) // this should never happen since no valid index points to _root
-      parentTreeItem = _root;
+    const TreeItem *parentTreeItem =
+        parent.isValid() ? treeItemByIndex(parent) : _root;
     return createIndex(row, column, parentTreeItem->child(row));
   }
   return QModelIndex();
@@ -39,28 +95,22 @@ QModelIndex SharedUiItemsTreeModel::index(
 
 QModelIndex SharedUiItemsTreeModel::parent(const QModelIndex &child) const {
   if (child.isValid()) {
-    TreeItem *childTreeItem = treeItemByIndex(child);
-    TreeItem *parentTreeItem = childTreeItem ? childTreeItem->parent() : 0;
-    if (parentTreeItem) // this should always happen since no valid index points to _root
-      if (parentTreeItem != _root)
-        return createIndex(parentTreeItem->row(), 0, parentTreeItem);
+    TreeItem *parentTreeItem = treeItemByIndex(child)->parent();
+    // parentTreeItem should never be null since no valid index points to _root
+    Q_ASSERT_X(parentTreeItem, "SharedUiItemsTreeModel::parent",
+               "inconsistent item index");
+    if (parentTreeItem != _root)
+      return createIndex(parentTreeItem->row(), 0, parentTreeItem);
   }
   return QModelIndex();
 }
 
 int SharedUiItemsTreeModel::rowCount(const QModelIndex &parent) const {
-  TreeItem *parentTreeItem = treeItemByIndex(parent);
-  //  if (parentTreeItem)
-  //    qDebug() << "SharedUiItemsTreeModel::rowCount"
-  //             << parentTreeItem->item().qualifiedId()
-  //             << parentTreeItem->childrenCount();
-  return parentTreeItem ? parentTreeItem->childrenCount()
-                        : _root->childrenCount();
+  return treeItemByIndex(parent)->childrenCount();
 }
 
 SharedUiItem SharedUiItemsTreeModel::itemAt(const QModelIndex &index) const {
-  TreeItem *treeItem = treeItemByIndex(index);
-  return treeItem ? treeItem->item() : SharedUiItem();
+  return treeItemByIndex(index)->item();
 }
 
 QModelIndex SharedUiItemsTreeModel::indexOf(QString qualifiedId) const {
@@ -75,56 +125,86 @@ void SharedUiItemsTreeModel::changeItem(
     return;
   if (newItem.isNull()) {
     if (!oldItem.isNull()) { // delete
-      QModelIndex index = indexOf(oldItem);
-      TreeItem *treeItem = treeItemByIndex(index);
-      if (treeItem)
-        removeRows(treeItem->row(), 1, index.parent());
-    }
-  } else if (oldItem.isNull()) { // create
-    QModelIndex parent;
-    int row = -1; // -1 will be replaced by size() in adjustTreeItemAndRow()
-    determineItemPlaceInTree(newItem, &parent, &row);
-    TreeItem *parentTreeItem = treeItemByIndex(parent);
-    adjustTreeItemAndRow(&parentTreeItem, &row);
-    beginInsertRows(parent, row, row);
-    new TreeItem(this, newItem, parentTreeItem, row);
-    endInsertRows();
-  } else { // update (or rename)
-    QModelIndex index = indexOf(oldItem);
-    TreeItem *treeItem = treeItemByIndex(index);
-    if (treeItem) {
-      QModelIndex oldParent = index.parent(), newParent = oldParent;
-      QString newId = newItem.qualifiedId(), oldId = oldItem.qualifiedId();
-      int row = -1; // -1 will be replaced by size() in adjustTreeItemAndRow()
-      determineItemPlaceInTree(newItem, &newParent, &row);
-      if (newParent != oldParent) { // parent in tree model changed
-        TreeItem *oldParentTreeItem = treeItemByIndex(oldParent);
-        if (!oldParentTreeItem)
-          oldParentTreeItem = _root;
-        TreeItem *newParentTreeItem = treeItemByIndex(newParent);
-        adjustTreeItemAndRow(&newParentTreeItem, &row);
-        if (beginMoveRows(oldParent, treeItem->row(), treeItem->row(),
-                          newParent, row)) {
-          newParentTreeItem->adoptChild(treeItem);
-          updateIndexIfIdChanged(newId, oldId, treeItem);
-          endMoveRows();
-          goto end;
-        } else {
-          qDebug() << QString("ignoring result of ")
-                      +this->metaObject()->className()
-                      +"::determineItemPlaceInTree() since it was rejected by "
-                      "QAbstractItemModel::beginMoveRows()";
-        }
+      QModelIndex oldIndex = indexOf(oldItem);
+      //qDebug() << "delete" << newItem << oldItem << oldIndex.isValid();
+      if (oldIndex.isValid()) {
+        removeRows(treeItemByIndex(oldIndex)->row(), 1, oldIndex.parent());
       }
-      // the following is executed if either parent in tree model did not
-      // change or the change was refused by beginMoveRows() because it was
-      // found inconsistent
-      treeItem->item() = newItem;
-      updateIndexIfIdChanged(newId, oldId, treeItem);
-      emit dataChanged(index, index);
+    } else {
+      // ignore changeItem(null,null)
+    }
+  } else {
+    if (oldItem.isNull()) {
+      // if an item with same id exists, change create into update
+      TreeItem *treeItem = _itemsIndex.value(newItem.qualifiedId());
+      if (treeItem) {
+        //qDebug() << "SharedUiItemsTreeModel::changeItem: if an item with same "
+        //            "id exists, change create into update"
+        //         << oldItem.qualifiedId() << newItem.qualifiedId()
+        //         << treeItem << _root;
+        oldItem = treeItem->item();
+      }
+    } else {
+      // if no item with oldItem id exists, change update into create
+      TreeItem *treeItem = _itemsIndex.value(oldItem.qualifiedId());
+      if (!treeItem) {
+        //qDebug() << "SharedUiItemsTreeModel::changeItem: if no item with "
+        //            "oldItem id exists, change update into create"
+        //         << oldItem.qualifiedId() << newItem.qualifiedId()
+        //         << treeItem << _root;
+        //qDebug() << _itemsIndex;
+        oldItem = SharedUiItem();
+      }
+    }
+    if (oldItem.isNull()) { // create
+      //qDebug() << "create" << newItem << oldItem; // << _itemsIndex.keys();
+      QModelIndex parent;
+      int row = -1; // -1 will be replaced by size() in adjustTreeItemAndRow()
+      determineItemPlaceInTree(newItem, &parent, &row);
+      TreeItem *parentTreeItem = treeItemByIndex(parent);
+      adjustTreeItemAndRow(&parentTreeItem, &row);
+      beginInsertRows(parent, row, row);
+      new TreeItem(this, newItem, parentTreeItem, row);
+      endInsertRows();
+    } else { // update (or rename)
+      //qDebug() << "update" << newItem << oldItem;
+      QModelIndex oldIndex = indexOf(oldItem);
+      TreeItem *treeItem = treeItemByIndex(oldIndex);
+      QModelIndex oldParent = oldIndex.parent(), newParent = oldParent;
+      QString newId = newItem.qualifiedId(), oldId = oldItem.qualifiedId();
+      int newRow = -1; // -1 will be replaced by size() in adjustTreeItemAndRow()
+      determineItemPlaceInTree(newItem, &newParent, &newRow);
+      TreeItem *newParentTreeItem = treeItemByIndex(newParent);
+      adjustTreeItemAndRow(&newParentTreeItem, &newRow);
+      // LATER make it possible for determineItemPlaceInTree to change row without changing parent
+      if (newParent != oldParent // need to move item in the tree
+          && !newParentTreeItem->isDescendantOf(treeItem)) {
+        //qDebug() << "reparenting:" << treeItem->item().id()
+        //         <<"parent:" << oldParent << oldParentTreeItem
+        //        << treeItem->row() << "->" << newParent
+        //        << newParentTreeItem << newRow << "/"
+        //        << newParentTreeItem->childrenCount();
+        //qDebug() << "  root:" << _root << _root->item().id();
+        Q_ASSERT_X(beginMoveRows(
+                     oldParent, treeItem->row(), treeItem->row(),
+                     newParent, newRow),
+                   "SharedUiItemsTreeModel::changeItem",
+                   "inconsistent reparenting according to beginMoveRows");
+        newParentTreeItem->adoptChild(treeItem, newRow);
+        updateIndexIfIdChanged(newId, oldId, treeItem);
+        endMoveRows();
+      } else { // update item without moving it in the tree
+        if (newParent != oldParent) {
+          qDebug() << "SharedUiItemsTreeModel::changeItem denies item moving "
+                      "because new parent would be a descendant of moved "
+                      "child.";
+        }
+        treeItem->item() = newItem;
+        updateIndexIfIdChanged(newId, oldId, treeItem);
+        emit dataChanged(oldIndex, oldIndex);
+      }
     }
   }
-end:
   emit itemChanged(newItem, oldItem);
 }
 
@@ -168,8 +248,6 @@ bool SharedUiItemsTreeModel::removeRows(
   if (row < 0 || count < 0)
     return false;
   TreeItem *parentTreeItem = treeItemByIndex(parent);
-  if (!parentTreeItem)
-    parentTreeItem = _root;
   int rowCount = parentTreeItem->childrenCount();
   int last = row+count-1;
   if (row >= rowCount)
@@ -322,11 +400,11 @@ bool SharedUiItemsTreeModel::dropMimeData(
     if (splitPath(QString::fromLatin1(pathsArrays[i]), &row)
         != firstParentPath)
       return false;
-    TreeItem *ti = treeItemByIndex(index(row, 0, sourceParent));
-    if (ti->childrenCount())
+    TreeItem *treeItem = treeItemByIndex(index(row, 0, sourceParent));
+    if (treeItem->childrenCount())
       return false; // LATER learn to move non-leaves items
-    if (!qualifiedId.isEmpty() && ti
-        && ti->item().qualifiedId() == qualifiedId) {
+    if (!qualifiedId.isEmpty() && treeItem
+        && treeItem->item().qualifiedId() == qualifiedId) {
       rows.append(row);
     } else {
       //qDebug() << "SharedUiItemsTreeModel::dropMimeData() received an "
@@ -420,11 +498,16 @@ SharedUiItemsTreeModel::TreeItem *SharedUiItemsTreeModel::treeItemByIndex(
     const QModelIndex &index) const {
   if (index.isValid()) {
     if (index.model() != this) {
-      // must never happen
       qWarning() << "SharedUiItemsTreeModel received an index not related to "
-                    "this model" << index << this;
+                    "this model:" << index.model() << "instead of" << this;
+      Q_ASSERT_X((index.model() == this),
+                 "SharedUiItemsTreeModel::treeItemByIndex",
+                 "index not related to this model");
     } else {
-      return (TreeItem*)index.internalPointer();
+      TreeItem *treeItem = (TreeItem*)index.internalPointer();
+      Q_ASSERT_X(treeItem, "SharedUiItemsTreeModel::treeItemByIndex",
+                 "inconsistent index");
+      return treeItem;
     }
   }
   return _root;

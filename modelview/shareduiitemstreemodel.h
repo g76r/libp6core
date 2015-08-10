@@ -36,24 +36,8 @@ protected:
 
   public:
     TreeItem(SharedUiItemsTreeModel *model, SharedUiItem item, TreeItem *parent,
-             int row) : _model(model), _item(item), _row(row), _parent(parent) {
-      QString id = item.qualifiedId();
-      if (parent) {
-        parent->_children.insert(row, this);
-        for (++row; row < parent->_children.size(); ++row)
-          _parent->_children[row]->_row = row;
-      }
-      if (!id.isEmpty())
-        _model->_itemsIndex.insert(id, this);
-    }
-    ~TreeItem() {
-      _model->_itemsIndex.remove(_item.qualifiedId());
-      if (_parent)
-        _parent->_children.removeAt(_row);
-      // must not use qDeleteAll since ~child modifies its parent's _children
-      foreach(TreeItem *child, _children)
-        delete child;
-    }
+             int row);
+    ~TreeItem();
     SharedUiItem &item() { return _item; }
     int row() const { return _row; }
     TreeItem *parent() const { return _parent; }
@@ -61,30 +45,14 @@ protected:
     TreeItem *child(int row) const {
       return row >= 0 && row < _children.size() ? _children[row] : 0; }
     void deleteChild(int row) { removeChild(row, true); }
-    void adoptChild(TreeItem *child) {
-      if (!child)
-        return;
-      if (child->_parent)
-        child->_parent->removeChild(child->_row, false);
-      child->_parent = this;
-      child->_row = _children.size();
-      _children.append(child);
-    }
+    void adoptChild(TreeItem *child, int newRow);
+    /** Return true if ancestor == this or is an ancestor. */
+    bool isDescendantOf(TreeItem *ancestor) const;
     //void dumpForDebug(QString indentation = QString(),
     //                  const TreeItem *parent = 0) const;
 
   private:
-    void removeChild(int row, bool shouldDelete) {
-      if (row >= _children.size() || row < 0)
-        return;
-      TreeItem *child = _children[row];
-      if (shouldDelete)
-        delete child; // destructor will call _children.removeAt() on its parent
-      else
-        _children.removeAt(row);
-      for (; row < _children.size(); ++row)
-        _children[row]->_row = row;
-    }
+    void removeChild(int row, bool shouldDelete);
   };
   friend class TreeItem;
 
@@ -154,6 +122,7 @@ private:
   inline void adjustTreeItemAndRow(TreeItem **item, int *row);
   inline void updateIndexIfIdChanged(QString newId, QString oldId,
                                      TreeItem *newTreeItem);
+  /** Never return null, return _root when index is invalid. */
   inline TreeItem *treeItemByIndex(const QModelIndex &index) const;
   // hide functions that cannot work with SharedUiItem paradigm to avoid
   // misunderstanding
