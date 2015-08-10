@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -27,14 +27,14 @@ void QtLogLogger::doLog(const LogEntry entry) {
   switch(entry.severity()) {
   case Log::Debug:
   case Log::Info:
-    qDebug() << header << entry.message();
+    qDebug().noquote() << header << entry.message();
     break;
   case Log::Warning:
   case Log::Error:
-    qWarning() << header << entry.message();
+    qWarning().noquote() << header << entry.message();
     break;
   case Log::Fatal:
-    qCritical() << header << entry.message();
+    qCritical().noquote() << header << entry.message();
     break;
   }
 }
