@@ -93,9 +93,9 @@ SOURCES += \
     modelview/shareduiitemslogmodel.cpp \
     util/stringsparamsprovider.cpp \
     util/regexpparamsprovider.cpp \
-    modelview/simpleshareduiitemdocumentmanager.cpp \
     modelview/genericshareduiitem.cpp \
-    sql/simpledatabasedocumentmanager.cpp
+    modelview/inmemoryshareduiitemdocumentmanager.cpp \
+    sql/inmemorydatabasedocumentmanager.cpp
 
 
 HEADERS +=\
@@ -166,9 +166,9 @@ HEADERS +=\
     modelview/shareduiitemslogmodel.h \
     util/stringsparamsprovider.h \
     util/regexpparamsprovider.h \
-    modelview/simpleshareduiitemdocumentmanager.h \
     modelview/genericshareduiitem.h \
-    sql/simpledatabasedocumentmanager.h
+    sql/inmemorydatabasedocumentmanager.h \
+    modelview/inmemoryshareduiitemdocumentmanager.h
 
 unix {
     target.path = /usr/lib

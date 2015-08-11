@@ -11,8 +11,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SIMPLESHAREDUIITEMDOCUMENTMANAGER_H
-#define SIMPLESHAREDUIITEMDOCUMENTMANAGER_H
+#ifndef INMEMORYSHAREDUIITEMDOCUMENTMANAGER_H
+#define INMEMORYSHAREDUIITEMDOCUMENTMANAGER_H
 
 #include "shareduiitemdocumentmanager.h"
 #include <QHash>
@@ -23,15 +23,15 @@
  * To enable holding items, registerItemType() must be called for every
  * idQualifier, in such a way:
  *   dm->registerItemType(
- *         "foobar", static_cast<SimpleSharedUiItemDocumentManager::Setter>(
+ *         "foobar", static_cast<InMemorySharedUiItemDocumentManager::Setter>(
  *         &Foobar::setUiData),
  *         [](QString id) -> SharedUiItem { return Foobar(id); });
  *
  */
-class LIBQTSSUSHARED_EXPORT SimpleSharedUiItemDocumentManager
+class LIBQTSSUSHARED_EXPORT InMemorySharedUiItemDocumentManager
     : public SharedUiItemDocumentManager {
   Q_OBJECT
-  Q_DISABLE_COPY(SimpleSharedUiItemDocumentManager)
+  Q_DISABLE_COPY(InMemorySharedUiItemDocumentManager)
 
 public:
   using Setter = bool (SharedUiItem::*)(int, const QVariant &, QString *, int,
@@ -44,7 +44,7 @@ protected:
   QHash<QString,Creator> _creators;
 
 public:
-  explicit SimpleSharedUiItemDocumentManager(QObject *parent = 0);
+  explicit InMemorySharedUiItemDocumentManager(QObject *parent = 0);
   SharedUiItem createNewItem(QString idQualifier) override;
   bool changeItem(SharedUiItem newItem, SharedUiItem oldItem) override;
   bool changeItemByUiData(
@@ -53,10 +53,10 @@ public:
   SharedUiItem itemById(QString idQualifier, QString id) const override;
   /** This method must be called for every item type the document manager will
    * hold, to enable it to create and modify such items. */
-  SimpleSharedUiItemDocumentManager &registerItemType(
+  InMemorySharedUiItemDocumentManager &registerItemType(
       QString idQualifier, Setter setter, Creator creator);
   using SharedUiItemDocumentManager::itemsByIdQualifier;
   SharedUiItemList<SharedUiItem> itemsByIdQualifier(QString idQualifier) const;
 };
 
-#endif // SIMPLESHAREDUIITEMDOCUMENTMANAGER_H
+#endif // INMEMORYSHAREDUIITEMDOCUMENTMANAGER_H

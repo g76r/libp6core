@@ -11,10 +11,10 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef SIMPLEDATABASEDOCUMENTMANAGER_H
-#define SIMPLEDATABASEDOCUMENTMANAGER_H
+#ifndef INMEMORYDATABASEDOCUMENTMANAGER_H
+#define INMEMORYDATABASEDOCUMENTMANAGER_H
 
-#include "modelview/simpleshareduiitemdocumentmanager.h"
+#include "modelview/inmemoryshareduiitemdocumentmanager.h"
 #include <QHash>
 #include <QList>
 #include <QSqlDatabase>
@@ -26,7 +26,7 @@
  * Database persistence is inefficient for large number of items (all mapped
  * objects stay in memory, database schema is auto-created with no index at all,
  * etc.) but quite easy to set up since you only need to have a database
- * (event a Sqlite one-file database) and SimpleDatabaseDocumentManager will
+ * (event a Sqlite one-file database) and InMemoryDatabaseDocumentManager will
  * create one table per registred item type and will manage (insert and delete)
  * one row per item.
  *
@@ -36,7 +36,7 @@
  * To enable holding items, registerItemType() must be called for every
  * idQualifier, in such a way:
  *   dm->registerItemType(
- *         "foobar", static_cast<SimpleSharedUiItemDocumentManager::Setter>(
+ *         "foobar", static_cast<InMemorySharedUiItemDocumentManager::Setter>(
  *         &Foobar::setUiData),
  *         [](QString id) -> SharedUiItem { return Foobar(id); },
  *         0);
@@ -45,22 +45,22 @@
  *   QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
  *   db.setDatabaseName(QDir::homePath()+"/.foo.db");
  *   db.open();
- *   SimpleDatabaseDocumentManager *configureDm
- *        = new SimpleDatabaseDocumentManager(db, this);
+ *   InMemoryDatabaseDocumentManager *configureDm
+ *        = new InMemoryDatabaseDocumentManager(db, this);
  */
-class LIBQTSSUSHARED_EXPORT SimpleDatabaseDocumentManager
-    : public SimpleSharedUiItemDocumentManager {
+class LIBQTSSUSHARED_EXPORT InMemoryDatabaseDocumentManager
+    : public InMemorySharedUiItemDocumentManager {
   Q_OBJECT
-  Q_DISABLE_COPY(SimpleDatabaseDocumentManager)
+  Q_DISABLE_COPY(InMemoryDatabaseDocumentManager)
   QSqlDatabase _db;
   QHash<QString,int> _idSections;
 
 public:
-  SimpleDatabaseDocumentManager(QObject *parent = 0);
-  SimpleDatabaseDocumentManager(QSqlDatabase db, QObject *parent = 0);
+  InMemoryDatabaseDocumentManager(QObject *parent = 0);
+  InMemoryDatabaseDocumentManager(QSqlDatabase db, QObject *parent = 0);
   /** Does not take ownership of the QSqlDatabse. */
-  SimpleDatabaseDocumentManager &setDatabase(QSqlDatabase db);
-  SimpleSharedUiItemDocumentManager &registerItemType(
+  InMemoryDatabaseDocumentManager &setDatabase(QSqlDatabase db);
+  InMemorySharedUiItemDocumentManager &registerItemType(
       QString idQualifier, Setter setter, Creator creator,
       int idSection);
   SharedUiItem createNewItem(QString idQualifier) override;
@@ -75,4 +75,4 @@ private:
   bool insertItem(SharedUiItem newItem);
 };
 
-#endif // SIMPLEDATABASEDOCUMENTMANAGER_H
+#endif // INMEMORYDATABASEDOCUMENTMANAGER_H

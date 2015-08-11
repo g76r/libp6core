@@ -11,45 +11,45 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "simpledatabasedocumentmanager.h"
+#include "inmemorydatabasedocumentmanager.h"
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QRegularExpression>
 #include <QtDebug>
 
-SimpleDatabaseDocumentManager::SimpleDatabaseDocumentManager(QObject *parent)
-  : SimpleSharedUiItemDocumentManager(parent) {
+InMemoryDatabaseDocumentManager::InMemoryDatabaseDocumentManager(QObject *parent)
+  : InMemorySharedUiItemDocumentManager(parent) {
 }
 
-SimpleDatabaseDocumentManager::SimpleDatabaseDocumentManager(
+InMemoryDatabaseDocumentManager::InMemoryDatabaseDocumentManager(
     QSqlDatabase db, QObject *parent)
-  : SimpleSharedUiItemDocumentManager(parent), _db(db) {
+  : InMemorySharedUiItemDocumentManager(parent), _db(db) {
 }
 
-SimpleSharedUiItemDocumentManager &
-SimpleDatabaseDocumentManager::registerItemType(
+InMemorySharedUiItemDocumentManager &
+InMemoryDatabaseDocumentManager::registerItemType(
     QString idQualifier, Setter setter, Creator creator, int idSection) {
-  SimpleSharedUiItemDocumentManager::registerItemType(
+  InMemorySharedUiItemDocumentManager::registerItemType(
         idQualifier, setter, creator);
   _idSections.insert(idQualifier, idSection);
   createTableAndSelectData(idQualifier, setter, creator, idSection);
   return *this;
 }
 
-SharedUiItem SimpleDatabaseDocumentManager::createNewItem(QString idQualifier) {
+SharedUiItem InMemoryDatabaseDocumentManager::createNewItem(QString idQualifier) {
   SharedUiItem newItem =
-      SimpleSharedUiItemDocumentManager::createNewItem(idQualifier);
+      InMemorySharedUiItemDocumentManager::createNewItem(idQualifier);
   if (!insertItem(newItem)) {
-    SimpleSharedUiItemDocumentManager::changeItem(SharedUiItem(), newItem);
+    InMemorySharedUiItemDocumentManager::changeItem(SharedUiItem(), newItem);
     return SharedUiItem();
   }
   return newItem;
 }
 
-bool SimpleDatabaseDocumentManager::changeItem(
+bool InMemoryDatabaseDocumentManager::changeItem(
     SharedUiItem newItem, SharedUiItem oldItem) {
   if (!_db.transaction()) {
-    qDebug() << "SimpleDatabaseDocumentManager cannot start transaction"
+    qDebug() << "InMemoryDatabaseDocumentManager cannot start transaction"
              << _db.lastError().text();
     goto failed;
   }
@@ -66,7 +66,7 @@ bool SimpleDatabaseDocumentManager::changeItem(
                   +" = ?");
     query.bindValue(0, oldItem.id());
     if (!query.exec()) {
-      qDebug() << "SimpleDatabaseDocumentManager cannot delete from table"
+      qDebug() << "InMemoryDatabaseDocumentManager cannot delete from table"
                << idQualifier << oldItem.id() << query.lastError().text()
                << query.executedQuery();
       goto failed;
@@ -76,24 +76,24 @@ bool SimpleDatabaseDocumentManager::changeItem(
   }
   if (!newItem.isNull() && !insertItem(newItem)) {
     if (!_db.rollback()) {
-      qDebug() << "SimpleDatabaseDocumentManager cannot rollback transaction"
+      qDebug() << "InMemoryDatabaseDocumentManager cannot rollback transaction"
                << _db.lastError().text();
     }
     goto failed;
   }
   if (!_db.commit()) {
-    qDebug() << "SimpleDatabaseDocumentManager cannot commit transaction"
+    qDebug() << "InMemoryDatabaseDocumentManager cannot commit transaction"
              << _db.lastError().text();
     goto failed;
   }
-  SimpleSharedUiItemDocumentManager::changeItem(newItem, oldItem);
+  InMemorySharedUiItemDocumentManager::changeItem(newItem, oldItem);
   return true;
 failed:;
   _db.rollback();
   return false;
 }
 
-bool SimpleDatabaseDocumentManager::insertItem(SharedUiItem newItem) {
+bool InMemoryDatabaseDocumentManager::insertItem(SharedUiItem newItem) {
   Creator creator = _creators.value(newItem.idQualifier());
   if (newItem.isNull() || !creator)
     return false;
@@ -112,14 +112,14 @@ bool SimpleDatabaseDocumentManager::insertItem(SharedUiItem newItem) {
   for (int i = 0; i < newItem.uiSectionCount(); ++i)
     query.bindValue(i, newItem.uiData(i, SharedUiItem::ExternalDataRole));
   if (!query.exec()) {
-    qDebug() << "SimpleDatabaseDocumentManager cannot insert into table"
+    qDebug() << "InMemoryDatabaseDocumentManager cannot insert into table"
              << idQualifier << newItem.id() << query.lastError().text();
     return false;
   }
   return true;
 }
 
-SimpleDatabaseDocumentManager &SimpleDatabaseDocumentManager::setDatabase(
+InMemoryDatabaseDocumentManager &InMemoryDatabaseDocumentManager::setDatabase(
     QSqlDatabase db) {
   _repository.clear();
   _db = db;
@@ -130,7 +130,7 @@ SimpleDatabaseDocumentManager &SimpleDatabaseDocumentManager::setDatabase(
   return *this;
 }
 
-void SimpleDatabaseDocumentManager::createTableAndSelectData(
+void InMemoryDatabaseDocumentManager::createTableAndSelectData(
     QString idQualifier, Setter setter, Creator creator, int idSection) {
   Q_UNUSED(idSection)
   if (!creator || !setter) // should never happen
@@ -155,7 +155,7 @@ void SimpleDatabaseDocumentManager::createTableAndSelectData(
     q += " )";
     query.exec(q);
     if (query.lastError().type() != QSqlError::NoError) {
-      qWarning() << "SimpleDatabaseDocumentManager cannot create table"
+      qWarning() << "InMemoryDatabaseDocumentManager cannot create table"
                  << idQualifier << query.lastError().text();
       return;
     }
@@ -172,7 +172,7 @@ sqlite> drop table foo;
    */
   query.exec("select "+protectedColumnNames.join(',')+" from "+idQualifier);
   if (query.lastError().type() != QSqlError::NoError) {
-    qWarning() << "SimpleDatabaseDocumentManager cannot select from table"
+    qWarning() << "InMemoryDatabaseDocumentManager cannot select from table"
                << idQualifier << query.lastError().text();
     return;
   }
@@ -185,19 +185,19 @@ sqlite> drop table foo;
                                SharedUiItem::ExternalDataRole, this);
       if (!ok) {
         // TODO do not log this
-        qDebug() << "SimpleDatabaseDocumentManager cannot set value for item"
+        qDebug() << "InMemoryDatabaseDocumentManager cannot set value for item"
                  << item.qualifiedId() << errorString;
       }
     }
     //qDebug() << "  have item:" << item.qualifiedId();
-    SimpleSharedUiItemDocumentManager::changeItem(item, SharedUiItem());
+    InMemorySharedUiItemDocumentManager::changeItem(item, SharedUiItem());
   }
 }
 
 static QRegularExpression unallowedColumnCharsSequence {
   "(^[^a-zA-Z_]+)|([^a-zA-Z0-9_]+)" };
 
-QString SimpleDatabaseDocumentManager::protectedColumnName(QString columnName) {
+QString InMemoryDatabaseDocumentManager::protectedColumnName(QString columnName) {
   return columnName.replace(unallowedColumnCharsSequence,
                             QStringLiteral("_"));
 }

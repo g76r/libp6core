@@ -11,13 +11,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "simpleshareduiitemdocumentmanager.h"
+#include "inmemoryshareduiitemdocumentmanager.h"
 
-SimpleSharedUiItemDocumentManager::SimpleSharedUiItemDocumentManager(
+InMemorySharedUiItemDocumentManager::InMemorySharedUiItemDocumentManager(
     QObject *parent) : SharedUiItemDocumentManager(parent) {
 }
 
-SharedUiItem SimpleSharedUiItemDocumentManager::createNewItem(
+SharedUiItem InMemorySharedUiItemDocumentManager::createNewItem(
     QString idQualifier) {
   //qDebug() << "createNewItem" << idQualifier;
   Creator creator = _creators.value(idQualifier);
@@ -32,7 +32,7 @@ SharedUiItem SimpleSharedUiItemDocumentManager::createNewItem(
   return newItem;
 }
 
-bool SimpleSharedUiItemDocumentManager::changeItem(
+bool InMemorySharedUiItemDocumentManager::changeItem(
     SharedUiItem newItem, SharedUiItem oldItem) {
   QString idQualifier;
   if (newItem != oldItem && !oldItem.isNull()) { // renamed or deleted
@@ -48,7 +48,7 @@ bool SimpleSharedUiItemDocumentManager::changeItem(
   return true;
 }
 
-bool SimpleSharedUiItemDocumentManager::changeItemByUiData(
+bool InMemorySharedUiItemDocumentManager::changeItemByUiData(
     SharedUiItem oldItem, int section, const QVariant &value) {
   SharedUiItem newItem = oldItem;
   Setter setter = _setters.value(oldItem.idQualifier());
@@ -59,22 +59,22 @@ bool SimpleSharedUiItemDocumentManager::changeItemByUiData(
   return false;
 }
 
-SharedUiItem SimpleSharedUiItemDocumentManager::itemById(
+SharedUiItem InMemorySharedUiItemDocumentManager::itemById(
     QString idQualifier, QString id) const {
   return _repository.value(idQualifier).value(id);
 }
 
-SimpleSharedUiItemDocumentManager &SimpleSharedUiItemDocumentManager
+InMemorySharedUiItemDocumentManager &InMemorySharedUiItemDocumentManager
 ::registerItemType(QString idQualifier,
-                    SimpleSharedUiItemDocumentManager::Setter setter,
-                    SimpleSharedUiItemDocumentManager::Creator creator) {
+                    InMemorySharedUiItemDocumentManager::Setter setter,
+                    InMemorySharedUiItemDocumentManager::Creator creator) {
   _setters.insert(idQualifier, setter);
   _creators.insert(idQualifier, creator);
   //qDebug() << "registered" << idQualifier;
   return *this;
 }
 
-SharedUiItemList<SharedUiItem> SimpleSharedUiItemDocumentManager
+SharedUiItemList<SharedUiItem> InMemorySharedUiItemDocumentManager
 ::itemsByIdQualifier(QString idQualifier) const {
   SharedUiItemList<SharedUiItem> list;
   foreach (SharedUiItem item, _repository.value(idQualifier))
