@@ -135,13 +135,10 @@ public slots:
   virtual void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
                           QString idQualifier) = 0;
   /** Short for changeItem(newItem, SharedUiItem(), newItem.idQualifier()). */
-  void createItem(SharedUiItem newItem) {
-    changeItem(newItem, SharedUiItem(), newItem.idQualifier()); }
-  /** Short for changeItem(newItem, newItem, newItem.idQualifier()). */
   void createOrUpdateItem(SharedUiItem newItem) {
-    changeItem(newItem, newItem, newItem.idQualifier()); }
+    changeItem(newItem, SharedUiItem(), newItem.idQualifier()); }
   /** Short for changeItem(SharedUiItem(), oldItem, oldItem.idQualifier()). */
-  void deleteItem(SharedUiItem oldItem) {
+  void deleteItemIfExists(SharedUiItem oldItem) {
     changeItem(SharedUiItem(), oldItem, oldItem.idQualifier()); }
 
 signals:
