@@ -166,8 +166,8 @@ QModelIndex SharedUiItemsProxyModelHelper::mapFromReal(
 }
 
 QModelIndex SharedUiItemsProxyModelHelper::mapToReal(
-    QModelIndex realIndex) const {
+    QModelIndex apparentIndex) const {
   for (int i = _proxies.size()-1; i >= 0; --i)
-    realIndex = _proxies[i]->mapToSource(realIndex);
-  return realIndex;
+    apparentIndex = _proxies[i]->mapToSource(apparentIndex);
+  return apparentIndex;
 }

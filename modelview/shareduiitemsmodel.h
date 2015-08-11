@@ -14,12 +14,10 @@
 #ifndef SHAREDUIITEMSMODEL_H
 #define SHAREDUIITEMSMODEL_H
 
-#include <QAbstractItemModel>
+#include <QAbstractProxyModel>
 #include "shareduiitem.h"
 #include "libqtssu_global.h"
 #include <QString>
-
-class QAbstractProxyModel;
 
 /** Base class for model holding SharedUiItems, being them table or
  * tree-oriented they provides one item section per column.
@@ -182,9 +180,17 @@ public:
   SharedUiItemsProxyModelHelper(QAbstractItemModel *model) {
     setApparentModel(model); }
   void setApparentModel(QAbstractItemModel *model);
+  QAbstractItemModel *apparentModel() const {
+    if (_proxies.isEmpty())
+      return _realModel;
+    return _proxies.last();
+  }
+  /** Null if apparent model not set or not proxying a SharedUiItemsModel. */
   SharedUiItemsModel *realModel() const { return _realModel; }
+  /** Equivalent to realModel() != 0. */
+  bool isValid() const { return _realModel; }
   QModelIndex mapFromReal(QModelIndex realIndex) const;
-  QModelIndex mapToReal(QModelIndex realIndex) const;
+  QModelIndex mapToReal(QModelIndex apparentIndex) const;
   QModelIndex indexOf(SharedUiItem item) const {
     return _realModel ? mapFromReal(_realModel->indexOf(item))
                       : QModelIndex(); }
@@ -196,6 +202,41 @@ public:
                       : QModelIndex(); }
   SharedUiItem itemAt(const QModelIndex &index) const {
     return _realModel ? _realModel->itemAt(mapToReal(index)) : SharedUiItem(); }
+  SharedUiItem itemAt(int row, int column,
+                      const QModelIndex &parent = QModelIndex()) const {
+    if (!_realModel)
+      return SharedUiItem();
+    if (_proxies.isEmpty())
+      return _realModel->itemAt(row, column, parent);
+    return _realModel->itemAt(mapToReal(apparentModel()->index(row, column,
+                                                               parent)));
+  }
+  /** Convenience template performing downcast. */
+  template<class T>
+  inline T itemAt(QString qualifier, const QModelIndex &index) const {
+    SharedUiItem item = itemAt(index);
+    return item.idQualifier() == qualifier ? static_cast<T&>(item) : T();
+  }
+  /** Convenience template performing downcast. */
+  template<class T>
+  inline T itemAt(const char *qualifier, const QModelIndex &index) const {
+    SharedUiItem item = itemAt(index);
+    return item.idQualifier() == qualifier ? static_cast<T&>(item) : T();
+  }
+  /** Convenience template performing downcast. */
+  template<class T>
+  inline T itemAt(QString qualifier, int row, int column,
+           const QModelIndex &parent = QModelIndex()) const {
+    SharedUiItem item = itemAt(row, column, parent);
+    return item.idQualifier() == qualifier ? static_cast<T&>(item) : T();
+  }
+  /** Convenience template performing downcast. */
+  template<class T>
+  inline T itemAt(const char *qualifier, int row, int column,
+           const QModelIndex &parent = QModelIndex()) const {
+    SharedUiItem item = itemAt(row, column, parent);
+    return item.idQualifier() == qualifier ? static_cast<T&>(item) : T();
+  }
 };
 
 #endif // SHAREDUIITEMSMODEL_H
