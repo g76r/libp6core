@@ -27,7 +27,7 @@ SharedUiItemsTableModel::SharedUiItemsTableModel(
     SharedUiItem templateItem, DefaultInsertionPoint defaultInsertionPoint,
     QObject *parent)
   : SharedUiItemsModel(parent),
-    _defaultInsertionPoint(SharedUiItemsTableModel::LastItem),
+    _defaultInsertionPoint(defaultInsertionPoint),
     _maxrows(INT_MAX) {
   setHeaderDataFromTemplate(templateItem);
 }
