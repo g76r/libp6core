@@ -152,7 +152,7 @@ signals:
    * this model also subscribe for without connecting to relevant document
    * manager signals by itself.
    * Only changeItem() emits this signal, other methods that may change items,
-   * like deleteItem() don't emit this signal. */
+   * like removeRows() don't emit this signal. */
   void itemChanged(SharedUiItem newItem, SharedUiItem oldItem);
 
 protected:
