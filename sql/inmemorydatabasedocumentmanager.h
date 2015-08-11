@@ -64,7 +64,8 @@ public:
       QString idQualifier, Setter setter, Creator creator,
       int idSection);
   SharedUiItem createNewItem(QString idQualifier) override;
-  bool changeItem(SharedUiItem newItem, SharedUiItem oldItem) override;
+  bool changeItem(SharedUiItem newItem, SharedUiItem oldItem,
+                  QString idQualifier) override;
   // TODO add a way to notify user of database errors, such as a signal
 
 private:

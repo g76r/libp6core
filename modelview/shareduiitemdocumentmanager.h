@@ -37,8 +37,21 @@ public:
   virtual bool changeItemByUiData(SharedUiItem oldItem, int section,
                                   const QVariant &value) = 0;
   /** Method that user interface or non-interactive code should call to change
-   * an item at whole. */
-  virtual bool changeItem(SharedUiItem newItem, SharedUiItem oldItem) = 0;
+   * an item at whole.
+   *
+   * Although SharedUiItemsModel::changeItem() is more tolerant, this method
+   * must not support createOrUpdate or deleteIfExist semantics, it MUST only
+   * support:
+   * - delete: newItem.isNull() and !oldItem.isNull()
+   * - create: !newItem.isNull() and oldItem.isNull()
+   * - update (incl. rename): neither is null
+   *
+   * If it were more tolerant, interactive undo/redo would be far harder to
+   * implement (one could not rely on swaping new and old items to perform
+   * undo).
+   */
+  virtual bool changeItem(SharedUiItem newItem, SharedUiItem oldItem,
+                          QString idQualifier) = 0;
   virtual SharedUiItem itemById(QString idQualifier, QString id) const = 0;
   /** Default: parses qualifiedId and calls itemById(QString,QString). */
   virtual SharedUiItem itemById(QString qualifiedId) const;
@@ -50,16 +63,16 @@ public:
   }
   /** Convenience template performing downcast. */
   template<class T>
-  T itemById(QString qualifierId) const {
-    SharedUiItem item = itemById(qualifierId);
+  T itemById(QString qualifiedId) const {
+    SharedUiItem item = itemById(qualifiedId);
     return static_cast<T&>(item);
   }
   /** This method build a list of every item currently holded, given their
-   * qualifierId. */
+   * qualifiedId. */
   virtual SharedUiItemList<SharedUiItem> itemsByIdQualifier(
       QString idQualifier) const = 0;
   /** This method build a list of every item currently holded, given their class
-   * (T) and qualifierId. */
+   * (T) and qualifiedId. */
   template<class T>
   SharedUiItemList<T> itemsByIdQualifier(QString idQualifier) const {
     T *dummy;

@@ -40,14 +40,15 @@ SharedUiItem InMemoryDatabaseDocumentManager::createNewItem(QString idQualifier)
   SharedUiItem newItem =
       InMemorySharedUiItemDocumentManager::createNewItem(idQualifier);
   if (!insertItem(newItem)) {
-    InMemorySharedUiItemDocumentManager::changeItem(SharedUiItem(), newItem);
+    InMemorySharedUiItemDocumentManager::changeItem(SharedUiItem(), newItem,
+                                                    idQualifier);
     return SharedUiItem();
   }
   return newItem;
 }
 
 bool InMemoryDatabaseDocumentManager::changeItem(
-    SharedUiItem newItem, SharedUiItem oldItem) {
+    SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
   if (!_db.transaction()) {
     qDebug() << "InMemoryDatabaseDocumentManager cannot start transaction"
              << _db.lastError().text();
@@ -56,9 +57,8 @@ bool InMemoryDatabaseDocumentManager::changeItem(
   // resolve oldItem from repository, to handle case where oldItem is just a
   // GenericSharedUiItem placeholder with ids but no data and to handle case
   // where oldItem does not actualy exist
-  oldItem = itemById(oldItem.idQualifier(), oldItem.id());
+  oldItem = itemById(idQualifier, oldItem.id());
   if (!oldItem.isNull()) {
-    QString idQualifier = oldItem.idQualifier();
     QSqlQuery query(_db);
     query.prepare("delete from "+idQualifier+" where "
                   +protectedColumnName(oldItem.uiHeaderString(
@@ -86,7 +86,8 @@ bool InMemoryDatabaseDocumentManager::changeItem(
              << _db.lastError().text();
     goto failed;
   }
-  InMemorySharedUiItemDocumentManager::changeItem(newItem, oldItem);
+  InMemorySharedUiItemDocumentManager::changeItem(newItem, oldItem,
+                                                  idQualifier);
   return true;
 failed:;
   _db.rollback();
@@ -190,7 +191,8 @@ sqlite> drop table foo;
       }
     }
     //qDebug() << "  have item:" << item.qualifiedId();
-    InMemorySharedUiItemDocumentManager::changeItem(item, SharedUiItem());
+    InMemorySharedUiItemDocumentManager::changeItem(item, SharedUiItem(),
+                                                    idQualifier);
   }
 }
 
