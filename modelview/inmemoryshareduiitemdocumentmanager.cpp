@@ -33,29 +33,32 @@ SharedUiItem InMemorySharedUiItemDocumentManager::createNewItem(
 }
 
 bool InMemorySharedUiItemDocumentManager::changeItem(
-    SharedUiItem newItem, SharedUiItem oldItem) {
-  QString idQualifier;
+    SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
   if (newItem != oldItem && !oldItem.isNull()) { // renamed or deleted
-    idQualifier = oldItem.idQualifier();
     _repository[idQualifier].remove(oldItem.id());
   }
-  if (!newItem.isNull()) {
-    idQualifier = newItem.idQualifier();
+  if (!newItem.isNull()) { // created or updated
     _repository[idQualifier][newItem.id()] = newItem;
   }
-  if (!idQualifier.isEmpty())
-    emit itemChanged(newItem, oldItem, idQualifier);
+  emit itemChanged(newItem, oldItem, idQualifier);
   return true;
 }
 
 bool InMemorySharedUiItemDocumentManager::changeItemByUiData(
     SharedUiItem oldItem, int section, const QVariant &value) {
-  SharedUiItem newItem = oldItem;
+  SharedUiItem newItem;
+  return changeItemByUiData(oldItem, section, value, &newItem);
+}
+
+bool InMemorySharedUiItemDocumentManager::changeItemByUiData(
+    SharedUiItem oldItem, int section,
+    const QVariant &value, SharedUiItem *newItem) {
+  *newItem = oldItem;
   Setter setter = _setters.value(oldItem.idQualifier());
   //qDebug() << "changeItemByUiData" << oldItem.qualifiedId() << section
   //         << value << setter;
-  if (setter && (newItem.*setter)(section, value, 0, Qt::EditRole, this))
-    return changeItem(newItem, oldItem);
+  if (setter && (newItem->*setter)(section, value, 0, Qt::EditRole, this))
+    return changeItem(*newItem, oldItem, oldItem.idQualifier());
   return false;
 }
 

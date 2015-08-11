@@ -46,9 +46,14 @@ protected:
 public:
   explicit InMemorySharedUiItemDocumentManager(QObject *parent = 0);
   SharedUiItem createNewItem(QString idQualifier) override;
-  bool changeItem(SharedUiItem newItem, SharedUiItem oldItem) override;
+  bool changeItem(SharedUiItem newItem, SharedUiItem oldItem,
+                  QString idQualifier) override;
   bool changeItemByUiData(
       SharedUiItem oldItem, int section, const QVariant &value) override;
+  /** Richer method that make it possible to implement interactive undo/redo
+   * over it. */
+  bool changeItemByUiData(SharedUiItem oldItem, int section,
+                          const QVariant &value, SharedUiItem *newItem);
   using SharedUiItemDocumentManager::itemById;
   SharedUiItem itemById(QString idQualifier, QString id) const override;
   /** This method must be called for every item type the document manager will
