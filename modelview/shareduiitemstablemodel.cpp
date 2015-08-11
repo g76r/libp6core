@@ -108,19 +108,34 @@ void SharedUiItemsTableModel::changeItem(
   if (!_changeItemQualifierFilter.isEmpty()
       && !_changeItemQualifierFilter.contains(idQualifier))
     return;
-  QModelIndex oldIndex = indexOf(oldItem);
   if (newItem.isNull()) {
-    if (oldIndex.isValid()) {
-      // delete
+    QModelIndex oldIndex = indexOf(oldItem);
+    if (oldIndex.isValid()) { // delete
       removeItems(oldIndex.row(), oldIndex.row());
+    } else {
+      // ignore changeItem(null,null)
     }
-  } else if (oldItem.isNull() || !oldIndex.isValid()) {
-    // create
-    insertItemAt(newItem, _defaultInsertionPoint == FirstItem ? 0 : rowCount());
   } else {
-    // update
-    _items[oldIndex.row()] = newItem;
-    emit dataChanged(oldIndex, index(oldIndex.row(), columnCount()-1));
+    if (oldItem.isNull()) {
+      // if an item with same id exists, change create into update
+      QModelIndex index = indexOf(newItem.qualifiedId());
+      if (index.isValid())
+        oldItem = itemAt(index);
+    } else {
+      // if no item with oldItem id exists, change update into create
+      QModelIndex index = indexOf(oldItem.qualifiedId());
+      if (! index.isValid())
+        oldItem = SharedUiItem();
+    }
+    if (oldItem.isNull()) { // create
+      insertItemAt(newItem,
+                   _defaultInsertionPoint == FirstItem ? 0 : rowCount());
+    } else { // update (incl. rename)
+      QModelIndex oldIndex = indexOf(oldItem);
+      _items[oldIndex.row()] = newItem;
+      emit dataChanged(index(oldIndex.row(), 0),
+                       index(oldIndex.row(), columnCount()-1));
+    }
   }
   emit itemChanged(newItem, oldItem);
 }

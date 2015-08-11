@@ -137,24 +137,13 @@ void SharedUiItemsTreeModel::changeItem(
     if (oldItem.isNull()) {
       // if an item with same id exists, change create into update
       TreeItem *treeItem = _itemsIndex.value(newItem.qualifiedId());
-      if (treeItem) {
-        //qDebug() << "SharedUiItemsTreeModel::changeItem: if an item with same "
-        //            "id exists, change create into update"
-        //         << oldItem.qualifiedId() << newItem.qualifiedId()
-        //         << treeItem << _root;
+      if (treeItem)
         oldItem = treeItem->item();
-      }
     } else {
       // if no item with oldItem id exists, change update into create
       TreeItem *treeItem = _itemsIndex.value(oldItem.qualifiedId());
-      if (!treeItem) {
-        //qDebug() << "SharedUiItemsTreeModel::changeItem: if no item with "
-        //            "oldItem id exists, change update into create"
-        //         << oldItem.qualifiedId() << newItem.qualifiedId()
-        //         << treeItem << _root;
-        //qDebug() << _itemsIndex;
+      if (!treeItem)
         oldItem = SharedUiItem();
-      }
     }
     if (oldItem.isNull()) { // create
       //qDebug() << "create" << newItem << oldItem; // << _itemsIndex.keys();
@@ -166,7 +155,7 @@ void SharedUiItemsTreeModel::changeItem(
       beginInsertRows(parent, row, row);
       new TreeItem(this, newItem, parentTreeItem, row);
       endInsertRows();
-    } else { // update (or rename)
+    } else { // update (incl. rename)
       //qDebug() << "update" << newItem << oldItem;
       QModelIndex oldIndex = indexOf(oldItem);
       TreeItem *treeItem = treeItemByIndex(oldIndex);
