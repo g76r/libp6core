@@ -25,7 +25,7 @@ SharedUiItem SharedUiItemDocumentManager::itemById(QString qualifiedId) const {
 
 QString SharedUiItemDocumentManager::genererateNewId(QString idQualifier) {
   QString id;
-  for (int i = 1; i < 1000; ++i) {
+  for (int i = 1; i < 100; ++i) {
     id = idQualifier+QString::number(i);
     if (itemById(idQualifier, id).isNull())
       return id;

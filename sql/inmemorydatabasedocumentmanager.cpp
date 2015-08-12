@@ -26,32 +26,37 @@ InMemoryDatabaseDocumentManager::InMemoryDatabaseDocumentManager(
   : InMemorySharedUiItemDocumentManager(parent), _db(db) {
 }
 
-InMemorySharedUiItemDocumentManager &
-InMemoryDatabaseDocumentManager::registerItemType(
-    QString idQualifier, Setter setter, Creator creator, int idSection) {
+bool InMemoryDatabaseDocumentManager::registerItemType(
+    QString idQualifier, Setter setter, Creator creator, int idSection,
+    QString *errorString) {
   InMemorySharedUiItemDocumentManager::registerItemType(
         idQualifier, setter, creator);
   _idSections.insert(idQualifier, idSection);
-  createTableAndSelectData(idQualifier, setter, creator, idSection);
-  return *this;
+  return createTableAndSelectData(idQualifier, setter, creator, idSection,
+                                  errorString);
 }
 
-SharedUiItem InMemoryDatabaseDocumentManager::createNewItem(QString idQualifier) {
+SharedUiItem InMemoryDatabaseDocumentManager::createNewItem(
+    QString idQualifier, QString *errorString) {
   SharedUiItem newItem =
-      InMemorySharedUiItemDocumentManager::createNewItem(idQualifier);
-  if (!insertItem(newItem)) {
-    InMemorySharedUiItemDocumentManager::changeItem(SharedUiItem(), newItem,
-                                                    idQualifier);
+      InMemorySharedUiItemDocumentManager::createNewItem(
+        idQualifier, errorString);
+  if (newItem.isNull())
+    return SharedUiItem();
+  if (!insertItem(newItem, errorString)) {
+    InMemorySharedUiItemDocumentManager::changeItem(
+          SharedUiItem(), newItem, idQualifier);
     return SharedUiItem();
   }
   return newItem;
 }
 
 bool InMemoryDatabaseDocumentManager::changeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
+    SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier,
+    QString *errorString) {
+  QString reason;
   if (!_db.transaction()) {
-    qDebug() << "InMemoryDatabaseDocumentManager cannot start transaction"
-             << _db.lastError().text();
+    reason = "database error: cannot start transaction "+_db.lastError().text();
     goto failed;
   }
   // resolve oldItem from repository, to handle case where oldItem is just a
@@ -66,24 +71,24 @@ bool InMemoryDatabaseDocumentManager::changeItem(
                   +" = ?");
     query.bindValue(0, oldItem.id());
     if (!query.exec()) {
-      qDebug() << "InMemoryDatabaseDocumentManager cannot delete from table"
-               << idQualifier << oldItem.id() << query.lastError().text()
-               << query.executedQuery();
+      reason = "database error: cannot delete from table "+idQualifier+" "
+          +oldItem.id()+" "+query.lastError().text()+" "+query.executedQuery();
       goto failed;
     }
   } else if (newItem.isNull()) {
-    goto failed; // called with null,null : should never happen
+    reason = "changeItem(null,null)";
+    goto failed;
   }
-  if (!newItem.isNull() && !insertItem(newItem)) {
+  if (!newItem.isNull() && !insertItem(newItem, &reason)) {
     if (!_db.rollback()) {
-      qDebug() << "InMemoryDatabaseDocumentManager cannot rollback transaction"
-               << _db.lastError().text();
+      qDebug() << "InMemoryDatabaseDocumentManager database error: cannot "
+                  "rollback transaction" << _db.lastError().text();
     }
     goto failed;
   }
   if (!_db.commit()) {
-    qDebug() << "InMemoryDatabaseDocumentManager cannot commit transaction"
-             << _db.lastError().text();
+    reason = "database error: cannot commit transaction "
+        +_db.lastError().text();
     goto failed;
   }
   InMemorySharedUiItemDocumentManager::changeItem(newItem, oldItem,
@@ -91,10 +96,15 @@ bool InMemoryDatabaseDocumentManager::changeItem(
   return true;
 failed:;
   _db.rollback();
+  if (errorString)
+    *errorString = reason;
+  qWarning() << "InMemoryDatabaseDocumentManager" << reason;
   return false;
 }
 
-bool InMemoryDatabaseDocumentManager::insertItem(SharedUiItem newItem) {
+bool InMemoryDatabaseDocumentManager::insertItem(
+    SharedUiItem newItem, QString *errorString) {
+  QString reason;
   Creator creator = _creators.value(newItem.idQualifier());
   if (newItem.isNull() || !creator)
     return false;
@@ -113,29 +123,48 @@ bool InMemoryDatabaseDocumentManager::insertItem(SharedUiItem newItem) {
   for (int i = 0; i < newItem.uiSectionCount(); ++i)
     query.bindValue(i, newItem.uiData(i, SharedUiItem::ExternalDataRole));
   if (!query.exec()) {
-    qDebug() << "InMemoryDatabaseDocumentManager cannot insert into table"
-             << idQualifier << newItem.id() << query.lastError().text();
+    reason = "database error: cannot insert into table "+idQualifier+" "
+        +newItem.id()+" "+query.lastError().text();
+    qDebug() << "InMemoryDatabaseDocumentManager" << reason;
+    if (errorString)
+      *errorString = reason;
     return false;
   }
   return true;
 }
 
-InMemoryDatabaseDocumentManager &InMemoryDatabaseDocumentManager::setDatabase(
-    QSqlDatabase db) {
+bool InMemoryDatabaseDocumentManager::setDatabase(
+    QSqlDatabase db, QString *errorString) {
   _repository.clear();
   _db = db;
-  foreach (const QString &idQualifier, _idSections.keys())
-    createTableAndSelectData(idQualifier, _setters.value(idQualifier),
-                             _creators.value(idQualifier),
-                             _idSections.value(idQualifier));
-  return *this;
+  bool successful = true;
+  QString reason;
+  foreach (const QString &idQualifier, _idSections.keys()) {
+    QString oneReason;
+    if (!createTableAndSelectData(
+          idQualifier, _setters.value(idQualifier),
+          _creators.value(idQualifier), _idSections.value(idQualifier),
+          &oneReason)) {
+      successful = false;
+      if (!reason.isEmpty())
+        reason = reason+"\n"+oneReason;
+      else
+        reason = oneReason;
+    }
+  }
+  if (!successful && errorString)
+    *errorString = reason;
+  return successful;
 }
 
-void InMemoryDatabaseDocumentManager::createTableAndSelectData(
-    QString idQualifier, Setter setter, Creator creator, int idSection) {
+bool InMemoryDatabaseDocumentManager::createTableAndSelectData(
+    QString idQualifier, Setter setter, Creator creator, int idSection,
+    QString *errorString) {
+  QString reason;
   Q_UNUSED(idSection)
-  if (!creator || !setter) // should never happen
-    return;
+  Q_ASSERT_X((creator && setter),
+             "InMemoryDatabaseDocumentManager::createTableAndSelectData",
+             "invalid parameters");
   QStringList columnNames, protectedColumnNames;
   SharedUiItem item = creator(QStringLiteral("dummy"));
   for (int i = 0; i < item.uiSectionCount(); ++i) {
@@ -156,9 +185,9 @@ void InMemoryDatabaseDocumentManager::createTableAndSelectData(
     q += " )";
     query.exec(q);
     if (query.lastError().type() != QSqlError::NoError) {
-      qWarning() << "InMemoryDatabaseDocumentManager cannot create table"
-                 << idQualifier << query.lastError().text();
-      return;
+      reason = "database error: cannot create table: "+idQualifier
+          +query.lastError().text();
+      goto failed;
     }
   }
   // TODO alter table, if needed, @see QSqlDatabase::record()
@@ -173,9 +202,9 @@ sqlite> drop table foo;
    */
   query.exec("select "+protectedColumnNames.join(',')+" from "+idQualifier);
   if (query.lastError().type() != QSqlError::NoError) {
-    qWarning() << "InMemoryDatabaseDocumentManager cannot select from table"
-               << idQualifier << query.lastError().text();
-    return;
+    reason = "database error: cannot select from table: "+idQualifier
+        +query.lastError().text();
+    goto failed;
   }
   //qDebug() << "***** selected:" << query.executedQuery();
   while (query.next()) {
@@ -194,6 +223,12 @@ sqlite> drop table foo;
     InMemorySharedUiItemDocumentManager::changeItem(item, SharedUiItem(),
                                                     idQualifier);
   }
+  return true;
+failed:
+  if (errorString)
+    *errorString = reason;
+  qWarning() << "InMemoryDatabaseDocumentManager" << reason;
+  return false;
 }
 
 static QRegularExpression unallowedColumnCharsSequence {

@@ -18,7 +18,7 @@ InMemorySharedUiItemDocumentManager::InMemorySharedUiItemDocumentManager(
 }
 
 SharedUiItem InMemorySharedUiItemDocumentManager::createNewItem(
-    QString idQualifier) {
+    QString idQualifier, QString *errorString) {
   //qDebug() << "createNewItem" << idQualifier;
   Creator creator = _creators.value(idQualifier);
   SharedUiItem newItem;
@@ -28,37 +28,51 @@ SharedUiItem InMemorySharedUiItemDocumentManager::createNewItem(
     _repository[idQualifier][id] = newItem;
     emit itemChanged(newItem, SharedUiItem(), idQualifier);
     //qDebug() << "created";
+  } else {
+    if (errorString)
+      *errorString = "no creator registred for item of type "+idQualifier;
   }
   return newItem;
 }
 
 bool InMemorySharedUiItemDocumentManager::changeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
-  if (newItem != oldItem && !oldItem.isNull()) { // renamed or deleted
-    _repository[idQualifier].remove(oldItem.id());
+    SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier,
+    QString *errorString) {
+  QString reason;
+  if (!oldItem.isNull() && !_repository[idQualifier].contains(oldItem.id())) {
+    // reject createOrUpdate and deleteIfExist behaviors
+    reason = "old item "+oldItem.qualifiedId()+" not found";
+  } else {
+    if (!oldItem.isNull() && newItem != oldItem) { // renamed or deleted
+      _repository[idQualifier].remove(oldItem.id());
+    }
+    if (!newItem.isNull()) { // created or updated
+      _repository[idQualifier][newItem.id()] = newItem;
+    }
+    emit itemChanged(newItem, oldItem, idQualifier);
   }
-  if (!newItem.isNull()) { // created or updated
-    _repository[idQualifier][newItem.id()] = newItem;
-  }
-  emit itemChanged(newItem, oldItem, idQualifier);
-  return true;
+  if (!reason.isEmpty() && errorString)
+    *errorString = reason;
+  return reason.isEmpty();
 }
 
 bool InMemorySharedUiItemDocumentManager::changeItemByUiData(
-    SharedUiItem oldItem, int section, const QVariant &value) {
+    SharedUiItem oldItem, int section, const QVariant &value,
+    QString *errorString) {
   SharedUiItem newItem;
-  return changeItemByUiData(oldItem, section, value, &newItem);
+  return changeItemByUiData(oldItem, section, value, &newItem, errorString);
 }
 
 bool InMemorySharedUiItemDocumentManager::changeItemByUiData(
-    SharedUiItem oldItem, int section,
-    const QVariant &value, SharedUiItem *newItem) {
+    SharedUiItem oldItem, int section, const QVariant &value,
+    SharedUiItem *newItem, QString *errorString) {
   *newItem = oldItem;
   Setter setter = _setters.value(oldItem.idQualifier());
   //qDebug() << "changeItemByUiData" << oldItem.qualifiedId() << section
   //         << value << setter;
-  if (setter && (newItem->*setter)(section, value, 0, Qt::EditRole, this))
-    return changeItem(*newItem, oldItem, oldItem.idQualifier());
+  if (setter && (newItem->*setter)(section, value, errorString,
+                                   Qt::EditRole, this))
+    return changeItem(*newItem, oldItem, oldItem.idQualifier(), errorString);
   return false;
 }
 

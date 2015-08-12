@@ -58,22 +58,21 @@ class LIBQTSSUSHARED_EXPORT InMemoryDatabaseDocumentManager
 public:
   InMemoryDatabaseDocumentManager(QObject *parent = 0);
   InMemoryDatabaseDocumentManager(QSqlDatabase db, QObject *parent = 0);
-  /** Does not take ownership of the QSqlDatabse. */
-  InMemoryDatabaseDocumentManager &setDatabase(QSqlDatabase db);
-  InMemorySharedUiItemDocumentManager &registerItemType(
-      QString idQualifier, Setter setter, Creator creator,
-      int idSection);
-  SharedUiItem createNewItem(QString idQualifier) override;
+  bool setDatabase(QSqlDatabase db, QString *errorString = 0);
+  bool registerItemType(QString idQualifier, Setter setter, Creator creator,
+                        int idSection, QString *errorString = 0);
+  SharedUiItem createNewItem(
+      QString idQualifier, QString *errorString = 0) override;
   bool changeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                  QString idQualifier) override;
+                  QString idQualifier, QString *errorString = 0) override;
   // TODO add a way to notify user of database errors, such as a signal
 
 private:
-  void createTableAndSelectData(
+  bool createTableAndSelectData(
       QString idQualifier, Setter setter, Creator creator,
-      int idSection);
+      int idSection, QString *errorString);
   static inline QString protectedColumnName(QString columnName);
-  bool insertItem(SharedUiItem newItem);
+  bool insertItem(SharedUiItem newItem, QString *errorString);
 };
 
 #endif // INMEMORYDATABASEDOCUMENTMANAGER_H
