@@ -145,9 +145,7 @@ protected:
  *     // in .h
  *     Foobar &operator=(const Foobar &other) {
  *       SharedUiItem::operator=(other); return *this; }
- * - A subclass SHOULD implement operator==(const SharedUiItem&) wrapping
- *   SharedUiItem::operator== and operator<(const SharedUiItem&) wrapping
- *   SharedUiItem::operator<
+ * - A subclass MUST NOT override comparison operators (==, <, etc.)
  * - A subclass MUST NOT access d in non-const methods since SharedUiItemData's
  *   copy constructor is not able to copy the real object.
  * - Often, a subclass SHOULD implement a detach() method, in such a way:
@@ -233,10 +231,14 @@ public:
    * two versions of an object with same identifiers will be equal. */
   bool operator==(const SharedUiItem &other) const {
     return idQualifier() == other.idQualifier() && id() == other.id(); }
+  bool operator!=(const SharedUiItem &other) const { return !(*this == other); }
   /** Compares identifers (idQualifier() then id()), not full content, therefore
    * two versions of an object with same identifiers will have same order. */
   bool operator<(const SharedUiItem &other) const {
     return idQualifier() < other.idQualifier() || id() < other.id(); }
+  bool operator>(const SharedUiItem &other) const { return other<*this; }
+  bool operator<=(const SharedUiItem &other) const { return !(other<*this); }
+  bool operator>=(const SharedUiItem &other) const { return !(*this<other); }
   bool isNull() const { return !_data; }
   /** @return !isNull() */
   operator bool() const { return !!_data; }
