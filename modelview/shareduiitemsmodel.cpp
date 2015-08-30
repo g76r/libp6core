@@ -80,11 +80,12 @@ bool SharedUiItemsModel::setData(
   //         << "dm:" << _documentManager;
   SharedUiItem oldItem = itemAt(index);
   //qDebug() << "oldItem:" << oldItem.qualifiedId();
-  return role == Qt::EditRole
-      && index.isValid()
-      && !oldItem.isNull()
-      && _documentManager
-      && _documentManager->changeItemByUiData(oldItem, index.column(), value);
+  if (role != Qt::EditRole || !index.isValid() || oldItem.isNull()
+      || !_documentManager) // cannot set data
+    return false;
+  if (oldItem.uiData(index.column(), role) == value) // nothing to do
+    return true;
+  return _documentManager->changeItemByUiData(oldItem, index.column(), value);
 }
 
 void SharedUiItemsModel::moveRowsByRownums(
@@ -121,7 +122,7 @@ void SharedUiItemsModel::moveRowsByRownums(
     insertItemAt(items[i], targetRow+i, parent);
   }
   if (_documentManager)
-    _documentManager->reorderedItems(items);
+    _documentManager->reorderItems(items);
 }
 
 Qt::DropActions SharedUiItemsModel::supportedDropActions() const {
