@@ -61,8 +61,6 @@ public:
   bool setDatabase(QSqlDatabase db, QString *errorString = 0);
   bool registerItemType(QString idQualifier, Setter setter, Creator creator,
                         int idSection, QString *errorString = 0);
-  SharedUiItem createNewItem(
-      QString idQualifier, QString *errorString = 0) override;
   bool changeItem(SharedUiItem newItem, SharedUiItem oldItem,
                   QString idQualifier, QString *errorString = 0) override;
   // TODO add a way to notify user of database errors, such as a signal

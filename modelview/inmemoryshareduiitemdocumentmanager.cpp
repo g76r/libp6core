@@ -17,24 +17,6 @@ InMemorySharedUiItemDocumentManager::InMemorySharedUiItemDocumentManager(
     QObject *parent) : SharedUiItemDocumentManager(parent) {
 }
 
-SharedUiItem InMemorySharedUiItemDocumentManager::createNewItem(
-    QString idQualifier, QString *errorString) {
-  //qDebug() << "createNewItem" << idQualifier;
-  Creator creator = _creators.value(idQualifier);
-  SharedUiItem newItem;
-  if (creator) {
-    QString id = genererateNewId(idQualifier);
-    newItem = (*creator)(id);
-    _repository[idQualifier][id] = newItem;
-    emit itemChanged(newItem, SharedUiItem(), idQualifier);
-    //qDebug() << "created";
-  } else {
-    if (errorString)
-      *errorString = "no creator registred for item of type "+idQualifier;
-  }
-  return newItem;
-}
-
 bool InMemorySharedUiItemDocumentManager::changeItem(
     SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier,
     QString *errorString) {
@@ -56,39 +38,9 @@ bool InMemorySharedUiItemDocumentManager::changeItem(
   return reason.isEmpty();
 }
 
-bool InMemorySharedUiItemDocumentManager::changeItemByUiData(
-    SharedUiItem oldItem, int section, const QVariant &value,
-    QString *errorString) {
-  SharedUiItem newItem;
-  return changeItemByUiData(oldItem, section, value, &newItem, errorString);
-}
-
-bool InMemorySharedUiItemDocumentManager::changeItemByUiData(
-    SharedUiItem oldItem, int section, const QVariant &value,
-    SharedUiItem *newItem, QString *errorString) {
-  *newItem = oldItem;
-  Setter setter = _setters.value(oldItem.idQualifier());
-  //qDebug() << "changeItemByUiData" << oldItem.qualifiedId() << section
-  //         << value << setter;
-  if (setter && (newItem->*setter)(section, value, errorString,
-                                   Qt::EditRole, this))
-    return changeItem(*newItem, oldItem, oldItem.idQualifier(), errorString);
-  return false;
-}
-
 SharedUiItem InMemorySharedUiItemDocumentManager::itemById(
     QString idQualifier, QString id) const {
   return _repository.value(idQualifier).value(id);
-}
-
-InMemorySharedUiItemDocumentManager &InMemorySharedUiItemDocumentManager
-::registerItemType(QString idQualifier,
-                    InMemorySharedUiItemDocumentManager::Setter setter,
-                    InMemorySharedUiItemDocumentManager::Creator creator) {
-  _setters.insert(idQualifier, setter);
-  _creators.insert(idQualifier, creator);
-  //qDebug() << "registered" << idQualifier;
-  return *this;
 }
 
 SharedUiItemList<SharedUiItem> InMemorySharedUiItemDocumentManager

@@ -37,6 +37,52 @@ QString SharedUiItemDocumentManager::genererateNewId(QString idQualifier) {
   }
 }
 
-void SharedUiItemDocumentManager::reorderedItems(QList<SharedUiItem> items) {
+void SharedUiItemDocumentManager::reorderItems(QList<SharedUiItem> items) {
   Q_UNUSED(items)
+}
+
+SharedUiItem SharedUiItemDocumentManager::createNewItem(
+    QString idQualifier, QString *errorString) {
+  Creator creator = _creators.value(idQualifier);
+  //qDebug() << "createNewItem" << idQualifier << this << creator;
+  SharedUiItem newItem;
+  if (creator) {
+    QString id = genererateNewId(idQualifier);
+    newItem = (*creator)(id);
+    if (changeItem(newItem, SharedUiItem(), idQualifier, errorString))
+      return newItem;
+    return SharedUiItem();
+    //qDebug() << "created";
+  } else {
+    if (errorString)
+      *errorString = "no creator registered for item of type "+idQualifier;
+  }
+  return newItem;
+}
+
+void SharedUiItemDocumentManager::registerItemType(
+    QString idQualifier, SharedUiItemDocumentManager::Setter setter,
+    SharedUiItemDocumentManager::Creator creator) {
+  _setters.insert(idQualifier, setter);
+  _creators.insert(idQualifier, creator);
+  //qDebug() << "registered" << idQualifier << this;
+}
+
+bool SharedUiItemDocumentManager::changeItemByUiData(
+    SharedUiItem oldItem, int section, const QVariant &value,
+    QString *errorString) {
+  //if (oldItem.uiData(section, Qt::EditRole) == value)
+  //  return true; // nothing to do
+  Setter setter = _setters.value(oldItem.idQualifier());
+  SharedUiItem newItem = oldItem;
+  if (setter) {
+    // LATER always EditRole ?
+    if ((newItem.*setter)(section, value, errorString, Qt::EditRole, this)
+      && changeItem(newItem, oldItem, oldItem.idQualifier(), errorString))
+      return true;
+  } else {
+    if (errorString)
+      *errorString = "No setter registred for item type "+oldItem.idQualifier();
+  }
+  return false;
 }

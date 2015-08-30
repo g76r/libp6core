@@ -26,18 +26,28 @@ class LIBQTSSUSHARED_EXPORT SharedUiItemDocumentManager : public QObject {
   Q_DISABLE_COPY(SharedUiItemDocumentManager)
 
 public:
+  using Setter = bool (SharedUiItem::*)(int, const QVariant &, QString *, int,
+  const SharedUiItemDocumentManager *);
+  using Creator = SharedUiItem (*)(QString id);
+
+protected:
+  QHash<QString,Setter> _setters;
+  QHash<QString,Creator> _creators;
+
+public:
   explicit SharedUiItemDocumentManager(QObject *parent = 0);
   /** Method that user interface should call to create a new default item with
    * an automatically generated unique id.  */
+  // FIXME doc: wrapper ov generateXXX, registred creator and changeItem()
   virtual SharedUiItem createNewItem(
-      QString idQualifier, QString *errorString = 0) = 0;
+      QString idQualifier, QString *errorString = 0);
   /** Method that user interface should call to change an item, one field at a
    * time.
    *
    * Suited for model/view edition. */
   virtual bool changeItemByUiData(
-      SharedUiItem oldItem, int section, const QVariant &value,
-      QString *errorString = 0) = 0;
+        SharedUiItem oldItem, int section, const QVariant &value,
+        QString *errorString = 0);
   /** Method that user interface or non-interactive code should call to change
    * an item at whole.
    *
@@ -88,15 +98,19 @@ public:
     }
     return *reinterpret_cast<SharedUiItemList<T>*>(&list);
   }
-  /** Notify document manager of a change in items order.
+  /** Change items order.
    *
    * Items list may contain a mix of several items type (i.e. with different
    * id qualifiers) and may be partial (i.e. not contains all items of a given
    * type).
-   * In most cases items order are not significant.
+   * In most cases items order are not significant but some document managers
+   * may keep memory of their order (or of the orders of some item types).
    * Default implementation does nothing.
    */
-  virtual void reorderedItems(QList<SharedUiItem> items);
+  virtual void reorderItems(QList<SharedUiItem> items);
+  /** This method must be called for every item type the document manager will
+   * hold, to enable it to create and modify such items. */
+  void registerItemType(QString idQualifier, Setter setter, Creator creator);
 
 signals:
   /** Emited whenever an item changes.

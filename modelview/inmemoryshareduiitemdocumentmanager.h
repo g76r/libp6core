@@ -33,36 +33,15 @@ class LIBQTSSUSHARED_EXPORT InMemorySharedUiItemDocumentManager
   Q_OBJECT
   Q_DISABLE_COPY(InMemorySharedUiItemDocumentManager)
 
-public:
-  using Setter = bool (SharedUiItem::*)(int, const QVariant &, QString *, int,
-  const SharedUiItemDocumentManager *);
-  using Creator = SharedUiItem (*)(QString id);
-
 protected:
   QHash<QString,QHash<QString,SharedUiItem>> _repository;
-  QHash<QString,Setter> _setters;
-  QHash<QString,Creator> _creators;
 
 public:
   explicit InMemorySharedUiItemDocumentManager(QObject *parent = 0);
-  SharedUiItem createNewItem(
-      QString idQualifier, QString *errorString = 0) override;
   bool changeItem(SharedUiItem newItem, SharedUiItem oldItem,
                   QString idQualifier, QString *errorString = 0) override;
-  bool changeItemByUiData(
-      SharedUiItem oldItem, int section, const QVariant &value,
-      QString *errorString = 0) override;
-  /** Richer method that make it possible to implement interactive undo/redo
-   * over it. */
-  bool changeItemByUiData(
-      SharedUiItem oldItem, int section, const QVariant &value,
-      SharedUiItem *newItem, QString *errorString = 0);
   using SharedUiItemDocumentManager::itemById;
   SharedUiItem itemById(QString idQualifier, QString id) const override;
-  /** This method must be called for every item type the document manager will
-   * hold, to enable it to create and modify such items. */
-  InMemorySharedUiItemDocumentManager &registerItemType(
-      QString idQualifier, Setter setter, Creator creator);
   using SharedUiItemDocumentManager::itemsByIdQualifier;
   SharedUiItemList<SharedUiItem> itemsByIdQualifier(QString idQualifier) const;
 };

@@ -36,21 +36,6 @@ bool InMemoryDatabaseDocumentManager::registerItemType(
                                   errorString);
 }
 
-SharedUiItem InMemoryDatabaseDocumentManager::createNewItem(
-    QString idQualifier, QString *errorString) {
-  SharedUiItem newItem =
-      InMemorySharedUiItemDocumentManager::createNewItem(
-        idQualifier, errorString);
-  if (newItem.isNull())
-    return SharedUiItem();
-  if (!insertItem(newItem, errorString)) {
-    InMemorySharedUiItemDocumentManager::changeItem(
-          SharedUiItem(), newItem, idQualifier);
-    return SharedUiItem();
-  }
-  return newItem;
-}
-
 bool InMemoryDatabaseDocumentManager::changeItem(
     SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier,
     QString *errorString) {
