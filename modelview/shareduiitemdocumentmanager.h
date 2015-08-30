@@ -18,6 +18,7 @@
 #include "libqtssu_global.h"
 #include "modelview/shareduiitem.h"
 #include "shareduiitemlist.h"
+#include <functional>
 
 /** Base class for SharedUiItem-based document managers.
  * @see SharedUiItem */
@@ -28,7 +29,7 @@ class LIBQTSSUSHARED_EXPORT SharedUiItemDocumentManager : public QObject {
 public:
   using Setter = bool (SharedUiItem::*)(int, const QVariant &, QString *, int,
   const SharedUiItemDocumentManager *);
-  using Creator = SharedUiItem (*)(QString id);
+  using Creator = std::function<SharedUiItem(QString)>;
 
 protected:
   QHash<QString,Setter> _setters;

@@ -48,7 +48,7 @@ SharedUiItem SharedUiItemDocumentManager::createNewItem(
   SharedUiItem newItem;
   if (creator) {
     QString id = genererateNewId(idQualifier);
-    newItem = (*creator)(id);
+    newItem = creator(id);
     if (changeItem(newItem, SharedUiItem(), idQualifier, errorString))
       return newItem;
     return SharedUiItem();
