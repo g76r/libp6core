@@ -1,3 +1,5 @@
 /html
 /latex
 /libqtssu.tags
+/doxygen*.db
+/Makefile

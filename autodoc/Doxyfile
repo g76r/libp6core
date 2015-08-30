@@ -1494,7 +1494,7 @@ SKIP_FUNCTION_MACROS   = YES
 # is run, you must also specify the path to the tagfile here.
 
 #TAGFILES               = /usr/share/qt4/doc/html/qt.tags
-TAGFILES		=
+TAGFILES		= /usr/share/qt5/doc/qtcore/qtcore.tags=http://doc.qt.io/qt-5/ /usr/share/qt5/doc/qtnetwork/qtnetwork.tags=http://doc.qt.io/qt-5/
 
 # When a file name is specified after GENERATE_TAGFILE, doxygen will create 
 # a tag file that is based on the input files it reads.
@@ -1505,7 +1505,7 @@ GENERATE_TAGFILE       = libqtssu.tags
 # in the class index. If set to NO only the inherited external classes 
 # will be listed.
 
-ALLEXTERNALS           = YES
+ALLEXTERNALS           = NO
 
 # If the EXTERNAL_GROUPS tag is set to YES all external groups will be listed 
 # in the modules index. If set to NO, only the current project's groups will 
