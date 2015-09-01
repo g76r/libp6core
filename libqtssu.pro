@@ -95,7 +95,8 @@ SOURCES += \
     util/regexpparamsprovider.cpp \
     modelview/genericshareduiitem.cpp \
     modelview/inmemoryshareduiitemdocumentmanager.cpp \
-    sql/inmemorydatabasedocumentmanager.cpp
+    sql/inmemorydatabasedocumentmanager.cpp \
+    util/coreundocommand.cpp
 
 
 HEADERS +=\
@@ -168,7 +169,8 @@ HEADERS +=\
     util/regexpparamsprovider.h \
     modelview/genericshareduiitem.h \
     sql/inmemorydatabasedocumentmanager.h \
-    modelview/inmemoryshareduiitemdocumentmanager.h
+    modelview/inmemoryshareduiitemdocumentmanager.h \
+    util/coreundocommand.h
 
 unix {
     target.path = /usr/lib
