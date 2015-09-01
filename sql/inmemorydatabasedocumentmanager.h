@@ -59,10 +59,15 @@ public:
   InMemoryDatabaseDocumentManager(QObject *parent = 0);
   InMemoryDatabaseDocumentManager(QSqlDatabase db, QObject *parent = 0);
   bool setDatabase(QSqlDatabase db, QString *errorString = 0);
+  void registerItemType(QString idQualifier, Setter setter,
+                        Creator creator) = delete;
   bool registerItemType(QString idQualifier, Setter setter, Creator creator,
                         int idSection, QString *errorString = 0);
-  bool changeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                  QString idQualifier, QString *errorString = 0) override;
+  bool prepareChangeItem(
+      CoreUndoCommand *command, SharedUiItem newItem, SharedUiItem oldItem,
+      QString idQualifier, QString *errorString) override;
+  void commitChangeItem(SharedUiItem newItem, SharedUiItem oldItem,
+                        QString idQualifier) override;
   // TODO add a way to notify user of database errors, such as a signal
 
 private:
@@ -70,7 +75,10 @@ private:
       QString idQualifier, Setter setter, Creator creator,
       int idSection, QString *errorString);
   static inline QString protectedColumnName(QString columnName);
-  bool insertItem(SharedUiItem newItem, QString *errorString);
+  bool insertItemInDatabase(SharedUiItem newItem, QString *errorString);
+  bool changeItemInDatabase(
+      SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier,
+      QString *errorString, bool dryRun);
 };
 
 #endif // INMEMORYDATABASEDOCUMENTMANAGER_H

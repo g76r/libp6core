@@ -131,6 +131,7 @@ public slots:
    *
    * Must emit itemChanged() after having updated data.
    * @see SharedUiItemDocumentManager::itemChanged()
+   * @see SharedUiItemDocumentManager::changeItem()
    */
   virtual void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
                           QString idQualifier) = 0;

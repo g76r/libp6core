@@ -17,25 +17,23 @@ InMemorySharedUiItemDocumentManager::InMemorySharedUiItemDocumentManager(
     QObject *parent) : SharedUiItemDocumentManager(parent) {
 }
 
-bool InMemorySharedUiItemDocumentManager::changeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier,
-    QString *errorString) {
-  QString reason;
-  if (!oldItem.isNull() && !_repository[idQualifier].contains(oldItem.id())) {
-    // reject createOrUpdate and deleteIfExist behaviors
-    reason = "old item "+oldItem.qualifiedId()+" not found";
-  } else {
-    if (!oldItem.isNull() && newItem != oldItem) { // renamed or deleted
-      _repository[idQualifier].remove(oldItem.id());
-    }
-    if (!newItem.isNull()) { // created or updated
-      _repository[idQualifier][newItem.id()] = newItem;
-    }
-    emit itemChanged(newItem, oldItem, idQualifier);
+bool InMemorySharedUiItemDocumentManager::prepareChangeItem(
+    CoreUndoCommand *command, SharedUiItem newItem, SharedUiItem oldItem,
+    QString idQualifier, QString *errorString) {
+  Q_UNUSED(errorString)
+  new ChangeItemCommand(this, newItem, oldItem, idQualifier, command);
+  return true; // cannot fail
+}
+
+void InMemorySharedUiItemDocumentManager::commitChangeItem(
+    SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
+  if (!oldItem.isNull() && newItem != oldItem) { // renamed or deleted
+    _repository[idQualifier].remove(oldItem.id());
   }
-  if (!reason.isEmpty() && errorString)
-    *errorString = reason;
-  return reason.isEmpty();
+  if (!newItem.isNull()) { // created or updated
+    _repository[idQualifier][newItem.id()] = newItem;
+  }
+  SharedUiItemDocumentManager::commitChangeItem(newItem, oldItem, idQualifier);
 }
 
 SharedUiItem InMemorySharedUiItemDocumentManager::itemById(
