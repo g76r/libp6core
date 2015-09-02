@@ -274,9 +274,28 @@ protected:
 
 private:
   // FIXME doc
-  bool checkAndApplyConstraintsOnChangeItem(CoreUndoCommand *command,
-      SharedUiItem &newItem, SharedUiItem &oldItem, QString idQualifier,
-      QString *errorString = 0);
+  bool processConstraintsAndPrepareChangeItem(
+      CoreUndoCommand *command, SharedUiItem newItem, SharedUiItem oldItem,
+      QString idQualifier, QString *errorString);
+  // FIXME doc×6
+  bool processBeforeUpdate(
+      CoreUndoCommand *command, SharedUiItem *newItem, SharedUiItem oldItem,
+      QString idQualifier, QString *errorString);
+  bool processBeforeCreate(
+      CoreUndoCommand *command, SharedUiItem *newItem, QString idQualifier,
+      QString *errorString);
+  bool processBeforeDelete(
+      CoreUndoCommand *command, SharedUiItem oldItem, QString idQualifier,
+      QString *errorString);
+  bool processAfterUpdate(
+      CoreUndoCommand *command, SharedUiItem newItem, SharedUiItem oldItem,
+      QString idQualifier, QString *errorString);
+  bool processAfterCreate(
+      CoreUndoCommand *command, SharedUiItem newItem, QString idQualifier,
+      QString *errorString);
+  bool processAfterDelete(
+      CoreUndoCommand *command, SharedUiItem oldItem, QString idQualifier,
+      QString *errorString);
 
   friend class ChangeItemCommand; // needed to call back commitChangeItem()
   friend class DtpDocumentManagerWrapper; // needed to wrapp internalChangeItem

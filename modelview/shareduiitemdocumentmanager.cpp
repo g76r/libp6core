@@ -55,12 +55,6 @@ bool SharedUiItemDocumentManager::changeItem(
     QString *errorString) {
   Q_ASSERT(newItem.isNull() || newItem.idQualifier() == idQualifier);
   Q_ASSERT(oldItem.isNull() || oldItem.idQualifier() == idQualifier);
-  // support for transforming into update an createOrUpdate call
-  // and ensure that, on update or delete, oldItem is the real one, not a
-  // placeholder only bearing ids
-  oldItem = itemById(idQualifier, oldItem.id());
-  if (oldItem.isNull() && newItem.isNull())
-    return true; // nothing to do (support deleteIfExists on inexistent item)
   CoreUndoCommand *command =
       internalChangeItem(newItem, oldItem, idQualifier, errorString);
   //qDebug() << "SharedUiItemDocumentManager::changeItem" << command;
@@ -79,10 +73,7 @@ CoreUndoCommand *SharedUiItemDocumentManager::internalChangeItem(
   QString reason;
   if (!errorString)
     errorString = &reason;
-  // LATER simplify constraints processing when called through changeItemByUiData()
-  if (checkAndApplyConstraintsOnChangeItem(
-        command, newItem, oldItem, idQualifier, errorString)
-      && prepareChangeItem(
+  if (processConstraintsAndPrepareChangeItem(
         command, newItem, oldItem, idQualifier, errorString)) {
     return command;
   }
@@ -145,14 +136,17 @@ CoreUndoCommand *SharedUiItemDocumentManager::internalCreateNewItem(
   if (creator) {
     QString id = genererateNewId(idQualifier);
     *newItem = creator(id);
+    SharedUiItem oldItem;
     if (!newItem->isNull()) {
-      new ChangeItemCommand(this, *newItem, SharedUiItem(), idQualifier,
-                            command);
+      if (processConstraintsAndPrepareChangeItem(
+            command, *newItem, oldItem, idQualifier, errorString)) {
+        return command;
+      }
+    } else {
+      *errorString = "creation of item of type "+idQualifier+" failed";
     }
-    return command;
   } else {
-    if (errorString)
-      *errorString = "no creator registered for item of type "+idQualifier;
+    *errorString = "no creator registered for item of type "+idQualifier;
   }
   delete command;
   return 0;
@@ -185,9 +179,7 @@ CoreUndoCommand *SharedUiItemDocumentManager::internalChangeItemByUiData(
     // LATER always EditRole ?
     // LATER simplify constraints processing since only one section is touched
     if ((newItem.*setter)(section, value, errorString, Qt::EditRole, this)) {
-      if (checkAndApplyConstraintsOnChangeItem(
-            command, newItem, oldItem, idQualifier, errorString)
-          && prepareChangeItem(
+      if (processConstraintsAndPrepareChangeItem(
             command, newItem, oldItem, idQualifier, errorString)) {
         return command;
       }
@@ -198,6 +190,44 @@ CoreUndoCommand *SharedUiItemDocumentManager::internalChangeItemByUiData(
   }
   delete command;
   return 0;
+}
+
+bool SharedUiItemDocumentManager::processConstraintsAndPrepareChangeItem(
+    CoreUndoCommand *command, SharedUiItem newItem, SharedUiItem oldItem,
+    QString idQualifier, QString *errorString) {
+  // TODO add recursive context to detect constraints loops, or check recursive constraints when adding them (addFK()...)
+  qDebug() << "SharedUiItemDocumentManager::prepareChangeItemWithConstraints"
+           << newItem << oldItem << idQualifier;
+  // to support for transforming into update an createOrUpdate call
+  // and ensure that, on update or delete, oldItem is the real one, not a
+  // placeholder only bearing ids such as GenericSharedUiItem, we must replace
+  // oldItem by trusting only its ids
+  oldItem = itemById(idQualifier, oldItem.id());
+  if (oldItem.isNull()) {
+    if (newItem.isNull()) {
+      // nothing to do (e.g. deleteIfExists on inexistent item)
+      return true;
+    } else { // create
+      return processBeforeCreate(command, &newItem, idQualifier, errorString)
+          && prepareChangeItem(command, newItem, oldItem, idQualifier,
+                               errorString)
+          && processAfterCreate(command, newItem, idQualifier, errorString);
+    }
+  } else {
+    if (newItem.isNull()) { // delete
+      return processBeforeDelete(command, oldItem, idQualifier, errorString)
+          && prepareChangeItem(command, newItem, oldItem, idQualifier,
+                               errorString)
+          && processAfterDelete(command, oldItem, idQualifier, errorString);
+    } else { // update (incl. renaming)
+      return processBeforeUpdate(command, &newItem, oldItem, idQualifier,
+                                 errorString)
+          && prepareChangeItem(command, newItem, oldItem, idQualifier,
+                               errorString)
+          && processAfterUpdate(command, newItem, oldItem, idQualifier,
+                                errorString);
+    }
+  }
 }
 
 void SharedUiItemDocumentManager::addForeignKey(
@@ -220,15 +250,11 @@ static SharedUiItemList<> sources(
   return sources;
 }
 
-// FIXME not sure that & are needed
-// FIXME remove fk._nullable
-// FIXME split On -> {Before,After}
-bool SharedUiItemDocumentManager::checkAndApplyConstraintsOnChangeItem(
-    CoreUndoCommand *command, SharedUiItem &newItem, SharedUiItem &oldItem,
+// FIXME remove fk._nullable ?
+
+bool SharedUiItemDocumentManager::processBeforeUpdate(
+    CoreUndoCommand *command, SharedUiItem *newItem, SharedUiItem oldItem,
     QString idQualifier, QString *errorString) {
-  QString reason;
-  if (!errorString)
-    errorString = &reason;
   foreach (const ForeignKey &fk, _foreignKeys) {
     // foreign keys from this item
     if (fk._sourceQualifier == idQualifier) {
@@ -236,37 +262,17 @@ bool SharedUiItemDocumentManager::checkAndApplyConstraintsOnChangeItem(
     }
     // foreign keys to this item
     if (fk._referenceQualifier == idQualifier) {
-      if (newItem.isNull()) {
-        // on delete policy
-        SharedUiItemList<> references =
-            sources(this, fk._sourceQualifier, fk._sourceSection, oldItem.id());
-        switch (fk._onDeletePolicy) {
-        case Unknown:
-        case NoAction:
-          if (!references.isEmpty()) {
-            *errorString = "Cannot delete "+idQualifier+" \""+oldItem.id()
-                +"\" because it is stil referenced by "
-                +QString::number(references.size())+" "+fk._sourceQualifier
-                +"(s).";
-            return false;
-          }
-          break;
-        case SetNull:
-          // FIXME
-          break;
-        case Cascade:
-          // FIXME
-          break;
-        }
-      } else if (newItem.uiData(fk._referenceSection)
-                 != oldItem.uiData(fk._referenceSection)) {
+      if (newItem->uiData(fk._referenceSection)
+          != oldItem.uiData(fk._referenceSection)) {
         // on update policy
         SharedUiItemList<> references =
             sources(this, fk._sourceQualifier, fk._sourceSection, oldItem.id());
         switch (fk._onUpdatePolicy) {
+        case SetNull: // FIXME implement rather than fall through NoAction
+        case Cascade: // FIXME implement rather than fall through NoAction
         case Unknown:
         case NoAction:
-          if (!references.isEmpty()) {
+          if (!references.isEmpty()) { // FIXME && not nullable || not null ???
             *errorString = "Cannot rename "+idQualifier+" \""+oldItem.id()
                 +"\" because it is stil referenced by "
                 +QString::number(references.size())+" "+fk._sourceQualifier
@@ -274,15 +280,62 @@ bool SharedUiItemDocumentManager::checkAndApplyConstraintsOnChangeItem(
             return false;
           }
           break;
-        case SetNull:
-          // FIXME
-          break;
-        case Cascade:
-          // FIXME
-          break;
         }
       }
     }
   }
+  return true;
+}
+
+bool SharedUiItemDocumentManager::processBeforeCreate(
+    CoreUndoCommand *command, SharedUiItem *newItem, QString idQualifier,
+    QString *errorString) {
+  return true;
+}
+
+bool SharedUiItemDocumentManager::processBeforeDelete(
+    CoreUndoCommand *command, SharedUiItem oldItem, QString idQualifier,
+    QString *errorString) {
+  foreach (const ForeignKey &fk, _foreignKeys) {
+    // foreign keys from this item : nothing to do
+    // foreign keys to this item
+    if (fk._referenceQualifier == idQualifier) {
+      // on delete policy
+      SharedUiItemList<> references =
+          sources(this, fk._sourceQualifier, fk._sourceSection, oldItem.id());
+      switch (fk._onDeletePolicy) {
+      case SetNull: // FIXME implement rather than fall through NoAction
+      case Cascade: // FIXME implement rather than fall through NoAction
+      case Unknown:
+      case NoAction:
+        if (!references.isEmpty()) {
+          *errorString = "Cannot delete "+idQualifier+" \""+oldItem.id()
+              +"\" because it is stil referenced by "
+              +QString::number(references.size())+" "+fk._sourceQualifier
+              +"(s).";
+          return false;
+        }
+        break;
+      }
+    }
+  }
+  return true;
+}
+
+bool SharedUiItemDocumentManager::processAfterUpdate(
+    CoreUndoCommand *command, SharedUiItem newItem, SharedUiItem oldItem,
+    QString idQualifier, QString *errorString) {
+  return true;
+}
+
+bool SharedUiItemDocumentManager::processAfterCreate(
+    CoreUndoCommand *command, SharedUiItem newItem, QString idQualifier,
+    QString *errorString) {
+  return true;
+}
+
+bool SharedUiItemDocumentManager::processAfterDelete(
+    CoreUndoCommand *command, SharedUiItem oldItem, QString idQualifier,
+    QString *errorString) {
   return true;
 }
