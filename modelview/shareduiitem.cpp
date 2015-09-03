@@ -33,12 +33,13 @@ QVariant SharedUiItemData::uiData(int section, int role) const {
 bool SharedUiItemData::setUiData(int section, const QVariant &value,
                                  QString *errorString, int role,
                                  const SharedUiItemDocumentManager *dm) {
-  Q_UNUSED(section)
   Q_UNUSED(role)
   Q_UNUSED(value)
   Q_UNUSED(dm)
-  if (errorString)
-    *errorString = "setUiData() not implemented (called on base class)";
+  Q_ASSERT(dm != 0);
+  Q_ASSERT(errorString != 0);
+  *errorString = "Field \""+uiHeaderData(section, Qt::DisplayRole).toString()
+      +"\" is not ui-editable for item of type "+idQualifier()+"";
   return false;
 }
 
@@ -55,10 +56,6 @@ QVariant SharedUiItemData::uiHeaderData(int section, int role) const {
 
 QString SharedUiItemData::id() const {
   return uiData(0, Qt::DisplayRole).toString();
-}
-
-QString SharedUiItemData::idQualifier() const {
-  return QString();
 }
 
 int SharedUiItemData::uiSectionCount() const {

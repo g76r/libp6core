@@ -50,15 +50,13 @@ private:
     int _referenceSection;
     OnChangePolicy _onDeletePolicy;
     OnChangePolicy _onUpdatePolicy;
-    bool _nullable;
     ForeignKey(QString sourceQualifier, int sourceSection,
                QString referenceQualifier, int referenceSection,
-               OnChangePolicy onDeletePolicy, OnChangePolicy onUpdatePolicy,
-               bool nullable)
+               OnChangePolicy onDeletePolicy, OnChangePolicy onUpdatePolicy)
       : _sourceQualifier(sourceQualifier), _sourceSection(sourceSection),
         _referenceQualifier(referenceQualifier),
         _referenceSection(referenceSection), _onDeletePolicy(onDeletePolicy),
-        _onUpdatePolicy(onUpdatePolicy), _nullable(nullable) { }
+        _onUpdatePolicy(onUpdatePolicy) { }
   };
 
 protected:
@@ -167,9 +165,8 @@ public:
   // FIXME doc
   void addForeignKey(QString sourceQualifier, int sourceSection,
                      QString referenceQualifier, int referenceSection = 0,
-                     OnChangePolicy onDeletePolicy = NoAction,
-                     OnChangePolicy onUpdatePolicy = NoAction,
-                     bool nullable = true);
+                     OnChangePolicy onUpdatePolicy = Cascade,
+                     OnChangePolicy onDeletePolicy = NoAction);
 signals:
   /** Emited whenever an item changes.
    *
@@ -213,8 +210,10 @@ protected:
 
   /** Can be called by createNewItem() implementations to generate a new id not
    * currently in use for the given idQualifier item type.
-   * Generate id of the form idQualifier+number (e.g. "foobar1"). */
-  QString genererateNewId(QString idQualifier);
+   * Generate id of the form prefix+number (e.g. "foobar1"), most of the time
+   * one should choose idQualifier as prefix, which is the default (= if prefix
+   * is left empty). */
+  QString genererateNewId(QString idQualifier, QString prefix = QString());
   /** Prepare change: ensure that the change can be performed, add
    * ChangeItemCommand children as needed to command, and return true only on
    * success.
@@ -296,6 +295,9 @@ private:
   bool processAfterDelete(
       CoreUndoCommand *command, SharedUiItem oldItem, QString idQualifier,
       QString *errorString);
+  // id as primary key (uniqueness, not empty, same qualifiers before and after)
+  bool checkIdsConstraints(SharedUiItem newItem, SharedUiItem oldItem,
+                           QString idQualifier, QString *errorString);
 
   friend class ChangeItemCommand; // needed to call back commitChangeItem()
   friend class DtpDocumentManagerWrapper; // needed to wrapp internalChangeItem
@@ -304,4 +306,3 @@ private:
 // LATER Q_DECLARE_TYPEINFO(SharedUiItemDocumentManager::ForeignKey, Q_MOVABLE_TYPE);
 
 #endif // SHAREDUIITEMDOCUMENTMANAGER_H
-

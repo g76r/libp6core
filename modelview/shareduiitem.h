@@ -77,9 +77,8 @@ public:
    * Default: return uiData(0, Qt::DisplayRole).toString() */
   virtual QString id() const;
   /** Return a string identifiying the data type represented within the
-   * application, e.g. "student", "calendar", "quote".
-   * Default: return QString() */
-  virtual QString idQualifier() const;
+   * application, e.g. "student", "calendar", "quote". */
+  virtual QString idQualifier() const = 0;
   /** Return UI sections count, like QAbstractItemModel::columnCount() does for
    * columns (anyway SharedUiItem sections are likely to be presented as
    * columns by a Model and displayed aas columns by a View).
@@ -101,6 +100,8 @@ public:
   /** Set data from a UI point of view, i.e. called by a QAbstractItemModel
    * after user edition.
    * Default: return false
+   * @return errorString must not be null
+   * @return dm must not be null
    * @return true on success, false otherwise */
   virtual bool setUiData(int section, const QVariant &value,
                          QString *errorString, int role,

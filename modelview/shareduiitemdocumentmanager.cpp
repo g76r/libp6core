@@ -24,15 +24,18 @@ SharedUiItem SharedUiItemDocumentManager::itemById(QString qualifiedId) const {
                      : itemById(qualifiedId.left(pos), qualifiedId.mid(pos+1));
 }
 
-QString SharedUiItemDocumentManager::genererateNewId(QString idQualifier) {
+QString SharedUiItemDocumentManager::genererateNewId(
+    QString idQualifier, QString prefix) {
   QString id;
+  if (prefix.isEmpty())
+    prefix = idQualifier;
   for (int i = 1; i < 100; ++i) {
-    id = idQualifier+QString::number(i);
+    id = prefix+QString::number(i);
     if (itemById(idQualifier, id).isNull())
       return id;
   }
   forever {
-    id = idQualifier+QString::number(qrand());
+    id = prefix+QString::number(qrand());
     if (itemById(idQualifier, id).isNull())
       return id;
   }
@@ -232,14 +235,14 @@ bool SharedUiItemDocumentManager::processConstraintsAndPrepareChangeItem(
 
 void SharedUiItemDocumentManager::addForeignKey(
     QString sourceQualifier, int sourceSection, QString referenceQualifier,
-    int referenceSection, OnChangePolicy onDeletePolicy,
-    OnChangePolicy onUpdatePolicy, bool nullable) {
+    int referenceSection, OnChangePolicy onUpdatePolicy,
+    OnChangePolicy onDeletePolicy) {
   _foreignKeys.append(
         ForeignKey(sourceQualifier, sourceSection, referenceQualifier,
-                   referenceSection, onDeletePolicy, onUpdatePolicy, nullable));
+                   referenceSection, onDeletePolicy, onUpdatePolicy));
 }
 
-static SharedUiItemList<> sources(
+static SharedUiItemList<> foreignKeySources(
     SharedUiItemDocumentManager *dm, QString sourceQualifier, int sourceSection,
     QString referenceId) {
   SharedUiItemList<> sources;
@@ -250,32 +253,71 @@ static SharedUiItemList<> sources(
   return sources;
 }
 
-// FIXME remove fk._nullable ?
+bool SharedUiItemDocumentManager::checkIdsConstraints(
+    SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier,
+    QString *errorString) {
+  if (!oldItem.isNull()) {
+    if (oldItem.idQualifier() != idQualifier) {
+      *errorString = "Old item \""+oldItem.qualifiedId()
+          +"\" is inconsistent with qualifier \""+idQualifier+"\".";
+      return false;
+    }
+  }
+  if (!newItem.isNull()) {
+    if (newItem.idQualifier() != idQualifier) {
+      *errorString = "New item \""+newItem.qualifiedId()
+          +"\" is inconsistent with qualifier \""+idQualifier+"\".";
+      return false;
+    }
+    if (newItem.id().isEmpty()) {
+      *errorString = "Id cannot be empty.";
+      return false;
+    }
+    if (newItem.id() != oldItem.id() // create or rename
+        && !itemById(idQualifier, newItem.id()).isNull()) {
+      *errorString = "New id is already used by another "+idQualifier+": "
+          +newItem.id();
+      return false;
+    }
+  }
+  return true;
+}
 
 bool SharedUiItemDocumentManager::processBeforeUpdate(
     CoreUndoCommand *command, SharedUiItem *newItem, SharedUiItem oldItem,
     QString idQualifier, QString *errorString) {
+  Q_UNUSED(command)
+  if (!checkIdsConstraints(*newItem, oldItem, idQualifier, errorString))
+    return false;
   foreach (const ForeignKey &fk, _foreignKeys) {
     // foreign keys from this item
     if (fk._sourceQualifier == idQualifier) {
-      // FIXME referential integrity
+      // referential integrity
+      QString referenceId = newItem->uiString(fk._sourceSection);
+      if (!referenceId.isEmpty()
+          && itemById(fk._referenceQualifier, referenceId).isNull()) {
+        *errorString = "Cannot change "+idQualifier+" \""+oldItem.id()
+            +"\" because there is no "+fk._referenceQualifier+" with id \""
+            +referenceId+"\".";
+        return false;
+      }
     }
     // foreign keys to this item
     if (fk._referenceQualifier == idQualifier) {
       if (newItem->uiData(fk._referenceSection)
           != oldItem.uiData(fk._referenceSection)) {
         // on update policy
-        SharedUiItemList<> references =
-            sources(this, fk._sourceQualifier, fk._sourceSection, oldItem.id());
+        SharedUiItemList<> sources = foreignKeySources(
+              this, fk._sourceQualifier, fk._sourceSection, oldItem.id());
         switch (fk._onUpdatePolicy) {
         case SetNull: // FIXME implement rather than fall through NoAction
         case Cascade: // FIXME implement rather than fall through NoAction
         case Unknown:
         case NoAction:
-          if (!references.isEmpty()) { // FIXME && not nullable || not null ???
-            *errorString = "Cannot rename "+idQualifier+" \""+oldItem.id()
+          if (!sources.isEmpty()) {
+            *errorString = "Cannot change "+idQualifier+" \""+oldItem.id()
                 +"\" because it is stil referenced by "
-                +QString::number(references.size())+" "+fk._sourceQualifier
+                +QString::number(sources.size())+" "+fk._sourceQualifier
                 +"(s).";
             return false;
           }
@@ -290,19 +332,25 @@ bool SharedUiItemDocumentManager::processBeforeUpdate(
 bool SharedUiItemDocumentManager::processBeforeCreate(
     CoreUndoCommand *command, SharedUiItem *newItem, QString idQualifier,
     QString *errorString) {
+  Q_UNUSED(command)
+  if (!checkIdsConstraints(*newItem, SharedUiItem(), idQualifier, errorString))
+    return false;
   return true;
 }
 
 bool SharedUiItemDocumentManager::processBeforeDelete(
     CoreUndoCommand *command, SharedUiItem oldItem, QString idQualifier,
     QString *errorString) {
+  Q_UNUSED(command)
+  if (!checkIdsConstraints(SharedUiItem(), oldItem, idQualifier, errorString))
+    return false;
   foreach (const ForeignKey &fk, _foreignKeys) {
     // foreign keys from this item : nothing to do
     // foreign keys to this item
     if (fk._referenceQualifier == idQualifier) {
       // on delete policy
       SharedUiItemList<> references =
-          sources(this, fk._sourceQualifier, fk._sourceSection, oldItem.id());
+          foreignKeySources(this, fk._sourceQualifier, fk._sourceSection, oldItem.id());
       switch (fk._onDeletePolicy) {
       case SetNull: // FIXME implement rather than fall through NoAction
       case Cascade: // FIXME implement rather than fall through NoAction
@@ -325,17 +373,30 @@ bool SharedUiItemDocumentManager::processBeforeDelete(
 bool SharedUiItemDocumentManager::processAfterUpdate(
     CoreUndoCommand *command, SharedUiItem newItem, SharedUiItem oldItem,
     QString idQualifier, QString *errorString) {
+  Q_UNUSED(command)
+  Q_UNUSED(newItem)
+  Q_UNUSED(oldItem)
+  Q_UNUSED(idQualifier)
+  Q_UNUSED(errorString)
   return true;
 }
 
 bool SharedUiItemDocumentManager::processAfterCreate(
     CoreUndoCommand *command, SharedUiItem newItem, QString idQualifier,
     QString *errorString) {
+  Q_UNUSED(command)
+  Q_UNUSED(newItem)
+  Q_UNUSED(idQualifier)
+  Q_UNUSED(errorString)
   return true;
 }
 
 bool SharedUiItemDocumentManager::processAfterDelete(
     CoreUndoCommand *command, SharedUiItem oldItem, QString idQualifier,
     QString *errorString) {
+  Q_UNUSED(command)
+  Q_UNUSED(oldItem)
+  Q_UNUSED(idQualifier)
+  Q_UNUSED(errorString)
   return true;
 }
