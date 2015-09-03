@@ -30,13 +30,13 @@ QVariant SharedUiItemData::uiData(int section, int role) const {
   return QVariant();
 }
 
-bool SharedUiItemData::setUiData(int section, const QVariant &value,
-                                 QString *errorString, int role,
-                                 const SharedUiItemDocumentManager *dm) {
+bool SharedUiItemData::setUiData(
+    int section, const QVariant &value, QString *errorString,
+    SharedUiItemDocumentTransaction *transaction, int role) {
   Q_UNUSED(role)
   Q_UNUSED(value)
-  Q_UNUSED(dm)
-  Q_ASSERT(dm != 0);
+  Q_UNUSED(transaction)
+  Q_ASSERT(transaction != 0);
   Q_ASSERT(errorString != 0);
   *errorString = "Field \""+uiHeaderData(section, Qt::DisplayRole).toString()
       +"\" is not ui-editable for item of type "+idQualifier()+"";

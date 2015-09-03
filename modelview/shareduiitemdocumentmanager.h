@@ -15,12 +15,8 @@
 #define SHAREDUIITEMDOCUMENTMANAGER_H
 
 #include <QObject>
-#include "libqtssu_global.h"
-#include "modelview/shareduiitem.h"
-#include "shareduiitemlist.h"
+#include "shareduiitemdocumenttransaction.h"
 #include <functional>
-#include "util/coreundocommand.h"
-#include <QPointer>
 
 /** Base class for SharedUiItem-based document managers.
  *
@@ -37,8 +33,15 @@ class LIBQTSSUSHARED_EXPORT SharedUiItemDocumentManager : public QObject {
   Q_DISABLE_COPY(SharedUiItemDocumentManager)
 
 public:
-  using Setter = bool (SharedUiItem::*)(int, const QVariant &, QString *, int,
-  const SharedUiItemDocumentManager *);
+  using Setter = std::function<bool(SharedUiItem *, int, const QVariant &,
+  QString *, SharedUiItemDocumentTransaction *, int)>;
+  // following adapter is needed because members pointer are not convertible
+  // to base class member pointer, therefore &Foobar::setUiData cannot be
+  // holded by function<bool(SharedUiItem*...)> even if Foobar is a subclass
+  // of SharedUiItem
+  template <class T>
+  using MemberSetter = bool (T::*)(int, const QVariant &,
+  QString *, SharedUiItemDocumentTransaction *, int);
   using Creator = std::function<SharedUiItem(QString)>;
   enum OnChangePolicy { Unknown, NoAction, SetNull, Cascade };
 
@@ -69,7 +72,7 @@ public:
   /** Method that user interface should call to create a new default item with
    * an automatically generated unique id.
    *
-   * Actually, this method create a CoreUndoCommand and calls item type creator
+   * Actually, this method create a Transaction and calls item type creator
    * which is the right place to customize item creation from document manager
    * implementations.
    * No other class than DtpDocumentManager should override createNewItem().
@@ -81,7 +84,7 @@ public:
    *
    * Suited for model/view edition.
    *
-   * Actually, this method create a CoreUndoCommand and calls
+   * Actually, this method create a Transaction and calls
    * prepareChangeItem() which is the method to override by document manager
    * implementations.
    * No other class than DtpDocumentManager should override changeItem().
@@ -108,7 +111,7 @@ public:
    * SharedUiItemDocumentManager::itemChanged() which is emited just after
    * actual data change).
    *
-   * Actually, this method create a CoreUndoCommand and calls
+   * Actually, this method create a Transaction and calls
    * prepareChangeItem() which is the method to override by document manager
    * implementations.
    * No other class than DtpDocumentManager should override changeItem().
@@ -162,6 +165,16 @@ public:
   /** This method must be called for every item type the document manager will
    * hold, to enable it to create and modify such items. */
   void registerItemType(QString idQualifier, Setter setter, Creator creator);
+  template <class T>
+  void registerItemType(QString idQualifier, MemberSetter<T> setter,
+                        Creator creator) {
+    registerItemType(idQualifier, [setter](SharedUiItem *item, int section,
+                     const QVariant &value, QString *errorString,
+                     SharedUiItemDocumentTransaction *transaction, int role ){
+      return (item->*static_cast<MemberSetter<SharedUiItem>>(setter))(
+            section, value, errorString, transaction, role);
+    }, creator);
+  }
   // FIXME doc
   void addForeignKey(QString sourceQualifier, int sourceSection,
                      QString referenceQualifier, int referenceSection = 0,
@@ -186,44 +199,14 @@ signals:
                    QString idQualifier);
 
 protected:
-  /** Command to be used by changeItem()/prepareChangeItem()/commitChangeItem()
-   * as child for command received as parameter. */
-  class LIBQTSSUSHARED_EXPORT ChangeItemCommand : public CoreUndoCommand {
-    QPointer<SharedUiItemDocumentManager> _dm;
-    SharedUiItem _newItem, _oldItem;
-    QString _idQualifier;
-    bool _ignoreFirstRedo;
-
-  public:
-    /**
-     * @param alreadyCommitedBeforeFirstRedo set to true if change has already
-     *   been performed, in this case first redo() (i.e. the one performed when
-     *   pushing QUndoCommand to QUndoStack) call will be ignored.
-     */
-    ChangeItemCommand(SharedUiItemDocumentManager *dm, SharedUiItem newItem,
-                      SharedUiItem oldItem, QString idQualifier,
-                      CoreUndoCommand *parent/*,
-                      bool alreadyCommitedBeforeFirstRedo = false*/);
-    void redo();
-    void undo();
-  };
-
   /** Can be called by createNewItem() implementations to generate a new id not
    * currently in use for the given idQualifier item type.
    * Generate id of the form prefix+number (e.g. "foobar1"), most of the time
    * one should choose idQualifier as prefix, which is the default (= if prefix
    * is left empty). */
   QString genererateNewId(QString idQualifier, QString prefix = QString());
-  /** Prepare change: ensure that the change can be performed, add
-   * ChangeItemCommand children as needed to command, and return true only on
-   * success.
-   * It is better for prepareChangeItem() no to perform any change and to
-   * pospone all of them until commitChangeItem() is called. However, depending
-   * on the way data is store, this may not be possible. This is why
-   * ChangeItemCommand supports alreadyCommitedBeforeFirstRedo parameter.
-   * If prepareChangeItem() perform changes and finaly detects that the whole
-   * change is not possible, it must manage restore any changed data to its
-   * previous state before returning false.
+  /** Prepare change: ensure that the change can be performed, record them
+   * through transaction->changeItem(), and return true only on success.
    *
    * Although changeItem() is more tolerant, this method is not needed to
    * support createOrUpdate or deleteIfExist semantics, since it is called
@@ -238,68 +221,71 @@ protected:
    *
    * @param errorString is guaranted not to be null
    */
-  virtual bool prepareChangeItem(CoreUndoCommand *command, SharedUiItem newItem,
-                                 SharedUiItem oldItem, QString idQualifier,
-                                 QString *errorString) = 0;
+  virtual bool prepareChangeItem(
+      SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
+      SharedUiItem oldItem, QString idQualifier, QString *errorString) = 0;
   /** Perform actual change and emit itemChanged().
    *
    * Default impl only emit signal. Implementations must called base class
    * method after performing actual change.
    *
    * This method is called just after prepareChangeItem() returned true, and
-   * whenever associated undo command is undone or redone.
+   * whenever the transaction (or associated QUndoCommand) is undone or redone.
+   * Since both old and new items are kept in the transaction, commitChangeItem
+   * is called with its parameters swapped to undo what has been (re)done.
    *
-   * commitChangeItem() can be called several times per prepareChangeItem()
-   * call since prepareChangeItem() may add several commands and constraints
-   * (especially foreign keys) may also add additional commands. */
+   * Method commitChangeItem() can even be called several times per
+   * prepareChangeItem() call since prepareChangeItem() may add several changes,
+   * and constraints (especially foreign keys) or triggers may also add
+   * additional changes. */
   virtual void commitChangeItem(SharedUiItem newItem, SharedUiItem oldItem,
                                 QString idQualifier);
 
 protected:
   /** To be called by createNewItem().
    * Should never be overriden apart by DtpDocumentManagerWrapper. */
-  virtual CoreUndoCommand *internalCreateNewItem(
+  virtual SharedUiItemDocumentTransaction *internalCreateNewItem(
       SharedUiItem *newItem, QString idQualifier, QString *errorString);
   /** To be called by changeItem().
    * Should never be overriden apart by DtpDocumentManagerWrapper. */
-  virtual CoreUndoCommand *internalChangeItem(
+  virtual SharedUiItemDocumentTransaction *internalChangeItem(
       SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier,
       QString *errorString);
   /** To be called by changeItemByUiData().
    * Should never be overriden apart by DtpDocumentManagerWrapper. */
-  virtual CoreUndoCommand *internalChangeItemByUiData(
+  virtual SharedUiItemDocumentTransaction *internalChangeItemByUiData(
       SharedUiItem oldItem, int section, const QVariant &value,
       QString *errorString);
 
 private:
   // FIXME doc
   bool processConstraintsAndPrepareChangeItem(
-      CoreUndoCommand *command, SharedUiItem newItem, SharedUiItem oldItem,
-      QString idQualifier, QString *errorString);
+      SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
+      SharedUiItem oldItem, QString idQualifier, QString *errorString);
   // FIXME doc×6
   bool processBeforeUpdate(
-      CoreUndoCommand *command, SharedUiItem *newItem, SharedUiItem oldItem,
-      QString idQualifier, QString *errorString);
+      SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
+      SharedUiItem oldItem, QString idQualifier, QString *errorString);
   bool processBeforeCreate(
-      CoreUndoCommand *command, SharedUiItem *newItem, QString idQualifier,
-      QString *errorString);
-  bool processBeforeDelete(
-      CoreUndoCommand *command, SharedUiItem oldItem, QString idQualifier,
-      QString *errorString);
-  bool processAfterUpdate(
-      CoreUndoCommand *command, SharedUiItem newItem, SharedUiItem oldItem,
+      SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
       QString idQualifier, QString *errorString);
+  bool processBeforeDelete(
+      SharedUiItemDocumentTransaction *transaction, SharedUiItem oldItem,
+      QString idQualifier, QString *errorString);
+  bool processAfterUpdate(
+      SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
+      SharedUiItem oldItem, QString idQualifier, QString *errorString);
   bool processAfterCreate(
-      CoreUndoCommand *command, SharedUiItem newItem, QString idQualifier,
-      QString *errorString);
+      SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
+      QString idQualifier, QString *errorString);
   bool processAfterDelete(
-      CoreUndoCommand *command, SharedUiItem oldItem, QString idQualifier,
-      QString *errorString);
+      SharedUiItemDocumentTransaction *transaction, SharedUiItem oldItem,
+      QString idQualifier, QString *errorString);
   // id as primary key (uniqueness, not empty, same qualifiers before and after)
   bool checkIdsConstraints(SharedUiItem newItem, SharedUiItem oldItem,
                            QString idQualifier, QString *errorString);
 
-  friend class ChangeItemCommand; // needed to call back commitChangeItem()
+  friend class SharedUiItemDocumentTransaction::ChangeItemCommand; // needed to call back commitChangeItem()
   friend class DtpDocumentManagerWrapper; // needed to wrapp internalChangeItem
 };
 

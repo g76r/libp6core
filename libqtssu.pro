@@ -96,7 +96,8 @@ SOURCES += \
     modelview/genericshareduiitem.cpp \
     modelview/inmemoryshareduiitemdocumentmanager.cpp \
     sql/inmemorydatabasedocumentmanager.cpp \
-    util/coreundocommand.cpp
+    util/coreundocommand.cpp \
+    modelview/shareduiitemdocumenttransaction.cpp
 
 
 HEADERS +=\
@@ -170,7 +171,8 @@ HEADERS +=\
     modelview/genericshareduiitem.h \
     sql/inmemorydatabasedocumentmanager.h \
     modelview/inmemoryshareduiitemdocumentmanager.h \
-    util/coreundocommand.h
+    util/coreundocommand.h \
+    modelview/shareduiitemdocumenttransaction.h
 
 unix {
     target.path = /usr/lib

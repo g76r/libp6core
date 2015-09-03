@@ -19,6 +19,8 @@
 #include "libqtssu_global.h"
 #include <QString>
 
+class SharedUiItemDocumentManager;
+
 /** Base class for model holding SharedUiItems, being them table or
  * tree-oriented they provides one item section per column.
  *

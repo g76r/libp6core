@@ -18,10 +18,10 @@ InMemorySharedUiItemDocumentManager::InMemorySharedUiItemDocumentManager(
 }
 
 bool InMemorySharedUiItemDocumentManager::prepareChangeItem(
-    CoreUndoCommand *command, SharedUiItem newItem, SharedUiItem oldItem,
+    SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem, SharedUiItem oldItem,
     QString idQualifier, QString *errorString) {
   Q_UNUSED(errorString)
-  new ChangeItemCommand(this, newItem, oldItem, idQualifier, command);
+  transaction->changeItem(newItem, oldItem, idQualifier);
   return true; // cannot fail
 }
 

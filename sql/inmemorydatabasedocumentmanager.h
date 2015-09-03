@@ -59,12 +59,22 @@ public:
   InMemoryDatabaseDocumentManager(QObject *parent = 0);
   InMemoryDatabaseDocumentManager(QSqlDatabase db, QObject *parent = 0);
   bool setDatabase(QSqlDatabase db, QString *errorString = 0);
-  void registerItemType(QString idQualifier, Setter setter,
-                        Creator creator) = delete;
   bool registerItemType(QString idQualifier, Setter setter, Creator creator,
                         int idSection, QString *errorString = 0);
+  template <class T>
+  void registerItemType(QString idQualifier, MemberSetter<T> setter,
+                        Creator creator, int idSection,
+                        QString *errorString = 0) {
+    registerItemType(idQualifier, [setter](SharedUiItem *item, int section,
+                     const QVariant &value, QString *errorString,
+                     SharedUiItemDocumentTransaction *transaction, int role ){
+      return (item->*static_cast<MemberSetter<SharedUiItem>>(setter))(
+            section, value, errorString, transaction, role);
+    }, creator, idSection, errorString);
+  }
+
   bool prepareChangeItem(
-      CoreUndoCommand *command, SharedUiItem newItem, SharedUiItem oldItem,
+      SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem, SharedUiItem oldItem,
       QString idQualifier, QString *errorString) override;
   void commitChangeItem(SharedUiItem newItem, SharedUiItem oldItem,
                         QString idQualifier) override;
@@ -79,6 +89,7 @@ private:
   bool changeItemInDatabase(
       SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier,
       QString *errorString, bool dryRun);
+  using InMemorySharedUiItemDocumentManager::registerItemType; // hide
 };
 
 #endif // INMEMORYDATABASEDOCUMENTMANAGER_H

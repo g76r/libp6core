@@ -14,13 +14,11 @@
 #ifndef SHAREDUIITEMLIST_H
 #define SHAREDUIITEMLIST_H
 
-#include "libqtssu_global.h"
+#include "shareduiitem.h"
 #include <QList>
 #include <QChar>
 #include <QString>
 #include <QRegularExpression>
-
-class SharedUiItem;
 
 /** Specializing QList for SharedUiItems, the same way QStringList does. */
 template <class T = SharedUiItem>

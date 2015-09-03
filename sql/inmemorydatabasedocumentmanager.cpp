@@ -44,7 +44,7 @@ bool InMemoryDatabaseDocumentManager::registerItemType(
 }
 
 bool InMemoryDatabaseDocumentManager::prepareChangeItem(
-    CoreUndoCommand *command, SharedUiItem newItem, SharedUiItem oldItem,
+    SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem, SharedUiItem oldItem,
     QString idQualifier, QString *errorString) {
   Q_ASSERT(errorString != 0);
   if (!changeItemInDatabase(newItem, oldItem, idQualifier, errorString, true)) {
@@ -52,7 +52,7 @@ bool InMemoryDatabaseDocumentManager::prepareChangeItem(
                 "test transaction failed:" << *errorString;
     return false;
   }
-  new ChangeItemCommand(this, newItem, oldItem, idQualifier, command);
+  transaction->changeItem(newItem, oldItem, idQualifier);
   return true;
 }
 
@@ -230,12 +230,13 @@ sqlite> drop table foo;
     return false;
   }
   //qDebug() << "***** selected:" << query.executedQuery();
+  SharedUiItemDocumentTransaction transaction(this);
   while (query.next()) {
     item = creator(QStringLiteral("dummy"));
     for (int i = 0; i < item.uiSectionCount(); ++i) {
       QString errorString;
-      bool ok = (item.*setter)(i, query.value(i), &errorString,
-                               SharedUiItem::ExternalDataRole, this);
+      bool ok = setter(&item, i, query.value(i), &errorString, &transaction,
+                       SharedUiItem::ExternalDataRole);
       if (!ok) {
         // TODO do not log this
         qDebug() << "InMemoryDatabaseDocumentManager cannot set value for item"
@@ -243,9 +244,8 @@ sqlite> drop table foo;
       }
     }
     //qDebug() << "  have item:" << item.qualifiedId();
-    // LATER try to find a less misleading way to initialize data
-    InMemorySharedUiItemDocumentManager
-        ::commitChangeItem(item, SharedUiItem(), idQualifier);
+    InMemorySharedUiItemDocumentManager::commitChangeItem(
+          item, SharedUiItem(), idQualifier);
   }
   return true;
 }

@@ -39,7 +39,7 @@ protected:
 public:
   explicit InMemorySharedUiItemDocumentManager(QObject *parent = 0);
   bool prepareChangeItem(
-      CoreUndoCommand *command, SharedUiItem newItem, SharedUiItem oldItem,
+      SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem, SharedUiItem oldItem,
       QString idQualifier, QString *errorString) override;
   void commitChangeItem(SharedUiItem newItem, SharedUiItem oldItem,
                         QString idQualifier) override;

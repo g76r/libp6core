@@ -21,7 +21,7 @@
 #include <QSharedDataPointer>
 
 class QDebug;
-class SharedUiItemDocumentManager;
+class SharedUiItemDocumentTransaction;
 class SharedUiItemParamsProvider;
 
 /** Parent class for SharedUiItem implementation data classes.
@@ -55,7 +55,8 @@ class SharedUiItemParamsProvider;
  * - When planning to have generic UI edition features, a subclass MUST
  *   implement uiFlags() (to add Qt::ItemIsEditable flag for editable sections)
  *   and setUiData() and setUiData() MUST handle Qt::EditRole and
- *   SharedUiItem::ExternalDataRole.
+ *   SharedUiItem::ExternalDataRole and MAY process any role as if it were
+ *   Qt::EditRole (in other words: ignore role).
  * - There MUST NOT be several level of subclasses, i.e. you must not subclass
  *   SharedUiItemData subclasses.
  * @see SharedUiItem */
@@ -103,9 +104,9 @@ public:
    * @return errorString must not be null
    * @return dm must not be null
    * @return true on success, false otherwise */
-  virtual bool setUiData(int section, const QVariant &value,
-                         QString *errorString, int role,
-                         const SharedUiItemDocumentManager *dm);
+  virtual bool setUiData(
+      int section, const QVariant &value, QString *errorString,
+      SharedUiItemDocumentTransaction *transaction, int role);
 
 protected:
   // both default and copy constructor are declared protected to avoid being
@@ -172,16 +173,17 @@ protected:
  *   reimplement setUiData() method, in such a way:
  *     // in .h
  *     bool setUiData(int section, const QVariant &value, QString *errorString,
- *                    int role, const SharedUiItemDocumentManager *dm);
+ *                    SharedUiItemDocumentTransaction *transaction,
+ *                    int role = Qt::EditRole);
  *     // in .cpp
  *     bool Foobar::setUiData(int section, const QVariant &value,
- *                            QString *errorString = 0, int role,
- *                            const SharedUiItemDocumentManager *dm) {
+ *           QString *errorString, SharedUiItemDocumentTransaction *transaction,
+ *           int role) {
  *       if (isNull())
  *         return false;
  *       SharedUiItem::detach<FoobarData>();
  *       return ((FoobarData*)constData())->setUiData(section, value,
- *                                                    errorString, role, dm);
+ *                                              errorString, transaction, role);
  *     }
  * - There MUST NOT be several level of subclasses, i.e. you must not subclass
  *   SharedUiItem subclasses.
@@ -335,9 +337,9 @@ protected:
    * It cannot be done in a generic manner in base class because non-const
    * access to data mustn't be performed in base class.
    * @return true on success, false otherwise */
-  bool setUiData(int section, const QVariant &value, QString *errorString = 0,
-                 int role = Qt::EditRole,
-                 const SharedUiItemDocumentManager *dm = 0);
+  bool setUiData(int section, const QVariant &value, QString *errorString,
+                 SharedUiItemDocumentTransaction *transaction,
+                 int role = Qt::EditRole);
   /** Make uiData() available through ParamsProvider interface.
    * @see SharedUiItemParamsProvider */
   inline SharedUiItemParamsProvider toParamsProvider() const;
