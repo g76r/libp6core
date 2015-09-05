@@ -43,7 +43,8 @@ public:
   using MemberSetter = bool (T::*)(int, const QVariant &,
   QString *, SharedUiItemDocumentTransaction *, int);
   using Creator = std::function<SharedUiItem(QString)>;
-  enum OnChangePolicy { Unknown, NoAction, SetNull, Cascade };
+  enum OnChangePolicy { Unknown, NoAction, SetNull, CascadeReferencedKey,
+                        CascadeAnySection };
 
 private:
   struct ForeignKey {
@@ -178,7 +179,7 @@ public:
   // FIXME doc
   void addForeignKey(QString sourceQualifier, int sourceSection,
                      QString referenceQualifier, int referenceSection = 0,
-                     OnChangePolicy onUpdatePolicy = Cascade,
+                     OnChangePolicy onUpdatePolicy = CascadeAnySection,
                      OnChangePolicy onDeletePolicy = NoAction);
 signals:
   /** Emited whenever an item changes.

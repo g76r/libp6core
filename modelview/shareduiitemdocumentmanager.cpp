@@ -279,7 +279,8 @@ bool SharedUiItemDocumentManager::processBeforeUpdate(
         SharedUiItemList<> sources = transaction->foreignKeySources(
               fk._sourceQualifier, fk._sourceSection, oldItem.id());
         switch (fk._onUpdatePolicy) {
-        case Cascade:
+        case CascadeReferencedKey:
+        case CascadeAnySection:
           break;
         case SetNull:
           // LATER implement rather than fall through NoAction
@@ -325,7 +326,8 @@ bool SharedUiItemDocumentManager::processBeforeDelete(
       switch (fk._onDeletePolicy) {
       case SetNull:
         // LATER implement rather than fall through NoAction
-      case Cascade:
+      case CascadeReferencedKey:
+      case CascadeAnySection:
         // LATER implement rather than fall through NoAction
       case Unknown:
       case NoAction:
@@ -351,12 +353,14 @@ bool SharedUiItemDocumentManager::processAfterUpdate(
     if (fk._referenceQualifier == idQualifier) {
       QString newReferenceId = newItem.uiString(fk._referenceSection);
       QString oldReferenceId = oldItem.uiString(fk._referenceSection);
-      if (newReferenceId != oldReferenceId) {
+      if (newReferenceId != oldReferenceId
+          || fk._onUpdatePolicy == CascadeAnySection) {
         // on update policy
         SharedUiItemList<> sources = transaction->foreignKeySources(
               fk._sourceQualifier, fk._sourceSection, oldItem.id());
         switch (fk._onUpdatePolicy) {
-        case Cascade:
+        case CascadeReferencedKey:
+        case CascadeAnySection:
           foreach (const SharedUiItem &oldSource, sources) {
             SharedUiItem newSource = oldSource;
             Setter setter = _setters.value(fk._sourceQualifier);
