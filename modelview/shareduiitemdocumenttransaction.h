@@ -27,7 +27,6 @@ class LIBQTSSUSHARED_EXPORT SharedUiItemDocumentTransaction
     : public CoreUndoCommand {
   SharedUiItemDocumentManager *_dm;
   QHash<QString,QHash<QString,SharedUiItem>> _newItems;
-  QHash<QString,QSet<QString>> _deletedItems;
 
 public:
   class LIBQTSSUSHARED_EXPORT ChangeItemCommand : public CoreUndoCommand {
@@ -46,9 +45,9 @@ public:
   SharedUiItemDocumentTransaction(SharedUiItemDocumentManager *dm) : _dm(dm) { }
   void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
                   QString idQualifier);
-  SharedUiItem itemById(QString idQualifier, QString id);
+  SharedUiItem itemById(QString idQualifier, QString id) const;
   SharedUiItemList<> foreignKeySources(
-      QString sourceQualifier, int sourceSection, QString referenceId);
+      QString sourceQualifier, int sourceSection, QString referenceId) const;
 };
 
 

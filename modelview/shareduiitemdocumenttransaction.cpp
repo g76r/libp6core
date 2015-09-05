@@ -17,28 +17,23 @@
 void SharedUiItemDocumentTransaction::changeItem(
     SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
   new ChangeItemCommand(_dm, newItem, oldItem, idQualifier, this);
-  QString id = newItem.id();
-  if (newItem.isNull()) {
-    _deletedItems[idQualifier].insert(id);
-    _newItems[idQualifier].remove(id);
-  } else {
-    _deletedItems[idQualifier].remove(id);
-    _newItems[idQualifier][id] = newItem;
-  }
+  if (!oldItem.isNull())
+    _newItems[idQualifier][oldItem.id()] = SharedUiItem();
+  if (!newItem.isNull())
+    _newItems[idQualifier][newItem.id()] = newItem;
 }
 
 SharedUiItem SharedUiItemDocumentTransaction::itemById(
-    QString idQualifier, QString id) {
-  if (_deletedItems[idQualifier].contains(id))
-    return SharedUiItem();
-  SharedUiItem item = _newItems[idQualifier].value(id);
-  return item.isNull() ? _dm->itemById(idQualifier, id) : item;
+    QString idQualifier, QString id) const {
+  const QHash<QString,SharedUiItem> newItems = _newItems[idQualifier];
+  return newItems.contains(id) ? newItems.value(id)
+                               : _dm->itemById(idQualifier, id);
 }
 
 SharedUiItemList<> SharedUiItemDocumentTransaction::foreignKeySources(
-    QString sourceQualifier, int sourceSection, QString referenceId) {
+    QString sourceQualifier, int sourceSection, QString referenceId) const {
   SharedUiItemList<> sources;
-  QHash<QString,SharedUiItem> &newItems = _newItems[sourceQualifier];
+  const QHash<QString,SharedUiItem> newItems = _newItems[sourceQualifier];
   foreach (const SharedUiItem &item, newItems.values()) {
     if (item.uiData(sourceSection) == referenceId)
       sources.append(item);
@@ -46,8 +41,7 @@ SharedUiItemList<> SharedUiItemDocumentTransaction::foreignKeySources(
   foreach (const SharedUiItem &item,
            _dm->itemsByIdQualifier(sourceQualifier)) {
     if (item.uiData(sourceSection) == referenceId
-        && !newItems.contains(item.id())
-        && !_deletedItems.contains(item.id()))
+        && !newItems.contains(item.id()))
       sources.append(item);
   }
   return sources;
