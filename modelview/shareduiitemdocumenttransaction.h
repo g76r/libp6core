@@ -43,11 +43,21 @@ public:
   };
 
   SharedUiItemDocumentTransaction(SharedUiItemDocumentManager *dm) : _dm(dm) { }
-  void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                  QString idQualifier);
   SharedUiItem itemById(QString idQualifier, QString id) const;
   SharedUiItemList<> foreignKeySources(
       QString sourceQualifier, int sourceSection, QString referenceId) const;
+  bool changeItemByUiData(
+      SharedUiItem oldItem, int section, const QVariant &value,
+      QString *errorString);
+  bool changeItem(SharedUiItem newItem, SharedUiItem oldItem,
+                  QString idQualifier, QString *errorString);
+  SharedUiItem createNewItem(QString idQualifier, QString *errorString);
+
+private:
+  void storeItemChange(SharedUiItem newItem, SharedUiItem oldItem,
+                       QString idQualifier);
+
+  friend class SharedUiItemDocumentManager;
 };
 
 

@@ -58,6 +58,9 @@ bool SharedUiItemDocumentManager::changeItem(
     QString *errorString) {
   Q_ASSERT(newItem.isNull() || newItem.idQualifier() == idQualifier);
   Q_ASSERT(oldItem.isNull() || oldItem.idQualifier() == idQualifier);
+  QString reason;
+  if (!errorString)
+    errorString = &reason;
   SharedUiItemDocumentTransaction *transaction =
       internalChangeItem(newItem, oldItem, idQualifier, errorString);
   //qDebug() << "SharedUiItemDocumentManager::changeItem" << transaction;
@@ -73,14 +76,10 @@ SharedUiItemDocumentTransaction
 *SharedUiItemDocumentManager::internalChangeItem(
     SharedUiItem newItem, SharedUiItem oldItem,
     QString idQualifier, QString *errorString) {
-  SharedUiItemDocumentTransaction *transaction = new SharedUiItemDocumentTransaction(this);
-  QString reason;
-  if (!errorString)
-    errorString = &reason;
-  if (processConstraintsAndPrepareChangeItem(
-        transaction, newItem, oldItem, idQualifier, errorString)) {
+  SharedUiItemDocumentTransaction *transaction =
+      new SharedUiItemDocumentTransaction(this);
+  if (transaction->changeItem(newItem, oldItem, idQualifier, errorString))
     return transaction;
-  }
   delete transaction;
   return 0;
 }
@@ -92,6 +91,9 @@ void SharedUiItemDocumentManager::commitChangeItem(
 
 SharedUiItem SharedUiItemDocumentManager::createNewItem(
     QString idQualifier, QString *errorString) {
+  QString reason;
+  if (!errorString)
+    errorString = &reason;
   SharedUiItem newItem;
   SharedUiItemDocumentTransaction *transaction =
       internalCreateNewItem(&newItem, idQualifier, errorString);
@@ -107,33 +109,22 @@ SharedUiItemDocumentTransaction
 *SharedUiItemDocumentManager::internalCreateNewItem(
     SharedUiItem *newItem, QString idQualifier, QString *errorString) {
   Q_ASSERT(newItem != 0);
-  SharedUiItemDocumentTransaction *transaction = new SharedUiItemDocumentTransaction(this);
-  QString reason;
-  if (!errorString)
-    errorString = &reason;
-  Creator creator = _creators.value(idQualifier);
-  if (creator) {
-    QString id = genererateNewId(idQualifier);
-    *newItem = creator(id);
-    SharedUiItem oldItem;
-    if (!newItem->isNull()) {
-      if (processConstraintsAndPrepareChangeItem(
-            transaction, *newItem, oldItem, idQualifier, errorString)) {
-        return transaction;
-      }
-    } else {
-      *errorString = "creation of item of type "+idQualifier+" failed";
-    }
-  } else {
-    *errorString = "no creator registered for item of type "+idQualifier;
+  SharedUiItemDocumentTransaction *transaction =
+      new SharedUiItemDocumentTransaction(this);
+  *newItem = transaction->createNewItem(idQualifier, errorString);
+  if (newItem->isNull()) {
+    delete transaction;
+    return 0;
   }
-  delete transaction;
-  return 0;
+  return transaction;
 }
 
 bool SharedUiItemDocumentManager::changeItemByUiData(
     SharedUiItem oldItem, int section, const QVariant &value,
     QString *errorString) {
+  QString reason;
+  if (!errorString)
+    errorString = &reason;
   SharedUiItemDocumentTransaction *transaction = internalChangeItemByUiData(
         oldItem, section, value, errorString);
   if (transaction) {
@@ -150,25 +141,8 @@ SharedUiItemDocumentTransaction
     QString *errorString) {
   SharedUiItemDocumentTransaction *transaction =
       new SharedUiItemDocumentTransaction(this);
-  QString reason;
-  if (!errorString)
-    errorString = &reason;
-  QString idQualifier = oldItem.idQualifier();
-  Setter setter = _setters.value(idQualifier);
-  SharedUiItem newItem = oldItem;
-  if (setter) {
-    // LATER always EditRole ?
-    // LATER simplify constraints processing since only one section is touched
-    if (setter(&newItem, section, value, errorString, transaction,
-               Qt::EditRole)) {
-      if (processConstraintsAndPrepareChangeItem(
-            transaction, newItem, oldItem, idQualifier, errorString)) {
-        return transaction;
-      }
-    }
-  } else {
-    *errorString = "No setter registred for item type "+oldItem.idQualifier();
-  }
+  if (transaction->changeItemByUiData(oldItem, section, value, errorString))
+    return transaction;
   delete transaction;
   return 0;
 }
@@ -177,8 +151,6 @@ bool SharedUiItemDocumentManager::processConstraintsAndPrepareChangeItem(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem, SharedUiItem oldItem,
     QString idQualifier, QString *errorString) {
   // TODO add recursive context to detect constraints loops, or check recursive constraints when adding them (addFK()...)
-  qDebug() << "SharedUiItemDocumentManager::prepareChangeItemWithConstraints"
-           << newItem << oldItem << idQualifier;
   // to support for transforming into update an createOrUpdate call
   // and ensure that, on update or delete, oldItem is the real one, not a
   // placeholder only bearing ids such as GenericSharedUiItem, we must replace
@@ -220,6 +192,22 @@ void SharedUiItemDocumentManager::addForeignKey(
                    referenceSection, onDeletePolicy, onUpdatePolicy));
 }
 
+void SharedUiItemDocumentManager::addChangeItemTrigger(
+    QString idQualifier, TriggerFlags flags, ChangeItemTrigger trigger) {
+  if (flags & BeforeUpdate)
+    _triggersBeforeUpdate.insertMulti(idQualifier, trigger);
+  if (flags & AfterUpdate)
+    _triggersAfterUpdate.insertMulti(idQualifier, trigger);
+  if (flags & BeforeCreate)
+    _triggersBeforeCreate.insertMulti(idQualifier, trigger);
+  if (flags & AfterCreate)
+    _triggersAfterCreate.insertMulti(idQualifier, trigger);
+  if (flags & BeforeDelete)
+    _triggersBeforeDelete.insertMulti(idQualifier, trigger);
+  if (flags & AfterDelete)
+    _triggersAfterDelete.insertMulti(idQualifier, trigger);
+}
+
 bool SharedUiItemDocumentManager::checkIdsConstraints(
     SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier,
     QString *errorString) {
@@ -251,8 +239,8 @@ bool SharedUiItemDocumentManager::checkIdsConstraints(
 }
 
 bool SharedUiItemDocumentManager::processBeforeUpdate(
-    SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem, SharedUiItem oldItem,
-    QString idQualifier, QString *errorString) {
+    SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
+    SharedUiItem oldItem, QString idQualifier, QString *errorString) {
   Q_UNUSED(transaction)
   if (!checkIdsConstraints(*newItem, oldItem, idQualifier, errorString))
     return false;
@@ -284,7 +272,6 @@ bool SharedUiItemDocumentManager::processBeforeUpdate(
           break;
         case SetNull:
           // LATER implement rather than fall through NoAction
-        case Unknown:
         case NoAction:
           if (!sources.isEmpty()) {
             *errorString = "Cannot change "+idQualifier+" \""+oldItem.id()
@@ -298,21 +285,28 @@ bool SharedUiItemDocumentManager::processBeforeUpdate(
       }
     }
   }
+  foreach (ChangeItemTrigger trigger, _triggersBeforeUpdate.values(idQualifier))
+    if (!trigger(transaction, newItem, oldItem, idQualifier, errorString))
+      return false;
   return true;
 }
 
 bool SharedUiItemDocumentManager::processBeforeCreate(
-    SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem, QString idQualifier,
-    QString *errorString) {
+    SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
+    QString idQualifier, QString *errorString) {
   Q_UNUSED(transaction)
   if (!checkIdsConstraints(*newItem, SharedUiItem(), idQualifier, errorString))
     return false;
+  foreach (ChangeItemTrigger trigger, _triggersBeforeCreate.values(idQualifier))
+    if (!trigger(transaction, newItem, SharedUiItem(), idQualifier,
+                 errorString))
+      return false;
   return true;
 }
 
 bool SharedUiItemDocumentManager::processBeforeDelete(
-    SharedUiItemDocumentTransaction *transaction, SharedUiItem oldItem, QString idQualifier,
-    QString *errorString) {
+    SharedUiItemDocumentTransaction *transaction, SharedUiItem oldItem,
+    QString idQualifier, QString *errorString) {
   Q_UNUSED(transaction)
   if (!checkIdsConstraints(SharedUiItem(), oldItem, idQualifier, errorString))
     return false;
@@ -329,7 +323,6 @@ bool SharedUiItemDocumentManager::processBeforeDelete(
       case CascadeReferencedKey:
       case CascadeAnySection:
         // LATER implement rather than fall through NoAction
-      case Unknown:
       case NoAction:
         if (!sources.isEmpty()) {
           *errorString = "Cannot delete "+idQualifier+" \""+oldItem.id()
@@ -342,12 +335,18 @@ bool SharedUiItemDocumentManager::processBeforeDelete(
       }
     }
   }
+  foreach (ChangeItemTrigger trigger,
+           _triggersBeforeDelete.values(idQualifier)) {
+    SharedUiItem newItem;
+    if (!trigger(transaction, &newItem, oldItem, idQualifier, errorString))
+      return false;
+  }
   return true;
 }
 
 bool SharedUiItemDocumentManager::processAfterUpdate(
-    SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem, SharedUiItem oldItem,
-    QString idQualifier, QString *errorString) {
+    SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
+    SharedUiItem oldItem, QString idQualifier, QString *errorString) {
   foreach (const ForeignKey &fk, _foreignKeys) {
     // foreign keys to this item
     if (fk._referenceQualifier == idQualifier) {
@@ -361,51 +360,49 @@ bool SharedUiItemDocumentManager::processAfterUpdate(
         switch (fk._onUpdatePolicy) {
         case CascadeReferencedKey:
         case CascadeAnySection:
-          foreach (const SharedUiItem &oldSource, sources) {
-            SharedUiItem newSource = oldSource;
-            Setter setter = _setters.value(fk._sourceQualifier);
-            if (!setter) {
-              *errorString = "No setter registred for item type "
-                  +fk._sourceQualifier;
+          foreach (const SharedUiItem &oldSource, sources)
+            if (!transaction->changeItemByUiData(
+                  oldSource, fk._sourceSection, newReferenceId, errorString))
               return false;
-            }
-            if (!setter(&newSource, fk._sourceSection, newReferenceId,
-                        errorString, transaction, Qt::EditRole))
-              return false;
-            if (!processConstraintsAndPrepareChangeItem(
-                  transaction, newSource, oldSource, fk._sourceQualifier,
-                  errorString))
-              return false;
-          }
           break;
         case SetNull:
           // LATER implement rather than fall through NoAction
-        case Unknown:
         case NoAction:
           break;
         }
       }
     }
   }
+  foreach (ChangeItemTrigger trigger,
+           _triggersAfterUpdate.values(idQualifier)) {
+    SharedUiItem tmpItem = newItem;
+    if (!trigger(transaction, &tmpItem, oldItem, idQualifier, errorString))
+      return false;
+  }
   return true;
 }
 
 bool SharedUiItemDocumentManager::processAfterCreate(
-    SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem, QString idQualifier,
-    QString *errorString) {
-  Q_UNUSED(transaction)
-  Q_UNUSED(newItem)
-  Q_UNUSED(idQualifier)
-  Q_UNUSED(errorString)
+    SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
+    QString idQualifier, QString *errorString) {
+  foreach (ChangeItemTrigger trigger,
+           _triggersAfterCreate.values(idQualifier)) {
+    SharedUiItem tmpItem = newItem;
+    if (!trigger(transaction, &tmpItem, SharedUiItem(), idQualifier,
+                 errorString))
+      return false;
+  }
   return true;
 }
 
 bool SharedUiItemDocumentManager::processAfterDelete(
-    SharedUiItemDocumentTransaction *transaction, SharedUiItem oldItem, QString idQualifier,
-    QString *errorString) {
-  Q_UNUSED(transaction)
-  Q_UNUSED(oldItem)
-  Q_UNUSED(idQualifier)
-  Q_UNUSED(errorString)
+    SharedUiItemDocumentTransaction *transaction, SharedUiItem oldItem,
+    QString idQualifier, QString *errorString) {
+  foreach (ChangeItemTrigger trigger,
+           _triggersAfterDelete.values(idQualifier)) {
+    SharedUiItem newItem;
+    if (!trigger(transaction, &newItem, oldItem, idQualifier, errorString))
+      return false;
+  }
   return true;
 }

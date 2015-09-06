@@ -33,18 +33,38 @@ class LIBQTSSUSHARED_EXPORT SharedUiItemDocumentManager : public QObject {
   Q_DISABLE_COPY(SharedUiItemDocumentManager)
 
 public:
-  using Setter = std::function<bool(SharedUiItem *, int, const QVariant &,
-  QString *, SharedUiItemDocumentTransaction *, int)>;
+  using Setter = std::function<bool(SharedUiItem *item, int section,
+  const QVariant &value, QString *errorString,
+  SharedUiItemDocumentTransaction *transaction, int role)>;
   // following adapter is needed because members pointer are not convertible
   // to base class member pointer, therefore &Foobar::setUiData cannot be
   // holded by function<bool(SharedUiItem*...)> even if Foobar is a subclass
   // of SharedUiItem
   template <class T>
-  using MemberSetter = bool (T::*)(int, const QVariant &,
-  QString *, SharedUiItemDocumentTransaction *, int);
-  using Creator = std::function<SharedUiItem(QString)>;
-  enum OnChangePolicy { Unknown, NoAction, SetNull, CascadeReferencedKey,
-                        CascadeAnySection };
+  using MemberSetter = bool (T::*)(int section, const QVariant &value,
+  QString *errorString, SharedUiItemDocumentTransaction *transaction,
+  int role);
+  using Creator = std::function<SharedUiItem(QString id)>;
+  using ChangeItemTrigger = std::function<bool(
+  SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
+  SharedUiItem oldItem, QString idQualifier, QString *errorString)>;
+  enum OnChangePolicy {
+    NoAction,
+    SetNull,
+    CascadeReferencedKey,
+    CascadeAnySection
+  };
+  enum TriggerFlag {
+    NoTrigger = 0,
+    BeforeUpdate = 1,
+    AfterUpdate = 2,
+    BeforeCreate = 4,
+    AfterCreate = 8,
+    BeforeDelete = 16,
+    AfterDelete = 32
+  };
+  Q_DECLARE_FLAGS(TriggerFlags, TriggerFlag)
+  Q_FLAGS(TriggerFlags)
 
 private:
   struct ForeignKey {
@@ -67,6 +87,12 @@ protected:
   QHash<QString,Setter> _setters;
   QHash<QString,Creator> _creators;
   QList<ForeignKey> _foreignKeys;
+  QMultiHash<QString,ChangeItemTrigger> _triggersBeforeUpdate;
+  QMultiHash<QString,ChangeItemTrigger> _triggersAfterUpdate;
+  QMultiHash<QString,ChangeItemTrigger> _triggersBeforeCreate;
+  QMultiHash<QString,ChangeItemTrigger> _triggersAfterCreate;
+  QMultiHash<QString,ChangeItemTrigger> _triggersBeforeDelete;
+  QMultiHash<QString,ChangeItemTrigger> _triggersAfterDelete;
 
 public:
   explicit SharedUiItemDocumentManager(QObject *parent = 0);
@@ -181,6 +207,10 @@ public:
                      QString referenceQualifier, int referenceSection = 0,
                      OnChangePolicy onUpdatePolicy = CascadeAnySection,
                      OnChangePolicy onDeletePolicy = NoAction);
+  // FIXME doc
+  void addChangeItemTrigger(QString idQualifier, TriggerFlags flags,
+                            ChangeItemTrigger trigger);
+
 signals:
   /** Emited whenever an item changes.
    *
@@ -241,8 +271,13 @@ protected:
    * additional changes. */
   virtual void commitChangeItem(SharedUiItem newItem, SharedUiItem oldItem,
                                 QString idQualifier);
+  // FIXME doc
+  void storeItemChange(
+      SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
+      SharedUiItem oldItem, QString idQualifier) {
+    transaction->storeItemChange(newItem, oldItem, idQualifier);
+  }
 
-protected:
   /** To be called by createNewItem().
    * Should never be overriden apart by DtpDocumentManagerWrapper. */
   virtual SharedUiItemDocumentTransaction *internalCreateNewItem(
@@ -286,9 +321,12 @@ private:
   bool checkIdsConstraints(SharedUiItem newItem, SharedUiItem oldItem,
                            QString idQualifier, QString *errorString);
 
+  friend class SharedUiItemDocumentTransaction; // needed for many methods and fields
   friend class SharedUiItemDocumentTransaction::ChangeItemCommand; // needed to call back commitChangeItem()
   friend class DtpDocumentManagerWrapper; // needed to wrapp internalChangeItem
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(SharedUiItemDocumentManager::TriggerFlags)
 
 // LATER Q_DECLARE_TYPEINFO(SharedUiItemDocumentManager::ForeignKey, Q_MOVABLE_TYPE);
 

@@ -14,7 +14,7 @@
 #include "shareduiitemdocumenttransaction.h"
 #include "shareduiitemdocumentmanager.h"
 
-void SharedUiItemDocumentTransaction::changeItem(
+void SharedUiItemDocumentTransaction::storeItemChange(
     SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
   new ChangeItemCommand(_dm, newItem, oldItem, idQualifier, this);
   if (!oldItem.isNull())
@@ -45,6 +45,58 @@ SharedUiItemList<> SharedUiItemDocumentTransaction::foreignKeySources(
       sources.append(item);
   }
   return sources;
+}
+
+bool SharedUiItemDocumentTransaction::changeItemByUiData(
+    SharedUiItem oldItem, int section, const QVariant &value,
+    QString *errorString) {
+  QString idQualifier = oldItem.idQualifier();
+  SharedUiItemDocumentManager::Setter setter =
+      _dm->_setters.value(idQualifier);
+  SharedUiItem newItem = oldItem;
+  if (setter) {
+    // LATER always EditRole ?
+    // LATER simplify constraints processing since only one section is touched
+    if (setter(&newItem, section, value, errorString, this, Qt::EditRole)) {
+      if (_dm->processConstraintsAndPrepareChangeItem(
+            this, newItem, oldItem, idQualifier, errorString)) {
+        return true;
+      }
+    }
+  } else {
+    *errorString = "No setter registred for item type "+oldItem.idQualifier();
+  }
+  return false;
+}
+
+bool SharedUiItemDocumentTransaction::changeItem(
+    SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier,
+    QString *errorString) {
+  return _dm->processConstraintsAndPrepareChangeItem(
+        this, newItem, oldItem, idQualifier, errorString);
+}
+
+SharedUiItem SharedUiItemDocumentTransaction::createNewItem(
+    QString idQualifier, QString *errorString) {
+  SharedUiItemDocumentManager::Creator creator =
+      _dm->_creators.value(idQualifier);
+  SharedUiItem nullItem;
+  if (creator) {
+    QString id = _dm->genererateNewId(idQualifier);
+    SharedUiItem newItem = creator(id);
+    if (newItem.isNull()) {
+      *errorString = "Creation of item of type "+idQualifier+" failed";
+      return nullItem;
+    } else {
+      if (!_dm->processConstraintsAndPrepareChangeItem(
+            this, newItem, nullItem, idQualifier, errorString))
+        return nullItem;
+    }
+    return newItem;
+  } else {
+    *errorString = "No creator registered for item of type "+idQualifier;
+    return nullItem;
+  }
 }
 
 SharedUiItemDocumentTransaction::ChangeItemCommand::ChangeItemCommand(

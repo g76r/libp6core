@@ -52,7 +52,7 @@ bool InMemoryDatabaseDocumentManager::prepareChangeItem(
                 "test transaction failed:" << *errorString;
     return false;
   }
-  transaction->changeItem(newItem, oldItem, idQualifier);
+  storeItemChange(transaction, newItem, oldItem, idQualifier);
   return true;
 }
 

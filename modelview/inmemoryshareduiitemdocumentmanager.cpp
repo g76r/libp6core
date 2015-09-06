@@ -21,7 +21,7 @@ bool InMemorySharedUiItemDocumentManager::prepareChangeItem(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem, SharedUiItem oldItem,
     QString idQualifier, QString *errorString) {
   Q_UNUSED(errorString)
-  transaction->changeItem(newItem, oldItem, idQualifier);
+  storeItemChange(transaction, newItem, oldItem, idQualifier);
   return true; // cannot fail
 }
 
