@@ -43,6 +43,8 @@ public:
   QString text() const { return _text; }
   virtual void redo();
   virtual void undo();
+  virtual int id() const;
+  virtual bool mergeWith(const CoreUndoCommand *command);
 };
 
 #endif // COREUNDOCOMMAND_H

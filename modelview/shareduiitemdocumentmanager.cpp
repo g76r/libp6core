@@ -31,12 +31,12 @@ QString SharedUiItemDocumentManager::genererateNewId(
     prefix = idQualifier;
   for (int i = 1; i < 100; ++i) {
     id = prefix+QString::number(i);
-    if (itemById(idQualifier, id).isNull())
+    if (itemById(idQualifier, id).isNull()) // FIXME transaction
       return id;
   }
   forever {
     id = prefix+QString::number(qrand());
-    if (itemById(idQualifier, id).isNull())
+    if (itemById(idQualifier, id).isNull()) // FIXME transaction
       return id;
   }
 }
@@ -78,7 +78,8 @@ SharedUiItemDocumentTransaction
     QString idQualifier, QString *errorString) {
   SharedUiItemDocumentTransaction *transaction =
       new SharedUiItemDocumentTransaction(this);
-  if (transaction->changeItem(newItem, oldItem, idQualifier, errorString))
+  if (transaction->changeItem(newItem, oldItem, idQualifier, errorString)
+      && delayedChecks(transaction, errorString))
     return transaction;
   delete transaction;
   return 0;
@@ -112,7 +113,7 @@ SharedUiItemDocumentTransaction
   SharedUiItemDocumentTransaction *transaction =
       new SharedUiItemDocumentTransaction(this);
   *newItem = transaction->createNewItem(idQualifier, errorString);
-  if (newItem->isNull()) {
+  if (newItem->isNull() || !delayedChecks(transaction, errorString)) {
     delete transaction;
     return 0;
   }
@@ -141,21 +142,22 @@ SharedUiItemDocumentTransaction
     QString *errorString) {
   SharedUiItemDocumentTransaction *transaction =
       new SharedUiItemDocumentTransaction(this);
-  if (transaction->changeItemByUiData(oldItem, section, value, errorString))
+  if (transaction->changeItemByUiData(oldItem, section, value, errorString)
+      && delayedChecks(transaction, errorString))
     return transaction;
   delete transaction;
   return 0;
 }
 
 bool SharedUiItemDocumentManager::processConstraintsAndPrepareChangeItem(
-    SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem, SharedUiItem oldItem,
-    QString idQualifier, QString *errorString) {
+    SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
+    SharedUiItem oldItem, QString idQualifier, QString *errorString) {
   // TODO add recursive context to detect constraints loops, or check recursive constraints when adding them (addFK()...)
   // to support for transforming into update an createOrUpdate call
   // and ensure that, on update or delete, oldItem is the real one, not a
   // placeholder only bearing ids such as GenericSharedUiItem, we must replace
   // oldItem by trusting only its ids
-  oldItem = itemById(idQualifier, oldItem.id());
+  oldItem = transaction->itemById(idQualifier, oldItem.id());
   if (oldItem.isNull()) {
     if (newItem.isNull()) {
       // nothing to do (e.g. deleteIfExists on inexistent item)
@@ -229,7 +231,7 @@ bool SharedUiItemDocumentManager::checkIdsConstraints(
       return false;
     }
     if (newItem.id() != oldItem.id() // create or rename
-        && !itemById(idQualifier, newItem.id()).isNull()) {
+        && !itemById(idQualifier, newItem.id()).isNull()) { // FIXME transaction
       *errorString = "New id is already used by another "+idQualifier+": "
           +newItem.id();
       return false;
@@ -244,20 +246,10 @@ bool SharedUiItemDocumentManager::processBeforeUpdate(
   Q_UNUSED(transaction)
   if (!checkIdsConstraints(*newItem, oldItem, idQualifier, errorString))
     return false;
+  foreach (ChangeItemTrigger trigger, _triggersBeforeUpdate.values(idQualifier))
+    if (!trigger(transaction, newItem, oldItem, idQualifier, errorString))
+      return false;
   foreach (const ForeignKey &fk, _foreignKeys) {
-    // foreign keys from this item
-    if (fk._sourceQualifier == idQualifier) {
-      // referential integrity
-      QString referenceId = newItem->uiString(fk._sourceSection);
-      if (!referenceId.isEmpty()
-          && transaction->itemById(
-            fk._referenceQualifier, referenceId).isNull()) {
-        *errorString = "Cannot change "+idQualifier+" \""+oldItem.id()
-            +"\" because there is no "+fk._referenceQualifier+" with id \""
-            +referenceId+"\".";
-        return false;
-      }
-    }
     // foreign keys to this item
     if (fk._referenceQualifier == idQualifier) {
       QString newReferenceId = newItem->uiString(fk._referenceSection);
@@ -285,9 +277,6 @@ bool SharedUiItemDocumentManager::processBeforeUpdate(
       }
     }
   }
-  foreach (ChangeItemTrigger trigger, _triggersBeforeUpdate.values(idQualifier))
-    if (!trigger(transaction, newItem, oldItem, idQualifier, errorString))
-      return false;
   return true;
 }
 
@@ -310,9 +299,15 @@ bool SharedUiItemDocumentManager::processBeforeDelete(
   Q_UNUSED(transaction)
   if (!checkIdsConstraints(SharedUiItem(), oldItem, idQualifier, errorString))
     return false;
+  foreach (ChangeItemTrigger trigger,
+           _triggersBeforeDelete.values(idQualifier)) {
+    SharedUiItem newItem;
+    if (!trigger(transaction, &newItem, oldItem, idQualifier, errorString))
+      return false;
+  }
   foreach (const ForeignKey &fk, _foreignKeys) {
-    // foreign keys from this item : nothing to do
     // foreign keys to this item
+    // FIXME shouldn't this be done *after* delete ?
     if (fk._referenceQualifier == idQualifier) {
       // on delete policy
       SharedUiItemList<> sources = transaction->foreignKeySources(
@@ -334,12 +329,6 @@ bool SharedUiItemDocumentManager::processBeforeDelete(
         break;
       }
     }
-  }
-  foreach (ChangeItemTrigger trigger,
-           _triggersBeforeDelete.values(idQualifier)) {
-    SharedUiItem newItem;
-    if (!trigger(transaction, &newItem, oldItem, idQualifier, errorString))
-      return false;
   }
   return true;
 }
@@ -403,6 +392,31 @@ bool SharedUiItemDocumentManager::processAfterDelete(
     SharedUiItem newItem;
     if (!trigger(transaction, &newItem, oldItem, idQualifier, errorString))
       return false;
+  }
+  return true;
+}
+
+bool SharedUiItemDocumentManager::delayedChecks(
+    SharedUiItemDocumentTransaction *transaction, QString *errorString) {
+  foreach (const SharedUiItem &newItem, transaction->changingItems()) {
+    QString idQualifier = newItem.idQualifier();
+    foreach (const ForeignKey &fk, _foreignKeys) {
+      // foreign keys from this item
+      if (fk._sourceQualifier == idQualifier) {
+        // referential integrity
+        QString referenceId = newItem.uiString(fk._sourceSection);
+        qDebug() << "referential integrity check" << newItem.id()
+                 << fk._sourceSection << referenceId << fk._referenceQualifier;
+        if (!referenceId.isEmpty()
+            && transaction->itemById(
+              fk._referenceQualifier, referenceId).isNull()) {
+          *errorString = "Cannot change "+idQualifier+" \""+newItem.id() // LATER oldItemIdByChangingItem instead of newItem
+              +"\" because there is no "+fk._referenceQualifier+" with id \""
+              +referenceId+"\".";
+          return false;
+        }
+      }
+    }
   }
   return true;
 }

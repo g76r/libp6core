@@ -28,3 +28,12 @@ void CoreUndoCommand::undo() {
   foreach (CoreUndoCommand *child, _children)
     child->undo();
 }
+
+int	CoreUndoCommand::id() const {
+  return -1;
+}
+
+bool CoreUndoCommand::mergeWith(const CoreUndoCommand *command) {
+  Q_UNUSED(command)
+  return false;
+}

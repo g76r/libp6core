@@ -40,6 +40,8 @@ public:
                       CoreUndoCommand *parent);
     void redo();
     void undo();
+    int	id() const;
+    bool mergeWith(const CoreUndoCommand *command);
   };
 
   SharedUiItemDocumentTransaction(SharedUiItemDocumentManager *dm) : _dm(dm) { }
@@ -56,7 +58,8 @@ public:
 private:
   void storeItemChange(SharedUiItem newItem, SharedUiItem oldItem,
                        QString idQualifier);
-
+  SharedUiItemList<> changingItems() const;
+  SharedUiItem oldItemIdByChangingItem(SharedUiItem changingItem) const;
   friend class SharedUiItemDocumentManager;
 };
 

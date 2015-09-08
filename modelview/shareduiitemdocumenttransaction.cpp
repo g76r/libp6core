@@ -30,6 +30,23 @@ SharedUiItem SharedUiItemDocumentTransaction::itemById(
                                : _dm->itemById(idQualifier, id);
 }
 
+SharedUiItemList<> SharedUiItemDocumentTransaction::changingItems() const {
+  SharedUiItemList<> items;
+  foreach (const QString &idQualifier, _newItems.keys())
+    foreach (const SharedUiItem &item, _newItems.value(idQualifier).values()) {
+      if (!item.isNull())
+        items.append(item);
+    }
+  return items;
+}
+
+SharedUiItem SharedUiItemDocumentTransaction::oldItemIdByChangingItem(
+    SharedUiItem changingItem) const {
+  Q_UNUSED(changingItem)
+  // LATER (together with compression)
+  return SharedUiItem();
+}
+
 SharedUiItemList<> SharedUiItemDocumentTransaction::foreignKeySources(
     QString sourceQualifier, int sourceSection, QString referenceId) const {
   SharedUiItemList<> sources;
@@ -120,4 +137,17 @@ void SharedUiItemDocumentTransaction::ChangeItemCommand::undo() {
   //         << _dm << _newItem << _oldItem;
   if (_dm)
     _dm->commitChangeItem(_oldItem, _newItem, _idQualifier);
+}
+
+int	SharedUiItemDocumentTransaction::ChangeItemCommand::id() const {
+  return 42;
+}
+
+bool SharedUiItemDocumentTransaction::ChangeItemCommand::mergeWith(
+    const CoreUndoCommand *command) {
+  const ChangeItemCommand *other =
+      static_cast<const ChangeItemCommand *>(command);
+  Q_UNUSED(other)
+  // LATER implement this or find another way to compress commands within a transaction in case the same item is changed several times in chain
+  return false;
 }
