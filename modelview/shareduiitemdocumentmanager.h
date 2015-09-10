@@ -44,7 +44,10 @@ public:
   using MemberSetter = bool (T::*)(int section, const QVariant &value,
   QString *errorString, SharedUiItemDocumentTransaction *transaction,
   int role);
-  using Creator = std::function<SharedUiItem(QString id)>;
+  using Creator = std::function<SharedUiItem(
+  SharedUiItemDocumentTransaction *transaction, QString id,
+  QString *errorString)>;
+  using SimplestCreator = std::function<SharedUiItem(QString id)>;
   using ChangeItemTrigger = std::function<bool(
   SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
   SharedUiItem oldItem, QString idQualifier, QString *errorString)>;
@@ -62,6 +65,7 @@ public:
     AfterCreate = 8,
     BeforeDelete = 16,
     AfterDelete = 32
+    // LATER add BeforeCommit trigger for integrity checks
   };
   Q_DECLARE_FLAGS(TriggerFlags, TriggerFlag)
   Q_FLAGS(TriggerFlags)
@@ -192,6 +196,15 @@ public:
   /** This method must be called for every item type the document manager will
    * hold, to enable it to create and modify such items. */
   void registerItemType(QString idQualifier, Setter setter, Creator creator);
+  /** Convenience method. */
+  void registerItemType(QString idQualifier, Setter setter,
+                        SimplestCreator creator) {
+    registerItemType(idQualifier, setter, [creator](
+                     SharedUiItemDocumentTransaction *, QString id, QString *) {
+      return creator(id);
+    });
+  }
+  /** Convenience method. */
   template <class T>
   void registerItemType(QString idQualifier, MemberSetter<T> setter,
                         Creator creator) {
@@ -201,6 +214,19 @@ public:
       return (item->*static_cast<MemberSetter<SharedUiItem>>(setter))(
             section, value, errorString, transaction, role);
     }, creator);
+  }
+  /** Convenience method. */
+  template <class T>
+  void registerItemType(QString idQualifier, MemberSetter<T> setter,
+                        SimplestCreator creator) {
+    registerItemType(idQualifier, [setter](SharedUiItem *item, int section,
+                     const QVariant &value, QString *errorString,
+                     SharedUiItemDocumentTransaction *transaction, int role ){
+      return (item->*static_cast<MemberSetter<SharedUiItem>>(setter))(
+            section, value, errorString, transaction, role);
+    }, [creator](SharedUiItemDocumentTransaction *, QString id, QString *) {
+      return creator(id);
+    });
   }
   // FIXME doc
   void addForeignKey(QString sourceQualifier, int sourceSection,
@@ -235,7 +261,9 @@ protected:
    * Generate id of the form prefix+number (e.g. "foobar1"), most of the time
    * one should choose idQualifier as prefix, which is the default (= if prefix
    * is left empty). */
-  QString genererateNewId(QString idQualifier, QString prefix = QString());
+  QString genererateNewId(
+      SharedUiItemDocumentTransaction *transaction, QString idQualifier,
+      QString prefix = QString()) const;
   /** Prepare change: ensure that the change can be performed, record them
    * through transaction->changeItem(), and return true only on success.
    *

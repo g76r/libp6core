@@ -59,8 +59,21 @@ public:
   InMemoryDatabaseDocumentManager(QObject *parent = 0);
   InMemoryDatabaseDocumentManager(QSqlDatabase db, QObject *parent = 0);
   bool setDatabase(QSqlDatabase db, QString *errorString = 0);
+  /** As compared to base class, registerItemType also need section number to
+   * be used to store item id (which is recommended to be 0). */
   bool registerItemType(QString idQualifier, Setter setter, Creator creator,
                         int idSection, QString *errorString = 0);
+  /** Convenience method. */
+  bool registerItemType(QString idQualifier, Setter setter,
+                        SimplestCreator creator,
+                        int idSection, QString *errorString = 0) {
+    return registerItemType(idQualifier, setter, [creator](
+                            SharedUiItemDocumentTransaction *,
+                            QString id, QString *) {
+      return creator(id);
+    }, idSection, errorString);
+  }
+  /** Convenience method. */
   template <class T>
   void registerItemType(QString idQualifier, MemberSetter<T> setter,
                         Creator creator, int idSection,
@@ -72,10 +85,23 @@ public:
             section, value, errorString, transaction, role);
     }, creator, idSection, errorString);
   }
-
+  /** Convenience method. */
+  template <class T>
+  void registerItemType(QString idQualifier, MemberSetter<T> setter,
+                        SimplestCreator creator, int idSection,
+                        QString *errorString = 0) {
+    registerItemType(idQualifier, [setter](SharedUiItem *item, int section,
+                     const QVariant &value, QString *errorString,
+                     SharedUiItemDocumentTransaction *transaction, int role ){
+      return (item->*static_cast<MemberSetter<SharedUiItem>>(setter))(
+            section, value, errorString, transaction, role);
+    }, [creator](SharedUiItemDocumentTransaction *, QString id, QString *) {
+      return creator(id);
+    }, idSection, errorString);
+  }
   bool prepareChangeItem(
-      SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem, SharedUiItem oldItem,
-      QString idQualifier, QString *errorString) override;
+      SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
+      SharedUiItem oldItem, QString idQualifier, QString *errorString) override;
   void commitChangeItem(SharedUiItem newItem, SharedUiItem oldItem,
                         QString idQualifier) override;
   // TODO add a way to notify user of database errors, such as a signal
@@ -85,8 +111,9 @@ private:
       QString idQualifier, Setter setter, Creator creator,
       int idSection, QString *errorString);
   static inline QString protectedColumnName(QString columnName);
-  bool insertItemInDatabase(SharedUiItem newItem, QString *errorString);
-  bool changeItemInDatabase(
+  bool insertItemInDatabase(SharedUiItemDocumentTransaction *transaction,
+                            SharedUiItem newItem, QString *errorString);
+  bool changeItemInDatabase(SharedUiItemDocumentTransaction *transaction,
       SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier,
       QString *errorString, bool dryRun);
   using InMemorySharedUiItemDocumentManager::registerItemType; // hide

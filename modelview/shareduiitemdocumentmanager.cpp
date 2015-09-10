@@ -25,18 +25,19 @@ SharedUiItem SharedUiItemDocumentManager::itemById(QString qualifiedId) const {
 }
 
 QString SharedUiItemDocumentManager::genererateNewId(
-    QString idQualifier, QString prefix) {
+    SharedUiItemDocumentTransaction *transaction, QString idQualifier,
+    QString prefix) const {
   QString id;
   if (prefix.isEmpty())
     prefix = idQualifier;
   for (int i = 1; i < 100; ++i) {
     id = prefix+QString::number(i);
-    if (itemById(idQualifier, id).isNull()) // FIXME transaction
+    if (transaction->itemById(idQualifier, id).isNull())
       return id;
   }
   forever {
     id = prefix+QString::number(qrand());
-    if (itemById(idQualifier, id).isNull()) // FIXME transaction
+    if (transaction->itemById(idQualifier, id).isNull())
       return id;
   }
 }

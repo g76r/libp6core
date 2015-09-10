@@ -30,14 +30,15 @@ bool InMemoryDatabaseDocumentManager::registerItemType(
     QString idQualifier, Setter setter, Creator creator, int idSection,
     QString *errorString) {
   QString reason;
+  if (!errorString)
+    errorString = &reason;
   InMemorySharedUiItemDocumentManager::registerItemType(
         idQualifier, setter, creator);
   _idSections.insert(idQualifier, idSection);
   if (!createTableAndSelectData(idQualifier, setter, creator, idSection,
-                                &reason)) {
-    if (errorString)
-      *errorString = reason;
-    qWarning() << "InMemoryDatabaseDocumentManager" << reason;
+                                errorString)) {
+    *errorString = reason;
+    qWarning() << "InMemoryDatabaseDocumentManager" << *errorString;
     return false;
   }
   return true;
@@ -47,7 +48,8 @@ bool InMemoryDatabaseDocumentManager::prepareChangeItem(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem, SharedUiItem oldItem,
     QString idQualifier, QString *errorString) {
   Q_ASSERT(errorString != 0);
-  if (!changeItemInDatabase(newItem, oldItem, idQualifier, errorString, true)) {
+  if (!changeItemInDatabase(transaction, newItem, oldItem, idQualifier,
+                            errorString, true)) {
     qDebug() << "InMemoryDatabaseDocumentManager::prepareChangeItem: "
                 "test transaction failed:" << *errorString;
     return false;
@@ -59,8 +61,9 @@ bool InMemoryDatabaseDocumentManager::prepareChangeItem(
 void InMemoryDatabaseDocumentManager::commitChangeItem(
     SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
   QString errorString;
-  if (!changeItemInDatabase(newItem, oldItem, idQualifier, &errorString,
-                            false)) {
+  SharedUiItemDocumentTransaction transaction(this);
+  if (!changeItemInDatabase(&transaction, newItem, oldItem, idQualifier,
+                            &errorString, false)) {
     // this should only occur on sever technical error (filesystem full,
     // network connection to the database lost, etc.)
     qWarning() << "InMemoryDatabaseDocumentManager cannot write to database "
@@ -75,8 +78,9 @@ void InMemoryDatabaseDocumentManager::commitChangeItem(
 }
 
 bool InMemoryDatabaseDocumentManager::changeItemInDatabase(
-    SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier,
-    QString *errorString, bool dryRun) {
+    SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
+    SharedUiItem oldItem, QString idQualifier, QString *errorString,
+    bool dryRun) {
   Q_ASSERT(errorString != 0);
   Q_ASSERT(!newItem.isNull() || !oldItem.isNull());
   if (!_db.transaction()) {
@@ -97,7 +101,8 @@ bool InMemoryDatabaseDocumentManager::changeItemInDatabase(
       goto failed;
     }
   }
-  if (!newItem.isNull() && !insertItemInDatabase(newItem, errorString)) {
+  if (!newItem.isNull()
+      && !insertItemInDatabase(transaction, newItem, errorString)) {
     if (!_db.rollback()) {
       qDebug() << "InMemoryDatabaseDocumentManager database error: cannot "
                   "rollback transaction" << _db.lastError().text();
@@ -125,7 +130,8 @@ failed:;
 }
 
 bool InMemoryDatabaseDocumentManager::insertItemInDatabase(
-    SharedUiItem newItem, QString *errorString) {
+    SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
+    QString *errorString) {
   Q_ASSERT(errorString != 0);
   Creator creator = _creators.value(newItem.idQualifier());
   if (newItem.isNull() || !creator) {
@@ -135,7 +141,8 @@ bool InMemoryDatabaseDocumentManager::insertItemInDatabase(
   }
   QString idQualifier = newItem.idQualifier();
   QStringList columnNames, protectedColumnNames, placeholders;
-  SharedUiItem item = creator(QStringLiteral("dummy"));
+  SharedUiItem item = creator(transaction, QStringLiteral("dummy"),
+                              errorString);
   for (int i = 0; i < item.uiSectionCount(); ++i) {
     QString headerName = item.uiHeaderString(i);
     columnNames << headerName;
@@ -189,7 +196,9 @@ bool InMemoryDatabaseDocumentManager::createTableAndSelectData(
              "InMemoryDatabaseDocumentManager::createTableAndSelectData",
              "invalid parameters");
   QStringList columnNames, protectedColumnNames;
-  SharedUiItem item = creator(QStringLiteral("dummy"));
+  SharedUiItemDocumentTransaction transaction(this);
+  SharedUiItem item = creator(&transaction, QStringLiteral("dummy"),
+                              errorString);
   for (int i = 0; i < item.uiSectionCount(); ++i) {
     QString headerName = item.uiHeaderString(i);
     columnNames << headerName;
@@ -230,9 +239,8 @@ sqlite> drop table foo;
     return false;
   }
   //qDebug() << "***** selected:" << query.executedQuery();
-  SharedUiItemDocumentTransaction transaction(this);
   while (query.next()) {
-    item = creator(QStringLiteral("dummy"));
+    item = creator(&transaction, QStringLiteral("dummy"), errorString);
     for (int i = 0; i < item.uiSectionCount(); ++i) {
       QString errorString;
       bool ok = setter(&item, i, query.value(i), &errorString, &transaction,

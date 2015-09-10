@@ -129,10 +129,9 @@ SharedUiItem SharedUiItemDocumentTransaction::createNewItem(
       _dm->_creators.value(idQualifier);
   SharedUiItem nullItem;
   if (creator) {
-    QString id = _dm->genererateNewId(idQualifier);
-    SharedUiItem newItem = creator(id);
+    QString id = _dm->genererateNewId(this, idQualifier);
+    SharedUiItem newItem = creator(this, id, errorString);
     if (newItem.isNull()) {
-      *errorString = "Creation of item of type "+idQualifier+" failed";
       return nullItem;
     } else {
       if (!_dm->processConstraintsAndPrepareChangeItem(
