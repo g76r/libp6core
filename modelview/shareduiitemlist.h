@@ -37,14 +37,12 @@ public:
     T *dummy;
     Q_UNUSED(static_cast<SharedUiItem*>(dummy)); // ensure T is a SharedUiItem
   }
-  //QString join<SharedUiItem>(const QString &separator, bool qualified) const;
-  //QString join<SharedUiItem>(const QChar separator, bool qualified) const;
-  QString join(const QString &separator, bool qualified) const {
+  QString join(const QString &separator, bool qualified = false) const {
     SharedUiItemList<SharedUiItem> *upcasted =
         (SharedUiItemList<SharedUiItem>*)this;
     return upcasted->join(separator, qualified);
   }
-  QString join(const QChar separator, bool qualified) const {
+  QString join(const QChar separator, bool qualified = false) const {
     SharedUiItemList<SharedUiItem> *upcasted =
         (SharedUiItemList<SharedUiItem>*)this;
     return upcasted->join(separator, qualified);
