@@ -205,7 +205,7 @@ public:
   // FIXME doc
   void addForeignKey(QString sourceQualifier, int sourceSection,
                      QString referenceQualifier, int referenceSection = 0,
-                     OnChangePolicy onUpdatePolicy = CascadeAnySection,
+                     OnChangePolicy onUpdatePolicy = NoAction,
                      OnChangePolicy onDeletePolicy = NoAction);
   // FIXME doc
   void addChangeItemTrigger(QString idQualifier, TriggerFlags flags,

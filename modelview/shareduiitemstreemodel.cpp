@@ -123,10 +123,12 @@ void SharedUiItemsTreeModel::changeItem(
   if (!_changeItemQualifierFilter.isEmpty()
       && !_changeItemQualifierFilter.contains(idQualifier))
     return;
+  qDebug() << "SharedUiItemsTreeModel::changeItem" << newItem.id()
+           << oldItem.id() << idQualifier;
   if (newItem.isNull()) {
     if (!oldItem.isNull()) { // delete
       QModelIndex oldIndex = indexOf(oldItem);
-      //qDebug() << "delete" << newItem << oldItem << oldIndex.isValid();
+      qDebug() << "delete" << newItem << oldItem << oldIndex.isValid();
       if (oldIndex.isValid()) {
         removeRows(treeItemByIndex(oldIndex)->row(), 1, oldIndex.parent());
       }
@@ -146,7 +148,7 @@ void SharedUiItemsTreeModel::changeItem(
         oldItem = SharedUiItem();
     }
     if (oldItem.isNull()) { // create
-      //qDebug() << "create" << newItem << oldItem; // << _itemsIndex.keys();
+      qDebug() << "create" << newItem << oldItem; // << _itemsIndex.keys();
       QModelIndex parent;
       int row = -1; // -1 will be replaced by size() in adjustTreeItemAndRow()
       determineItemPlaceInTree(newItem, &parent, &row);
@@ -156,7 +158,7 @@ void SharedUiItemsTreeModel::changeItem(
       new TreeItem(this, newItem, parentTreeItem, row);
       endInsertRows();
     } else { // update (incl. rename)
-      //qDebug() << "update" << newItem << oldItem;
+      qDebug() << "update" << newItem << oldItem;
       QModelIndex oldIndex = indexOf(oldItem);
       TreeItem *treeItem = treeItemByIndex(oldIndex);
       QModelIndex oldParent = oldIndex.parent(), newParent = oldParent;
@@ -168,11 +170,11 @@ void SharedUiItemsTreeModel::changeItem(
       // LATER make it possible for determineItemPlaceInTree to change row without changing parent
       if (newParent != oldParent // need to move item in the tree
           && !newParentTreeItem->isDescendantOf(treeItem)) {
-        //qDebug() << "reparenting:" << treeItem->item().id()
-        //         <<"parent:" << oldParent << oldParentTreeItem
-        //        << treeItem->row() << "->" << newParent
-        //        << newParentTreeItem << newRow << "/"
-        //        << newParentTreeItem->childrenCount();
+        qDebug() << "reparenting:" << treeItem->item().id()
+                 <<"parent:" << oldParent << treeItem
+                << treeItem->row() << "->" << newParent
+                << newParentTreeItem << newRow << "/"
+                << newParentTreeItem->childrenCount();
         //qDebug() << "  root:" << _root << _root->item().id();
         Q_ASSERT_X(beginMoveRows(
                      oldParent, treeItem->row(), treeItem->row(),

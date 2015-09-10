@@ -17,48 +17,78 @@
 void SharedUiItemDocumentTransaction::storeItemChange(
     SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
   new ChangeItemCommand(_dm, newItem, oldItem, idQualifier, this);
+  QString oldId = oldItem.id(), newId = newItem.id();
+  QHash<QString,SharedUiItem> &changingItems = _changingItems[idQualifier];
+  if (!oldItem.isNull() && !changingItems.contains(oldId))
+    _originalItems[idQualifier].insert(oldId, oldItem);
   if (!oldItem.isNull())
-    _newItems[idQualifier][oldItem.id()] = SharedUiItem();
+    changingItems.insert(oldId, SharedUiItem());
   if (!newItem.isNull())
-    _newItems[idQualifier][newItem.id()] = newItem;
+    changingItems.insert(newId, newItem);
 }
 
 SharedUiItem SharedUiItemDocumentTransaction::itemById(
     QString idQualifier, QString id) const {
-  const QHash<QString,SharedUiItem> newItems = _newItems[idQualifier];
+  const QHash<QString,SharedUiItem> newItems = _changingItems[idQualifier];
   return newItems.contains(id) ? newItems.value(id)
                                : _dm->itemById(idQualifier, id);
 }
 
+SharedUiItemList<> SharedUiItemDocumentTransaction::itemsByIdQualifier(
+    QString idQualifier) const {
+  QHash<QString,SharedUiItem> changingItems = _changingItems.value(idQualifier);
+  SharedUiItemList<> items;
+  foreach (const SharedUiItem &item, changingItems.values())
+    if (!item.isNull())
+      items.append(item);
+  foreach (const SharedUiItem &item, _dm->itemsByIdQualifier(idQualifier))
+    if (!changingItems.contains(item.id()))
+      items.append(item);
+  return items;
+}
+
 SharedUiItemList<> SharedUiItemDocumentTransaction::changingItems() const {
   SharedUiItemList<> items;
-  foreach (const QString &idQualifier, _newItems.keys())
-    foreach (const SharedUiItem &item, _newItems.value(idQualifier).values()) {
+  foreach (const QString &idQualifier, _changingItems.keys())
+    foreach (const SharedUiItem &item,
+             _changingItems.value(idQualifier).values()) {
       if (!item.isNull())
         items.append(item);
     }
   return items;
 }
 
-SharedUiItem SharedUiItemDocumentTransaction::oldItemIdByChangingItem(
+SharedUiItemList<> SharedUiItemDocumentTransaction::originalItems() const {
+  SharedUiItemList<> items;
+  foreach (const QString &idQualifier, _originalItems.keys())
+    foreach (const SharedUiItem &item,
+             _originalItems.value(idQualifier).values()) {
+      if (!item.isNull())
+        items.append(item);
+    }
+  return items;
+}
+
+/*SharedUiItem SharedUiItemDocumentTransaction::oldItemIdByChangingItem(
     SharedUiItem changingItem) const {
   Q_UNUSED(changingItem)
   // LATER (together with compression)
   return SharedUiItem();
-}
+}*/
 
 SharedUiItemList<> SharedUiItemDocumentTransaction::foreignKeySources(
     QString sourceQualifier, int sourceSection, QString referenceId) const {
   SharedUiItemList<> sources;
-  const QHash<QString,SharedUiItem> newItems = _newItems[sourceQualifier];
-  foreach (const SharedUiItem &item, newItems.values()) {
+  QHash<QString,SharedUiItem> changingItems =
+      _changingItems.value(sourceQualifier);
+  foreach (const SharedUiItem &item, changingItems.values()) {
     if (item.uiData(sourceSection) == referenceId)
       sources.append(item);
   }
   foreach (const SharedUiItem &item,
            _dm->itemsByIdQualifier(sourceQualifier)) {
     if (item.uiData(sourceSection) == referenceId
-        && !newItems.contains(item.id()))
+        && !changingItems.contains(item.id()))
       sources.append(item);
   }
   return sources;

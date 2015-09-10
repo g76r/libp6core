@@ -26,7 +26,7 @@ class SharedUiItemDocumentManager;
 class LIBQTSSUSHARED_EXPORT SharedUiItemDocumentTransaction
     : public CoreUndoCommand {
   SharedUiItemDocumentManager *_dm;
-  QHash<QString,QHash<QString,SharedUiItem>> _newItems;
+  QHash<QString,QHash<QString,SharedUiItem>> _changingItems, _originalItems;
 
 public:
   class LIBQTSSUSHARED_EXPORT ChangeItemCommand : public CoreUndoCommand {
@@ -46,8 +46,10 @@ public:
 
   SharedUiItemDocumentTransaction(SharedUiItemDocumentManager *dm) : _dm(dm) { }
   SharedUiItem itemById(QString idQualifier, QString id) const;
+  SharedUiItemList<> itemsByIdQualifier(QString idQualifier) const;
   SharedUiItemList<> foreignKeySources(
       QString sourceQualifier, int sourceSection, QString referenceId) const;
+
   bool changeItemByUiData(
       SharedUiItem oldItem, int section, const QVariant &value,
       QString *errorString);
@@ -59,7 +61,8 @@ private:
   void storeItemChange(SharedUiItem newItem, SharedUiItem oldItem,
                        QString idQualifier);
   SharedUiItemList<> changingItems() const;
-  SharedUiItem oldItemIdByChangingItem(SharedUiItem changingItem) const;
+  SharedUiItemList<> originalItems() const;
+  //SharedUiItem oldItemIdByChangingItem(SharedUiItem changingItem) const;
   friend class SharedUiItemDocumentManager;
 };
 

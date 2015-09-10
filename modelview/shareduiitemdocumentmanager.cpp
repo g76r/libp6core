@@ -249,34 +249,6 @@ bool SharedUiItemDocumentManager::processBeforeUpdate(
   foreach (ChangeItemTrigger trigger, _triggersBeforeUpdate.values(idQualifier))
     if (!trigger(transaction, newItem, oldItem, idQualifier, errorString))
       return false;
-  foreach (const ForeignKey &fk, _foreignKeys) {
-    // foreign keys to this item
-    if (fk._referenceQualifier == idQualifier) {
-      QString newReferenceId = newItem->uiString(fk._referenceSection);
-      QString oldReferenceId = oldItem.uiString(fk._referenceSection);
-      if (newReferenceId != oldReferenceId) {
-        // on update policy
-        SharedUiItemList<> sources = transaction->foreignKeySources(
-              fk._sourceQualifier, fk._sourceSection, oldItem.id());
-        switch (fk._onUpdatePolicy) {
-        case CascadeReferencedKey:
-        case CascadeAnySection:
-          break;
-        case SetNull:
-          // LATER implement rather than fall through NoAction
-        case NoAction:
-          if (!sources.isEmpty()) {
-            *errorString = "Cannot change "+idQualifier+" \""+oldItem.id()
-                +"\" because it is stil referenced by "
-                +QString::number(sources.size())+" "+fk._sourceQualifier
-                +"(s).";
-            return false;
-          }
-          break;
-        }
-      }
-    }
-  }
   return true;
 }
 
@@ -305,31 +277,6 @@ bool SharedUiItemDocumentManager::processBeforeDelete(
     if (!trigger(transaction, &newItem, oldItem, idQualifier, errorString))
       return false;
   }
-  foreach (const ForeignKey &fk, _foreignKeys) {
-    // foreign keys to this item
-    // FIXME shouldn't this be done *after* delete ?
-    if (fk._referenceQualifier == idQualifier) {
-      // on delete policy
-      SharedUiItemList<> sources = transaction->foreignKeySources(
-            fk._sourceQualifier, fk._sourceSection, oldItem.id());
-      switch (fk._onDeletePolicy) {
-      case SetNull:
-        // LATER implement rather than fall through NoAction
-      case CascadeReferencedKey:
-      case CascadeAnySection:
-        // LATER implement rather than fall through NoAction
-      case NoAction:
-        if (!sources.isEmpty()) {
-          *errorString = "Cannot delete "+idQualifier+" \""+oldItem.id()
-              +"\" because it is stil referenced by "
-              +QString::number(sources.size())+" "+fk._sourceQualifier
-              +"(s).";
-          return false;
-        }
-        break;
-      }
-    }
-  }
   return true;
 }
 
@@ -337,7 +284,7 @@ bool SharedUiItemDocumentManager::processAfterUpdate(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
     SharedUiItem oldItem, QString idQualifier, QString *errorString) {
   foreach (const ForeignKey &fk, _foreignKeys) {
-    // foreign keys to this item
+    // foreign keys referencing this item
     if (fk._referenceQualifier == idQualifier) {
       QString newReferenceId = newItem.uiString(fk._referenceSection);
       QString oldReferenceId = oldItem.uiString(fk._referenceSection);
@@ -349,10 +296,11 @@ bool SharedUiItemDocumentManager::processAfterUpdate(
         switch (fk._onUpdatePolicy) {
         case CascadeReferencedKey:
         case CascadeAnySection:
-          foreach (const SharedUiItem &oldSource, sources)
+          foreach (const SharedUiItem &oldSource, sources) {
             if (!transaction->changeItemByUiData(
                   oldSource, fk._sourceSection, newReferenceId, errorString))
               return false;
+          }
           break;
         case SetNull:
           // LATER implement rather than fall through NoAction
@@ -387,6 +335,23 @@ bool SharedUiItemDocumentManager::processAfterCreate(
 bool SharedUiItemDocumentManager::processAfterDelete(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem oldItem,
     QString idQualifier, QString *errorString) {
+  foreach (const ForeignKey &fk, _foreignKeys) {
+    // foreign keys referencing this item
+    if (fk._referenceQualifier == idQualifier) {
+      // on delete policy
+      //SharedUiItemList<> sources = transaction->foreignKeySources(
+      //      fk._sourceQualifier, fk._sourceSection, oldItem.id());
+      switch (fk._onDeletePolicy) {
+      case SetNull:
+        // LATER implement rather than fall through NoAction
+      case CascadeReferencedKey:
+      case CascadeAnySection:
+        // LATER implement rather than fall through NoAction
+      case NoAction:
+        break;
+      }
+    }
+  }
   foreach (ChangeItemTrigger trigger,
            _triggersAfterDelete.values(idQualifier)) {
     SharedUiItem newItem;
@@ -398,15 +363,14 @@ bool SharedUiItemDocumentManager::processAfterDelete(
 
 bool SharedUiItemDocumentManager::delayedChecks(
     SharedUiItemDocumentTransaction *transaction, QString *errorString) {
+  // referential integrity for foreign keys referenced by changing items
   foreach (const SharedUiItem &newItem, transaction->changingItems()) {
     QString idQualifier = newItem.idQualifier();
     foreach (const ForeignKey &fk, _foreignKeys) {
-      // foreign keys from this item
       if (fk._sourceQualifier == idQualifier) {
-        // referential integrity
         QString referenceId = newItem.uiString(fk._sourceSection);
-        qDebug() << "referential integrity check" << newItem.id()
-                 << fk._sourceSection << referenceId << fk._referenceQualifier;
+        //qDebug() << "referential integrity check" << newItem.id()
+        //         << fk._sourceSection << referenceId << fk._referenceQualifier;
         if (!referenceId.isEmpty()
             && transaction->itemById(
               fk._referenceQualifier, referenceId).isNull()) {
@@ -416,6 +380,31 @@ bool SharedUiItemDocumentManager::delayedChecks(
           return false;
         }
       }
+    }
+  }
+  // referential integrity for foreign keys referencing original items
+  foreach (const SharedUiItem &oldItem, transaction->originalItems()) {
+    QString idQualifier = oldItem.idQualifier();
+    foreach (const ForeignKey &fk, _foreignKeys) {
+      if (fk._referenceQualifier == idQualifier) {
+        QString oldReferenceId = oldItem.uiString(fk._referenceSection);
+        SharedUiItemList<> newItems =
+            transaction->itemsByIdQualifier(idQualifier);
+        // LATER optimize this: full scan of reference for each fk is just awful
+        foreach (const SharedUiItem &newItem, newItems)
+          if (newItem.uiString(fk._referenceSection) == oldReferenceId)
+            goto reference_still_exists;
+        SharedUiItemList<> sources = transaction->foreignKeySources(
+              fk._sourceQualifier, fk._sourceSection, oldItem.id());
+        if (!sources.isEmpty()) {
+          *errorString = "Cannot change "+idQualifier+" \""+oldItem.id()
+              +"\" because it is stil referenced by "
+              +QString::number(sources.size())+" "+fk._sourceQualifier
+              +"(s).";
+          return false;
+        }
+      }
+reference_still_exists:;
     }
   }
   return true;
