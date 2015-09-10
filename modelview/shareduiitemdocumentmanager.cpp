@@ -212,8 +212,8 @@ void SharedUiItemDocumentManager::addChangeItemTrigger(
 }
 
 bool SharedUiItemDocumentManager::checkIdsConstraints(
-    SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier,
-    QString *errorString) {
+    SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
+    SharedUiItem oldItem, QString idQualifier, QString *errorString) {
   if (!oldItem.isNull()) {
     if (oldItem.idQualifier() != idQualifier) {
       *errorString = "Old item \""+oldItem.qualifiedId()
@@ -232,7 +232,7 @@ bool SharedUiItemDocumentManager::checkIdsConstraints(
       return false;
     }
     if (newItem.id() != oldItem.id() // create or rename
-        && !itemById(idQualifier, newItem.id()).isNull()) { // FIXME transaction
+        && !transaction->itemById(idQualifier, newItem.id()).isNull()) {
       *errorString = "New id is already used by another "+idQualifier+": "
           +newItem.id();
       return false;
@@ -245,7 +245,8 @@ bool SharedUiItemDocumentManager::processBeforeUpdate(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
     SharedUiItem oldItem, QString idQualifier, QString *errorString) {
   Q_UNUSED(transaction)
-  if (!checkIdsConstraints(*newItem, oldItem, idQualifier, errorString))
+  if (!checkIdsConstraints(transaction, *newItem, oldItem, idQualifier,
+                           errorString))
     return false;
   foreach (ChangeItemTrigger trigger, _triggersBeforeUpdate.values(idQualifier))
     if (!trigger(transaction, newItem, oldItem, idQualifier, errorString))
@@ -257,7 +258,8 @@ bool SharedUiItemDocumentManager::processBeforeCreate(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
     QString idQualifier, QString *errorString) {
   Q_UNUSED(transaction)
-  if (!checkIdsConstraints(*newItem, SharedUiItem(), idQualifier, errorString))
+  if (!checkIdsConstraints(transaction, *newItem, SharedUiItem(), idQualifier,
+                           errorString))
     return false;
   foreach (ChangeItemTrigger trigger, _triggersBeforeCreate.values(idQualifier))
     if (!trigger(transaction, newItem, SharedUiItem(), idQualifier,
@@ -270,7 +272,8 @@ bool SharedUiItemDocumentManager::processBeforeDelete(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem oldItem,
     QString idQualifier, QString *errorString) {
   Q_UNUSED(transaction)
-  if (!checkIdsConstraints(SharedUiItem(), oldItem, idQualifier, errorString))
+  if (!checkIdsConstraints(transaction, SharedUiItem(), oldItem, idQualifier,
+                           errorString))
     return false;
   foreach (ChangeItemTrigger trigger,
            _triggersBeforeDelete.values(idQualifier)) {

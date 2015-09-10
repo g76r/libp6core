@@ -346,7 +346,8 @@ private:
       SharedUiItemDocumentTransaction *transaction, SharedUiItem oldItem,
       QString idQualifier, QString *errorString);
   // id as primary key (uniqueness, not empty, same qualifiers before and after)
-  bool checkIdsConstraints(SharedUiItem newItem, SharedUiItem oldItem,
+  bool checkIdsConstraints(SharedUiItemDocumentTransaction *transaction,
+                           SharedUiItem newItem, SharedUiItem oldItem,
                            QString idQualifier, QString *errorString);
   /** Perform checks that are delayed until commit, such as referential
    * integrity checks. */
