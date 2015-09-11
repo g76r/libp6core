@@ -52,9 +52,17 @@ public:
   SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
   SharedUiItem oldItem, QString idQualifier, QString *errorString)>;
   enum OnChangePolicy {
+    /** no automatic action on update or delete */
     NoAction,
+    /** set referencing section to QVariant() on referencing item */
     SetNull,
-    CascadeReferencedKey,
+    /** on update: update referencing section on referencing item,
+     * on delete: delete referencing item */
+    Cascade,
+    /** on update: update referencing section on referencing item every time
+     * referenced item changes, even if changing sections do not include
+     * referenced key section,
+     * on delete: same as Cascade */
     CascadeAnySection
   };
   enum TriggerFlag {

@@ -150,10 +150,12 @@ SharedUiItemDocumentTransaction
   return 0;
 }
 
+// LATER add recursive context to detect constraints loops, or check recursive
+// constraints when adding them (addFK()...)
+
 bool SharedUiItemDocumentManager::processConstraintsAndPrepareChangeItem(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
     SharedUiItem oldItem, QString idQualifier, QString *errorString) {
-  // TODO add recursive context to detect constraints loops, or check recursive constraints when adding them (addFK()...)
   // to support for transforming into update an createOrUpdate call
   // and ensure that, on update or delete, oldItem is the real one, not a
   // placeholder only bearing ids such as GenericSharedUiItem, we must replace
@@ -295,19 +297,26 @@ bool SharedUiItemDocumentManager::processAfterUpdate(
       if (newReferenceId != oldReferenceId
           || fk._onUpdatePolicy == CascadeAnySection) {
         // on update policy
-        SharedUiItemList<> sources = transaction->foreignKeySources(
-              fk._sourceQualifier, fk._sourceSection, oldItem.id());
         switch (fk._onUpdatePolicy) {
-        case CascadeReferencedKey:
+        case Cascade:
         case CascadeAnySection:
-          foreach (const SharedUiItem &oldSource, sources) {
+          foreach (const SharedUiItem &oldSource,
+                   transaction->foreignKeySources(
+                     fk._sourceQualifier, fk._sourceSection, oldItem.id())) {
             if (!transaction->changeItemByUiData(
                   oldSource, fk._sourceSection, newReferenceId, errorString))
               return false;
           }
           break;
         case SetNull:
-          // LATER implement rather than fall through NoAction
+          foreach (const SharedUiItem &oldSource,
+                   transaction->foreignKeySources(
+                     fk._sourceQualifier, fk._sourceSection, oldItem.id())) {
+            if (!transaction->changeItemByUiData(
+                  oldSource, fk._sourceSection, QVariant(), errorString))
+              return false;
+          }
+          break;
         case NoAction:
           break;
         }
@@ -343,14 +352,26 @@ bool SharedUiItemDocumentManager::processAfterDelete(
     // foreign keys referencing this item
     if (fk._referenceQualifier == idQualifier) {
       // on delete policy
-      //SharedUiItemList<> sources = transaction->foreignKeySources(
-      //      fk._sourceQualifier, fk._sourceSection, oldItem.id());
       switch (fk._onDeletePolicy) {
-      case SetNull:
-        // LATER implement rather than fall through NoAction
-      case CascadeReferencedKey:
+      case Cascade:
       case CascadeAnySection:
-        // LATER implement rather than fall through NoAction
+        foreach (const SharedUiItem &oldSource,
+                 transaction->foreignKeySources(
+                   fk._sourceQualifier, fk._sourceSection, oldItem.id())) {
+          if (!transaction->changeItem(
+                SharedUiItem(), oldSource, fk._sourceQualifier, errorString))
+            return false;
+        }
+        break;
+      case SetNull:
+        foreach (const SharedUiItem &oldSource,
+                 transaction->foreignKeySources(
+                   fk._sourceQualifier, fk._sourceSection, oldItem.id())) {
+          if (!transaction->changeItemByUiData(
+                oldSource, fk._sourceSection, QVariant(), errorString))
+            return false;
+        }
+        break;
       case NoAction:
         break;
       }
@@ -378,7 +399,8 @@ bool SharedUiItemDocumentManager::delayedChecks(
         if (!referenceId.isEmpty()
             && transaction->itemById(
               fk._referenceQualifier, referenceId).isNull()) {
-          *errorString = "Cannot change "+idQualifier+" \""+newItem.id() // LATER oldItemIdByChangingItem instead of newItem
+          // LATER oldItemIdByChangingItem instead of newItem
+          *errorString = "Cannot change "+idQualifier+" \""+newItem.id()
               +"\" because there is no "+fk._referenceQualifier+" with id \""
               +referenceId+"\".";
           return false;
