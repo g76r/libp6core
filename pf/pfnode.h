@@ -511,17 +511,6 @@ public:
     * Encoding is always UTF-8.
     */
   //qint64 writeCompatibleXml(QIODevice *target) const;
-  /** Write the node content (without node structure and children tree)
-    * with no escape for PF special chars and so on. */
-  inline qint64 writeRawContent(QIODevice *target,
-                                PfOptions options = PfOptions()) const {
-    return d ? d->writeRawContent(target, options) : 0; }
-  /** Write the node content (without node structure and children tree)
-    * in PF syntax (escaping special chars and adding binary fragment headers).
-    */
-  inline qint64 writeContentAsPf(QIODevice *target,
-                                 PfOptions options = PfOptions()) const {
-    return d ? d->writePfContent(target, options) : 0; }
 };
 
 #endif // PFNODE_H
