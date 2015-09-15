@@ -36,13 +36,23 @@ public:
            QString prefixFilter = QString());
   /** Create a model that collects log entries with severity >= minSeverity. */
   explicit LogModel(Log::Severity minSeverity, int maxrows = 100,
-                    QString prefixFilter = QString());
+                    QString prefixFilter = QString())
+    : LogModel(0, minSeverity, maxrows, prefixFilter) { }
+  /** Create a model that collects log entries with severity >= minSeverity. */
+  LogModel(Log::Severity minSeverity, QString prefixFilter)
+    : LogModel(0, minSeverity, 100, prefixFilter) { }
+  /** Create a model that collects log entries with severity >= minSeverity. */
+  LogModel(Log::Severity minSeverity, const char *prefixFilter)
+    : LogModel(0, minSeverity, 100, prefixFilter) { }
+  /** Create a model that collects log entries with severity >= minSeverity. */
+  LogModel(QObject *parent, Log::Severity minSeverity, const char *prefixFilter)
+    : LogModel(parent, minSeverity, 100, prefixFilter) { }
   /** Create a model that do not collect any log entry (prependLogEntry() must
    * be called to fill-in the model by hand). */
   explicit LogModel(QObject *parent, int maxrows = 100);
   /** Create a model that do not collect any log entry (prependLogEntry() must
    * be called to fill-in the model by hand). */
-  explicit LogModel(int maxrows = 100);
+  explicit LogModel(int maxrows = 100) : LogModel(0, maxrows) { }
   ~LogModel();
   MemoryLogger *logger() const { return _logger; }
 };

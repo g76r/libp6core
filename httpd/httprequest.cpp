@@ -248,28 +248,28 @@ QByteArray HttpRequest::base64BinaryCookie(QString name,
 }
 
 static QRegExp xffSeparator("\\s*,\\s*");
+static QString xffHeader;
+
+namespace {
+struct XffHeaderInitializer {
+  XffHeaderInitializer() {
+    QByteArray header = qgetenv("LIBQTSSU_X_FORWARDED_FOR_HEADER");
+    if (header.isNull())
+      header = "X-Forwarded-For";
+    xffHeader = QString::fromUtf8(header);
+  }
+} xffHeaderInitializer;
+}
 
 QStringList HttpRequest::clientAdresses() const {
   if (!d)
     return QStringList();
   if (d->_clientAdresses.isEmpty()) {
-    QStringList xff = headers("X-Forwarded-For");
-    if (!xff.isEmpty())
-      d->_clientAdresses.append(xff.last().split(xffSeparator)); // FIXME: not last, every one
-    /*
-
-RFC2616 is clear on how headers should be combined so order is retained. In short
-...
-X-Forwarded-For : A, B
-...
-X-Forwarded-For : C
-...
-X-Forwarded-For : D, E
-
-must be treated exactly the same way as:
-X-Forwarded-For: A, B, C, D, E
-
-*/
+    QStringList xff = headers(xffHeader);
+    for (int i = xff.size()-1; i >= 0; --i) {
+      const QString &oneHeader = xff[i];
+      d->_clientAdresses.append(oneHeader.split(xffSeparator));
+    }
     QHostAddress peerAddress = d->_input->peerAddress();
     if (peerAddress.isNull()) {
       Log::debug() << "HttpRequest::clientAdresses() cannot find socket peer "
