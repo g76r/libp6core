@@ -26,21 +26,13 @@ LogModel::LogModel(QObject *parent, Log::Severity minSeverity, int maxrows,
   Log::addLogger(_logger, false, false);
 }
 
-LogModel::LogModel(Log::Severity minSeverity, int maxrows, QString prefixFilter)
-  : SharedUiItemsTableModel(0),
-    _logger(new MemoryLogger(minSeverity, prefixFilter, this)) {
-  setMaxrows(maxrows);
-  Log::addLogger(_logger, false, false);
-}
-
 LogModel::LogModel(QObject *parent, int maxrows)
   : SharedUiItemsTableModel(parent), _logger(0) {
   setMaxrows(maxrows);
-}
-
-LogModel::LogModel(int maxrows)
-  : SharedUiItemsTableModel(0), _logger(0) {
-  setMaxrows(maxrows);
+  setDefaultInsertionPoint(SharedUiItemsTableModel::FirstItem);
+  setHeaderDataFromTemplate(
+        Logger::LogEntry(QDateTime(), QString(), Log::Debug, QString(),
+                         QString(), QString()));
 }
 
 LogModel::~LogModel() {
