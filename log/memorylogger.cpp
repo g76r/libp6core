@@ -26,5 +26,6 @@ void MemoryLogger::doLog(const LogEntry entry) {
     return;
   QMetaObject::invokeMethod(_model, "changeItem",
                             Q_ARG(SharedUiItem, entry),
-                            Q_ARG(SharedUiItem, SharedUiItem()));
+                            Q_ARG(SharedUiItem, SharedUiItem()),
+                            Q_ARG(QString, entry.idQualifier()));
 }
