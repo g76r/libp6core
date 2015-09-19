@@ -88,6 +88,9 @@ public:
     _changeItemQualifierFilter = acceptedQualifiers; }
   void setChangeItemQualifierFilter(QList<QString> acceptedQualifiers) {
     _changeItemQualifierFilter = QSet<QString>::fromList(acceptedQualifiers); }
+  void setChangeItemQualifierFilter(
+      std::initializer_list<QString> acceptedQualifiers) {
+    _changeItemQualifierFilter = QSet<QString>(acceptedQualifiers); }
   void setChangeItemQualifierFilter(QString acceptedQualifier) {
     _changeItemQualifierFilter.clear();
     _changeItemQualifierFilter.insert(acceptedQualifier); }
