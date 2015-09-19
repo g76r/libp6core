@@ -38,22 +38,23 @@ public:
   bool acceptRequest(HttpRequest req);
   bool handleRequest(HttpRequest req, HttpResponse res,
                      ParamsProviderMerger *processingContext);
-  BasicAuthHttpHandler &setAuthenticator(Authenticator *authenticator,
-                                         bool takeOwnership);
-  BasicAuthHttpHandler &setRealm(QString realm) {
-    _realm = realm; _authContext.setValue("realm", realm); return *this; }
+  void setAuthenticator(Authenticator *authenticator, bool takeOwnership);
+  void setRealm(QString realm) {
+    _realm = realm;
+    _authContext.setValue(QStringLiteral("realm"), realm);
+  }
   /** Define which param name will be used to set the (principal) user id in
    * HttpRequestContext. Default is "userid". Null or empty string disable
    * setting any parameter in HttpRequestContext. */
-  BasicAuthHttpHandler &setUserIdContextParamName(QString name) {
-    _userIdContextParamName = name; return *this; }
+  void setUserIdContextParamName(QString name) {
+    _userIdContextParamName = name;
+  }
 
 public slots:
   /** If no or bad basic auth, request auth (HTTP 401) and stop pipeline
    * (handRequest() returns false).
    * Otherwise let the page be served with no userId in HttpRequestContext. */
-  BasicAuthHttpHandler &setAuthIsMandatory(bool mandatory) {
-    _authIsMandatory = mandatory; return *this; }
+  void setAuthIsMandatory(bool mandatory);
 };
 
 #endif // BASICAUTHHTTPHANDLER_H

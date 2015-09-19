@@ -60,11 +60,14 @@ bool BasicAuthHttpHandler::handleRequest(
   return true;
 }
 
-BasicAuthHttpHandler &BasicAuthHttpHandler::setAuthenticator(
+void BasicAuthHttpHandler::setAuthenticator(
     Authenticator *authenticator, bool takeOwnership) {
   if (_ownAuthenticator && _authenticator)
     delete _authenticator;
   _authenticator = authenticator;
   _ownAuthenticator = takeOwnership;
-  return *this;
+}
+
+void BasicAuthHttpHandler::setAuthIsMandatory(bool mandatory) {
+  _authIsMandatory = mandatory;
 }
