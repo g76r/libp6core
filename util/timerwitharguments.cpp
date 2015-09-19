@@ -61,11 +61,12 @@ void TimerWithArguments::forwardTimeout() {
           _arg[7].isNull() ? QGenericArgument() : Q_ARG(QVariant, _arg[7]),
           _arg[8].isNull() ? QGenericArgument() : Q_ARG(QVariant, _arg[8]),
           _arg[9].isNull() ? QGenericArgument() : Q_ARG(QVariant, _arg[9]))) {
-      qWarning() << "cannot signal timer timeout to" << _object.data()
-                 << _member << _arg[0] << _arg[1];
+      qWarning() << "TimerWithArguments: cannot signal timer timeout to"
+                 << _object.data() << _member << _arg[0] << _arg[1];
     }
   } else {
-    qWarning() << "timer timeout occur before target is configured";
+    qWarning() << "TimerWithArguments: timer timeout occur before target is "
+                  "configured";
   }
 }
 
