@@ -29,18 +29,22 @@ class LIBQTSSUSHARED_EXPORT TextMatrixModel : public QAbstractTableModel {
 
 public:
   explicit TextMatrixModel(QObject *parent = 0);
-  int rowCount(const QModelIndex &parent) const;
-  int columnCount(const QModelIndex &parent) const;
+  int rowCount(const QModelIndex &parent = QModelIndex()) const;
+  int columnCount(const QModelIndex &parent = QModelIndex()) const;
   QVariant data(const QModelIndex &index, int role) const;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
   QString value(QString row, QString column) const;
-
-public slots:
   /** Set a cell value.
    * Row and/or column will be added if they do not yet exist. */
   void setCellValue(QString row, QString column, QString value);
   /** Remove any data. */
   void clear();
+  using QAbstractTableModel::removeColumn;
+  /** Remove a column, knowing its name. */
+  bool removeColumn(QString name);
+  using QAbstractTableModel::removeRow;
+  /** Remove a row, knowing its name. */
+  bool removeRow(QString name);
 };
 
 #endif // TEXTMATRIXMODEL_H

@@ -105,3 +105,19 @@ void TextMatrixModel::clear() {
     endRemoveRows();
   }
 }
+
+bool TextMatrixModel::removeColumn(QString name) {
+  // LATER optimize
+  for (int i = 0; i < columnCount(); ++i)
+    if (_columnNames.at(i) == name)
+      return QAbstractTableModel::removeColumn(i);
+  return false;
+}
+
+bool TextMatrixModel::removeRow(QString name) {
+  // LATER optimize
+  for (int i = 0; i < rowCount(); ++i)
+    if (_rowNames.at(i) == name)
+      return QAbstractTableModel::removeRow(i);
+  return false;
+}
