@@ -1,0 +1,14 @@
+stages:
+- build
+- test
+
+job1:
+  stage: build
+  script:
+    - qmake
+    - make
+
+job2:
+  stage: test
+  script:
+   - cd tests && qmake && make 
