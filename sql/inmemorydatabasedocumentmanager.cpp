@@ -1,5 +1,5 @@
 /* Copyright 2015 Hallowyn and others.
- * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
+ * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
