@@ -11,7 +11,7 @@ LICENSE
 -------
 
 This software is made availlable to you under the terms of the GNU Affero
-General Public License version 3, see LICENSE file content.
+General Public License version 3, see AGPL-3.0.txt file content.
 
 BUILD INSTRUCTIONS
 ------------------
