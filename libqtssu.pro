@@ -36,10 +36,6 @@ SOURCES += \
     httpd/httpresponse.cpp \
     httpd/httprequest.cpp \
     httpd/httphandler.cpp \
-    thread/threadedtaskthread.cpp \
-    thread/threadedtask.cpp \
-    thread/periodictaskthread.cpp \
-    thread/periodictask.cpp \
     thread/blockingtimer.cpp \
     textview/htmltableview.cpp \
     textview/textview.cpp \
@@ -107,10 +103,6 @@ HEADERS +=\
     httpd/httpresponse.h \
     httpd/httprequest.h \
     httpd/httphandler.h \
-    thread/threadedtaskthread.h \
-    thread/threadedtask.h \
-    thread/periodictaskthread.h \
-    thread/periodictask.h \
     thread/blockingtimer.h \
     textview/htmltableview.h \
     textview/textview.h \
