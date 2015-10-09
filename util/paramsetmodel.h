@@ -32,6 +32,8 @@ class LIBQTSSUSHARED_EXPORT ParamSetModel : public QAbstractListModel {
 public:
   explicit ParamSetModel(QObject *parent = 0, bool inherit = false,
                          bool evaluate = false);
+  // TODO add inheritance labels to display a third column with param origin
+  // TODO make inherited params non editable and somewhat graphicaly different
   int rowCount(const QModelIndex &parent) const;
   int columnCount(const QModelIndex &parent) const;
   QVariant data(const QModelIndex &index, int role) const;
@@ -39,6 +41,8 @@ public:
 
 public slots:
   /** Must be signaled each time the ParamSet data changes. */
+  // TODO use ParamSet,ParamSet,QString signature and add filter, the SUIM way
+  // then update DM signature and web console connections to use only one signal
   void paramsChanged(ParamSet params);
 };
 
