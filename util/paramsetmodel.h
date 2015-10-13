@@ -58,7 +58,7 @@ private:
         _inherited(inherited) { }
   };
   ParamSet _params;
-  QString _paramsetId;
+  QString _paramsetId, _idQualifier;
   QVector<ParamSetRow> _rows;
   QVector<QString> _scopes;
   bool _inherit, _evaluate, _displayOverriden, _trimOnEdit;
@@ -120,12 +120,13 @@ public:
   template <class T>
   void connectToDocumentManager(
       T *documentManager, ParamSet initialParams, QString changeParamsIdFilter,
-      ParamSetModel::ChangedSignal<T> changedSignal,
+      QString idQualifier, ParamSetModel::ChangedSignal<T> changedSignal,
       ParamSetModel::ChangeSetter<T> changeSetter,
       QVector<QString> scopes = QVector<QString>()) {
     _scopes = scopes;
+    _idQualifier = idQualifier;
     if (!changeParamsIdFilter.isEmpty())
-      _changeParamsIdFilter = changeParamsIdFilter;
+      _changeParamsIdFilter = _paramsetId = changeParamsIdFilter;
     connect(documentManager, changedSignal,
             this, &ParamSetModel::changeParams);
     connect(this, &ParamSetModel::paramsChanged,
@@ -136,13 +137,13 @@ public:
   template <class T>
   void connectToDocumentManager(
       T *documentManager, ParamSet initialParams, QString changeParamsIdFilter,
-      ParamSetModel::ChangedSignal<T> changedSignal,
+      QString idQualifier, ParamSetModel::ChangedSignal<T> changedSignal,
       ParamSetModel::ChangeSetter<T> changeSetter, QString localScope) {
     QVector<QString> scopes;
     scopes.append(localScope);
     connectToDocumentManager(
-          documentManager, initialParams, changeParamsIdFilter, changedSignal,
-          changeSetter, scopes);
+          documentManager, initialParams, changeParamsIdFilter, idQualifier,
+          changedSignal, changeSetter, scopes);
   }
 
 public slots:
