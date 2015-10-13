@@ -101,10 +101,14 @@ bool ParamSetModel::setData(const QModelIndex &index, const QVariant &value,
   case 0:
     if (s.isEmpty())
       return false;
+    if (_rows[index.row()]._key == s)
+      return true; // nothing changed
     newParams.removeValue(_rows[index.row()]._key);
     newParams.setValue(s, _rows[index.row()]._value);
     break;
   case 1:
+    if (_rows[index.row()]._value == s)
+      return true; // nothing changed
     newParams.setValue(_rows[index.row()]._key, s);
     break;
   default:
