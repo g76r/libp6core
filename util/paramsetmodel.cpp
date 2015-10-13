@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,16 +15,18 @@
 #include <QtDebug>
 #include <QStringList>
 
-#define COLUMNS 2
+#define COLUMNS 4
 
-// LATER provide a 3-column mode with 3rd column displaying "", "inherited" or "overrided"
-ParamSetModel::ParamSetModel(QObject *parent, bool inherit, bool evaluate)
-  : QAbstractListModel(parent), _inherit(inherit), _evaluate(evaluate) {
+ParamSetModel::ParamSetModel(
+    QObject *parent, bool inherit, bool evaluate, bool displayOverriden,
+    bool trimOnEdit)
+  : QAbstractListModel(parent), _inherit(inherit), _evaluate(evaluate),
+    _displayOverriden(displayOverriden), _trimOnEdit(trimOnEdit) {
 }
 
 int ParamSetModel::rowCount(const QModelIndex &parent) const {
   Q_UNUSED(parent)
-  return parent.isValid() ? 0 : _keys.size();
+  return parent.isValid() ? 0 : _rows.size();
 }
 
 int ParamSetModel::columnCount(const QModelIndex &parent) const {
@@ -33,19 +35,32 @@ int ParamSetModel::columnCount(const QModelIndex &parent) const {
 }
 
 QVariant ParamSetModel::data(const QModelIndex &index, int role) const {
-  if (index.isValid() && index.row() >= 0 && index.row() < _keys.size()) {
+  if (index.isValid() && index.row() >= 0 && index.row() < _rows.size()) {
     switch(role) {
     case Qt::DisplayRole:
+    case Qt::EditRole:
       switch(index.column()) {
       case 0:
-        return _keys.at(index.row());
+        return _rows.at(index.row())._key;
       case 1:
-        return _evaluate ? _params.value(_keys.at(index.row()), _inherit)
-                         : _params.rawValue(_keys.at(index.row()), _inherit);
+        return _rows.at(index.row())._value;
+      case 2:
+        return _rows.at(index.row())._scope;
+      case 3:
+        return _rows.at(index.row())._overriden;
       }
       break;
-    default:
-      ;
+    case Qt::DecorationRole:
+      switch(index.column()) {
+      case 0:
+        if (_rows.at(index.row())._overriden)
+          return _overridenDecoration.isNull()
+              ? _inheritedDecoration : _overridenDecoration;
+        if (_rows.at(index.row())._inherited)
+          return _inheritedDecoration;
+        return _localDecoration;
+      }
+      break;
     }
   }
   return QVariant();
@@ -57,9 +72,13 @@ QVariant ParamSetModel::headerData(int section, Qt::Orientation orientation,
     if (orientation == Qt::Horizontal) {
       switch(section) {
       case 0:
-        return "Key";
+        return QStringLiteral("Key");
       case 1:
-        return "Value";
+        return QStringLiteral("Value");
+      case 2:
+        return QStringLiteral("Scope");
+      case 3:
+        return QStringLiteral("Overriden");
       }
     } else {
       return QString::number(section);
@@ -68,18 +87,147 @@ QVariant ParamSetModel::headerData(int section, Qt::Orientation orientation,
   return QVariant();
 }
 
-void ParamSetModel::paramsChanged(ParamSet params) {
-  if (!_keys.isEmpty()) {
-    beginRemoveRows(QModelIndex(), 0, _keys.size()-1);
-    _keys.clear();
+bool ParamSetModel::setData(const QModelIndex &index, const QVariant &value,
+                            int role) {
+  Q_UNUSED(role)
+  if (!index.isValid())
+    return false;
+  Q_ASSERT(index.model() == this);
+  if (_rows[index.row()]._inherited)
+    return false; // cannot modify inherited rows (such rows are not selectable)
+  ParamSet newParams = _params, oldParams = _params;
+  QString s = _trimOnEdit ? value.toString().trimmed() : value.toString();
+  switch (index.column()) {
+  case 0:
+    if (s.isEmpty())
+      return false;
+    newParams.removeValue(_rows[index.row()]._key);
+    newParams.setValue(s, _rows[index.row()]._value);
+    break;
+  case 1:
+    newParams.setValue(_rows[index.row()]._key, s);
+    break;
+  default:
+    return false;
+  }
+  changeParams(newParams, oldParams, _paramsetId);
+  emit paramsChanged(newParams, oldParams, _paramsetId);
+  return true;
+}
+
+static QString genererateNewKey(ParamSet params) {
+  QString key, prefix = QStringLiteral("key");
+  for (int i = 1; i < 100; ++i) {
+    key = prefix+QString::number(i);
+    if (!params.contains(key, false))
+      return key;
+  }
+  forever {
+    key = prefix+QString::number(qrand());
+    if (!params.contains(key, false))
+      return key;
+  }
+}
+
+QString ParamSetModel::createNewParam() {
+  QString key = genererateNewKey(_params), value = QStringLiteral("value");
+  ParamSet newParams = _params, oldParams = _params;
+  newParams.setValue(key, value);
+  changeParams(newParams, oldParams, _paramsetId);
+  emit paramsChanged(newParams, oldParams, _paramsetId);
+  return key;
+}
+
+QModelIndex ParamSetModel::indexOf(QString key, bool allowInherited) const {
+  for (int i = _rows.size()-1; i >= 0; --i) {
+    if (_rows[i]._inherited && !allowInherited)
+      break;
+    if (_rows[i]._key == key)
+      return index(i, 0);
+  }
+  return QModelIndex();
+}
+
+bool ParamSetModel::removeRows(
+    int row, int count, const QModelIndex &parent) {
+  if (row < 0 || count <= 0 || row+count > _rows.size() || parent.isValid())
+    return false; // at less one row is out of range
+  if (_rows[row]._inherited)
+    return false; // cannot remove inherited rows (such rows are not selectable)
+  ParamSet newParams = _params, oldParams = _params;
+  for (int i = row; i < row+count; ++i)
+    newParams.removeValue(_rows[i]._key);
+  changeParams(newParams, oldParams, _paramsetId);
+  emit paramsChanged(newParams, oldParams, _paramsetId);
+  return true;
+}
+
+void ParamSetModel::fillRows(
+    QVector<ParamSetRow> *rows, ParamSet params, int depth,
+    QSet<QString> *allKeys) {
+  if (_inherit) {
+    ParamSet parent = params.parent();
+    if (!parent.isNull())
+      fillRows(rows, parent, depth+1, allKeys);
+  }
+  QStringList localKeys = params.keys(false).toList();
+  qSort(localKeys);
+  QString scope = _scopes.value(depth);
+  if (scope.isEmpty() && depth)
+    scope = _defaultScopeForInheritedParams;
+  foreach (const QString &key, localKeys) {
+    if (allKeys->contains(key)) {
+      for (int i = 0; i < rows->size(); ++i)
+        if ((*rows)[i]._key == key) {
+          if (_displayOverriden) {
+             (*rows)[i]._overriden = true;
+          } else {
+            rows->remove(i);
+            break;
+          }
+        }
+    }
+    QString value = _evaluate ? params.value(key, false)
+                              : params.rawValue(key, false);
+    rows->append(ParamSetRow(key, value, scope, false, depth));
+    allKeys->insert(key);
+  }
+}
+
+void ParamSetModel::changeParams(ParamSet newParams, ParamSet oldParams,
+                                 QString paramsetId) {
+  Q_UNUSED(oldParams)
+  if (!_changeParamsIdFilter.isEmpty() && _changeParamsIdFilter != paramsetId)
+    return; // ignore filtered out paramsets
+  if (!_rows.isEmpty()) {
+    beginRemoveRows(QModelIndex(), 0, _rows.size()-1);
+    _rows.clear();
     _params = ParamSet();
     endRemoveRows();
   }
-  if (!params.isEmpty()) {
-    beginInsertRows(QModelIndex(), 0, params.size()-1);
-    _keys = params.keys(_inherit).toList();
-    _keys.sort();
-    _params = params;
+  QVector<ParamSetRow> rows;
+  QSet<QString> allKeys;
+  fillRows(&rows, newParams, 0, &allKeys);
+  if (!newParams.isEmpty()) {
+    beginInsertRows(QModelIndex(), 0, rows.size()-1);
+    _rows = rows;
+    _paramsetId = paramsetId;
+    _params = newParams;
     endInsertRows();
   }
+}
+
+Qt::ItemFlags ParamSetModel::flags(const QModelIndex &index) const {
+  //qDebug() << "ParamSetModel::flags" << index << index.isValid()
+  //         << _rows[index.row()]._overriden << _rows[index.row()]._key;
+  Qt::ItemFlags flags = Qt::NoItemFlags;
+  if (index.isValid()) {
+    flags |= Qt::ItemIsEnabled | Qt::ItemNeverHasChildren;
+    if (!_rows[index.row()]._inherited) {
+      flags |= Qt::ItemIsSelectable;
+      if (index.column() < 2)
+        flags |= Qt::ItemIsEditable;
+    }
+  }
+  return flags;
 }
