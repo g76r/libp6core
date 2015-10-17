@@ -167,32 +167,31 @@ void SharedUiItemsTreeModel::changeItem(
       determineItemPlaceInTree(newItem, &newParent, &newRow);
       TreeItem *newParentTreeItem = treeItemByIndex(newParent);
       adjustTreeItemAndRow(&newParentTreeItem, &newRow);
+      treeItem->item() = newItem;
+      updateIndexIfIdChanged(newId, oldId, treeItem);
+      emit dataChanged(oldIndex, oldIndex);
       // LATER make it possible for determineItemPlaceInTree to change row without changing parent
-      if (newParent != oldParent // need to move item in the tree
-          && !newParentTreeItem->isDescendantOf(treeItem)) {
-        //qDebug() << "reparenting:" << treeItem->item().id()
-        //         <<"parent:" << oldParent << treeItem
-        //        << treeItem->row() << "->" << newParent
-        //        << newParentTreeItem << newRow << "/"
-        //        << newParentTreeItem->childrenCount();
-        //qDebug() << "  root:" << _root << _root->item().id();
-        Q_ASSERT_X(beginMoveRows(
-                     oldParent, treeItem->row(), treeItem->row(),
-                     newParent, newRow),
-                   "SharedUiItemsTreeModel::changeItem",
-                   "inconsistent reparenting according to beginMoveRows");
-        newParentTreeItem->adoptChild(treeItem, newRow);
-        updateIndexIfIdChanged(newId, oldId, treeItem);
-        endMoveRows();
-      } else { // update item without moving it in the tree
-        if (newParent != oldParent) {
+      if (newParent != oldParent) { // need to move item in the tree
+        if (newParentTreeItem->isDescendantOf(treeItem)) {
           qDebug() << "SharedUiItemsTreeModel::changeItem denies item moving "
                       "because new parent would be a descendant of moved "
                       "child.";
+        } else {
+          //qDebug() << "reparenting:" << treeItem->item().id()
+          //         <<"parent:" << oldParent << treeItem
+          //        << treeItem->row() << "->" << newParent
+          //        << newParentTreeItem << newRow << "/"
+          //        << newParentTreeItem->childrenCount();
+          //qDebug() << "  root:" << _root << _root->item().id();
+          Q_ASSERT_X(beginMoveRows(
+                       oldParent, treeItem->row(), treeItem->row(),
+                       newParent, newRow),
+                     "SharedUiItemsTreeModel::changeItem",
+                     "inconsistent reparenting according to beginMoveRows");
+          newParentTreeItem->adoptChild(treeItem, newRow);
+          updateIndexIfIdChanged(newId, oldId, treeItem); // LATER not sure needed
+          endMoveRows();
         }
-        treeItem->item() = newItem;
-        updateIndexIfIdChanged(newId, oldId, treeItem);
-        emit dataChanged(oldIndex, oldIndex);
       }
     }
   }
