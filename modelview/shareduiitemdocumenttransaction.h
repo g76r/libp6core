@@ -46,7 +46,19 @@ public:
 
   SharedUiItemDocumentTransaction(SharedUiItemDocumentManager *dm) : _dm(dm) { }
   SharedUiItem itemById(QString idQualifier, QString id) const;
+  template <class T>
+  inline T itemById(QString idQualifier, QString id) const {
+    SharedUiItem item = itemById(idQualifier, id);
+    return static_cast<T&>(item);
+  }
   SharedUiItemList<> itemsByIdQualifier(QString idQualifier) const;
+  template <class T>
+  inline SharedUiItemList<T> itemsByIdQualifier(QString idQualifier) const {
+    T *dummy;
+    Q_UNUSED(static_cast<SharedUiItem*>(dummy)); // ensure T is a SharedUiItem
+    SharedUiItemList<> list = itemsByIdQualifier(idQualifier);
+    return reinterpret_cast<SharedUiItemList<T>&>(list);
+  }
   SharedUiItemList<> foreignKeySources(
       QString sourceQualifier, int sourceSection, QString referenceId) const;
 
