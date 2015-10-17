@@ -43,7 +43,10 @@ class SharedUiItemParamsProvider;
  *   one from another.
  * - As soon as it contains data and wants it displayed, which is very likely,
  *   a subclass MUST implement uiData() and uiSectionCount() and SHOULD
- *   implement uiHeaderData().
+ *   implement uiHeaderData() and uiSectionName(), although uiSectionName() MAY
+ *   NOT be implemented since it can be deduced from uiHeaderData() as long as
+ *   uiHeaderData() always return the same values (i.e. the header labels are
+ *   not translated into several language).
  * - uiData() MUST handle Qt::EditRole, Qt::DisplayRole and
  *   SharedUiItem::ExternalDataRole.
  *   When planning to have only read-only UI features, Qt::EditRole SHOULD be
@@ -95,6 +98,11 @@ public:
   /** Return UI header data, like QAbstractItemModel::headerData().
    * Default: QVariant() */
   virtual QVariant uiHeaderData(int section, int role) const;
+  /** Return UI name (id) for the section, in the sense of
+   * QAbstractItemsModel::roleNames().
+   * Defaults to uiHeaderData() with some cleanup processing (lowercases,
+   * non alphanum to underscores...) */
+  virtual QString uiSectionName(int section) const;
   /** Return UI item flags, like QAbstractItemModel::flags().
    * Default: return Qt::ItemIsEnabled | Qt::ItemIsSelectable */
   virtual Qt::ItemFlags uiFlags(int section) const;
@@ -305,6 +313,10 @@ public:
   /** Convenience method for uiHeaderData(...).toString(). */
   QString uiHeaderString(int section, int role = Qt::DisplayRole) const {
     return uiHeaderData(section, role).toString(); }
+  /** Return UI name (id) for the section, in the sense of
+   * QAbstractItemsModel::roleNames() */
+  QString uiSectionName(int section) const {
+    return _data ? _data->uiSectionName(section) : QString(); }
   /** Return UI item flags, like QAbstractItemModel::flags().
    *
    * Apart from very special cases, item should only set following flags:

@@ -31,7 +31,8 @@ const QStringList SharedUiItemsModel::suiMimeTypes {
 };
 
 SharedUiItemsModel::SharedUiItemsModel(QObject *parent)
-  : QAbstractItemModel(parent), _columnsCount(0), _documentManager(0) {
+  : QAbstractItemModel(parent), _columnsCount(0),
+    _roleNames(QAbstractItemModel::roleNames()), _documentManager(0) {
 }
 
 int SharedUiItemsModel::columnCount(const QModelIndex &parent) const {
@@ -62,8 +63,11 @@ void SharedUiItemsModel::setHeaderDataFromTemplate(
     SharedUiItem templateItem, int role) {
   _columnsCount = templateItem.uiSectionCount();
   QHash<int,QVariant> mapSectionHeader;
-  for (int section = 0; section < _columnsCount; ++section)
+  _roleNames = QAbstractItemModel::roleNames();
+  for (int section = 0; section < _columnsCount; ++section) {
     mapSectionHeader.insert(section, templateItem.uiHeaderData(section, role));
+    _roleNames.insert(section, templateItem.uiSectionName(section).toLatin1());
+  }
   _mapRoleSectionHeader.insert(role, mapSectionHeader);
 }
 
@@ -171,4 +175,8 @@ QModelIndex SharedUiItemsProxyModelHelper::mapToReal(
   for (int i = _proxies.size()-1; i >= 0; --i)
     apparentIndex = _proxies[i]->mapToSource(apparentIndex);
   return apparentIndex;
+}
+
+QHash<int,QByteArray> SharedUiItemsModel::roleNames() const {
+  return _roleNames;
 }

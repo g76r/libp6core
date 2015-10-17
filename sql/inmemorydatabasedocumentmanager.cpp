@@ -91,7 +91,7 @@ bool InMemoryDatabaseDocumentManager::changeItemInDatabase(
   if (!oldItem.isNull()) {
     QSqlQuery query(_db);
     query.prepare("delete from "+idQualifier+" where "
-                  +protectedColumnName(oldItem.uiHeaderString(
+                  +protectedColumnName(oldItem.uiSectionName(
                                          _idSections.value(idQualifier)))
                   +" = ?");
     query.bindValue(0, oldItem.id());
@@ -140,18 +140,14 @@ bool InMemoryDatabaseDocumentManager::insertItemInDatabase(
     return false;
   }
   QString idQualifier = newItem.idQualifier();
-  QStringList columnNames, protectedColumnNames, placeholders;
-  SharedUiItem item = creator(transaction, QStringLiteral("dummy"),
-                              errorString);
-  for (int i = 0; i < item.uiSectionCount(); ++i) {
-    QString headerName = item.uiHeaderString(i);
-    columnNames << headerName;
-    protectedColumnNames << protectedColumnName(headerName);
+  QStringList columnNames, placeholders;
+  for (int i = 0; i < newItem.uiSectionCount(); ++i) {
+    columnNames << protectedColumnName(newItem.uiSectionName(i));
     placeholders << QStringLiteral("?");
   }
   QSqlQuery query(_db);
-  query.prepare("insert into "+idQualifier+" ("+protectedColumnNames.join(',')
-                +") values ("+placeholders.join(',')+") ");
+  query.prepare("insert into "+idQualifier+" ("+columnNames.join(',')
+                +") values ("+placeholders.join(',')+")");
   for (int i = 0; i < newItem.uiSectionCount(); ++i)
     query.bindValue(i, newItem.uiData(i, SharedUiItem::ExternalDataRole));
   if (!query.exec()) {
@@ -195,21 +191,19 @@ bool InMemoryDatabaseDocumentManager::createTableAndSelectData(
   Q_ASSERT_X((creator && setter),
              "InMemoryDatabaseDocumentManager::createTableAndSelectData",
              "invalid parameters");
-  QStringList columnNames, protectedColumnNames;
+  QStringList columnNames;
   SharedUiItemDocumentTransaction transaction(this);
   SharedUiItem item = creator(&transaction, QStringLiteral("dummy"),
                               errorString);
   for (int i = 0; i < item.uiSectionCount(); ++i) {
-    QString headerName = item.uiHeaderString(i);
-    columnNames << headerName;
-    protectedColumnNames << protectedColumnName(headerName);
+    columnNames << protectedColumnName(item.uiSectionName(i));
   }
   QSqlQuery query(_db);
   query.exec("select count(*) from "+idQualifier);
   if (query.lastError().type() != QSqlError::NoError) {
     QString q = "create table "+idQualifier+" ( ";
-    for (int i = 0; i < protectedColumnNames.size(); ++ i) {
-      const QString &columnName = protectedColumnNames[i];
+    for (int i = 0; i < columnNames.size(); ++ i) {
+      const QString &columnName = columnNames[i];
       if (i)
         q += ", ";
       q = q+columnName+" text"; // LATER use a more portable text data type
@@ -232,7 +226,7 @@ Id|URL|Login|Password|Proxy_Id
 connection4||||
 sqlite> drop table foo;
    */
-  query.exec("select "+protectedColumnNames.join(',')+" from "+idQualifier);
+  query.exec("select "+columnNames.join(',')+" from "+idQualifier);
   if (query.lastError().type() != QSqlError::NoError) {
     *errorString = "database error: cannot select from table: "+idQualifier
         +query.lastError().text();

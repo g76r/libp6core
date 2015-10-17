@@ -13,6 +13,7 @@
  */
 #include "shareduiitem.h"
 #include <QtDebug>
+#include <QRegularExpression>
 
 static class SharedUiItemRegisterMetatype {
 public:
@@ -60,6 +61,13 @@ QString SharedUiItemData::id() const {
 
 int SharedUiItemData::uiSectionCount() const {
   return 0;
+}
+
+static QRegularExpression nonAlphanum("[^a-z0-9]+");
+
+QString SharedUiItemData::uiSectionName(int section) const {
+  return uiHeaderData(section, Qt::DisplayRole).toString().trimmed()
+      .toLower().replace(nonAlphanum, QStringLiteral("_"));
 }
 
 QDebug operator<<(QDebug dbg, const SharedUiItem &i) {

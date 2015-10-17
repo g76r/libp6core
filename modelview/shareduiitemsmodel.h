@@ -36,7 +36,8 @@ class LIBQTSSUSHARED_EXPORT SharedUiItemsModel : public QAbstractItemModel {
   Q_OBJECT
   Q_DISABLE_COPY(SharedUiItemsModel)
   int _columnsCount;
-  QHash<int,QHash<int,QVariant> > _mapRoleSectionHeader;
+  QHash<int,QHash<int,QVariant>> _mapRoleSectionHeader;
+  QHash<int,QByteArray> _roleNames;
 
 protected:
   SharedUiItemDocumentManager *_documentManager;
@@ -110,6 +111,7 @@ public:
    * ids in idQualifiers. */
   virtual void setDocumentManager(SharedUiItemDocumentManager *documentManager,
                                   QStringList idQualifiers = QStringList());
+  QHash<int,QByteArray> roleNames() const override;
 
 public slots:
   /** Operate a change on an item within this model.
