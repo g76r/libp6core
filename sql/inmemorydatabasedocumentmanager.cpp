@@ -195,6 +195,11 @@ bool InMemoryDatabaseDocumentManager::createTableAndSelectData(
   SharedUiItemDocumentTransaction transaction(this);
   SharedUiItem item = creator(&transaction, QStringLiteral("dummy"),
                               errorString);
+  if (item.isNull()) {
+    qWarning() << "InMemoryDatabaseDocumentManager cannot create empty "
+                  "item of type" << idQualifier << ":" << *errorString;
+    return false;
+  }
   for (int i = 0; i < item.uiSectionCount(); ++i) {
     columnNames << protectedColumnName(item.uiSectionName(i));
   }
@@ -235,6 +240,11 @@ sqlite> drop table foo;
   //qDebug() << "***** selected:" << query.executedQuery();
   while (query.next()) {
     item = creator(&transaction, QStringLiteral("dummy"), errorString);
+    if (item.isNull()) {
+      qWarning() << "InMemoryDatabaseDocumentManager cannot create empty "
+                    "item of type" << idQualifier << ":" << *errorString;
+      break;
+    }
     for (int i = 0; i < item.uiSectionCount(); ++i) {
       QString errorString;
       bool ok = setter(&item, i, query.value(i), &errorString, &transaction,
