@@ -85,5 +85,11 @@ QVariant SharedUiItemParamsProvider::paramValue(
     if (value.isValid())
       return value;
   }
+  if (key == "id")
+    return _item.id();
+  if (key == "idQualifier")
+    return _item.idQualifier();
+  if (key == "qualifiedId")
+    return _item.qualifiedId();
   return defaultValue;
 }
