@@ -59,7 +59,6 @@ protected:
 private:
   TreeItem *_root;
   QHash<QString,TreeItem*> _itemsIndex; // key: qualified id
-  QSet<QString> _changeItemQualifierFilter;
 
 public:
   explicit SharedUiItemsTreeModel(QObject *parent = 0);
@@ -84,18 +83,6 @@ public:
   bool dropMimeData(
       const QMimeData *data, Qt::DropAction action, int targetRow,
       int targetColumn, const QModelIndex &droppedParent) override;
-  void setChangeItemQualifierFilter(QSet<QString> acceptedQualifiers) {
-    _changeItemQualifierFilter = acceptedQualifiers; }
-  void setChangeItemQualifierFilter(QList<QString> acceptedQualifiers) {
-    _changeItemQualifierFilter = QSet<QString>::fromList(acceptedQualifiers); }
-  void setChangeItemQualifierFilter(
-      std::initializer_list<QString> acceptedQualifiers) {
-    _changeItemQualifierFilter = QSet<QString>(acceptedQualifiers); }
-  void setChangeItemQualifierFilter(QString acceptedQualifier) {
-    _changeItemQualifierFilter.clear();
-    _changeItemQualifierFilter.insert(acceptedQualifier); }
-  void clearChangeItemQualifierFilter() {
-    _changeItemQualifierFilter.clear(); }
 
 protected:
   void clear();

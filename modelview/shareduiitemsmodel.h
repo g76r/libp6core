@@ -38,6 +38,7 @@ class LIBQTSSUSHARED_EXPORT SharedUiItemsModel : public QAbstractItemModel {
   int _columnsCount;
   QHash<int,QHash<int,QVariant>> _mapRoleSectionHeader;
   QHash<int,QByteArray> _roleNames;
+  QSet<QString> _changeItemQualifierFilter;
 
 protected:
   SharedUiItemDocumentManager *_documentManager;
@@ -107,11 +108,25 @@ public:
   Qt::DropActions supportedDropActions() const override;
   SharedUiItemDocumentManager *documentManager() const {
     return _documentManager; }
-  /** Set document manager and populate model with its items matching qualifier
-   * ids in idQualifiers. */
-  virtual void setDocumentManager(SharedUiItemDocumentManager *documentManager,
-                                  QStringList idQualifiers = QStringList());
+  /** Set document manager, connect its itemChanged() and dataReset() signals
+   * and populate model with items matching changeItemQualifierFilter id
+   * qualifiers (if setChangeItemQualifierFilter() has been called before). */
+  virtual void setDocumentManager(SharedUiItemDocumentManager *documentManager);
   QHash<int,QByteArray> roleNames() const override;
+  void setChangeItemQualifierFilter(QSet<QString> acceptedQualifiers) {
+    _changeItemQualifierFilter = acceptedQualifiers; }
+  void setChangeItemQualifierFilter(QList<QString> acceptedQualifiers) {
+    _changeItemQualifierFilter = QSet<QString>::fromList(acceptedQualifiers); }
+  void setChangeItemQualifierFilter(
+      std::initializer_list<QString> acceptedQualifiers) {
+    _changeItemQualifierFilter = QSet<QString>(acceptedQualifiers); }
+  void setChangeItemQualifierFilter(QString acceptedQualifier) {
+    _changeItemQualifierFilter.clear();
+    _changeItemQualifierFilter.insert(acceptedQualifier); }
+  void clearChangeItemQualifierFilter() {
+    _changeItemQualifierFilter.clear(); }
+  QSet<QString> changeItemQualifierFilter() const {
+    return _changeItemQualifierFilter; }
 
 public slots:
   /** Operate a change on an item within this model.
@@ -129,9 +144,7 @@ public slots:
    * changeItem() may be ignored.
    *
    * This slot can be connected to SharedUiItemDocumentManager::itemChanged()
-   * signal, or any more precise signals (kind of
-   * FoobarDocumentManager::foobarItemChanged(Foobar newFoobar,
-   * Foobar oldFoobar)).
+   * signal.
    *
    * Must emit itemChanged() after having updated data.
    * @see SharedUiItemDocumentManager::itemChanged()
@@ -145,6 +158,10 @@ public slots:
   /** Short for changeItem(SharedUiItem(), oldItem, oldItem.idQualifier()). */
   void deleteItemIfExists(SharedUiItem oldItem) {
     changeItem(SharedUiItem(), oldItem, oldItem.idQualifier()); }
+  /** Reread the whole data from current document manager.
+   *
+   * This slot can be connected to SharedUiItemDocumentManager::dataReset() */
+  virtual void resetData();
 
 signals:
   /** Emited by changeItem(), after it performed model changes.

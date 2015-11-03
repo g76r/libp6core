@@ -256,12 +256,17 @@ signals:
    * Notes: oldItem and newItem cannot be null at the same time, if none is null
    * then oldItem.idQualifier() == newItem.idQualifier().
    *
-   * Subclasses may (should?) add specialized signals for their different item
+   * Subclasses may add specialized signals for their different item
    * types, e.g. "void customerChanged(Customer newItem, Customer oldItem)"
-   * where Customer is a SharedUiItem.
+   * where Customer is a SharedUiItem, however using the generic itemChanged()
+   * signal is often more powerful and therefore most of the time they should
+   * not specialize signals.
    */
   void itemChanged(SharedUiItem newItem, SharedUiItem oldItem,
                    QString idQualifier);
+  /** Emited when all data is reset as a whole, for instance when switching
+   * from a document to another one. */
+  void dataReset();
 
 protected:
   /** Can be called by createNewItem() implementations to generate a new id not

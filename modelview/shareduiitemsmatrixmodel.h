@@ -32,7 +32,6 @@ class LIBQTSSUSHARED_EXPORT SharedUiItemsMatrixModel
   QVector<ItemBinding> _verticalHeaders, _horizontalHeaders;
   QVector<QVector<ItemBinding>> _cells;
   int _rowsCount = 0, _columnsCount = 0;
-  QSet<QString> _changeItemQualifierFilter;
 
 public:
   explicit SharedUiItemsMatrixModel(QObject *parent = 0);
@@ -59,18 +58,6 @@ public:
                 QString formula = QStringLiteral("%id"),
                 int editableSection = -1);
   void clear();
-  void setChangeItemQualifierFilter(QSet<QString> acceptedQualifiers) {
-    _changeItemQualifierFilter = acceptedQualifiers; }
-  void setChangeItemQualifierFilter(QList<QString> acceptedQualifiers) {
-    _changeItemQualifierFilter = QSet<QString>::fromList(acceptedQualifiers); }
-  void setChangeItemQualifierFilter(
-      std::initializer_list<QString> acceptedQualifiers) {
-    _changeItemQualifierFilter = QSet<QString>(acceptedQualifiers); }
-  void setChangeItemQualifierFilter(QString acceptedQualifier) {
-    _changeItemQualifierFilter.clear();
-    _changeItemQualifierFilter.insert(acceptedQualifier); }
-  void clearChangeItemQualifierFilter() {
-    _changeItemQualifierFilter.clear(); }
 
 private:
   static inline QVariant evaluate(
