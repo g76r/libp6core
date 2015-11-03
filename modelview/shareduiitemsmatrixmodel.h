@@ -52,12 +52,12 @@ public:
   Qt::ItemFlags flags(const QModelIndex &index) const;
   QHash<int, QByteArray> roleNames() const;
   // FIXME void setHeaderDataFromTemplate(SharedUiItem templateItem, int role) = delete;
-  void bindHeader(int section, Qt::Orientation orientation,
-                  SharedUiItem item, QString formula);
-  void bindCell(int row, int column, SharedUiItem item,
-                QString formula = QStringLiteral("%id"),
-                int editableSection = -1);
-  void clear();
+  virtual void bindHeader(int section, Qt::Orientation orientation,
+                          SharedUiItem item, QString formula);
+  virtual void bindCell(int row, int column, SharedUiItem item,
+                        QString formula = QStringLiteral("%id"),
+                        int editableSection = -1);
+  virtual void clearBindings();
 
 private:
   static inline QVariant evaluate(

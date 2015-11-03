@@ -153,13 +153,11 @@ void SharedUiItemsMatrixModel::bindCell(
   emit dataChanged(i, i);
 }
 
-void SharedUiItemsMatrixModel::clear() {
-  beginResetModel();
+void SharedUiItemsMatrixModel::clearBindings() {
   _cells.clear();
   _horizontalHeaders.clear();
   _verticalHeaders.clear();
   _rowsCount = _columnsCount = 0;
-  endResetModel();
 }
 
 QVariant SharedUiItemsMatrixModel::evaluate(
