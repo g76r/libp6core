@@ -67,9 +67,38 @@ void SharedUiItemsMatrixModel::insertItemAt(
 
 void SharedUiItemsMatrixModel::changeItem(
     SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
-  qDebug() << "SharedUiItemsMatrixModel::changeItem" << newItem << oldItem
-           << idQualifier;
-  // FIXME implement
+  //qDebug() << "SharedUiItemsMatrixModel::changeItem" << newItem << oldItem
+  //         << idQualifier;
+  if (oldItem.isNull())
+    return;
+  for (int i = 0; i < _verticalHeaders.size(); ++i) {
+    ItemBinding &binding = _verticalHeaders[i];
+    if (binding._item == oldItem) {
+      binding._item = newItem;
+      //qDebug() << "  updated vertical header" << i;
+      emit headerDataChanged(Qt::Vertical, i, i);
+    }
+  }
+  for (int i = 0; i < _horizontalHeaders.size(); ++i) {
+    ItemBinding &binding = _horizontalHeaders[i];
+    if (binding._item == oldItem) {
+      binding._item = newItem;
+      //qDebug() << "  updated horizontal header" << i;
+      emit headerDataChanged(Qt::Horizontal, i, i);
+    }
+  }
+  for (int i = 0; i < _cells.size(); ++i) {
+    QVector<ItemBinding> &row = _cells[i];
+    for (int j = 0; j < row.size(); ++j) {
+      ItemBinding &binding = row[j];
+      if (binding._item == oldItem) {
+        binding._item = newItem;
+        QModelIndex topLeft = index(i, j);
+        //qDebug() << "  updated cell" << i << j;
+        emit dataChanged(topLeft, topLeft);
+      }
+    }
+  }
 }
 
 void SharedUiItemsMatrixModel::bindHeader(
