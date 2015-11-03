@@ -168,6 +168,9 @@ QVariant SharedUiItemsMatrixModel::evaluate(
   case SharedUiItem::ExternalDataRole:
     return ParamSet().evaluate(binding._formula, false, &pp);
   case Qt::EditRole:
+  case SharedUiItem::IdQualifierRole:
+  case SharedUiItem::IdRole:
+  case SharedUiItem::QualifiedIdRole:
     return binding._item.uiData(binding._editableSection, role);
   }
   return QVariant();
