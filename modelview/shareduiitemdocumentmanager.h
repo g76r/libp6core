@@ -118,6 +118,12 @@ public:
    */
   virtual SharedUiItem createNewItem(
       QString idQualifier, QString *errorString = 0);
+  /** Convenience template performing downcast. */
+  template<class T>
+  T createNewItem(QString idQualifier, QString *errorString = 0) {
+    SharedUiItem item = createNewItem(idQualifier, errorString);
+    return static_cast<T&>(item);
+  }
   /** Method that user interface should call to change an item, one field at a
    * time.
    *
