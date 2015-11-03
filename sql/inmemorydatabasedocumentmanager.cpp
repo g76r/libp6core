@@ -180,6 +180,7 @@ bool InMemoryDatabaseDocumentManager::setDatabase(
   }
   if (!successful && errorString)
     *errorString = reason;
+  emit dataReset();
   return successful;
 }
 
@@ -195,6 +196,8 @@ bool InMemoryDatabaseDocumentManager::createTableAndSelectData(
   SharedUiItemDocumentTransaction transaction(this);
   SharedUiItem item = creator(&transaction, QStringLiteral("dummy"),
                               errorString);
+  if (!_db.isOpen())
+    return true; // do nothing without a valid opened database
   if (item.isNull()) {
     qWarning() << "InMemoryDatabaseDocumentManager cannot create empty "
                   "item of type" << idQualifier << ":" << *errorString;
