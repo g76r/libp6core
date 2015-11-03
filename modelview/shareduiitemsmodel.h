@@ -38,7 +38,7 @@ class LIBQTSSUSHARED_EXPORT SharedUiItemsModel : public QAbstractItemModel {
   int _columnsCount;
   QHash<int,QHash<int,QVariant>> _mapRoleSectionHeader;
   QHash<int,QByteArray> _roleNames;
-  QSet<QString> _changeItemQualifierFilter;
+  QStringList _itemQualifierFilter;
 
 protected:
   SharedUiItemDocumentManager *_documentManager;
@@ -113,20 +113,23 @@ public:
    * qualifiers (if setChangeItemQualifierFilter() has been called before). */
   virtual void setDocumentManager(SharedUiItemDocumentManager *documentManager);
   QHash<int,QByteArray> roleNames() const override;
-  void setChangeItemQualifierFilter(QSet<QString> acceptedQualifiers) {
-    _changeItemQualifierFilter = acceptedQualifiers; }
-  void setChangeItemQualifierFilter(QList<QString> acceptedQualifiers) {
-    _changeItemQualifierFilter = QSet<QString>::fromList(acceptedQualifiers); }
-  void setChangeItemQualifierFilter(
+  /** Set which items should be holded by the model depending on their id
+   * qualifier.
+   *
+   * This should be used by implementation to filter changes received by
+   * changeItem() and this is used by default resetData() implementation to
+   * populate model, respecting the list order (which matters e.g. for a tree
+   * model with cascading an item types).
+   */
+  void setItemQualifierFilter(QStringList acceptedQualifiers) {
+    _itemQualifierFilter = acceptedQualifiers; }
+  void setItemQualifierFilter(
       std::initializer_list<QString> acceptedQualifiers) {
-    _changeItemQualifierFilter = QSet<QString>(acceptedQualifiers); }
-  void setChangeItemQualifierFilter(QString acceptedQualifier) {
-    _changeItemQualifierFilter.clear();
-    _changeItemQualifierFilter.insert(acceptedQualifier); }
-  void clearChangeItemQualifierFilter() {
-    _changeItemQualifierFilter.clear(); }
-  QSet<QString> changeItemQualifierFilter() const {
-    return _changeItemQualifierFilter; }
+    _itemQualifierFilter = QStringList(acceptedQualifiers); }
+  void setItemQualifierFilter(QString acceptedQualifier) {
+    _itemQualifierFilter = QStringList(acceptedQualifier); }
+  void clearItemQualifierFilter() { _itemQualifierFilter.clear(); }
+  QStringList itemQualifierFilter() const { return _itemQualifierFilter; }
 
 public slots:
   /** Operate a change on an item within this model.

@@ -120,8 +120,8 @@ QModelIndex SharedUiItemsTreeModel::indexOf(QString qualifiedId) const {
 
 void SharedUiItemsTreeModel::changeItem(
     SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
-  if (!changeItemQualifierFilter().isEmpty()
-      && !changeItemQualifierFilter().contains(idQualifier))
+  if (!itemQualifierFilter().isEmpty()
+      && !itemQualifierFilter().contains(idQualifier))
     return;
   //qDebug() << "SharedUiItemsTreeModel::changeItem" << newItem.id()
   //         << oldItem.id() << idQualifier;
