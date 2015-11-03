@@ -93,7 +93,8 @@ SOURCES += \
     modelview/inmemoryshareduiitemdocumentmanager.cpp \
     sql/inmemorydatabasedocumentmanager.cpp \
     util/coreundocommand.cpp \
-    modelview/shareduiitemdocumenttransaction.cpp
+    modelview/shareduiitemdocumenttransaction.cpp \
+    modelview/shareduiitemsmatrixmodel.cpp
 
 
 HEADERS +=\
@@ -164,7 +165,8 @@ HEADERS +=\
     sql/inmemorydatabasedocumentmanager.h \
     modelview/inmemoryshareduiitemdocumentmanager.h \
     util/coreundocommand.h \
-    modelview/shareduiitemdocumenttransaction.h
+    modelview/shareduiitemdocumenttransaction.h \
+    modelview/shareduiitemsmatrixmodel.h
 
 unix {
     target.path = /usr/lib
