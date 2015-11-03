@@ -250,6 +250,15 @@ public:
   // FIXME doc
   void addChangeItemTrigger(QString idQualifier, TriggerFlags flags,
                             ChangeItemTrigger trigger);
+  /** Can be called to generate a new id not currently in use for the given
+   * idQualifier item type.
+   * Generate id of the form prefix+number (e.g. "foobar1"), most of the time
+   * one should choose idQualifier as prefix, which is the default (= if prefix
+   * is left empty). */
+  QString genererateNewId(QString idQualifier,
+                          QString prefix = QString()) const {
+    return genererateNewId(0, idQualifier, prefix);
+  }
 
 signals:
   /** Emited whenever an item changes.

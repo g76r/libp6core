@@ -32,13 +32,23 @@ QString SharedUiItemDocumentManager::genererateNewId(
     prefix = idQualifier;
   for (int i = 1; i < 100; ++i) {
     id = prefix+QString::number(i);
-    if (transaction->itemById(idQualifier, id).isNull())
-      return id;
+    if (transaction) {
+      if (transaction->itemById(idQualifier, id).isNull())
+        return id;
+    } else {
+      if (itemById(idQualifier, id).isNull())
+        return id;
+    }
   }
   forever {
     id = prefix+QString::number(qrand());
-    if (transaction->itemById(idQualifier, id).isNull())
-      return id;
+    if (transaction) {
+      if (transaction->itemById(idQualifier, id).isNull())
+        return id;
+    } else {
+      if (itemById(idQualifier, id).isNull())
+        return id;
+    }
   }
 }
 
@@ -216,6 +226,7 @@ void SharedUiItemDocumentManager::addChangeItemTrigger(
 bool SharedUiItemDocumentManager::checkIdsConstraints(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
     SharedUiItem oldItem, QString idQualifier, QString *errorString) {
+  Q_ASSERT(errorString);
   if (!oldItem.isNull()) {
     if (oldItem.idQualifier() != idQualifier) {
       *errorString = "Old item \""+oldItem.qualifiedId()
