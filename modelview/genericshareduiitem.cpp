@@ -12,6 +12,8 @@
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "genericshareduiitem.h"
+#include "shareduiitemdocumentmanager.h"
+#include "shareduiitemdocumenttransaction.h"
 
 class GenericSharedUiItemData : public SharedUiItemData {
 public:
@@ -39,17 +41,19 @@ public:
   QString idQualifier() const { return _idQualifier; }
   int uiSectionCount() const { return qMax(_headers.size(), _values.size()); }
   QVariant uiData(int section, int role) const {
-    if (role == Qt::DisplayRole || role == Qt::EditRole)
+    if (role == Qt::DisplayRole || role == Qt::EditRole
+        || role == SharedUiItem::ExternalDataRole)
       return _values.value(section);
     return QVariant();
   }
   QVariant uiHeaderData(int section, int role) const {
     return role == Qt::DisplayRole ? _headers.value(section) : QVariant();
   }
-  //Qt::ItemFlags uiFlags(int section) const;
-  //bool setUiData(int section, const QVariant &value, QString *errorString,
-  //               int role, const SharedUiItemDocumentManager *dm);
+  Qt::ItemFlags uiFlags(int section) const;
+  bool setUiData(int section, const QVariant &value, QString *errorString,
+                 SharedUiItemDocumentTransaction *transaction, int role);
 };
+
 
 GenericSharedUiItem::GenericSharedUiItem() {
 }
@@ -93,4 +97,45 @@ QList<GenericSharedUiItem> GenericSharedUiItem::fromCsv(
     list.append(GenericSharedUiItem(idQualifier, id, vHeaders, vValues));
   }
   return list;
+}
+
+bool GenericSharedUiItem::setUiDataWithIdSection(
+    int section, const QVariant &value, QString *errorString,
+    SharedUiItemDocumentTransaction *transaction, int role, int idSection) {
+  auto *d = data();
+  if (!d)
+    setData(d = new GenericSharedUiItemData());
+  bool success = d->setUiData(section, value, errorString, transaction, role);
+  if (success && section == idSection)
+    d->_id = d->_values.value(section).toString();
+  return success;
+}
+
+Qt::ItemFlags GenericSharedUiItemData::uiFlags(int section) const {
+  Qt::ItemFlags flags = SharedUiItemData::uiFlags(section);
+  if (section >= 0 && (section < _values.size() || section < _headers.size())) {
+    flags |= Qt::ItemIsEditable;
+  }
+  return flags;
+}
+
+bool GenericSharedUiItemData::setUiData(
+    int section, const QVariant &value, QString *errorString,
+    SharedUiItemDocumentTransaction *transaction, int role) {
+  Q_ASSERT(transaction != 0);
+  Q_ASSERT(errorString != 0);
+  if (section >= 0 && (section < _values.size() || section < _headers.size())) {
+    QString s = value.toString().trimmed();
+    while (_values.size() < section+1)
+      _values.append(QVariant());
+    _values[section] = s;
+    return true;
+  }
+  return SharedUiItemData::setUiData(section, value, errorString, transaction,
+                                     role);
+}
+
+GenericSharedUiItemData *GenericSharedUiItem::data() {
+  SharedUiItem::detach<GenericSharedUiItemData>();
+  return (GenericSharedUiItemData*)SharedUiItem::data();
 }

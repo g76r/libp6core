@@ -17,6 +17,8 @@
 #include "shareduiitem.h"
 #include "csv/csvfile.h"
 
+class GenericSharedUiItemData;
+
 /** Util class to build a SharedUiItem from arbitrary ids and QVariant values.
  */
 class LIBQTSSUSHARED_EXPORT GenericSharedUiItem : public SharedUiItem {
@@ -43,7 +45,23 @@ public:
       CsvFile *csvFile, int idColumn = 0,
       QString idQualifier = QStringLiteral("generic"));
   // LATER another fromCsv(), with idQualifierColumn
-  // LATER make it editable
+  /** Not only set ui data but also update id if updated section is id section.
+   */
+  template <int idSection>
+  bool setUiData(int section, const QVariant &value, QString *errorString,
+                 SharedUiItemDocumentTransaction *transaction,
+                 int role = Qt::EditRole) {
+    return setUiDataWithIdSection(section, value, errorString, transaction,
+                                  role, idSection);
+  }
+
+private:
+  bool setUiDataWithIdSection(
+      int section, const QVariant &value, QString *errorString,
+      SharedUiItemDocumentTransaction *transaction, int role, int idSection);
+  const GenericSharedUiItemData *data() const {
+    return (const GenericSharedUiItemData*)SharedUiItem::data(); }
+  GenericSharedUiItemData *data();
 };
 
 #endif // GENERICSHAREDUIITEM_H
