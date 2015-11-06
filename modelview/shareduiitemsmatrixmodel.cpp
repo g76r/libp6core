@@ -15,6 +15,7 @@
 #include "util/paramset.h"
 #include "shareduiitemdocumentmanager.h"
 #include <QtDebug>
+#include "modelview/genericshareduiitem.h"
 
 SharedUiItemsMatrixModel::SharedUiItemsMatrixModel(QObject *parent)
   : SharedUiItemsModel(parent) {
@@ -51,8 +52,16 @@ SharedUiItem SharedUiItemsMatrixModel::itemAt(const QModelIndex &index) const {
 }
 
 QModelIndex SharedUiItemsMatrixModel::indexOf(QString qualifiedId) const {
-  Q_UNUSED(qualifiedId)
-  // LATER implement a kind of search-for-first-matching-item-in-that-matrix
+  GenericSharedUiItem oldItem(qualifiedId);
+  for (int i = 0; i < _cells.size(); ++i) {
+    const QVector<ItemBinding> &row = _cells[i];
+    for (int j = 0; j < row.size(); ++j) {
+      const ItemBinding &binding = row[j];
+      if (binding._item == oldItem) {
+        return index(i, j);
+      }
+    }
+  }
   return QModelIndex();
 }
 

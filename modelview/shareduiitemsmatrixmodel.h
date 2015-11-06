@@ -41,6 +41,7 @@ public:
   int rowCount(const QModelIndex &parent = QModelIndex()) const;
   int columnCount(const QModelIndex &parent = QModelIndex()) const;
   SharedUiItem itemAt(const QModelIndex &index) const;
+  using SharedUiItemsModel::indexOf;
   QModelIndex indexOf(QString qualifiedId) const;
   void insertItemAt(SharedUiItem newItem, int row,
                     QModelIndex parent = QModelIndex());
