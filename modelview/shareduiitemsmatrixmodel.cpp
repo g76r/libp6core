@@ -225,7 +225,7 @@ Qt::ItemFlags SharedUiItemsMatrixModel::flags(const QModelIndex &index) const {
     flags |= Qt::ItemNeverHasChildren;
     const ItemBinding &binding = _cells[index.row()][index.column()];
     if (!binding._item.isNull())
-      flags |= Qt::ItemIsEnabled;
+      flags |= Qt::ItemIsEnabled | Qt::ItemIsSelectable;
     // LATER not sure checking _item.uiFlags() is needed
     if (binding._editableSection >= 0
         && binding._item.uiFlags(binding._editableSection) & Qt::ItemIsEditable)
