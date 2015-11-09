@@ -76,6 +76,7 @@ void SharedUiItemsMatrixModel::insertItemAt(
 
 void SharedUiItemsMatrixModel::changeItem(
     SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
+  Q_UNUSED(idQualifier)
   //qDebug() << "SharedUiItemsMatrixModel::changeItem" << newItem << oldItem
   //         << idQualifier;
   if (oldItem.isNull())

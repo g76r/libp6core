@@ -132,6 +132,7 @@ failed:;
 bool InMemoryDatabaseDocumentManager::insertItemInDatabase(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
     QString *errorString) {
+  Q_UNUSED(transaction)
   Q_ASSERT(errorString != 0);
   Creator creator = _creators.value(newItem.idQualifier());
   if (newItem.isNull() || !creator) {
