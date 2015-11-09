@@ -15,13 +15,6 @@
 #include <QtDebug>
 #include <QRegularExpression>
 
-static class SharedUiItemRegisterMetatype {
-public:
-  SharedUiItemRegisterMetatype() {
-    qRegisterMetaType<SharedUiItem>("SharedUiItem");
-  }
-} _registerMetatype;
-
 SharedUiItemData::~SharedUiItemData() {
 }
 

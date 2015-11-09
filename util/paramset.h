@@ -170,6 +170,7 @@ class ParamSetData;
 class LIBQTSSUSHARED_EXPORT ParamSet : public ParamsProvider {
   friend class ParamsProviderMerger;
   QSharedDataPointer<ParamSetData> d;
+
 public:
   ParamSet();
   ParamSet(const ParamSet &other);
@@ -329,6 +330,9 @@ private:
     return evaluate(rawValue(key, inherit), inherit, context, alreadyEvaluated);
   }
 };
+
+Q_DECLARE_METATYPE(ParamSet)
+Q_DECLARE_TYPEINFO(ParamSet, Q_MOVABLE_TYPE);
 
 QDebug LIBQTSSUSHARED_EXPORT operator<<(QDebug dbg, const ParamSet &params);
 

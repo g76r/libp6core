@@ -64,4 +64,6 @@ private:
   GenericSharedUiItemData *data();
 };
 
+Q_DECLARE_TYPEINFO(GenericSharedUiItem, Q_MOVABLE_TYPE);
+
 #endif // GENERICSHAREDUIITEM_H

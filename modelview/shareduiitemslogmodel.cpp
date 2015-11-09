@@ -51,6 +51,8 @@ public:
                      wrapped, QDateTime::currentDateTime())) { }
 };
 
+Q_DECLARE_TYPEINFO(SharedUiItemLogWrapper, Q_MOVABLE_TYPE);
+
 SharedUiItemsLogModel::SharedUiItemsLogModel(QObject *parent, int maxrows)
   : SharedUiItemsTableModel(parent), _timestampColumn(0) {
   setDefaultInsertionPoint(FirstItem);

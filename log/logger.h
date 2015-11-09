@@ -126,4 +126,6 @@ protected:
   virtual void doLog(const LogEntry entry) = 0;
 };
 
+Q_DECLARE_TYPEINFO(Logger::LogEntry, Q_MOVABLE_TYPE);
+
 #endif // LOGGER_H

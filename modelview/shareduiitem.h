@@ -158,7 +158,19 @@ protected:
  * - A subclass MUST NOT override comparison operators (==, <, etc.)
  * - A subclass MUST NOT access d in non-const methods since SharedUiItemData's
  *   copy constructor is not able to copy the real object.
- * - Often, a subclass SHOULD implement a detach() method, in such a way:
+ * - A subclass MUST be declared as Q_MOVABLE_TYPE, in such a way:
+ *     // in .h, after class definition
+ *     Q_DECLARE_TYPEINFO(Foobar, Q_MOVABLE_TYPE);
+ *   Otherwise, the application will crash, e.g. as soon as you store subclasses
+ *   in a QList<SharedUiItem>. This because SharedUiItem itself is declared
+ *   Q_MOVABLE_TYPE (which is the right thing to do anyway, since it actually
+ *   can be moved using memcpy()).
+ * - A subclass MAY also be declared as metatype e.g. if it is intended to be
+ *   sent through a signal, in such a way:
+ *     // in .h, after class definition
+ *     Q_DECLARE_METATYPE(SharedUiItem)
+ * - Often (when not immutable), a subclass SHOULD implement a detach() method,
+ *   in such a way:
  *     // in .h
  *     void detach();
  *     // in .cpp
@@ -356,6 +368,9 @@ protected:
    * @see SharedUiItemParamsProvider */
   inline SharedUiItemParamsProvider toParamsProvider() const;
 };
+
+Q_DECLARE_METATYPE(SharedUiItem)
+Q_DECLARE_TYPEINFO(SharedUiItem, Q_MOVABLE_TYPE);
 
 /** ParamsProvider wrapper for SharedUiItem.
  * Its paramValue() implementation returns uiData(key.toInt()).
