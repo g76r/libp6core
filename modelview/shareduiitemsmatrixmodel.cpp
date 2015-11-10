@@ -139,7 +139,9 @@ void SharedUiItemsMatrixModel::bindHeader(
                   "orientation:" << orientation;
     return;
   }
+  SharedUiItem oldItem = (*headers)[section]._item;
   (*headers)[section] = ItemBinding(item, formula);
+  emit headerBinded(section, orientation, item, oldItem, formula);
   emit headerDataChanged(orientation, section, section);
 }
 
@@ -158,8 +160,10 @@ void SharedUiItemsMatrixModel::bindCell(
     _columnsCount = qMax(_columnsCount, _cells[row].size());
     endInsertColumns();
   }
+  SharedUiItem oldItem = _cells[row][column]._item;
   _cells[row][column] = ItemBinding(item, formula, editableSection);
   QModelIndex i = index(row, column);
+  emit cellBinded(row, column, item, oldItem, formula, editableSection);
   emit dataChanged(i, i);
 }
 

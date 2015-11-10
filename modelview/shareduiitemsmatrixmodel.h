@@ -60,6 +60,14 @@ public:
                         int editableSection = -1);
   virtual void clearBindings();
 
+signals:
+  void headerBinded(int section, Qt::Orientation orientation,
+                    SharedUiItem newItem, SharedUiItem oldItem,
+                    QString newFormula);
+  void cellBinded(int row, int column, SharedUiItem newItem,
+                  SharedUiItem oldItem, QString newFormula,
+                  int newEditableSection);
+
 private:
   static inline QVariant evaluate(
       SharedUiItemsMatrixModel::ItemBinding binding, int role);
