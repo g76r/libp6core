@@ -60,6 +60,8 @@ class SharedUiItemParamsProvider;
  *   and setUiData() and setUiData() MUST handle Qt::EditRole and
  *   SharedUiItem::ExternalDataRole and MAY process any role as if it were
  *   Qt::EditRole (in other words: ignore role).
+ * - Subclasses MAY override operator< to provide a more natural order than
+ *   qualifiedId ascii order.
  * - There MUST NOT be several level of subclasses, i.e. you must not subclass
  *   SharedUiItemData subclasses.
  * @see SharedUiItem */
@@ -115,6 +117,18 @@ public:
   virtual bool setUiData(
       int section, const QVariant &value, QString *errorString,
       SharedUiItemDocumentTransaction *transaction, int role);
+  /** By default: compares identifers (idQualifier() then id()), not full
+   * content, therefore two versions of an object with same identifiers will
+   * have same order.
+   * Implementation can rely on SharedUiItem::operator< not calling
+   * SharedUiItemData::operator< with this == 0 or &other == 0. */
+  virtual bool operator<(const SharedUiItemData &other) const;
+  /** Calls operator<. Do not override. Override operator< instead. */
+  bool operator>(const SharedUiItemData &other) const { return other<*this; }
+  /** Calls operator<. Do not override. Override operator< instead. */
+  bool operator<=(const SharedUiItemData &other) const { return !(other<*this); }
+  /** Calls operator<. Do not override. Override operator< instead. */
+  bool operator>=(const SharedUiItemData &other) const { return !(*this<other); }
 
 protected:
   // both default and copy constructor are declared protected to avoid being
@@ -255,10 +269,8 @@ public:
   bool operator==(const SharedUiItem &other) const {
     return idQualifier() == other.idQualifier() && id() == other.id(); }
   bool operator!=(const SharedUiItem &other) const { return !(*this == other); }
-  /** Compares identifers (idQualifier() then id()), not full content, therefore
-   * two versions of an object with same identifiers will have same order. */
   bool operator<(const SharedUiItem &other) const {
-    return idQualifier() < other.idQualifier() || id() < other.id(); }
+    return other._data && (_data ? _data->operator<(*(other._data)) : true); }
   bool operator>(const SharedUiItem &other) const { return other<*this; }
   bool operator<=(const SharedUiItem &other) const { return !(other<*this); }
   bool operator>=(const SharedUiItem &other) const { return !(*this<other); }

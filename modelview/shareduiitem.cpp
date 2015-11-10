@@ -86,3 +86,7 @@ QVariant SharedUiItemParamsProvider::paramValue(
     return _item.qualifiedId();
   return defaultValue;
 }
+
+bool SharedUiItemData::operator<(const SharedUiItemData &other) const {
+  return idQualifier() < other.idQualifier() || id() < other.id();
+}
