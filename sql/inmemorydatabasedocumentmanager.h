@@ -59,6 +59,7 @@ public:
   InMemoryDatabaseDocumentManager(QObject *parent = 0);
   InMemoryDatabaseDocumentManager(QSqlDatabase db, QObject *parent = 0);
   bool setDatabase(QSqlDatabase db, QString *errorString = 0);
+  bool isDatabaseOpen() const { return _db.isOpen(); }
   /** As compared to base class, registerItemType also need section number to
    * be used to store item id (which is recommended to be 0). */
   bool registerItemType(QString idQualifier, Setter setter, Creator creator,
