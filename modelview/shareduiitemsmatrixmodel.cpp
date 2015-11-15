@@ -112,8 +112,8 @@ void SharedUiItemsMatrixModel::changeItem(
 }
 
 void SharedUiItemsMatrixModel::bindHeader(
-    int section, Qt::Orientation orientation,  SharedUiItem item,
-    QString formula) {
+    int section, Qt::Orientation orientation, SharedUiItem item,
+    QString display, QString tooltip) {
   QVector<ItemBinding> *headers;
   switch (orientation) {
   case Qt::Horizontal:
@@ -140,13 +140,13 @@ void SharedUiItemsMatrixModel::bindHeader(
     return;
   }
   SharedUiItem oldItem = (*headers)[section]._item;
-  (*headers)[section] = ItemBinding(item, formula);
-  emit headerBinded(section, orientation, item, oldItem, formula);
+  (*headers)[section] = ItemBinding(item, display, tooltip);
+  emit headerBinded(section, orientation, item, oldItem, display, tooltip);
   emit headerDataChanged(orientation, section, section);
 }
 
 void SharedUiItemsMatrixModel::bindCell(
-    int row, int column, SharedUiItem item, QString formula,
+    int row, int column, SharedUiItem item, QString display, QString tooltip,
     int editableSection) {
   if (_cells.size() < row+1) {
     beginInsertRows(QModelIndex(), _cells.size(), row);
@@ -161,9 +161,10 @@ void SharedUiItemsMatrixModel::bindCell(
     endInsertColumns();
   }
   SharedUiItem oldItem = _cells[row][column]._item;
-  _cells[row][column] = ItemBinding(item, formula, editableSection);
+  _cells[row][column] = ItemBinding(item, display, tooltip, editableSection);
   QModelIndex i = index(row, column);
-  emit cellBinded(row, column, item, oldItem, formula, editableSection);
+  emit cellBinded(row, column, item, oldItem, display, tooltip,
+                  editableSection);
   emit dataChanged(i, i);
 }
 
@@ -175,12 +176,17 @@ void SharedUiItemsMatrixModel::clearBindings() {
 }
 
 QVariant SharedUiItemsMatrixModel::evaluate(
-    SharedUiItemsMatrixModel::ItemBinding binding, int role) {
-  SharedUiItemParamsProvider pp(binding._item, role);
+    SharedUiItemsMatrixModel::ItemBinding binding, int role) const {
+  int evaluationRole = role;
+  if (_forceDisplayRoleWhenEvaluatingTooltips && role == Qt::ToolTipRole)
+    evaluationRole = Qt::DisplayRole;
+  SharedUiItemParamsProvider pp(binding._item, evaluationRole);
   switch(role) {
   case Qt::DisplayRole:
   case SharedUiItem::ExternalDataRole:
-    return ParamSet().evaluate(binding._formula, false, &pp);
+    return ParamSet().evaluate(binding._display, false, &pp);
+  case Qt::ToolTipRole:
+    return ParamSet().evaluate(binding._tooltip, false, &pp);
   case Qt::EditRole:
   case SharedUiItem::IdQualifierRole:
   case SharedUiItem::IdRole:
@@ -251,4 +257,12 @@ Qt::ItemFlags SharedUiItemsMatrixModel::flags(const QModelIndex &index) const {
 QHash<int, QByteArray> SharedUiItemsMatrixModel::roleNames() const {
   // shortcut SharedUiItemsModel's overriding
   return QAbstractItemModel::roleNames();
+}
+
+void SharedUiItemsMatrixModel::setHeaderDataFromTemplate(
+    SharedUiItem templateItem, int role) {
+  Q_UNUSED(templateItem)
+  Q_UNUSED(role)
+  qWarning() << "SharedUiItemsMatrixModel::setHeaderDataFromTemplate() called "
+                "whereas it's non-sense for a matrix model.";
 }

@@ -16,22 +16,31 @@
 
 #include "shareduiitemsmodel.h"
 
-// FIXME doc, incl. formulas
+/** Model holding SharedUiItems, one or zero item per table cell and header,
+ * with SharedUiItemParamsProvider-evaluated formulas (e.g. "%0 %1" to display
+ * section 0, a space, and section 1).
+ * @see SharedUiItemsModel
+ * @see SharedUiItemParamsProvider
+ */
 class LIBQTSSUSHARED_EXPORT SharedUiItemsMatrixModel
     : public SharedUiItemsModel {
   Q_OBJECT
   Q_DISABLE_COPY(SharedUiItemsMatrixModel)
   struct ItemBinding {
     SharedUiItem _item;
-    QString _formula;
+    QString _display, _tooltip;
     int _editableSection;
     ItemBinding(SharedUiItem item = SharedUiItem(),
-         QString formula = QStringLiteral("%id"), int editableSection = -1)
-      : _item(item), _formula(formula), _editableSection(editableSection) { }
+         QString display = QStringLiteral("%id"), QString tooltip = QString(),
+                int editableSection = -1)
+      : _item(item), _display(display),
+        _tooltip(tooltip.isNull() ? display : tooltip),
+        _editableSection(editableSection) { }
   };
   QVector<ItemBinding> _verticalHeaders, _horizontalHeaders;
   QVector<QVector<ItemBinding>> _cells;
   int _rowsCount = 0, _columnsCount = 0;
+  bool _forceDisplayRoleWhenEvaluatingTooltips = true; // LATER provide setter
 
 public:
   explicit SharedUiItemsMatrixModel(QObject *parent = 0);
@@ -52,25 +61,29 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
   Qt::ItemFlags flags(const QModelIndex &index) const;
   QHash<int, QByteArray> roleNames() const;
-  // FIXME void setHeaderDataFromTemplate(SharedUiItem templateItem, int role) = delete;
   virtual void bindHeader(int section, Qt::Orientation orientation,
-                          SharedUiItem item, QString formula);
+                          SharedUiItem item,
+                          QString display = QStringLiteral("%id"),
+                          QString tooltip = QString());
   virtual void bindCell(int row, int column, SharedUiItem item,
-                        QString formula = QStringLiteral("%id"),
+                        QString display = QStringLiteral("%id"),
+                        QString tooltip = QString(),
                         int editableSection = -1);
   virtual void clearBindings();
 
 signals:
   void headerBinded(int section, Qt::Orientation orientation,
                     SharedUiItem newItem, SharedUiItem oldItem,
-                    QString newFormula);
+                    QString newDisplay, QString newTooltip);
   void cellBinded(int row, int column, SharedUiItem newItem,
-                  SharedUiItem oldItem, QString newFormula,
+                  SharedUiItem oldItem, QString newDisplay, QString newTooltip,
                   int newEditableSection);
 
 private:
-  static inline QVariant evaluate(
-      SharedUiItemsMatrixModel::ItemBinding binding, int role);
+  inline QVariant evaluate(
+      SharedUiItemsMatrixModel::ItemBinding binding, int role) const;
+  /** setHeaderDataFromTemplate() is non-sense for a matrix model. */
+  void setHeaderDataFromTemplate(SharedUiItem templateItem, int role);
 };
 
 #endif // SHAREDUIITEMSMATRIXMODEL_H
