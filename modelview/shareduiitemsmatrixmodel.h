@@ -57,7 +57,8 @@ public:
   void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
                   QString idQualifier);
   QVariant data(const QModelIndex &index, int role) const;
-  bool setData(const QModelIndex &index, const QVariant &value, int role);
+  bool setData(const QModelIndex &index, const QVariant &value,
+               int role = Qt::EditRole);
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
   Qt::ItemFlags flags(const QModelIndex &index) const;
   QHash<int, QByteArray> roleNames() const;
