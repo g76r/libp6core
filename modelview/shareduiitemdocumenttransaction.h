@@ -57,7 +57,12 @@ public:
     T *dummy;
     Q_UNUSED(static_cast<SharedUiItem*>(dummy)); // ensure T is a SharedUiItem
     SharedUiItemList<> list = itemsByIdQualifier(idQualifier);
-    return reinterpret_cast<SharedUiItemList<T>&>(list);
+    union { // against "dereferencing type-punned pointer will break strict-aliasing rules" warning
+      SharedUiItemList<SharedUiItem> *generic;
+      SharedUiItemList<T> *specialized;
+    } pointer_alias_friendly_union;
+    pointer_alias_friendly_union.generic = &list;
+    return *pointer_alias_friendly_union.specialized;
   }
   SharedUiItemList<> foreignKeySources(
       QString sourceQualifier, int sourceSection, QString referenceId) const;

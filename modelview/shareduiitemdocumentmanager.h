@@ -195,7 +195,12 @@ public:
       //              "inconsistent types and qualifier";
       return SharedUiItemList<T>();
     }
-    return *reinterpret_cast<SharedUiItemList<T>*>(&list);
+    union { // against "dereferencing type-punned pointer will break strict-aliasing rules" warning
+      SharedUiItemList<SharedUiItem> *generic;
+      SharedUiItemList<T> *specialized;
+    } pointer_alias_friendly_union;
+    pointer_alias_friendly_union.generic = &list;
+    return *pointer_alias_friendly_union.specialized;
   }
   /** Change items order.
    *
