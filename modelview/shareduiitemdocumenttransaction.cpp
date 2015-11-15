@@ -16,7 +16,9 @@
 
 void SharedUiItemDocumentTransaction::storeItemChange(
     SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
-  new ChangeItemCommand(_dm, newItem, oldItem, idQualifier, this);
+  ChangeItemCommand *command =
+      new ChangeItemCommand(_dm, newItem, oldItem, idQualifier, this);
+  setText(childCount() == 1 ? command->text() : text()+" and other changes");
   QString oldId = oldItem.id(), newId = newItem.id();
   QHash<QString,SharedUiItem> &changingItems = _changingItems[idQualifier];
   if (!oldItem.isNull() && !changingItems.contains(oldId))
@@ -150,20 +152,20 @@ SharedUiItemDocumentTransaction::ChangeItemCommand::ChangeItemCommand(
     QString idQualifier, CoreUndoCommand *parent)
   : CoreUndoCommand(parent), _dm(dm), _newItem(newItem), _oldItem(oldItem),
     _idQualifier(idQualifier)  {
-  //qDebug() << "ChangeItemCommand::ChangeItemCommand()" << parent;
-  // LATER: compose a textual description of command and call setText
+  if (newItem.isNull())
+    setText("Deleting a "+oldItem.idQualifier());
+  else if (oldItem.isNull())
+    setText("Creating a "+newItem.idQualifier());
+  else
+    setText("Changing a "+oldItem.idQualifier());
 }
 
 void SharedUiItemDocumentTransaction::ChangeItemCommand::redo() {
-  //qDebug() << "SharedUiItemDocumentManager::ChangeItemCommand::redo()"
-  //         << _dm << _ignoreFirstRedo << _newItem << _oldItem;
   if (_dm)
     _dm->commitChangeItem(_newItem, _oldItem, _idQualifier);
 }
 
 void SharedUiItemDocumentTransaction::ChangeItemCommand::undo() {
-  //qDebug() << "SharedUiItemDocumentManager::ChangeItemCommand::undo()"
-  //         << _dm << _newItem << _oldItem;
   if (_dm)
     _dm->commitChangeItem(_oldItem, _newItem, _idQualifier);
 }
