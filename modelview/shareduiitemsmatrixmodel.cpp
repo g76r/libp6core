@@ -169,10 +169,13 @@ void SharedUiItemsMatrixModel::bindCell(
 }
 
 void SharedUiItemsMatrixModel::clearBindings() {
+  // TODO method name is misleading
+  beginResetModel();
   _cells.clear();
   _horizontalHeaders.clear();
   _verticalHeaders.clear();
   _rowsCount = _columnsCount = 0;
+  endResetModel();
 }
 
 QVariant SharedUiItemsMatrixModel::evaluate(
