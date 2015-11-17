@@ -166,6 +166,19 @@ class ParamSetData;
  * %{=htmlencode:1 < 2} -> 1 &lt; 2
  * %{=htmlencode:http://wwww.google.com/} -> <a href="http://wwww.google.com/">http://wwww.google.com/</a>
  * %{=htmlencode http://wwww.google.com/} -> same
+ *
+ * %=elideright function: %{=elideright:input:length[:placeholder]}
+ *
+ * input is the data to transform, it is evaluated (%foo become the content of
+ *   foo param)
+ * length is the number of character to keep from the input, if negative or
+ *   invalid or smaller than placeholder, the whole input is kept
+ * placeholder is the string replacing removed characters, by default "..."
+ *
+ * examples:
+ * %{=elideright:%foo:40}
+ * %{=elideright:Hello World !:10} -> Hello W...
+ * %{=elideright:Hello World !:10:(...)} -> Hello(...)
  */
 class LIBQTSSUSHARED_EXPORT ParamSet : public ParamsProvider {
   friend class ParamsProviderMerger;

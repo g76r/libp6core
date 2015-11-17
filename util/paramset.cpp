@@ -104,6 +104,7 @@ QString ParamSet::evaluate(
 }
 
 // LATER add functions: %=ifgt %=ifgte %=iflt %=iflte
+// LATER optimize (avoid tons of startsWith())
 QString ParamSet::evaluateImplicitVariable(
     QString key, bool inherit, const ParamsProvider *context,
     QSet<QString> alreadyEvaluated) const {
@@ -240,14 +241,14 @@ QString ParamSet::evaluateImplicitVariable(
                                alreadyEvaluated);
       bool ok;
       int i = params.value(1).toInt(&ok);
-      return ok ? input.left(i) : QString();
+      return ok ? input.left(i) : input;
     } else if (key.startsWith("=right")) {
       CharacterSeparatedExpression params(key, 6);
       QString input = evaluate(params.value(0), inherit, context,
                                alreadyEvaluated);
       bool ok;
       int i = params.value(1).toInt(&ok);
-      return ok ? input.right(i) : QString();
+      return ok ? input.right(i) : input;
     } else if (key.startsWith("=mid")) {
       CharacterSeparatedExpression params(key, 4);
       QString input = evaluate(params.value(0), inherit, context,
@@ -258,7 +259,37 @@ QString ParamSet::evaluateImplicitVariable(
         int j = params.value(2).toInt(&ok);
         return input.mid(i, ok ? j : -1);
       }
-      return QString();
+      return input;
+    } else if (key.startsWith("=elideright")) {
+      CharacterSeparatedExpression params(key, 11);
+      QString input = evaluate(params.value(0), inherit, context,
+                               alreadyEvaluated);
+      bool ok;
+      int i = params.value(1).toInt(&ok);
+      QString placeHolder = params.value(2, QStringLiteral("..."));
+      if (!ok || placeHolder.size() > i || input.size() <= i)
+        return input;
+      return input.left(i-placeHolder.size())+placeHolder;
+    } else if (key.startsWith("=elideleft")) {
+      CharacterSeparatedExpression params(key, 10);
+      QString input = evaluate(params.value(0), inherit, context,
+                               alreadyEvaluated);
+      bool ok;
+      int i = params.value(1).toInt(&ok);
+      QString placeHolder = params.value(2, QStringLiteral("..."));
+      if (!ok || placeHolder.size() > i || input.size() <= i)
+        return input;
+      return placeHolder+input.right(i-placeHolder.size());
+    } else if (key.startsWith("=elidemiddle")) {
+      CharacterSeparatedExpression params(key, 12);
+      QString input = evaluate(params.value(0), inherit, context,
+                               alreadyEvaluated);
+      bool ok;
+      int i = params.value(1).toInt(&ok);
+      QString placeHolder = params.value(2, QStringLiteral("..."));
+      if (!ok || placeHolder.size() > i || input.size() <= i)
+        return input;
+      return input.left(i/2-placeHolder.size())+placeHolder+input.right(i-i/2);
     } else if (key.startsWith("=htmlencode")) {
       // LATER provide more options such as encoding <br> or links, through e.g. and =htmlencodeext function
       QString input = evaluate(key.mid(12), inherit, context, alreadyEvaluated);
