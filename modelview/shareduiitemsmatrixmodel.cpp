@@ -17,6 +17,8 @@
 #include <QtDebug>
 #include "modelview/genericshareduiitem.h"
 
+SharedUiItemsMatrixModel::ItemBinding SharedUiItemsMatrixModel::nullBinding;
+
 SharedUiItemsMatrixModel::SharedUiItemsMatrixModel(QObject *parent)
   : SharedUiItemsModel(parent) {
 }
@@ -43,12 +45,17 @@ int SharedUiItemsMatrixModel::columnCount(const QModelIndex &parent) const {
 }
 
 SharedUiItem SharedUiItemsMatrixModel::itemAt(const QModelIndex &index) const {
+  return cellBindingAt(index)._item;
+}
+
+const SharedUiItemsMatrixModel::ItemBinding &
+SharedUiItemsMatrixModel::cellBindingAt(const QModelIndex &index) const {
   if (index.isValid() && !index.parent().isValid()
       && index.row() >= 0 && index.row() < _cells.size()
       && index.column() >= 0 && index.column() < _cells[index.row()].size()) {
-    return _cells[index.row()][index.column()]._item;
+    return _cells[index.row()][index.column()];
   }
-  return SharedUiItem();
+  return nullBinding;
 }
 
 QModelIndex SharedUiItemsMatrixModel::indexOf(QString qualifiedId) const {

@@ -26,21 +26,26 @@ class LIBQTSSUSHARED_EXPORT SharedUiItemsMatrixModel
     : public SharedUiItemsModel {
   Q_OBJECT
   Q_DISABLE_COPY(SharedUiItemsMatrixModel)
+
+protected:
   struct ItemBinding {
     SharedUiItem _item;
     QString _display, _tooltip;
     int _editableSection;
     ItemBinding(SharedUiItem item = SharedUiItem(),
-         QString display = QStringLiteral("%id"), QString tooltip = QString(),
+         QString display = QString(), QString tooltip = QString(),
                 int editableSection = -1)
       : _item(item), _display(display),
         _tooltip(tooltip.isNull() ? display : tooltip),
         _editableSection(editableSection) { }
   };
+
+private:
   QVector<ItemBinding> _verticalHeaders, _horizontalHeaders;
   QVector<QVector<ItemBinding>> _cells;
   int _rowsCount = 0, _columnsCount = 0;
   bool _forceDisplayRoleWhenEvaluatingTooltips = true; // LATER provide setter
+  static ItemBinding nullBinding;
 
 public:
   explicit SharedUiItemsMatrixModel(QObject *parent = 0);
@@ -79,6 +84,9 @@ signals:
   void cellBinded(int row, int column, SharedUiItem newItem,
                   SharedUiItem oldItem, QString newDisplay, QString newTooltip,
                   int newEditableSection);
+
+protected:
+  const ItemBinding &cellBindingAt(const QModelIndex &index) const;
 
 private:
   inline QVariant evaluate(
