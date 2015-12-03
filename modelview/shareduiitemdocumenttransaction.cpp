@@ -18,7 +18,14 @@ void SharedUiItemDocumentTransaction::storeItemChange(
     SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
   ChangeItemCommand *command =
       new ChangeItemCommand(_dm, newItem, oldItem, idQualifier, this);
-  setText(childCount() == 1 ? command->text() : text()+" and other changes");
+  switch (childCount()) {
+  case 1:
+    setText(command->text());
+    break;
+  case 2:
+    setText(text()+" and other changes");
+    break;
+  }
   QString oldId = oldItem.id(), newId = newItem.id();
   QHash<QString,SharedUiItem> &changingItems = _changingItems[idQualifier];
   if (!oldItem.isNull() && !changingItems.contains(oldId))
