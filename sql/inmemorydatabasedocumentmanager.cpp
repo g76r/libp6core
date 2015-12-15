@@ -224,6 +224,7 @@ bool InMemoryDatabaseDocumentManager::createTableAndSelectData(
           +query.lastError().text();
       return false;
     }
+    // TODO create unique index if not exists mytable_pk on mytable(idcolumn)
   }
   // TODO alter table, if needed, @see QSqlDatabase::record()
   /*
