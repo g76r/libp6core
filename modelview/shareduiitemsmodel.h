@@ -213,6 +213,14 @@ public:
   bool isValid() const { return _realModel; }
   QModelIndex mapFromReal(QModelIndex realIndex) const;
   QModelIndex mapToReal(QModelIndex apparentIndex) const;
+  QVariant data(const QModelIndex &apparentIndex,
+                int role = Qt::DisplayRole) const {
+    if (!_realModel)
+      return QVariant();
+    if (_proxies.isEmpty())
+      return _realModel->data(apparentIndex, role);
+    return _realModel->data(mapToReal(apparentIndex), role);
+  }
   QModelIndex indexOf(SharedUiItem item) const {
     return _realModel ? mapFromReal(_realModel->indexOf(item))
                       : QModelIndex(); }
