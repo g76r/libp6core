@@ -220,7 +220,7 @@ bool InMemoryDatabaseDocumentManager::createTableAndSelectData(
     q += " )";
     query.exec(q);
     if (query.lastError().type() != QSqlError::NoError) {
-      *errorString = "database error: cannot create table: "+idQualifier
+      *errorString = "database error: cannot create table: "+idQualifier+": "
           +query.lastError().text();
       return false;
     }
