@@ -96,7 +96,9 @@ SOURCES += \
     sql/inmemorydatabasedocumentmanager.cpp \
     util/coreundocommand.cpp \
     modelview/shareduiitemdocumenttransaction.cpp \
-    modelview/shareduiitemsmatrixmodel.cpp
+    modelview/shareduiitemsmatrixmodel.cpp \
+    ftp/ftpclient.cpp \
+    ftp/ftpscript.cpp
 
 
 HEADERS +=\
@@ -168,7 +170,9 @@ HEADERS +=\
     modelview/inmemoryshareduiitemdocumentmanager.h \
     util/coreundocommand.h \
     modelview/shareduiitemdocumenttransaction.h \
-    modelview/shareduiitemsmatrixmodel.h
+    modelview/shareduiitemsmatrixmodel.h \
+    ftp/ftpclient.h \
+    ftp/ftpscript.h
 
 unix {
     target.path = /usr/lib
