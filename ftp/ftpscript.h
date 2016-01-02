@@ -36,12 +36,23 @@ public:
   ~FtpScript();
   FtpScript &operator=(const FtpScript &);
   FtpClient *client() const;
-  int id() const;
+  //int id() const;
+  // LATER int lastResultCode() const
   bool execAndWait(int msecs = DefaultTimeout);
   FtpScript &clearCommands();
   FtpScript &connectToHost(QString host, quint16 port = 21);
   FtpScript &login(QString login, QString password);
   FtpScript &cd(QString path);
+  FtpScript &mkdir(QString path);
+  FtpScript &mkdirIgnoringFailure(QString path);
+  FtpScript &rmdir(QString path);
+  FtpScript &rmdirIgnoringFailure(QString path);
+  FtpScript &rm(QString path);
+  FtpScript &rmIgnoringFailure(QString path);
+  FtpScript &ls(QStringList *basenames, QString path = ".");
+  // LATER lsLong(QList<FtpFileInfo>*, path)
+  // FtpFileInfo: { QString basename, QString path, QDateTime mtime, qint64 size }
+  // using NLST, PWD or memorized pwd from last login() or cd(), MDTM, SIZE
   FtpScript &get(QString path, QIODevice *dest);
   FtpScript &get(QString path, QByteArray *dest);
   FtpScript &put(QString path, QIODevice *source);

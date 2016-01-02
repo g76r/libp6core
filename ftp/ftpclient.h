@@ -18,7 +18,14 @@
 #include <QTcpSocket>
 #include "ftpscript.h"
 
-// FIXME doc
+/** One thread, event-driven FTP client executing one or several operation in
+ * a fail-at-first-error script-style fashion.
+ *
+ * Works only with common modern FTP dialect (only passive transfer, only binary
+ * file encoding) but does not need any FTP extension (does not use e.g. EPSV).
+ *
+ * Should work nicely over IPv6 although not yet tested.
+ */
 class LIBQTSSUSHARED_EXPORT FtpClient : public QObject {
   friend class FtpScript;
   friend class FtpScriptData;
@@ -26,7 +33,8 @@ class LIBQTSSUSHARED_EXPORT FtpClient : public QObject {
 
 public:
   enum FtpError { NoError, Error };
-  enum TransferState { NoTransfer, Download, Upload, TransferSucceeded, TransferFailed };
+  enum TransferState { NoTransfer, Download, Upload, TransferSucceeded,
+                       TransferFailed };
 
 private:
   Q_DISABLE_COPY(FtpClient)
@@ -46,7 +54,54 @@ public:
                      int msecs = FtpScript::DefaultTimeout) {
     return script().connectToHost(host, port).execAndWait(msecs);
   }
-  // FIXME wrap other script commands
+  bool login(QString login, QString password,
+             int msecs = FtpScript::DefaultTimeout) {
+    return script().login(login, password).execAndWait(msecs);
+  }
+  bool cd(QString path, int msecs = FtpScript::DefaultTimeout) {
+    return script().cd(path).execAndWait(msecs);
+  }
+  bool mkdir(QString path, int msecs = FtpScript::DefaultTimeout) {
+    return script().mkdir(path).execAndWait(msecs);
+  }
+  bool mkdirIgnoringFailure(QString path,
+                            int msecs = FtpScript::DefaultTimeout) {
+    return script().mkdirIgnoringFailure(path).execAndWait(msecs);
+  }
+  bool rmdir(QString path, int msecs = FtpScript::DefaultTimeout) {
+    return script().rmdir(path).execAndWait(msecs);
+  }
+  bool rmdirIgnoringFailure(QString path,
+                            int msecs = FtpScript::DefaultTimeout) {
+    return script().rmdirIgnoringFailure(path).execAndWait(msecs);
+  }
+  bool rm(QString path, int msecs = FtpScript::DefaultTimeout) {
+    return script().rm(path).execAndWait(msecs);
+  }
+  bool rmIgnoringFailure(QString path, int msecs = FtpScript::DefaultTimeout) {
+    return script().rmIgnoringFailure(path).execAndWait(msecs);
+  }
+  bool ls(QStringList *basenames, QString path = ".",
+          int msecs = FtpScript::DefaultTimeout) {
+    return script().ls(basenames, path).execAndWait(msecs);
+  }
+  // LATER lsLong(QList<FtpFileInfo>*, path)
+  bool get(QString path, QIODevice *dest,
+           int msecs = FtpScript::DefaultTimeout) {
+    return script().get(path, dest).execAndWait(msecs);
+  }
+  bool get(QString path, QByteArray *dest,
+           int msecs = FtpScript::DefaultTimeout) {
+    return script().get(path, dest).execAndWait(msecs);
+  }
+  bool put(QString path, QIODevice *source,
+           int msecs = FtpScript::DefaultTimeout) {
+    return script().put(path, source).execAndWait(msecs);
+  }
+  bool put(QString path, QByteArray source,
+           int msecs = FtpScript::DefaultTimeout) {
+    return script().put(path, source).execAndWait(msecs);
+  }
 
 signals:
   void connected();
