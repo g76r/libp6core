@@ -137,15 +137,15 @@ struct FtpScriptData : public QSharedData {
   }
   bool nlstTransferIsFinished(
       bool *success, QString *errorString, int resultCode, QString result,
-      QBuffer *buffer, QStringList *basenames) {
+      QBuffer *buffer, QStringList *relativePaths) {
     Q_ASSERT(buffer);
-    Q_ASSERT(basenames);
+    Q_ASSERT(relativePaths);
     bool finished = transferIsFinished(success, errorString, resultCode,
                                        result);
     // TODO what if the command is destoyed before finished ?
     // e.g. after abort or by destroying the script before execution
     if (finished) {
-      *basenames = QString::fromUtf8(buffer->data())
+      *relativePaths = QString::fromUtf8(buffer->data())
           .split(_newlineRe, QString::SkipEmptyParts);
       delete buffer;
     }
@@ -394,18 +394,18 @@ FtpScript &FtpScript::rmIgnoringFailure(QString path) {
   return *this;
 }
 
-FtpScript &FtpScript::ls(QStringList *basenames, QString path) {
+FtpScript &FtpScript::ls(QStringList *relativePaths, QString path) {
   FtpScriptData *d = _data;
   if (d) {
     d->_commands.append(FtpCommand([]{},
     std::bind(&FtpScriptData::pasvIsFinished, d, _1, _2, _3, _4), "PASV"));
     QBuffer *buf = new QBuffer(d->_client);
     buf->open(QIODevice::WriteOnly);
-    d->_commands.append(FtpCommand([d, buf, basenames]() {
+    d->_commands.append(FtpCommand([d, buf, relativePaths]() {
       d->_client->download(d->_pasvPort, buf);
     },
     std::bind(&FtpScriptData::nlstTransferIsFinished, d, _1, _2, _3, _4, buf,
-              basenames),
+              relativePaths),
     "NLST "+path));
   }
   return *this;

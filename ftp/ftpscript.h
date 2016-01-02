@@ -49,9 +49,9 @@ public:
   FtpScript &rmdirIgnoringFailure(QString path);
   FtpScript &rm(QString path);
   FtpScript &rmIgnoringFailure(QString path);
-  FtpScript &ls(QStringList *basenames, QString path = ".");
+  FtpScript &ls(QStringList *relativePaths, QString path = ".");
   // LATER lsLong(QList<FtpFileInfo>*, path)
-  // FtpFileInfo: { QString basename, QString path, QDateTime mtime, qint64 size }
+  // FtpFileInfo: { QString relativePath, QString absolutePath, QDateTime mtime, qint64 size }
   // using NLST, PWD or memorized pwd from last login() or cd(), MDTM, SIZE
   FtpScript &get(QString path, QIODevice *dest);
   FtpScript &get(QString path, QByteArray *dest);

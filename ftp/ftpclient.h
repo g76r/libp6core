@@ -81,9 +81,9 @@ public:
   bool rmIgnoringFailure(QString path, int msecs = FtpScript::DefaultTimeout) {
     return script().rmIgnoringFailure(path).execAndWait(msecs);
   }
-  bool ls(QStringList *basenames, QString path = ".",
+  bool ls(QStringList *relativePaths, QString path = ".",
           int msecs = FtpScript::DefaultTimeout) {
-    return script().ls(basenames, path).execAndWait(msecs);
+    return script().ls(relativePaths, path).execAndWait(msecs);
   }
   // LATER lsLong(QList<FtpFileInfo>*, path)
   bool get(QString path, QIODevice *dest,
