@@ -20,13 +20,14 @@
 #include <QElapsedTimer>
 #include <QCoreApplication>
 #include <unistd.h>
+#include <QBuffer>
 
 using namespace std::placeholders;
 
 #define FTP_WAIT_DURATION_MILLIS 1
 
 static QAtomicInt _sequence(1);
-static QRegularExpression _pasvResultRe(",(\\d+),(\\d+)\\)$");
+static QRegularExpression _pasvResultRe("\\(.*,(\\d+),(\\d+)\\)");
 static QRegularExpression _resultCodeRe("^(\\d+) ");
 
 struct FtpCommand {
@@ -91,8 +92,11 @@ struct FtpScriptData : public QSharedData {
     Q_UNUSED(errorString)
     Q_ASSERT(success);
     QRegularExpressionMatch match = _pasvResultRe.match(result);
-    if (resultCode != 227 || !match.hasMatch())
+    if (resultCode != 227 || !match.hasMatch()) {
       *success = false;
+      return true;
+    }
+    *success = true;
     _pasvPort = match.captured(1).toInt()*256+match.captured(2).toInt();
     return true;
   }
@@ -116,6 +120,17 @@ struct FtpScriptData : public QSharedData {
     default:
       return false;
     }
+  }
+  bool memoryTransferIsFinished(
+      bool *success, QString *errorString, int resultCode, QString result,
+      QBuffer *buffer) {
+    bool finished = transferIsFinished(success, errorString, resultCode,
+                                       result);
+    // TODO what if the command is destoyed before finished ?
+    // e.g. after abort or by destroying the script before execution
+    if (finished)
+      delete buffer;
+    return finished;
   }
 };
 
@@ -189,6 +204,16 @@ bool FtpScript::execAndWait(int msecs) {
       QByteArray buf = d->_client->_controlSocket->readAll();
       result += QString::fromUtf8(buf);
       //qDebug() << "    temporary result" << result << buf;
+      while (result.startsWith('1')) {
+        // skip intermidiary 1xx status lines to keep only final status
+        // e.g. RETR is answered smth like "1xx transfer begin\r\n2xx ok\r\n"
+        int i = result.indexOf('\n');
+        if (i > 0) {
+          qDebug() << "    skipping intermediary status : "
+                   << result.left(i).trimmed();
+          result = result.mid(i+1);
+        }
+      }
       if (result.endsWith('\n'))
         break;
       if (timer.hasExpired(msecs))
@@ -309,3 +334,49 @@ FtpScript &FtpScript::get(QString path, QIODevice *dest) {
   return *this;
 }
 
+FtpScript &FtpScript::get(QString path, QByteArray *dest) {
+  FtpScriptData *d = _data;
+  if (d) {
+    d->_commands.append(FtpCommand([]{},
+    std::bind(&FtpScriptData::pasvIsFinished, d, _1, _2, _3, _4), "PASV"));
+    QBuffer *buf = new QBuffer(dest, d->_client);
+    buf->open(QIODevice::WriteOnly);
+    d->_commands.append(FtpCommand([d, buf]() {
+      d->_client->download(d->_pasvPort, buf);
+    },
+    std::bind(&FtpScriptData::memoryTransferIsFinished, d, _1, _2, _3, _4, buf),
+    "RETR "+path));
+  }
+  return *this;
+}
+
+FtpScript &FtpScript::put(QString path, QIODevice *source) {
+  FtpScriptData *d = _data;
+  if (d) {
+    d->_commands.append(FtpCommand([]{},
+    std::bind(&FtpScriptData::pasvIsFinished, d, _1, _2, _3, _4), "PASV"));
+    d->_commands.append(FtpCommand([d, source]() {
+      d->_client->upload(d->_pasvPort, source);
+    },
+    std::bind(&FtpScriptData::transferIsFinished, d, _1, _2, _3, _4),
+    "STOR "+path));
+  }
+  return *this;
+}
+
+FtpScript &FtpScript::put(QString path, QByteArray source) {
+  FtpScriptData *d = _data;
+  if (d) {
+    d->_commands.append(FtpCommand([]{},
+    std::bind(&FtpScriptData::pasvIsFinished, d, _1, _2, _3, _4), "PASV"));
+    QBuffer *buf = new QBuffer(d->_client);
+    buf->setData(source);
+    buf->open(QIODevice::ReadOnly);
+    d->_commands.append(FtpCommand([d, buf]() {
+      d->_client->upload(d->_pasvPort, buf);
+    },
+    std::bind(&FtpScriptData::memoryTransferIsFinished, d, _1, _2, _3, _4, buf),
+    "RETR "+path));
+  }
+  return *this;
+}

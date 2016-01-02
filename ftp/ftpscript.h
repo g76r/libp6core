@@ -43,6 +43,9 @@ public:
   FtpScript &login(QString login, QString password);
   FtpScript &cd(QString path);
   FtpScript &get(QString path, QIODevice *dest);
+  FtpScript &get(QString path, QByteArray *dest);
+  FtpScript &put(QString path, QIODevice *source);
+  FtpScript &put(QString path, QByteArray source);
 };
 
 #endif // FTPSCRIPT_H
