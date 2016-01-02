@@ -55,8 +55,16 @@ public:
   // using NLST, PWD or memorized pwd from last login() or cd(), MDTM, SIZE
   FtpScript &get(QString path, QIODevice *dest);
   FtpScript &get(QString path, QByteArray *dest);
+  FtpScript &get(QString path, QString localPath);
+  FtpScript &get(QString path, const char *localPath) {
+    return get(path, QString(localPath));
+  }
   FtpScript &put(QString path, QIODevice *source);
   FtpScript &put(QString path, QByteArray source);
+  FtpScript &put(QString path, QString localPath);
+  FtpScript &put(QString path, const char *localPath) {
+    return put(path, QString(localPath));
+  }
 };
 
 #endif // FTPSCRIPT_H

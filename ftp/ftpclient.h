@@ -94,6 +94,14 @@ public:
            int msecs = FtpScript::DefaultTimeout) {
     return script().get(path, dest).execAndWait(msecs);
   }
+  bool get(QString path, QString localPath,
+           int msecs = FtpScript::DefaultTimeout) {
+    return script().get(path, localPath).execAndWait(msecs);
+  }
+  bool get(QString path, const char *localPath,
+           int msecs = FtpScript::DefaultTimeout) {
+    return script().get(path, localPath).execAndWait(msecs);
+  }
   bool put(QString path, QIODevice *source,
            int msecs = FtpScript::DefaultTimeout) {
     return script().put(path, source).execAndWait(msecs);
@@ -101,6 +109,14 @@ public:
   bool put(QString path, QByteArray source,
            int msecs = FtpScript::DefaultTimeout) {
     return script().put(path, source).execAndWait(msecs);
+  }
+  bool put(QString path, QString localPath,
+           int msecs = FtpScript::DefaultTimeout) {
+    return script().put(path, localPath).execAndWait(msecs);
+  }
+  bool put(QString path, const char *localPath,
+           int msecs = FtpScript::DefaultTimeout) {
+    return script().put(path, localPath).execAndWait(msecs);
   }
 
 signals:

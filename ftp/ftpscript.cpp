@@ -21,6 +21,7 @@
 #include <QCoreApplication>
 #include <unistd.h>
 #include <QBuffer>
+#include <QFile>
 
 using namespace std::placeholders;
 
@@ -124,14 +125,14 @@ struct FtpScriptData : public QSharedData {
   }
   bool memoryTransferIsFinished(
       bool *success, QString *errorString, int resultCode, QString result,
-      QBuffer *buffer) {
-    Q_ASSERT(buffer);
+      QIODevice *localDevice) {
+    Q_ASSERT(localDevice);
     bool finished = transferIsFinished(success, errorString, resultCode,
                                        result);
     // TODO what if the command is destoyed before finished ?
     // e.g. after abort or by destroying the script before execution
     if (finished)
-      delete buffer;
+      delete localDevice;
     return finished;
   }
   bool nlstTransferIsFinished(
@@ -440,6 +441,24 @@ FtpScript &FtpScript::get(QString path, QByteArray *dest) {
   return *this;
 }
 
+FtpScript &FtpScript::get(QString path, QString localPath) {
+  FtpScriptData *d = _data;
+  if (d) {
+    d->_commands.append(FtpCommand([]{},
+    std::bind(&FtpScriptData::pasvIsFinished, d, _1, _2, _3, _4), "PASV"));
+    QFile *file = new QFile(localPath);
+    // LATER create and truncate only when download start
+    file->open(QIODevice::WriteOnly|QIODevice::Truncate);
+    d->_commands.append(FtpCommand([d, file]() {
+      d->_client->download(d->_pasvPort, file);
+    },
+    std::bind(&FtpScriptData::memoryTransferIsFinished, d, _1, _2, _3, _4,
+              file),
+    "RETR "+path));
+  }
+  return *this;
+}
+
 FtpScript &FtpScript::put(QString path, QIODevice *source) {
   FtpScriptData *d = _data;
   if (d) {
@@ -466,7 +485,24 @@ FtpScript &FtpScript::put(QString path, QByteArray source) {
       d->_client->upload(d->_pasvPort, buf);
     },
     std::bind(&FtpScriptData::memoryTransferIsFinished, d, _1, _2, _3, _4, buf),
-    "RETR "+path));
+    "STOR "+path));
+  }
+  return *this;
+}
+
+FtpScript &FtpScript::put(QString path, QString localPath) {
+  FtpScriptData *d = _data;
+  if (d) {
+    d->_commands.append(FtpCommand([]{},
+    std::bind(&FtpScriptData::pasvIsFinished, d, _1, _2, _3, _4), "PASV"));
+    QFile *file = new QFile(localPath);
+    file->open(QIODevice::ReadOnly);
+    d->_commands.append(FtpCommand([d, file]() {
+      d->_client->upload(d->_pasvPort, file);
+    },
+    std::bind(&FtpScriptData::memoryTransferIsFinished, d, _1, _2, _3, _4,
+              file),
+    "STOR "+path));
   }
   return *this;
 }
