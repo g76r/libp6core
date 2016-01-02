@@ -18,8 +18,12 @@
 #include <QAtomicInt>
 #include <QRegularExpression>
 #include <QElapsedTimer>
+#include <QCoreApplication>
+#include <unistd.h>
 
 using namespace std::placeholders;
+
+#define FTP_WAIT_DURATION_MILLIS 1
 
 static QAtomicInt _sequence(1);
 static QRegularExpression _pasvResultRe(",(\\d+),(\\d+)\\)$");
@@ -28,11 +32,11 @@ static QRegularExpression _resultCodeRe("^(\\d+) ");
 struct FtpCommand {
   QString _command;
   std::function<void()> _actionBefore;
-  std::function<bool(bool *success, int resultCode,
-                     QString result)> _isFinished; // FIXME add QString *errorString
+  std::function<bool(bool *success, QString *errorString, int resultCode,
+                     QString result)> _isFinished;
   FtpCommand(std::function<void()> actionBefore,
-             std::function<bool(bool *success, int resultCode,
-                                QString result)> isFinished,
+             std::function<bool(bool *success, QString *errorString,
+                                int resultCode, QString result)> isFinished,
              QString command = QString())
     : _command(command), _actionBefore(actionBefore),
       _isFinished(isFinished) { }
@@ -41,31 +45,34 @@ struct FtpCommand {
              int minExpectedResult = 100,
              int maxExpectedResult = 399)
     : _command(command), _actionBefore(actionBefore),
-      _isFinished(std::bind(noTransferIsFinished, _1, _2, _3,
+      _isFinished(std::bind(noTransferIsFinished, _1, _2, _3, _4,
                             minExpectedResult, maxExpectedResult)) { }
   FtpCommand(QString command, int minExpectedResult = 100,
              int maxExpectedResult = 399)
     : _command(command),
-      _isFinished(std::bind(noTransferIsFinished, _1, _2, _3,
+      _isFinished(std::bind(noTransferIsFinished, _1, _2, _3, _4,
                             minExpectedResult, maxExpectedResult)) { }
   FtpCommand() : _isFinished(alwaysFail) { }
 
 private:
-  static bool noTransferIsFinished(bool *success, int resultCode,
-                                   QString result, int minExpectedResult,
-                                   int maxExpectedResult) {
+  static bool noTransferIsFinished(
+      bool *success, QString *errorString, int resultCode, QString result,
+      int minExpectedResult, int maxExpectedResult) {
     Q_UNUSED(result)
+    Q_UNUSED(errorString)
     Q_ASSERT(success);
     *success = resultCode >= minExpectedResult
         && resultCode <= maxExpectedResult;
     return true;
   }
-  static bool alwaysFail(bool *success, int resultCode,
+  static bool alwaysFail(bool *success, QString *errorString, int resultCode,
                          QString result) {
     Q_UNUSED(result)
     Q_UNUSED(resultCode)
     Q_ASSERT(success);
+    Q_ASSERT(errorString);
     *success = false;
+    *errorString = "Failed";
     return true;
   }
 };
@@ -79,13 +86,36 @@ struct FtpScriptData : public QSharedData {
   FtpScriptData(FtpClient *client = 0)
     : _id(_sequence.fetchAndAddOrdered(1)), _client(client) { }
 
-  bool parsePasvResult(bool *success, int resultCode, QString result) {
+  bool pasvIsFinished(bool *success, QString *errorString, int resultCode,
+                       QString result) {
+    Q_UNUSED(errorString)
     Q_ASSERT(success);
     QRegularExpressionMatch match = _pasvResultRe.match(result);
     if (resultCode != 227 || !match.hasMatch())
       *success = false;
     _pasvPort = match.captured(1).toInt()*256+match.captured(2).toInt();
     return true;
+  }
+  bool transferIsFinished(bool *success, QString *errorString, int resultCode,
+                          QString result) {
+    Q_UNUSED(errorString)
+    Q_UNUSED(result)
+    Q_ASSERT(success);
+    if (resultCode < 200 || resultCode > 399) {
+      _client->abortTransfer();
+      *success = false;
+      return true;
+    }
+    switch (_client->_transferState) {
+    case FtpClient::TransferFailed:
+      *success = false;
+      return true;
+    case FtpClient::TransferSucceeded:
+      *success = true;
+      return true;
+    default:
+      return false;
+    }
   }
 };
 
@@ -115,9 +145,6 @@ int FtpScript::id() const {
   return d ? d->_id : 0;
 }
 
-#include <QCoreApplication>
-#include <unistd.h>
-
 bool FtpScript::execAndWait(int msecs) {
   // note that execAndWait must not be const since FtpCommand's lambdas are
   // capturing non-const references on FtpScriptData and use them to change
@@ -125,44 +152,52 @@ bool FtpScript::execAndWait(int msecs) {
   FtpScriptData *d = _data;
   if (!d)
     return false;
+  emit d->_client->scriptStarted(*this);
   QElapsedTimer timer;
   timer.start();
   int i = 0;
   // FIXME QEventLoop::ExcludeUserInputEvents ?
   while (!timer.hasExpired(msecs)) {
+    qDebug() << "ftp exec loop" << i << d->_commands.size();
     if (i >= d->_commands.size()) {
       d->_client->_error = FtpClient::NoError;
       d->_client->_errorString = "Success";
+      emit d->_client->scriptFinished(true, d->_client->_errorString,
+                                      d->_client->_error);
       return true;
     }
     FtpCommand &command = d->_commands[i];
     QString result;
     int resultCode;
+    qDebug() << "  action before";
     if (command._actionBefore)
       command._actionBefore();
     // send command to control socket
+    qDebug() << "  command" << command._command;
     if (!command._command.isEmpty()) {
       int written = d->_client->_controlSocket->write(
-            command._command.toUtf8());
+            command._command.toUtf8()+"\r\n");
       if (written < 0) {
         d->_client->_error = FtpClient::Error;
         d->_client->_errorString = "Cannot send request to server : "
             +d->_client->_controlSocket->errorString();
-        return false;
+        goto failed;
       }
     }
     // wait for result (or for banner, since connectToServer has no command)
     forever {
       QByteArray buf = d->_client->_controlSocket->readAll();
       result += QString::fromUtf8(buf);
+      //qDebug() << "    temporary result" << result << buf;
       if (result.endsWith('\n'))
         break;
       if (timer.hasExpired(msecs))
         goto timeout;
+      usleep(FTP_WAIT_DURATION_MILLIS*1000);
       QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
-      usleep(10000);
     }
     result = result.trimmed();
+    qDebug() << "  result" << result;
     if (result.isEmpty()) {
       d->_client->_error = FtpClient::Error;
       if (!d->_client->_controlSocket->isOpen())
@@ -171,7 +206,7 @@ bool FtpScript::execAndWait(int msecs) {
       else
         d->_client->_errorString = "No response : "
             +d->_client->_controlSocket->errorString();
-      return false;
+      goto failed;
     }
     QRegularExpressionMatch match = _resultCodeRe.match(result);
     resultCode = match.hasMatch() ? match.captured(1).toInt() : 0;
@@ -182,12 +217,13 @@ bool FtpScript::execAndWait(int msecs) {
       bool success = false;
       d->_client->_errorString = result;
       forever {
-        if (command._isFinished(&success, resultCode, result))
+        if (command._isFinished(&success, &d->_client->_errorString,
+                                resultCode, result))
           break;
         if (timer.hasExpired(msecs))
           goto timeout;
+        usleep(FTP_WAIT_DURATION_MILLIS*1000);
         QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
-        usleep(10000);
       }
       if (success) {
         qDebug() << "successfuly executed FTP command" << command._command
@@ -197,18 +233,28 @@ bool FtpScript::execAndWait(int msecs) {
         qDebug() << "error when executing FTP command" << command._command
                  << result;
         d->_client->_error = FtpClient::Error;
-        return false;
+        goto failed;
       }
     } else { // should never happen
       d->_client->_error = FtpClient::Error;
       d->_client->_errorString = "Internal error : no isFinished function";
-      return false;
+      goto failed;
     }
   }
 timeout:
   d->_client->_error = FtpClient::Error;
   d->_client->_errorString = "Timeout expired";
+failed:
+  emit d->_client->scriptFinished(false, d->_client->_errorString,
+                                  d->_client->_error);
   return false;
+}
+
+FtpScript &FtpScript::clearCommands() {
+  FtpScriptData *d = _data;
+  if (d)
+    d->_commands.clear();
+  return *this;
 }
 
 FtpScript &FtpScript::connectToHost(QString host, quint16 port) {
@@ -233,7 +279,9 @@ FtpScript &FtpScript::login(QString login, QString password) {
     d->_commands.append(FtpCommand([d, password]() {
       d->_password = password;
     }, "PASS "+password));
-    // TODO execute PWD and store its result
+    // LATER make binary transfer an option
+    d->_commands.append(FtpCommand("TYPE I"));
+    // LATER execute PWD and store its result
   }
   return *this;
 }
@@ -242,7 +290,7 @@ FtpScript &FtpScript::cd(QString path) {
   FtpScriptData *d = _data;
   if (d) {
     d->_commands.append(FtpCommand("CWD "+path));
-    // TODO execute PWD and store its result
+    // LATER execute PWD and store its result
   }
   return *this;
 }
@@ -251,17 +299,12 @@ FtpScript &FtpScript::get(QString path, QIODevice *dest) {
   FtpScriptData *d = _data;
   if (d) {
     d->_commands.append(FtpCommand([]{},
-    /*[d](bool *success, int resultCode, QString result) -> bool {
-      d->parsePasvResult(success, resultCode, result);
-    }*/
-    std::bind(&FtpScriptData::parsePasvResult, d, _1, _2, _3), "PASV"));
-    d->_commands.append(FtpCommand([]() {
-      // FIXME open socket to pasv port
-      // FIXME start transfer thread
+    std::bind(&FtpScriptData::pasvIsFinished, d, _1, _2, _3, _4), "PASV"));
+    d->_commands.append(FtpCommand([d, dest]() {
+      d->_client->download(d->_pasvPort, dest);
     },
-    [](bool *success, int resultCode, QString result) -> bool {
-      // FIXME close transfer socket and stop transfer thread on failure ?
-    }, "RETR "+path)); // FIXME action before and finish condition
+    std::bind(&FtpScriptData::transferIsFinished, d, _1, _2, _3, _4),
+    "RETR "+path));
   }
   return *this;
 }

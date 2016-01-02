@@ -14,6 +14,7 @@
 #ifndef FTPSCRIPT_H
 #define FTPSCRIPT_H
 
+#include "libqtssu_global.h"
 #include <QSharedDataPointer>
 #include <QIODevice>
 #include <QByteArray>
@@ -25,7 +26,7 @@ class FtpClient;
  * When executed, fails on first failed operation.
  * @see FtpClient
  */
-class FtpScript {
+class LIBQTSSUSHARED_EXPORT FtpScript {
   QSharedDataPointer<FtpScriptData> _data;
 
 public:
@@ -36,10 +37,9 @@ public:
   FtpScript &operator=(const FtpScript &);
   FtpClient *client() const;
   int id() const;
-  // LATER void setFailOnFirstError(bool);
-  // LATER void setDefaultMode(enum);
   bool execAndWait(int msecs = DefaultTimeout);
-  FtpScript &connectToHost(QString host, quint16 port);
+  FtpScript &clearCommands();
+  FtpScript &connectToHost(QString host, quint16 port = 21);
   FtpScript &login(QString login, QString password);
   FtpScript &cd(QString path);
   FtpScript &get(QString path, QIODevice *dest);

@@ -18,33 +18,51 @@
 #include <QTcpSocket>
 #include "ftpscript.h"
 
-class FtpClient : public QObject {
+// FIXME doc
+class LIBQTSSUSHARED_EXPORT FtpClient : public QObject {
   friend class FtpScript;
+  friend class FtpScriptData;
   Q_OBJECT
 
 public:
   enum FtpError { NoError, Error };
+  enum TransferState { NoTransfer, Download, Upload, TransferSucceeded, TransferFailed };
 
 private:
   Q_DISABLE_COPY(FtpClient)
   QTcpSocket *_controlSocket, *_transferSocket;
   FtpError _error;
   QString _errorString;
+  TransferState _transferState;
+  QIODevice *_transferLocalDevice;
 
 public:
   explicit FtpClient(QObject *parent = 0);
   FtpScript script() { return FtpScript(this); }
   FtpError error() const { return _error; }
   QString errorString() const { return _errorString; }
-  bool connectToHost(QString host, quint16 port,
+  void abort();
+  bool connectToHost(QString host, quint16 port = 21,
                      int msecs = FtpScript::DefaultTimeout) {
     return script().connectToHost(host, port).execAndWait(msecs);
   }
+  // FIXME wrap other script commands
 
 signals:
-  void	connected();
-  void	disconnected();
-  // TODO more signals
+  void connected();
+  void disconnected();
+  void scriptStarted(FtpScript script);
+  void scriptFinished(bool success, QString errorString, FtpError error);
+  // LATER more signals: transferFinished() transferProgress()
+
+private:
+  void download(quint16 port, QIODevice *transferLocalDevice);
+  void upload(quint16 port, QIODevice *transferLocalDevice);
+  void abortTransfer();
+  void bytesWrittenToTransferSocket(quint64 bytes);
+  void readyReadFromTransferSocket();
+  void connectedTransferSocket();
+  void disconnectedTransferSocket();
 };
 
 #endif // FTPCLIENT_H
