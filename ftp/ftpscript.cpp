@@ -332,6 +332,8 @@ FtpScript &FtpScript::login(QString login, QString password) {
     }, "PASS "+password));
     // LATER make binary transfer an option
     d->_commands.append(FtpCommand("TYPE I"));
+    // LATER make umask an option
+    d->_commands.append(FtpCommand("SITE UMASK 22", 0, 9999999));
     // LATER execute PWD and store its result
   }
   return *this;
