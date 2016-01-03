@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,7 +18,8 @@
 #include "libqtssu_global.h"
 
 class LIBQTSSUSHARED_EXPORT HtmlUtils {
-  HtmlUtils() { }
+  HtmlUtils() = delete;
+
 public:
   /** Encode raw text to make it includable in an html document.
    * Special chars (such as '<') are replaced with entities.

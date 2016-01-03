@@ -98,7 +98,8 @@ SOURCES += \
     modelview/shareduiitemdocumenttransaction.cpp \
     modelview/shareduiitemsmatrixmodel.cpp \
     ftp/ftpclient.cpp \
-    ftp/ftpscript.cpp
+    ftp/ftpscript.cpp \
+    util/stringutils.cpp
 
 
 HEADERS +=\
@@ -172,7 +173,8 @@ HEADERS +=\
     modelview/shareduiitemdocumenttransaction.h \
     modelview/shareduiitemsmatrixmodel.h \
     ftp/ftpclient.h \
-    ftp/ftpscript.h
+    ftp/ftpscript.h \
+    util/stringutils.h
 
 unix {
     target.path = /usr/lib

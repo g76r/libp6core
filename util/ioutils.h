@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,7 +21,8 @@
 class QIODevice;
 
 class LIBQTSSUSHARED_EXPORT IOUtils {
-  IOUtils() { }
+  IOUtils() = delete;
+
 public:
   /** Copy content of src into dest until max bytes or src's end is reached. */
   static qint64 copy(QIODevice *dest, QIODevice *src, qint64 max = LLONG_MAX,

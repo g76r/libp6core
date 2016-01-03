@@ -22,6 +22,7 @@
 #include "regexpparamsprovider.h"
 #include "paramsprovidermerger.h"
 #include "htmlutils.h"
+#include "stringutils.h"
 
 class ParamSetData : public QSharedData {
 public:
@@ -269,7 +270,7 @@ QString ParamSet::evaluateImplicitVariable(
       QString placeHolder = params.value(2, QStringLiteral("..."));
       if (!ok || placeHolder.size() > i || input.size() <= i)
         return input;
-      return input.left(i-placeHolder.size())+placeHolder;
+      return StringUtils::elideRight(input, i, placeHolder);
     } else if (key.startsWith("=elideleft")) {
       CharacterSeparatedExpression params(key, 10);
       QString input = evaluate(params.value(0), inherit, context,
@@ -279,7 +280,7 @@ QString ParamSet::evaluateImplicitVariable(
       QString placeHolder = params.value(2, QStringLiteral("..."));
       if (!ok || placeHolder.size() > i || input.size() <= i)
         return input;
-      return placeHolder+input.right(i-placeHolder.size());
+      return StringUtils::elideLeft(input, i, placeHolder);
     } else if (key.startsWith("=elidemiddle")) {
       CharacterSeparatedExpression params(key, 12);
       QString input = evaluate(params.value(0), inherit, context,
@@ -289,7 +290,7 @@ QString ParamSet::evaluateImplicitVariable(
       QString placeHolder = params.value(2, QStringLiteral("..."));
       if (!ok || placeHolder.size() > i || input.size() <= i)
         return input;
-      return input.left(i/2-placeHolder.size())+placeHolder+input.right(i-i/2);
+      return StringUtils::elideMiddle(input, i, placeHolder);
     } else if (key.startsWith("=htmlencode")) {
       // LATER provide more options such as encoding <br> or links, through e.g. and =htmlencodeext function
       QString input = evaluate(key.mid(12), inherit, context, alreadyEvaluated);
