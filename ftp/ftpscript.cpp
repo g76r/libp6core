@@ -147,6 +147,8 @@ struct FtpScriptData : public QSharedData {
     if (finished) {
       *relativePaths = QString::fromUtf8(buffer->data())
           .split(_newlineRe, QString::SkipEmptyParts);
+      relativePaths->removeAll(".");
+      relativePaths->removeAll("..");
       delete buffer;
     }
     return finished;
@@ -178,6 +180,22 @@ FtpClient *FtpScript::client() const {
   const FtpScriptData *d = _data;
   return d ? d->_id : 0;
 }*/
+
+static QRegularExpression _intermidiaryStatusLineRE("^(1|\\d+-)");
+
+static void skipIntermediaryStatusLines(QString &result) {
+  while (_intermidiaryStatusLineRE.match(result).hasMatch()) {
+    // skip intermidiary 1xx status lines to keep only final status
+    // e.g. RETR is answered smth like "1xx transfer begin\r\n2xx ok\r\n"
+    // skip multiline status line of the form xxx-
+    int i = result.indexOf('\n');
+    if (i > 0) {
+      qDebug() << "  skipping intermediary status : "
+               << result.left(i).trimmed();
+      result = result.mid(i+1);
+    }
+  }
+}
 
 bool FtpScript::execAndWait(int msecs) {
   // note that execAndWait must not be const since FtpCommand's lambdas are
@@ -230,16 +248,7 @@ bool FtpScript::execAndWait(int msecs) {
     forever {
       QByteArray buf = d->_client->_controlSocket->readAll();
       result += QString::fromUtf8(buf);
-      while (result.startsWith('1')) {
-        // skip intermidiary 1xx status lines to keep only final status
-        // e.g. RETR is answered smth like "1xx transfer begin\r\n2xx ok\r\n"
-        int i = result.indexOf('\n');
-        if (i > 0) {
-          qDebug() << "  skipping intermediary status : "
-                   << result.left(i).trimmed();
-          result = result.mid(i+1);
-        }
-      }
+      skipIntermediaryStatusLines(result);
       if (result.endsWith('\n'))
         break;
       if (timer.hasExpired(msecs))
@@ -317,6 +326,7 @@ FtpScript &FtpScript::connectToHost(QString host, quint16 port) {
       d->_host = host;
       d->_port = port;
     }));
+    d->_commands.append(FtpCommand("OPTS UTF8 ON", 0, 9999999));
   }
   return *this;
 }
