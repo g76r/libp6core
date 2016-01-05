@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <QBuffer>
 #include <QFile>
+#include <QStack>
 
 using namespace std::placeholders;
 
@@ -31,34 +32,57 @@ using namespace std::placeholders;
 static QRegularExpression _pasvResultRe("\\(.*,(\\d+),(\\d+)\\)");
 static QRegularExpression _resultCodeRe("^(\\d+) ");
 static QRegularExpression _newlineRe("[\r\n]+");
+static QRegularExpression _pwdRe("^2\\d\\d \"?([^\"]+)");
 
 struct FtpCommand {
-  QString _command;
   std::function<void()> _actionBefore;
+  std::function<QString()> _command;
   std::function<bool(bool *success, QString *errorString, int resultCode,
                      QString result)> _isFinished;
   FtpCommand(std::function<void()> actionBefore,
+             std::function<QString()> command,
              std::function<bool(bool *success, QString *errorString,
-                                int resultCode, QString result)> isFinished,
-             QString command = QString())
-    : _command(command), _actionBefore(actionBefore),
+                                int resultCode, QString result)> isFinished)
+    : _actionBefore(actionBefore), _command(command),
       _isFinished(isFinished) { }
   FtpCommand(std::function<void()> actionBefore,
-             QString command = QString(),
-             int minExpectedResult = 200,
+             std::function<QString()> command, int minExpectedResult = 200,
              int maxExpectedResult = 299)
-    : _command(command), _actionBefore(actionBefore),
-      _isFinished(std::bind(noTransferIsFinished, _1, _2, _3, _4,
-                            minExpectedResult, maxExpectedResult)) { }
+    : FtpCommand(actionBefore, command,
+                 std::bind(resultCodeBaseIsFinished, _1, _2, _3, _4,
+                           minExpectedResult, maxExpectedResult)) { }
+  FtpCommand(std::function<QString()> command, int minExpectedResult = 200,
+             int maxExpectedResult = 299)
+    : FtpCommand([](){}, command, minExpectedResult, maxExpectedResult) { }
+  FtpCommand(std::function<QString()> command,
+             std::function<bool(bool *success, QString *errorString,
+                                int resultCode, QString result)> isFinished)
+    : FtpCommand([](){}, command, isFinished) { }
+  FtpCommand(std::function<void()> actionBefore, int minExpectedResult = 200,
+             int maxExpectedResult = 299)
+    : FtpCommand(actionBefore, [](){ return QString(); },
+  std::bind(resultCodeBaseIsFinished, _1, _2, _3, _4, minExpectedResult,
+            maxExpectedResult)) { }
+  FtpCommand(std::function<void()> actionBefore, QString command,
+             std::function<bool(bool *success, QString *errorString,
+                                int resultCode, QString result)> isFinished)
+    : FtpCommand(actionBefore, [=](){ return command; }, isFinished) { }
+  FtpCommand(std::function<void()> actionBefore, QString command,
+             int minExpectedResult = 200, int maxExpectedResult = 299)
+    : FtpCommand(actionBefore, [=](){ return command; }, minExpectedResult,
+  maxExpectedResult) { }
+  FtpCommand(QString command,
+             std::function<bool(bool *success, QString *errorString,
+                                int resultCode, QString result)> isFinished)
+    : FtpCommand([](){}, [=](){ return command; }, isFinished) { }
   FtpCommand(QString command, int minExpectedResult = 200,
              int maxExpectedResult = 299)
-    : _command(command),
-      _isFinished(std::bind(noTransferIsFinished, _1, _2, _3, _4,
-                            minExpectedResult, maxExpectedResult)) { }
-  FtpCommand() : _isFinished(alwaysFail) { }
+    : FtpCommand([](){}, [=](){ return command; }, minExpectedResult,
+  maxExpectedResult) { }
+  FtpCommand() : FtpCommand([](){}, [](){ return QString(); }, alwaysFail) { }
 
 private:
-  static bool noTransferIsFinished(
+  static bool resultCodeBaseIsFinished(
       bool *success, QString *errorString, int resultCode, QString result,
       int minExpectedResult, int maxExpectedResult) {
     Q_UNUSED(result)
@@ -68,6 +92,8 @@ private:
         && resultCode <= maxExpectedResult;
     return true;
   }
+
+public:
   static bool alwaysFail(bool *success, QString *errorString, int resultCode,
                          QString result) {
     Q_UNUSED(result)
@@ -78,17 +104,30 @@ private:
     *errorString = "Failed";
     return true;
   }
+  static bool alwaysSucceed(bool *success, QString *errorString, int resultCode,
+                            QString result) {
+    Q_UNUSED(result)
+    Q_UNUSED(resultCode)
+    Q_ASSERT(success);
+    Q_ASSERT(errorString);
+    *success = true;
+    return true;
+  }
 };
 
+// TODO fix resource leaks in functional methods and lambdas
+// "delete buffer" and "delete top" won't be called if hte command is not
+// executed and finished, e.g. if the script is deleted before execution or
+// aborted before reaching this particular command
 struct FtpScriptData : public QSharedData {
   //int _id;
   FtpClient *_client;
   QVector<FtpCommand> _commands;
-  QString _host, _login, _password;
+  QString _host, _login, _password, _cwd;
   quint16 _port, _pasvPort;
+  QStack<QString> _dirstack;
   FtpScriptData(FtpClient *client = 0)
     : /*_id(_sequence.fetchAndAddOrdered(1)),*/ _client(client) { }
-
   bool pasvIsFinished(bool *success, QString *errorString, int resultCode,
                        QString result) {
     Q_UNUSED(errorString)
@@ -123,32 +162,56 @@ struct FtpScriptData : public QSharedData {
       return false;
     }
   }
+  bool pwdIsFinished(bool *success, QString *errorString, int resultCode,
+                     QString result, QString *path) {
+    Q_UNUSED(errorString)
+    Q_UNUSED(resultCode)
+    Q_ASSERT(success);
+    QRegularExpressionMatch match = _pwdRe.match(result);
+    if (match.hasMatch()) {
+      _cwd = match.captured(1);
+      if (path)
+        *path = _cwd;
+      *success = true;
+      qDebug() << "  cwd is now" << _cwd;
+    } else {
+      if (path)
+        *path = QString();
+      *success = false;
+    }
+    return true;
+  }
   bool memoryTransferIsFinished(
       bool *success, QString *errorString, int resultCode, QString result,
       QIODevice *localDevice) {
     Q_ASSERT(localDevice);
     bool finished = transferIsFinished(success, errorString, resultCode,
                                        result);
-    // TODO what if the command is destoyed before finished ?
-    // e.g. after abort or by destroying the script before execution
     if (finished)
       delete localDevice;
     return finished;
   }
   bool nlstTransferIsFinished(
       bool *success, QString *errorString, int resultCode, QString result,
-      QBuffer *buffer, QStringList *relativePaths) {
+      QBuffer *buffer, QStringList *basenames) {
     Q_ASSERT(buffer);
-    Q_ASSERT(relativePaths);
+    Q_ASSERT(basenames);
     bool finished = transferIsFinished(success, errorString, resultCode,
                                        result);
-    // TODO what if the command is destoyed before finished ?
-    // e.g. after abort or by destroying the script before execution
     if (finished) {
-      *relativePaths = QString::fromUtf8(buffer->data())
-          .split(_newlineRe, QString::SkipEmptyParts);
-      relativePaths->removeAll(".");
-      relativePaths->removeAll("..");
+      *basenames = QStringList();
+      foreach (const QString &name, QString::fromUtf8(buffer->data())
+               .split(_newlineRe, QString::SkipEmptyParts)) {
+        // never list . and ..
+        if (name == "." || name == "..")
+          continue;
+        // next line is ok because mid(-1+1) = mid(0) = whole string
+        //qDebug() << "ls:" << name << name.lastIndexOf('/')
+        //         << name.mid(name.lastIndexOf('/')+1);
+        //basenames->append(name.mid(name.lastIndexOf('/')+1));
+        // FIXME
+        basenames->append(name);
+      }
       delete buffer;
     }
     return finished;
@@ -233,10 +296,12 @@ bool FtpScript::execAndWait(int msecs) {
     // send command to control socket
     QString result;
     int resultCode;
-    qDebug() << "  command" << command._command;
-    if (!command._command.isEmpty()) {
-      int written = d->_client->_controlSocket->write(
-            command._command.toUtf8()+"\r\n");
+    QString cmd;
+    if (command._command)
+      cmd = command._command();
+    qDebug() << "  command" << cmd;
+    if (!cmd.isEmpty()) {
+      int written = d->_client->_controlSocket->write(cmd.toUtf8()+"\r\n");
       if (written < 0) {
         d->_client->_error = FtpClient::Error;
         d->_client->_errorString = "Cannot send request to server : "
@@ -286,12 +351,10 @@ bool FtpScript::execAndWait(int msecs) {
         QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
       }
       if (success) {
-        qDebug() << "successfuly executed FTP command" << command._command
-                 << result;
+        qDebug() << "successfuly executed FTP command" << cmd << result;
         ++i;
       } else {
-        qDebug() << "error when executing FTP command" << command._command
-                 << result;
+        qDebug() << "error when executing FTP command" << cmd << result;
         d->_client->_error = FtpClient::Error;
         goto failed;
       }
@@ -326,7 +389,7 @@ FtpScript &FtpScript::connectToHost(QString host, quint16 port) {
       d->_host = host;
       d->_port = port;
     }));
-    d->_commands.append(FtpCommand("OPTS UTF8 ON", 0, 9999999));
+    d->_commands.append(FtpCommand("OPTS UTF8 ON", &FtpCommand::alwaysSucceed));
   }
   return *this;
 }
@@ -343,8 +406,10 @@ FtpScript &FtpScript::login(QString login, QString password) {
     // LATER make binary transfer an option
     d->_commands.append(FtpCommand("TYPE I"));
     // LATER make umask an option
-    d->_commands.append(FtpCommand("SITE UMASK 22", 0, 9999999));
-    // LATER execute PWD and store its result
+    d->_commands.append(FtpCommand("SITE UMASK 22", &FtpCommand::alwaysSucceed));
+    d->_commands.append(
+          FtpCommand("PWD", std::bind(&FtpScriptData::pwdIsFinished, d, _1, _2,
+                                      _3, _4, nullptr)));
   }
   return *this;
 }
@@ -353,7 +418,74 @@ FtpScript &FtpScript::cd(QString path) {
   FtpScriptData *d = _data;
   if (d) {
     d->_commands.append(FtpCommand("CWD "+path));
-    // LATER execute PWD and store its result
+    d->_commands.append(
+          FtpCommand("PWD", std::bind(&FtpScriptData::pwdIsFinished, d, _1, _2,
+                                      _3, _4, nullptr)));
+  }
+  return *this;
+}
+
+FtpScript &FtpScript::pushd(QString path) {
+  FtpScriptData *d = _data;
+  if (d) {
+    // pwd needed before in case no cd or connectToHost has been performed
+    // before pushd in *this* script (i.e. the client was connected in another
+    // script
+    // LATER find a way to avoid this if cwd has been set before
+    d->_commands.append(
+          FtpCommand("PWD", std::bind(&FtpScriptData::pwdIsFinished, d, _1, _2,
+                                      _3, _4, nullptr)));
+    if (path.isEmpty()) { // swaping dir with top of stack
+      QString *top = new QString;
+      d->_commands.append(FtpCommand([d, top](){
+        *top = d->_dirstack.isEmpty() ? d->_cwd : d->_dirstack.top();
+        d->_dirstack.push(d->_cwd);
+        qDebug() << "  dirs stack is now" << d->_dirstack
+                 << "after pushd w/o param";
+      }, [d, top]() {
+        QString tmp = *top;
+        delete top;
+        return "CWD "+tmp;
+      }));
+    } else { // regular push
+      d->_commands.append(FtpCommand([d](){
+        d->_dirstack.push(d->_cwd);
+        qDebug() << "  dirs stack is now" << d->_dirstack
+                 << "after pushd w/ param";
+      }, "CWD "+path));
+    }
+    d->_commands.append(
+          FtpCommand("PWD", std::bind(&FtpScriptData::pwdIsFinished, d, _1, _2,
+                                      _3, _4, nullptr)));
+  }
+  return *this;
+}
+
+FtpScript &FtpScript::popd() {
+  FtpScriptData *d = _data;
+  if (d) {
+    QString *top = new QString;
+    d->_commands.append(FtpCommand([d, top](){
+      *top = d->_dirstack.isEmpty() ? "." : d->_dirstack.pop();
+      qDebug() << "  dirs stack is now" << d->_dirstack << "after popd";
+    }, [d, top]() {
+      QString tmp = *top;
+      delete top;
+      return "CWD "+tmp;
+    }));
+    d->_commands.append(
+          FtpCommand("PWD", std::bind(&FtpScriptData::pwdIsFinished, d, _1, _2,
+                                      _3, _4, nullptr)));
+  }
+  return *this;
+}
+
+FtpScript &FtpScript::pwd(QString *path) {
+  FtpScriptData *d = _data;
+  if (d) {
+    d->_commands.append(
+          FtpCommand("PWD", std::bind(&FtpScriptData::pwdIsFinished, d, _1, _2,
+                                      _3, _4, path)));
   }
   return *this;
 }
@@ -369,7 +501,7 @@ FtpScript &FtpScript::mkdir(QString path) {
 FtpScript &FtpScript::mkdirIgnoringFailure(QString path) {
   FtpScriptData *d = _data;
   if (d) {
-    d->_commands.append(FtpCommand("MKD "+path, 0, 999999999));
+    d->_commands.append(FtpCommand("MKD "+path, &FtpCommand::alwaysSucceed));
   }
   return *this;
 }
@@ -385,7 +517,7 @@ FtpScript &FtpScript::rmdir(QString path) {
 FtpScript &FtpScript::rmdirIgnoringFailure(QString path) {
   FtpScriptData *d = _data;
   if (d) {
-    d->_commands.append(FtpCommand("RMD "+path, 0, 999999999));
+    d->_commands.append(FtpCommand("RMD "+path, &FtpCommand::alwaysSucceed));
   }
   return *this;
 }
@@ -401,24 +533,28 @@ FtpScript &FtpScript::rm(QString path) {
 FtpScript &FtpScript::rmIgnoringFailure(QString path) {
   FtpScriptData *d = _data;
   if (d) {
-    d->_commands.append(FtpCommand("DELE "+path, 0, 999999999));
+    d->_commands.append(FtpCommand("DELE "+path, &FtpCommand::alwaysSucceed));
   }
   return *this;
 }
 
-FtpScript &FtpScript::ls(QStringList *relativePaths, QString path) {
+FtpScript &FtpScript::ls(QStringList *basenames, QString path) {
   FtpScriptData *d = _data;
   if (d) {
-    d->_commands.append(FtpCommand([]{},
-    std::bind(&FtpScriptData::pasvIsFinished, d, _1, _2, _3, _4), "PASV"));
+    bool subdir = !path.isEmpty() && path != QStringLiteral(".");
+    if (subdir)
+      pushd(path);
+    d->_commands.append(FtpCommand( "PASV",
+    std::bind(&FtpScriptData::pasvIsFinished, d, _1, _2, _3, _4)));
     QBuffer *buf = new QBuffer(d->_client);
     buf->open(QIODevice::WriteOnly);
-    d->_commands.append(FtpCommand([d, buf, relativePaths]() {
+    d->_commands.append(FtpCommand([d, buf, basenames]() {
       d->_client->download(d->_pasvPort, buf);
-    },
+    }, "NLST",
     std::bind(&FtpScriptData::nlstTransferIsFinished, d, _1, _2, _3, _4, buf,
-              relativePaths),
-    "NLST "+path));
+              basenames)));
+    if (subdir)
+      popd();
   }
   return *this;
 }
@@ -426,13 +562,12 @@ FtpScript &FtpScript::ls(QStringList *relativePaths, QString path) {
 FtpScript &FtpScript::get(QString path, QIODevice *dest) {
   FtpScriptData *d = _data;
   if (d) {
-    d->_commands.append(FtpCommand([]{},
-    std::bind(&FtpScriptData::pasvIsFinished, d, _1, _2, _3, _4), "PASV"));
+    d->_commands.append(FtpCommand("PASV",
+    std::bind(&FtpScriptData::pasvIsFinished, d, _1, _2, _3, _4)));
     d->_commands.append(FtpCommand([d, dest]() {
       d->_client->download(d->_pasvPort, dest);
-    },
-    std::bind(&FtpScriptData::transferIsFinished, d, _1, _2, _3, _4),
-    "RETR "+path));
+    }, "RETR "+path,
+    std::bind(&FtpScriptData::transferIsFinished, d, _1, _2, _3, _4)));
   }
   return *this;
 }
@@ -440,15 +575,15 @@ FtpScript &FtpScript::get(QString path, QIODevice *dest) {
 FtpScript &FtpScript::get(QString path, QByteArray *dest) {
   FtpScriptData *d = _data;
   if (d) {
-    d->_commands.append(FtpCommand([]{},
-    std::bind(&FtpScriptData::pasvIsFinished, d, _1, _2, _3, _4), "PASV"));
+    d->_commands.append(FtpCommand("PASV",
+    std::bind(&FtpScriptData::pasvIsFinished, d, _1, _2, _3, _4)));
     QBuffer *buf = new QBuffer(dest, d->_client);
     buf->open(QIODevice::WriteOnly);
     d->_commands.append(FtpCommand([d, buf]() {
       d->_client->download(d->_pasvPort, buf);
-    },
-    std::bind(&FtpScriptData::memoryTransferIsFinished, d, _1, _2, _3, _4, buf),
-    "RETR "+path));
+    }, "RETR "+path,
+    std::bind(&FtpScriptData::memoryTransferIsFinished, d, _1, _2, _3, _4,
+              buf)));
   }
   return *this;
 }
@@ -456,17 +591,15 @@ FtpScript &FtpScript::get(QString path, QByteArray *dest) {
 FtpScript &FtpScript::get(QString path, QString localPath) {
   FtpScriptData *d = _data;
   if (d) {
-    d->_commands.append(FtpCommand([]{},
-    std::bind(&FtpScriptData::pasvIsFinished, d, _1, _2, _3, _4), "PASV"));
+    d->_commands.append(FtpCommand("PASV",
+    std::bind(&FtpScriptData::pasvIsFinished, d, _1, _2, _3, _4)));
     QFile *file = new QFile(localPath);
-    // LATER create and truncate only when download start
-    file->open(QIODevice::WriteOnly|QIODevice::Truncate);
     d->_commands.append(FtpCommand([d, file]() {
+      file->open(QIODevice::WriteOnly|QIODevice::Truncate);
       d->_client->download(d->_pasvPort, file);
-    },
+    }, "RETR "+path,
     std::bind(&FtpScriptData::memoryTransferIsFinished, d, _1, _2, _3, _4,
-              file),
-    "RETR "+path));
+              file)));
   }
   return *this;
 }
@@ -474,13 +607,12 @@ FtpScript &FtpScript::get(QString path, QString localPath) {
 FtpScript &FtpScript::put(QString path, QIODevice *source) {
   FtpScriptData *d = _data;
   if (d) {
-    d->_commands.append(FtpCommand([]{},
-    std::bind(&FtpScriptData::pasvIsFinished, d, _1, _2, _3, _4), "PASV"));
+    d->_commands.append(FtpCommand("PASV",
+    std::bind(&FtpScriptData::pasvIsFinished, d, _1, _2, _3, _4)));
     d->_commands.append(FtpCommand([d, source]() {
       d->_client->upload(d->_pasvPort, source);
-    },
-    std::bind(&FtpScriptData::transferIsFinished, d, _1, _2, _3, _4),
-    "STOR "+path));
+    }, "STOR "+path,
+    std::bind(&FtpScriptData::transferIsFinished, d, _1, _2, _3, _4)));
   }
   return *this;
 }
@@ -488,16 +620,16 @@ FtpScript &FtpScript::put(QString path, QIODevice *source) {
 FtpScript &FtpScript::put(QString path, QByteArray source) {
   FtpScriptData *d = _data;
   if (d) {
-    d->_commands.append(FtpCommand([]{},
-    std::bind(&FtpScriptData::pasvIsFinished, d, _1, _2, _3, _4), "PASV"));
+    d->_commands.append(FtpCommand("PASV",
+    std::bind(&FtpScriptData::pasvIsFinished, d, _1, _2, _3, _4)));
     QBuffer *buf = new QBuffer(d->_client);
     buf->setData(source);
     buf->open(QIODevice::ReadOnly);
     d->_commands.append(FtpCommand([d, buf]() {
       d->_client->upload(d->_pasvPort, buf);
-    },
-    std::bind(&FtpScriptData::memoryTransferIsFinished, d, _1, _2, _3, _4, buf),
-    "STOR "+path));
+    }, "STOR "+path,
+    std::bind(&FtpScriptData::memoryTransferIsFinished, d, _1, _2, _3, _4,
+              buf)));
   }
   return *this;
 }
@@ -505,16 +637,15 @@ FtpScript &FtpScript::put(QString path, QByteArray source) {
 FtpScript &FtpScript::put(QString path, QString localPath) {
   FtpScriptData *d = _data;
   if (d) {
-    d->_commands.append(FtpCommand([]{},
-    std::bind(&FtpScriptData::pasvIsFinished, d, _1, _2, _3, _4), "PASV"));
+    d->_commands.append(FtpCommand("PASV",
+    std::bind(&FtpScriptData::pasvIsFinished, d, _1, _2, _3, _4)));
     QFile *file = new QFile(localPath);
     file->open(QIODevice::ReadOnly);
     d->_commands.append(FtpCommand([d, file]() {
       d->_client->upload(d->_pasvPort, file);
-    },
+    }, "STOR "+path,
     std::bind(&FtpScriptData::memoryTransferIsFinished, d, _1, _2, _3, _4,
-              file),
-    "STOR "+path));
+              file)));
   }
   return *this;
 }

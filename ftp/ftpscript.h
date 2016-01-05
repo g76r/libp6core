@@ -43,14 +43,17 @@ public:
   FtpScript &connectToHost(QString host, quint16 port = 21);
   FtpScript &login(QString login, QString password);
   FtpScript &cd(QString path);
+  FtpScript &pushd(QString path = QString());
+  FtpScript &popd();
+  FtpScript &pwd(QString *path);
   FtpScript &mkdir(QString path);
   FtpScript &mkdirIgnoringFailure(QString path);
   FtpScript &rmdir(QString path);
   FtpScript &rmdirIgnoringFailure(QString path);
   FtpScript &rm(QString path);
   FtpScript &rmIgnoringFailure(QString path);
-  FtpScript &ls(QStringList *relativePaths, QString path = ".");
-  // LATER lsLong(QList<FtpFileInfo>*, path)
+  FtpScript &ls(QStringList *basenames, QString path = QString());
+  // LATER lsLong(QList<FtpFileInfo>*)
   // FtpFileInfo: { QString relativePath, QString absolutePath, QDateTime mtime, qint64 size }
   // using NLST, PWD or memorized pwd from last login() or cd(), MDTM, SIZE
   FtpScript &get(QString path, QIODevice *dest);

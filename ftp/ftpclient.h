@@ -61,6 +61,19 @@ public:
   bool cd(QString path, int msecs = FtpScript::DefaultTimeout) {
     return script().cd(path).execAndWait(msecs);
   }
+  bool pushd(QString path = QString(),
+                   int msecs = FtpScript::DefaultTimeout) {
+    return script().pushd(path).execAndWait(msecs);
+  }
+  bool pushd(int msecs) {
+    return script().pushd().execAndWait(msecs);
+  }
+  bool popd(int msecs = FtpScript::DefaultTimeout) {
+    return script().popd().execAndWait(msecs);
+  }
+  bool pwd(QString *path, int msecs = FtpScript::DefaultTimeout){
+    return script().pwd(path).execAndWait(msecs);
+  }
   bool mkdir(QString path, int msecs = FtpScript::DefaultTimeout) {
     return script().mkdir(path).execAndWait(msecs);
   }
@@ -81,11 +94,11 @@ public:
   bool rmIgnoringFailure(QString path, int msecs = FtpScript::DefaultTimeout) {
     return script().rmIgnoringFailure(path).execAndWait(msecs);
   }
-  bool ls(QStringList *relativePaths, QString path = ".",
+  bool ls(QStringList *basenames, QString path = QString(),
           int msecs = FtpScript::DefaultTimeout) {
-    return script().ls(relativePaths, path).execAndWait(msecs);
+    return script().ls(basenames, path).execAndWait(msecs);
   }
-  // LATER lsLong(QList<FtpFileInfo>*, path)
+  // LATER lsLong(QList<FtpFileInfo>*)
   bool get(QString path, QIODevice *dest,
            int msecs = FtpScript::DefaultTimeout) {
     return script().get(path, dest).execAndWait(msecs);
