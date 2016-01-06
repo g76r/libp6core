@@ -48,10 +48,10 @@ QString HtmlUtils::htmlEncode(QString text, bool urlAsLinks, bool newlineAsBr) {
         s.append("&amp;");
         break;
       case '"':
-        s.append("&quot;");
+        s.append("&#34;");
         break;
       case '\'':
-        s.append("&apos;");
+        s.append("&#39;");
         break;
       case '\n':
         if (newlineAsBr)
