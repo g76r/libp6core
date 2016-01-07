@@ -60,7 +60,7 @@ QAbstractSocket *HttpResponse::output() {
     foreach (QString name, d->_headers.keys().toSet())
       foreach (QString value, d->_headers.values(name))
         ts << name << ": " << value << "\r\n";
-    if (header("Content-Type").isEmpty())
+    if (header(QStringLiteral("Content-Type")).isEmpty())
       ts << "Content-Type: text/plain;charset=UTF-8\r\n";
     ts << "\r\n";
     d->_headersSent = true;
@@ -100,11 +100,12 @@ void HttpResponse::redirect(QString location) {
   if (!d)
     return;
   setStatus(302);
-  setHeader("Location", location);
-  setContentType("text/html;charset=UTF-8");
-  // LATER html escape
-  output()->write(QString("<html><body>Moved. Please click on <a href=\"%1"
-                  "\">this link</a>").arg(location).toUtf8().constData());
+  setHeader(QStringLiteral("Location"), location);
+  setContentType(QStringLiteral("text/html;charset=UTF-8"));
+  // LATER url encode
+  output()->write(QStringLiteral(
+                    "<html><body>Moved. Please click on <a href=\"%1"
+                    "\">this link</a>").arg(location).toUtf8().constData());
 }
 
 // LATER convert to QRegularExpression, but not without regression/unit testing
@@ -180,56 +181,56 @@ QString HttpResponse::statusAsString(int status) {
   switch(status) {
   // LATER other statuses
   case 200:
-    return "Ok";
+    return QStringLiteral("Ok");
   case 201:
-    return "Created";
+    return QStringLiteral("Created");
   case 202:
-    return "Accepted";
+    return QStringLiteral("Accepted");
   case 300:
-    return "Multiple choices";
+    return QStringLiteral("Multiple choices");
   case 301:
-    return "Moving permantently";
+    return QStringLiteral("Moving permantently");
   case 302:
-    return "Found";
+    return QStringLiteral("Found");
   case 303:
-    return "See other";
+    return QStringLiteral("See other");
   case 304:
-    return "Not modified";
+    return QStringLiteral("Not modified");
   case 305:
-    return "Use proxy";
+    return QStringLiteral("Use proxy");
   case 306:
-    return "Switch proxy";
+    return QStringLiteral("Switch proxy");
   case 307:
-    return "Temporary redirect";
+    return QStringLiteral("Temporary redirect");
   case 308:
-    return "Permanent redirect";
+    return QStringLiteral("Permanent redirect");
   case 400:
-    return "Bad request";
+    return QStringLiteral("Bad request");
   case 401:
-    return "Authentication required";
+    return QStringLiteral("Authentication required");
   case 402:
-    return "Insert coin";
+    return QStringLiteral("Insert coin");
   case 403:
-    return "Forbidden";
+    return QStringLiteral("Forbidden");
   case 404:
-    return "Not Found";
+    return QStringLiteral("Not Found");
   case 405:
-    return "Method not allowed";
+    return QStringLiteral("Method not allowed");
   case 408:
-    return "Request timeout";
+    return QStringLiteral("Request timeout");
   case 413:
-    return "Request entity too large";
+    return QStringLiteral("Request entity too large");
   case 414:
-    return "Request URI too large";
+    return QStringLiteral("Request URI too large");
   case 415:
-    return "Unsupported media type";
+    return QStringLiteral("Unsupported media type");
   case 418:
-    return "I'm a teapot";
+    return QStringLiteral("I'm a teapot");
   case 500:
-    return "Internal server error";
+    return QStringLiteral("Internal server error");
   case 501:
-    return "Not implemented";
+    return QStringLiteral("Not implemented");
   default:
-    return QString("Status %1").arg(status);
+    return QStringLiteral("Status %1").arg(status);
   }
 }
