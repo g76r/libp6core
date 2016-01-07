@@ -29,6 +29,36 @@ class HttpResponseData;
  * very low cost in thread-safe manner, however it must not be accessed from
  * several threads at a time. */
 class LIBQTSSUSHARED_EXPORT HttpResponse {
+public:
+  enum WellKnownStatusCode {
+    Unknown,
+    HTTP_Ok = 200,
+    HTTP_Created,
+    HTTP_Accepted,
+    HTTP_Multiple_Choices = 300,
+    HTTP_Moved_Permanently,
+    HTTP_Found,
+    HTTP_See_Other,
+    HTTP_Not_Modified,
+    HTTP_Use_Proxy,
+    HTTP_Switch_Proxy,
+    HTTP_Temporary_Redirect,
+    HTTP_Permanent_Redirect,
+    HTTP_Bad_Request = 400,
+    HTTP_Authentication_Required,
+    HTTP_Payment_Required,
+    HTTP_Forbidden,
+    HTTP_Not_Found,
+    HTTP_Method_Not_Allowed,
+    HTTP_Request_Timeout = 408,
+    HTTP_Request_Entity_Too_Large = 413,
+    HTTP_Request_URI_Too_Large,
+    HTTP_Unsupported_Media_Type,
+    HTTP_I_Am_Teapot = 418,
+    HTTP_Internal_Server_Error = 500,
+    HTTP_Not_Implemented
+  };
+
 private:
   QExplicitlySharedDataPointer<HttpResponseData> d;
 
@@ -44,12 +74,13 @@ public:
   /** Syntaxic sugar for setHeader("Content-Type", type).
    * Default content type is "text/plain;charset=UTF-8". */
   inline void setContentType(QString type) {
-    setHeader("Content-Type", type); }
+    setHeader(QStringLiteral("Content-Type"), type); }
   /** Syntaxic sugar for setHeader("Content-Length", length). */
   inline void setContentLength(qint64 length) {
-    setHeader("Content-Length", QString::number(length)); }
+    setHeader(QStringLiteral("Content-Length"), QString::number(length)); }
   /** Set HTTP status code. Default is 200.
-   * Must be called before output(). */
+   * Must be called before output().
+   * @see StatusCode */
   void setStatus(int status);
   /** Current http status, as set by last setStatus() call */
   int status() const;
