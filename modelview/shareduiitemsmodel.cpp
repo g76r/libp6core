@@ -153,11 +153,6 @@ void SharedUiItemsModel::resetData() {
   int rows = rowCount();
   if (rows)
     removeRows(0, rows);
-  SharedUiItem nullitem;
-  foreach (QString idQualifier, _itemQualifierFilter)
-    foreach (SharedUiItem item,
-             _documentManager->itemsByIdQualifier(idQualifier))
-      changeItem(item, nullitem, idQualifier);
 }
 
 void SharedUiItemsProxyModelHelper::setApparentModel(

@@ -164,6 +164,7 @@ bool InMemoryDatabaseDocumentManager::setDatabase(
     QSqlDatabase db, QString *errorString) {
   _repository.clear();
   _db = db;
+  emit dataReset();
   bool successful = true;
   QString reason;
   foreach (const QString &idQualifier, _idSections.keys()) {
@@ -181,7 +182,6 @@ bool InMemoryDatabaseDocumentManager::setDatabase(
   }
   if (!successful && errorString)
     *errorString = reason;
-  emit dataReset();
   return successful;
 }
 
