@@ -27,14 +27,26 @@ void QtLogLogger::doLog(const LogEntry entry) {
   switch(entry.severity()) {
   case Log::Debug:
   case Log::Info:
+#if QT_VERSION >= 0x050400
     qDebug().noquote() << header << entry.message();
+#else
+    qDebug() << header << entry.message();
+#endif
     break;
   case Log::Warning:
   case Log::Error:
+#if QT_VERSION >= 0x050400
     qWarning().noquote() << header << entry.message();
+#else
+    qWarning() << header << entry.message();
+#endif
     break;
   case Log::Fatal:
+#if QT_VERSION >= 0x050400
     qCritical().noquote() << header << entry.message();
+#else
+    qCritical() << header << entry.message();
+#endif
     break;
   }
 }
