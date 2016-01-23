@@ -21,7 +21,7 @@ under the License.
 enum State { TopLevel, Name, Content, Comment, Quote, BinarySurfaceOrLength,
              BinaryLength, ArrayHeader, ArrayBody, Escape, EscapeHex };
 
-static const char hexdigits[] = {
+static const qint8 hexdigits[] = {
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -48,9 +48,9 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
   }
   _handler->setErrorString(tr("unknown handler error"));
   int line = 1, column = 0, arrayColumn = 0;
-  uchar c, quote = 0;
-  ushort escaped = 0;
-  char digit;
+  quint8 c, quote = 0;
+  quint16 escaped = 0;
+  qint8 digit;
   State state = TopLevel, nextState = TopLevel;
   QByteArray content, comment, surface;
   QStringList names;
