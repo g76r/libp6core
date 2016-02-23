@@ -96,10 +96,10 @@ void HttpResponse::addHeader(QString name, QString value) {
     Log::warning() << "HttpResponse: cannot set header after writing data";
 }
 
-void HttpResponse::redirect(QString location) {
+void HttpResponse::redirect(QString location, int status) {
   if (!d)
     return;
-  setStatus(302);
+  setStatus(status);
   setHeader(QStringLiteral("Location"), location);
   setContentType(QStringLiteral("text/html;charset=UTF-8"));
   // LATER url encode

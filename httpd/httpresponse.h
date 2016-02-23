@@ -113,9 +113,9 @@ public:
   QStringList headers(QString name) const;
   /** Full header hash */
   QMultiHash<QString,QString> headers() const;
-  /** Respond with a temporary moved page (302).
+  /** Redirect to another URL, by default using a temporary redirect (302).
    * Must be called before output(). */
-  void redirect(QString location);
+  void redirect(QString location, int status = HTTP_Found);
   /** Set a session cookie
   * Some characters are not allowed in value, see RFC6265 or use
   * setBase64SessionCookie() */
