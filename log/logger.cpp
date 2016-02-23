@@ -148,8 +148,6 @@ Logger::Logger(Log::Severity minSeverity, ThreadModel threadModel)
     _thread->start();
     moveToThread(_thread);
   }
-  qRegisterMetaType<Log::Severity>("Log::Severity");
-  qRegisterMetaType<Logger::LogEntry>("Logger::LogEntry");
 }
 
 Logger::~Logger() {

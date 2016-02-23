@@ -113,6 +113,8 @@ private:
   static inline QString sanitizeMessage(QString string);
 };
 
+Q_DECLARE_METATYPE(Log::Severity)
+
 class LIBQTSSUSHARED_EXPORT LogHelper {
   mutable bool _logOnDestroy;
   Log::Severity _severity;
