@@ -32,9 +32,14 @@ class LIBQTSSUSHARED_EXPORT HttpResponse {
 public:
   enum WellKnownStatusCode {
     Unknown,
+    HTTP_Continue = 100,
+    HTTP_Switching_Protocols,
     HTTP_Ok = 200,
     HTTP_Created,
     HTTP_Accepted,
+    HTTP_Non_Authoritative_Information,
+    HTTP_No_Content,
+    HTTP_Reset_Content,
     HTTP_Multiple_Choices = 300,
     HTTP_Moved_Permanently,
     HTTP_Found,
@@ -50,13 +55,24 @@ public:
     HTTP_Forbidden,
     HTTP_Not_Found,
     HTTP_Method_Not_Allowed,
+    HTTP_Not_Acceptable,
+    HTTP_Proxy_Authentication_Required,
     HTTP_Request_Timeout = 408,
-    HTTP_Request_Entity_Too_Large = 413,
-    HTTP_Request_URI_Too_Large,
+    HTTP_Conflict,
+    HTTP_Gone,
+    HTTP_Length_Required,
+    HTTP_Request_Representation_Too_Large = 413,
+    HTTP_URI_Too_Long,
     HTTP_Unsupported_Media_Type,
+    HTTP_Expectation_Failed = 417,
     HTTP_I_Am_Teapot = 418,
+    HTTP_Upgrade_Required = 426,
     HTTP_Internal_Server_Error = 500,
-    HTTP_Not_Implemented
+    HTTP_Not_Implemented,
+    HTTP_Bad_Gateway,
+    HTTP_Service_Unavailable,
+    HTTP_Gateway_Timeout,
+    HTTP_Version_Not_Supported
   };
 
 private:
