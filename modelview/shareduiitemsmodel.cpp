@@ -1,4 +1,4 @@
-/* Copyright 2014-2015 Hallowyn and others.
+/* Copyright 2014-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -33,6 +33,7 @@ const QStringList SharedUiItemsModel::suiMimeTypes {
 SharedUiItemsModel::SharedUiItemsModel(QObject *parent)
   : QAbstractItemModel(parent), _columnsCount(0),
     _roleNames(QAbstractItemModel::roleNames()), _documentManager(0) {
+  qMetaTypeId<SharedUiItem>();
 }
 
 int SharedUiItemsModel::columnCount(const QModelIndex &parent) const {
