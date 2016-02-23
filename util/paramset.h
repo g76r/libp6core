@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -105,6 +105,7 @@ class ParamSetData;
  * %{=switch:%loglevel:E:error:W:warning:I:info:debug}
  * %{=switch:%foo:0:false:true} -> if 0: false else: true
  * %{=switch:%foo:0:false} -> if 0: false else: %foo
+ * %{=switch:%foo} -> always return %foo, but won't warn if foo is not defined
  *
  * %=sub function: %{=sub!input!s-expression!...}
  *
@@ -179,6 +180,18 @@ class ParamSetData;
  * %{=elideright:%foo:40}
  * %{=elideright:Hello World !:10} -> Hello W...
  * %{=elideright:Hello World !:10:(...)} -> Hello(...)
+ *
+ * %=random function: %{=random[:modulo[:shift]]
+ *
+ * produce a pseudo-random integer number between shift (default: 0) and
+ * modulo-1+shift.
+ * negative modulos are silently converted to their absolute values.
+ *
+ * examples:
+ * %{=random} -> any integer number (32 or 64 bits, depending on platform)
+ * %{=random:100} -> a number between 0 and 99
+ * %{=random:6:1} -> a number between 1 and 6
+ * %{=random:-8:-4} -> a number between -4 and 3
  */
 class LIBQTSSUSHARED_EXPORT ParamSet : public ParamsProvider {
   friend class ParamsProviderMerger;

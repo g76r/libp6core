@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -295,6 +295,15 @@ QString ParamSet::evaluateImplicitVariable(
       // LATER provide more options such as encoding <br> or links, through e.g. and =htmlencodeext function
       QString input = evaluate(key.mid(12), inherit, context, alreadyEvaluated);
       return HtmlUtils::htmlEncode(input, false, false);
+    } else if (key.startsWith("=random")) {
+      CharacterSeparatedExpression params(key, 7);
+      int modulo = abs(params.value(0).toInt());
+      int shift = params.value(1).toInt();
+      int i = ::rand();
+      if (modulo)
+        i %= modulo;
+      i += shift;
+      return QString::number(i);
     }
   }
   return QString();
