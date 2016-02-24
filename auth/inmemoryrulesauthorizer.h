@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -47,7 +47,7 @@ class LIBQTSSUSHARED_EXPORT InMemoryRulesAuthorizer : public Authorizer {
 
 public:
   explicit InMemoryRulesAuthorizer(QObject *parent = 0);
-  InMemoryRulesAuthorizer(UsersDatabase *db, bool takeOwnership);
+  InMemoryRulesAuthorizer(UsersDatabase *db);
   ~InMemoryRulesAuthorizer();
   /** This method is thread-safe */
   bool authorizeUserData(UserData user, QString actionScope,

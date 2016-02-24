@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,11 +14,10 @@
 #include "authorizer.h"
 
 Authorizer::Authorizer(QObject *parent)
-  : QObject(parent), _usersDatabase(0), _ownUsersDatabase(false) {
+  : QObject(parent), _usersDatabase(0) {
 }
 
 Authorizer::~Authorizer() {
-  setUsersDatabase(0, false);
 }
 
 bool Authorizer::authorize(QString userId, QString actionScope,
@@ -29,12 +28,7 @@ bool Authorizer::authorize(QString userId, QString actionScope,
   return false;
 }
 
-Authorizer &Authorizer::setUsersDatabase(UsersDatabase *db, bool takeOwnership) {
-  if (_ownUsersDatabase && _usersDatabase)
-    delete _usersDatabase;
+Authorizer &Authorizer::setUsersDatabase(UsersDatabase *db) {
   _usersDatabase = db;
-  _ownUsersDatabase = takeOwnership;
-  if (takeOwnership)
-    db->setParent(this);
   return *this;
 }

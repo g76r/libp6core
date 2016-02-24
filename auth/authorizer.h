@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,7 +24,6 @@ class LIBQTSSUSHARED_EXPORT Authorizer : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(Authorizer)
   UsersDatabase *_usersDatabase;
-  bool _ownUsersDatabase;
 
 public:
   explicit Authorizer(QObject *parent = 0);
@@ -44,7 +43,8 @@ public:
   virtual bool authorize(QString userId, QString actionScope,
                          QString dataScope = QString(),
                          QDateTime timestamp = QDateTime()) const;
-  Authorizer &setUsersDatabase(UsersDatabase *db, bool takeOwnership);
+  /** Does not take ownership. */
+  Authorizer &setUsersDatabase(UsersDatabase *db);
 };
 
 #endif // AUTHORIZER_H

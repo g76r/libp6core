@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 Hallowyn and others.
+/* Copyright 2013-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,19 +16,33 @@
 
 #include "httphandler.h"
 #include "auth/authenticator.h"
+#include "auth/authorizer.h"
 
 /** Handler for HTTP Basic authentication scheme.
  * Check for Authorization header, challenge login/password against an
  * Authenticator and set userid in HttpRequestContext.
- * If auth is mandatory (which is the default), no or bad credentials will
- * lead to an HTTP 401 and will stop the handlers pipeline (handleRequest()
- * returning false).
+ *
+ * Using an Authorizer is optional and is only used to decide if unauthenticated
+ * access are allowed or not, not to actually check authorization rules.
+ *
+ * In the following cases, serve a 401 response and stop the handlers pipeline:
+ * - There are no or invalid credentials and auth is mandatory (which is not
+ *   the default).
+ * - There are no or invalid credentials and an Authorizer is set and denies
+ *   access with empty userid for current path (the path is givent to the
+ *   authorizer as action scope); this is convenient e.g. to allow
+ *   unauthenticated access to static resources matching ^/css/.* but issue a
+ *   401 for other pathes.
+ *
+ * In all other cases the pipeline will continue (and authorization check of
+ * authenticated users is up to the following handlers).
  */
 class LIBQTSSUSHARED_EXPORT BasicAuthHttpHandler : public HttpHandler {
   Q_OBJECT
   Q_DISABLE_COPY(BasicAuthHttpHandler)
   Authenticator *_authenticator;
-  bool _ownAuthenticator, _authIsMandatory;
+  Authorizer *_authorizer;
+  bool _authIsMandatory;
   QString _realm, _userIdContextParamName;
   ParamSet _authContext;
 
@@ -38,7 +52,10 @@ public:
   bool acceptRequest(HttpRequest req);
   bool handleRequest(HttpRequest req, HttpResponse res,
                      ParamsProviderMerger *processingContext);
-  void setAuthenticator(Authenticator *authenticator, bool takeOwnership);
+  /** Does not take ownership */
+  void setAuthenticator(Authenticator *authenticator);
+  /** Does not take ownership */
+  void setAuthorizer(Authorizer *authorizer);
   void setRealm(QString realm) {
     _realm = realm;
     _authContext.setValue(QStringLiteral("realm"), realm);
@@ -54,7 +71,7 @@ public slots:
   /** If no or bad basic auth, request auth (HTTP 401) and stop pipeline
    * (handRequest() returns false).
    * Otherwise let the page be served with no userId in HttpRequestContext. */
-  void setAuthIsMandatory(bool mandatory);
+  void setAuthIsMandatory(bool mandatory = true);
 };
 
 #endif // BASICAUTHHTTPHANDLER_H

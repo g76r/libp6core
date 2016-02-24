@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,9 +17,8 @@ InMemoryRulesAuthorizer::InMemoryRulesAuthorizer(QObject *parent)
   : Authorizer(parent) {
 }
 
-InMemoryRulesAuthorizer::InMemoryRulesAuthorizer(UsersDatabase *db,
-                                                 bool takeOwnership) {
-  setUsersDatabase(db, takeOwnership);
+InMemoryRulesAuthorizer::InMemoryRulesAuthorizer(UsersDatabase *db) {
+  setUsersDatabase(db);
 }
 
 InMemoryRulesAuthorizer::~InMemoryRulesAuthorizer() {

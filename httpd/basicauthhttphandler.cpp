@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 Hallowyn and others.
+/* Copyright 2013-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,12 +14,11 @@
 #include "basicauthhttphandler.h"
 
 BasicAuthHttpHandler::BasicAuthHttpHandler(QObject *parent)
-  : HttpHandler(parent), _authenticator(0), _ownAuthenticator(false),
-    _authIsMandatory(true), _userIdContextParamName("userid") {
+  : HttpHandler(parent), _authenticator(0), _authorizer(0),
+    _authIsMandatory(false), _userIdContextParamName("userid") {
 }
 
 BasicAuthHttpHandler::~BasicAuthHttpHandler() {
-  setAuthenticator(0, false);
 }
 
 bool BasicAuthHttpHandler::acceptRequest(HttpRequest req) {
@@ -51,7 +50,10 @@ bool BasicAuthHttpHandler::handleRequest(
       }
     }
   }
-  if (_authIsMandatory) {
+  if (_authIsMandatory
+      || (_authorizer && !_authorizer->authorize(
+            QString(), req.url().path(), QString(),
+            QDateTime::currentDateTime()))) {
     res.setStatus(401);
     res.setHeader("WWW-Authenticate", // LATER sanitize realm
                   QString("Basic realm=\"%1\"").arg(_realm));
@@ -60,12 +62,12 @@ bool BasicAuthHttpHandler::handleRequest(
   return true;
 }
 
-void BasicAuthHttpHandler::setAuthenticator(
-    Authenticator *authenticator, bool takeOwnership) {
-  if (_ownAuthenticator && _authenticator)
-    delete _authenticator;
+void BasicAuthHttpHandler::setAuthenticator(Authenticator *authenticator) {
   _authenticator = authenticator;
-  _ownAuthenticator = takeOwnership;
+}
+
+void BasicAuthHttpHandler::setAuthorizer(Authorizer *authorizer) {
+  _authorizer = authorizer;
 }
 
 void BasicAuthHttpHandler::setAuthIsMandatory(bool mandatory) {
