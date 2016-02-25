@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,14 +23,15 @@
 #include <QRegularExpression>
 #include "util/htmlutils.h"
 
-int TemplatingHttpHandler::_defaultMaxValueLength(200);
+int TemplatingHttpHandler::_defaultMaxValueLength(500);
 TemplatingHttpHandler::TextConversion
 TemplatingHttpHandler::_defaultTextConversion(HtmlEscapingWithUrlAsLinks);
 
 TemplatingHttpHandler::TemplatingHttpHandler(
     QObject *parent, QString urlPathPrefix, QString documentRoot)
   : FilesystemHttpHandler(parent, urlPathPrefix, documentRoot),
-    _textConversion(_defaultTextConversion) {
+    _textConversion(_defaultTextConversion),
+    _maxValueLength(_defaultMaxValueLength) {
 }
 
 void TemplatingHttpHandler::sendLocalResource(
@@ -90,7 +91,7 @@ void TemplatingHttpHandler::applyTemplateFile(
         output->append(
               processingContext.overridingParams()
               .evaluate(markupContent.mid(1), &processingContext));
-      } else if (markupId == "view") {
+      } else if (markupId == QStringLiteral("view")) {
         // syntax: <?view:viewname?>
         QString markupData = markupContent.mid(separatorPos+1);
         TextView *view = _views.value(markupData);
@@ -101,10 +102,9 @@ void TemplatingHttpHandler::applyTemplateFile(
                          << markupData << "' among " << _views.keys();
           output->append("?");
         }
-      } else if (markupId == "value" || markupId == "rawvalue") {
+      } else if (markupId == QStringLiteral("value")
+                 || markupId == QStringLiteral("rawvalue")) {
         // syntax: <?[raw]value:variablename[:valueifnotdef[:valueifdef]]?>
-        // value is htmlencoded provided textConversion != AsIs
-        // rawvalue is not htmlencoded regardless textConversion setting
         CharacterSeparatedExpression markupParams(markupContent, separatorPos);
         QString value = processingContext
             .paramValue(markupParams.value(0)).toString();
@@ -121,9 +121,9 @@ void TemplatingHttpHandler::applyTemplateFile(
             value = markupParams.value(1);
           }
         }
-        convertData(&value, markupId == "rawvalue");
+        convertData(&value, markupId == QStringLiteral("rawvalue"));
         output->append(value);
-      } else if (markupId == "include") {
+      } else if (markupId == QStringLiteral("include")) {
         // syntax: <?include:path_relative_to_current_file_dir?>
         QString markupData = markupContent.mid(separatorPos+1);
         QString includePath = file->fileName();
