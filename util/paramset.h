@@ -33,7 +33,10 @@ class ParamSetData;
  * %!variable_with_only_one_leading_special_char
  *
  * It also supports functions in the form or special variable names starting
- * with an equal sign:
+ * with an equal sign and optional parameters separated by arbitrary chars the
+ * same way sed commands do (e.g. s/foo/bar/ is the same than s,foo,bar,).
+ *
+ * Here are supported functions:
  *
  * %=date function: %{=date!format!relativedatetime!timezone}
  *
@@ -51,7 +54,7 @@ class ParamSetData;
  * %{=date,,,UTC}
  * %{=date!hh:mm:ss,zzz!01-01T20:02-2w+1d!GMT}
  *
- * %=default function: %{=default!variable1[!variable2[...]]!value_if_not_set}
+ * %=default function: %{=default!variable1[!variable2[...]][!value_if_not_set]}
  *
  * the function works like %{variable:-value_if_not_set} in shell scripts and
  * almost like nvl/ifnull functions in sql
@@ -168,7 +171,8 @@ class ParamSetData;
  * %{=htmlencode:http://wwww.google.com/} -> <a href="http://wwww.google.com/">http://wwww.google.com/</a>
  * %{=htmlencode http://wwww.google.com/} -> same
  *
- * %=elideright function: %{=elideright:input:length[:placeholder]}
+ * %=elideright,=elideleft,=elidemiddle functions:
+ *    %{=elidexxx:input:length[:placeholder]}
  *
  * input is the data to transform, it is evaluated (%foo become the content of
  *   foo param)
@@ -180,6 +184,8 @@ class ParamSetData;
  * %{=elideright:%foo:40}
  * %{=elideright:Hello World !:10} -> Hello W...
  * %{=elideright:Hello World !:10:(...)} -> Hello(...)
+ * %{=elideleft:Hello World !:10} -> ...World !
+ * %{=elidemiddle:Hello World !:10} -> Hell...d !
  *
  * %=random function: %{=random[:modulo[:shift]]
  *
@@ -196,6 +202,7 @@ class ParamSetData;
 class LIBQTSSUSHARED_EXPORT ParamSet : public ParamsProvider {
   friend class ParamsProviderMerger;
   QSharedDataPointer<ParamSetData> d;
+  static bool _variableNotFoundLoggingEnabled;
 
 public:
   ParamSet();
@@ -336,6 +343,13 @@ public:
   QString toString(bool inherit = true, bool decorate = true) const;
   /** Create an empty ParamSet having this one for parent. */
   ParamSet createChild() const;
+  /** Record debug log messages when a variable evaluation is required and not
+   * found.
+   * Applicable to all params sets in the applicatoin (global parameter).
+   * Defaults: disabled, but if "ENABLE_PARAMSET_VARIABLE_NOT_FOUND_LOGGING"
+   * environment variable is set to "true". */
+  static void enableVariableNotFoundLogging(bool enabled = true) {
+    _variableNotFoundLoggingEnabled = enabled; }
 
 private:
   inline bool appendVariableValue(

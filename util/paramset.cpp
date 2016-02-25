@@ -23,6 +23,21 @@
 #include "paramsprovidermerger.h"
 #include "htmlutils.h"
 #include "stringutils.h"
+#include <stdlib.h>
+
+bool ParamSet::_variableNotFoundLoggingEnabled = false;
+
+namespace {
+
+struct EnvironmentVariablesReader {
+  EnvironmentVariablesReader() {
+    char *value = getenv("ENABLE_PARAMSET_VARIABLE_NOT_FOUND_LOGGING");
+    if (value && strcmp(value, "true") == 0)
+      ParamSet::enableVariableNotFoundLogging();
+  }
+} _environmentVariablesReader;
+
+} // unnamed namespace
 
 class ParamSetData : public QSharedData {
 public:
@@ -116,17 +131,14 @@ QString ParamSet::evaluateImplicitVariable(
     } else if (key.startsWith("=default")) {
       CharacterSeparatedExpression params(key, 8);
       QString value;
-      if (params.size() >= 1) {
-        for (int i = 0; i < params.size()-1; ++i) {
-          if (appendVariableValue(&value, params.value(i), inherit, context,
-                                  alreadyEvaluated, false))
-            return value;
-        }
-        if (params.size() >= 2)
-          value = evaluate(params.value(params.size()-1), inherit, context,
-                           alreadyEvaluated);
-        return value;
+      for (int i = 0; i < params.size()-1; ++i) {
+        if (appendVariableValue(&value, params.value(i), inherit, context,
+                                alreadyEvaluated, false))
+          return value;
       }
+      if (params.size() >= 2)
+        value = evaluate(params.value(params.size()-1), inherit, context,
+                         alreadyEvaluated);
       return value;
     } else if (key.startsWith("=rawvalue")) {
       CharacterSeparatedExpression params(key, 9);
@@ -339,7 +351,7 @@ bool ParamSet::appendVariableValue(
     value->append(s);
     return true;
   }
-  if (logIfVariableNotFound) {
+  if (_variableNotFoundLoggingEnabled && logIfVariableNotFound) {
     Log::debug()
         << "unsupported variable substitution: variable not found: "
            "%{" << variable << "} in paramset " << toString(false)
