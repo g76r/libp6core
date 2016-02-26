@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -11,8 +11,8 @@ License for the specific language governing permissions and limitations
 under the License.
 */
 
-#ifndef PFINTERNALS_H
-#define PFINTERNALS_H
+#ifndef PFINTERNALS_P_H
+#define PFINTERNALS_P_H
 
 /* This file contain methods and defines that are only for internal use
  * of PF implementation and MUST not be used (or even #include'd) by
@@ -98,4 +98,4 @@ inline QString pftoxmltext(QString string) {
   return s;
 }
 
-#endif // PFINTERNALS_H
+#endif // PFINTERNALS_P_H
