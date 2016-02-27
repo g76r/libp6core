@@ -17,6 +17,7 @@
 #include "shareduiitemdocumentmanager.h"
 #include "shareduiitemlist.h"
 #include <QtDebug>
+
 const QString SharedUiItemsModel::suiQualifiedIdsListMimeType {
   "application/shareduiitem-qualifiedid-list"
 };
@@ -33,7 +34,6 @@ const QStringList SharedUiItemsModel::suiMimeTypes {
 SharedUiItemsModel::SharedUiItemsModel(QObject *parent)
   : QAbstractItemModel(parent), _columnsCount(0),
     _roleNames(QAbstractItemModel::roleNames()), _documentManager(0) {
-  qMetaTypeId<SharedUiItem>();
 }
 
 int SharedUiItemsModel::columnCount(const QModelIndex &parent) const {

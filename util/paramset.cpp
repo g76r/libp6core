@@ -27,17 +27,14 @@
 
 bool ParamSet::_variableNotFoundLoggingEnabled = false;
 
-namespace {
-
-struct EnvironmentVariablesReader {
-  EnvironmentVariablesReader() {
-    char *value = getenv("ENABLE_PARAMSET_VARIABLE_NOT_FOUND_LOGGING");
-    if (value && strcmp(value, "true") == 0)
-      ParamSet::enableVariableNotFoundLogging();
-  }
-} _environmentVariablesReader;
-
-} // unnamed namespace
+static int staticInit() {
+  qMetaTypeId<ParamSet>();
+  char *value = getenv("ENABLE_PARAMSET_VARIABLE_NOT_FOUND_LOGGING");
+  if (value && strcmp(value, "true") == 0)
+    ParamSet::enableVariableNotFoundLogging();
+  return 0;
+}
+Q_CONSTRUCTOR_FUNCTION(staticInit)
 
 class ParamSetData : public QSharedData {
 public:
