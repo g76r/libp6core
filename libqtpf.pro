@@ -34,7 +34,8 @@ SOURCES += \
     pf/pfnode.cpp \
     pf/pfhandler.cpp \
     pf/pfdomhandler.cpp \
-    pf/pfarray.cpp
+    pf/pfarray.cpp \
+    pf/pffragment.cpp
 
 HEADERS +=\
     pf/libqtpf_global.h \
@@ -42,10 +43,11 @@ HEADERS +=\
     pf/pfparser.h \
     pf/pfoptions.h \
     pf/pfnode.h \
-    pf/pfinternals.h \
     pf/pfhandler.h \
     pf/pfdomhandler.h \
-    pf/pfarray.h
+    pf/pfarray.h \
+    pf/pffragment_p.h \
+    pf/pfinternals_p.h
 
 unix {
     target.path = /usr/lib

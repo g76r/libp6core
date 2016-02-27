@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -14,137 +14,18 @@ under the License.
 #ifndef PFNODE_H
 #define PFNODE_H
 
-#include "libqtpf_global.h"
+#include "pffragment_p.h"
+#include "pfarray.h"
 #include <QString>
 #include <QList>
-#include <QIODevice>
 #include <QVariant>
-#include <QSharedData>
-#include "pfoptions.h"
 #include <QStringList>
 #include <QBuffer>
-#include "pfarray.h"
 
 class PfNode;
 
 class LIBQTPFSHARED_EXPORT PfNodeData : public QSharedData {
   friend class PfNode;
-
-  class PfFragment;
-
-  /** Internal class for Qt's implicit sharing idiom.
-    * @see PfFragment */
-  class LIBQTPFSHARED_EXPORT PfFragmentData : public QSharedData {
-  public:
-    enum Format {Raw, Pf, XmlBase64 };
-    virtual ~PfFragmentData();
-    virtual qint64 write(
-        QIODevice *target, Format format, PfOptions options) const = 0;
-    virtual bool isText() const;
-    virtual QString text() const;
-    virtual bool isEmpty() const;
-    virtual bool isBinary() const;
-    virtual bool isLazyBinary() const;
-  };
-
-  class LIBQTPFSHARED_EXPORT PfTextFragmentData : public PfFragmentData {
-  public:
-    QString _text;
-    explicit inline PfTextFragmentData(QString text) : _text(text) { }
-    qint64 write(QIODevice *target, Format format, PfOptions options) const;
-    bool isText() const;
-    QString text() const;
-  };
-
-  class LIBQTPFSHARED_EXPORT PfAbstractBinaryFragmentData
-      : public PfFragmentData {
-  public:
-    QString _surface;
-    qint64 _size; // real data size, surface removed
-    bool isBinary() const;
-
-  protected:
-    PfAbstractBinaryFragmentData() : _size(0) { }
-    inline qint64 writeDataApplyingSurface(
-        QIODevice *target, Format format, PfOptions options,
-        QByteArray data) const;
-    inline QString takeFirstLayer(QString &surface) const;
-    inline bool removeSurface(QByteArray &data, QString surface) const;
-    inline bool applySurface(QByteArray &data, QString surface) const;
-    inline qint64 measureSurface(QByteArray data, QString surface) const;
-  };
-
-  class LIBQTPFSHARED_EXPORT PfBinaryFragmentData
-      : public PfAbstractBinaryFragmentData {
-  public:
-    QByteArray _data;
-    inline PfBinaryFragmentData(QByteArray data, QString surface)
-      : _data(data) { setSurface(surface, true); }
-    void setSurface(QString surface, bool shouldAdjustSize);
-    qint64 write(QIODevice *target, Format format, PfOptions options) const;
-  };
-
-  class LIBQTPFSHARED_EXPORT PfLazyBinaryFragmentData
-      : public PfAbstractBinaryFragmentData {
-  public:
-    mutable QIODevice *_device; // TODO manage ownership of the device
-    qint64 _length; // raw data length on device, surface applyied
-    qint64 _offset;
-    inline PfLazyBinaryFragmentData(
-        QIODevice *device, qint64 length, qint64 offset, QString surface)
-      : _device(device), _length(length), _offset(offset) {
-      setSurface(surface, true); }
-    void setSurface(QString surface, bool shouldAdjustSize);
-    qint64 write(QIODevice *target, Format format, PfOptions options) const;
-    bool isLazyBinary() const;
-  };
-
-  /** Fragment of PF node content, this class is only for internal use of
-    * implementation, mainly PfContent. It should not be used directly by
-    * application code.
-    *
-    * A fragment is either text or binary or array.
-    * A binary fragment can be lazy or not.
-    * There is no difference between a null or empty fragment.
-    * An empty fragment is a text fragment.
-    */
-  class LIBQTPFSHARED_EXPORT PfFragment {
-  private:
-    QSharedDataPointer<PfFragmentData> d;
-
-  public:
-    inline PfFragment() { }
-    explicit inline PfFragment(QString text)
-      : d(new PfTextFragmentData(text)) { }
-    inline PfFragment(QIODevice *device, qint64 length, qint64 offset,
-                      QString surface)
-      : d(new PfLazyBinaryFragmentData(device, length, offset, surface)) { }
-    inline PfFragment(QByteArray data, QString surface)
-      : d(new PfBinaryFragmentData(data, surface)) { }
-    inline PfFragment(const PfFragment &other) : d(other.d) { }
-    PfFragment &operator =(const PfFragment &other) { d = other.d; return *this; }
-    inline bool isEmpty() const { return d ? d->isEmpty() : true; }
-    inline bool isText() const { return d ? d->isText() : true; }
-    inline bool isBinary() const { return d ? d->isBinary() : false; }
-    inline bool isLazyBinary() const { return d ? d->isLazyBinary() : false; }
-    /** binary size (for text: size of text in UTF-8) */
-    // inline qint64 size() const { return d ? d->_size : 0; }
-    /** .isNull() if binary fragment */
-    inline QString text() const { return d ? d->text() : QString(); }
-    /** Write content as PF-escaped string or binary with header. */
-    inline qint64 writePf(QIODevice *target, PfOptions options) const {
-      return d ? d->write(target, PfFragmentData::Pf, options) : 0;
-    }
-    /** Write actual content in unescaped format. */
-    inline qint64 writeRaw(QIODevice *target, PfOptions options) const {
-      return d ? d->write(target, PfFragmentData::Raw, options) : 0;
-    }
-    /** Write content as XML string, using base64 encoding for binary fragments */
-    inline qint64 writeXmlUsingBase64(QIODevice *target,
-                                      PfOptions options) const {
-      return d ? d->write(target, PfFragmentData::XmlBase64, options) : 0;
-    }
-  };
 
   QString _name;
   QList<PfNode> _children;
@@ -410,7 +291,7 @@ public:
     d->_array.clear();
     // LATER merge fragments if previous one is text
     if (!text.isEmpty())
-      d->_fragments.append(PfNodeData::PfFragment(text));
+      d->_fragments.append(PfFragment(text));
     return *this;
   }
   /** Append text fragment to context (and remove array if any). */
@@ -424,7 +305,7 @@ public:
     // Merging fragments if previous is in-memory binary is probably a bad idea
     // because it would prevent Qt's implicite sharing to work.
     if (!data.isEmpty())
-      d->_fragments.append(PfNodeData::PfFragment(data, surface));
+      d->_fragments.append(PfFragment(data, surface));
     return *this;
   }
   /** Append lazy-loaded binary fragment to context (and remove array if any) */
@@ -435,7 +316,7 @@ public:
     d->_array.clear();
     if (device && length > 0)
       d->_fragments
-          .append(PfNodeData::PfFragment(device, length, offset, surface));
+          .append(PfFragment(device, length, offset, surface));
     return *this;
   }
   /** Replace current content with text fragment. */
@@ -512,5 +393,8 @@ public:
     */
   //qint64 writeCompatibleXml(QIODevice *target) const;
 };
+
+Q_DECLARE_METATYPE(PfNode)
+Q_DECLARE_TYPEINFO(PfNode, Q_MOVABLE_TYPE);
 
 #endif // PFNODE_H
