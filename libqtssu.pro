@@ -99,7 +99,8 @@ SOURCES += \
     modelview/shareduiitemsmatrixmodel.cpp \
     ftp/ftpclient.cpp \
     ftp/ftpscript.cpp \
-    util/stringutils.cpp
+    util/stringutils.cpp \
+    net/dummysocket.cpp
 
 
 HEADERS +=\
@@ -174,7 +175,8 @@ HEADERS +=\
     modelview/shareduiitemsmatrixmodel.h \
     ftp/ftpclient.h \
     ftp/ftpscript.h \
-    util/stringutils.h
+    util/stringutils.h \
+    net/dummysocket.h
 
 unix {
     target.path = /usr/lib
