@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -80,9 +80,10 @@ void HttpWorker::handleConnection(int socketDescriptor) {
     goto finally;
   }
   method = args[0];
-  if (method == "HEAD")
+  if (method == "HEAD") {
     req.setMethod(HttpRequest::HEAD);
-  else if (method == "GET")
+    res.disableBodyOutput();
+  } else if (method == "GET")
     req.setMethod(HttpRequest::GET);
   else if (method == "POST")
     req.setMethod(HttpRequest::POST);

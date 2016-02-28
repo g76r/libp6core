@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,15 +19,17 @@
 #include <QSharedData>
 #include <QMultiHash>
 #include "util/timeformats.h"
+#include "net/dummysocket.h"
 
 class HttpResponseData : public QSharedData {
 public:
   QAbstractSocket *_output;
   int _status;
-  bool _headersSent;
+  bool _headersSent, _disableBodyOutput;
   QMultiHash<QString,QString> _headers;
-  explicit HttpResponseData(QAbstractSocket *output) : _output(output),
-    _status(200), _headersSent(false) { }
+  explicit HttpResponseData(QAbstractSocket *output)
+    : _output(output), _status(200), _headersSent(false),
+      _disableBodyOutput(false) { }
 };
 
 HttpResponse::HttpResponse(QAbstractSocket *output)
@@ -49,10 +51,16 @@ HttpResponse &HttpResponse::operator=(const HttpResponse &other) {
   return *this;
 }
 
+void HttpResponse::disableBodyOutput() {
+  if (d)
+    d->_disableBodyOutput = true;
+}
+
 QAbstractSocket *HttpResponse::output() {
-  if (d && !d->_headersSent) {
+  if (!d)
+    return DummySocket::singletonInstance();
+  if (!d->_headersSent) {
     QTextStream ts(d->_output);
-    // LATER give a label for each well known status codes
     ts << "HTTP/1.0 " << d->_status << " " << statusAsString(d->_status)
        << "\r\n";
     // LATER sanitize well-known headers (Content-Type...) values
@@ -65,7 +73,7 @@ QAbstractSocket *HttpResponse::output() {
     ts << "\r\n";
     d->_headersSent = true;
   }
-  return d ? d->_output : 0;
+  return d->_disableBodyOutput ? DummySocket::singletonInstance() : d->_output;
 }
 
 void HttpResponse::setStatus(int status) {

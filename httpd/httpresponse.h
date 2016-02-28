@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -87,6 +87,11 @@ public:
   /** Get the output to write content; calling this method triggers sending
     * the response status and headers. */
   QAbstractSocket *output();
+  /** Further calls to output() will return a dummy socket to disable sending
+   * data to the client. This method is only intended to be called by HttpWorker
+   * when processing a HEAD request, to disable naive HttpHandlers from sending
+   * a body in response to a HEAD request. */
+  void disableBodyOutput();
   /** Syntaxic sugar for setHeader("Content-Type", type).
    * Default content type is "text/plain;charset=UTF-8". */
   inline void setContentType(QString type) {
