@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -108,7 +108,8 @@ void FilesystemHttpHandler::sendLocalResource(
   if (!handleCacheHeadersAndSend304(file, req, res)) {
     setMimeTypeByName(filename, res);
     res.setContentLength(file->size());
-    IOUtils::copy(res.output(), file);
+    if (req.method() != HttpRequest::HEAD)
+      IOUtils::copy(res.output(), file);
   }
 }
 

@@ -45,9 +45,11 @@ void TemplatingHttpHandler::sendLocalResource(
       applyTemplateFile(req, res, file, processingContext, &output);
       QByteArray ba = output.toUtf8();
       res.setContentLength(ba.size());
-      QBuffer buf(&ba);
-      buf.open(QIODevice::ReadOnly);
-      IOUtils::copy(res.output(), &buf);
+      if (req.method() != HttpRequest::HEAD) {
+        QBuffer buf(&ba);
+        buf.open(QIODevice::ReadOnly);
+        IOUtils::copy(res.output(), &buf);
+      }
       return;
     }
   }
