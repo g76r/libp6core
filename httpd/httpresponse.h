@@ -40,6 +40,9 @@ public:
     HTTP_Non_Authoritative_Information,
     HTTP_No_Content,
     HTTP_Reset_Content,
+    HTTP_Partial_Content,
+    HTTP_Multi_Status, // WebDAV
+    HTTP_Content_Different = 210, // WebDAV
     HTTP_Multiple_Choices = 300,
     HTTP_Moved_Permanently,
     HTTP_Found,
@@ -49,6 +52,7 @@ public:
     HTTP_Switch_Proxy,
     HTTP_Temporary_Redirect,
     HTTP_Permanent_Redirect,
+    HTTP_Too_Many_Redirects = 310,
     HTTP_Bad_Request = 400,
     HTTP_Authentication_Required,
     HTTP_Payment_Required,
@@ -65,14 +69,23 @@ public:
     HTTP_URI_Too_Long,
     HTTP_Unsupported_Media_Type,
     HTTP_Expectation_Failed = 417,
-    HTTP_I_Am_Teapot = 418,
-    HTTP_Upgrade_Required = 426,
+    HTTP_I_Am_Teapot = 418, // RFC 2324
+    HTTP_Unprocessable_Entity = 422, // WebDAV
+    HTTP_Locked, // WebDAV
+    HTTP_Method_Failure, // WebDAV
+    HTTP_Unordered_Collection, // WebDAV RFC 3648
+    HTTP_Upgrade_Required = 426, // RFC 2817
+    HTTP_Unavailable_For_Legal_Reasons = 451, // RFC 7725
     HTTP_Internal_Server_Error = 500,
     HTTP_Not_Implemented,
     HTTP_Bad_Gateway,
     HTTP_Service_Unavailable,
     HTTP_Gateway_Timeout,
-    HTTP_Version_Not_Supported
+    HTTP_Version_Not_Supported,
+    HTTP_Variant_Also_Negociates,
+    HTTP_Insufficient_Storage, // WebDAV
+    HTTP_Loop_Detected, // WebDAV
+    HTTP_Bandwidth_Limit_Exceeded
   };
 
 private:
