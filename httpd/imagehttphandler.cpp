@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 Hallowyn and others.
+/* Copyright 2013-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -38,7 +38,8 @@ bool ImageHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
     res.setHeader("Content-Encoding", contentEncoding);
   QByteArray data = imageData(0);
   res.setContentLength(data.size());
-  res.output()->write(data);
+  if (req.method() != HttpRequest::HEAD)
+    res.output()->write(data);
   return true;
 }
 
