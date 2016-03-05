@@ -24,6 +24,9 @@
 #include "htmlutils.h"
 #include "stringutils.h"
 #include <stdlib.h>
+#include "stringmap.h"
+#include <functional>
+
 
 bool ParamSet::_variableNotFoundLoggingEnabled = false;
 
@@ -116,207 +119,240 @@ QString ParamSet::evaluate(
   return values.first();
 }
 
-// LATER add functions: %=ifgt %=ifgte %=iflt %=iflte
-// LATER optimize (avoid tons of startsWith())
-QString ParamSet::evaluateImplicitVariable(
-    QString key, bool inherit, const ParamsProvider *context,
-    QSet<QString> alreadyEvaluated) const {
-  if (key.at(0) == '=') {
-    if (key.startsWith("=date")) {
-      return TimeFormats::toMultifieldSpecifiedCustomTimestamp(
-            QDateTime::currentDateTime(), key.mid(5));
-    } else if (key.startsWith("=default")) {
-      CharacterSeparatedExpression params(key, 8);
-      QString value;
-      for (int i = 0; i < params.size()-1; ++i) {
-        if (appendVariableValue(&value, params.value(i), inherit, context,
-                                alreadyEvaluated, false))
-          return value;
-      }
-      if (params.size() >= 2)
-        value = evaluate(params.value(params.size()-1), inherit, context,
-                         alreadyEvaluated);
+static StringMap<std::function<
+QString(ParamSet params, QString key, bool inherit,
+const ParamsProvider *context, QSet<QString> alreadyEvaluated)>>
+implicitVariables {
+{ "=date", [](ParamSet, QString key, bool,
+              const ParamsProvider *, QSet<QString>) {
+  return TimeFormats::toMultifieldSpecifiedCustomTimestamp(
+        QDateTime::currentDateTime(), key.mid(5));
+}, true},
+{ "=default", [](ParamSet paramset, QString key, bool inherit,
+              const ParamsProvider *context, QSet<QString> alreadyEvaluated) {
+  CharacterSeparatedExpression params(key, 8);
+  QString value;
+  for (int i = 0; i < params.size()-1; ++i) {
+    value = paramset.value(params.value(i), inherit, context, alreadyEvaluated);
+    if (!value.isNull())
       return value;
-    } else if (key.startsWith("=rawvalue")) {
-      CharacterSeparatedExpression params(key, 9);
-      if (params.size() < 1)
-        return QString();
-      QString value = rawValue(params.value(0));
-      if (params.size() >= 2) {
-        QString flags = params.value(1);
-        if (flags.contains('e')) { // %-escape
-          value = escape(value);
-        }
-        if (flags.contains('h')) { // htmlencode
-          value = HtmlUtils::htmlEncode(
-                value, flags.contains('u'), // url as links
-                flags.contains('n')); // newline as <br>
-        }
-      }
-      return value;
-    } else if (key.startsWith("=ifneq")) {
-      CharacterSeparatedExpression params(key, 6);
-      if (params.size() >= 3) {
-        QString input = evaluate(params.value(0), inherit, context,
-                                 alreadyEvaluated);
-        QString ref = evaluate(params.value(1), inherit, context,
-                               alreadyEvaluated);
-        if (input != ref) {
-          return evaluate(params.value(2), inherit, context, alreadyEvaluated);
-        } else {
-          return params.size() >= 4
-              ? evaluate(params.value(3), inherit, context, alreadyEvaluated)
-              : input;
-        }
-      } else {
-        //qDebug() << "%=ifneq function invalid syntax:" << key;
-      }
-    } else if (key.startsWith("=switch")) {
-      CharacterSeparatedExpression params(key, 7);
-      if (params.size() >= 1) {
-        QString input = evaluate(params.value(0), inherit, context,
-                                 alreadyEvaluated);
-        // evaluating :case:value params, if any
-        int n = (params.size() - 1) / 2;
-        for (int i = 0; i < n; ++i) {
-          QString ref = evaluate(params.value(1+i*2), inherit, context,
-                                 alreadyEvaluated);
-          if (input == ref)
-            return evaluate(params.value(1+i*2+1), inherit, context,
-                            alreadyEvaluated);
-        }
-        // evaluating :default param, if any
-        if (params.size() % 2 == 0) {
-          return evaluate(params.value(params.size()-1), inherit, context,
-                          alreadyEvaluated);
-        }
-        // otherwise left input as is
-        return input;
-      } else {
-        //qDebug() << "%=switch function invalid syntax:" << key;
-      }
-    } else if (key.startsWith("=sub")) {
-      CharacterSeparatedExpression params(key, 4);
-      //qDebug() << "%=sub:" << key << params.size() << params;
-      QString value = evaluate(params.value(0), inherit, context,
-                               alreadyEvaluated);
-      for (int i = 1; i < params.size(); ++i) {
-        CharacterSeparatedExpression sFields(params[i]);
-        //qDebug() << "pattern" << i << params[i] << sFields.size() << sFields;
-        QString optionsString = sFields.value(2);
-        QRegularExpression::PatternOption patternOptions
-            = QRegularExpression::NoPatternOption;
-        if (optionsString.contains('i'))
-          patternOptions = QRegularExpression::CaseInsensitiveOption;
-        QRegularExpression re(sFields.value(0), patternOptions);
-        if (!re.isValid()) {
-          qDebug() << "%=sub with invalid regular expression: "
-                   << sFields.value(0);
-          continue;
-        }
-        bool repeat = optionsString.contains('g');
-        int offset = 0;
-        QString transformed;
-        do {
-          QRegularExpressionMatch match = re.match(value, offset);
-          if (match.hasMatch()) {
-            //qDebug() << "match:" << match.captured()
-            //         << value.mid(offset, match.capturedStart()-offset);
-            // append text between previous match and start of this match
-            transformed += value.mid(offset, match.capturedStart()-offset);
-            // replace current match with (evaluated) replacement string
-            RegexpParamsProvider repp(match);
-            ParamsProviderMerger reContext =
-                ParamsProviderMerger(&repp)(context);
-            transformed += evaluate(sFields.value(1), inherit, &reContext,
-                                    alreadyEvaluated);
-            // skip current match for next iteration
-            offset = match.capturedEnd();
-          } else {
-            //qDebug() << "no more match:" << value.mid(offset);
-            // append text between previous match and end of value
-            transformed += value.mid(offset);
-            // stop matching
-            repeat = false;
-          }
-          //qDebug() << "transformed:" << transformed;
-        } while(repeat);
-        value = transformed;
-      }
-      //qDebug() << "value:" << value;
-      return value;
-    } else if (key.startsWith("=left")) {
-      CharacterSeparatedExpression params(key, 5);
-      QString input = evaluate(params.value(0), inherit, context,
-                               alreadyEvaluated);
-      bool ok;
-      int i = params.value(1).toInt(&ok);
-      return ok ? input.left(i) : input;
-    } else if (key.startsWith("=right")) {
-      CharacterSeparatedExpression params(key, 6);
-      QString input = evaluate(params.value(0), inherit, context,
-                               alreadyEvaluated);
-      bool ok;
-      int i = params.value(1).toInt(&ok);
-      return ok ? input.right(i) : input;
-    } else if (key.startsWith("=mid")) {
-      CharacterSeparatedExpression params(key, 4);
-      QString input = evaluate(params.value(0), inherit, context,
-                               alreadyEvaluated);
-      bool ok;
-      int i = params.value(1).toInt(&ok);
-      if (ok) {
-        int j = params.value(2).toInt(&ok);
-        return input.mid(i, ok ? j : -1);
-      }
-      return input;
-    } else if (key.startsWith("=elideright")) {
-      CharacterSeparatedExpression params(key, 11);
-      QString input = evaluate(params.value(0), inherit, context,
-                               alreadyEvaluated);
-      bool ok;
-      int i = params.value(1).toInt(&ok);
-      QString placeHolder = params.value(2, QStringLiteral("..."));
-      if (!ok || placeHolder.size() > i || input.size() <= i)
-        return input;
-      return StringUtils::elideRight(input, i, placeHolder);
-    } else if (key.startsWith("=elideleft")) {
-      CharacterSeparatedExpression params(key, 10);
-      QString input = evaluate(params.value(0), inherit, context,
-                               alreadyEvaluated);
-      bool ok;
-      int i = params.value(1).toInt(&ok);
-      QString placeHolder = params.value(2, QStringLiteral("..."));
-      if (!ok || placeHolder.size() > i || input.size() <= i)
-        return input;
-      return StringUtils::elideLeft(input, i, placeHolder);
-    } else if (key.startsWith("=elidemiddle")) {
-      CharacterSeparatedExpression params(key, 12);
-      QString input = evaluate(params.value(0), inherit, context,
-                               alreadyEvaluated);
-      bool ok;
-      int i = params.value(1).toInt(&ok);
-      QString placeHolder = params.value(2, QStringLiteral("..."));
-      if (!ok || placeHolder.size() > i || input.size() <= i)
-        return input;
-      return StringUtils::elideMiddle(input, i, placeHolder);
-    } else if (key.startsWith("=htmlencode")) {
-      // LATER provide more options such as encoding <br> or links, through e.g. and =htmlencodeext function
-      QString input = evaluate(key.mid(12), inherit, context, alreadyEvaluated);
-      return HtmlUtils::htmlEncode(input, false, false);
-    } else if (key.startsWith("=random")) {
-      CharacterSeparatedExpression params(key, 7);
-      int modulo = abs(params.value(0).toInt());
-      int shift = params.value(1).toInt();
-      int i = ::rand();
-      if (modulo)
-        i %= modulo;
-      i += shift;
-      return QString::number(i);
+  }
+  if (params.size() >= 2)
+    value = paramset.evaluate(params.value(params.size()-1), inherit, context,
+                              alreadyEvaluated);
+  return value;
+}, true},
+{ "=rawvalue", [](ParamSet paramset, QString key, bool,
+              const ParamsProvider *, QSet<QString>) {
+  CharacterSeparatedExpression params(key, 9);
+  if (params.size() < 1)
+    return QString();
+  QString value = paramset.rawValue(params.value(0));
+  if (params.size() >= 2) {
+    QString flags = params.value(1);
+    if (flags.contains('e')) { // %-escape
+      value = ParamSet::escape(value);
+    }
+    if (flags.contains('h')) { // htmlencode
+      value = HtmlUtils::htmlEncode(
+            value, flags.contains('u'), // url as links
+            flags.contains('n')); // newline as <br>
     }
   }
+  return value;
+}, true},
+{ "=ifneq", [](ParamSet paramset, QString key, bool inherit,
+              const ParamsProvider *context, QSet<QString> alreadyEvaluated) {
+  CharacterSeparatedExpression params(key, 6);
+  if (params.size() >= 3) {
+    QString input = paramset.evaluate(params.value(0), inherit, context,
+                                      alreadyEvaluated);
+    QString ref = paramset.evaluate(params.value(1), inherit, context,
+                                    alreadyEvaluated);
+    if (input != ref)
+      return paramset.evaluate(params.value(2), inherit, context,
+                               alreadyEvaluated);
+    return params.size() >= 4
+        ? paramset.evaluate(params.value(3), inherit, context,
+                            alreadyEvaluated)
+        : input;
+  }
+  //qDebug() << "%=ifneq function invalid syntax:" << key;
   return QString();
-}
+}, true},
+{ "=switch", [](ParamSet paramset, QString key, bool inherit,
+              const ParamsProvider *context, QSet<QString> alreadyEvaluated) {
+  CharacterSeparatedExpression params(key, 7);
+  if (params.size() >= 1) {
+    QString input = paramset.evaluate(params.value(0), inherit, context,
+                                      alreadyEvaluated);
+    // evaluating :case:value params, if any
+    int n = (params.size() - 1) / 2;
+    for (int i = 0; i < n; ++i) {
+      QString ref = paramset.evaluate(params.value(1+i*2), inherit, context,
+                                      alreadyEvaluated);
+      if (input == ref)
+        return paramset.evaluate(params.value(1+i*2+1), inherit, context,
+                                 alreadyEvaluated);
+    }
+    // evaluating :default param, if any
+    if (params.size() % 2 == 0) {
+      return paramset.evaluate(params.value(params.size()-1), inherit, context,
+                               alreadyEvaluated);
+    }
+    // otherwise left input as is
+    return input;
+  }
+  //qDebug() << "%=switch function invalid syntax:" << key;
+  return QString();
+}, true},
+{ "=sub", [](ParamSet paramset, QString key, bool inherit,
+              const ParamsProvider *context, QSet<QString> alreadyEvaluated) {
+  CharacterSeparatedExpression params(key, 4);
+  //qDebug() << "%=sub:" << key << params.size() << params;
+  QString value = paramset.evaluate(params.value(0), inherit, context,
+                                    alreadyEvaluated);
+  for (int i = 1; i < params.size(); ++i) {
+    CharacterSeparatedExpression sFields(params[i]);
+    //qDebug() << "pattern" << i << params[i] << sFields.size() << sFields;
+    QString optionsString = sFields.value(2);
+    QRegularExpression::PatternOption patternOptions
+        = QRegularExpression::NoPatternOption;
+    if (optionsString.contains('i'))
+      patternOptions = QRegularExpression::CaseInsensitiveOption;
+    QRegularExpression re(sFields.value(0), patternOptions);
+    if (!re.isValid()) {
+      qDebug() << "%=sub with invalid regular expression: "
+               << sFields.value(0);
+      continue;
+    }
+    bool repeat = optionsString.contains('g');
+    int offset = 0;
+    QString transformed;
+    do {
+      QRegularExpressionMatch match = re.match(value, offset);
+      if (match.hasMatch()) {
+        //qDebug() << "match:" << match.captured()
+        //         << value.mid(offset, match.capturedStart()-offset);
+        // append text between previous match and start of this match
+        transformed += value.mid(offset, match.capturedStart()-offset);
+        // replace current match with (evaluated) replacement string
+        RegexpParamsProvider repp(match);
+        ParamsProviderMerger reContext =
+            ParamsProviderMerger(&repp)(context);
+        transformed += paramset.evaluate(sFields.value(1), inherit, &reContext,
+                                         alreadyEvaluated);
+        // skip current match for next iteration
+        offset = match.capturedEnd();
+      } else {
+        //qDebug() << "no more match:" << value.mid(offset);
+        // append text between previous match and end of value
+        transformed += value.mid(offset);
+        // stop matching
+        repeat = false;
+      }
+      //qDebug() << "transformed:" << transformed;
+    } while(repeat);
+    value = transformed;
+  }
+  //qDebug() << "value:" << value;
+  return value;
+}, true},
+{ "=left", [](ParamSet paramset, QString key, bool inherit,
+              const ParamsProvider *context, QSet<QString> alreadyEvaluated) {
+  CharacterSeparatedExpression params(key, 5);
+  QString input = paramset.evaluate(params.value(0), inherit, context,
+                                    alreadyEvaluated);
+  bool ok;
+  int i = params.value(1).toInt(&ok);
+  return ok ? input.left(i) : input;
+}, true},
+{ "=right", [](ParamSet paramset, QString key, bool inherit,
+              const ParamsProvider *context, QSet<QString> alreadyEvaluated) {
+  CharacterSeparatedExpression params(key, 6);
+  QString input = paramset.evaluate(params.value(0), inherit, context,
+                                    alreadyEvaluated);
+  bool ok;
+  int i = params.value(1).toInt(&ok);
+  return ok ? input.right(i) : input;
+}, true},
+{ "=mid", [](ParamSet paramset, QString key, bool inherit,
+              const ParamsProvider *context, QSet<QString> alreadyEvaluated) {
+  CharacterSeparatedExpression params(key, 4);
+  QString input = paramset.evaluate(params.value(0), inherit, context,
+                                    alreadyEvaluated);
+  bool ok;
+  int i = params.value(1).toInt(&ok);
+  if (ok) {
+    int j = params.value(2).toInt(&ok);
+    return input.mid(i, ok ? j : -1);
+  }
+  return input;
+}, true},
+{ "=elideright", [](ParamSet paramset, QString key, bool inherit,
+              const ParamsProvider *context, QSet<QString> alreadyEvaluated) {
+  CharacterSeparatedExpression params(key, 11);
+  QString input = paramset.evaluate(params.value(0), inherit, context,
+                                    alreadyEvaluated);
+  bool ok;
+  int i = params.value(1).toInt(&ok);
+  QString placeHolder = params.value(2, QStringLiteral("..."));
+  if (!ok || placeHolder.size() > i || input.size() <= i)
+    return input;
+  return StringUtils::elideRight(input, i, placeHolder);
+}, true},
+{ "=elideleft", [](ParamSet paramset, QString key, bool inherit,
+              const ParamsProvider *context, QSet<QString> alreadyEvaluated) {
+  CharacterSeparatedExpression params(key, 10);
+  QString input = paramset.evaluate(params.value(0), inherit, context,
+                                    alreadyEvaluated);
+  bool ok;
+  int i = params.value(1).toInt(&ok);
+  QString placeHolder = params.value(2, QStringLiteral("..."));
+  if (!ok || placeHolder.size() > i || input.size() <= i)
+    return input;
+  return StringUtils::elideLeft(input, i, placeHolder);
+}, true},
+{ "=elidemiddle", [](ParamSet paramset, QString key, bool inherit,
+              const ParamsProvider *context, QSet<QString> alreadyEvaluated) {
+  CharacterSeparatedExpression params(key, 12);
+  QString input = paramset.evaluate(params.value(0), inherit, context,
+                                    alreadyEvaluated);
+  bool ok;
+  int i = params.value(1).toInt(&ok);
+  QString placeHolder = params.value(2, QStringLiteral("..."));
+  if (!ok || placeHolder.size() > i || input.size() <= i)
+    return input;
+  return StringUtils::elideMiddle(input, i, placeHolder);
+}, true},
+{ "=htmlencode", [](ParamSet paramset, QString key, bool inherit,
+              const ParamsProvider *context, QSet<QString> alreadyEvaluated) {
+  // LATER provide more options such as encoding <br> or links, through e.g. and =htmlencodeext function
+  QString input = paramset.evaluate(key.mid(12), inherit, context,
+                                    alreadyEvaluated);
+  return HtmlUtils::htmlEncode(input, false, false);
+}, true},
+{ "=random", [](ParamSet, QString key, bool,
+              const ParamsProvider *, QSet<QString>) {
+  CharacterSeparatedExpression params(key, 7);
+  int modulo = abs(params.value(0).toInt());
+  int shift = params.value(1).toInt();
+  int i = ::rand();
+  if (modulo)
+    i %= modulo;
+  i += shift;
+  return QString::number(i);
+}, true}
+};
+
+// LATER add functions: %=ifgt %=ifgte %=iflt %=iflte
+
+/*
+{ "=function", [](ParamSet paramset, QString key, bool inherit,
+              const ParamsProvider *context, QSet<QString> alreadyEvaluated) {
+  return QString();
+}, true}
+ */
 
 bool ParamSet::appendVariableValue(
     QString *value, QString variable, bool inherit,
@@ -330,9 +366,13 @@ bool ParamSet::appendVariableValue(
                       "variable \"" << variable << "\"";
     return false;
   }
-  QString s = evaluateImplicitVariable(
-        variable, inherit, context, alreadyEvaluated);
-  if (!s.isNull()) {
+  QString s;
+  auto implicitVariable = implicitVariables.value(variable);
+  //qDebug() << "implicitVariable" << variable << !!implicitVariable;
+  if (implicitVariable) {
+    s = implicitVariable(*this, variable, inherit, context,
+                         alreadyEvaluated);
+    //qDebug() << "" << s;
     value->append(s);
     return true;
   }

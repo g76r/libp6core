@@ -246,6 +246,10 @@ public:
     return evaluate(rawValue(key, QString(), inherit), inherit, context); }
   inline QString value(QString key, const ParamsProvider *context) const {
     return evaluate(rawValue(key, QString(), true), true, context); }
+  inline QString value(QString key, bool inherit, const ParamsProvider *context,
+                       QSet<QString> alreadyEvaluated) const {
+    return evaluate(rawValue(key, inherit), inherit, context, alreadyEvaluated);
+  }
   /** Return a value splitted into strings after parameters substitution. */
   QStringList valueAsStrings(QString key, QString separator = " ",
                              bool inherit = true,
@@ -309,6 +313,9 @@ public:
     return evaluate(rawValue, inherit, context, QSet<QString>()); }
   QString evaluate(QString rawValue, const ParamsProvider *context) const {
     return evaluate(rawValue, true, context); }
+  QString evaluate(QString rawValue, bool inherit,
+                   const ParamsProvider *context,
+                   QSet<QString> alreadyEvaluated) const;
   /** Split string and perform parameters substitution. */
   QStringList splitAndEvaluate(
       QString rawValue, QString separator = " ", bool inherit = true,
@@ -319,6 +326,9 @@ public:
   QStringList splitAndEvaluate(QString rawValue,
                                const ParamsProvider *context) const {
     return splitAndEvaluate(rawValue, " ", true, context); }
+  QStringList splitAndEvaluate(
+      QString rawValue, QString separator, bool inherit,
+      const ParamsProvider *context, QSet<QString> alreadyEvaluated) const;
   /** Escape all characters in string so that they no longer have speciale
    * meaning for evaluate() and splitAndEvaluate() methods. */
   static QString escape(QString string);
@@ -359,16 +369,6 @@ private:
   inline QString evaluateImplicitVariable(
       QString key, bool inherit, const ParamsProvider *context,
       QSet<QString> alreadyEvaluated) const;
-  QString evaluate(QString rawValue, bool inherit,
-                   const ParamsProvider *context,
-                   QSet<QString> alreadyEvaluated) const;
-  QStringList splitAndEvaluate(
-      QString rawValue, QString separator, bool inherit,
-      const ParamsProvider *context, QSet<QString> alreadyEvaluated) const;
-  inline QString value(QString key, bool inherit, const ParamsProvider *context,
-                       QSet<QString> alreadyEvaluated) const {
-    return evaluate(rawValue(key, inherit), inherit, context, alreadyEvaluated);
-  }
 };
 
 Q_DECLARE_METATYPE(ParamSet)
