@@ -161,15 +161,19 @@ class ParamSetData;
  * %{=mid:%foo:4:5}
  * %{=mid:%foo:4}
  *
- * %=htmlencode function: %{=htmlencode:input}
+ * %=htmlencode function: %{=htmlencode:input[:flags]}
  *
  * input is the data to transform, it is evaluated (%foo become the content of
  *   foo param) and can contain the separator character (e.g. :)
+ * flags can contain following characters:
+ *   u to surround url with links markups
+ *   n to add br markup whenever a newline is encountered
  *
  * examples:
  * %{=htmlencode:1 < 2} -> 1 &lt; 2
- * %{=htmlencode:http://wwww.google.com/} -> <a href="http://wwww.google.com/">http://wwww.google.com/</a>
- * %{=htmlencode http://wwww.google.com/} -> same
+ * %{=htmlencode:http://wwww.google.com/:u} -> <a href="http://wwww.google.com/">http://wwww.google.com/</a>
+ * %{=htmlencode http://wwww.google.com/ u} -> same
+ * %{=htmlencode|http://wwww.google.com/} -> http://wwww.google.com/
  *
  * %=elideright,=elideleft,=elidemiddle functions:
  *    %{=elidexxx:input:length[:placeholder]}

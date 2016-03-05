@@ -327,9 +327,17 @@ implicitVariables {
 }, true},
 { "=htmlencode", [](ParamSet paramset, QString key, bool inherit,
               const ParamsProvider *context, QSet<QString> alreadyEvaluated) {
-  // LATER provide more options such as encoding <br> or links, through e.g. and =htmlencodeext function
-  QString input = paramset.evaluate(key.mid(12), inherit, context,
-                                    alreadyEvaluated);
+  CharacterSeparatedExpression params(key, 11);
+  if (params.size() < 1)
+    return QString();
+  QString input = paramset.evaluate(params.value(0),
+                                    inherit, context, alreadyEvaluated);
+  if (params.size() >= 2) {
+    QString flags = params.value(1);
+    return HtmlUtils::htmlEncode(
+          input, flags.contains('u'), // url as links
+          flags.contains('n')); // newline as <br>
+  }
   return HtmlUtils::htmlEncode(input, false, false);
 }, true},
 { "=random", [](ParamSet, QString key, bool,
