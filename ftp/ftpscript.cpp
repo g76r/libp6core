@@ -108,6 +108,7 @@ public:
                             QString result) {
     Q_UNUSED(result)
     Q_UNUSED(resultCode)
+    Q_UNUSED(errorString)
     Q_ASSERT(success);
     Q_ASSERT(errorString);
     *success = true;
