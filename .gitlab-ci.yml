@@ -1,0 +1,11 @@
+stages:
+- build
+
+build_main:
+  stage: build
+  script:
+    - qmake
+    - make
+  tags:
+    - qt
+    - c++
