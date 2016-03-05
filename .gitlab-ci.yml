@@ -2,13 +2,19 @@ stages:
 - build
 - test
 
-job1:
+build_main:
   stage: build
   script:
     - qmake
     - make
+  tags:
+    - qt
+    - c++
 
-job2:
+build_tests:
   stage: test
   script:
    - cd tests && qmake && make 
+  tags:
+    - qt
+    - c++
