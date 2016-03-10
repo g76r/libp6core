@@ -55,6 +55,7 @@ void HttpWorker::handleConnection(int socketDescriptor) {
   HttpResponse res(socket);
   ParamsProviderMerger processingContext;
   HttpHandler *handler = 0;
+  QString uri;
   QUrl url;
   //qDebug() << "new client socket" << socket->peerAddress();
   QTextStream out(socket);
@@ -134,7 +135,14 @@ void HttpWorker::handleConnection(int socketDescriptor) {
     }
     //qDebug() << "a7";
   }
-  url = QUrl::fromEncoded(args[1].toLatin1()/*, QUrl::StrictMode */);
+  uri = args[1];
+  // replacing + with space in URI since this cannot be done in HttpRequest
+  // unless QUrl implements a full HTML form encoding (including + for space)
+  // in addition to current QUrl::FullyDecoded
+  // see (among other references) QTBUG-10146
+  uri.replace('+', ' ');
+  // LATER is utf8 the right choice ? should encoding depend on headers ?
+  url = QUrl::fromEncoded(uri.toUtf8());
   req.overrideUrl(url);
   handler = _server->chooseHandler(req);
   handler->handleRequest(req, res, &processingContext);
