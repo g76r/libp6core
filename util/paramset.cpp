@@ -415,7 +415,8 @@ QStringList ParamSet::splitAndEvaluate(
   while (i < rawValue.size()) {
     QChar c = rawValue.at(i++);
     if (c == '%') {
-      c = rawValue.at(i++);
+      if (i < rawValue.size()) // otherwise keep % and process as %%
+        c = rawValue.at(i++);
       if (c == '{') {
         // '{' and '}' are used as variable name delimiters, the way a Unix
         // shell use them along with $
@@ -439,10 +440,10 @@ QStringList ParamSet::splitAndEvaluate(
         // %% is used as an escape sequence for %
         value.append(c);
       } else {
-        // any other character, e.g. '=', is interpreted as the first
+        // any other character, e.g. 'a' or '=', is interpreted as the first
         // character of a variable name that will continue with letters
         // digits and underscores
-        // e.g. "=date" in "=date-foo"
+        // e.g. "abc",  "23", "=date", "!foobar"
         variable.append(c);
         while (i < rawValue.size()) {
           c = rawValue.at(i++);
@@ -458,6 +459,10 @@ QStringList ParamSet::splitAndEvaluate(
                             alreadyEvaluated, true);
         variable.clear();
       }
+    } else if (c =='\\') {
+      if (i < rawValue.size()) // otherwise process as double backslash
+        c = rawValue.at(i++);
+      value.append(c);
     } else if (separator.contains(c)) {
       if (!value.isEmpty())
         values.append(value);

@@ -320,7 +320,12 @@ public:
   QString evaluate(QString rawValue, bool inherit,
                    const ParamsProvider *context,
                    QSet<QString> alreadyEvaluated) const;
-  /** Split string and perform parameters substitution. */
+  /** Split string and perform parameters substitution.
+    * Raw value is split in parts separated by any character in separator
+    * string, several separators are processed as only one (hence splitted parts
+    * cannot be empty) and leading or trailing separators are ignored.
+    * Separators, and any other character, can be escaped with backslash (\),
+    * therefore backslashes must be backslashed. */
   QStringList splitAndEvaluate(
       QString rawValue, QString separator = " ", bool inherit = true,
       const ParamsProvider *context = 0) const {
