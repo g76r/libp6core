@@ -48,10 +48,12 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
   }
   _handler->setErrorString(tr("unknown handler error"));
   int line = 1, column = 0, arrayColumn = 0;
-  quint8 c, quote = 0;
+  quint8 c, quote = 0, escapeshift = 0;
   quint16 escaped = 0;
   qint8 digit;
-  State state = TopLevel, nextState = TopLevel;
+  State state = TopLevel; // current state
+  State quotedState = TopLevel; // saved state for quotes and comments
+  State escapedState = TopLevel; // saved state for escapes
   QByteArray content, comment, surface;
   QStringList names;
   PfArray array;
@@ -76,7 +78,7 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
       } else if (pfisspace(c)) {
       } else if (c == '#') {
         state = Comment;
-        nextState = TopLevel;
+        quotedState = TopLevel;
       } else {
         _handler->setErrorString(tr("unexpected character '%1' "
                                     "(in TopLevel state)")
@@ -124,7 +126,7 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
           goto error;
         }
         state = Comment;
-        nextState = Content;
+        quotedState = Content;
       } else if (c == '|') {
         names.append(QString::fromUtf8(content));
         content.clear();
@@ -136,10 +138,10 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
       } else if (pfisquote(c)) {
         quote = c;
         state = Quote;
-        nextState = Name;
+        quotedState = Name;
       } else if (c == '\\') {
         state = Escape;
-        nextState = Name;
+        escapedState = Name;
       } else if (pfisspecial(c)) {
         _handler->setErrorString(tr("unexpected character '%1' (in Name state)")
                                  .arg(pfquotechar(c)));
@@ -203,7 +205,7 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
           content.clear();
         }
         state = Comment;
-        nextState = Content;
+        quotedState = Content;
       } else if (c == '|') {
         if (content.size()) {
           if (!_handler->text(QString::fromUtf8(content))) {
@@ -216,10 +218,10 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
       } else if (pfisquote(c)) {
         quote = c;
         state = Quote;
-        nextState = Content;
+        quotedState = Content;
       } else if (c == '\\') {
         state = Escape;
-        nextState = Content;
+        escapedState = Content;
       } else if (pfisspecial(c)) {
         _handler->setErrorString(tr("unexpected character '%1' "
                                     "(in Content state)")
@@ -239,7 +241,7 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
         comment.clear();
         ++line;
         column = 0;
-        state = nextState;
+        state = quotedState;
       } else {
         if (!options.shouldIgnoreComment())
           comment.append(c);
@@ -248,7 +250,11 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
       break;
     case Quote:
       if (c == quote) {
-        state = nextState;
+        state = quotedState;
+        ++column;
+      } else if (c == '\\' && quote == '"') {
+        state = Escape;
+        escapedState = Quote;
         ++column;
       } else {
         if (c == '\n') {
@@ -360,16 +366,16 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
             array.appendHeader(QString::number(arrayColumn));
           ++column;
           state = Comment;
-          nextState = ArrayBody;
+          quotedState = ArrayBody;
         } else if (pfisspace(c)) {
           // ignore
         } else if (pfisquote(c)) {
           quote = c;
           state = Quote;
-          nextState = ArrayHeader;
+          quotedState = ArrayHeader;
         } else if (c == '\\') {
           state = Escape;
-          nextState = ArrayHeader;
+          escapedState = ArrayHeader;
         } else if (pfisspecial(c)) {
           _handler->setErrorString(tr("unexpected character '%1'"
                                       " (in ArrayHeader state)")
@@ -406,16 +412,16 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
           content.clear();
           ++column;
           state = Comment;
-          nextState = ArrayBody;
+          quotedState = ArrayBody;
         } else if (pfisspace(c)) {
           // ignore
         } else if (pfisquote(c)) {
           quote = c;
           state = Quote;
-          nextState = ArrayBody;
+          quotedState = ArrayBody;
         } else if (c == '\\') {
           state = Escape;
-          nextState = ArrayBody;
+          escapedState = ArrayBody;
         } else if (pfisspecial(c)) {
           _handler->setErrorString(tr("unexpected character '%1'"
                                       " (in ArrayBody state)")
@@ -442,19 +448,19 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
           c = 0;
         else if (c == 'x') {
           state = EscapeHex;
-          quote = 4; // LATER use another variable, this is really too ugly!
+          escapeshift = 4;
           escaped = 0;
           break;
         } else if (c == 'u') {
           state = EscapeHex;
-          quote = 12;
+          escapeshift = 12;
           escaped = 0;
           break;
         }
         ++column;
       }
       content.append(c);
-      state = nextState;
+      state = escapedState;
       break;
     case EscapeHex:
       digit = hexdigits[c];
@@ -462,15 +468,15 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
         _handler->setErrorString("bad hexadecimal digit in escape sequence");
         goto error;
       }
-      if (quote) {
-        escaped |= digit << quote;
-        quote -= 4;
+      if (escapeshift) {
+        escaped |= digit << escapeshift;
+        escapeshift -= 4;
       } else {
         if (escaped > 0x7f)
           content.append(QString(QChar(escaped|digit)).toUtf8());
         else
           content.append(QChar(escaped|digit));
-        state = nextState;
+        state = escapedState;
       }
       ++column;
       break;
