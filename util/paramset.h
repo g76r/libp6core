@@ -255,10 +255,10 @@ public:
     return evaluate(rawValue(key, inherit), inherit, context, alreadyEvaluated);
   }
   /** Return a value splitted into strings after parameters substitution. */
-  QStringList valueAsStrings(QString key, QString separator = " ",
+  QStringList valueAsStrings(QString key, QString separators = " ",
                              bool inherit = true,
                              const ParamsProvider *context = 0) const {
-    return splitAndEvaluate(rawValue(key), separator, inherit, context); }
+    return splitAndEvaluate(rawValue(key), separators, inherit, context); }
   /** Return a value splitted at first whitespace. Both strings are trimmed.
    * E.g. a raw value of "  foo    bar baz  " is returned as a
    * QPair<>("foo", "bar baz"). */
@@ -320,23 +320,27 @@ public:
   QString evaluate(QString rawValue, bool inherit,
                    const ParamsProvider *context,
                    QSet<QString> alreadyEvaluated) const;
-  /** Split string and perform parameters substitution.
-    * Raw value is split in parts separated by any character in separator
-    * string, several separators are processed as only one (hence splitted parts
-    * cannot be empty) and leading or trailing separators are ignored.
-    * Separators, and any other character, can be escaped with backslash (\),
-    * therefore backslashes must be backslashed. */
   QStringList splitAndEvaluate(
-      QString rawValue, QString separator = " ", bool inherit = true,
+      QString rawValue, QString separators = " ", bool inherit = true,
       const ParamsProvider *context = 0) const {
-    return splitAndEvaluate(rawValue, separator, inherit, context,
+    return splitAndEvaluate(rawValue, separators, inherit, context,
                             QSet<QString>());
   }
   QStringList splitAndEvaluate(QString rawValue,
                                const ParamsProvider *context) const {
     return splitAndEvaluate(rawValue, " ", true, context); }
+  /** Split string and perform parameters substitution.
+   *
+   * If (and only if) separators is not empty, raw value is splitted into parts
+   * separated by any character in separators string, several separators are
+   * processed as only one (hence splitted parts cannot be empty) and leading
+   * or trailing separators are ignored.
+   * Separators, and any other character, can be escaped with backslash (\),
+   * therefore backslashes must be backslashed.
+   * If separators is empty, neither split nor backslash escape is performed.
+   */
   QStringList splitAndEvaluate(
-      QString rawValue, QString separator, bool inherit,
+      QString rawValue, QString separators, bool inherit,
       const ParamsProvider *context, QSet<QString> alreadyEvaluated) const;
   /** Escape all characters in string so that they no longer have speciale
    * meaning for evaluate() and splitAndEvaluate() methods. */

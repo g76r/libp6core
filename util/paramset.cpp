@@ -407,7 +407,7 @@ bool ParamSet::appendVariableValue(
 }
 
 QStringList ParamSet::splitAndEvaluate(
-    QString rawValue, QString separator, bool inherit,
+    QString rawValue, QString separators, bool inherit,
     const ParamsProvider *context, QSet<QString> alreadyEvaluated) const {
   QStringList values;
   QString value, variable;
@@ -459,11 +459,11 @@ QStringList ParamSet::splitAndEvaluate(
                             alreadyEvaluated, true);
         variable.clear();
       }
-    } else if (c =='\\') {
+    } else if (!separators.isEmpty() && c =='\\') {
       if (i < rawValue.size()) // otherwise process as double backslash
         c = rawValue.at(i++);
       value.append(c);
-    } else if (separator.contains(c)) {
+    } else if (separators.contains(c)) {
       if (!value.isEmpty())
         values.append(value);
       value.clear();
