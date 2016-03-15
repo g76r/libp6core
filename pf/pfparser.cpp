@@ -18,8 +18,9 @@ under the License.
 #include <QBuffer>
 #include "pfarray.h"
 
-enum State { TopLevel, Name, Content, Comment, Quote, BinarySurfaceOrLength,
-             BinaryLength, ArrayHeader, ArrayBody, Escape, EscapeHex };
+enum State { TopLevel, Name, Content, SpaceInContent, Comment, Quote,
+             BinarySurfaceOrLength, BinaryLength, ArrayHeader, ArrayBody,
+             Escape, EscapeHex };
 
 static const qint8 hexdigits[] = {
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -150,6 +151,18 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
         content.append(c);
       }
       break;
+    case SpaceInContent:
+      if (pfisspace(c)) {
+        if (c == '\n') {
+          ++line;
+          column = 0;
+        } else {
+          ++column;
+        }
+        state = SpaceInContent;
+        break;
+      }
+      // otherwise process as Content by falling into Content: label
     case Content:
       if (c == ';') {
         // LATER warn if an array node has text or binary content
@@ -188,14 +201,10 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
         if (c == '\n') {
           ++line;
           column = 0;
+        } else {
+          ++column;
         }
-        if (content.size()) {
-          if (!_handler->text(QString::fromUtf8(content))) {
-            _handler->setErrorString(tr("cannot handle text fragment"));
-            goto error;
-          }
-          content.clear();
-        }
+        state = SpaceInContent;
       } else if (c == '#') {
         if (content.size()) {
           if (!_handler->text(QString::fromUtf8(content))) {
@@ -216,10 +225,14 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
         }
         state = BinarySurfaceOrLength;
       } else if (pfisquote(c)) {
+        if (state == SpaceInContent)
+          content.append(' ');
         quote = c;
         state = Quote;
         quotedState = Content;
       } else if (c == '\\') {
+        if (state == SpaceInContent)
+          content.append(' ');
         state = Escape;
         escapedState = Content;
       } else if (pfisspecial(c)) {
@@ -227,8 +240,13 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
                                     "(in Content state)")
                                  .arg(pfquotechar(c)));
         goto error;
-      } else
+      } else {
+        if (state == SpaceInContent) {
+          content.append(' ');
+          state = Content;
+        }
         content.append(c);
+      }
       break;
     case Comment:
       if (c == '\n') {
