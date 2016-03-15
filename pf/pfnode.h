@@ -34,28 +34,28 @@ class LIBQTPFSHARED_EXPORT PfNodeData : public QSharedData {
   PfArray _array;
 
 public:
-  explicit inline PfNodeData(QString name = QString()) : _name(name),
+  explicit PfNodeData(QString name = QString()) : _name(name),
     _isComment(false) { }
 
 private:
-  inline PfNodeData(QString name, QString content, bool isComment)
+  PfNodeData(QString name, QString content, bool isComment)
     : _name(name), _isComment(isComment) {
     if (!content.isEmpty())
       _fragments.append(PfFragment(content));
   }
-  inline bool isComment() const { return _isComment; }
-  inline bool isEmpty() const {
+  bool isComment() const { return _isComment; }
+  bool isEmpty() const {
     return !_fragments.size() && _array.isNull(); }
-  inline bool isArray() const { return !_array.isNull(); }
-  inline bool isText() const {
+  bool isArray() const { return !_array.isNull(); }
+  bool isText() const {
     return !isArray() && !isBinary() && !isComment(); }
-  inline bool isBinary() const {
+  bool isBinary() const {
     foreach (const PfFragment &f, _fragments)
       if (f.isBinary())
         return true;
     return false;
   }
-  inline QString contentAsString() const {
+  QString contentAsString() const {
     if (isArray())
       return QString();
     QString s("");
@@ -100,22 +100,22 @@ class LIBQTPFSHARED_EXPORT PfNode {
   QSharedDataPointer<PfNodeData> d;
   static const QList<PfNode> _emptyList;
 
-  inline PfNode(PfNodeData *data) : d(data) { }
+  PfNode(PfNodeData *data) : d(data) { }
 
 public:
   /** Create a null node. */
-  inline PfNode() { }
-  inline PfNode(const PfNode &other) : d(other.d) { }
+  PfNode() { }
+  PfNode(const PfNode &other) : d(other.d) { }
   /** If name is empty, the node will be null. */
-  explicit inline PfNode(QString name)
+  explicit PfNode(QString name)
       : d(name.isEmpty() ? 0 : new PfNodeData(name)) { }
   /** If name is empty, the node will be null. */
-  inline PfNode(QString name, QString content)
+  PfNode(QString name, QString content)
     : d(name.isEmpty() ? 0 : new PfNodeData(name, content, false)) { }
   /** Create a comment node. */
-  static inline PfNode createCommentNode(QString comment) {
+  static PfNode createCommentNode(QString comment) {
     return PfNode(new PfNodeData("comment", comment, true)); }
-  inline PfNode &operator=(const PfNode &other) { d = other.d; return *this; }
+  PfNode &operator=(const PfNode &other) { d = other.d; return *this; }
   /** Build a PfNode from PF external format.
    * @return first encountered root node or PfNode() */
   static PfNode fromPf(QByteArray source, PfOptions options = PfOptions());
@@ -123,9 +123,9 @@ public:
   // Node related methods /////////////////////////////////////////////////////
 
   /** A node has an empty string name if and only if the node is null. */
-  inline QString name() const { return d ? d->_name : QString(); }
+  QString name() const { return d ? d->_name : QString(); }
   /** Replace node name. If name is empty, the node will become null. */
-  inline PfNode &setName(QString name) {
+  PfNode &setName(QString name) {
     if (name.isEmpty())
       d = 0;
     else {
@@ -135,20 +135,20 @@ public:
     }
     return *this;
   }
-  inline bool isNull() const { return !d; }
-  inline bool isComment() const { return d && d->isComment(); }
+  bool isNull() const { return !d; }
+  bool isComment() const { return d && d->isComment(); }
 
   // Children related methods /////////////////////////////////////////////////
 
-  inline const QList<PfNode> children() const {
+  const QList<PfNode> children() const {
     return d ? d->_children : _emptyList; }
   /** prepend a child to existing children (do nothing if child.isNull()) */
   inline PfNode &prependChild(PfNode child);
   /** append a child to existing children (do nothing if child.isNull()) */
   inline PfNode &appendChild(PfNode child);
-  inline PfNode &prependCommentChild(QString comment) {
+  PfNode &prependCommentChild(QString comment) {
     return prependChild(createCommentNode(comment)); }
-  inline PfNode &appendCommentChild(QString comment) {
+  PfNode &appendCommentChild(QString comment) {
     return appendChild(createCommentNode(comment)); }
   /** @return first text child by name
    * Most of the time one will use attribute() and xxxAttribute() methods rather
@@ -159,7 +159,7 @@ public:
     * QString("") if child exists but has no content
     * If several children have the same name the first text one is choosen.
     * The goal is to emulate XML attributes, hence the name. */
-  inline QString attribute(QString name) const {
+  QString attribute(QString name) const {
     PfNode child = firstTextChildByName(name);
     return child.isNull() ? QString() : child.contentAsString(); }
   /** Return a child content knowing the child name.
@@ -167,7 +167,7 @@ public:
     * QString("") if child exists but has no content
     * If several children have the same name the first text one is choosen.
     * The goal is to emulate XML attributes, hence the name. */
-  inline QString attribute(QString name, QString defaultValue) const {
+  QString attribute(QString name, QString defaultValue) const {
     PfNode child = firstTextChildByName(name);
     return child.isNull() ? defaultValue : child.contentAsString(); }
   /** Return the content (as string) of every child with a given name.
@@ -207,10 +207,10 @@ public:
     * child named 'name'. */
   PfNode &setAttribute(QString name, QString content);
   /** Convenience method */
-  inline PfNode &setAttribute(QString name, QVariant content) {
+  PfNode &setAttribute(QString name, QVariant content) {
     return setAttribute(name, content.toString()); }
   /** Convenience method (assume content is UTF-8 encoded) */
-  inline PfNode &setAttribute(QString name, const char *content) {
+  PfNode &setAttribute(QString name, const char *content) {
     return setAttribute(name, QString::fromUtf8(content)); }
   // LATER setAttribute() for QDateTime, QDate, QTime and QStringList/QSet<QString>
   // TODO document behaviour
@@ -227,18 +227,18 @@ public:
 
   /** @return true when there is no content (neither text or binary fragment or
    * array content) */
-  inline bool isEmpty() const { return !d || d->isEmpty(); }
+  bool isEmpty() const { return !d || d->isEmpty(); }
   /** @return true if the content is an array */
-  inline bool isArray() const { return d && d->isArray(); }
+  bool isArray() const { return d && d->isArray(); }
   /** @return true if the content consist only of text data (no binary no array)
    * or is empty or the node is null, false for comment nodes */
-  inline bool isText() const { return !d || d->isText(); }
+  bool isText() const { return !d || d->isText(); }
   /** @return true if the content is (fully or partly) binary data, therefore
    * false when empty */
-  inline bool isBinary() const { return d && d->isBinary(); }
+  bool isBinary() const { return d && d->isBinary(); }
   /** @return QString() if isBinary() or isArray() or isNull(), and QString("")
    * if isText() even if isEmpty() */
-  inline QString contentAsString() const {
+  QString contentAsString() const {
     return d ? d->contentAsString() : QString(); }
   /** @return integer value if the string content T a valid C-like integer */
   qint64 contentAsLong(qint64 defaultValue = 0, bool *ok = 0) const;
@@ -266,12 +266,12 @@ public:
   QStringList contentAsTwoStringsList() const;
   /** @return QByteArray() if isEmpty() otherwise raw content (no escape
    * for PF special characters) */
-  inline QByteArray contentAsByteArray() const {
+  QByteArray contentAsByteArray() const {
     return d ? d->contentAsByteArray() : QByteArray(); }
   /** @return PfArray() if not isArray() */
   PfArray contentAsArray() const { return d ? d->_array : PfArray(); }
   /** Append text fragment to context (and remove array if any). */
-  inline PfNode &appendContent(const QString text) {
+  PfNode &appendContent(const QString text) {
     if (!d)
       d = new PfNodeData();
     d->_array.clear();
@@ -281,22 +281,22 @@ public:
     return *this;
   }
   /** Append text fragment to context (and remove array if any). */
-  inline PfNode &appendContent(const char *utf8text) {
+  PfNode &appendContent(const char *utf8text) {
     return appendContent(QString::fromUtf8(utf8text)); }
   /** Append in-memory binary fragment to context (and remove array if any). */
-  inline PfNode &appendContent(QByteArray data, QString surface = QString()) {
+  PfNode &appendContent(QByteArray data, QString surface = QString()) {
     if (!d)
       d = new PfNodeData();
     d->_array.clear();
     // Merging fragments if previous is in-memory binary is probably a bad idea
-    // because it would prevent Qt's implicite sharing to work.
+    // because it would prevent Qt's implicit sharing to work.
     if (!data.isEmpty())
       d->_fragments.append(PfFragment(data, surface));
     return *this;
   }
   /** Append lazy-loaded binary fragment to context (and remove array if any) */
-  inline PfNode &appendContent(QIODevice *device, qint64 length, qint64 offset,
-                               QString surface = QString()) {
+  PfNode &appendContent(QIODevice *device, qint64 length, qint64 offset,
+                        QString surface = QString()) {
     if (!d)
       d = new PfNodeData();
     d->_array.clear();
@@ -306,19 +306,19 @@ public:
     return *this;
   }
   /** Replace current content with text fragment. */
-  inline PfNode &setContent(QString text) {
+  PfNode &setContent(QString text) {
     clearContent(); appendContent(text); return *this; }
   /** Replace current content with text fragment. */
-  inline PfNode &setContent(const char *utf8text) {
+  PfNode &setContent(const char *utf8text) {
     setContent(QString::fromUtf8(utf8text)); return *this; }
   /** Replace current content with in-memory binary fragment. */
-  inline PfNode &setContent(QByteArray data) {
+  PfNode &setContent(QByteArray data) {
     clearContent(); appendContent(data); return *this; }
   /** Replace current content with lazy-loaded binary fragment. */
-  inline PfNode &setContent(QIODevice *device, qint64 length, qint64 offset) {
+  PfNode &setContent(QIODevice *device, qint64 length, qint64 offset) {
     clearContent(); appendContent(device, length, offset); return *this; }
   /** Replace current content with an array. */
-  inline PfNode &setContent(PfArray array) {
+  PfNode &setContent(PfArray array) {
     if (!d)
       d = new PfNodeData();
     d->_fragments.clear();
@@ -330,7 +330,7 @@ public:
    * backslash */
   PfNode &setContent(QStringList strings);
   /** Remove current content and make the node content empty (and thus text). */
-  inline PfNode &clearContent() {
+  PfNode &clearContent() {
     if (d) {
       d->_array.clear();
       d->_fragments.clear();
@@ -341,8 +341,7 @@ public:
   // Output methods ///////////////////////////////////////////////////////////
 
   /** Write the whole PfNode tree in PF file format. */
-  inline qint64 writePf(QIODevice *target,
-                        PfOptions options = PfOptions()) const {
+  qint64 writePf(QIODevice *target, PfOptions options = PfOptions()) const {
     return d ? d->writePf(target, options) : 0; }
   /** Convert the whole PfNode tree to PF in a byte array. */
   QByteArray toPf(PfOptions options = PfOptions()) const;
@@ -352,19 +351,15 @@ public:
     * method is only for debuging or human-readable display, not for
     * data output (which should use writePf() instead).
     */
-  inline QString toString() const {
+  QString toString() const {
     return QString::fromUtf8(toPf(PfOptions().setShouldIndent()));
   }
-  /** Convenience operator to transparently convert into a QString */
-  /*inline operator QString() const {
-    return QString::fromUtf8(toPf(true));
-  }*/
   /** Write node and whole tree (children recursively) in flat XML format.
     * Flat XML format is a format without any attribute (every PF node is
     * written as an XML element) and with binary content converted into
     * Base64 text. Encoding is always UTF-8. */
-  inline qint64 writeFlatXml(QIODevice *target,
-                             PfOptions options = PfOptions()) const {
+  qint64 writeFlatXml(QIODevice *target,
+                      PfOptions options = PfOptions()) const {
     return d ? d->writeFlatXml(target, options) : 0; }
   // LATER test, debug and uncomment method
   /* Write node and whole tree (children recursively) in compatible XML format.

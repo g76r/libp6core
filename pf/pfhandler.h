@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -36,11 +36,11 @@ public:
   /** @param ignoreComments should the parser call comment() or not */
   PfHandler();
   virtual ~PfHandler();
-  inline QString errorString() const { return _errorString; }
-  inline void setErrorString(QString string) { _errorString = string; }
-  inline int errorLine() const { return _errorLine; }
-  inline int errorColumn() const { return _errorColumn; }
-  inline bool errorOccured() const { return _errorOccured; }
+  QString errorString() const { return _errorString; }
+  void setErrorString(QString string) { _errorString = string; }
+  int errorLine() const { return _errorLine; }
+  int errorColumn() const { return _errorColumn; }
+  bool errorOccured() const { return _errorOccured; }
   /** Event method called once at document begining.
     * @return must return false iff an error occur (and optionaly set
     * errorString before) */
@@ -98,7 +98,7 @@ public:
   virtual void error(int line, int column);
 
 protected:
-  inline PfOptions options() const { return _options; }
+  PfOptions options() const { return _options; }
 };
 
 #endif // PFHANDLER_H

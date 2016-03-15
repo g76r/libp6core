@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -44,41 +44,41 @@ public:
 class LIBQTPFSHARED_EXPORT PfOptions {
   QSharedDataPointer<PfOptionsData> d;
 public:
-  inline PfOptions() : d(new PfOptionsData) { }
-  inline PfOptions(const PfOptions &other) : d(other.d) { }
-  inline PfOptions &operator=(const PfOptions &other) {
+  PfOptions() : d(new PfOptionsData) { }
+  PfOptions(const PfOptions &other) : d(other.d) { }
+  PfOptions &operator=(const PfOptions &other) {
     d = other.d; return *this; }
   /** Parser should enable lazy loading for binary fragments. This option will
     * be ignored when parsing non-seekable sources (e.g. network sockets).
     * Default: false. */
-  inline bool shouldLazyLoadBinaryFragments() const {
+  bool shouldLazyLoadBinaryFragments() const {
     return d->_shouldLazyLoadBinaryFragments; }
-  inline PfOptions &setShouldLazyLoadBinaryFragments(bool value = true) {
+  PfOptions &setShouldLazyLoadBinaryFragments(bool value = true) {
     d->_shouldLazyLoadBinaryFragments = value; return *this; }
   /** Parser should load array contents as children tree rather than as arrays.
     * Writing methods should write arrays as children tree rahter than as
     * arrays. Default: false. */
-  inline bool shouldTranslateArrayIntoTree() const {
+  bool shouldTranslateArrayIntoTree() const {
     return d->_shouldTranslateArrayIntoTree; }
-  inline PfOptions &setShouldTranslateArrayIntoTree(bool value = true) {
+  PfOptions &setShouldTranslateArrayIntoTree(bool value = true) {
     d->_shouldTranslateArrayIntoTree = value; return *this; }
   /** Writing methods should indent output to make it easier to read by human
     * beings even though it use more space and take (slightly) more time to
     * parse. Default: false. */
-  inline bool shouldIndent() const { return d->_shouldIndent; }
-  inline PfOptions &setShouldIndent(bool value = true) {
+  bool shouldIndent() const { return d->_shouldIndent; }
+  PfOptions &setShouldIndent(bool value = true) {
     d->_shouldIndent = value; return *this; }
   /** Parser should not create comment nodes. Writing methods should not write
     * comments. Default: true. */
-  inline bool shouldIgnoreComment() const { return d->_shouldIgnoreComment; }
-  inline PfOptions &setShouldIgnoreComment(bool value = true) {
+  bool shouldIgnoreComment() const { return d->_shouldIgnoreComment; }
+  PfOptions &setShouldIgnoreComment(bool value = true) {
     d->_shouldIgnoreComment = value; return *this; }
   /** Writing methods should write node content before subnodes, which is not
    * done by default because parsing such a document consumes more memory if
    * nodes have large content. */
-  inline bool shouldWriteContentBeforeSubnodes() const {
+  bool shouldWriteContentBeforeSubnodes() const {
     return d->_shouldWriteContentBeforeSubnodes; }
-  inline PfOptions &setShouldWriteContentBeforeSubnodes(bool value = true) {
+  PfOptions &setShouldWriteContentBeforeSubnodes(bool value = true) {
     d->_shouldWriteContentBeforeSubnodes = value; return *this; }
   /** Surface used by writing methods to write for binary fragments. If
     * isNull() then the surface found when parsing will be used when writing
@@ -87,8 +87,8 @@ public:
     * then no surface will be used when writing, whatever surface has been
     * defined when parsing or creating the fragment through API.
     * Default: QString(). */
-  inline QString outputSurface() const { return d->_outputSurface; }
-  inline PfOptions &setOutputSurface(const QString value) {
+  QString outputSurface() const { return d->_outputSurface; }
+  PfOptions &setOutputSurface(const QString value) {
     d->_outputSurface = normalizeSurface(value); return *this; }
   /** Normalize a surface string description, e.g. transform ":::null:zlib:hex:"
     * into "zlib:hex".
@@ -97,13 +97,13 @@ public:
   static QString normalizeSurface(QString surface);
   /** Prefered method to protect special characters.
     * default: PfDoubleQuoteProtection. */
-  inline PfPreferedCharactersProtection preferedCharactersProtection() const {
+  PfPreferedCharactersProtection preferedCharactersProtection() const {
     return d->_preferedCharactersProtection; }
-  inline PfOptions &preferBackslashCharactersProtection() {
+  PfOptions &preferBackslashCharactersProtection() {
     d->_preferedCharactersProtection = PfBackslashProtection; return *this; }
-  inline PfOptions &preferDoubleQuoteCharactersProtection() {
+  PfOptions &preferDoubleQuoteCharactersProtection() {
     d->_preferedCharactersProtection = PfDoubleQuoteProtection; return *this; }
-  inline PfOptions &preferSimpleQuoteCharactersProtection() {
+  PfOptions &preferSimpleQuoteCharactersProtection() {
     d->_preferedCharactersProtection = PfSimpleQuoteProtection; return *this; }
 };
 

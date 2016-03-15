@@ -27,7 +27,6 @@ class PfArray;
   * @see PfHandler
   * @see PfDomHandler */
 class LIBQTPFSHARED_EXPORT PfParser {
-private:
   PfHandler *_handler;
 
 public:

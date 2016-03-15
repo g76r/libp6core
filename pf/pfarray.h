@@ -25,26 +25,24 @@ class PfNode;
 
 class LIBQTPFSHARED_EXPORT PfArrayData : public QSharedData {
   friend class PfArray;
-private:
   QStringList _headers;
   QList<QStringList> _rows;
 
 public:
-  inline PfArrayData() { }
+  PfArrayData() { }
 };
 
 class LIBQTPFSHARED_EXPORT PfArray {
-private:
   QSharedDataPointer<PfArrayData> d;
 
 public:
-  inline PfArray() {  }
-  inline PfArray(const PfArray &other) : d(other.d) { }
+  PfArray() {  }
+  PfArray(const PfArray &other) : d(other.d) { }
   PfArray &operator=(const PfArray &other) { d = other.d; return *this; }
   /** @return true if null-size array (0 rows 0 columns 0 headers) */
-  inline bool isNull() const { return !d; }
+  bool isNull() const { return !d; }
   /** @return true if no data (0 rows but maybe some headers defined) */
-  inline bool isEmpty() const { return d ? d->_rows.isEmpty() : true; }
+  bool isEmpty() const { return d ? d->_rows.isEmpty() : true; }
   int columnsCount() const { return d ? d->_headers.size() : 0; }
   /** do not include headers */
   int rowsCount() const { return d ? d->_rows.size() : 0; }
@@ -85,19 +83,19 @@ public:
       r.append(QString());
     r[column] = value;
   }
-  inline void appendHeader(QString value) {
+  void appendHeader(QString value) {
     if (!d)
       d = new PfArrayData();
     d->_headers.append(value);
   }
-  inline void appendRow(QStringList values = QStringList()) {
+  void appendRow(QStringList values = QStringList()) {
     if (!d)
       d = new PfArrayData();
     d->_rows.append(values);
     for (int i = d->_headers.size(); i < values.size(); ++i)
       d->_headers.append(QString::number(i));
   }
-  inline void appendCell(QString value) {
+  void appendCell(QString value) {
     if (!d)
       d = new PfArrayData();
     if (d->_rows.size() == 0)
@@ -107,11 +105,11 @@ public:
     d->_rows.last().append(value);
   }
   /** convenience method for parser */
-  inline void removeLastRowIfEmpty() {
+  void removeLastRowIfEmpty() {
     if (d && d->_rows.size() && d->_rows.last().isEmpty())
       d->_rows.removeLast();
   }
-  inline void clear() {
+  void clear() {
     if (d) {
       d->_headers.clear();
       d->_rows.clear();
