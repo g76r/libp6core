@@ -97,8 +97,8 @@ private:
 
 class LIBQTPFSHARED_EXPORT PfNode {
   friend class PfNodeData;
-private:
   QSharedDataPointer<PfNodeData> d;
+  static const QList<PfNode> _emptyList;
 
   inline PfNode(PfNodeData *data) : d(data) { }
 
@@ -141,25 +141,11 @@ public:
   // Children related methods /////////////////////////////////////////////////
 
   inline const QList<PfNode> children() const {
-    return d ? d->_children : QList<PfNode>(); }
+    return d ? d->_children : _emptyList; }
   /** prepend a child to existing children (do nothing if child.isNull()) */
-  inline PfNode &prependChild(PfNode child) {
-    if (!child.isNull()) {
-      if (!d)
-        d = new PfNodeData();
-      d->_children.prepend(child);
-    }
-    return *this;
-  }
+  inline PfNode &prependChild(PfNode child);
   /** append a child to existing children (do nothing if child.isNull()) */
-  inline PfNode &appendChild(PfNode child) {
-    if (!child.isNull()) {
-      if (!d)
-        d = new PfNodeData();
-      d->_children.append(child);
-    }
-    return *this;
-  }
+  inline PfNode &appendChild(PfNode child);
   inline PfNode &prependCommentChild(QString comment) {
     return prependChild(createCommentNode(comment)); }
   inline PfNode &appendCommentChild(QString comment) {
@@ -233,8 +219,8 @@ public:
   const QList<PfNode> childrenByName(QString name) const;
   bool hasChild(QString name) const;
   /** This PfNode has no children. Null nodes are leaves */
-  bool isLeaf() const { return !d || d->_children.size() == 0; }
-  PfNode &removeAllChildren() { if (d) d->_children.clear(); return *this; }
+  inline bool isLeaf() const;
+  inline PfNode &removeAllChildren();
   PfNode &removeChildrenByName(QString name);
 
   // Content related methods //////////////////////////////////////////////////
@@ -396,5 +382,38 @@ public:
 
 Q_DECLARE_METATYPE(PfNode)
 Q_DECLARE_TYPEINFO(PfNode, Q_MOVABLE_TYPE);
+
+// following methods are those that should be declared after
+// Q_DECLARE_TYPEINFO(PfNode, Q_MOVABLE_TYPE) because they call QList methods
+// that depends on its internal memory layout, and 'inline' declaration does not
+// guarantee that the method will be inlined by the compiler
+
+inline bool PfNode::isLeaf() const {
+  return !d || d->_children.size() == 0;
+}
+
+inline PfNode &PfNode::removeAllChildren() {
+  if (d)
+    d->_children.clear();
+  return *this;
+}
+
+inline PfNode &PfNode::prependChild(PfNode child) {
+  if (!child.isNull()) {
+    if (!d)
+      d = new PfNodeData();
+    d->_children.prepend(child);
+  }
+  return *this;
+}
+
+inline PfNode &PfNode::appendChild(PfNode child) {
+  if (!child.isNull()) {
+    if (!d)
+      d = new PfNodeData();
+    d->_children.append(child);
+  }
+  return *this;
+}
 
 #endif // PFNODE_H
