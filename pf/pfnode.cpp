@@ -18,11 +18,12 @@ under the License.
 #include <QStringList>
 #include "pfparser.h"
 #include "pfdomhandler.h"
-#include <QRegExp>
 #include <QRegularExpression>
 
 #define INDENTATION_EOL_STRING "\n"
 #define INDENTATION_STRING "  "
+
+const QList<PfNode> PfNode::_emptyList;
 
 static int staticInit() {
   qMetaTypeId<PfNode>();
@@ -30,8 +31,8 @@ static int staticInit() {
 }
 Q_CONSTRUCTOR_FUNCTION(staticInit)
 
-static QRegExp whitespace("\\s");
-static QRegExp leadingwhitespace("^\\s+");
+static QRegularExpression _whitespace("\\s");
+static QRegularExpression _leadingwhitespace("\\A\\s+");
 
 qint64 PfNodeData::writePf(QIODevice *target, PfOptions options) const {
   if (options.shouldIndent())
@@ -345,8 +346,8 @@ QList<QPair<QString,QString> > PfNode::stringsPairChildrenByName(
   if (!name.isEmpty())
     foreach (PfNode child, children())
       if (!child.isNull() && child.d->_name == name && child.isText()) {
-        QString s = child.contentAsString().remove(leadingwhitespace);
-        int i = s.indexOf(whitespace);
+        QString s = child.contentAsString().remove(_leadingwhitespace);
+        int i = s.indexOf(_whitespace);
         if (i >= 0)
           l.append(QPair<QString,QString>(s.left(i), s.mid(i+1)));
         else
@@ -361,8 +362,8 @@ QList<QPair<QString, qint64> > PfNode::stringLongPairChildrenByName(
   if (!name.isEmpty())
     foreach (PfNode child, children())
       if (!child.isNull() && child.d->_name == name && child.isText()) {
-        QString s = child.contentAsString().remove(leadingwhitespace);
-        int i = s.indexOf(whitespace);
+        QString s = child.contentAsString().remove(_leadingwhitespace);
+        int i = s.indexOf(_whitespace);
         if (i >= 0)
           l.append(QPair<QString,qint64>(s.left(i),
                                          s.mid(i).trimmed().toLongLong(0, 0)));

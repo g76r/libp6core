@@ -14,14 +14,17 @@ under the License.
 #include <QtDebug>
 #include "pfutils.h"
 #include "pfinternals_p.h"
+#include <QRegularExpression>
+
+static QRegularExpression _surfaceHeadRE { "\\A([^:]*)(:|$)" };
 
 QString PfAbstractBinaryFragmentData::takeFirstLayer(
     QString &surface) const {
-  QRegExp head("^([^:]*)(:|$).*");
-  if (!head.exactMatch(surface))
+  QRegularExpressionMatch match = _surfaceHeadRE.match(surface);
+  if (!match.hasMatch())
     return surface = QString();
-  QString first = head.cap(1);
-  surface.remove(0, first.size()+1);
+  QString first = match.captured(1);
+  surface.remove(0, match.capturedEnd(2));
   return first;
 }
 
