@@ -275,9 +275,18 @@ public:
     if (!d)
       d = new PfNodeData();
     d->_array.clear();
-    // LATER merge fragments if previous one is text
-    if (!text.isEmpty())
+    if (!text.isEmpty()) {
+      // merge fragments if previous one exists and is text
+      if (!d->_fragments.isEmpty()) {
+        PfFragment &last = d->_fragments.last();
+        if (last.isText()) {
+          last = PfFragment(last.text()+' '+text);
+          return *this;
+        }
+      }
+      // otherwise append new fragment
       d->_fragments.append(PfFragment(text));
+    }
     return *this;
   }
   /** Append text fragment to context (and remove array if any). */

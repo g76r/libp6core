@@ -38,10 +38,7 @@ bool PfDomHandler::text(QString text) {
     setErrorString(tr("text data before root node"));
     return false;
   }
-  if (!_path.last().isEmpty())
-    _path.last().appendContent(QString(" ")+text);
-  else
-    _path.last().appendContent(text);
+  _path.last().appendContent(text);
   return true;
 }
 
