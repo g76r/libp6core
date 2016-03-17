@@ -220,6 +220,10 @@ implicitVariables {
         = QRegularExpression::NoPatternOption;
     if (optionsString.contains('i'))
       patternOptions = QRegularExpression::CaseInsensitiveOption;
+    // LATER add support for other available options: s,x...
+    // LATER add a regexp cache because same =sub is likely to be evaluated several times
+    // options must be part of the cache key
+    // not sure if QRegularExpression::optimize() should be called
     QRegularExpression re(sFields.value(0), patternOptions);
     if (!re.isValid()) {
       qDebug() << "%=sub with invalid regular expression: "
