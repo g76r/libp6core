@@ -1,4 +1,4 @@
-/* Copyright 2015 Hallowyn and others.
+/* Copyright 2015-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,7 +14,7 @@
 #include "regexpparamsprovider.h"
 #include <QRegularExpression>
 
-static QRegularExpression integerRE("^\\d+$");
+static QRegularExpression integerRE("\\A\\d+\\z");
 
 QVariant RegexpParamsProvider::paramValue(
     QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
