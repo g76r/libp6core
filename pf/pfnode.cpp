@@ -423,10 +423,10 @@ QStringList PfNode::contentAsStringList() const {
   return l;
 }
 
-QRegularExpression twoStringsListRegexp("^\\s*(\\S+)\\s*(.*)$");
+static QRegularExpression _twoStringsListRegexp("\\A\\s*(\\S+)\\s*(.*)\\z");
 
 QStringList PfNode::contentAsTwoStringsList() const {
-  return twoStringsListRegexp.match(contentAsString()).capturedTexts();
+  return _twoStringsListRegexp.match(contentAsString()).capturedTexts();
 }
 
 PfNode &PfNode::setAttribute(QString name, QString content) {
