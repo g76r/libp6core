@@ -30,9 +30,9 @@ using namespace std::placeholders;
 
 //static QAtomicInt _sequence(1);
 static QRegularExpression _pasvResultRe("\\(.*,(\\d+),(\\d+)\\)");
-static QRegularExpression _resultCodeRe("^(\\d+) ");
+static QRegularExpression _resultCodeRe("\\A(\\d+) ");
 static QRegularExpression _newlineRe("[\r\n]+");
-static QRegularExpression _pwdRe("^2\\d\\d \"?([^\"]+)");
+static QRegularExpression _pwdRe("\\A2\\d\\d \"?([^\"]+)");
 
 struct FtpCommand {
   std::function<void()> _actionBefore;
@@ -245,7 +245,7 @@ FtpClient *FtpScript::client() const {
   return d ? d->_id : 0;
 }*/
 
-static QRegularExpression _intermidiaryStatusLineRE("^(1|\\d+-)");
+static QRegularExpression _intermidiaryStatusLineRE("\\A(1|\\d+-)");
 
 static void skipIntermediaryStatusLines(QString &result) {
   while (_intermidiaryStatusLineRE.match(result).hasMatch()) {
