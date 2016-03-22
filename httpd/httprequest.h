@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -34,7 +34,7 @@ class HttpRequestPseudoParamsProvider;
 class LIBQTSSUSHARED_EXPORT HttpRequest {
 public:
   enum HttpRequestMethod { NONE = 0, HEAD = 1, GET = 2, POST = 4, PUT = 8,
-                           DELETE = 16, ANY = 0xffff} ;
+                           DELETE = 16, ANY = 0x7fff} ;
 
 private:
   QExplicitlySharedDataPointer<HttpRequestData> d;
@@ -52,6 +52,11 @@ public:
   inline QString methodName() const;
   /** @return protocol and human readable string, e.g. "GET" */
   static QString methodName(HttpRequestMethod method);
+  /** @return enum from protocol and human readable string, e.g. "GET"
+   * @param name case sensitive, must be upper case */
+  static HttpRequestMethod methodFromText(QString name) {
+    return methodFromText(name.toUtf8().constData()); }
+  static HttpRequestMethod methodFromText(const char *name);
   bool parseAndAddHeader(QString rawHeader);
   /** Value associated to a request header.
    * If the header is found several time, last value is returned. */

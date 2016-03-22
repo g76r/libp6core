@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,6 +17,8 @@
 #include "httpcommon.h"
 #include <QSharedData>
 #include <QHostAddress>
+#include <QHash>
+#include "util/stringmap.h"
 
 class HttpRequestData : public QSharedData {
 public:
@@ -54,24 +56,32 @@ QString HttpRequest::methodName() const {
   return methodName(method());
 }
 
+static QHash<HttpRequest::HttpRequestMethod,QString> _methodToText {
+  { HttpRequest::NONE, "NONE" },
+  { HttpRequest::HEAD, "HEAD" },
+  { HttpRequest::GET, "GET" },
+  { HttpRequest::POST, "POST" },
+  { HttpRequest::PUT, "PUT" },
+  { HttpRequest::DELETE, "DELETE" },
+  { HttpRequest::ANY, "ANY" },
+};
+
 QString HttpRequest::methodName(HttpRequestMethod method) {
-  switch(method) {
-  case NONE:
-    return "NONE";
-  case HEAD:
-    return "HEAD";
-  case GET:
-    return "GET";
-  case POST:
-    return "POST";
-  case PUT:
-    return "PUT";
-  case DELETE:
-    return "DELETE";
-  case ANY:
-    return "ANY";
-  }
-  return "UNKNOWN";
+  return _methodToText.value(method, QStringLiteral("UNKNOWN"));
+}
+
+static StringMap<HttpRequest::HttpRequestMethod> _methodFromText {
+  { "NONE", HttpRequest::NONE },
+  { "GET", HttpRequest::GET },
+  { "POST", HttpRequest::POST },
+  { "HEAD", HttpRequest::HEAD },
+  { "PUT", HttpRequest::PUT },
+  { "DELETE", HttpRequest::DELETE },
+  { "ANY", HttpRequest::ANY }
+};
+
+HttpRequest::HttpRequestMethod HttpRequest::methodFromText(const char *name) {
+  return _methodFromText.value(name);
 }
 
 bool HttpRequest::parseAndAddHeader(QString rawHeader) {

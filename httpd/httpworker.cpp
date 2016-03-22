@@ -59,7 +59,8 @@ void HttpWorker::handleConnection(int socketDescriptor) {
   QUrl url;
   //qDebug() << "new client socket" << socket->peerAddress();
   QTextStream out(socket);
-  QString line, method;
+  QString line;
+  HttpRequest::HttpRequestMethod method = HttpRequest::NONE;
   if (!socket->canReadLine() && !socket->waitForReadyRead(MAXIMUM_READ_WAIT)) {
     out << "HTTP/1.0 408 Request timeout\r\n\r\n";
     Log::error() << "HTTP/1.0 408 Request timeout";
@@ -80,22 +81,14 @@ void HttpWorker::handleConnection(int socketDescriptor) {
                  << line.left(200);
     goto finally;
   }
-  method = args[0];
-  if (method == "HEAD") {
-    req.setMethod(HttpRequest::HEAD);
+  method = HttpRequest::methodFromText(args[0]);
+  req.setMethod(method);
+  if (method == HttpRequest::HEAD) {
     res.disableBodyOutput();
-  } else if (method == "GET")
-    req.setMethod(HttpRequest::GET);
-  else if (method == "POST")
-    req.setMethod(HttpRequest::POST);
-  else if (method == "PUT")
-    req.setMethod(HttpRequest::PUT);
-  else if (method == "DELETE")
-    req.setMethod(HttpRequest::DELETE);
-  else {
+  } else if (method == HttpRequest::NONE || method == HttpRequest::ANY) {
     out << "HTTP/1.0 405 Method not allowed\r\n";
     Log::error() << "HTTP/1.0 405 Method not allowed, starting with: "
-                 << method.left(200);
+                 << args[0].left(200);
     goto finally;
   }
   if (!args[2].startsWith("HTTP/")) {
