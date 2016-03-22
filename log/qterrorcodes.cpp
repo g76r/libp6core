@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -36,6 +36,12 @@ QString networkErrorAsString(QNetworkReply::NetworkError code) {
     return QObject::tr("network session failed");
   case QNetworkReply::BackgroundRequestNotAllowedError:
     return QObject::tr("background request not allowed");
+#if QT_VERSION >= 0x050600
+  case QNetworkReply::TooManyRedirectsError:
+    return QObject::tr("too many redirects");
+  case QNetworkReply::InsecureRedirectError:
+    return QObject::tr("insecure redirect");
+#endif
   case QNetworkReply::ProxyConnectionRefusedError:
     return QObject::tr("proxy connection refused");
   case QNetworkReply::ProxyConnectionClosedError:
@@ -80,6 +86,7 @@ QString networkErrorAsString(QNetworkReply::NetworkError code) {
     return QObject::tr("protocol failure");
   case QNetworkReply::UnknownServerError:
       return QObject::tr("unknown server error");
+
   }
   return QObject::tr("unknown error %d").arg(code);
 }
