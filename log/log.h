@@ -156,8 +156,14 @@ public:
     _message.append(o); return *this; }
   inline LogHelper &operator<<(const char *o) {
     _message.append(o); return *this; }
-  inline LogHelper &operator<<(char o) {
-    _message.append(o); return *this; }
+  inline LogHelper &operator<<(qint8 o) {
+    _message.append(QString::number(o)); return *this; }
+  inline LogHelper &operator<<(quint8 o) {
+    _message.append(QString::number(o)); return *this; }
+  inline LogHelper &operator<<(qint16 o) {
+    _message.append(QString::number(o)); return *this; }
+  inline LogHelper &operator<<(quint16 o) {
+    _message.append(QString::number(o)); return *this; }
   inline LogHelper &operator<<(qint64 o) {
     _message.append(QString::number(o)); return *this; }
   inline LogHelper &operator<<(quint64 o) {
@@ -168,6 +174,8 @@ public:
     _message.append(QString::number(o)); return *this; }
   inline LogHelper &operator<<(double o) {
     _message.append(QString::number(o)); return *this; }
+  inline LogHelper &operator<<(float o) {
+    _message.append(QString::number(o)); return *this; }
   inline LogHelper &operator<<(bool o) {
     _message.append(o ? QStringLiteral("true") : QStringLiteral("false"));
     return *this; }
@@ -175,14 +183,18 @@ public:
     _message.append(o.toString()); return *this; }
   inline LogHelper &operator<<(const QList<QString> &o) {
     _message.append("{ ");
-    foreach (const QString &s, o)
+    foreach (QString s, o) {
+      s.replace('\\', "\\\\").replace('"', "\\\"");
       _message.append("\"").append(s).append("\" ");
+    }
     _message.append("}");
     return *this; }
   inline LogHelper &operator<<(const QSet<QString> &o) {
     _message.append("{ ");
-    foreach (const QString &s, o)
+    foreach (QString s, o) {
+      s.replace('\\', "\\\\").replace('"', "\\\"");
       _message.append("\"").append(s).append("\" ");
+    }
     _message.append("}");
     return *this; }
   inline LogHelper &operator<<(const QObject *o) {
