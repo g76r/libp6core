@@ -27,8 +27,9 @@
 #include "stringmap.h"
 #include <functional>
 
-
-bool ParamSet::_variableNotFoundLoggingEnabled = false;
+bool ParamSet::_variableNotFoundLoggingEnabled { false };
+const QString ParamSet::_true { "true" };
+const QString ParamSet::_false { "false" };
 
 static int staticInit() {
   qMetaTypeId<ParamSet>();

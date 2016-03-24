@@ -207,6 +207,8 @@ class LIBQTSSUSHARED_EXPORT ParamSet : public ParamsProvider {
   friend class ParamsProviderMerger;
   QSharedDataPointer<ParamSetData> d;
   static bool _variableNotFoundLoggingEnabled;
+  static const QString _true;
+  static const QString _false;
 
 public:
   ParamSet();
@@ -219,6 +221,30 @@ public:
   ParamSet parent() const;
   void setParent(ParamSet parent);
   void setValue(QString key, QString value);
+  void setValue(QString key, QVariant value) {
+    setValue(key, value.toString()); }
+  void setValue(QString key, bool value) {
+    setValue(key, value ? _true : _false); }
+  void setValue(QString key, qint8 value, int base = 10) {
+    setValue(key, QString::number(value, base)); }
+  void setValue(QString key, qint16 value, int base = 10) {
+    setValue(key, QString::number(value, base)); }
+  void setValue(QString key, qint32 value, int base = 10) {
+    setValue(key, QString::number(value, base)); }
+  void setValue(QString key, qint64 value, int base = 10) {
+    setValue(key, QString::number(value, base)); }
+  void setValue(QString key, quint8 value, int base = 10) {
+    setValue(key, QString::number(value, base)); }
+  void setValue(QString key, quint16 value, int base = 10) {
+    setValue(key, QString::number(value, base)); }
+  void setValue(QString key, quint32 value, int base = 10) {
+    setValue(key, QString::number(value, base)); }
+  void setValue(QString key, quint64 value, int base = 10) {
+    setValue(key, QString::number(value, base)); }
+  void setValue(QString key, double value, char format='g', int precision=6) {
+    setValue(key, QString::number(value, format, precision)); }
+  void setValue(QString key, float value, char format='g', int precision=6) {
+    setValue(key, QString::number(value, format, precision)); }
   void clear();
   void removeValue(QString key);
   /** Return a value without performing parameters substitution.
@@ -296,9 +322,9 @@ public:
                           const ParamsProvider *context = 0) const {
     QString v = evaluate(rawValue(key, QString(), inherit), inherit, context)
         .trimmed().toLower();
-    if (v == "true")
+    if (v == _true)
       return true;
-    if (v == "false")
+    if (v == _false)
       return false;
     bool ok;
     int i = v.toInt(&ok);
