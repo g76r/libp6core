@@ -41,6 +41,15 @@ HttpWorker::HttpWorker(HttpServer *server)
   moveToThread(_thread);
 }
 
+static inline void sendError(QTextStream &out, const char *httpMessage,
+                             QString logDetails = QString()) {
+  out << "HTTP/1.1 " << httpMessage << "\r\nConnection: close\r\n\r\n";
+  if (logDetails.isNull())
+    Log::error() << httpMessage;
+  else
+    Log::error() << QString(httpMessage)+", "+logDetails;
+}
+
 void HttpWorker::handleConnection(int socketDescriptor) {
   // LATER replace by QDateTime when Qt >= 4.7
   //QTime before= QTime::currentTime();
@@ -62,23 +71,20 @@ void HttpWorker::handleConnection(int socketDescriptor) {
   QString line;
   HttpRequest::HttpRequestMethod method = HttpRequest::NONE;
   if (!socket->canReadLine() && !socket->waitForReadyRead(MAXIMUM_READ_WAIT)) {
-    out << "HTTP/1.0 408 Request timeout\r\n\r\n";
-    Log::error() << "HTTP/1.0 408 Request timeout";
+    sendError(out, "408 Request timeout");
     goto finally;
   }
   line = socket->readLine(MAXIMUM_LINE_SIZE+2);
   if (line.size() > MAXIMUM_LINE_SIZE) {
-    out << "HTTP/1.0 414 Request URI too long\r\n\r\n";
-    Log::error() << "HTTP/1.0 414 Request URI too long, starting with: "
-                 << line.left(200);
+    sendError(out, "408 414 Request URI too long",
+              "starting with: "+line.left(200));
     goto finally;
   }
   line = line.trimmed();
   args = line.split(QRegExp("[ \t]+"));
   if (args.size() != 3) {
-    out << "HTTP/1.0 400 Bad request line\r\n\r\n"+line;
-    Log::error() << "HTTP/1.0 400 Bad request line, starting with: "
-                 << line.left(200);
+    sendError(out, "400 Bad request line",
+              "starting with: "+line.left(200));
     goto finally;
   }
   method = HttpRequest::methodFromText(args[0]);
@@ -86,18 +92,15 @@ void HttpWorker::handleConnection(int socketDescriptor) {
   if (method == HttpRequest::HEAD) {
     res.disableBodyOutput();
   } else if (method == HttpRequest::NONE || method == HttpRequest::ANY) {
-    out << "HTTP/1.0 405 Method not allowed\r\n";
-    Log::error() << "HTTP/1.0 405 Method not allowed, starting with: "
-                 << args[0].left(200);
+    sendError(out, "405 Method not allowed",
+              "starting with: "+args[0].left(200));
     goto finally;
   }
   if (!args[2].startsWith("HTTP/")) {
-    out << "HTTP/1.0 400 Bad request protocol\r\n\r\n";
-    Log::error() << "HTTP/1.0 400 Bad request protocol, starting with: "
-                 << args[2].left(200);
+    sendError(out, "400 Bad request protocol",
+              "starting with: "+args[2].left(200));
     goto finally;
   }
-  //qDebug() << "a1" << args;
   for (;;) {
     if (!socket->isOpen()) {
       //qDebug() << "socket is not open";
@@ -110,9 +113,8 @@ void HttpWorker::handleConnection(int socketDescriptor) {
     }
     line = socket->readLine(MAXIMUM_LINE_SIZE+2).trimmed();
     if (line.size() > MAXIMUM_LINE_SIZE) {
-      out << "HTTP/1.0 413 Header line too long\r\n\r\n";
-      Log::error() << "HTTP/1.0 413 Header line too long, starting with: "
-                   << line.left(200);
+      sendError(out, "413 Header line too long",
+                "starting with: "+line.left(200));
       goto finally;
     }
     if (line.isEmpty()) {
@@ -121,9 +123,8 @@ void HttpWorker::handleConnection(int socketDescriptor) {
     }
     // LATER: handle multi line headers
     if (!req.parseAndAddHeader(line)) {
-      out << "HTTP/1.0 400 Bad request header line\r\n\r\n"+line;
-      Log::error() << "HTTP/1.0 400 Bad request header line, starting with: "
-                   << line.left(200);
+      sendError(out, "400 Bad request header line",
+                "starting with: "+line.left(200));
       goto finally;
     }
     //qDebug() << "a7";

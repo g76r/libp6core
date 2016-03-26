@@ -61,7 +61,7 @@ QAbstractSocket *HttpResponse::output() {
     return DummySocket::singletonInstance();
   if (!d->_headersSent) {
     QTextStream ts(d->_output);
-    ts << "HTTP/1.0 " << d->_status << " " << statusAsString(d->_status)
+    ts << "HTTP/1.1 " << d->_status << " " << statusAsString(d->_status)
        << "\r\n";
     // LATER sanitize well-known headers (Content-Type...) values
     // LATER handle multi-line headers and special chars
@@ -70,6 +70,7 @@ QAbstractSocket *HttpResponse::output() {
         ts << name << ": " << value << "\r\n";
     if (header(QStringLiteral("Content-Type")).isEmpty())
       ts << "Content-Type: text/plain;charset=UTF-8\r\n";
+    ts << "Connection: close\r\n";
     ts << "\r\n";
     d->_headersSent = true;
   }
