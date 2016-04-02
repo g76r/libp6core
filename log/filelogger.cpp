@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -87,8 +87,9 @@ void FileLogger::doLog(const LogEntry entry) {
   }
   if (_device) {
     // TODO move this to LogEntry::asLogLine()
-    QString line = QString("%1 %2/%3 %4 %5 %6")
-        .arg(entry.timestamp().toString("yyyy-MM-ddThh:mm:ss,zzz"))
+    QString line = QStringLiteral("%1 %2/%3 %4 %5 %6")
+        .arg(entry.timestamp()
+             .toString(QStringLiteral("yyyy-MM-ddThh:mm:ss,zzz")))
         .arg(entry.task()).arg(entry.execId()).arg(entry.sourceCode())
         .arg(entry.severityToString()).arg(entry.message()).append('\n');
     //qDebug() << "***log" << line;
