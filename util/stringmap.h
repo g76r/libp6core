@@ -17,6 +17,8 @@
 #include "libqtssu_global.h"
 #include <QSharedData>
 #include <QString>
+#include <QHash>
+#include <QMap>
 //#include <QtDebug>
 
 // LATER T &operator[](QString key) { return operator[](key.toUtf8()); }
@@ -231,6 +233,22 @@ public:
     //if (d->_root)
     //  qDebug() << "initialized:" << "\n"+d->_root->toString()+"\n";
   }
+  StringMap(QHash<QString,T> hash) : StringMap() {
+    foreach (const QString &key, hash.keys())
+      insert(key.toUtf8().constData(), hash.value(key));
+  }
+  StringMap(QHash<const char *,T> hash) : StringMap() {
+    foreach (const char *key, hash.keys())
+      insert(key, hash.value(key));
+  }
+  StringMap(QMap<QString,T> map) : StringMap() {
+    foreach (const QString &key, map.keys())
+      insert(key.toUtf8().constData(), map.value(key));
+  }
+  StringMap(QMap<const char *,T> map) : StringMap() {
+    foreach (const char *key, map.keys())
+      insert(key, map.value(key));
+  }
   StringMap(const StringMap &other) : d(other.d) { }
   StringMap &operator=(const StringMap &other) {
     if (&other != this) d = other.d; }
@@ -264,6 +282,29 @@ public:
   bool contains(QString *key) const { return value(key->toUtf8().constData()); }
   const T operator[](QString key) const { return value(key); }
   const T operator[](const char *key) const { return value(key); }
+
+  static StringMap<T> reversed(QHash<T,QString> hash) {
+    StringMap<T> that;
+    foreach (const T &key, hash.keys())
+      that.insert(hash.value(key).toUtf8().constData(), key);
+    return that;
+  }
+  static StringMap<T> reversed(QHash<T,const char *> hash) {
+    StringMap<T> that;
+    foreach (const T &key, hash.keys())
+      that.insert(hash.value(key), key);
+    return that;
+  }
+  static StringMap<T> reversed(QMap<T,QString> map) {
+    StringMap<T> that;
+    foreach (const T &key, map.keys())
+      that.insert(map.value(key).toUtf8().constData(), key);
+  }
+  static StringMap<T> reversed(QMap<T,const char *> map) {
+    StringMap<T> that;
+    foreach (const T &key, map.keys())
+      that.insert(map.value(key), key);
+  }
 };
 
 #endif // STRINGMAP_H

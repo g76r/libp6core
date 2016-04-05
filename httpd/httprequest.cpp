@@ -66,19 +66,13 @@ static QHash<HttpRequest::HttpRequestMethod,QString> _methodToText {
   { HttpRequest::ANY, "ANY" },
 };
 
+static StringMap<HttpRequest::HttpRequestMethod> _methodFromText {
+  StringMap<HttpRequest::HttpRequestMethod>::reversed(_methodToText)
+};
+
 QString HttpRequest::methodName(HttpRequestMethod method) {
   return _methodToText.value(method, QStringLiteral("UNKNOWN"));
 }
-
-static StringMap<HttpRequest::HttpRequestMethod> _methodFromText {
-  { "NONE", HttpRequest::NONE },
-  { "GET", HttpRequest::GET },
-  { "POST", HttpRequest::POST },
-  { "HEAD", HttpRequest::HEAD },
-  { "PUT", HttpRequest::PUT },
-  { "DELETE", HttpRequest::DELETE },
-  { "ANY", HttpRequest::ANY }
-};
 
 HttpRequest::HttpRequestMethod HttpRequest::methodFromText(const char *name) {
   return _methodFromText.value(name);
