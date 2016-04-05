@@ -178,7 +178,8 @@ HEADERS +=\
     ftp/ftpscript.h \
     util/stringutils.h \
     net/dummysocket.h \
-    util/stringmap.h
+    util/stringmap.h \
+    util/containerutils.h
 
 unix {
     target.path = /usr/lib
