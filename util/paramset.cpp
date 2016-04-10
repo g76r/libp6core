@@ -24,7 +24,7 @@
 #include "htmlutils.h"
 #include "stringutils.h"
 #include <stdlib.h>
-#include "stringmap.h"
+#include "radixtree.h"
 #include <functional>
 
 bool ParamSet::_variableNotFoundLoggingEnabled { false };
@@ -120,7 +120,7 @@ QString ParamSet::evaluate(
   return values.first();
 }
 
-static StringMap<std::function<
+static RadixTree<std::function<
 QString(ParamSet params, QString key, bool inherit,
 const ParamsProvider *context, QSet<QString> alreadyEvaluated)>>
 implicitVariables {

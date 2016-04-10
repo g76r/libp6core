@@ -18,7 +18,7 @@
 #include <QSharedData>
 #include <QHostAddress>
 #include <QHash>
-#include "util/stringmap.h"
+#include "util/radixtree.h"
 
 class HttpRequestData : public QSharedData {
 public:
@@ -66,8 +66,8 @@ static QHash<HttpRequest::HttpRequestMethod,QString> _methodToText {
   { HttpRequest::ANY, "ANY" },
 };
 
-static StringMap<HttpRequest::HttpRequestMethod> _methodFromText {
-  StringMap<HttpRequest::HttpRequestMethod>::reversed(_methodToText)
+static RadixTree<HttpRequest::HttpRequestMethod> _methodFromText {
+  RadixTree<HttpRequest::HttpRequestMethod>::reversed(_methodToText)
 };
 
 QString HttpRequest::methodName(HttpRequestMethod method) {

@@ -11,8 +11,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef STRINGMAP_H
-#define STRINGMAP_H
+#ifndef RADIXTREE_H
+#define RADIXTREE_H
 
 #include "libqtssu_global.h"
 #include <QSharedData>
@@ -34,23 +34,23 @@ struct qDebug {
 // LATER remove()
 // LATER make it stdlib compliant
 
-/** Helper class to make it possible to initialize a StringMap with such syntax:
- * StringMap<int> foo { {"abc", 42, true}, { "xyz", -1 } };
- * StringMap<std::function<double(double)>> bar {
+/** Helper class to make it possible to initialize a RadixTree with such syntax:
+ * RadixTree<int> foo { {"abc", 42, true}, { "xyz", -1 } };
+ * RadixTree<std::function<double(double)>> bar {
  *   { "square", [](double d){ return d*d; } },
  *   { "round", ::round },
  *   { { "opposite", "-" }, [](double d){ return -d; } }
  * };
  */
 template<class T>
-struct StringMapInitializerHelper {
+struct RadixTreeInitializerHelper {
   std::vector<const char *> _keys;
   T _value;
   bool _isPrefix;
-  StringMapInitializerHelper(std::vector<const char *>key, T value,
+  RadixTreeInitializerHelper(std::vector<const char *>key, T value,
                              bool isPrefix = false)
     : _keys(key), _value(value), _isPrefix(isPrefix) { }
-  StringMapInitializerHelper(const char *key, T value, bool isPrefix = false)
+  RadixTreeInitializerHelper(const char *key, T value, bool isPrefix = false)
     : _value(value), _isPrefix(isPrefix) { _keys.push_back(key); }
 };
 
@@ -63,7 +63,7 @@ struct StringMapInitializerHelper {
  * first converted to const char * using QString::utf8();
  */
 template<class T>
-class LIBQTSSUSHARED_EXPORT StringMap {
+class LIBQTSSUSHARED_EXPORT RadixTree {
   struct Node {
     char *_fragment;
     T _value;
@@ -223,18 +223,18 @@ class LIBQTSSUSHARED_EXPORT StringMap {
     }
   };
 
-  struct StringMapData : QSharedData {
+  struct RadixTreeData : QSharedData {
     Node *_root;
-    StringMapData() : _root(0) { }
+    RadixTreeData() : _root(0) { }
   };
 
-  QSharedDataPointer<StringMapData> d;
+  QSharedDataPointer<RadixTreeData> d;
 
 public:
-  StringMap() : d(new StringMapData) { }
-  StringMap(std::initializer_list<StringMapInitializerHelper<T>> list)
-    : StringMap() {
-    for (const StringMapInitializerHelper<T> &helper : list)
+  RadixTree() : d(new RadixTreeData) { }
+  RadixTree(std::initializer_list<RadixTreeInitializerHelper<T>> list)
+    : RadixTree() {
+    for (const RadixTreeInitializerHelper<T> &helper : list)
       for (const char *key: helper._keys)
         insert(key, helper._value, helper._isPrefix);
     /*if (d->_root) {
@@ -243,27 +243,27 @@ public:
         qDebug().noquote() << s;
     }*/
   }
-  StringMap(QHash<QString,T> hash) : StringMap() {
+  RadixTree(QHash<QString,T> hash) : RadixTree() {
     foreach (const QString &key, hash.keys())
       insert(key.toUtf8().constData(), hash.value(key));
   }
-  StringMap(QHash<const char *,T> hash) : StringMap() {
+  RadixTree(QHash<const char *,T> hash) : RadixTree() {
     foreach (const char *key, hash.keys())
       insert(key, hash.value(key));
   }
-  StringMap(QMap<QString,T> map) : StringMap() {
+  RadixTree(QMap<QString,T> map) : RadixTree() {
     foreach (const QString &key, map.keys())
       insert(key.toUtf8().constData(), map.value(key));
   }
-  StringMap(QMap<const char *,T> map) : StringMap() {
+  RadixTree(QMap<const char *,T> map) : RadixTree() {
     foreach (const char *key, map.keys())
       insert(key, map.value(key));
   }
-  StringMap(const StringMap &other) : d(other.d) { }
-  StringMap &operator=(const StringMap &other) {
+  RadixTree(const RadixTree &other) : d(other.d) { }
+  RadixTree &operator=(const RadixTree &other) {
     if (&other != this) d = other.d; }
   void insert(const char *key, T value, bool isPrefix = false) {
-    //qDebug() << "StringMap::insert" << !!d << key;
+    //qDebug() << "RadixTree::insert" << !!d << key;
     if (!d)
       return;
     if (d->_root)
@@ -293,28 +293,28 @@ public:
   const T operator[](QString key) const { return value(key); }
   const T operator[](const char *key) const { return value(key); }
 
-  static StringMap<T> reversed(QHash<T,QString> hash) {
-    StringMap<T> that;
+  static RadixTree<T> reversed(QHash<T,QString> hash) {
+    RadixTree<T> that;
     foreach (const T &key, hash.keys())
       that.insert(hash.value(key).toUtf8().constData(), key);
     return that;
   }
-  static StringMap<T> reversed(QHash<T,const char *> hash) {
-    StringMap<T> that;
+  static RadixTree<T> reversed(QHash<T,const char *> hash) {
+    RadixTree<T> that;
     foreach (const T &key, hash.keys())
       that.insert(hash.value(key), key);
     return that;
   }
-  static StringMap<T> reversed(QMap<T,QString> map) {
-    StringMap<T> that;
+  static RadixTree<T> reversed(QMap<T,QString> map) {
+    RadixTree<T> that;
     foreach (const T &key, map.keys())
       that.insert(map.value(key).toUtf8().constData(), key);
   }
-  static StringMap<T> reversed(QMap<T,const char *> map) {
-    StringMap<T> that;
+  static RadixTree<T> reversed(QMap<T,const char *> map) {
+    RadixTree<T> that;
     foreach (const T &key, map.keys())
       that.insert(map.value(key), key);
   }
 };
 
-#endif // STRINGMAP_H
+#endif // RADIXTREE_H
