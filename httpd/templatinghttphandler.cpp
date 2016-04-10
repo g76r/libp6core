@@ -144,6 +144,18 @@ void TemplatingHttpHandler::applyTemplateFile(
                          << " : " << included.errorString();
           output->append("?");
         }
+      } else if (markupId == QStringLiteral("override")) {
+        // syntax: <?override:key:value?>
+        CharacterSeparatedExpression markupParams(markupContent, separatorPos);
+        QString key = markupParams.value(0);
+        if (key.isEmpty()) {
+          Log::debug() << "TemplatingHttpHandler cannot set parameter with "
+                          "null key in file " << file->fileName();
+        } else {
+          QString value = processingContext.overridingParams().evaluate(
+                markupParams.value(1), &processingContext);
+          processingContext.overrideParamValue(key, value);
+        }
       } else {
         Log::warning() << "TemplatingHttpHandler found unsupported markup: <?"
                        << markupContent << "?>";
