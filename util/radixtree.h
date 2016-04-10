@@ -61,14 +61,16 @@ template<class T>
 class LIBQTSSUSHARED_EXPORT RadixTree {
   struct Node {
     char *_fragment;
-    T _value;
     bool _isPrefix;
+    int _length;
     Node **_children;
     int _childrenCount;
+    T _value;
     //Node() : _fragment(0), _isPrefix(false), _children(0), _childrenCount(0) { }
     Node(const char *fragment, T value, bool isPrefix, Node *parent)
-      : _fragment(0), _value(value), _isPrefix(isPrefix), _children(0),
-        _childrenCount(0) {
+      : _fragment(0), _isPrefix(isPrefix),
+        _length((parent ? parent->_length : 0) + strlen(fragment)),
+        _children(0), _childrenCount(0), _value(value) {
       Q_ASSERT(fragment);
       //qDebug() << "new Node" << fragment << parent;
       _fragment = strdup(fragment);
@@ -107,10 +109,11 @@ class LIBQTSSUSHARED_EXPORT RadixTree {
         auto oldChildrenCount = _childrenCount;
         _children = 0;
         _childrenCount = 0;
+        _length -= strlen(_fragment)-i; // must be done before new Node()
         auto mainChild = new Node(_fragment+i, _value, _isPrefix, this);
+        _fragment[i] = 0; // shorten _fragment without reallocating memory
         mainChild->_children = oldChildren;
         mainChild->_childrenCount = oldChildrenCount;
-        _fragment[i] = 0; // shorten _fragment without reallocating memory
         if (i || key[i]) { // inserted key > this node key, need a second child
           _value = T();
           _isPrefix = false;
@@ -136,7 +139,8 @@ class LIBQTSSUSHARED_EXPORT RadixTree {
      * @return true if found
      * @param value receive a copy of the value if found and value!=0
      */
-    bool inline lookup(const char *key, T *value = 0) const {
+    bool inline lookup(const char *key, T *value = 0,
+                       int *matchedLength = 0) const {
       Q_ASSERT(key);
       Q_ASSERT(_fragment);
       int i = 0;
@@ -149,35 +153,40 @@ class LIBQTSSUSHARED_EXPORT RadixTree {
       if (_isPrefix) { // prefix match
         // -> check for a better (more precise) match among children
         bool amongChildren = lookupAmongChildren(key+i, value, _children,
-                                                 _childrenCount);
+                                                 _childrenCount, matchedLength);
         if (amongChildren) {
           //qDebug() << "Node::lookup prefix match deferred to children"
           //         << _fragment;
           return true;
         }
-        // -> or select value if not null (i.e. if not in intermediary node)
-        if (value) {
-          //qDebug() << "Node::lookup prefix match not deferred to children"
-          //         << _fragment;
+        // -> or select value
+        //qDebug() << "Node::lookup prefix match not deferred to children"
+        //         << _fragment;
+        if (value)
           *value = _value;
-          return true;
-        }
-      } else if (!key[i]) { // exact match -> select value if not null
-        if (value) {
-          //qDebug() << "Node::lookup exact match" << _fragment;
+        if (matchedLength)
+          *matchedLength = _length;
+        return true;
+      }
+      if (!key[i]) { // exact match -> select value if not null
+        //qDebug() << "Node::lookup exact match" << _fragment;
+        if (value)
           *value = _value;
-          return true;
-        }
+        if (matchedLength)
+          *matchedLength = _length;
+        return true;
       }
       // _fragment is shorter and not _isPrefix, or value is null
       //     -> continue among children
       //qDebug() << "Node::lookup continue among children" << i << _fragment
       //         << key;
-      return lookupAmongChildren(key+i, value, _children, _childrenCount);
+      return lookupAmongChildren(key+i, value, _children, _childrenCount,
+                                 matchedLength);
     }
     QString toString(QString indentation = QString()) const {
       QString s;
-      s += indentation + _fragment //+ " " + (_value ? "set" : "null")
+      s += indentation + _fragment + " " + QString::number(_length)
+          //+ " " + (_value ? "set" : "null")
           + " " + (_isPrefix ? "prefix" : "exact" ) + "\n";
       //int n = strlen(_fragment);
       //for (int i = 0; i < n; ++i)
@@ -211,17 +220,17 @@ class LIBQTSSUSHARED_EXPORT RadixTree {
     /// binary search among children and recurse lookup
     static inline bool lookupAmongChildren(
         const char *key, T *value, const Node * const *children,
-        int childrenCount) {
+        int childrenCount, int *matchedLength) {
       if (childrenCount <= 0)
         return false;
       int middle = childrenCount >> 1;
       int cmp = children[middle]->_fragment[0] - key[0];
       if (cmp > 0)
-        return lookupAmongChildren(key, value, children, middle);
+        return lookupAmongChildren(key, value, children, middle, matchedLength);
       if (cmp < 0)
         return lookupAmongChildren(key, value, children+middle+1,
-                                   childrenCount-middle-1);
-      return children[middle]->lookup(key, value);
+                                   childrenCount-middle-1, matchedLength);
+      return children[middle]->lookup(key, value, matchedLength);
     }
   };
 
@@ -269,26 +278,31 @@ public:
     else
       d->_root = new Node(key, value, isPrefix, 0);
   }
-  const T value(const char *key, T defaultValue) const {
+  void insert(const QString &key, T value, bool isPrefix = false) {
+    insert (key.toUtf8().constData(), value, isPrefix); }
+  const T value(const char *key, T defaultValue = T(),
+                int *matchedLength = 0) const {
     T value = defaultValue;
+    if (matchedLength)
+      *matchedLength = 0;
     if (d && d->_root)
-      d->_root->lookup(key, &value);
+      d->_root->lookup(key, &value, matchedLength);
     return value;
   }
+  const T value(const char *key, int *matchedLength) const {
+    return value(key, T(), matchedLength); }
+  const T value(const QString &key, T defaultValue = T(),
+                int *matchedLength = 0) const {
+    return value(key.toUtf8().constData(), defaultValue, matchedLength); }
+  const T value(const QString &key, int *matchedLength) const {
+    return value(key.toUtf8().constData(), T(), matchedLength); }
+  const T operator[](const QString &key) const { return value(key); }
+  const T operator[](const char *key) const { return value(key); }
   bool contains(const char *key) const {
     return (d && d->_root) ? d->_root->lookup(key) : false;
   }
-
-  void insert(QString key, T value, bool isPrefix = false) {
-    insert (key.toUtf8().constData(), value, isPrefix); }
-  const T value(const char *key) const { return value(key, T()); }
-  const T value(QString key, T defaultValue) const {
-    return value(key.toUtf8().constData(), defaultValue); }
-  const T value(QString key) const { return value(key.toUtf8().constData()); }
-  bool contains(QString *key) const { return value(key->toUtf8().constData()); }
-  const T operator[](QString key) const { return value(key); }
-  const T operator[](const char *key) const { return value(key); }
-
+  bool contains(const QString &key) const {
+    return value(key.toUtf8().constData()); }
   static RadixTree<T> reversed(QHash<T,QString> hash) {
     RadixTree<T> that;
     foreach (const T &key, hash.keys())
