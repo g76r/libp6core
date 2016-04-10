@@ -20,6 +20,13 @@
 #include <QHash>
 #include <QMap>
 //#include <QtDebug>
+/*#undef qDebug
+struct qDebug {
+  qDebug() { }
+  template <class T>
+  qDebug &operator<<(const T&) { return *this; }
+  qDebug &noquote() { return *this; }
+};*/
 
 // LATER T &operator[](QString key) { return operator[](key.toUtf8()); }
 // LATER keys(), values(), operator==
@@ -90,13 +97,13 @@ class LIBQTSSUSHARED_EXPORT StringMap {
       int i = 0;
       for (; key[i] == _fragment[i] && key[i]; ++i)
         ;
-      //qDebug() << "" << i << key[i] << _fragment[i] << key << _fragment << !!_isPrefix << !!isPrefix << _childrenCount;
+      //qDebug() << "" << i << key[i] << (int)_fragment[i] << key << _fragment << !!_isPrefix << !!isPrefix << _childrenCount;
       if (!_fragment[i] && !key[i] && (!_isPrefix || isPrefix)) {
         // exact match -> override old value
         //qDebug() << "" << "exact match" << _fragment << key << this;
         _value = value;
         _isPrefix = isPrefix;
-      } else if (!_childrenCount || _fragment[i]) {
+      } else if (_fragment[i]) {
         // have to split the tree -> make current and new content two children
         //qDebug() << "" << "have to split" << _fragment+i << key+i << this;
         auto oldChildren = _children;
@@ -230,8 +237,11 @@ public:
     for (const StringMapInitializerHelper<T> &helper : list)
       for (const char *key: helper._keys)
         insert(key, helper._value, helper._isPrefix);
-    //if (d->_root)
-    //  qDebug() << "initialized:" << "\n"+d->_root->toString()+"\n";
+    /*if (d->_root) {
+      qDebug() << "INITIALIZED:";
+      foreach(QString s, d->_root->toString().split('\n'))
+        qDebug().noquote() << s;
+    }*/
   }
   StringMap(QHash<QString,T> hash) : StringMap() {
     foreach (const QString &key, hash.keys())
