@@ -28,12 +28,6 @@ struct qDebug {
   qDebug &noquote() { return *this; }
 };*/
 
-// LATER T &operator[](QString key) { return operator[](key.toUtf8()); }
-// LATER keys(), values(), operator==
-// LATER methods w/ QStringRef ?
-// LATER remove()
-// LATER make it stdlib compliant
-
 /** Helper class to make it possible to initialize a RadixTree with such syntax:
  * RadixTree<int> foo { {"abc", 42, true}, { "xyz", -1 } };
  * RadixTree<std::function<double(double)>> bar {
@@ -56,11 +50,12 @@ struct RadixTreeInitializerHelper {
 
 /** Lookup-optimized dictionary for a large number of strings or string prefixes
  * as keys, based on a radix tree.
+ *
  * Kind of specialized QMap<K,T> for K = utf8 character string.
- * T must be castable to bool and this conversion must have "not null" semantics
- * such as the one provided by QPointer, std::function or even int.
+ *
  * The class is optimized for handling const char *, any QString parameter is
- * first converted to const char * using QString::utf8();
+ * first converted to const char * using QString::toUtf8().constData() which is
+ * not costless.
  */
 template<class T>
 class LIBQTSSUSHARED_EXPORT RadixTree {
@@ -97,7 +92,8 @@ class LIBQTSSUSHARED_EXPORT RadixTree {
       int i = 0;
       for (; key[i] == _fragment[i] && key[i]; ++i)
         ;
-      //qDebug() << "" << i << key[i] << (int)_fragment[i] << key << _fragment << !!_isPrefix << !!isPrefix << _childrenCount;
+      //qDebug() << "" << i << (int)key[i] << (int)_fragment[i] << key
+      //         << _fragment << !!_isPrefix << !!isPrefix << _childrenCount;
       if (!_fragment[i] && !key[i] && (!_isPrefix || isPrefix)) {
         // exact match -> override old value
         //qDebug() << "" << "exact match" << _fragment << key << this;
@@ -105,7 +101,8 @@ class LIBQTSSUSHARED_EXPORT RadixTree {
         _isPrefix = isPrefix;
       } else if (_fragment[i]) {
         // have to split the tree -> make current and new content two children
-        //qDebug() << "" << "have to split" << _fragment+i << key+i << this;
+        //qDebug() << "" << "have to split" << _fragment+i << key+i << this
+        //         << (i || key[i] ? "" : "without second child");
         auto oldChildren = _children;
         auto oldChildrenCount = _childrenCount;
         _children = 0;
@@ -113,10 +110,15 @@ class LIBQTSSUSHARED_EXPORT RadixTree {
         auto mainChild = new Node(_fragment+i, _value, _isPrefix, this);
         mainChild->_children = oldChildren;
         mainChild->_childrenCount = oldChildrenCount;
-        _value = T();
-        _isPrefix = false;
         _fragment[i] = 0; // shorten _fragment without reallocating memory
-        new Node(key+i, value, isPrefix, this);
+        if (i || key[i]) { // inserted key > this node key, need a second child
+          _value = T();
+          _isPrefix = false;
+          new Node(key+i, value, isPrefix, this);
+        } else { // inserted key is exactly this node key, override value
+          _value = value;
+          _isPrefix = isPrefix;
+        }
       } else {
         //qDebug() << "" << "among children" << i << _fragment << key << this;
         for (int j = 0; j < _childrenCount; ++j) {
@@ -175,8 +177,8 @@ class LIBQTSSUSHARED_EXPORT RadixTree {
     }
     QString toString(QString indentation = QString()) const {
       QString s;
-      s += indentation + _fragment + " " + (_value ? "set" : "null") + " "
-          + (_isPrefix ? "prefix" : "exact" ) + "\n";
+      s += indentation + _fragment //+ " " + (_value ? "set" : "null")
+          + " " + (_isPrefix ? "prefix" : "exact" ) + "\n";
       //int n = strlen(_fragment);
       //for (int i = 0; i < n; ++i)
       indentation += ' ';
@@ -237,11 +239,7 @@ public:
     for (const RadixTreeInitializerHelper<T> &helper : list)
       for (const char *key: helper._keys)
         insert(key, helper._value, helper._isPrefix);
-    /*if (d->_root) {
-      qDebug() << "INITIALIZED:";
-      foreach(QString s, d->_root->toString().split('\n'))
-        qDebug().noquote() << s;
-    }*/
+    //dumpContent();
   }
   RadixTree(QHash<QString,T> hash) : RadixTree() {
     foreach (const QString &key, hash.keys())
@@ -280,8 +278,6 @@ public:
   bool contains(const char *key) const {
     return (d && d->_root) ? d->_root->lookup(key) : false;
   }
-  // LATER T &operator[](const char *key);
-
 
   void insert(QString key, T value, bool isPrefix = false) {
     insert (key.toUtf8().constData(), value, isPrefix); }
@@ -297,6 +293,7 @@ public:
     RadixTree<T> that;
     foreach (const T &key, hash.keys())
       that.insert(hash.value(key).toUtf8().constData(), key);
+    //that.dumpContent();
     return that;
   }
   static RadixTree<T> reversed(QHash<T,const char *> hash) {
@@ -314,6 +311,13 @@ public:
     RadixTree<T> that;
     foreach (const T &key, map.keys())
       that.insert(map.value(key), key);
+  }
+  void dumpContent() {
+    qDebug() << "RadixTree " << QString::number((quint64)this, 16);
+    if (d->_root) {
+      foreach(QString s, d->_root->toString().split('\n'))
+        qDebug().noquote() << s;
+    }
   }
 };
 
