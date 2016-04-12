@@ -104,7 +104,7 @@ class LIBQTSSUSHARED_EXPORT RadixTree {
       } else if (_fragment[i]) {
         // have to split the tree -> make current and new content two children
         //qDebug() << "" << "have to split" << _fragment+i << key+i << this
-        //         << (i || key[i] ? "" : "without second child");
+        //         << (i && key[i] ? "" : "without second child");
         auto oldChildren = _children;
         auto oldChildrenCount = _childrenCount;
         _children = 0;
@@ -114,7 +114,7 @@ class LIBQTSSUSHARED_EXPORT RadixTree {
         _fragment[i] = 0; // shorten _fragment without reallocating memory
         mainChild->_children = oldChildren;
         mainChild->_childrenCount = oldChildrenCount;
-        if (i || key[i]) { // inserted key > this node key, need a second child
+        if (i && key[i]) { // inserted key > this node key, need a second child
           _value = T();
           _isPrefix = false;
           new Node(key+i, value, isPrefix, this);
