@@ -139,6 +139,11 @@ void HttpWorker::handleConnection(int socketDescriptor) {
   url = QUrl::fromEncoded(uri.toUtf8());
   req.overrideUrl(url);
   handler = _server->chooseHandler(req);
+  if (req.header(QStringLiteral("Expect")) == QStringLiteral("100-continue")) {
+    // LATER only send 100 Continue if the URI is actually accepted by the handler
+    out << "HTTP/1.1 100 Continue\r\n\r\n";
+    out.flush();
+  }
   handler->handleRequest(req, res, &processingContext);
   res.output()->flush(); // calling output() ensures that header was sent
   //qDebug() << req;
