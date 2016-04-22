@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,7 +21,7 @@ class QtLogLogger : public Logger {
   Q_DISABLE_COPY(QtLogLogger)
 public:
   explicit QtLogLogger(Log::Severity minSeverity = Log::Info);
-  void doLog(const LogEntry entry);
+  void doLog(const LogEntry &entry);
 };
 
 #endif // QTLOGLOGGER_H

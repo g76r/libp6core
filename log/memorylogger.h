@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 Hallowyn and others.
+/* Copyright 2013-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -33,7 +33,7 @@ class LIBQTSSUSHARED_EXPORT MemoryLogger : public Logger {
                LogModel *logmodel);
 
 protected:
-  void doLog(const LogEntry entry);
+  void doLog(const LogEntry &entry);
 };
 
 #endif // MEMORYLOGGER_H

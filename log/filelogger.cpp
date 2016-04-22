@@ -44,7 +44,7 @@ FileLogger::FileLogger(QString pathPattern, Log::Severity minSeverity,
   : Logger(minSeverity, Logger::DedicatedThread), _device(0),
     _pathPattern(pathPattern), _lastOpen(QDateTime::currentDateTime()),
     _secondsReopenInterval(secondsReopenInterval), _buffered(buffered) {
-  //qDebug() << "creating FileLogger from path" << path << _currentPath;
+  //qDebug() << "creating FileLogger from path" << pathPattern << this;
 }
 
 FileLogger::~FileLogger() {
@@ -60,7 +60,7 @@ QString FileLogger::pathPattern() const {
   return _pathPattern;
 }
 
-void FileLogger::doLog(const LogEntry entry) {
+void FileLogger::doLog(const LogEntry &entry) {
   QDateTime now = QDateTime::currentDateTime();
   if (!_pathPattern.isEmpty()
       && (_device == 0
@@ -94,6 +94,8 @@ void FileLogger::doLog(const LogEntry entry) {
         .arg(entry.severityToString()).arg(entry.message()).append('\n');
     //qDebug() << "***log" << line;
     QByteArray ba = line.toUtf8();
+    //if (_pathPattern.endsWith(".slow") && (QTime::currentTime().second()/10)%2)
+    //  ::usleep(1000000);
     if (_device->write(ba) != ba.size()) {
       // TODO warn, but only once
       //qWarning() << "error while writing log:" << _device

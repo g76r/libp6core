@@ -153,6 +153,7 @@ public slots:
    * @see SharedUiItemDocumentManager::itemChanged()
    * @see SharedUiItemDocumentManager::changeItem()
    */
+  // TODO switch signatures to const SharedUiItem & whenever possible
   virtual void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
                           QString idQualifier) = 0;
   /** Short for changeItem(newItem, SharedUiItem(), newItem.idQualifier()). */

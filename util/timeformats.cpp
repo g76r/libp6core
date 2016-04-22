@@ -194,6 +194,7 @@ QString TimeFormats::toCoarseHumanReadableTimeInterval(
     qint64 msecs, bool absolute) {
   QString s(msecs < 0 && !absolute ? "-" : "");
   // LATER i18n
+  // LATER hide second part of expression when %2 == 0
   msecs = qAbs(msecs);
   if (msecs <= 60*1000)
     s.append(QObject::tr("%1 seconds", "<= 1 min").arg(.001*msecs));

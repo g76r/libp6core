@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 Hallowyn and others.
+/* Copyright 2013-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,7 +21,7 @@ MemoryLogger::MemoryLogger(
     _model(logmodel) {
 }
 
-void MemoryLogger::doLog(const LogEntry entry) {
+void MemoryLogger::doLog(const LogEntry &entry) {
   if (!_prefixFilter.isNull() && !entry.message().startsWith(_prefixFilter))
     return;
   QMetaObject::invokeMethod(_model, "changeItem",

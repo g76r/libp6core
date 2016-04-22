@@ -1,4 +1,4 @@
-/* Copyright 2014-2015 Hallowyn and others.
+/* Copyright 2014-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,7 +18,7 @@ QtLogLogger::QtLogLogger(Log::Severity minSeverity)
   : Logger(minSeverity, Logger::DirectCall) {
 }
 
-void QtLogLogger::doLog(const LogEntry entry) {
+void QtLogLogger::doLog(const LogEntry &entry) {
   QString header = QString("%1 %2/%3 %4 %5")
       .arg(entry.timestamp().toString("yyyy-MM-ddThh:mm:ss,zzz"))
       .arg(entry.task()).arg(entry.execId()).arg(entry.sourceCode())

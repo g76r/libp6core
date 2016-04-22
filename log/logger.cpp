@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 Hallowyn and others.
+/* Copyright 2013-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,6 +13,11 @@
  */
 #include "logger.h"
 #include "loggerthread.h"
+#include <QTimer>
+#include "util/paramset.h"
+#include "util/timeformats.h"
+
+#define ISO8601 QStringLiteral("yyyy-MM-ddThh:mm:ss,zzz")
 
 static QString _uiHeaderNames[] = {
   "Timestamp", // 0
@@ -124,10 +129,10 @@ int Logger::LogEntryData::uiSectionCount() const {
 
 Logger::Logger(Log::Severity minSeverity, ThreadModel threadModel)
   : QObject(0), _thread(0), _minSeverity(minSeverity), _autoRemovable(true),
-    _bufferOverflown(0), _buffer(0) {
+    _lastBufferOverflownWarning(0), _buffer(0) {
   // LATER make buffer size parametrable
-  //Log::fatal() << "*** Logger::Logger " << this << " " << minSeverity
-  //             << " " << dedicatedThread;
+  //qDebug() << "*** Logger::Logger " << this << " " << minSeverity
+  //         << " " << threadModel;
   //qDebug() << "Logger" << QString::number((long)this, 16);
   switch(threadModel) {
   case DirectCall:
@@ -136,12 +141,12 @@ Logger::Logger(Log::Severity minSeverity, ThreadModel threadModel)
     _thread = new LoggerThread(this);
     _thread->setObjectName("Logger-"+Log::severityToString(minSeverity)
                            +"-"+QString::number((long)this, 16));
-    _buffer = new CircularBuffer<LogEntry>(10);
+    _buffer = new CircularBuffer<LogEntry>(12);
     break;
   case RootLogger:
     _thread = new LoggerThread(this);
     _thread->setObjectName("RootLogger-"+QString::number((long)this, 16));
-    _buffer = new CircularBuffer<LogEntry>(10);
+    _buffer = new CircularBuffer<LogEntry>(12);
     break;
   }
   if (_thread) {
@@ -167,10 +172,47 @@ void Logger::deleteLater() {
   }
 }
 
+void Logger::log(const LogEntry &entry) {
+  // this method must be callable from any thread, whereas the logger
+  // implementation may not be threadsafe and/or may need a protection
+  // against i/o latency: slow disk, NFS stall (for those fool enough to
+  // write logs over NFS), etc.
+  if (entry.severity() >= _minSeverity) {
+    if (_thread) {
+      if (!_buffer->tryPut(entry)) {
+        // warn only if not warned recently
+        QMutexLocker ml(&_bufferOverflownMutex);
+        qint64 now = QDateTime::currentMSecsSinceEpoch();
+        if (now - _lastBufferOverflownWarning > _bufferOverflownWarningIntervalMs) {
+          _lastBufferOverflownWarning = now;
+          qWarning().noquote()
+              << QDateTime::currentDateTime().toString(ISO8601) << this
+              << "Logger::log discarded at less one log entry due to "
+                 "thread buffer full" << entry.message()
+              << "this warning occurs at most every"
+              << TimeFormats::toCoarseHumanReadableTimeInterval(
+                   _bufferOverflownWarningIntervalMs)
+              << "for every logger";
+        }
+      }
+    } else {
+      doLog(entry);
+    }
+  }
+}
+
 QString Logger::currentPath() const {
   return QString();
 }
 
 QString Logger::pathPattern() const {
   return currentPath();
+}
+
+QString Logger::pathMathchingPattern() const {
+  return ParamSet::matchingPattern(pathPattern());
+}
+
+QRegExp Logger::pathMatchingRegexp() const {
+  return ParamSet::matchingRegexp(pathPattern());
 }

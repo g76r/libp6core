@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 Hallowyn and others.
+/* Copyright 2013-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,7 +17,6 @@
 #include <QObject>
 #include "log.h"
 #include <QDateTime>
-#include "util/paramset.h"
 #include "thread/circularbuffer.h"
 #include <QThread>
 #include "modelview/shareduiitem.h"
@@ -70,7 +69,10 @@ private:
   QThread *_thread;
   Log::Severity _minSeverity;
   bool _autoRemovable;
-  QAtomicInt _bufferOverflown;
+  QMutex _bufferOverflownMutex;
+  qint64 _lastBufferOverflownWarning;
+  // LATER make _bufferOverflownWarningIntervalMs configurable
+  qint64 _bufferOverflownWarningIntervalMs = 10*60*1000; // 10'
   CircularBuffer<LogEntry> *_buffer;
 
 public:
@@ -78,27 +80,7 @@ public:
   // static methods)
   Logger(Log::Severity minSeverity, ThreadModel threadModel);
   /** This method is thread-safe. */
-  inline void log(LogEntry entry) {
-    // this method must be callable from any thread, whereas the logger
-    // implementation may not be threadsafe and/or may need a protection
-    // against i/o latency: slow disk, NFS stall (for those fool enough to
-    // write logs over NFS), etc.
-    if (entry.severity() >= _minSeverity) {
-      if (_thread) {
-        if (!_buffer->tryPut(entry)) {
-          // warn only once in the Logger lifetime
-          if (_bufferOverflown.fetchAndStoreOrdered(1) == 0)
-            qWarning() << QDateTime::currentDateTime()
-                          .toString("yyyy-MM-dd hh:mm:ss,zzz")
-                       << "Logger::log discarded at less one log entry due to "
-                          "thread buffer full" << this << entry.message();
-          // LATER have a way to reset flag after a while, to warn again if needed
-        }
-      } else {
-        doLog(entry);
-      }
-    }
-  }
+  void log(const LogEntry &entry);
   ~Logger();
   /** Return current logging path, e.g. "/var/log/qron-20181231.log"
    * To be used by implementation only when relevant.
@@ -109,11 +91,9 @@ public:
    * Default: same as currentPath() */
   virtual QString pathPattern() const;
   /** Return the path regexp pattern, e.g. "/var/log/qron-.*\\.log" */
-  QString pathMathchingPattern() const {
-    return ParamSet::matchingPattern(pathPattern()); }
+  QString pathMathchingPattern() const;
   /** Return the path regexp pattern, e.g. "/var/log/qron-.*\\.log" */
-  QRegExp pathMatchingRegexp() const {
-    return ParamSet::matchingRegexp(pathPattern()); }
+  QRegExp pathMatchingRegexp() const;
   Log::Severity minSeverity() const { return _minSeverity; }
   /** Delete later both this and, if any, its dedicated thread. */
   void deleteLater();
@@ -123,7 +103,7 @@ protected:
    * Either the Logger must be created with dedicatedThread = true or this
    * method must be threadsafe (= able to handle calls from any thread at any
    * time). */
-  virtual void doLog(const LogEntry entry) = 0;
+  virtual void doLog(const LogEntry &entry) = 0;
 };
 
 Q_DECLARE_METATYPE(Logger::LogEntry)
