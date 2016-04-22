@@ -76,7 +76,7 @@ void HttpWorker::handleConnection(int socketDescriptor) {
   }
   line = socket->readLine(MAXIMUM_LINE_SIZE+2);
   if (line.size() > MAXIMUM_LINE_SIZE) {
-    sendError(out, "408 414 Request URI too long",
+    sendError(out, "414 Request URI too long",
               "starting with: "+line.left(200));
     goto finally;
   }
