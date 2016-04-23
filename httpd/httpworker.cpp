@@ -26,6 +26,7 @@
 #include <QString>
 
 #define MAXIMUM_LINE_SIZE 65536
+#define MAXIMUM_ENCODED_FORM_POST_SIZE MAXIMUM_LINE_SIZE
 #define MAXIMUM_READ_WAIT 30000
 #define MAXIMUM_WRITE_WAIT 10000
 
@@ -69,6 +70,7 @@ void HttpWorker::handleConnection(int socketDescriptor) {
   //qDebug() << "new client socket" << socket->peerAddress();
   QTextStream out(socket);
   QString line;
+  qint64 contentLength = 0;
   HttpRequest::HttpRequestMethod method = HttpRequest::NONE;
   if (!socket->canReadLine() && !socket->waitForReadyRead(MAXIMUM_READ_WAIT)) {
     sendError(out, "408 Request timeout");
@@ -108,7 +110,8 @@ void HttpWorker::handleConnection(int socketDescriptor) {
     }
     if (!socket->canReadLine()
         && !socket->waitForReadyRead(MAXIMUM_READ_WAIT)) {
-      //qDebug() << "socket is not readable";
+      sendError(out, "408 Request timeout");
+      goto finally;
       break;
     }
     line = socket->readLine(MAXIMUM_LINE_SIZE+2).trimmed();
@@ -138,6 +141,39 @@ void HttpWorker::handleConnection(int socketDescriptor) {
   // LATER is utf8 the right choice ? should encoding depend on headers ?
   url = QUrl::fromEncoded(uri.toUtf8());
   req.overrideUrl(url);
+  // load post params
+  // LATER should probably also remove query items
+  if (method == HttpRequest::POST
+      && req.header(QStringLiteral("Content-Type"))
+      == QStringLiteral("application/x-www-form-urlencoded")) {
+    contentLength = req.header(QStringLiteral("Content-Length"),
+                               QStringLiteral("-1")).toLongLong();
+    if (contentLength < 0) {
+      sendError(out, "411 Length Required");
+      goto finally;
+    }
+    if (contentLength > MAXIMUM_ENCODED_FORM_POST_SIZE) {
+      sendError(out, "413 Encoded form parameters string too long",
+                "starting with: "+line.left(200));
+      goto finally;
+    }
+    line = QString();
+    forever {
+      line += QString::fromLatin1(socket->read(contentLength-line.size()));
+      if (contentLength && line.size() >= contentLength)
+        break;
+      // LATER avoid DoS by setting a maximum *total* read time out
+      if (!socket->waitForReadyRead(MAXIMUM_READ_WAIT)) {
+        sendError(out, "408 Request timeout");
+        goto finally;
+      }
+    }
+    foreach (const auto &p, QUrlQuery(line).queryItems(QUrl::FullyDecoded))
+      req.overrideParam(p.first, p.second);
+    // override body parameters with query string parameters
+    foreach (const auto &p, QUrlQuery(url).queryItems(QUrl::FullyDecoded))
+      req.overrideParam(p.first, p.second);
+  }
   handler = _server->chooseHandler(req);
   if (req.header(QStringLiteral("Expect")) == QStringLiteral("100-continue")) {
     // LATER only send 100 Continue if the URI is actually accepted by the handler

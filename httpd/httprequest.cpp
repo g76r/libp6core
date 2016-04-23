@@ -19,6 +19,7 @@
 #include <QHostAddress>
 #include <QHash>
 #include "util/radixtree.h"
+#include "util/containerutils.h"
 
 class HttpRequestData : public QSharedData {
 public:
@@ -66,16 +67,16 @@ static QHash<HttpRequest::HttpRequestMethod,QString> _methodToText {
   { HttpRequest::ANY, "ANY" },
 };
 
-static RadixTree<HttpRequest::HttpRequestMethod> _methodFromText {
-  RadixTree<HttpRequest::HttpRequestMethod>::reversed(_methodToText)
+static QHash<QString,HttpRequest::HttpRequestMethod> _methodFromText {
+  ContainerUtils::reversed(_methodToText)
 };
 
 QString HttpRequest::methodName(HttpRequestMethod method) {
   return _methodToText.value(method, QStringLiteral("UNKNOWN"));
 }
 
-HttpRequest::HttpRequestMethod HttpRequest::methodFromText(const char *name) {
-  return _methodFromText.value(name);
+HttpRequest::HttpRequestMethod HttpRequest::methodFromText(QString name) {
+  return _methodFromText.value(name, NONE);
 }
 
 bool HttpRequest::parseAndAddHeader(QString rawHeader) {
@@ -140,11 +141,6 @@ void HttpRequest::overrideUnsetParam(QString key) {
     d->_paramsCache.insert(key, QString());
 }
 
-void HttpRequest::discardParamsCache() {
-  if (d)
-    d->_paramsCache.clear();
-}
-
 ParamSet HttpRequest::paramsAsParamSet() const {
   if (d) {
     cacheAllParams();
@@ -154,20 +150,16 @@ ParamSet HttpRequest::paramsAsParamSet() const {
 }
 
 void HttpRequest::cacheAllParams() const {
-  if (d) {
-    QListIterator<QPair<QString,QString> > it(
-          d->_query.queryItems(QUrl::FullyDecoded));
-    while (it.hasNext()) {
-      QPair<QString,QString> p(it.next());
-      if (!d->_paramsCache.contains(p.first))
-        d->_paramsCache.insert(p.first, p.second);
-    }
-  }
+  if (!d)
+    return;
+  foreach (const auto &p, d->_query.queryItems(QUrl::FullyDecoded))
+    if (!d->_paramsCache.contains(p.first))
+      d->_paramsCache.insert(p.first, p.second);
 }
 
 HttpRequest::operator QString() const {
   if (!d)
-    return "HttpRequest{}";
+    return QStringLiteral("HttpRequest{}");
   QString s;
   QTextStream ts(&s, QIODevice::WriteOnly);
   ts << "HttpRequest{ " << methodName() << ", " << url().toString() << ", { ";

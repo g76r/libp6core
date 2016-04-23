@@ -54,9 +54,7 @@ public:
   static QString methodName(HttpRequestMethod method);
   /** @return enum from protocol and human readable string, e.g. "GET"
    * @param name case sensitive, must be upper case */
-  static HttpRequestMethod methodFromText(QString name) {
-    return methodFromText(name.toUtf8().constData()); }
-  static HttpRequestMethod methodFromText(const char *name);
+  static HttpRequestMethod methodFromText(QString name);
   bool parseAndAddHeader(QString rawHeader);
   /** Value associated to a request header.
    * If the header is found several time, last value is returned. */
@@ -86,9 +84,6 @@ public:
   QString param(QString key) const;
   void overrideParam(QString key, QString value);
   void overrideUnsetParam(QString key);
-  /** Discard params cache built by calls to param(). These also discard any
-   * overiding done on params. */
-  void discardParamsCache();
   /** Retrieve url params (query items) as a ParamSet.
    * Only first value of multi-valued items is kept. */
   // LATER manage to keep last value instead
@@ -107,8 +102,8 @@ public:
   // LATER handle sessions
 
 private:
-  void parseAndAddCookie(QString rawHeaderValue);
-  void cacheAllParams() const;
+  inline void parseAndAddCookie(QString rawHeaderValue);
+  inline void cacheAllParams() const;
 };
 
 /** ParamsProvider wrapper for pseudo params. */
