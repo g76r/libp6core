@@ -16,6 +16,11 @@ CONFIG += c++11
 TARGET = qtpf
 TEMPLATE = lib
 
+contains(QT_VERSION, ^4\\..*) {
+  message("Cannot build with Qt version $${QT_VERSION}.")
+  error("Use Qt 5.")
+}
+
 DEFINES += LIBQTPF_LIBRARY
 
 exists(/usr/bin/ccache):QMAKE_CXX = ccache g++
