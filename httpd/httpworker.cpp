@@ -157,19 +157,21 @@ void HttpWorker::handleConnection(int socketDescriptor) {
                 "starting with: "+line.left(200));
       goto finally;
     }
-    line = QString();
-    forever {
-      line += QString::fromLatin1(socket->read(contentLength-line.size()));
-      if (contentLength && line.size() >= contentLength)
-        break;
-      // LATER avoid DoS by setting a maximum *total* read time out
-      if (!socket->waitForReadyRead(MAXIMUM_READ_WAIT)) {
-        sendError(out, "408 Request timeout");
-        goto finally;
+    if (contentLength > 0) { // avoid enter infinite loop with Content-Length: 0
+      line = QString();
+      forever {
+        line += QString::fromLatin1(socket->read(contentLength-line.size()));
+        if (contentLength && line.size() >= contentLength)
+          break;
+        // LATER avoid DoS by setting a maximum *total* read time out
+        if (!socket->waitForReadyRead(MAXIMUM_READ_WAIT)) {
+          sendError(out, "408 Request timeout");
+          goto finally;
+        }
       }
+      foreach (const auto &p, QUrlQuery(line).queryItems(QUrl::FullyDecoded))
+        req.overrideParam(p.first, p.second);
     }
-    foreach (const auto &p, QUrlQuery(line).queryItems(QUrl::FullyDecoded))
-      req.overrideParam(p.first, p.second);
     // override body parameters with query string parameters
     foreach (const auto &p, QUrlQuery(url).queryItems(QUrl::FullyDecoded))
       req.overrideParam(p.first, p.second);
