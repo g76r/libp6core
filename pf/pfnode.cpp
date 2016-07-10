@@ -446,7 +446,8 @@ PfNode &PfNode::setAttribute(QString name, QStringList content) {
 PfNode &PfNode::setContent(QStringList strings) {
   QString v;
   foreach(QString s, strings) {
-    s.replace('\\', "\\\\").replace(' ', "\\ ");
+    s.replace('\\', "\\\\").replace(' ', "\\ ").replace('\t', "\\\t")
+        .replace('\r', "\\\r").replace('\n', "\\\n");
     v.append(s).append(' ');
   }
   if (!v.isEmpty())

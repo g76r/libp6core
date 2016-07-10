@@ -213,7 +213,12 @@ public:
   PfNode &setAttribute(QString name, const char *content) {
     return setAttribute(name, QString::fromUtf8(content)); }
   // LATER setAttribute() for QDateTime, QDate, QTime and QStringList/QSet<QString>
-  // TODO document behaviour
+  /** Set a child named 'name' with 'content' content and remove any other child
+   * named 'name'. The QStringList is formated as a space separated value list
+   * in a way that it can be parsed back by contentAsStringList() (i.e. using
+   * backslash escapement for whitespace and backslashes).
+   * @see contentAsStringList()
+   */
   PfNode &setAttribute(QString name, QStringList content);
   /** Construct a list of all children named 'name'. */
   const QList<PfNode> childrenByName(QString name) const;
