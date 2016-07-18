@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -12,6 +12,7 @@
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "csvfile.h"
+#include <QBuffer>
 
 CsvFile::CsvFile(QObject *parent)
   : QObject(parent), _openMode(QIODevice::NotOpen),
@@ -52,6 +53,12 @@ bool CsvFile::openReadonly(QIODevice *input) {
   _filename = QString();
   _openMode = QIODevice::ReadOnly;
   return readAll(input);
+}
+
+bool CsvFile::openReadonly(QByteArray input) {
+  QBuffer buffer(&input);
+  buffer.open(QIODevice::ReadOnly);
+  return openReadonly(&buffer);
 }
 
 void CsvFile::close() {

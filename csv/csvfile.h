@@ -1,4 +1,4 @@
-/* Copyright 2014-2015 Hallowyn and others.
+/* Copyright 2014-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -53,6 +53,7 @@ public:
   bool open(QIODevice::OpenMode mode);
   bool open(QString filename, QIODevice::OpenMode mode);
   bool openReadonly(QIODevice *input);
+  bool openReadonly(QByteArray input);
   void close();
   QIODevice::OpenMode openMode() const { return _openMode; }
   bool isOpen() const { return _openMode != QIODevice::NotOpen; }
