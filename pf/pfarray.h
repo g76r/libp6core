@@ -39,6 +39,10 @@ public:
   PfArray() {  }
   PfArray(const PfArray &other) : d(other.d) { }
   explicit PfArray(QList<QStringList> rows) { appendRows(rows); }
+  explicit PfArray(QStringList headers, QList<QStringList> rows) {
+    appendHeaders(headers);
+    appendRows(rows);
+  }
   PfArray &operator=(const PfArray &other) { d = other.d; return *this; }
   /** @return true if null-size array (0 rows 0 columns 0 headers) */
   bool isNull() const { return !d; }
@@ -88,6 +92,12 @@ public:
     if (!d)
       d = new PfArrayData();
     d->_headers.append(value);
+  }
+  void appendHeaders(QStringList headers) {
+    if (!d)
+      d = new PfArrayData();
+    foreach (const QString &value, headers)
+      d->_headers.append(value);
   }
   void appendRow(QStringList values = QStringList()) {
     if (!d)
