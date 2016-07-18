@@ -16,6 +16,7 @@
 
 #include "libqtssu_global.h"
 #include <QString>
+#include <QStringList>
 
 class LIBQTSSUSHARED_EXPORT StringUtils {
   StringUtils() = delete;
@@ -49,6 +50,16 @@ public:
       return string;
     return string.left(maxsize/2-placeholder.size())+placeholder
         +string.right(maxsize-maxsize/2);
+  }
+  /** Return a column as a QStringList from QList<QStringList> list of rows.
+   * Kind of extracting a vector from a transposed text matrix.
+   */
+  static QStringList columnFromRows(QList<QStringList> rows, int column,
+                                    QString defaultValue = QString()) {
+    QStringList list;
+    foreach (const QStringList &row, rows)
+      list << row.value(column, defaultValue);
+    return list;
   }
 };
 
