@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,42 +16,32 @@
 #include <unistd.h>
 #include <QCoreApplication>
 
-#if QT_VERSION < 0x040700
-static QDateTime epoch(QDate(1970, 1, 1), QTime(0, 0));
-#endif
-
-static inline quint64 msecSince1970() {
-#if QT_VERSION >= 0x040700
-  return QDateTime::currentMSecsSinceEpoch();
-#else
-  return epoch.secsTo(QDateTime::currentDateTime())*1000;
-#endif
-}
-
-BlockingTimer::BlockingTimer(quint32 intervalMsec,
-                             quint32 processEventsIntervalMsec)
+BlockingTimer::BlockingTimer(quint32 intervalMsec, quint32 subntervalMsec,
+    ShouldStopFunction shouldStopFunction, bool shouldCallProcessEvents)
   : _lasttick(0), _intervalMsec(intervalMsec),
-    _processEventsIntervalMsec(processEventsIntervalMsec), _shouldStop(false) {
+    _subintervalMsec(subntervalMsec),
+    _shouldStopFunction(shouldStopFunction),
+    _shouldCallProcessEvents(shouldCallProcessEvents) {
 }
 
 void BlockingTimer::wait() {
   if (_lasttick == 0)
-    _lasttick = msecSince1970();
+    _lasttick = QDateTime::currentMSecsSinceEpoch();
   quint64 now = _lasttick, nexttick = _lasttick+_intervalMsec;
-  _shouldStop = false;
-  if (_processEventsIntervalMsec > 0)
+  if (_shouldCallProcessEvents)
     QCoreApplication::processEvents();
-  while (!_shouldStop && (now = msecSince1970()) < nexttick) {
+  while ((!_shouldStopFunction || !_shouldStopFunction())
+         && (now = QDateTime::currentMSecsSinceEpoch()) < nexttick) {
     // Bounding the wait time to 1 hour to avoid overflow when converting to
     // microseconds (microseconds in 22 bits would lead to bugs for intervals
     // longer than about 2 hours 1/2).
     // Cast to quint32 is obviously safe thanks to the bounds.
     // nexttick-now is always >= 0 since _lasttick is always <= now
     quint32 timeToWait = (quint32)qBound<quint64>(0, nexttick-now, 3600000);
-    if (_processEventsIntervalMsec)
-      timeToWait = qMin(timeToWait, _processEventsIntervalMsec);
+    if (_subintervalMsec > 0)
+      timeToWait = qMin(timeToWait, _subintervalMsec);
     usleep(1000*timeToWait);
-    if (_processEventsIntervalMsec)
+    if (_shouldCallProcessEvents)
       QCoreApplication::processEvents();
   }
   _lasttick = now;

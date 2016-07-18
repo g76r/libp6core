@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,21 +16,37 @@
 
 #include <QtGlobal>
 #include "libqtssu_global.h"
+#include <functional>
 
 /** Blocking timer which calls QCoreApplication::processEvents when waiting
   * and does not drift as a simple sleep() or usleep() would.
   */
 class LIBQTSSUSHARED_EXPORT BlockingTimer {
+public:
+  using ShouldStopFunction = std::function<bool()>;
+
 private:
   quint64 _lasttick;
-  quint32 _intervalMsec, _processEventsIntervalMsec;
-  bool _shouldStop;
+  quint32 _intervalMsec, _subintervalMsec;
+  ShouldStopFunction _shouldStopFunction;
+  bool _shouldCallProcessEvents;
 
 public:
-  /** @param processEventsIntervalMsec is bounded to 1 hour (any longer value
+  /** @param subintervalMsec is bounded to 1 hour (any longer value
     * will lead to precessEvents() being called every hour).
+    * @param intervalMsec time to wait between every call to wait()
+    * @param subIntervalMsec time to wait between every call to processEvents()
+    *   and/or to shouldStopFunction
     */
-  BlockingTimer(quint32 intervalMsec, quint32 processEventsIntervalMsec = 200);
+  BlockingTimer(quint32 intervalMsec, quint32 subntervalMsec = 200,
+                ShouldStopFunction shouldStopFunction = 0,
+                bool shouldCallProcessEvents = true);
+  BlockingTimer(quint32 intervalMsec, ShouldStopFunction shouldStopFunction,
+                bool shouldCallProcessEvents = true)
+    : BlockingTimer(intervalMsec, 200, shouldStopFunction,
+                    shouldCallProcessEvents) { }
+  BlockingTimer(quint32 intervalMsec, bool shouldCallProcessEvents)
+    : BlockingTimer(intervalMsec, 200, 0, shouldCallProcessEvents) { }
   /** Wait for the next trigger time.
     * To avoid drifting, this method does not wait intervalMsec but waits until
     * intervalMsec + last trigger time. If wait has been last called for longer
@@ -41,14 +57,6 @@ public:
     * If processEventsIntervalMsec <= 0, processEvents is never called.
     */
   void wait();
-  /** Stop waiting as soon as possible (i.e. within least of intervalMsec,
-    * processEventsIntervalMsec and 1 hour).
-    * This method can be called from another thread than the one currently
-    * waiting and can also be called from within a queued slot in the waiting
-    * thread (since wait calls QCoreApplication::processEvents()).
-    * If wait() is not running, then this method has no effect.
-    */
-  inline void stopWaiting() { _shouldStop = true; }
 };
 
 #endif // BLOCKINGTIMER_H
