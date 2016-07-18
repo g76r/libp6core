@@ -100,7 +100,8 @@ SOURCES += \
     ftp/ftpclient.cpp \
     ftp/ftpscript.cpp \
     util/stringutils.cpp \
-    net/dummysocket.cpp
+    net/dummysocket.cpp \
+    net/readonlyresourcescache.cpp
 
 
 HEADERS +=\
@@ -178,7 +179,8 @@ HEADERS +=\
     util/stringutils.h \
     net/dummysocket.h \
     util/containerutils.h \
-    util/radixtree.h
+    util/radixtree.h \
+    net/readonlyresourcescache.h
 
 unix {
     target.path = /usr/lib
