@@ -136,6 +136,17 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
           goto error;
         }
         state = BinarySurfaceOrLength;
+      } else if (c == ';') {
+        names.append(QString::fromUtf8(content));
+        array.clear();
+        content.clear();
+        if (!_handler->startNode(names)) {
+          _handler->setErrorString(tr("cannot handle start of node"));
+          goto error;
+        }
+        array.appendHeader("0");
+        arrayColumn = 1;
+        state = ArrayHeader;
       } else if (pfisquote(c)) {
         quote = c;
         state = Quote;
