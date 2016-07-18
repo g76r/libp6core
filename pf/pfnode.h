@@ -43,6 +43,10 @@ private:
     if (!content.isEmpty())
       _fragments.append(PfFragment(content));
   }
+  PfNodeData(QString name, PfArray array)
+    : _name(name), _isComment(false) {
+    _array = array;
+  }
   bool isComment() const { return _isComment; }
   bool isEmpty() const {
     return !_fragments.size() && _array.isNull(); }
@@ -112,6 +116,9 @@ public:
   /** If name is empty, the node will be null. */
   PfNode(QString name, QString content)
     : d(name.isEmpty() ? 0 : new PfNodeData(name, content, false)) { }
+  /** If name is empty, the node will be null. */
+  PfNode(QString name, PfArray array)
+    : d(name.isEmpty() ? 0 : new PfNodeData(name, array)) { }
   /** Create a comment node. */
   static PfNode createCommentNode(QString comment) {
     return PfNode(new PfNodeData("comment", comment, true)); }

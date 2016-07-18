@@ -38,6 +38,7 @@ class LIBQTPFSHARED_EXPORT PfArray {
 public:
   PfArray() {  }
   PfArray(const PfArray &other) : d(other.d) { }
+  explicit PfArray(QList<QStringList> rows) { appendRows(rows); }
   PfArray &operator=(const PfArray &other) { d = other.d; return *this; }
   /** @return true if null-size array (0 rows 0 columns 0 headers) */
   bool isNull() const { return !d; }
@@ -94,6 +95,10 @@ public:
     d->_rows.append(values);
     for (int i = d->_headers.size(); i < values.size(); ++i)
       d->_headers.append(QString::number(i));
+  }
+  void appendRows(QList<QStringList> rows) {
+    foreach (const QStringList &row, rows)
+      appendRow(row);
   }
   void appendCell(QString value) {
     if (!d)
