@@ -32,7 +32,9 @@ QString PfUtils::escape(QString string, PfOptions options,
         s.append(c);
         break;
       case PfDoubleQuoteProtection:
-        if (c == '"')
+        if (c == '\\')
+          s.append("\\\\");
+        else if (c == '"')
           s.append("\\\"");
         else
           s.append(c);
