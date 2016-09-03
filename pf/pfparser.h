@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -52,7 +52,6 @@ private:
   inline bool readAndFinishBinaryFragment(QIODevice *source,
                                           bool *lazyBinaryFragments,
                                           const QString surface, qint64 l);
-  inline bool finishArray(PfArray *array, QStringList *names);
 };
 
 #endif // PFPARSER_H

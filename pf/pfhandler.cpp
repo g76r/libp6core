@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -25,7 +25,7 @@ bool PfHandler::startDocument(PfOptions options) {
   return true;
 }
 
-bool PfHandler::startNode(QStringList names) {
+bool PfHandler::startNode(QVector<QString> names) {
   Q_UNUSED(names);
   return true;
 }
@@ -77,7 +77,7 @@ bool PfHandler::array(PfArray array) {
   return true;
 }
 
-bool PfHandler::endNode(QStringList names) {
+bool PfHandler::endNode(QVector<QString> names) {
   Q_UNUSED(names);
   return true;
 }

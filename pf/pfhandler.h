@@ -52,7 +52,7 @@ public:
     *        in the list
     * @return must return false iff an error occur (and optionaly set
     * errorString before) */
-  virtual bool startNode(QStringList names);
+  virtual bool startNode(QVector<QString> names);
   /** Event method called each time a text fragment is encountered.
     * @return must return false iff an error occur (and optionaly set
     * errorString before) */
@@ -82,7 +82,7 @@ public:
     * @param names names of nodes path to current node, same as with startNode()
     * @return must return false iff an error occur (and optionaly set
     * errorString before) */
-  virtual bool endNode(QStringList names);
+  virtual bool endNode(QVector<QString> names);
   /** Event method called each time a comment is encountered, but if
     * ignoreComments is set to true.
     * @return must return false iff an error occur (and optionaly set

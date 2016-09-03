@@ -13,6 +13,7 @@ under the License.
 
 #include "pfdomhandler.h"
 #include "pfinternals_p.h"
+#include <QVector>
 
 PfDomHandler::PfDomHandler() : PfHandler() {
 }
@@ -27,7 +28,7 @@ bool PfDomHandler::startDocument(PfOptions options) {
   return true;
 }
 
-bool PfDomHandler::startNode(QStringList names) {
+bool PfDomHandler::startNode(QVector<QString> names) {
   PfNode node(names.last());
   _path.append(node);
   return true;
@@ -76,7 +77,7 @@ bool PfDomHandler::array(PfArray array) {
   return true;
 }
 
-bool PfDomHandler::endNode(QStringList names) {
+bool PfDomHandler::endNode(QVector<QString> names) {
   Q_UNUSED(names);
   PfNode node(_path.takeLast());
   if (!_path.isEmpty())

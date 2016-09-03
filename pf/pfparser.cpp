@@ -18,9 +18,22 @@ under the License.
 #include <QBuffer>
 #include "pfarray.h"
 
+namespace {
+
+struct Node {
+  QString _name;
+  bool _hasContent;
+  Node(QString name = QString()) : _name(name), _hasContent(false) { }
+};
+
+// LATER would be nice but conflicts w/ unnamed namespace:
+// Q_DECLARE_TYPEINFO(Node, Q_MOVABLE_TYPE);
+
 enum State { TopLevel, Name, Content, SpaceInContent, Comment, Quote,
              BinarySurfaceOrLength, BinaryLength, ArrayHeader, ArrayBody,
              Escape, EscapeHex };
+
+} // unnamed namespace
 
 static const qint8 hexdigits[] = {
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -40,6 +53,28 @@ static const qint8 hexdigits[] = {
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
+static inline QVector<QString> names(QVector<Node> nodes) {
+  QVector<QString> names;
+  for (const Node &node : nodes)
+    names.append(node._name);
+  return names;
+}
+
+static inline bool finishArray(PfHandler *handler, PfArray *array,
+                               QVector<Node> *nodes) {
+  if (!(handler->array(*array))) {
+    array->clear();
+    handler->setErrorString(tr("cannot handle array fragment"));
+    return false;
+  }
+  if (!handler->endNode(names(*nodes))) {
+    handler->setErrorString(tr("cannot handle end of node"));
+    return false;
+  }
+  nodes->removeLast();
+  return true;
+}
+
 // LATER make read and write timeout parameters
 bool PfParser::parse(QIODevice *source, PfOptions options) {
   bool lazyBinaryFragments = options.shouldLazyLoadBinaryFragments();
@@ -56,7 +91,7 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
   State quotedState = TopLevel; // saved state for quotes and comments
   State escapedState = TopLevel; // saved state for escapes
   QByteArray content, comment, surface;
-  QStringList names;
+  QVector<Node> nodes;
   PfArray array;
   if (!source->isOpen() && !source->open(QIODevice::ReadOnly)) {
     _handler->setErrorString(tr("cannot open document : %1")
@@ -92,55 +127,56 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
         _handler->setErrorString(tr("anonymous node"));
         goto error;
       } else if (c == '(') {
-        names.append(QString::fromUtf8(content));
+        nodes.append(QString::fromUtf8(content));
         content.clear();
-        if (!_handler->startNode(names)) {
+        if (!_handler->startNode(names(nodes))) {
           _handler->setErrorString(tr("cannot handle start of node"));
           goto error;
         }
       } else if (c == ')') {
-        names.append(QString::fromUtf8(content));
+        nodes.append(QString::fromUtf8(content));
         content.clear();
+        QVector<QString> names = ::names(nodes);
         if (!_handler->startNode(names) || !_handler->endNode(names)) {
           _handler->setErrorString(tr("cannot handle end of node"));
           goto error;
         }
-        names.removeLast();
-        state = names.size() ? Content : TopLevel;
+        nodes.removeLast();
+        state = nodes.size() ? Content : TopLevel;
       } else if (pfisspace(c)) {
         if (c == '\n') {
           ++line;
           column = 0;
         }
-        names.append(QString::fromUtf8(content));
+        nodes.append(QString::fromUtf8(content));
         content.clear();
-        if (!_handler->startNode(names)) {
+        if (!_handler->startNode(names(nodes))) {
           _handler->setErrorString(tr("cannot handle start of node"));
           goto error;
         }
         state = Content;
       } else if (c == '#') {
-        names.append(QString::fromUtf8(content));
+        nodes.append(QString::fromUtf8(content));
         content.clear();
-        if (!_handler->startNode(names)) {
+        if (!_handler->startNode(names(nodes))) {
           _handler->setErrorString(tr("cannot handle start of node"));
           goto error;
         }
         state = Comment;
         quotedState = Content;
       } else if (c == '|') {
-        names.append(QString::fromUtf8(content));
+        nodes.append(QString::fromUtf8(content));
         content.clear();
-        if (!_handler->startNode(names)) {
+        if (!_handler->startNode(names(nodes))) {
           _handler->setErrorString(tr("cannot handle start of node"));
           goto error;
         }
         state = BinarySurfaceOrLength;
       } else if (c == ';') {
-        names.append(QString::fromUtf8(content));
+        nodes.append(QString::fromUtf8(content));
         array.clear();
         content.clear();
-        if (!_handler->startNode(names)) {
+        if (!_handler->startNode(names(nodes))) {
           _handler->setErrorString(tr("cannot handle start of node"));
           goto error;
         }
@@ -170,7 +206,6 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
         } else {
           ++column;
         }
-        state = SpaceInContent;
         break;
       }
       // otherwise process as Content by falling into Content: label
@@ -192,6 +227,7 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
             goto error;
           }
           content.clear();
+          nodes.last()._hasContent = true;
         }
         state = Name;
       } else if (c == ')') {
@@ -201,13 +237,14 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
             goto error;
           }
           content.clear();
+          nodes.last()._hasContent = true;
         }
-        if (!_handler->endNode(names)) {
+        if (!_handler->endNode(names(nodes))) {
           _handler->setErrorString(tr("cannot handle end of node"));
           goto error;
         }
-        names.removeLast();
-        state = names.size() ? Content : TopLevel;
+        nodes.removeLast();
+        state = nodes.size() ? Content : TopLevel;
       } else if (pfisspace(c)) {
         if (c == '\n') {
           ++line;
@@ -223,6 +260,7 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
             goto error;
           }
           content.clear();
+          nodes.last()._hasContent = true;
         }
         state = Comment;
         quotedState = Content;
@@ -233,6 +271,7 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
             goto error;
           }
           content.clear();
+          nodes.last()._hasContent = true;
         }
         state = BinarySurfaceOrLength;
       } else if (pfisquote(c)) {
@@ -253,7 +292,8 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
         goto error;
       } else {
         if (state == SpaceInContent) {
-          content.append(' ');
+          if (!content.isEmpty() || nodes.last()._hasContent)
+            content.append(' ');
           state = Content;
         }
         content.append(c);
@@ -309,6 +349,7 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
         if (!readAndFinishBinaryFragment(source, &lazyBinaryFragments, "", l))
           goto error;
         content.clear();
+        nodes.last()._hasContent = true;
         line = 10000000; // LATER hide line numbers after first binary fragment
         column = 0;
         state = Content;
@@ -347,6 +388,7 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
                                          l))
           goto error;
         content.clear();
+        nodes.last()._hasContent = true;
         line = 10000000; // LATER hide line numbers after first binary fragment
         column = 0;
         state = Content;
@@ -384,9 +426,9 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
           ++arrayColumn;
         } else if (c == ')') {
           content.clear();
-          if (!finishArray(&array, &names))
+          if (!finishArray(_handler, &array, &nodes))
             goto error;
-          state = names.size() ? Content : TopLevel;
+          state = nodes.size() ? Content : TopLevel;
         } else if (c == '#') {
           if (!content.isEmpty()) {
             array.appendHeader(QString::fromUtf8(content));
@@ -432,9 +474,9 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
             array.appendCell((QString::fromUtf8(content)));
           array.removeLastRowIfEmpty();
           content.clear();
-          if (!finishArray(&array, &names))
+          if (!finishArray(_handler, &array, &nodes))
             goto error;
-          state = names.size() ? Content : TopLevel;
+          state = nodes.size() ? Content : TopLevel;
         } else if (c == '#') {
           if (content.size())
             array.appendCell((QString::fromUtf8(content)));
@@ -595,19 +637,5 @@ bool PfParser::readAndFinishBinaryFragment(QIODevice *source,
       return false;
     }
   }
-  return true;
-}
-
-bool PfParser::finishArray(PfArray *array, QStringList *names) {
-  if (!(_handler->array(*array))) {
-    array->clear();
-    _handler->setErrorString(tr("cannot handle array fragment"));
-    return false;
-  }
-  if (!_handler->endNode(*names)) {
-    _handler->setErrorString(tr("cannot handle end of node"));
-    return false;
-  }
-  names->removeLast();
   return true;
 }
