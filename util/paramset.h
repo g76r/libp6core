@@ -54,20 +54,20 @@ class ParamSetData;
  * %{=date,,,UTC}
  * %{=date!hh:mm:ss,zzz!01-01T20:02-2w+1d!GMT}
  *
- * %=default function: %{=default!variable1[!variable2[...]][!value_if_not_set]}
+ * %=default function: %{=default!expr1[!expr2[...]][!value_if_not_set]}
  *
- * the function works like %{variable:-value_if_not_set} in shell scripts and
- * almost like nvl/ifnull functions in sql
+ * the function works like nvl/ifnull functions in sql
+ *   and almost like %{variable:-value_if_not_set} in shell scripts
+ * expr1..n are are evaluated
  * value_if_not_set is evaluated hence %foo is replaced by foo's value
- * variable1..n are of course not evaluated since foo is already replaced by foo's value if foo is set
  *
  * examples:
- * %{=default!foo!null}
- * %{=default!foo!foo not set}
- * %{=default:foo:foo not set!!!}
- * %{=default:foo:bar:neither foo nor bar are set!!!}
- * %{=default!foo!%bar}
- * %{=default!foo}
+ * %{=default!%foo!null}
+ * %{=default!%foo!foo not set}
+ * %{=default:%foo:foo not set!!!}
+ * %{=default:%foo:%bar:neither foo nor bar are set!!!}
+ * %{=default!%foo!%bar}
+ * %{=default!%foo}
  *
  * %=rawvalue function: %{=rawvalue!variable[!flags]}
  *

@@ -136,8 +136,9 @@ implicitVariables {
   CharacterSeparatedExpression params(key, matchedLength);
   QString value;
   for (int i = 0; i < params.size()-1; ++i) {
-    value = paramset.value(params.value(i), inherit, context, alreadyEvaluated);
-    if (!value.isNull())
+    value = paramset.evaluate(params.value(i), inherit, context,
+                              alreadyEvaluated);
+    if (!value.isEmpty())
       return value;
   }
   if (params.size() >= 2)
