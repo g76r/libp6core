@@ -1,4 +1,4 @@
-/* Copyright 2015 Hallowyn and others.
+/* Copyright 2015-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,19 +15,23 @@
 #include <QDateTime>
 #include "modelview/shareduiitem.h"
 
+static QAtomicInt _sequence;
+
 class LIBQTSSUSHARED_EXPORT SharedUiItemLogWrapperData
     : public SharedUiItemData {
 public:
+  QString _id;
   SharedUiItem _wrapped;
   QDateTime _timestamp;
   int _timestampSection;
 
   SharedUiItemLogWrapperData(SharedUiItem wrapped, QDateTime timestamp)
-    : _wrapped(wrapped), _timestamp(timestamp),
+    : _id(QString::number(_sequence.fetchAndAddOrdered(1))),
+      _wrapped(wrapped), _timestamp(timestamp),
       _timestampSection(wrapped.uiSectionCount()) { }
   SharedUiItemLogWrapperData() : _timestampSection(0) { }
-  QString id() const { return _wrapped.id(); }
-  QString idQualifier() const { return _wrapped.idQualifier(); }
+  QString id() const { return _id; }
+  QString idQualifier() const { return QStringLiteral("suilogwrapper"); }
   int uiSectionCount() const { return _timestampSection+1; }
   QVariant uiData(int section, int role) const {
     return (role == Qt::DisplayRole && section == _timestampSection)
