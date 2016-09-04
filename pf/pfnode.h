@@ -121,7 +121,7 @@ public:
     : d(name.isEmpty() ? 0 : new PfNodeData(name, array)) { }
   /** Create a comment node. */
   static PfNode createCommentNode(QString comment) {
-    return PfNode(new PfNodeData("comment", comment, true)); }
+    return PfNode(new PfNodeData(QStringLiteral("comment"), comment, true)); }
   PfNode &operator=(const PfNode &other) { d = other.d; return *this; }
   /** Build a PfNode from PF external format.
    * @return first encountered root node or PfNode() */
