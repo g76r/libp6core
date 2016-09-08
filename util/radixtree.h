@@ -51,11 +51,20 @@ struct RadixTreeInitializerHelper {
 /** Lookup-optimized dictionary for a large number of strings or string prefixes
  * as keys, based on a radix tree.
  *
- * Kind of specialized QMap<K,T> for K = utf8 character string.
+ * When isPrefix=false for every key, it behaves like a QMap<K,T> with K = utf8
+ * characters string.
+ * If at less on key is set with isPrefix=true, it becomes more powerful than
+ * a map and can e.g. match "/rest/customers/434909" with "/rest/customers/"
+ * key.
  *
  * The class is optimized for handling const char *, any QString parameter is
  * first converted to const char * using QString::toUtf8().constData() which is
  * not costless.
+ *
+ * See e.g. https://en.wikipedia.org/wiki/Radix_tree for a more detailed
+ * explanation of radix tree internals.
+ *
+ * This class implements Qt's implicit sharing pattern.
  */
 template<class T>
 class LIBQTSSUSHARED_EXPORT RadixTree {
@@ -76,6 +85,18 @@ class LIBQTSSUSHARED_EXPORT RadixTree {
       _fragment = strdup(fragment);
       if (parent)
         parent->addChild(this);
+    }
+    Node(const Node &other)
+      : _fragment(0), _isPrefix(other._isPrefix),
+        _length(other._length), _children(0),
+        _childrenCount(other._childrenCount), _value(other._value) {
+      Q_ASSERT(other._fragment);
+      _fragment = strdup(other._fragment);
+      if (_childrenCount) {
+        _children = new Node*[other._childrenCount];
+        for (int i = 0; i < _childrenCount; ++i)
+          _children[i] = new Node(*other._children[i]);
+      }
     }
     ~Node() {
       if (_fragment)
