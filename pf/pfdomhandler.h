@@ -28,7 +28,6 @@ class LIBQTPFSHARED_EXPORT PfDomHandler : public PfHandler {
 protected:
   QList<PfNode> _path;
   QList<PfNode> _roots;
-  bool _deleteNodesOnDelete;
 
 public:
   // LATER add option to enable (or disable) loading of arrays as children
