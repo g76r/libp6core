@@ -17,6 +17,7 @@ under the License.
 #include "pfinternals_p.h"
 #include <QBuffer>
 #include "pfarray.h"
+#include <QFile>
 
 namespace {
 
@@ -638,4 +639,17 @@ bool PfParser::readAndFinishBinaryFragment(QIODevice *source,
     }
   }
   return true;
+}
+
+bool PfParser::parse(QString pathOrUrl, PfOptions options) {
+  QFile file(pathOrUrl);
+  if (!_handler) {
+    qWarning() << "PfParser::parse called before setting a handler";
+    return false;
+  }
+  if (!file.open(QIODevice::ReadOnly)) {
+    _handler->setErrorString(tr("cannot open file: %1").arg(pathOrUrl));
+    return false;
+  }
+  return parse(&file, options);
 }

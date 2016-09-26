@@ -47,6 +47,8 @@ public:
     * PF documents without binary fragments or if the source array is a
     * temporary array and will be deleted soon after parsing. */
   bool parse(QByteArray source, PfOptions options = PfOptions());
+  /** Open a file and call parse(QIODevice*,PfOptions). */
+  bool parse(QString pathOrUrl, PfOptions options = PfOptions());
 
 private:
   inline bool readAndFinishBinaryFragment(QIODevice *source,
