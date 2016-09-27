@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -103,6 +103,28 @@ public:
                                 QString sourceCode = QString());
   static inline LogHelper fatal(QString task, quint64 execId,
                                 QString sourceCode = QString());
+  static inline LogHelper debug(QString task, qint64 execId,
+                                QString sourceCode = QString());
+  static inline LogHelper info(QString task, qint64 execId,
+                               QString sourceCode = QString());
+  static inline LogHelper warning(QString task, qint64 execId,
+                                  QString sourceCode = QString());
+  static inline LogHelper error(QString task, qint64 execId,
+                                QString sourceCode = QString());
+  static inline LogHelper fatal(QString task, qint64 execId,
+                                QString sourceCode = QString());
+  static inline LogHelper debug(quint64 execId, QString sourceCode = QString());
+  static inline LogHelper info(quint64 execId, QString sourceCode = QString());
+  static inline LogHelper warning(quint64 execId,
+                                  QString sourceCode = QString());
+  static inline LogHelper error(quint64 execId, QString sourceCode = QString());
+  static inline LogHelper fatal(quint64 execId, QString sourceCode = QString());
+  static inline LogHelper debug(qint64 execId, QString sourceCode = QString());
+  static inline LogHelper info(qint64 execId, QString sourceCode = QString());
+  static inline LogHelper warning(qint64 execId,
+                                  QString sourceCode = QString());
+  static inline LogHelper error(qint64 execId, QString sourceCode = QString());
+  static inline LogHelper fatal(qint64 execId, QString sourceCode = QString());
   static QString pathToLastFullestLog();
   static QStringList pathsToFullestLogs();
   static QStringList pathsToAllLogs();
@@ -262,6 +284,66 @@ LogHelper Log::error(QString task, quint64 execId, QString sourceCode) {
 
 LogHelper Log::fatal(QString task, quint64 execId,QString sourceCode) {
   return fatal(task, QString::number(execId), sourceCode);
+}
+
+LogHelper Log::debug(QString task, qint64 execId, QString sourceCode) {
+  return debug(task, QString::number(execId), sourceCode);
+}
+
+LogHelper Log::info(QString task, qint64 execId, QString sourceCode) {
+  return info(task, QString::number(execId), sourceCode);
+}
+
+LogHelper Log::warning(QString task, qint64 execId, QString sourceCode) {
+  return warning(task, QString::number(execId), sourceCode);
+}
+
+LogHelper Log::error(QString task, qint64 execId, QString sourceCode) {
+  return error(task, QString::number(execId), sourceCode);
+}
+
+LogHelper Log::fatal(QString task, qint64 execId,QString sourceCode) {
+  return fatal(task, QString::number(execId), sourceCode);
+}
+
+LogHelper Log::debug(quint64 execId, QString sourceCode) {
+  return debug(QString(), QString::number(execId), sourceCode);
+}
+
+LogHelper Log::info(quint64 execId, QString sourceCode) {
+  return info(QString(), QString::number(execId), sourceCode);
+}
+
+LogHelper Log::warning(quint64 execId, QString sourceCode) {
+  return warning(QString(), QString::number(execId), sourceCode);
+}
+
+LogHelper Log::error(quint64 execId, QString sourceCode) {
+  return error(QString(), QString::number(execId), sourceCode);
+}
+
+LogHelper Log::fatal(quint64 execId,QString sourceCode) {
+  return fatal(QString(), QString::number(execId), sourceCode);
+}
+
+LogHelper Log::debug(qint64 execId, QString sourceCode) {
+  return debug(QString(), QString::number(execId), sourceCode);
+}
+
+LogHelper Log::info(qint64 execId, QString sourceCode) {
+  return info(QString(), QString::number(execId), sourceCode);
+}
+
+LogHelper Log::warning(qint64 execId, QString sourceCode) {
+  return warning(QString(), QString::number(execId), sourceCode);
+}
+
+LogHelper Log::error(qint64 execId, QString sourceCode) {
+  return error(QString(), QString::number(execId), sourceCode);
+}
+
+LogHelper Log::fatal(qint64 execId,QString sourceCode) {
+  return fatal(QString(), QString::number(execId), sourceCode);
 }
 
 #endif // LOG_H
