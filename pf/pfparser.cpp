@@ -93,6 +93,7 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
   State escapedState = TopLevel; // saved state for escapes
   QByteArray content, comment, surface;
   QVector<Node> nodes;
+  bool firstNode = true;
   PfArray array;
   if (!source->isOpen() && !source->open(QIODevice::ReadOnly)) {
     _handler->setErrorString(tr("cannot open document : %1")
@@ -103,7 +104,9 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
     _handler->setErrorString(tr("cannot handle start of document"));
     goto error;
   }
-  while (source->waitForReadyRead(30000), source->getChar((char*)&c)) {
+  while (source->bytesAvailable()
+         || source->waitForReadyRead(options.readTimeout()),
+         source->getChar((char*)&c)) {
     ++column;
     switch(state) {
     case TopLevel:
@@ -144,6 +147,23 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
         }
         nodes.removeLast();
         state = nodes.size() ? Content : TopLevel;
+        if (nodes.isEmpty()) {
+          switch (options.rootNodesParsingPolicy()) {
+          case StopAfterFirstRootNode:
+            if (firstNode)
+              goto stop_parsing;
+            break;
+          case FailAtSecondRootNode:
+            if (!firstNode) {
+              _handler->setErrorString(tr("only one root node is allowed "
+                                          "(by option)"));
+              goto error;
+            }
+            break;
+          case ParseEveryRootNode:
+            ;
+          }
+        }
       } else if (pfisspace(c)) {
         if (c == '\n') {
           ++line;
@@ -246,6 +266,23 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
         }
         nodes.removeLast();
         state = nodes.size() ? Content : TopLevel;
+        if (nodes.isEmpty()) {
+          switch (options.rootNodesParsingPolicy()) {
+          case StopAfterFirstRootNode:
+            if (firstNode)
+              goto stop_parsing;
+            break;
+          case FailAtSecondRootNode:
+            if (!firstNode) {
+              _handler->setErrorString(tr("only one root node is allowed "
+                                          "(by option)"));
+              goto error;
+            }
+            break;
+          case ParseEveryRootNode:
+            ;
+          }
+        }
       } else if (pfisspace(c)) {
         if (c == '\n') {
           ++line;
@@ -347,7 +384,8 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
           _handler->setErrorString(tr("binary fragment with incorrect length"));
           goto error;
         }
-        if (!readAndFinishBinaryFragment(source, &lazyBinaryFragments, "", l))
+        if (!readAndFinishBinaryFragment(source, &lazyBinaryFragments, "", l,
+                                         options))
           goto error;
         content.clear();
         nodes.last()._hasContent = true;
@@ -386,7 +424,7 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
           goto error;
         }
         if (!readAndFinishBinaryFragment(source, &lazyBinaryFragments, surface,
-                                         l))
+                                         l, options))
           goto error;
         content.clear();
         nodes.last()._hasContent = true;
@@ -430,6 +468,23 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
           if (!finishArray(_handler, &array, &nodes))
             goto error;
           state = nodes.size() ? Content : TopLevel;
+          if (nodes.isEmpty()) {
+            switch (options.rootNodesParsingPolicy()) {
+            case StopAfterFirstRootNode:
+              if (firstNode)
+                goto stop_parsing;
+              break;
+            case FailAtSecondRootNode:
+              if (!firstNode) {
+                _handler->setErrorString(tr("only one root node is allowed "
+                                            "(by option)"));
+                goto error;
+              }
+              break;
+            case ParseEveryRootNode:
+              ;
+            }
+          }
         } else if (c == '#') {
           if (!content.isEmpty()) {
             array.appendHeader(QString::fromUtf8(content));
@@ -478,6 +533,23 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
           if (!finishArray(_handler, &array, &nodes))
             goto error;
           state = nodes.size() ? Content : TopLevel;
+          if (nodes.isEmpty()) {
+            switch (options.rootNodesParsingPolicy()) {
+            case StopAfterFirstRootNode:
+              if (firstNode)
+                goto stop_parsing;
+              break;
+            case FailAtSecondRootNode:
+              if (!firstNode) {
+                _handler->setErrorString(tr("only one root node is allowed "
+                                            "(by option)"));
+                goto error;
+              }
+              break;
+            case ParseEveryRootNode:
+              ;
+            }
+          }
         } else if (c == '#') {
           if (content.size())
             array.appendCell((QString::fromUtf8(content)));
@@ -554,6 +626,7 @@ bool PfParser::parse(QIODevice *source, PfOptions options) {
       break;
     }
   }
+stop_parsing:
   if (state != TopLevel) {
     _handler->setErrorString(tr("unexpected end of document"));
     goto error;
@@ -576,8 +649,8 @@ bool PfParser::parse(QByteArray source, PfOptions options) {
 }
 
 static qint64 copy(QIODevice *dest, QIODevice *src, qint64 max,
-                   qint64 bufsize = 65536, int readTimeout = 30000,
-                   int writeTimeout = 30000) {
+                   qint64 bufsize, int readTimeout,
+                   int writeTimeout) {
   if (!dest || !src)
     return -1;
   char buf[bufsize];
@@ -600,9 +673,9 @@ static qint64 copy(QIODevice *dest, QIODevice *src, qint64 max,
   return total;
 }
 
-bool PfParser::readAndFinishBinaryFragment(QIODevice *source,
-                                           bool *lazyBinaryFragments,
-                                           const QString surface, qint64 l) {
+bool PfParser::readAndFinishBinaryFragment(
+    QIODevice *source, bool *lazyBinaryFragments, const QString surface,
+    qint64 l, PfOptions options) {
   //qDebug() << "readAndFinishBinaryFragment" << lazyBinaryFragments
   //         << surface << l;
   if (l <= 0)
@@ -626,7 +699,7 @@ bool PfParser::readAndFinishBinaryFragment(QIODevice *source,
     QByteArray data; //(source.read(l));
     QBuffer buf(&data);
     buf.open(QIODevice::WriteOnly);
-    copy(&buf, source, l);
+    copy(&buf, source, l, 65536, options.readTimeout(), 0);
     if (data.size() != l) {
       _handler->setErrorString(tr("binary fragment beyond end of "
                                   "document (%1 bytes instead of %2)")

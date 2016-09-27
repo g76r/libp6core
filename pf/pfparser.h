@@ -51,9 +51,9 @@ public:
   bool parse(QString pathOrUrl, PfOptions options = PfOptions());
 
 private:
-  inline bool readAndFinishBinaryFragment(QIODevice *source,
-                                          bool *lazyBinaryFragments,
-                                          const QString surface, qint64 l);
+  inline bool readAndFinishBinaryFragment(
+      QIODevice *source, bool *lazyBinaryFragments, const QString surface,
+      qint64 l, PfOptions options);
 };
 
 #endif // PFPARSER_H

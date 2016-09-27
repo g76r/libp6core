@@ -22,6 +22,10 @@ enum PfPreferedCharactersProtection {
   PfBackslashProtection, PfDoubleQuoteProtection, PfSimpleQuoteProtection
 };
 
+enum PfRootNodesParsingPolicy {
+  ParseEveryRootNode, StopAfterFirstRootNode, FailAtSecondRootNode
+};
+
 class LIBQTPFSHARED_EXPORT PfOptionsData : public QSharedData {
   friend class PfOptions;
   bool _shouldLazyLoadBinaryFragments;
@@ -32,12 +36,16 @@ class LIBQTPFSHARED_EXPORT PfOptionsData : public QSharedData {
   // LATER maxBinaryFragmentSize (then split them into several fragments)
   QString _outputSurface;
   PfPreferedCharactersProtection _preferedCharactersProtection;
+  PfRootNodesParsingPolicy _rootNodesParsingPolicy;
+  int _readTimeout; // ms
 
 public:
   PfOptionsData() : _shouldLazyLoadBinaryFragments(false),
     _shouldTranslateArrayIntoTree(false), _shouldIndent(false),
     _shouldIgnoreComment(true), _shouldWriteContentBeforeSubnodes(false),
-    _preferedCharactersProtection(PfDoubleQuoteProtection) {
+    _preferedCharactersProtection(PfDoubleQuoteProtection),
+    _rootNodesParsingPolicy(ParseEveryRootNode),
+    _readTimeout(30000) {
   }
 };
 
@@ -105,6 +113,20 @@ public:
     d->_preferedCharactersProtection = PfDoubleQuoteProtection; return *this; }
   PfOptions &preferSimpleQuoteCharactersProtection() {
     d->_preferedCharactersProtection = PfSimpleQuoteProtection; return *this; }
+  /** Root nodes parsing policy.
+   * default: ParseEveryRootNode */
+  PfRootNodesParsingPolicy rootNodesParsingPolicy() const {
+    return d->_rootNodesParsingPolicy; }
+  PfOptions &parseEveryRootNode() {
+    d->_rootNodesParsingPolicy = ParseEveryRootNode; return *this; }
+  PfOptions &stopAfterFirstRootNode() {
+    d->_rootNodesParsingPolicy = StopAfterFirstRootNode; return *this; }
+  PfOptions &failAtSecondRootNode() {
+    d->_rootNodesParsingPolicy = FailAtSecondRootNode; return *this; }
+  /** Read timeout used e.g. when parsing a network stream, in milliseconds.
+   * default: 30000 (30") */
+  int readTimeout() const { return d->_readTimeout; }
+  PfOptions &setReadTimeout(int ms) { d->_readTimeout = ms; return *this; }
 };
 
 #endif // PFOPTIONS_H

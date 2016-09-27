@@ -45,6 +45,7 @@ public:
   bool comment(QString content);
   bool endDocument();
   QList<PfNode> roots() const { return _roots; }
+  void clear() { _path.clear(); _roots.clear(); }
 };
 
 #endif // PFDOMHANDLER_H
