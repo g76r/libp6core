@@ -21,6 +21,7 @@ under the License.
 #include <QVariant>
 #include <QStringList>
 #include <QBuffer>
+#include <QVector>
 
 class PfNode;
 
@@ -119,6 +120,24 @@ public:
   /** If name is empty, the node will be null. */
   PfNode(QString name, PfArray array)
     : d(name.isEmpty() ? 0 : new PfNodeData(name, array)) { }
+  /** If name is empty, the node will be null (and children ignored). */
+  PfNode(QString name, std::initializer_list<PfNode> children)
+      : d(name.isEmpty() ? 0 : new PfNodeData(name)) {
+    if (!name.isEmpty())
+      appendChildren(children);
+  }
+  /** If name is empty, the node will be null (and children ignored). */
+  PfNode(QString name, QString content, std::initializer_list<PfNode> children)
+    : d(name.isEmpty() ? 0 : new PfNodeData(name, content, false)) {
+    if (!name.isEmpty())
+      appendChildren(children);
+  }
+  /** If name is empty, the node will be null (and children ignored). */
+  PfNode(QString name, PfArray array, std::initializer_list<PfNode> children)
+    : d(name.isEmpty() ? 0 : new PfNodeData(name, array)) {
+    if (!name.isEmpty())
+      appendChildren(children);
+  }
   /** Create a comment node. */
   static PfNode createCommentNode(QString comment) {
     return PfNode(new PfNodeData(QStringLiteral("comment"), comment, true)); }
@@ -153,6 +172,18 @@ public:
   inline PfNode &prependChild(PfNode child);
   /** append a child to existing children (do nothing if child.isNull()) */
   inline PfNode &appendChild(PfNode child);
+  PfNode &appendChildren(std::initializer_list<PfNode> children) {
+    for (const PfNode &child : children)
+      appendChild(child);
+    return *this; }
+  PfNode &appendChildren(QList<PfNode> children) {
+    for (const PfNode &child : children)
+      appendChild(child);
+    return *this; }
+  PfNode &appendChildren(QVector<PfNode> children) {
+    for (const PfNode &child : children)
+      appendChild(child);
+    return *this; }
   PfNode &prependCommentChild(QString comment) {
     return prependChild(createCommentNode(comment)); }
   PfNode &appendCommentChild(QString comment) {
