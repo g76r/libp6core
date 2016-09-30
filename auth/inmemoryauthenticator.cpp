@@ -174,6 +174,11 @@ InMemoryAuthenticator &InMemoryAuthenticator::clearUsers() {
   return *this;
 }
 
+bool InMemoryAuthenticator::containsUser(QString login) const {
+  QMutexLocker locker(&_mutex);
+  return _users.contains(login);
+}
+
 InMemoryAuthenticator::Encoding InMemoryAuthenticator::encodingFromString(
     QString text) {
   text = text.trimmed().toLower();

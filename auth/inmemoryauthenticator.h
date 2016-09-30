@@ -44,6 +44,8 @@ public:
       QString userId, QString encodedPassword, Encoding encoding);
   /** This method is thread-safe */
   InMemoryAuthenticator &clearUsers();
+  /** This method is thread-safe */
+  bool containsUser(QString login) const ;
   static InMemoryAuthenticator::Encoding encodingFromString(QString text);
   static QString encodingToString(InMemoryAuthenticator::Encoding encoding);
 };
