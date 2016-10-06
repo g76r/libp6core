@@ -227,7 +227,8 @@ public:
   QList<QPair<QString, qint64> > stringLongPairChildrenByName(
       QString name) const;
   /** @see contentAsLong() */
-  qint64 longAttribute(QString name, qint64 defaultValue, bool *ok = 0) const {
+  qint64 longAttribute(QString name, qint64 defaultValue = 0,
+                       bool *ok = 0) const {
     return firstTextChildByName(name).contentAsLong(defaultValue, ok); }
   /** @see contentAsDouble() */
   double doubleAttribute(QString name, double defaultValue,
