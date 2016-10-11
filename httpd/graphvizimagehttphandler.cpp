@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 Hallowyn and others.
+/* Copyright 2013-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -26,14 +26,15 @@ GraphvizImageHttpHandler::GraphvizImageHttpHandler(QObject *parent,
     _renderingRunning(false), _renderingNeeded(0), _mutex(QMutex::Recursive),
     _process(new QProcess(this)), _refreshStrategy(refreshStrategy),
     _imageFormat(Png) {
+  // LATER use qOverload when possible
   connect(_process, SIGNAL(finished(int,QProcess::ExitStatus)),
           this, SLOT(processFinished(int,QProcess::ExitStatus)));
-  connect(_process, SIGNAL(error(QProcess::ProcessError)),
-          this, SLOT(processError(QProcess::ProcessError)));
-  connect(_process, SIGNAL(readyReadStandardOutput()),
-          this, SLOT(readyReadStandardOutput()));
-  connect(_process, SIGNAL(readyReadStandardError()),
-          this, SLOT(readyReadStandardError()));
+  connect(_process, &QProcess::errorOccurred,
+          this, &GraphvizImageHttpHandler::processError);
+  connect(_process, &QProcess::readyReadStandardOutput,
+          this, &GraphvizImageHttpHandler::readyReadStandardOutput);
+  connect(_process, &QProcess::readyReadStandardError,
+          this, &GraphvizImageHttpHandler::readyReadStandardError);
 }
 
 QByteArray GraphvizImageHttpHandler::imageData(ParamsProvider *params,

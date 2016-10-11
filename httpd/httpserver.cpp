@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,8 +23,8 @@ HttpServer::HttpServer(int workersPoolSize, int maxQueuedSockets,
   : QTcpServer(parent), _defaultHandler(0), _maxQueuedSockets(maxQueuedSockets),
     _thread(new QThread()) {
   _thread->setObjectName("HttpServer");
-  connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
-  connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
+  connect(this, &HttpServer::destroyed, _thread, &QThread::quit);
+  connect(_thread, &QThread::finished, _thread, &QThread::deleteLater);
   _thread->start();
   _defaultHandler = new PipelineHttpHandler(this);
   for (int i = 0; i < workersPoolSize; ++i) {
@@ -32,7 +32,7 @@ HttpServer::HttpServer(int workersPoolSize, int maxQueuedSockets,
     // cannot make workers become children, and cannot rely on _workersPool to
     // remove them in ~HttpServer since some may be in use, hence connecting
     // server's destroyed() to workers' deleteLater()
-    connect(this, SIGNAL(destroyed()), worker, SLOT(deleteLater()));
+    connect(this, &HttpServer::destroyed, worker, &HttpWorker::deleteLater);
     _workersPool.append(worker);
   }
   moveToThread(_thread);
@@ -46,8 +46,8 @@ void HttpServer::incomingConnection(qintptr socketDescriptor)  {
   //        << QThread::currentThread();
   if (_workersPool.size() > 0) {
     HttpWorker *worker = _workersPool.takeFirst();
-    connect(worker, SIGNAL(connectionHandled(HttpWorker*)),
-            this, SLOT(connectionHandled(HttpWorker*)));
+    connect(worker, &HttpWorker::connectionHandled,
+            this, &HttpServer::connectionHandled);
     // LATER replace double signal with simple invokeMethod
     QMetaObject::invokeMethod(worker, "handleConnection",
                               Q_ARG(int, socketDescriptor));
@@ -65,8 +65,8 @@ void HttpServer::incomingConnection(qintptr socketDescriptor)  {
 void HttpServer::connectionHandled(HttpWorker *worker) {
   if (_queuedSockets.isEmpty()) {
     _workersPool.append(worker);
-    disconnect(worker, SIGNAL(connectionHandled(HttpWorker*)),
-               this, SLOT(connectionHandled(HttpWorker*)));
+    disconnect(worker, &HttpWorker::connectionHandled,
+               this, &HttpServer::connectionHandled);
   } else {
     QMetaObject::invokeMethod(worker, "handleConnection",
                               Q_ARG(int, _queuedSockets.takeFirst()));
@@ -78,7 +78,7 @@ void HttpServer::appendHandler(HttpHandler *handler) {
   _handlers.append(handler);
   // cannot make handlers become children, hence connecting
   // server's destroyed() to handlers' deleteLater()
-  connect(this, SIGNAL(destroyed()), handler, SLOT(deleteLater()));
+  connect(this, &HttpServer::destroyed, handler, &HttpHandler::deleteLater);
 }
 
 void HttpServer::prependHandler(HttpHandler *handler) {
@@ -86,7 +86,7 @@ void HttpServer::prependHandler(HttpHandler *handler) {
   _handlers.prepend(handler);
   // cannot make handlers become children, hence connecting
   // server's destroyed() to handlers' deleteLater()
-  connect(this, SIGNAL(destroyed()), handler, SLOT(deleteLater()));
+  connect(this, &HttpServer::destroyed, handler, &HttpHandler::deleteLater);
 }
 
 HttpHandler *HttpServer::chooseHandler(HttpRequest req) {

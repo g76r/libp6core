@@ -36,8 +36,8 @@ HttpWorker::HttpWorker(HttpServer *server)
   : _server(server), _thread(new QThread()) {
   _thread->setObjectName(QString("HttpWorker-%1")
                          .arg(_workersCounter.fetchAndAddOrdered(1)));
-  connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
-  connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
+  connect(this, &HttpWorker::destroyed, _thread, &QThread::quit);
+  connect(_thread, &QThread::finished, _thread, &QThread::deleteLater);
   _thread->start();
   moveToThread(_thread);
 }

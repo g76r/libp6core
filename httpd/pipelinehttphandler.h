@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -46,7 +46,8 @@ public:
       _handlers.append(handler);
       // handler can be in another thread, therefore it cannot become a child
       handler->setParent(0);
-      connect(this, SIGNAL(destroyed()), handler, SLOT(deleteLater()));
+      connect(this, &PipelineHttpHandler::destroyed,
+              handler, &HttpHandler::deleteLater);
     }
     return *this; }
   /** Append a handler to the pipeline and take its ownership (it will become
@@ -57,7 +58,8 @@ public:
       _handlers.prepend(handler);
       // handler can be in another thread, therefore it cannot become a child
       handler->setParent(0);
-      connect(this, SIGNAL(destroyed()), handler, SLOT(deleteLater()));
+      connect(this, &PipelineHttpHandler::destroyed,
+              handler, &HttpHandler::deleteLater);
     }
     return *this; }
   inline PipelineHttpHandler &clearHandlers() {

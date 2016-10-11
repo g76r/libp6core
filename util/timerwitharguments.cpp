@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,7 +17,8 @@
 #include <QAbstractEventDispatcher>
 
 TimerWithArguments::TimerWithArguments(QObject *parent) : QTimer(parent) {
-  connect(this, SIGNAL(timeout()), this, SLOT(forwardTimeout()));
+  connect(this, &TimerWithArguments::timeout,
+          this, &TimerWithArguments::forwardTimeout);
 }
 
 void TimerWithArguments::connectWithArgs(
@@ -79,7 +80,8 @@ void TimerWithArguments::singleShot(
         new TimerWithArguments(QAbstractEventDispatcher::instance());
     t->setSingleShot(true);
     // this is less optimized than the internal mechanism of QSingleShotTimer
-    connect(t, SIGNAL(timeout()), t, SLOT(deleteLater()));
+    connect(t, &TimerWithArguments::timeout,
+            t, &TimerWithArguments::deleteLater);
     t->connectWithArgs(receiver, member, arg0, arg1, arg2, arg3, arg4, arg5,
                        arg6, arg7, arg8, arg9);
     if (msec < 0) {
