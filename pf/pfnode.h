@@ -118,6 +118,38 @@ public:
   PfNode(QString name, QString content)
     : d(name.isEmpty() ? 0 : new PfNodeData(name, content, false)) { }
   /** If name is empty, the node will be null. */
+  PfNode(QString name, qint64 content)
+    : d(name.isEmpty()
+        ? 0 : new PfNodeData(name, QString::number(content), false)) { }
+  /** If name is empty, the node will be null. */
+  PfNode(QString name, quint64 content)
+    : d(name.isEmpty()
+        ? 0 : new PfNodeData(name, QString::number(content), false)) { }
+  /** If name is empty, the node will be null. */
+  PfNode(QString name, qint32 content)
+    : d(name.isEmpty()
+        ? 0 : new PfNodeData(name, QString::number(content), false)) { }
+  /** If name is empty, the node will be null. */
+  PfNode(QString name, quint32 content)
+    : d(name.isEmpty()
+        ? 0 : new PfNodeData(name, QString::number(content), false)) { }
+  /** If name is empty, the node will be null. */
+  PfNode(QString name, qint16 content)
+    : d(name.isEmpty()
+        ? 0 : new PfNodeData(name, QString::number(content), false)) { }
+  /** If name is empty, the node will be null. */
+  PfNode(QString name, quint16 content)
+    : d(name.isEmpty()
+        ? 0 : new PfNodeData(name, QString::number(content), false)) { }
+  /** If name is empty, the node will be null. */
+  PfNode(QString name, double content)
+    : d(name.isEmpty()
+        ? 0 : new PfNodeData(name, QString::number(content), false)) { }
+  /** If name is empty, the node will be null. */
+  PfNode(QString name, float content)
+    : d(name.isEmpty()
+        ? 0 : new PfNodeData(name, QString::number(content), false)) { }
+  /** If name is empty, the node will be null. */
   PfNode(QString name, PfArray array)
     : d(name.isEmpty() ? 0 : new PfNodeData(name, array)) { }
   /** If name is empty, the node will be null (and children ignored). */
