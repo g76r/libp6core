@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,7 +15,7 @@
 //#include "log/log.h"
 
 TextMatrixModel::TextMatrixModel(QObject *parent)
-  : QAbstractTableModel(parent) {
+  : QAbstractTableModel(parent), _shouldSortRows(false), _shouldSortColumns(false) {
 }
 
 int TextMatrixModel::rowCount(const QModelIndex &parent) const {
@@ -70,21 +70,37 @@ QString TextMatrixModel::value(QString row, QString column) const {
   return _values.value(row).value(column);
 }
 
+/** @return -1 if found, or insertion point */
+static inline int insertionPosition(QStringList &list, QString key,
+                                    bool shouldSort) {
+  int pos, len = list.size();
+  for (pos = 0; pos < len; ++pos) {
+    const QString &s = list[pos];
+    // LATER parametrize comparison function
+    int comparison = QString::compare(s, key);
+    if (comparison == 0)
+      return -1; // found it, already in the list
+    else if (comparison > 0)
+      break; // not in list, found next item in order
+  }
+  return shouldSort ? pos : len;
+}
+
 void TextMatrixModel::setCellValue(QString row, QString column, QString value) {
   //Log::fatal() << "TextMatrixModel::setCellValue " << row << " " << column << " " << value;
   // LATER optimize TextMatrixModel::setCellValue, complexity is O(4n) and should be at most O(log n)
-  if (!_rowNames.contains(row)) {
-    int pos = _rowNames.size();
+  int pos = insertionPosition(_rowNames, row, _shouldSortRows);
+  if (pos >= 0){
     //Log::fatal() << "insert row " << pos << " " << row;
     beginInsertRows(QModelIndex(), pos, pos);
-    _rowNames.append(row);
+    _rowNames.insert(pos, row);
     endInsertRows();
   }
-  if (!_columnNames.contains(column)) {
-    int pos = _columnNames.size();
+  pos = insertionPosition(_columnNames, column, _shouldSortColumns);
+  if (pos >= 0) {
     //Log::fatal() << "insert column " << pos << " " << column;
     beginInsertColumns(QModelIndex(), pos, pos);
-    _columnNames.append(column);
+    _columnNames.insert(pos, column);
     endInsertColumns();
   }
   QHash<QString,QString> &values = _values[row];

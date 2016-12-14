@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,16 +19,26 @@
 #include <QStringList>
 #include <QHash>
 
-/** Kind of 2-dimensions QStringListModel. */
+/** Kind of 2-dimensions QStringListModel.
+ *
+ * Can optionaly sort columns and/or rows on the fly, by header names order.
+ */
 class LIBQTSSUSHARED_EXPORT TextMatrixModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(TextMatrixModel)
 
   QStringList _columnNames, _rowNames;
   QHash<QString,QHash<QString,QString> > _values;
+  bool _shouldSortRows, _shouldSortColumns;
 
 public:
   explicit TextMatrixModel(QObject *parent = 0);
+  /** Should sort rows. Default: false. */
+  void setShouldSortRows(bool enabled = true) { _shouldSortRows = enabled; }
+  bool shouldSortRows() const { return _shouldSortRows; }
+  /** Should sort columns. Default: false. */
+  void setShouldSortColumns(bool enabled = true) { _shouldSortColumns = enabled; }
+  bool shouldSortColumns() const { return _shouldSortColumns; }
   int rowCount(const QModelIndex &parent = QModelIndex()) const;
   int columnCount(const QModelIndex &parent = QModelIndex()) const;
   QVariant data(const QModelIndex &index, int role) const;
