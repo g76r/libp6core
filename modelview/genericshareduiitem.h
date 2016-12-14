@@ -60,7 +60,7 @@ private:
       int section, const QVariant &value, QString *errorString,
       SharedUiItemDocumentTransaction *transaction, int role, int idSection);
   const GenericSharedUiItemData *data() const {
-    return (const GenericSharedUiItemData*)SharedUiItem::data(); }
+    return specializedData<GenericSharedUiItemData>(); }
   GenericSharedUiItemData *data();
 };
 

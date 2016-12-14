@@ -249,7 +249,7 @@ QVariant SharedUiItemsMatrixModel::headerData(
 
 Qt::ItemFlags SharedUiItemsMatrixModel::flags(const QModelIndex &index) const {
   Qt::ItemFlags flags = Qt::NoItemFlags;
-  if (index.isValid() && index.isValid() && !index.parent().isValid()
+  if (index.isValid() && !index.parent().isValid()
       && index.row() >= 0 && index.row() < _cells.size()
       && index.column() >= 0 && index.column() < _cells[index.row()].size()) {
     flags |= Qt::ItemNeverHasChildren;

@@ -13,7 +13,7 @@
 
 QT -= gui
 QT += network sql
-CONFIG += c++11
+CONFIG += largefile c++11
 
 TARGET = qtssu
 TEMPLATE = lib

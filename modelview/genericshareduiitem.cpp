@@ -136,6 +136,5 @@ bool GenericSharedUiItemData::setUiData(
 }
 
 GenericSharedUiItemData *GenericSharedUiItem::data() {
-  SharedUiItem::detach<GenericSharedUiItemData>();
-  return (GenericSharedUiItemData*)SharedUiItem::data();
+  return SharedUiItem::detachedData<GenericSharedUiItemData>();
 }

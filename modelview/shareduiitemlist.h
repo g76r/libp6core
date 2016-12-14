@@ -47,11 +47,11 @@ public:
         (SharedUiItemList<SharedUiItem>*)this;
     return upcasted->join(separator, qualified);
   }
-  // conversion operator to enable upcasting an list to to SharedUiItem list
+  // conversion operator to enable upcasting a list to to SharedUiItem list
   operator SharedUiItemList<SharedUiItem> &() {
     return reinterpret_cast<SharedUiItemList<SharedUiItem>&>(*this);
   }
-  // conversion operator to enable upcasting an list to to SharedUiItem list
+  // conversion operator to enable upcasting a list to to SharedUiItem list
   operator const SharedUiItemList<SharedUiItem> &() const {
     return reinterpret_cast<const SharedUiItemList<SharedUiItem>&>(*this);
   }

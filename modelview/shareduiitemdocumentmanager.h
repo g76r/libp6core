@@ -195,10 +195,15 @@ public:
       //              "inconsistent types and qualifier";
       return SharedUiItemList<T>();
     }
-    union { // against "dereferencing type-punned pointer will break strict-aliasing rules" warning
+    union {
       SharedUiItemList<SharedUiItem> *generic;
       SharedUiItemList<T> *specialized;
     } pointer_alias_friendly_union;
+    // the implicit reinterpret_cast done through the union is safe because the
+    // static_cast at the begining would fail if T wasn't a ShareUiItem
+    // reinterpret_cast mustn't be used since it triggers a "dereferencing
+    // type-punned pointer will break strict-aliasing rules" warning, hence
+    // using a union instead, for explicit (or gcc-friendly) aliasing
     pointer_alias_friendly_union.generic = &list;
     return *pointer_alias_friendly_union.specialized;
   }

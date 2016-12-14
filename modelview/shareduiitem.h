@@ -170,8 +170,6 @@ protected:
  *     Foobar &operator=(const Foobar &other) {
  *       SharedUiItem::operator=(other); return *this; }
  * - A subclass MUST NOT override comparison operators (==, <, etc.)
- * - A subclass MUST NOT access d in non-const methods since SharedUiItemData's
- *   copy constructor is not able to copy the real object.
  * - A subclass MUST be declared as Q_MOVABLE_TYPE, in such a way:
  *     // in .h, after class definition
  *     Q_DECLARE_TYPEINFO(Foobar, Q_MOVABLE_TYPE);
@@ -182,27 +180,28 @@ protected:
  * - A subclass MAY also be declared as metatype e.g. if it is intended to be
  *   sent through a signal, in such a way:
  *     // in .h, after class definition
- *     Q_DECLARE_METATYPE(SharedUiItem)
- * - Often (when not immutable), a subclass SHOULD implement a detach() method,
- *   in such a way:
+ *     Q_DECLARE_METATYPE(Foobar)
+ * - A subclass CANNOT access directly its data class and must use
+ *   specializedData<>() for that. As it is tedious it SHOULD implement a const
+ *   data() method that way and then use data() for short:
  *     // in .h
+ *     private:
+ *     const FoobarData *data() const { return specializedData<FoobarData>(); }
+ * - If a subclass is not read-only, it will also need to access data through
+ *   detachedData<>(), and SHOULD then implement a non-const data() method this
+ *   way:
+ *     // in .h
+ *     private:
+ *     FoobarData *data();
+ *     // in .cpp
+ *     FoobarData *Foobar::data() { return detachedData<FoobarData>(); }
+ * - To provide a public way to detach the data, it MAY also implement a detach
+ *   method in such a way:
+ *     // in .h
+ *     public:
  *     void detach();
  *     // in .cpp
- *     void Foobar::detach() {
- *       SharedUiItem::detach<FoobarData>();
- *     }
- * - Therefore, as soon as at less one non-const method has to access data,
- *   a subclass MUST implement d accessors such as these and every non-const
- *   method must use them instead of _data.data():
- *     // in .h
- *     FoobarData *data();
- *     const FoobarData *data() const {
- *       return (const FoobarData*)SharedUiItem::data(); }
- *     // in .cpp
- *     FoobarData *Foobar::data() {
- *       SharedUiItem::detach<FoobarData>();
- *       return (FoobarData*)SharedUiItem::data();
- *     }
+ *     FoobarData *Foobar::detach() { detachedData<FoobarData>(); }
  * - When planning to have generic UI edition features, a subclass MUST
  *   reimplement setUiData() method, in such a way:
  *     // in .h
@@ -219,7 +218,7 @@ protected:
  *       return ((FoobarData*)constData())->setUiData(section, value,
  *                                              errorString, transaction, role);
  *     }
- * - There MUST NOT be several level of subclasses, i.e. you must not subclass
+ * - There MUST NOT be several level of subclasses, i.e. you MUST NOT subclass
  *   SharedUiItem subclasses.
  *
  * @see SharedUiItemsModel
@@ -360,11 +359,45 @@ public:
 protected:
   const SharedUiItemData *data() const { return _data.data(); }
   void setData(SharedUiItemData *data) { _data = data; }
+  /** Helper template to provide a const pointer to specialized data,
+   * e.g. const FooBarData *data = foobar.specializedData<FooBarData>();
+   * useful to declare a const FooBarData *data() const method in FooBar class,
+   * see subclassing guidelines above */
   template <class T>
-  void detach() {
-    T *dummy;
-    Q_UNUSED(static_cast<SharedUiItemData*>(dummy)); // ensure T is a SharedUiItemData
-    reinterpret_cast<QSharedDataPointer<T>*>(&_data)->detach();
+  const T *specializedData() const {
+    union {
+      const QSharedDataPointer<SharedUiItemData> *generic;
+      const QSharedDataPointer<T> *specialized;
+    } pointer_alias_friendly_union;
+    // the implicit reinterpret_cast done through the union is safe because the
+    // static_cast at the end would fail if T wasn't a ShareUiItemData
+    // reinterpret_cast mustn't be used since it triggers a "dereferencing
+    // type-punned pointer will break strict-aliasing rules" warning, hence
+    // using a union instead, for explicit (or gcc-friendly) aliasing
+    pointer_alias_friendly_union.generic = &_data;
+    return static_cast<const T*>(
+          pointer_alias_friendly_union.specialized->data());
+  }
+  /** Helper template to detach calling the specialized data class' copy
+   * constructor rather than base SharedUiItemData's one, and return a non-const
+   * pointer to specialized data,
+   * e.g. FooBarData *data = foobar.detachedData<FooBarData>();
+   * useful to declare a "FooBarData *data()" non const method in FooBar class,
+   * see subclassing guidelines above */
+  template <class T>
+  T *detachedData() {
+    union {
+      QSharedDataPointer<SharedUiItemData> *generic;
+      QSharedDataPointer<T> *specialized;
+    } pointer_alias_friendly_union;
+    // the implicit reinterpret_cast done through the union is safe because the
+    // static_cast at the end would fail if T wasn't a ShareUiItemData
+    // reinterpret_cast mustn't be used since it triggers a "dereferencing
+    // type-punned pointer will break strict-aliasing rules" warning, hence
+    // using a union instead, for explicit (or gcc-friendly) aliasing
+    pointer_alias_friendly_union.generic = &_data;
+    pointer_alias_friendly_union.specialized->detach();
+    return static_cast<T*>(pointer_alias_friendly_union.specialized->data());
   }
   /** Set data from a UI point of view, i.e. called by a QAbstractItemModel
    * after user edition.

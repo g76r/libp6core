@@ -55,7 +55,7 @@ public:
 
   private:
     const LogEntryData *data() const {
-      return (const LogEntryData*)SharedUiItem::data(); }
+      return reinterpret_cast<const LogEntryData*>(SharedUiItem::data()); }
   };
   enum ThreadModel {
     DirectCall, // the logger is already thread-safe and cannot block

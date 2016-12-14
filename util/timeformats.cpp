@@ -343,5 +343,4 @@ QString TimeFormats::toMultifieldSpecifiedCustomTimestamp(
   if (timezone.isValid())
     dt = dt.toTimeZone(timezone);
   return toCustomTimestamp(dt, format, RelativeDateTime(relativedatetime));
-  return QString();
 }

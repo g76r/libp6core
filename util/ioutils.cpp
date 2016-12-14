@@ -36,8 +36,9 @@ qint64 IOUtils::copy(QIODevice *dest, QIODevice *src, qint64 max,
   if (!dest || !src)
     return -1;
   char buf[bufsize];
-  int total = 0, n, m;
+  int total = 0;
   while (total < max) {
+    int n, m;
     if (src->bytesAvailable() < 1)
       src->waitForReadyRead(readTimeout);
     n = src->read(buf, std::min(bufsize, max-total));
@@ -63,17 +64,17 @@ qint64 IOUtils::grep(QIODevice *dest, QIODevice *src, QString pattern,
   if (useRegexp)
     return grep(dest, src, QRegExp(pattern), max, bufsize);
   char buf[bufsize];
-  int total = 0, n, m;
+  int total = 0;
   while (total < max) {
     if (src->bytesAvailable() < 1)
       src->waitForReadyRead(readTimeout);
-    n = src->readLine(buf, std::min(bufsize, max-total));
+    int n = src->readLine(buf, std::min(bufsize, max-total));
     if (n < 0)
       return -1;
     if (n == 0)
       break;
     if (QString::fromUtf8(buf).contains(pattern)) {
-      m = dest->write(buf, n);
+      int m = dest->write(buf, n);
       if (m != n)
         return -1;
       if (dest->bytesToWrite() > bufsize)
@@ -90,17 +91,17 @@ qint64 IOUtils::grep(QIODevice *dest, QIODevice *src,
   if (!dest || !src)
     return -1;
   char buf[bufsize];
-  int total = 0, n, m;
+  int total = 0;
   while (total < max) {
     if (src->bytesAvailable() < 1)
       src->waitForReadyRead(readTimeout);
-    n = src->readLine(buf, std::min(bufsize, max-total));
+    int n = src->readLine(buf, std::min(bufsize, max-total));
     if (n < 0)
       return -1;
     if (n == 0)
       break;
     if (regexp.indexIn(QString::fromUtf8(buf)) >= 0) {
-      m = dest->write(buf, n);
+      int m = dest->write(buf, n);
       if (m != n)
         return -1;
       if (dest->bytesToWrite() > bufsize)
@@ -118,12 +119,12 @@ qint64 IOUtils::grepWithContinuation(
   if (!dest || !src)
     return -1;
   char buf[bufsize];
-  int total = 0, n, m;
+  int total = 0;
   bool continuation = false;
   while (total < max) {
     if (src->bytesAvailable() < 1)
       src->waitForReadyRead(readTimeout);
-    n = src->readLine(buf, std::min(bufsize, max-total));
+    int n = src->readLine(buf, std::min(bufsize, max-total));
     if (n < 0)
       return -1;
     if (n == 0)
@@ -131,7 +132,7 @@ qint64 IOUtils::grepWithContinuation(
     QString line = QString::fromUtf8(buf);
     if ((continuation && line.startsWith(continuationLinePrefix))
         || regexp.indexIn(line) >= 0) {
-      m = dest->write(buf, n);
+      int m = dest->write(buf, n);
       if (m != n)
         return -1;
       if (dest->bytesToWrite() > bufsize)

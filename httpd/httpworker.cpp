@@ -112,7 +112,6 @@ void HttpWorker::handleConnection(int socketDescriptor) {
         && !socket->waitForReadyRead(MAXIMUM_READ_WAIT)) {
       sendError(out, "408 Request timeout");
       goto finally;
-      break;
     }
     line = socket->readLine(MAXIMUM_LINE_SIZE+2).trimmed();
     if (line.size() > MAXIMUM_LINE_SIZE) {
