@@ -1,3 +1,2 @@
 TEMPLATE = subdirs
-CONFIG += ordered
-SUBDIRS = circularbuffer
+SUBDIRS = circularbuffer csvfile
