@@ -654,8 +654,9 @@ static qint64 copy(QIODevice *dest, QIODevice *src, qint64 max,
   if (!dest || !src)
     return -1;
   char buf[bufsize];
-  int total = 0, n, m;
+  int total = 0;
   while (total < max) {
+    int n, m;
     if (src->bytesAvailable() < 1)
       src->waitForReadyRead(readTimeout);
     n = src->read(buf, std::min(bufsize, max-total));

@@ -25,7 +25,7 @@ DEFINES += LIBQTPF_LIBRARY
 
 exists(/usr/bin/ccache):QMAKE_CXX = ccache g++
 exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always
-QMAKE_CXXFLAGS += -Wextra
+QMAKE_CXXFLAGS += -Wextra -Woverloaded-virtual
 unix:CONFIG(debug,debug|release):QMAKE_CXXFLAGS += -ggdb
 unix {
   OBJECTS_DIR = build-libqtpf-unix/obj

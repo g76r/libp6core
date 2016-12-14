@@ -79,7 +79,7 @@ qint64 PfArray::writeTrTd(QIODevice *target, bool withHeaders,
       return -1;
     total += r;
   }
-  if ((r = target->write("</table>\n") < 0))
+  if ((r = target->write("</table>\n")) < 0)
     return -1;
   return total+r;
 }
