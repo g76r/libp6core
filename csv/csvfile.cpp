@@ -120,6 +120,7 @@ bool CsvFile::readAll(QIODevice *input) {
   if (_areHeadersPresent) {
     if (!readRow(input, &_headers, &atEnd))
       return false;
+    _columnCount = _headers.size();
   }
   while (!atEnd) {
     QStringList row;
@@ -127,6 +128,7 @@ bool CsvFile::readAll(QIODevice *input) {
       return false;
     if (!atEnd || !row.isEmpty())
       _rows.append(row);
+    _columnCount = std::max(_columnCount, row.size());
   }
   return true;
 }
@@ -135,9 +137,9 @@ bool CsvFile::readRow(QIODevice *input, QStringList *row, bool *atEnd) {
   row->clear();
   // LATER call waitForReadyRead() with a parametrized timeout (named pipes...)
   QByteArray data;
+  bool quoting = false;
   forever {
     char c;
-    bool quoting = false;
     switch (input->read(&c, 1)) {
     case 0: // end of file
       *atEnd = true;
