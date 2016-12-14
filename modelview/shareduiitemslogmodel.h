@@ -1,4 +1,4 @@
-/* Copyright 2015 Hallowyn and others.
+/* Copyright 2015-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,6 +24,10 @@
  * For instance, if logItem() is called with a "Customer" item with 14 sections,
  * SharedUiItemsLogModel will instead contain a special SharedUiItem containing
  * 15 sections, the 15th one being the timestamp when logItem() was called.
+ *
+ * Records are sorted in reverse chronological order (first row displays last
+ * event).
+ *
  * @brief The SharedUiItemsLogModel class
  */
 class LIBQTSSUSHARED_EXPORT SharedUiItemsLogModel

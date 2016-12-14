@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -26,6 +26,8 @@
  * Overriden is true for parent or ancestor values that are overriden in one or
  * several descendant paramsets, for instance this is suitable to display them
  * struck through.
+ *
+ * Rows are sorted by inheritance depth then key.
  *
  * @see ParamSet
  * @see QAbstractItemModel
