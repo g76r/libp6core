@@ -44,6 +44,8 @@ public:
                         bool takeOwnership);
   /** Remove a logger (and delete it), even if it is not autoremovable. */
   static void removeLogger(Logger *logger);
+  /** Wrap Qt's log framework to make its output look like Log one. */
+  static void wrapQtLogToSamePattern(bool enable = true);
   /** Add a logger to stdout. */
   static void addConsoleLogger(Log::Severity severity = Log::Warning,
                                bool autoRemovable = false);
@@ -131,8 +133,6 @@ public:
 
 private:
   Log() { }
-  static inline QString sanitizeField(QString string);
-  static inline QString sanitizeMessage(QString string);
 };
 
 Q_DECLARE_METATYPE(Log::Severity)
