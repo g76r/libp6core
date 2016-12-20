@@ -66,12 +66,12 @@ public:
     */
   static QString url2path(QUrl url);
   /** Return paths of all existing files that match pattern.
-    * Pattern is a globing pattern (@see QRegExp::Wildcard).
+    * Pattern is regular expression (@see QRegularExpression).
     * Beware that this method can take a lot of time depending on filesystem
     * tree size. */
-  static QStringList findFiles(QString pattern);
+  static QStringList findFiles(QString regexp);
   /** Return paths of all existing files that match patterns.
-    * Pattern is a globing pattern (@see QRegExp::Wildcard).
+    * Pattern is regular expression (@see QRegularExpression).
     * Beware that this method can take a lot of time depending on filesystem
     * tree size. */
   inline static QStringList findFiles(QStringList patterns) {

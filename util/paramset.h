@@ -17,7 +17,6 @@
 #include <QSharedData>
 #include <QList>
 #include <QStringList>
-#include <QRegularExpression>
 #include "log/log.h"
 #include "paramsprovider.h"
 
@@ -371,16 +370,14 @@ public:
   /** Escape all characters in string so that they no longer have speciale
    * meaning for evaluate() and splitAndEvaluate() methods. */
   static QString escape(QString string);
-  /** Return a globing expression that matches any string that can result
-   * in evaluation of the rawValue (@see QRegExp::Wildcard).
-   * For instance "foo%{=date:yyyy}-%{bar}.log" is converted into
-   * "foo????-*.log" or into "foo*-*.log". */
-  // TODO change for QRegularExpresion
-  static QString matchingPattern(QString rawValue);
-  inline static QRegExp matchingRegexp(QString rawValue) {
-    return QRegExp(matchingPattern(rawValue), Qt::CaseSensitive,
-                   QRegExp::Wildcard);
-  }
+  /** Return a regular expression that matches any string that can result
+   * in evaluation of the rawValue.
+   * For instance "foo%{=date:yyyy}-%{bar}.log" is converted into some pattern
+   * that can be "foo....-.*\\.log" or "foo.*-.*\\.log" (let be frank: currently
+   * the second pattern is returned, not the first one, and it's likely to stay
+   * this way).
+   * Can be used as an input for QRegularExpression(QString) constructor. */
+  static QString matchingRegexp(QString rawValue);
   QVariant paramValue(QString key, QVariant defaultValue = QVariant(),
                       QSet<QString> alreadyEvaluated = QSet<QString>()) const;
   bool isNull() const;

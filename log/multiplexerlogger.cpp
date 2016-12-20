@@ -139,7 +139,7 @@ QStringList MultiplexerLogger::pathsToFullestLogs() {
   QString path;
   foreach(Logger *logger, _loggers) {
     if (logger->minSeverity() < severity) {
-      QString p = logger->pathMathchingPattern();
+      QString p = logger->pathMatchingRegexp();
       if (!p.isEmpty()) {
         if (severity == Log::Debug) {
           locker.unlock();
@@ -159,7 +159,7 @@ QStringList MultiplexerLogger::pathsToAllLogs() {
   QMutexLocker locker(&_loggersMutex);
   QStringList paths;
   foreach(Logger *logger, _loggers) {
-    QString p = logger->pathMathchingPattern();
+    QString p = logger->pathMatchingRegexp();
     if (!p.isEmpty())
       paths.append(p);
   }

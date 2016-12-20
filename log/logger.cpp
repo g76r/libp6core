@@ -209,10 +209,6 @@ QString Logger::pathPattern() const {
   return currentPath();
 }
 
-QString Logger::pathMathchingPattern() const {
-  return ParamSet::matchingPattern(pathPattern());
-}
-
-QRegExp Logger::pathMatchingRegexp() const {
+QString Logger::pathMatchingRegexp() const {
   return ParamSet::matchingRegexp(pathPattern());
 }

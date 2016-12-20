@@ -91,9 +91,7 @@ public:
    * Default: same as currentPath() */
   virtual QString pathPattern() const;
   /** Return the path regexp pattern, e.g. "/var/log/qron-.*\\.log" */
-  QString pathMathchingPattern() const;
-  /** Return the path regexp pattern, e.g. "/var/log/qron-.*\\.log" */
-  QRegExp pathMatchingRegexp() const;
+  QString pathMatchingRegexp() const;
   Log::Severity minSeverity() const { return _minSeverity; }
   /** Delete later both this and, if any, its dedicated thread. */
   void deleteLater();

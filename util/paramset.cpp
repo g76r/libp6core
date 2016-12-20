@@ -40,6 +40,79 @@ static int staticInit() {
 }
 Q_CONSTRUCTOR_FUNCTION(staticInit)
 
+/** Tests if a character is allowed in % expression variable identifiers as
+ * a second character and beyond (first character can be anything apart of
+ * syntaxicaly meaningful characters such as % and {, including e.g. !).
+ */
+static inline bool isPercentVariableIdentifierSecondCharacter(char c) {
+  return (c >= '0' && c <= '9')
+      || (c >= 'A' && c <= 'Z')
+      || c == '_'
+      || (c >= 'a' && c <= 'z');
+}
+
+static inline bool shouldBeEscapedWithinRegexp(char c) {
+  switch (c) {
+  case '$':
+  case '(':
+  case ')':
+  case '*':
+  case '+':
+  case '.':
+  case '?':
+  case '[':
+  case '\\':
+  case ']':
+  case '^':
+  case '{':
+  case '|':
+  case '}':
+    return true;
+  default:
+    return false;
+  }
+}
+
+/** Read rawValue begining at index percentPosition, which should be set just
+ * on a % character, and return the length of the whole % expression, including
+ * the leading % and nested % expressions if any.
+ * Returns 1 if % is the last character, 2 if % is followed by another % and 0
+ * if percentPosition is beyond rawValue end.
+ * E.g. ("foobar%{xy%{z%1}}baz", 6) -> 11
+ */
+static inline int nestedPercentVariableLength(
+    const QString &rawValue, int percentPosition) {
+  int i = percentPosition+1, len = rawValue.size();
+  if (i > len)
+    return 0;
+  if (i >= len)
+    return 1;
+  QChar c = rawValue[i];
+  if (c == '%')
+    return 2;
+  if (c == '{') {
+    while (i < len) {
+      c = rawValue[++i];
+      if (c == '}')
+        break;
+      if (c == '%')
+        i += nestedPercentVariableLength(rawValue, i)-1;
+    }
+    return i-percentPosition+1;
+  }
+  // any other character, e.g. 'a' or '=', is interpreted as the first
+  // character of a variable name that will continue with letters
+  // digits and underscores
+  // e.g. "abc",  "23", "=date", "!foobar"
+  ++i;
+  while (i < len) {
+    c = rawValue[++i];
+    if (!isPercentVariableIdentifierSecondCharacter(c.toLatin1()))
+      break;
+  }
+  return i-percentPosition;
+}
+
 class ParamSetData : public QSharedData {
 public:
   ParamSet _parent;
@@ -459,8 +532,7 @@ QStringList ParamSet::splitAndEvaluate(
         variable.append(c);
         while (i < rawValue.size()) {
           c = rawValue.at(i++);
-          if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-              || (c >= '0' && c <= '9') || c == '_') {
+          if (isPercentVariableIdentifierSecondCharacter(c.toLatin1())) {
             variable.append(c);
           } else {
             --i;
@@ -500,48 +572,24 @@ QPair<QString,QString> ParamSet::valueAsStringsPair(
                                 evaluate(v.mid(i+1).trimmed(), context));
 }
 
-static const char matchingPatternSpecialChars[] = "*?[]\\";
-#define CONTAINS(array, item) (::memchr((array), (item), sizeof(array)/sizeof(*(array))))
-
-QString ParamSet::matchingPattern(QString rawValue) {
-  int i = 0;
-  QString value, variable;
-  while (i < rawValue.size()) {
-    QChar c = rawValue.at(i++);
+QString ParamSet::matchingRegexp(QString rawValue) {
+  int i = 0, len = rawValue.size();
+  QString value;
+  while (i < len) {
+    QChar c = rawValue[i];
     if (c == '%') {
-      variable.clear();
-      c = rawValue.at(i++);
-      // FIXME support for { imbrication
-      if (c == '{') {
-        while (i < rawValue.size()) {
-          c = rawValue.at(i++);
-          if (c == '}')
-            break;
-          else
-            variable.append(c);
-        }
-        value.append("*");
-      } else if (c == '!' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-                 || (c >= '0' && c <= '9') || c == '_') {
-        variable.append(c);
-        while (i < rawValue.size()) {
-          c = rawValue.at(i++);
-          if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-              || (c >= '0' && c <= '9') || c == '_') {
-            variable.append(c);
-          } else {
-            --i;
-            break;
-          }
-        }
-        value.append("*");
+      if (i+1 < len && rawValue[i+1] == '%') {
+        value.append('%');
+        i += 2; // skip next % too
       } else {
-        value.append(CONTAINS(matchingPatternSpecialChars, c.toLatin1())
-                     ? '?' : c);
+        i += nestedPercentVariableLength(rawValue, i);
+        value.append(".*");
       }
     } else {
-      value.append(CONTAINS(matchingPatternSpecialChars, c.toLatin1())
-                   ? '?' : c);
+      if (shouldBeEscapedWithinRegexp(c.toLatin1()))
+        value.append('\\');
+      value.append(c);
+      ++i;
     }
   }
   return value;

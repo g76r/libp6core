@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -164,12 +164,12 @@ static void findFiles(QDir dir, QStringList &files, const QRegExp pattern) {
 
 static const QRegularExpression slashFollowedByWildcard("/[^/]*[*?[]|\\]");
 
-QStringList IOUtils::findFiles(QString pattern) {
+QStringList IOUtils::findFiles(QString regexp) {
   QStringList files;
-  QString pat = QDir().absoluteFilePath(QDir::fromNativeSeparators(pattern));
+  QString pat = QDir().absoluteFilePath(QDir::fromNativeSeparators(regexp));
   int i = pat.indexOf(slashFollowedByWildcard);
   QString dir = i >= 0 ? pat.left(i+1) : pat;
-  QRegExp re(pat, Qt::CaseSensitive, QRegExp::Wildcard);
+  QRegExp re(pat, Qt::CaseSensitive, QRegExp::RegExp2);
   ::findFiles(QDir(dir), files, re);
   return files;
 }
