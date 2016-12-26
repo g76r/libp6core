@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -52,6 +52,13 @@ public:
    * @return false if a failure should interrupt the process */
   virtual bool handleRequest(HttpRequest req, HttpResponse res,
                              ParamsProviderMerger *processingContext) = 0;
+  /** Perform redirect to clean up url if needed.
+   * Currently the only case is when the path contains several adjacent /
+   * The redirect is performed with relative path.
+   * @return true iff redirect was issued
+   */
+  bool redirectForUrlCleanup(HttpRequest req, HttpResponse res,
+                             ParamsProviderMerger *processingContext);
 };
 
 #endif // HTTPHANDLER_H
