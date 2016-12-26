@@ -109,6 +109,18 @@ public:
    * HTML encoding if any. Default: 500. 0 means unlimited. */
   static void setDefaultMaxValueLength(int length = 500) {
     _defaultMaxValueLength = length; }
+  /** Compute "!pathtoroot" special parameter according to req.url() and
+   * urlPathPrefix(), and set "!pathtoroot" value in processingContext.
+   * This method is implicitly called by sendLocalResource() when "!pathtoroot"
+   * is not set, but can be called explicitly before to force computing and
+   * setting the parameter.
+   * It is convenient for instance before the url path is overriden to force
+   * using an on-disk resource at a different path than the url.
+   * @return "!pathtoroot" value
+   * @param processingContext failsafe if null, but won't set param to context
+   */
+  QString computePathToRoot(const HttpRequest &req,
+                            ParamsProviderMerger *processingContext) const;
 
 protected:
   void sendLocalResource(HttpRequest req, HttpResponse res, QFile *file,

@@ -23,6 +23,9 @@
 #include <QRegularExpression>
 #include "util/htmlutils.h"
 
+static const QRegularExpression _templateMarkupIdentifierEndRE("[^a-z]");
+static const QRegularExpression _directorySeparatorRE("[/:]");
+
 int TemplatingHttpHandler::_defaultMaxValueLength(500);
 TemplatingHttpHandler::TextConversion
 TemplatingHttpHandler::_defaultTextConversion(HtmlEscapingWithUrlAsLinks);
@@ -60,16 +63,32 @@ void TemplatingHttpHandler::sendLocalResource(
 
 }
 
-static QRegularExpression templateMarkupIdentifierEndRE("[^a-z]");
-static QRegularExpression directorySeparatorRE("[/:]");
+QString TemplatingHttpHandler::computePathToRoot(const HttpRequest &req, ParamsProviderMerger *processingContext) const {
+  // note that FileSystemHttpHandler enforces that:
+  // - the path never contains several adjacent / (would have been redirected)
+  // - the path never points on a directory (would've been redirected to index)
+  const QString prefix = urlPathPrefix();
+  const QString path = req.url().path().mid(urlPathPrefix().length());
+  bool ignoreOneSlash = prefix.isEmpty() ? path.startsWith('/')
+                                         : !prefix.endsWith('/');
+  int depth = path.count('/') - (ignoreOneSlash ? 1 : 0);
+  QString pathToRoot = depth ? QStringLiteral("../").repeated(depth)
+                             : QStringLiteral("./");
+  if (processingContext)
+    processingContext->overrideParamValue(QStringLiteral("!pathtoroot"),
+                                          pathToRoot);
+  return pathToRoot;
+}
 
 void TemplatingHttpHandler::applyTemplateFile(
     HttpRequest req, HttpResponse res, QFile *file,
-    ParamsProviderMerger *originalProcessingContext,
+    ParamsProviderMerger *processingContext,
     QString *output) {
   HttpRequestPseudoParamsProvider hrpp = req.pseudoParams();
-  ParamsProviderMerger processingContext(*originalProcessingContext);
-  processingContext.append(&hrpp);
+  ParamsProviderMergerRestorer restorer(processingContext);
+  processingContext->append(&hrpp);
+  if (!processingContext->paramValue(QStringLiteral("!pathtoroot")).isValid())
+    computePathToRoot(req, processingContext);
   QBuffer buf;
   buf.open(QIODevice::WriteOnly);
   IOUtils::copy(&buf, file);
@@ -81,7 +100,7 @@ void TemplatingHttpHandler::applyTemplateFile(
     pos = markupPos+2;
     markupPos = input.indexOf("?>", pos);
     QString markupContent = input.mid(pos, markupPos-pos).trimmed();
-    int separatorPos = markupContent.indexOf(templateMarkupIdentifierEndRE);
+    int separatorPos = markupContent.indexOf(_templateMarkupIdentifierEndRE);
     if (separatorPos < 0) {
       Log::warning() << "TemplatingHttpHandler found incorrect markup '"
                      << markupContent << "'";
@@ -91,14 +110,14 @@ void TemplatingHttpHandler::applyTemplateFile(
       if (markupContent.at(0) == '=') {
         // syntax: <?=paramset_evaluable_expression?>
         output->append(
-              processingContext.overridingParams()
-              .evaluate(markupContent.mid(1), &processingContext));
+              processingContext->overridingParams()
+              .evaluate(markupContent.mid(1), processingContext));
       } else if (markupId == QStringLiteral("view")) {
         // syntax: <?view:viewname?>
         QString markupData = markupContent.mid(separatorPos+1);
         TextView *view = _views.value(markupData);
         if (view)
-          output->append(view->text(&processingContext, req.url().toString()));
+          output->append(view->text(processingContext, req.url().toString()));
         else {
           Log::warning() << "TemplatingHttpHandler did not find view '"
                          << markupData << "' among " << _views.keys();
@@ -109,15 +128,14 @@ void TemplatingHttpHandler::applyTemplateFile(
         // syntax: <?[raw]value:variablename[:valueifnotdef[:valueifdef]]?>
         CharacterSeparatedExpression markupParams(markupContent, separatorPos);
         QString value = processingContext
-            .paramValue(markupParams.value(0)).toString();
+            ->paramValue(markupParams.value(0)).toString();
         if (!value.isNull()) {
           value = markupParams.value(2, value);
         } else {
           if (markupParams.size() < 2) {
             Log::debug() << "TemplatingHttpHandler did not find value: '"
                          << markupParams.value(0) << "' in context 0x"
-                         << QString::number(
-                              (long long)originalProcessingContext, 16);
+                         << QString::number((long long)processingContext, 16);
             value = "?";
           } else {
             value = markupParams.value(1);
@@ -130,17 +148,16 @@ void TemplatingHttpHandler::applyTemplateFile(
         QString markupData = markupContent.mid(separatorPos+1);
         QString includePath = file->fileName();
         includePath =
-            includePath.left(includePath.lastIndexOf(directorySeparatorRE));
+            includePath.left(includePath.lastIndexOf(_directorySeparatorRE));
         QFile included(includePath+"/"+markupData);
         // LATER detect include loops
         if (included.open(QIODevice::ReadOnly)) {
-          applyTemplateFile(req, res, &included, &processingContext, output);
+          applyTemplateFile(req, res, &included, processingContext, output);
         } else {
           Log::warning() << "TemplatingHttpHandler couldn't include file: '"
                          << markupData << "' as '" << included.fileName()
                          << "' in context 0x"
-                         << QString::number(
-                              (long long)originalProcessingContext, 16)
+                         << QString::number((long long)processingContext, 16)
                          << " : " << included.errorString();
           output->append("?");
         }
@@ -152,9 +169,9 @@ void TemplatingHttpHandler::applyTemplateFile(
           Log::debug() << "TemplatingHttpHandler cannot set parameter with "
                           "null key in file " << file->fileName();
         } else {
-          QString value = processingContext.overridingParams().evaluate(
-                markupParams.value(1), &processingContext);
-          processingContext.overrideParamValue(key, value);
+          QString value = processingContext->overridingParams().evaluate(
+                markupParams.value(1), processingContext);
+          processingContext->overrideParamValue(key, value);
         }
       } else {
         Log::warning() << "TemplatingHttpHandler found unsupported markup: <?"
