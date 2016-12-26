@@ -137,8 +137,11 @@ void HttpWorker::handleConnection(int socketDescriptor) {
   // in addition to current QUrl::FullyDecoded
   // see (among other references) QTBUG-10146
   uri.replace('+', ' ');
+  // ensure uri starts with /
+  if (uri.isEmpty() || uri[0] != '/')
+    uri.insert(0, '/');
   // LATER is utf8 the right choice ? should encoding depend on headers ?
-  url = QUrl::fromEncoded(uri.toUtf8());
+  url = QUrl::fromEncoded((QStringLiteral("http://host")+uri).toUtf8());
   req.overrideUrl(url);
   // load post params
   // LATER should probably also remove query items
