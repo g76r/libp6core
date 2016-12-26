@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 Hallowyn and others.
+/* Copyright 2013-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -125,6 +125,34 @@ public:
                       QSet<QString> alreadyEvaluated = QSet<QString>()) const;
   /** Give access to currently overriding params. */
   ParamSet overridingParams() const { return _overridingParams; }
+};
+
+/** RAII helper for ParamsProviderMerger save/restore.
+ *
+ * Calls ParamsProviderMerger::save() in constructor and
+ * ParamsProviderMerger::restore() in destructor.
+ *
+ * Can be used that way:
+ * void myfunc(ParamsProviderMerger *merger) {
+ *   ParamsProviderMergerRestorer restorer(merger);
+ *   // modify merger the way you want, it'll be restored when myfunc() exits
+ * }
+ */
+class LIBQTSSUSHARED_EXPORT ParamsProviderMergerRestorer {
+  ParamsProviderMerger *_merger;
+  ParamsProviderMergerRestorer() = delete;
+  ParamsProviderMergerRestorer(const ParamsProviderMergerRestorer &) = delete;
+public:
+  ParamsProviderMergerRestorer(ParamsProviderMerger *merger) : _merger(merger) {
+    if (_merger)
+      _merger->save();
+  }
+  ParamsProviderMergerRestorer(ParamsProviderMerger &merger)
+    : ParamsProviderMergerRestorer(&merger) { }
+  ~ParamsProviderMergerRestorer() {
+    if (_merger)
+      _merger->restore();
+  }
 };
 
 #endif // PARAMSPROVIDERMERGER_H
