@@ -24,6 +24,7 @@
 //#include "stats/statistics.h"
 #include "log/log.h"
 #include <QString>
+#include <QRegularExpression>
 
 #define MAXIMUM_LINE_SIZE 65536
 #define MAXIMUM_ENCODED_FORM_POST_SIZE MAXIMUM_LINE_SIZE
@@ -31,6 +32,7 @@
 #define MAXIMUM_WRITE_WAIT 10000
 
 static QAtomicInt _workersCounter(1);
+static QRegularExpression _requestLineSeparators { "[ \t]+" };
 
 HttpWorker::HttpWorker(HttpServer *server)
   : _server(server), _thread(new QThread()) {
@@ -83,7 +85,7 @@ void HttpWorker::handleConnection(int socketDescriptor) {
     goto finally;
   }
   line = line.trimmed();
-  args = line.split(QRegExp("[ \t]+"));
+  args = line.split(_requestLineSeparators);
   if (args.size() != 3) {
     sendError(out, "400 Bad request line",
               "starting with: "+line.left(200));
