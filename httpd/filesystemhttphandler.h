@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -45,13 +45,16 @@ class LIBQTSSUSHARED_EXPORT FilesystemHttpHandler : public HttpHandler {
   QList<QPair<QRegExp,QString> > _mimeTypes;
 
 public:
+  /** @param documentRoot will be appended a / if not present */
   explicit FilesystemHttpHandler(QObject *parent = 0,
                                  const QString urlPathPrefix = QString(),
                                  const QString documentRoot = ":docroot/");
   QString urlPathPrefix() const { return _urlPathPrefix; }
   void setUrlPrefix(const QString urlPathPrefix){
     _urlPathPrefix = urlPathPrefix; }
+  /** always ends with a / */
   QString documentRoot() const { return _documentRoot; }
+  /** @param documentRoot will be appended a / if not present */
   void setDocumentRoot(const QString documentRoot) {
     _documentRoot = documentRoot; }
   QStringList directoryIndex() const { return _directoryIndex; }

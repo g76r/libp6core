@@ -21,7 +21,7 @@
 FilesystemHttpHandler::FilesystemHttpHandler(
     QObject *parent, const QString urlPathPrefix, const QString documentRoot) :
   HttpHandler(parent), _urlPathPrefix(urlPathPrefix),
-  _documentRoot(documentRoot) {
+  _documentRoot(documentRoot.endsWith('/') ? documentRoot : documentRoot+"/") {
   appendDirectoryIndex("index.html");
   appendMimeType("\\.html$", "text/html;charset=UTF-8");
   appendMimeType("\\.js$", "application/javascript");
@@ -50,15 +50,16 @@ bool FilesystemHttpHandler::acceptRequest(HttpRequest req) {
 bool FilesystemHttpHandler::handleRequest(
     HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext) {
-  if (_documentRoot.isEmpty()) {
+  if (_documentRoot.isEmpty()) { // should never happen (at less == "/")
     res.setStatus(500);
     res.output()->write("No document root.");
     return true;
   }
-  QString path = req.url().path();
-  path.remove(0, _urlPathPrefix.length());
-  while (path.size() && path.at(path.size()-1) == '/')
+  QString path = req.url().path().mid(_urlPathPrefix.length());
+  if (path.endsWith('/'))
     path.chop(1);
+  if (path.startsWith('/'))
+    path.remove(0, 1);
   QFile file(_documentRoot+path);
   //qDebug() << "try file" << file.fileName();
   // Must try QDir::exists() before QFile::exists() because QFile::exists()
@@ -71,7 +72,7 @@ bool FilesystemHttpHandler::handleRequest(
       if (file.exists() && file.open(QIODevice::ReadOnly)) {
         QString location;
         QString reqPath = req.url().path();
-        if (!reqPath.isEmpty() && reqPath.at(reqPath.size()-1) != '/') {
+        if (!reqPath.endsWith('/')) {
           int i = reqPath.lastIndexOf('/');
           location.append(reqPath.mid(i == -1 ? 0 : i+1));
           location.append('/');
