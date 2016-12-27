@@ -53,10 +53,6 @@ HttpRequest &HttpRequest::operator=(const HttpRequest &other) {
   return *this;
 }
 
-QString HttpRequest::methodName() const {
-  return methodName(method());
-}
-
 static QHash<HttpRequest::HttpRequestMethod,QString> _methodToText {
   { HttpRequest::NONE, "NONE" },
   { HttpRequest::HEAD, "HEAD" },

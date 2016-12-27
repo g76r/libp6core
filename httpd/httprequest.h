@@ -49,7 +49,7 @@ public:
   void setMethod(HttpRequestMethod method);
   HttpRequest::HttpRequestMethod method() const;
   /** @return protocol and human readable string, e.g. "GET" */
-  inline QString methodName() const;
+  QString methodName() const { return methodName(method()); }
   /** @return protocol and human readable string, e.g. "GET" */
   static QString methodName(HttpRequestMethod method);
   /** @return enum from protocol and human readable string, e.g. "GET"
