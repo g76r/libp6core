@@ -16,7 +16,7 @@
 
 #include "authorizer.h"
 #include <QSet>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QMutex>
 
 /** In-memory rules-list based authorizer.
@@ -25,19 +25,22 @@
  * If no rule matches the authorization is denied (however one can append a last
  * rule that allow everything, allow() with no parameters will do that).
  * In a rule, an empty or null criterion matches all authorization requests
- * (e.g. using QString() or QString("") or QRegExp() as actionScopePattern will
- * match any actionScope value). This is true even for roles criterion. */
+ * (e.g. using QString() or QString("") or QRegularExpression() as
+ * actionScopePattern will match any actionScope value). This is true even for
+ * the roles criterion FIXME explain. */
 class LIBQTSSUSHARED_EXPORT InMemoryRulesAuthorizer : public Authorizer {
   Q_OBJECT
   Q_DISABLE_COPY(InMemoryRulesAuthorizer)
   class Rule {
   public:
     QSet<QString> _roles;
-    QRegExp _actionScopePattern, _dataScopePattern, _timestampPattern;
+    QRegularExpression _actionScopePattern, _dataScopePattern,
+    _timestampPattern;
     bool _allow; // otherwise deny
     Rule() {}
-    Rule(QSet<QString> roles, QRegExp actionScopePattern,
-         QRegExp dataScopePattern, QRegExp timestampPattern, bool allow)
+    Rule(QSet<QString> roles, QRegularExpression actionScopePattern,
+         QRegularExpression dataScopePattern,
+         QRegularExpression timestampPattern, bool allow)
       : _roles(roles), _actionScopePattern(actionScopePattern),
         _dataScopePattern(dataScopePattern),
         _timestampPattern(timestampPattern), _allow(allow) { }
@@ -57,33 +60,39 @@ public:
   InMemoryRulesAuthorizer &clearRules();
   /** This method is thread-safe */
   InMemoryRulesAuthorizer &appendRule(
-      QSet<QString> roles, QRegExp actionScopePattern = QRegExp(),
-      QRegExp dataScopePattern = QRegExp(),
-      QRegExp timestampPattern = QRegExp(), bool allow = true);
+      QSet<QString> roles,
+      QRegularExpression actionScopePattern = QRegularExpression(),
+      QRegularExpression dataScopePattern = QRegularExpression(),
+      QRegularExpression timestampPattern = QRegularExpression(),
+      bool allow = true);
   /** This method is thread-safe */
   InMemoryRulesAuthorizer &prependRule(
-      QSet<QString> roles, QRegExp actionScopePattern = QRegExp(),
-      QRegExp dataScopePattern = QRegExp(),
-      QRegExp timestampPattern = QRegExp(), bool allow = true);
-  /** Syntaxic sugar for QRegExp. Append an allow rule. */
+      QSet<QString> roles,
+      QRegularExpression actionScopePattern = QRegularExpression(),
+      QRegularExpression dataScopePattern = QRegularExpression(),
+      QRegularExpression timestampPattern = QRegularExpression(),
+      bool allow = true);
+  /** Syntaxic sugar for QRegularExpression. Append an allow rule. */
   inline InMemoryRulesAuthorizer &allow(
       QSet<QString> roles, QString actionScopePattern = QString(),
       QString dataScopePattern = QString(),
       QString timestampPattern = QString()) {
-    return appendRule(roles, QRegExp(actionScopePattern),
-                      QRegExp(dataScopePattern), QRegExp(timestampPattern),
+    return appendRule(roles, QRegularExpression(actionScopePattern),
+                      QRegularExpression(dataScopePattern),
+                      QRegularExpression(timestampPattern),
                       true);
   }
-  /** Syntaxic sugar for QRegExp. Append an allow rule. */
+  /** Syntaxic sugar for QRegularExpression. Append an deny rule. */
   inline InMemoryRulesAuthorizer &deny(
       QSet<QString> roles, QString actionScopePattern = QString(),
       QString dataScopePattern = QString(),
       QString timestampPattern = QString()) {
-    return appendRule(roles, QRegExp(actionScopePattern),
-                      QRegExp(dataScopePattern), QRegExp(timestampPattern),
+    return appendRule(roles, QRegularExpression(actionScopePattern),
+                      QRegularExpression(dataScopePattern),
+                      QRegularExpression(timestampPattern),
                       false);
   }
-  /** Syntaxic sugar for QRegExp and QSet. Append an allow rule. */
+  /** Syntaxic sugar for QRegularExpression and QSet. Append an allow rule. */
   inline InMemoryRulesAuthorizer &allow(
       QString role = QString(), QString actionScopePattern = QString(),
       QString dataScopePattern = QString(),
@@ -91,11 +100,12 @@ public:
     QSet<QString> roles;
     if (!role.isEmpty())
       roles.insert(role);
-    return appendRule(roles, QRegExp(actionScopePattern),
-                      QRegExp(dataScopePattern), QRegExp(timestampPattern),
+    return appendRule(roles, QRegularExpression(actionScopePattern),
+                      QRegularExpression(dataScopePattern),
+                      QRegularExpression(timestampPattern),
                       true);
   }
-  /** Syntaxic sugar for QRegExp and QSet. Append an deny rule. */
+  /** Syntaxic sugar for QRegularExpression and QSet. Append an deny rule. */
   inline InMemoryRulesAuthorizer &deny(
       QString role = QString(), QString actionScopePattern = QString(),
       QString dataScopePattern = QString(),
@@ -103,8 +113,9 @@ public:
     QSet<QString> roles;
     if (!role.isEmpty())
       roles.insert(role);
-    return appendRule(roles, QRegExp(actionScopePattern),
-                      QRegExp(dataScopePattern), QRegExp(timestampPattern),
+    return appendRule(roles, QRegularExpression(actionScopePattern),
+                      QRegularExpression(dataScopePattern),
+                      QRegularExpression(timestampPattern),
                       false);
   }
 };

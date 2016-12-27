@@ -47,13 +47,11 @@ bool InMemoryRulesAuthorizer::authorizeUserData(
     //Log::fatal() << "authorize rule: roles not matching";
     continue; // no role match between rule and user data
 roleok:;
-    if (!rule._actionScopePattern.isEmpty()
-        && !rule._actionScopePattern.exactMatch(actionScope)) {
+    if (!rule._actionScopePattern.match(actionScope).hasMatch()) {
       //Log::fatal() << "authorize rule: action scope not matching";
       continue;
     }
-    if (!rule._dataScopePattern.isEmpty()
-        && !rule._dataScopePattern.exactMatch(dataScope)) {
+    if (!rule._dataScopePattern.match(dataScope).hasMatch()) {
       //Log::fatal() << "authorize rule: data scope not matching";
       continue;
     }
@@ -71,8 +69,9 @@ InMemoryRulesAuthorizer &InMemoryRulesAuthorizer::clearRules() {
 }
 
 InMemoryRulesAuthorizer &InMemoryRulesAuthorizer::appendRule(
-    QSet<QString> roles, QRegExp actionScopePattern,
-    QRegExp dataScopePattern, QRegExp timestampPattern, bool allow) {
+    QSet<QString> roles, QRegularExpression actionScopePattern,
+    QRegularExpression dataScopePattern, QRegularExpression timestampPattern,
+    bool allow) {
   QMutexLocker locker(&_mutex);
   _rules.append(Rule(roles, actionScopePattern, dataScopePattern,
                      timestampPattern, allow));
@@ -80,8 +79,9 @@ InMemoryRulesAuthorizer &InMemoryRulesAuthorizer::appendRule(
 }
 
 InMemoryRulesAuthorizer &InMemoryRulesAuthorizer::prependRule(
-    QSet<QString> roles, QRegExp actionScopePattern,
-    QRegExp dataScopePattern, QRegExp timestampPattern, bool allow) {
+    QSet<QString> roles, QRegularExpression actionScopePattern,
+    QRegularExpression dataScopePattern, QRegularExpression timestampPattern,
+    bool allow) {
   QMutexLocker locker(&_mutex);
   _rules.prepend(Rule(roles, actionScopePattern, dataScopePattern,
                       timestampPattern, allow));
