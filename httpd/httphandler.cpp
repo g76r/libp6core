@@ -34,7 +34,14 @@ bool HttpHandler::redirectForUrlCleanup(
       --depth;
       reqPath.remove(0, 1);
     }
-    res.redirect(QStringLiteral("../").repeated(depth)+reqPath);
+    QUrl url;
+    url.setPath(QStringLiteral("../").repeated(depth)+reqPath);
+    QUrlQuery query(req.url());
+    if (query.isEmpty())
+      res.redirect(url.path(QUrl::FullyEncoded));
+    else
+      res.redirect(url.path(QUrl::FullyEncoded)+"?"
+                   +QUrlQuery(req.url()).toString(QUrl::FullyEncoded));
     return true;
   }
   return false;
