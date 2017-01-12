@@ -445,6 +445,9 @@ implicitVariables {
 };
 
 // LATER add functions: %=ifgt %=ifgte %=iflt %=iflte %=calc=(2+2)%3
+// LATER enhance %=random w/ dice expressions: %=random:3d6-1D4+3+1
+// or include dice expresions into %=calc: %=calc:(3d6+7)%0xf
+// more fun: supports 3d6k2 or 1d100e100 like ruby's dicebag library
 
 bool ParamSet::appendVariableValue(
     QString *value, QString variable, bool inherit,
