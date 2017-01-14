@@ -1,4 +1,4 @@
-/* Copyright 2016 Hallowyn and others.
+/* Copyright 2016-2017 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,4 +13,4 @@
  */
 #include "stringutils.h"
 
-const QString StringUtils::ellipsis { "..." };
+const QString StringUtils::_ellipsis { "..." };

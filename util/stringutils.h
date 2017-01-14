@@ -1,4 +1,4 @@
-/* Copyright 2016 Hallowyn and others.
+/* Copyright 2016-2017 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,39 +15,51 @@
 #define STRINGUTILS_H
 
 #include "libqtssu_global.h"
-#include <QString>
 #include <QStringList>
 
 class LIBQTSSUSHARED_EXPORT StringUtils {
   StringUtils() = delete;
 
 public:
-  static const QString ellipsis;
+  /** Equals to "..." */
+  static const QString _ellipsis;
   /** Ellide a string if needed, keeping its left part.
    * ("foobar",5,"...") -> "fo..."
+   * Return string as is if maxsize < 0.
+   * Return a subset of placeholder if maxsize < placeholder.size().
    */
   static QString elideRight(const QString &string, int maxsize,
-                            const QString &placeholder = ellipsis) {
-    if (placeholder.size() > maxsize || string.size() < maxsize)
+                            const QString &placeholder = _ellipsis) {
+    if (maxsize < 0 || string.size() < maxsize)
       return string;
+    if (placeholder.size() > maxsize)
+      return placeholder.left(maxsize);
     return string.left(maxsize-placeholder.size())+placeholder;
   }
   /** Ellide a string if needed, keeping its right part.
    * ("foobar",5,"...") -> "...ar"
+   * Return string as is if maxsize < 0.
+   * Return a subset of placeholder if maxsize < placeholder.size().
    */
   static QString elideLeft(const QString &string, int maxsize,
-                            const QString &placeholder = ellipsis) {
-    if (placeholder.size() > maxsize || string.size() < maxsize)
+                            const QString &placeholder = _ellipsis) {
+    if (maxsize < 0 || string.size() < maxsize)
       return string;
+    if (placeholder.size() > maxsize)
+      return placeholder.right(maxsize);
     return placeholder+string.right(maxsize-placeholder.size());
   }
   /** Ellide a string if needed, removing the middle part.
    * ("foobar",5,"...") -> "f...r"
+   * Return string as is if maxsize < 0.
+   * Return a subset of placeholder if maxsize < placeholder.size().
    */
   static QString elideMiddle(const QString &string, int maxsize,
-                            const QString &placeholder = ellipsis) {
-    if (placeholder.size() > maxsize || string.size() < maxsize)
+                            const QString &placeholder = _ellipsis) {
+    if (maxsize < 0 || string.size() < maxsize)
       return string;
+    if (placeholder.size() > maxsize)
+      return placeholder.left(maxsize);
     return string.left(maxsize/2-placeholder.size())+placeholder
         +string.right(maxsize-maxsize/2);
   }
