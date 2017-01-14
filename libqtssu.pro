@@ -101,7 +101,8 @@ SOURCES += \
     ftp/ftpscript.cpp \
     util/stringutils.cpp \
     net/dummysocket.cpp \
-    net/readonlyresourcescache.cpp
+    net/readonlyresourcescache.cpp \
+    format/csvformatter.cpp
 
 
 HEADERS +=\
@@ -180,7 +181,8 @@ HEADERS +=\
     net/dummysocket.h \
     util/containerutils.h \
     util/radixtree.h \
-    net/readonlyresourcescache.h
+    net/readonlyresourcescache.h \
+    format/csvformatter.h
 
 unix {
     target.path = /usr/lib
