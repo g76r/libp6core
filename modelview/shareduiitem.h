@@ -329,7 +329,7 @@ public:
   }
   /** Convenience method for uiData(...).toString(). */
   QString uiString(int section, int role = Qt::DisplayRole) const {
-    return _data ? _data->uiData(section, role).toString() : QString(); }
+    return uiData(section, role).toString(); }
   /** Return UI header data, like QAbstractItemModel::headerData(). */
   QVariant uiHeaderData(int section, int role) const {
     return _data ? _data->uiHeaderData(section, role) : QVariant() ; }
