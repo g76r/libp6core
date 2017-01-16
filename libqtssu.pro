@@ -59,7 +59,7 @@ SOURCES += \
     textview/texttableview.cpp \
     log/qterrorcodes.cpp \
     modelview/textmatrixmodel.cpp \
-    util/timeformats.cpp \
+    format/timeformats.cpp \
     httpd/pipelinehttphandler.cpp \
     httpd/basicauthhttphandler.cpp \
     auth/authenticator.cpp \
@@ -68,7 +68,6 @@ SOURCES += \
     auth/inmemoryusersdatabase.cpp \
     auth/authorizer.cpp \
     auth/inmemoryrulesauthorizer.cpp \
-    util/htmlutils.cpp \
     httpd/imagehttphandler.cpp \
     httpd/graphvizimagehttphandler.cpp \
     textview/htmlitemdelegate.cpp \
@@ -99,7 +98,7 @@ SOURCES += \
     modelview/shareduiitemsmatrixmodel.cpp \
     ftp/ftpclient.cpp \
     ftp/ftpscript.cpp \
-    util/stringutils.cpp \
+    format/stringutils.cpp \
     net/dummysocket.cpp \
     net/readonlyresourcescache.cpp \
     format/csvformatter.cpp \
@@ -136,7 +135,7 @@ HEADERS +=\
     httpd/httpcommon.h \
     log/qterrorcodes.h \
     modelview/textmatrixmodel.h \
-    util/timeformats.h \
+    format/timeformats.h \
     httpd/pipelinehttphandler.h \
     httpd/basicauthhttphandler.h \
     auth/authenticator.h \
@@ -146,7 +145,6 @@ HEADERS +=\
     auth/usersdatabase_spi.h \
     auth/authorizer.h \
     auth/inmemoryrulesauthorizer.h \
-    util/htmlutils.h \
     httpd/imagehttphandler.h \
     httpd/graphvizimagehttphandler.h \
     textview/htmlitemdelegate.h \
@@ -179,7 +177,7 @@ HEADERS +=\
     modelview/shareduiitemsmatrixmodel.h \
     ftp/ftpclient.h \
     ftp/ftpscript.h \
-    util/stringutils.h \
+    format/stringutils.h \
     net/dummysocket.h \
     util/containerutils.h \
     util/radixtree.h \

@@ -12,8 +12,7 @@
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "htmltableformatter.h"
-#include "util/htmlutils.h"
-#include "util/stringutils.h"
+#include "stringutils.h"
 
 HtmlTableFormatter::TextConversion
 HtmlTableFormatter::_defaultTextConversion(HtmlEscapingWithUrlAsLinks);
@@ -27,10 +26,10 @@ QString HtmlTableFormatter::formatCell(QString data) const {
   data = StringUtils::elideMiddle(data, maxCellContentLength());
   switch (_textConversion) {
   case HtmlEscaping:
-    return HtmlUtils::htmlEncode(data, false, false);
+    return StringUtils::htmlEncode(data, false, false);
     break;
   case HtmlEscapingWithUrlAsLinks:
-    return HtmlUtils::htmlEncode(data, true, true);
+    return StringUtils::htmlEncode(data, true, true);
     break;
   case AsIs:
     ;

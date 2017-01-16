@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2017 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -12,7 +12,7 @@
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "htmltableview.h"
-#include "util/htmlutils.h"
+#include "format/stringutils.h"
 #include "htmlitemdelegate.h"
 #include <QRegularExpression>
 
@@ -67,8 +67,8 @@ void HtmlTableView::updateHeaderAndFooterCache() {
         TextViewItemDelegate *d =
             itemDelegateForColumnOrDefault(displayedColumn);
         v.append(d ? d->headerText(column, Qt::Horizontal, m)
-                   : HtmlUtils::htmlEncode(m->headerData(column, Qt::Horizontal)
-                                           .toString(), true));
+                   : StringUtils::htmlEncode(
+                       m->headerData(column, Qt::Horizontal).toString(), true));
         v.append("</th>");
         ++displayedColumn;
       }
@@ -168,7 +168,7 @@ QString HtmlTableView::rowText(int row) {
     v.append("<th>");
     TextViewItemDelegate *d = itemDelegateForRowOrDefault(row);
     v.append(d ? d->headerText(row, Qt::Vertical, m)
-               : HtmlUtils::htmlEncode(
+               : StringUtils::htmlEncode(
                    m->headerData(row, Qt::Vertical).toString(), true));
     v.append("</th>");
   }
@@ -183,7 +183,7 @@ QString HtmlTableView::rowText(int row) {
     }
     TextViewItemDelegate *d = itemDelegateForCellOrDefault(row, column);
     v.append(d ? d->text(index)
-               : HtmlUtils::htmlEncode(index.data().toString(), true));
+               : StringUtils::htmlEncode(index.data().toString(), true));
     v.append("</td>");
   }
   v.append("</tr>\n");

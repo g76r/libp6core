@@ -1,4 +1,4 @@
-/* Copyright 2012-2016 Hallowyn and others.
+/* Copyright 2012-2017 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,7 +21,7 @@
 #include <QtDebug>
 #include "util/characterseparatedexpression.h"
 #include <QRegularExpression>
-#include "util/htmlutils.h"
+#include "format/stringutils.h"
 
 static const QRegularExpression _templateMarkupIdentifierEndRE("[^a-z]");
 static const QRegularExpression _directorySeparatorRE("[/:]");
@@ -206,10 +206,10 @@ void TemplatingHttpHandler::convertData(
     return;
   switch (_textConversion) {
   case HtmlEscaping:
-    *data = HtmlUtils::htmlEncode(*data, false, false);
+    *data = StringUtils::htmlEncode(*data, false, false);
     break;
   case HtmlEscapingWithUrlAsLinks:
-    *data = HtmlUtils::htmlEncode(*data, true, true);
+    *data = StringUtils::htmlEncode(*data, true, true);
     break;
   case AsIs:
     ;

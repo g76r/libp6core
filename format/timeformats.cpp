@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 Hallowyn and others.
+/* Copyright 2013-2017 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,7 +17,7 @@
 #include <QRegExp>
 #include "log/log.h"
 #include <QRegularExpression>
-#include "characterseparatedexpression.h"
+#include "util/characterseparatedexpression.h"
 
 Q_GLOBAL_STATIC(TimeFormats, timeFormatsInstance)
 

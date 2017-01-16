@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 Hallowyn and others.
+/* Copyright 2016-2017 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,13 +11,15 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "htmlutils.h"
+#include "stringutils.h"
 #include <QRegularExpression>
 #include <QHash>
 
+const QString StringUtils::_ellipsis { "..." };
 static QRegularExpression linkRe{"http(s?)://\\S+"};
 
-QString HtmlUtils::htmlEncode(QString text, bool urlAsLinks, bool newlineAsBr) {
+QString StringUtils::htmlEncode(
+    QString text, bool urlAsLinks, bool newlineAsBr) {
   QString s;
   QHash<int,int> linksIndexes; // start of link index -> length of link
   if (urlAsLinks) {

@@ -1,4 +1,4 @@
-/* Copyright 2013-2016 Hallowyn and others.
+/* Copyright 2013-2017 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,7 +15,7 @@
 #include "loggerthread.h"
 #include <QTimer>
 #include "util/paramset.h"
-#include "util/timeformats.h"
+#include "format/timeformats.h"
 
 #define ISO8601 QStringLiteral("yyyy-MM-ddThh:mm:ss,zzz")
 

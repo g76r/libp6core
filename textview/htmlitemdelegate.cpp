@@ -12,7 +12,7 @@
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "htmlitemdelegate.h"
-#include "util/htmlutils.h"
+#include "format/stringutils.h"
 
 HtmlItemDelegate::HtmlItemDelegate(QObject *parent)
   : TextViewItemDelegate(parent) {

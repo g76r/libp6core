@@ -12,7 +12,7 @@
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "csvformatter.h"
-#include "util/stringutils.h"
+#include "format/stringutils.h"
 
 QChar CsvFormatter::_defaultFieldSeparator(',');
 QString CsvFormatter::_defaultRecordSeparator("\n");

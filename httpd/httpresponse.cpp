@@ -1,4 +1,4 @@
-/* Copyright 2012-2016 Hallowyn and others.
+/* Copyright 2012-2017 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,7 +18,7 @@
 #include "log/log.h"
 #include <QSharedData>
 #include <QMultiHash>
-#include "util/timeformats.h"
+#include "format/timeformats.h"
 #include "net/dummysocket.h"
 
 class HttpResponseData : public QSharedData {

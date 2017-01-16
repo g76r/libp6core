@@ -1,4 +1,4 @@
-/* Copyright 2012-2016 Hallowyn and others.
+/* Copyright 2012-2017 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,12 +17,11 @@
 #include <QString>
 #include <QDateTime>
 #include <QtDebug>
-#include "timeformats.h"
+#include "format/timeformats.h"
 #include "characterseparatedexpression.h"
 #include "regexpparamsprovider.h"
 #include "paramsprovidermerger.h"
-#include "htmlutils.h"
-#include "stringutils.h"
+#include "format/stringutils.h"
 #include <stdlib.h>
 #include "radixtree.h"
 #include <functional>
@@ -231,7 +230,7 @@ implicitVariables {
       value = ParamSet::escape(value);
     }
     if (flags.contains('h')) { // htmlencode
-      value = HtmlUtils::htmlEncode(
+      value = StringUtils::htmlEncode(
             value, flags.contains('u'), // url as links
             flags.contains('n')); // newline as <br>
     }
@@ -425,11 +424,11 @@ implicitVariables {
                                     inherit, context, alreadyEvaluated);
   if (params.size() >= 2) {
     QString flags = params.value(1);
-    return HtmlUtils::htmlEncode(
+    return StringUtils::htmlEncode(
           input, flags.contains('u'), // url as links
           flags.contains('n')); // newline as <br>
   }
-  return HtmlUtils::htmlEncode(input, false, false);
+  return StringUtils::htmlEncode(input, false, false);
 }, true},
 { "=random", [](ParamSet, QString key, bool,
               const ParamsProvider *, QSet<QString>, int matchedLength) {
