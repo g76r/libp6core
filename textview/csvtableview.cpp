@@ -18,7 +18,9 @@ CsvTableView::CsvTableView(QObject *parent, int cachedRows, int rowsPerPage)
 }
 
 void CsvTableView::updateHeaderAndFooterCache() {
-  _tableHeader = formatHeader(model());
+  QStringList headers;
+  fetchHeaderList(&headers, model());
+  _tableHeader = formatTableHeader(headers);
 }
 
 QString CsvTableView::header(int currentPage, int lastPage,

@@ -14,21 +14,26 @@
 #ifndef CSVFORMATTER_H
 #define CSVFORMATTER_H
 
-#include "modelview/shareduiitemlist.h"
+#include "abstracttextformatter.h"
 #include <QAbstractItemModel>
 
 /** Formats various data types to CSV row, table or header. */
-class LIBQTSSUSHARED_EXPORT CsvFormatter {
-  QString _topLeftHeader, _recordSeparator, _specialChars;
+class LIBQTSSUSHARED_EXPORT CsvFormatter : public AbstractTextFormatter {
+  QString _recordSeparator, _specialChars;
   QChar _fieldSeparator, _fieldQuote, _escapeChar, _replacementChar;
-  bool _columnHeaders, _rowHeaders;
   static QString _defaultRecordSeparator;
   static QChar _defaultFieldSeparator, _defaultFieldQuote, _defaultEscapeChar,
   _defaultReplacementChar;
 
 public:
   CsvFormatter(QChar fieldSeparator, QString recordSeparator, QChar fieldQuote,
-               QChar escapeChar, QChar replacementChar);
+               QChar escapeChar, QChar replacementChar,
+               int maxCellContentLength);
+  CsvFormatter(QChar fieldSeparator, QString recordSeparator, QChar fieldQuote,
+               QChar escapeChar, QChar replacementChar)
+    : CsvFormatter(fieldSeparator, recordSeparator, fieldQuote, escapeChar,
+                   replacementChar,
+                   AbstractTextFormatter::defaultMaxCellContentLength()) { }
   CsvFormatter(QChar fieldSeparator, QString recordSeparator, QChar fieldQuote,
                QChar escapeChar)
     : CsvFormatter(fieldSeparator, recordSeparator, fieldQuote, escapeChar,
@@ -38,10 +43,9 @@ public:
                    _defaultEscapeChar) { }
   CsvFormatter(QChar fieldSeparator, QString recordSeparator)
     : CsvFormatter(fieldSeparator, recordSeparator, _defaultFieldQuote) { }
-  CsvFormatter(QChar fieldSeparator)
+  explicit CsvFormatter(QChar fieldSeparator)
     : CsvFormatter(fieldSeparator, _defaultRecordSeparator) { }
   CsvFormatter() : CsvFormatter(_defaultFieldSeparator) { }
-  void setTopLeftHeader(QString rawText) { _topLeftHeader = rawText; }
   /** Default: comma */
   void setFieldSeparator(QChar c = ',');
   /** Default: comma */
@@ -81,47 +85,18 @@ public:
   /** @see setReplacementChar() */
   static void setDefaultReplacementChar(QChar c = QChar()) {
     _defaultReplacementChar = c; }
-  void setColumnHeaders(bool set = true) { _columnHeaders = set; }
-  void setRowHeaders(bool set = true) { _rowHeaders = set; }
-  /** Format an item as a CSV row.
-   * To format a CSV header row, use SharedUiItem::HeaderDisplayRole as role.
-   * If row headers are enabled, item.id() is used as a row header but if role
-   * is HeaderDisplayRole, in which case topLeftHeader is used insted. */
-  QString format(const SharedUiItem &item, int role = Qt::DisplayRole);
-  /** Format items in a list as CSV rows.
-   * If column headers are enabled, a header row is added before rows (even if
-   * list is empty).
-   * If row headers are enabled, row number is used (starting from 1). */
-  QString format(const SharedUiItemList<> &list, int role = Qt::DisplayRole);
-  /** Format the rows under parent index as CSV rows.
-   * If lastRow is -1 or > to rowCount() every row is formatted until last one.
-   * If column headers are enabled, model's horizontal header are used.
-   * If row headers are enabled, model's vertical header is used. */
-  QString format(const QAbstractItemModel *model, int firstRow = 0,
-                 int lastRow = -1, const QModelIndex &parent = QModelIndex()) {
-    return format(model, firstRow, lastRow, parent, false); }
-  /** Format a row as CSV.
-   * If column headers are never written, being them enabled or not.
-   * If row headers are enabled, model's horizontal header is used. */
-  QString formatRow(const QAbstractItemModel *model, int row,
-                    const QModelIndex &parent = QModelIndex()) {
-    return format(model, row, row, parent, true); }
-  /** Format the row to which index belongs as CSV.
-   * If column headers are never written, being them enabled or not.
-   * If row headers are enabled, model's horizontal header is used. */
-  QString formatRow(const QModelIndex &index) {
-    return formatRow(index.model(), index.row(), index.parent()); }
-  /** Format model's horizontal headers under parent index as a CSV row.
-   * If row headers are enabled, topLeftHeader is used. */
-  QString formatHeader(const QAbstractItemModel *model,
-                       const QModelIndex &parent = QModelIndex());
+  using AbstractTextFormatter::formatCell;
+  QString formatCell(QString data) const override;
+  using AbstractTextFormatter::formatTableHeader;
+  QString formatTableHeader(const QStringList &columnHeaders) const override;
+  using AbstractTextFormatter::formatTableFooter;
+  QString formatTableFooter(const QStringList &columnHeaders) const override;
+  using AbstractTextFormatter::formatRow;
+  QString formatRow(const QStringList &cells,
+                    QString rowHeader = QString()) const override;
 
 private:
-  QString format(const QAbstractItemModel *model, int firstRow, int lastRow,
-                 const QModelIndex &parent, bool hideColumnsHeader);
-  inline QString format(const SharedUiItem &item, int role, bool hideRowHeader);
   inline void updateSpecialChars();
-  inline QString formatField(QString rawData) const;
 };
 
 #endif // CSVFORMATTER_H

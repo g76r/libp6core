@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 Hallowyn and others.
+/* Copyright 2013-2017 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,30 +14,8 @@
 #include "htmlitemdelegate.h"
 #include "util/htmlutils.h"
 
-int HtmlItemDelegate::_defaultMaxCellContentLength(200);
-HtmlItemDelegate::TextConversion
-HtmlItemDelegate::_defaultConversion(HtmlEscapingWithUrlAsLinks);
-
 HtmlItemDelegate::HtmlItemDelegate(QObject *parent)
-  : TextViewItemDelegate(parent), _conversion(_defaultConversion),
-    _maxCellContentLength(_defaultMaxCellContentLength) {
-}
-
-void HtmlItemDelegate::convertData(QString *data) const {
-  if (_maxCellContentLength > 0 && data->size() > _maxCellContentLength) {
-    *data = data->left(_maxCellContentLength/2-1) + "..."
-        + data->right(_maxCellContentLength/2-2);
-  }
-  switch (_conversion) {
-  case HtmlEscaping:
-    *data = HtmlUtils::htmlEncode(*data, false, false);
-    break;
-  case HtmlEscapingWithUrlAsLinks:
-    *data = HtmlUtils::htmlEncode(*data, true, true);
-    break;
-  case AsIs:
-    ;
-  }
+  : TextViewItemDelegate(parent) {
 }
 
 QString HtmlItemDelegate::dataAffix(const TextMapper &m,
@@ -71,7 +49,7 @@ QString HtmlItemDelegate::text(const QModelIndex &index) const {
   if (!index.isValid())
     return QString();
   QString data = index.data().toString();
-  convertData(&data);
+  formatCell(&data);
   // prefix
   if (_rowPrefixes.contains(index.row()))
     data.prepend(dataAffix(_rowPrefixes[index.row()], index));
@@ -98,7 +76,7 @@ QString HtmlItemDelegate::headerText(int section, Qt::Orientation orientation,
   if (!model)
     return QString();
   QString data = model->headerData(section, orientation).toString();
-  convertData(&data);
+  formatCell(&data);
   switch (orientation) {
   case Qt::Vertical:
     // prefix
@@ -126,15 +104,9 @@ QString HtmlItemDelegate::headerText(int section, Qt::Orientation orientation,
   return data;
 }
 
-HtmlItemDelegate *HtmlItemDelegate::setTextConversion(
-    TextConversion conversion) {
-  _conversion = conversion;
+void HtmlItemDelegate::setTextConversion(TextConversion conversion) {
+  HtmlTableFormatter::setTextConversion(conversion);
   emit textChanged();
-  return this;
-}
-
-void HtmlItemDelegate::setDefaultTextConversion(TextConversion conversion) {
-  _defaultConversion = conversion;
 }
 
 HtmlItemDelegate *HtmlItemDelegate::setPrefixForColumn(
@@ -213,10 +185,6 @@ HtmlItemDelegate *HtmlItemDelegate::clearAffixes() {
 }
 
 void HtmlItemDelegate::setMaxCellContentLength(int maxCellContentLength) {
-  _maxCellContentLength = maxCellContentLength;
+  HtmlTableFormatter::setMaxCellContentLength(maxCellContentLength);
   emit textChanged();
-}
-
-void HtmlItemDelegate::setDefaultMaxCellContentLength(int length) {
-  _defaultMaxCellContentLength = length;
 }

@@ -12,6 +12,7 @@
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "csvformatter.h"
+#include "util/stringutils.h"
 
 QChar CsvFormatter::_defaultFieldSeparator(',');
 QString CsvFormatter::_defaultRecordSeparator("\n");
@@ -21,11 +22,11 @@ QChar CsvFormatter::_defaultReplacementChar;
 
 CsvFormatter::CsvFormatter(
     QChar fieldSeparator, QString recordSeparator, QChar fieldQuote,
-    QChar escapeChar, QChar replacementChar)
-  : _recordSeparator(recordSeparator), _fieldSeparator(fieldSeparator),
+    QChar escapeChar, QChar replacementChar, int maxCellContentLength)
+  : AbstractTextFormatter(maxCellContentLength),
+    _recordSeparator(recordSeparator), _fieldSeparator(fieldSeparator),
     _fieldQuote(fieldQuote), _escapeChar(escapeChar),
-    _replacementChar(replacementChar),
-    _columnHeaders(true), _rowHeaders(false) {
+    _replacementChar(replacementChar) {
   updateSpecialChars();
 }
 
@@ -60,19 +61,20 @@ void CsvFormatter::updateSpecialChars() {
   _specialChars.append(_recordSeparator);
 }
 
-QString CsvFormatter::formatField(QString rawData) const {
+QString CsvFormatter::formatCell(QString data) const {
+  data = StringUtils::elideMiddle(data, maxCellContentLength());
   QString s;
   if (!_fieldQuote.isNull())
     s.append(_fieldQuote);
   if (!_escapeChar.isNull()) {
-    foreach (const QChar c, rawData) {
+    foreach (const QChar c, data) {
       if (_specialChars.contains(c))
         s.append(_escapeChar);
       s.append(c);
     }
   } else if (!_replacementChar.isNull()) {
     bool first = true;
-    foreach (const QChar c, rawData) {
+    foreach (const QChar c, data) {
       if (_specialChars.contains(c)) {
         if (first) {
           s.append(_replacementChar);
@@ -84,7 +86,7 @@ QString CsvFormatter::formatField(QString rawData) const {
       }
     }
   } else {
-    foreach (const QChar c, rawData)
+    foreach (const QChar c, data)
       if (!_specialChars.contains(c))
         s.append(c);
   }
@@ -93,87 +95,41 @@ QString CsvFormatter::formatField(QString rawData) const {
   return s;
 }
 
-QString CsvFormatter::format(
-    const SharedUiItem &item, int role, bool hideRowHeader) {
+QString CsvFormatter::formatTableHeader(
+    const QStringList &columnHeaders) const {
   QString s;
-  int n = item.uiSectionCount();
-  if (_rowHeaders && !hideRowHeader)
-    s.append(formatField(role == SharedUiItem::HeaderDisplayRole
-                         ? _topLeftHeader : item.id()))
-        .append(_fieldSeparator);
-  for (int i = 0; i < n; ++i) {
-    if (i)
+  if (rowHeadersEnabled())
+    s.append(topLeftHeader()).append(_fieldSeparator);
+  bool first = true;
+  for (const QString &header : columnHeaders) {
+    if (first)
+      first = false;
+    else
       s.append(_fieldSeparator);
-    s.append(formatField(item.uiString(i, role)));
+    s.append(formatCell(header));
   }
   s.append(_recordSeparator);
   return s;
 }
 
-QString CsvFormatter::format(const SharedUiItem &item, int role) {
-  return format(item, role, false);
+QString CsvFormatter::formatTableFooter(
+    const QStringList &columnHeaders) const {
+  Q_UNUSED(columnHeaders)
+  return QStringLiteral();
 }
 
-QString CsvFormatter::format(const SharedUiItemList<> &list, int role) {
+QString CsvFormatter::formatRow(const QStringList &cells,
+                                QString rowHeader) const {
   QString s;
-  if (_columnHeaders) {
-    const SharedUiItem first = list.isEmpty() ? SharedUiItem() : list.first();
-    s.append(format(first, SharedUiItem::HeaderDisplayRole));
-  }
-  if (_rowHeaders) {
-    int row = 0;
-    for (const SharedUiItem &item : list) {
-      ++row;
-      s.append(QString::number(row)).append(_fieldSeparator)
-          .append(format(item, role, true));
-    }
-  } else {
-    for (const SharedUiItem &item : list)
-      s.append(format(item, role, true));
-  }
-  return s;
-}
-
-QString CsvFormatter::format(
-    const QAbstractItemModel *model, int firstRow, int lastRow,
-    const QModelIndex &parent, bool hideColumnsHeader) {
-  QString s;
-  if (!model)
-    return s;
-  if (_columnHeaders && !hideColumnsHeader)
-    s.append(formatHeader(model, parent));
-  int columns = model->columnCount(parent);
-  if (firstRow < 0)
-    firstRow = 0;
-  if (lastRow == -1 || lastRow >= model->rowCount(parent))
-    lastRow = model->rowCount(parent)-1;
-  for (int row = firstRow; row <= lastRow; ++row) {
-    if (_rowHeaders)
-      s.append(formatField(model->headerData(row, Qt::Vertical).toString()))
-          .append(_fieldSeparator);
-    for (int column = 0; column < columns; ++column) {
-      QModelIndex index = model->index(row, column, QModelIndex());
-      s.append(formatField(model->data(index).toString()));
-      if (column < columns-1)
-        s.append(_fieldSeparator);
-    }
-    s.append(_recordSeparator);
-  }
-  return s;
-}
-
-QString CsvFormatter::formatHeader(
-    const QAbstractItemModel *model, const QModelIndex &parent) {
-  QString s;
-  if (!model)
-    return s;
-  if (_rowHeaders)
-    s.append(_topLeftHeader).append(_fieldSeparator);
-  int columns = model->columnCount(parent);
-  for (int i = 0; i < columns; ++i) {
-    if (i)
+  if (rowHeadersEnabled())
+    s.append(rowHeader).append(_fieldSeparator);
+  bool first = true;
+  for (const QString &cell : cells) {
+    if (first)
+      first = false;
+    else
       s.append(_fieldSeparator);
-    s.append(formatField(model->headerData(i, Qt::Horizontal).toString()));
+    s.append(formatCell(cell));
   }
   s.append(_recordSeparator);
   return s;

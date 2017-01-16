@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 Hallowyn and others.
+/* Copyright 2013-2017 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,13 +15,14 @@
 #define HTMLITEMDELEGATE_H
 
 #include "textviewitemdelegate.h"
+#include "format/htmltableformatter.h"
 
 // LATER try to factorize code with TemplatingHttpHandler
-class LIBQTSSUSHARED_EXPORT HtmlItemDelegate : public TextViewItemDelegate {
+class LIBQTSSUSHARED_EXPORT HtmlItemDelegate : public TextViewItemDelegate,
+    public HtmlTableFormatter {
   Q_OBJECT
   Q_DISABLE_COPY(HtmlItemDelegate)
 public:
-  enum TextConversion { AsIs, HtmlEscaping, HtmlEscapingWithUrlAsLinks };
   enum SpecialSections { AllSections = -1 };
   enum SpecialArgIndexes { None = -1 };
 
@@ -36,8 +37,6 @@ private:
     TextMapper() : _argIndex(None) { }
   };
 
-  TextConversion _conversion;
-  static TextConversion _defaultConversion;
   QHash<int,TextMapper> _columnPrefixes;
   QHash<int,TextMapper> _columnSuffixes;
   QHash<int,TextMapper> _rowPrefixes;
@@ -46,27 +45,12 @@ private:
   QHash<int,QString> _columnHeaderSuffixes;
   QHash<int,TextMapper> _rowHeaderPrefixes;
   QHash<int,TextMapper> _rowHeaderSuffixes;
-  int _maxCellContentLength;
-  static int _defaultMaxCellContentLength;
 
 public:
   explicit HtmlItemDelegate(QObject *parent = 0);
   QString text(const QModelIndex &index) const;
   QString headerText(int section, Qt::Orientation orientation,
                      const QAbstractItemModel* model) const;
-  /** Set the way text data in the model is converted.
-   * <ul>
-   * <li> AsIs: no conversion at all, even leave HTML special chars as is
-   * <li> HtmlEscaping: transform HTML special chars into HTML entities
-   * <li> HtmlEscapingWithUrlAsLinks: URLs are surrounded with a href tags
-   * </ul>
-   * default: HtmlEscapingWithUrlAsLinks */
-  HtmlItemDelegate *setTextConversion(
-      TextConversion conversion = HtmlEscapingWithUrlAsLinks);
-  TextConversion textConversion() const { return _conversion; }
-  /** @see setTextConversion(). */
-  static void setDefaultTextConversion(
-      TextConversion conversion = HtmlEscapingWithUrlAsLinks);
   /** All data in column column will be prefixed with raw (= copied as is,
    * without text conversion) html pattern that can optionnaly contain a
    * variable part that is defined by a given model column for the same row
@@ -149,15 +133,15 @@ public:
           row, pattern, argIndex, QHash<QString,QString>()); }
   /** Clear any previous suffix or prefix definition. */
   HtmlItemDelegate *clearAffixes();
-  /** Maximum length of text inside a cell, measured before HTML encoding if
-   * any. Default: 200. */
+  /** Overriden to emit textChanged() signal otherwise same as
+   * HtmlTableFormater's implementation. */
+  void setTextConversion(
+      TextConversion conversion = HtmlEscapingWithUrlAsLinks);
+  /** Overriden to emit textChanged() signal otherwise same as
+   * HtmlTableFormater's implementation. */
   void setMaxCellContentLength(int maxCellContentLength = 200);
-  /** Maximum length of text inside a cell, measured before HTML encoding if
-   * any. Default: 200. */
-  static void setDefaultMaxCellContentLength(int length);
 
 private:
-  inline void convertData(QString *data) const;
   inline QString dataAffix(const TextMapper &m, const QModelIndex &index) const;
   inline QString rowHeaderAffix(
       const TextMapper &m, const QAbstractItemModel* model, int row) const;

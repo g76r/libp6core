@@ -102,7 +102,9 @@ SOURCES += \
     util/stringutils.cpp \
     net/dummysocket.cpp \
     net/readonlyresourcescache.cpp \
-    format/csvformatter.cpp
+    format/csvformatter.cpp \
+    format/abstracttextformatter.cpp \
+    format/htmltableformatter.cpp
 
 
 HEADERS +=\
@@ -182,7 +184,9 @@ HEADERS +=\
     util/containerutils.h \
     util/radixtree.h \
     net/readonlyresourcescache.h \
-    format/csvformatter.h
+    format/csvformatter.h \
+    format/abstracttextformatter.h \
+    format/htmltableformatter.h
 
 unix {
     target.path = /usr/lib
