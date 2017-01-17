@@ -1,4 +1,4 @@
-/* Copyright 2012-2016 Hallowyn and others.
+/* Copyright 2012-2017 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -29,34 +29,67 @@ public:
                      qint64 bufsize = 65536, int readTimeout = 30000,
                      int writeTimeout = 30000);
   /** Copy at most max bytes from dest to src, copying only lines that match
-   * pattern.
+   * pattern. Use QRegularExpression if useRegexp == true.
    * Filter may mismatch lines if they are longer than bufsize-1.
    * @param useRegexp otherwise pattern is plain text */
   static qint64 grep(QIODevice *dest, QIODevice *src, QString pattern,
                      bool useRegexp = false, qint64 max = LLONG_MAX,
                      qint64 bufsize = 65535, int readTimeout = 30000,
                      int writeTimeout = 30000);
-  /** Syntaxic sugar */
-  inline static qint64 grep(QIODevice *dest, QIODevice *src,
-                            const char *pattern, bool useRegexp = false,
-                            qint64 max = LLONG_MAX, qint64 bufsize = 65535,
-                            int readTimeout = 30000, int writeTimeout = 30000) {
-    return useRegexp ? grep(dest, src, QRegExp(pattern), max, bufsize,
-                            readTimeout, writeTimeout)
-                     : grep(dest, src, QString(pattern), false, max, bufsize,
-                            readTimeout, writeTimeout); }
+  /** Disambiguation method converting const char * to QString. */
+  static qint64 grep(QIODevice *dest, QIODevice *src,
+                     const char *pattern, bool useRegexp = false,
+                     qint64 max = LLONG_MAX, qint64 bufsize = 65535,
+                     int readTimeout = 30000, int writeTimeout = 30000) {
+    return grep(dest, src, QString(pattern), useRegexp, max, bufsize,
+                readTimeout, writeTimeout); }
   /** Copy at most max bytes from dest to src, copying only lines that match
    * regexp.
-   * Filter may mismatch lines if they are longer than bufsize-1. */
+   * Filter may mismatch lines if they are longer than bufsize-1.
+   * @deprecated use QRegularExpression form instead */
   static qint64 grep(QIODevice *dest, QIODevice *src, QRegExp regexp,
                      qint64 max = LLONG_MAX, qint64 maxLineSize = 65535,
                      int readTimeout = 30000, int writeTimeout = 30000);
+  /** Copy at most max bytes from dest to src, copying only lines that match
+   * regexp.
+   * Filter may mismatch lines if they are longer than bufsize-1. */
+  static qint64 grep(QIODevice *dest, QIODevice *src, QRegularExpression regexp,
+                     qint64 max = LLONG_MAX, qint64 maxLineSize = 65535,
+                     int readTimeout = 30000, int writeTimeout = 30000);
+  /** Copy at most max bytes from dest to src, copying only lines that match
+   * plaintext pattern and those that follow it and begin with the
+   * continuationLinePrefix.
+   * Convenient for greping logfiles which continuation lines begin with "  ".
+   * Filter may mismatch lines if they are longer than bufsize-1. */
+  static qint64 grepWithContinuation(
+      QIODevice *dest, QIODevice *src, QString pattern,
+      QString continuationLinePrefix, qint64 max = LLONG_MAX,
+      qint64 bufsize = 65536, int readTimeout = 30000,
+      int writeTimeout = 30000);
+  /** Disambiguation method converting const char * to QString. */
+  static qint64 grepWithContinuation(
+      QIODevice *dest, QIODevice *src, const char *pattern,
+      QString continuationLinePrefix, qint64 max = LLONG_MAX,
+      qint64 bufsize = 65536, int readTimeout = 30000,
+      int writeTimeout = 30000) {
+    return grepWithContinuation(dest, src, pattern, continuationLinePrefix, max,
+                                bufsize, readTimeout, writeTimeout); }
+  /** Copy at most max bytes from dest to src, copying only lines that match
+   * regexp and those that follow it and begin with the continuationLinePrefix.
+   * Convenient for greping logfiles which continuation lines begin with "  ".
+   * Filter may mismatch lines if they are longer than bufsize-1.
+   * @deprecated use QRegularExpression form instead */
+  static qint64 grepWithContinuation(
+      QIODevice *dest, QIODevice *src, QRegExp regexp,
+      QString continuationLinePrefix, qint64 max = LLONG_MAX,
+      qint64 bufsize = 65536, int readTimeout = 30000,
+      int writeTimeout = 30000);
   /** Copy at most max bytes from dest to src, copying only lines that match
    * regexp and those that follow it and begin with the continuationLinePrefix.
    * Convenient for greping logfiles which continuation lines begin with "  ".
    * Filter may mismatch lines if they are longer than bufsize-1. */
   static qint64 grepWithContinuation(
-      QIODevice *dest, QIODevice *src, QRegExp regexp,
+      QIODevice *dest, QIODevice *src, QRegularExpression regexp,
       QString continuationLinePrefix, qint64 max = LLONG_MAX,
       qint64 bufsize = 65536, int readTimeout = 30000,
       int writeTimeout = 30000);
@@ -66,15 +99,14 @@ public:
     */
   static QString url2path(QUrl url);
   /** Return paths of all existing files that match pattern.
-    * Pattern is regular expression (@see QRegularExpression).
-    * Beware that this method can take a lot of time depending on filesystem
-    * tree size. */
+   * Pattern is regular expression e.g. "/foo/bar/.*\\.txt" will match any file
+   * under "/foo/bar" inculding e.g. "/foo/bar/baz/boo/test.txt".
+   * Beware that this method can take a lot of time depending on filesystem
+   * tree size. */
   static QStringList findFiles(QString regexp);
   /** Return paths of all existing files that match patterns.
-    * Pattern is regular expression (@see QRegularExpression).
-    * Beware that this method can take a lot of time depending on filesystem
-    * tree size. */
-  inline static QStringList findFiles(QStringList patterns) {
+   * @see findFiles(QString) */
+  static QStringList findFiles(QStringList patterns) {
     QStringList files;
     foreach (const QString pattern, patterns)
       files.append(findFiles(pattern));

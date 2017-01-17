@@ -1,4 +1,4 @@
-/* Copyright 2012-2016 Hallowyn and others.
+/* Copyright 2012-2017 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,6 +16,7 @@
 #include <QRegularExpression>
 #include <QDir>
 #include <QtDebug>
+#include <functional>
 
 static QRegularExpression slashBeforeDriveLetterRE{"^/[A-Z]:/"};
 
@@ -56,13 +57,13 @@ qint64 IOUtils::copy(QIODevice *dest, QIODevice *src, qint64 max,
   return total;
 }
 
-qint64 IOUtils::grep(QIODevice *dest, QIODevice *src, QString pattern,
-                     bool useRegexp, qint64 max, qint64 bufsize,
-                     int readTimeout, int writeTimeout) {
+static inline qint64 grep(
+    QIODevice *dest, QIODevice *src,
+    std::function<bool(QString subject)> matchCondition,
+    qint64 max, qint64 bufsize,
+    int readTimeout, int writeTimeout) {
   if (!dest || !src)
     return -1;
-  if (useRegexp)
-    return grep(dest, src, QRegExp(pattern), max, bufsize);
   char buf[bufsize];
   int total = 0;
   while (total < max) {
@@ -73,7 +74,7 @@ qint64 IOUtils::grep(QIODevice *dest, QIODevice *src, QString pattern,
       return -1;
     if (n == 0)
       break;
-    if (QString::fromUtf8(buf).contains(pattern)) {
+    if (matchCondition(QString::fromUtf8(buf))) {
       int m = dest->write(buf, n);
       if (m != n)
         return -1;
@@ -83,37 +84,45 @@ qint64 IOUtils::grep(QIODevice *dest, QIODevice *src, QString pattern,
     }
   }
   return total;
+}
+
+qint64 IOUtils::grep(QIODevice *dest, QIODevice *src, QString pattern,
+                     bool useRegexp, qint64 max, qint64 bufsize,
+                     int readTimeout, int writeTimeout) {
+  if (useRegexp) {
+    QRegularExpression regexp(pattern);
+    return ::grep(
+          dest, src,
+          [&regexp](QString line) { return regexp.match(line).hasMatch(); },
+          max, bufsize, readTimeout, writeTimeout);
+  } else
+    return ::grep(
+          dest, src,
+          [&pattern](QString line) { return line.contains(pattern); },
+          max, bufsize, readTimeout, writeTimeout);
 }
 
 qint64 IOUtils::grep(QIODevice *dest, QIODevice *src,
                      QRegExp regexp, qint64 max, qint64 bufsize,
                      int readTimeout, int writeTimeout) {
-  if (!dest || !src)
-    return -1;
-  char buf[bufsize];
-  int total = 0;
-  while (total < max) {
-    if (src->bytesAvailable() < 1)
-      src->waitForReadyRead(readTimeout);
-    int n = src->readLine(buf, std::min(bufsize, max-total));
-    if (n < 0)
-      return -1;
-    if (n == 0)
-      break;
-    if (regexp.indexIn(QString::fromUtf8(buf)) >= 0) {
-      int m = dest->write(buf, n);
-      if (m != n)
-        return -1;
-      if (dest->bytesToWrite() > bufsize)
-        while (dest->waitForBytesWritten(writeTimeout) > bufsize);
-      total += n;
-    }
-  }
-  return total;
+  return ::grep(
+        dest, src,
+        [&regexp](QString line) { return regexp.indexIn(line) >= 0; },
+        max, bufsize, readTimeout, writeTimeout);
 }
 
-qint64 IOUtils::grepWithContinuation(
-    QIODevice *dest, QIODevice *src, QRegExp regexp,
+qint64 IOUtils::grep(QIODevice *dest, QIODevice *src,
+                     QRegularExpression regexp, qint64 max, qint64 bufsize,
+                     int readTimeout, int writeTimeout) {
+  return ::grep(
+        dest, src,
+        [&regexp](QString line) { return regexp.match(line).hasMatch(); },
+        max, bufsize, readTimeout, writeTimeout);
+}
+
+static inline qint64 grepWithContinuation(
+    QIODevice *dest, QIODevice *src,
+    std::function<bool(QString subject)> matchCondition,
     QString continuationLinePrefix, qint64 max, qint64 bufsize,
     int readTimeout, int writeTimeout) {
   if (!dest || !src)
@@ -131,7 +140,7 @@ qint64 IOUtils::grepWithContinuation(
       break;
     QString line = QString::fromUtf8(buf);
     if ((continuation && line.startsWith(continuationLinePrefix))
-        || regexp.indexIn(line) >= 0) {
+        || matchCondition(line)) {
       int m = dest->write(buf, n);
       if (m != n)
         return -1;
@@ -145,7 +154,38 @@ qint64 IOUtils::grepWithContinuation(
   return total;
 }
 
-static void findFiles(QDir dir, QStringList &files, const QRegExp pattern) {
+qint64 IOUtils::grepWithContinuation(
+    QIODevice *dest, QIODevice *src, QString pattern,
+    QString continuationLinePrefix, qint64 max, qint64 bufsize,
+    int readTimeout, int writeTimeout) {
+  return ::grepWithContinuation(
+        dest, src,
+        [&pattern](QString line) { return line.contains(pattern); },
+        continuationLinePrefix, max, bufsize, readTimeout, writeTimeout);
+}
+
+qint64 IOUtils::grepWithContinuation(
+    QIODevice *dest, QIODevice *src, QRegExp regexp,
+    QString continuationLinePrefix, qint64 max, qint64 bufsize,
+    int readTimeout, int writeTimeout) {
+  return ::grepWithContinuation(
+        dest, src,
+        [&regexp](QString line) { return regexp.indexIn(line) >= 0; },
+        continuationLinePrefix, max, bufsize, readTimeout, writeTimeout);
+}
+
+qint64 IOUtils::grepWithContinuation(
+    QIODevice *dest, QIODevice *src, QRegularExpression regexp,
+    QString continuationLinePrefix, qint64 max, qint64 bufsize,
+    int readTimeout, int writeTimeout) {
+  return ::grepWithContinuation(
+        dest, src,
+        [&regexp](QString line) { return regexp.match(line).hasMatch(); },
+        continuationLinePrefix, max, bufsize, readTimeout, writeTimeout);
+}
+
+static void findFiles(QDir dir, QStringList &files,
+                      const QRegularExpression &pattern) {
   //qDebug() << "findFiles:" << dir.path() << dir.entryInfoList().size() << files.size() << pattern.pattern();
   foreach (const QFileInfo fi,
            dir.entryInfoList(QDir::Dirs|QDir::Files|QDir::NoDotAndDotDot,
@@ -155,7 +195,7 @@ static void findFiles(QDir dir, QStringList &files, const QRegExp pattern) {
     if (fi.isDir()) {
       //qDebug() << "  Going down:" << path;
       findFiles(QDir(path), files, pattern);
-    } else if (fi.isFile() && pattern.exactMatch(path)) {
+    } else if (fi.isFile() && pattern.match(path).hasMatch()) {
       //qDebug() << "  Appending:" << path;
       files.append(path);
     }
@@ -169,7 +209,7 @@ QStringList IOUtils::findFiles(QString regexp) {
   QString pat = QDir().absoluteFilePath(QDir::fromNativeSeparators(regexp));
   int i = pat.indexOf(slashFollowedByWildcard);
   QString dir = i >= 0 ? pat.left(i+1) : pat;
-  QRegExp re(pat, Qt::CaseSensitive, QRegExp::RegExp2);
-  ::findFiles(QDir(dir), files, re);
+  ::findFiles(QDir(dir), files, QRegularExpression("^"+pat+"$"));
+  //qDebug() << "returned file list:" << files;
   return files;
 }
