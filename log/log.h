@@ -1,4 +1,4 @@
-/* Copyright 2012-2016 Hallowyn and others.
+/* Copyright 2012-2017 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -182,17 +182,21 @@ public:
     _message.append(QString::number(o)); return *this; }
   inline LogHelper &operator<<(quint8 o) {
     _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator<<(qint16 o) {
+  inline LogHelper &operator<<(short o) {
     _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator<<(quint16 o) {
+  inline LogHelper &operator<<(ushort o) {
     _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator<<(qint64 o) {
+  inline LogHelper &operator<<(int o) {
     _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator<<(quint64 o) {
+  inline LogHelper &operator<<(uint o) {
     _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator<<(qint32 o) {
+  inline LogHelper &operator<<(long o) {
     _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator<<(quint32 o) {
+  inline LogHelper &operator<<(ulong o) {
+    _message.append(QString::number(o)); return *this; }
+  inline LogHelper &operator<<(qlonglong o) {
+    _message.append(QString::number(o)); return *this; }
+  inline LogHelper &operator<<(qulonglong o) {
     _message.append(QString::number(o)); return *this; }
   inline LogHelper &operator<<(double o) {
     _message.append(QString::number(o)); return *this; }
