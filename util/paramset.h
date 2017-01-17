@@ -55,6 +55,8 @@ class ParamSetData;
  *
  * %=default function: %{=default!expr1[!expr2[...]][!value_if_not_set]}
  *
+ * take first non-empty expression in order: expr1 if not empty, expr2 if expr1
+ * is empty, expr3 if neither expr1 nor expr2 are set, etc.
  * the function works like nvl/ifnull functions in sql
  *   and almost like %{variable:-value_if_not_set} in shell scripts
  * expr1..n are are evaluated
