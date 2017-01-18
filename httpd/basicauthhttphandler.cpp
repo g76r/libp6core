@@ -1,4 +1,4 @@
-/* Copyright 2013-2016 Hallowyn and others.
+/* Copyright 2013-2017 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -52,7 +52,7 @@ bool BasicAuthHttpHandler::handleRequest(
   }
   if (_authIsMandatory
       || (_authorizer && !_authorizer->authorize(
-            QString(), req.url().path(), QString(),
+            QString(), req.methodName(), req.url().path(),
             QDateTime::currentDateTime()))) {
     res.setStatus(401);
     res.setHeader("WWW-Authenticate", // LATER sanitize realm

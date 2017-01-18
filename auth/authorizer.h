@@ -1,4 +1,4 @@
-/* Copyright 2013-2016 Hallowyn and others.
+/* Copyright 2013-2017 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -29,8 +29,8 @@ public:
   explicit Authorizer(QObject *parent = 0);
   ~Authorizer();
   /** Test if a given user is authorized to perform a given action scope
-   * (e.g. "delete" or "modify.delete") on a given data scope (e.g.
-   * "business.accounting.invoices") at a given time.
+   * (e.g. "delete", "modify.delete" or "POST") on a given data scope (e.g.
+   * "business.accounting.invoices" or "/foo/bar.html") at a given time.
    * Of course there can be authorization definitions that ignore some of the
    * criteria (e.g. that only check the actionScope).
    * This method is thread-safe */
