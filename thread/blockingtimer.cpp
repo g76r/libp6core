@@ -1,4 +1,4 @@
-/* Copyright 2012-2016 Hallowyn and others.
+/* Copyright 2012-2017 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -40,7 +40,8 @@ void BlockingTimer::wait() {
     quint32 timeToWait = (quint32)qBound<quint64>(0, nexttick-now, 3600000);
     if (_subintervalMsec > 0)
       timeToWait = qMin(timeToWait, _subintervalMsec);
-    usleep(1000*timeToWait);
+    if (timeToWait)
+      usleep(1000*timeToWait);
     if (_shouldCallProcessEvents)
       QCoreApplication::processEvents();
   }
