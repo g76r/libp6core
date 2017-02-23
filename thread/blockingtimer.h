@@ -1,4 +1,4 @@
-/* Copyright 2012-2016 Hallowyn and others.
+/* Copyright 2012-2017 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,6 +20,11 @@
 
 /** Blocking timer which calls QCoreApplication::processEvents when waiting
   * and does not drift as a simple sleep() or usleep() would.
+  *
+  * Please be aware that most of the time using this class is not a good design
+  * choice as compared to true asynchronous processing.
+  * In other words: if you are about to use this class, please consider other
+  * options first and know why you use this one despite other options.
   */
 class LIBQTSSUSHARED_EXPORT BlockingTimer {
 public:
@@ -32,13 +37,18 @@ private:
   bool _shouldCallProcessEvents;
 
 public:
-  /** @param subintervalMsec is bounded to 1 hour (any longer value
-    * will lead to precessEvents() being called every hour).
-    * @param intervalMsec time to wait between every call to wait()
-    * @param subIntervalMsec time to wait between every call to processEvents()
-    *   and/or to shouldStopFunction
+  /** @param intervalMsec time to wait between every call to wait()
+    * @param subintervalMsec time to wait between every call to processEvents()
+    *   and/or to shouldStopFunction, it is bounded to 1 hour (any longer value
+    *   will be replaced with 3600000).
+    * @param shouldCallProcessEvents call QCoreApplication::processEvents()
+    *   every subintervalMsec ms if true. warning: most of the time, using this
+    *   feature needs the caller code to be fully reentrant since processing
+    *   events may call it again.
+    * @param shouldStopFunction called every subintervalMsec ms, the timer stops
+    *   if it returns true (disabled if 0)
     */
-  BlockingTimer(quint32 intervalMsec, quint32 subntervalMsec = 200,
+  BlockingTimer(quint32 intervalMsec, quint32 subintervalMsec = 200,
                 ShouldStopFunction shouldStopFunction = 0,
                 bool shouldCallProcessEvents = true);
   BlockingTimer(quint32 intervalMsec, ShouldStopFunction shouldStopFunction,

@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2017 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,7 +20,10 @@
 
 class RelativeDateTimeData;
 
-/** Relative datetime, XXX
+/** Represents a point in time relative to another point. Like natural language
+ * expression like "two days ago", "tomorrow" or "last monday at 1 a.m." do.
+ * Or more formally "two days before", "the day after" or "previous monday at
+ * 1 a.m." since the reference point may be different of "now".
  *
  * Support for a consise notation for relative (or even absolute) time
  * expression like those:
@@ -38,7 +41,7 @@ class RelativeDateTimeData;
  * "-3months" -> same time 93 days ago
  * "12:02:43-3months" -> 12:02:43 p.m. 93 days ago
  *
- * More formaly the expression is a sum which first term can be either an
+ * More formally the expression is a sum which first term can be either an
  * absolute timestamp or an incomplete (hence relative) timestamp or week
  * day in english (e.g. "monday"). Following terms are of the form
  * "([+-][0-9.]+[a-z]+)+" (e.g. "-1day+2hours").
@@ -48,7 +51,8 @@ class RelativeDateTimeData;
  * partial forms in reverse order as compared to what ISO8601 permits, like
  * this: "06-26 12:02" "26T12:02" "12:02" "26", but not in the way ISO8601
  * states (e.g. "2014-01" is invalid), and colons cannot be omitted.
- * When only the time is specified, the date is assumed to be today.
+ * When only the time is specified, the date is assumed to be the reference day
+ * (e.g. today).
  * When only the date is specified, the time is assumed to be midnight.
  * When the date is truncated (e.g. "06-26" or "26"), it represents last
  * occurence of such date, i.e. "06-26" means yesterday on june the 27th and
@@ -67,8 +71,9 @@ class RelativeDateTimeData;
  * Non significant 0 in month or day cannot be omitted in timestamp (e.g.
  * "2038-1-1" or "1-1" or even "1" are invalid).
  * Case is not significant.
- * When no reference (being it a timestamp or week day) is specified, current
- * date and time are used (e.g. "-1min" for one minute ago from now).
+ * When no reference (being it a timestamp or week day) is specified, reference
+ * date and time are used (e.g. "-1min" for one minute ago from the reference
+ * date and time, e.g. now).
  */
 class RelativeDateTime {
   QSharedDataPointer<RelativeDateTimeData> d;
@@ -80,9 +85,9 @@ public:
   RelativeDateTime &operator=(const RelativeDateTime &);
   ~RelativeDateTime();
   bool isNull();
-  /** Apply relative date pattern to 'origin'.
-   * If RelativeDateTime is null, return 'origin' as is. */
-  QDateTime apply(QDateTime origin = QDateTime::currentDateTime());
+  /** Apply relative date pattern to 'reference'.
+   * If RelativeDateTime is null, return 'reference' as is. */
+  QDateTime apply(QDateTime reference = QDateTime::currentDateTime());
 };
 
 #endif // RELATIVEDATETIME_H

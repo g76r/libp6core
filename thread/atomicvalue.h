@@ -1,4 +1,4 @@
-/* Copyright 2015 Hallowyn and others.
+/* Copyright 2015-2017 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,7 +17,7 @@
 #include <QMutex>
 #include <QMutexLocker>
 
-/** Class that protect access to a value object with a mutex providing the same
+/** Class protecting access to a value object with a mutex providing the same
  * kind of protection than e.g. a QAtomicInteger despite using a less scalable
  * mean (QMutex + copying the value object for every access).
  *
@@ -25,12 +25,19 @@
  * 64 bits integers on 32 bits platforms or implicitly shared objects (e.g.
  * QString, QDateTime).
  *
- * Usage example:
+ * Usage examples:
  * AtomicValue<QString> threadSafeString;
  * ...
  * QString string = threadSafeString; // a mutex protects the (shallow) copy
- * string.replace("foo", "bar");
+ * string.replace("foo", "bar"); // safe since main object is not accessed
+ * // but another thread can read or set threadSafeString meanwhile
  * threadSafeString = string; // the same mutex protects the (deep) copy
+ * ...
+ * QString &ref = threadSafeString.lockData(); // explicit lock
+ * ref.replace("foo", "bar"); // safe since main object is locked
+ * // no other thread can read or set threadSafeString meanwhile
+ * // the lock is holded longer and the syntax is more explicit
+ * threadSafeString.unlockData(); // explicit unlock
  *
  * @see QAtomicInteger
  * @see QMutex

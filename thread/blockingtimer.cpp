@@ -16,10 +16,10 @@
 #include <unistd.h>
 #include <QCoreApplication>
 
-BlockingTimer::BlockingTimer(quint32 intervalMsec, quint32 subntervalMsec,
+BlockingTimer::BlockingTimer(quint32 intervalMsec, quint32 subintervalMsec,
     ShouldStopFunction shouldStopFunction, bool shouldCallProcessEvents)
   : _lasttick(0), _intervalMsec(intervalMsec),
-    _subintervalMsec(subntervalMsec),
+    _subintervalMsec(subintervalMsec),
     _shouldStopFunction(shouldStopFunction),
     _shouldCallProcessEvents(shouldCallProcessEvents) {
 }
@@ -36,7 +36,9 @@ void BlockingTimer::wait() {
     // microseconds (microseconds in 22 bits would lead to bugs for intervals
     // longer than about 2 hours 1/2).
     // Cast to quint32 is obviously safe thanks to the bounds.
-    // nexttick-now is always >= 0 since _lasttick is always <= now
+    // nexttick-now should always be >= 0 since _lasttick <= now however
+    // if a clock irregularity happens _lasttick can be > now, in this case
+    // the will be no wait at all
     quint32 timeToWait = (quint32)qBound<quint64>(0, nexttick-now, 3600000);
     if (_subintervalMsec > 0)
       timeToWait = qMin(timeToWait, _subintervalMsec);

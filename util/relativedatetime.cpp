@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2017 Hallowyn and others.
  * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -120,6 +120,7 @@ public:
           } else if (unit == "y") {
             ms *= 1000LL*60*60*24*366;
           }
+          // else unit is "ms" or "mil.*"
           _delta += ms;
           //qDebug() << "found term" << ms << unit << _delta;
         }
@@ -130,9 +131,9 @@ public:
     }
   }
 
-  QDateTime apply(QDateTime origin) {
+  QDateTime apply(QDateTime reference) {
     //qDebug() << "applying" << _method << _date << _time << _delta << "to" << origin;
-    QDate date = origin.date();
+    QDate date = reference.date();
     switch (_method) {
     case Today:
       // nothing to do
@@ -154,12 +155,12 @@ public:
       date = _date;
       break;
     }
-    origin.setDate(date);
+    reference.setDate(date);
     if (!_time.isNull())
-      origin.setTime(_time);
-    origin = origin.addMSecs(_delta);
+      reference.setTime(_time);
+    reference = reference.addMSecs(_delta);
     //qDebug() << "applied:" << origin;
-    return origin;
+    return reference;
   }
 };
 
@@ -202,6 +203,6 @@ bool RelativeDateTime::isNull() {
   return !d;
 }
 
-QDateTime RelativeDateTime::apply(QDateTime origin) {
-  return d ? d->apply(origin) : origin;
+QDateTime RelativeDateTime::apply(QDateTime reference) {
+  return d ? d->apply(reference) : reference;
 }
