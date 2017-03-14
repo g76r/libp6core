@@ -69,3 +69,25 @@ QString StringUtils::htmlEncode(
   }
   return s;
 }
+
+QByteArray StringUtils::toSnakeCase(const QByteArray &anycase) {
+  QByteArray sc;
+  bool leading = true;
+  for (const QChar &c : anycase) {
+    if (c.isSpace()) {
+      sc.append('_');
+      leading = false;
+    } else if (c.isUpper()) {
+      if (leading) {
+        if (!sc.isEmpty())
+          sc.append('_');
+        leading = false;
+      }
+      sc.append(c.toLower());
+    } else {
+      sc.append(c);
+      leading = true;
+    }
+  }
+  return sc;
+}

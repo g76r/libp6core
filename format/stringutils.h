@@ -82,6 +82,12 @@ public:
    */
   static QString htmlEncode(QString text, bool urlAsLinks = true,
                             bool newlineAsBr = true);
+  /** Convert an identifier to snake case.
+   * E.g. "hello world" -> "hello_world", "HelloWorld" -> "hello_world".
+   */
+  static QByteArray toSnakeCase(const QByteArray &anycase);
+  // LATER static QString toSnakeCase(const QString &anycase);
+  // LATER toCamelCase() etc.
 };
 
 #endif // STRINGUTILS_H
