@@ -29,8 +29,10 @@ GraphvizImageHttpHandler::GraphvizImageHttpHandler(QObject *parent,
   // LATER use qOverload when possible
   connect(_process, SIGNAL(finished(int,QProcess::ExitStatus)),
           this, SLOT(processFinished(int,QProcess::ExitStatus)));
+#if QT_VERSION >= 0x050600
   connect(_process, &QProcess::errorOccurred,
           this, &GraphvizImageHttpHandler::processError);
+#endif
   connect(_process, &QProcess::readyReadStandardOutput,
           this, &GraphvizImageHttpHandler::readyReadStandardOutput);
   connect(_process, &QProcess::readyReadStandardError,

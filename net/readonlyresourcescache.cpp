@@ -118,7 +118,11 @@ void ReadOnlyResourcesCache::planResourceFetching(QString pathOrUrl) {
   //qDebug() << "reply:" << reply->thread() << reply->parent();
   if (!reply)
     return;
+#if QT_VERSION >= 0x050400
   QTimer::singleShot(_defaultRequestTimeout*1000, reply, &QNetworkReply::abort);
+#else
+  QTimer::singleShot(_defaultRequestTimeout*1000, reply, "abort");
+#endif
   // LATER set a maximum data size
   _fetching.insert(pathOrUrl);
   _errorStrings.insert(pathOrUrl, QStringLiteral("Still fetching..."));

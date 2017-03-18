@@ -185,7 +185,11 @@ void Logger::log(const LogEntry &entry) {
         qint64 now = QDateTime::currentMSecsSinceEpoch();
         if (now - _lastBufferOverflownWarning > _bufferOverflownWarningIntervalMs) {
           _lastBufferOverflownWarning = now;
+#if QT_VERSION >= 0x050400
           qWarning().noquote()
+#else
+          qWarning()
+#endif
               << QDateTime::currentDateTime().toString(ISO8601) << this
               << "Logger::log discarded at less one log entry due to "
                  "thread buffer full" << entry.message()

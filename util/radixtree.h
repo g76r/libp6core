@@ -351,7 +351,11 @@ public:
     qDebug() << "RadixTree " << QString::number((quint64)this, 16);
     if (d->_root) {
       foreach(QString s, d->_root->toString().split('\n'))
+#if QT_VERSION >= 0x050400
         qDebug().noquote() << s;
+#else
+        qDebug() << s;
+#endif
     }
   }
 };

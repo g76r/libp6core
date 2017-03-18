@@ -156,9 +156,11 @@ static void qtLogSamePatternWrapper(QtMsgType type, const QMessageLogContext &,
   case QtDebugMsg:
     severity = severityDebug;
     break;
+#if QT_VERSION >= 0x050500
   case QtInfoMsg:
     severity = severityInfo;
     break;
+#endif
   case QtWarningMsg:
     severity = severityWarning;
     break;
