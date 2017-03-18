@@ -198,10 +198,7 @@ void TemplatingHttpHandler::convertData(
     QString *data, bool disableTextConversion) const {
   if (!data)
     return;
-  if (_maxValueLength > 0 && data->size() > _maxValueLength) {
-    *data = data->left(_maxValueLength/2-1) + "..."
-        + data->right(_maxValueLength/2-2);
-  }
+  *data = StringUtils::elideMiddle(*data, _maxValueLength);
   if (disableTextConversion)
     return;
   switch (_textConversion) {
