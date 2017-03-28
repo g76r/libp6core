@@ -103,9 +103,11 @@ SOURCES += \
     modelview/genericshareduiitem.cpp \
     modelview/inmemoryshareduiitemdocumentmanager.cpp \
     sql/inmemorydatabasedocumentmanager.cpp \
+    sql/hidedeletedsqlrowsproxymodel.cpp \
     util/coreundocommand.cpp \
     modelview/shareduiitemdocumenttransaction.cpp \
     modelview/shareduiitemsmatrixmodel.cpp \
+    modelview/columnstorolenamesproxymodel.cpp \
     ftp/ftpclient.cpp \
     ftp/ftpscript.cpp \
     format/stringutils.cpp \
@@ -180,10 +182,12 @@ HEADERS +=\
     util/regexpparamsprovider.h \
     modelview/genericshareduiitem.h \
     sql/inmemorydatabasedocumentmanager.h \
+    sql/hidedeletedsqlrowsproxymodel.h \
     modelview/inmemoryshareduiitemdocumentmanager.h \
     util/coreundocommand.h \
     modelview/shareduiitemdocumenttransaction.h \
     modelview/shareduiitemsmatrixmodel.h \
+    modelview/columnstorolenamesproxymodel.h \
     ftp/ftpclient.h \
     ftp/ftpscript.h \
     format/stringutils.h \
