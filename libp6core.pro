@@ -30,7 +30,7 @@ CONFIG(release,debug|release): BUILD_TYPE=release
 
 DEFINES += LIBPUMPKIN_LIBRARY
 
-exists(/usr/bin/ccache):QMAKE_CXX = ccache g++
+exists(/usr/bin/ccache):QMAKE_CXX = ccache $$QMAKE_CXX
 exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always
 QMAKE_CXXFLAGS += -Wextra -Woverloaded-virtual
 CONFIG(debug,debug|release):QMAKE_CXXFLAGS += -ggdb
