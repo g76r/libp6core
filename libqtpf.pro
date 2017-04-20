@@ -16,6 +16,16 @@ CONFIG += largefile c++11
 TARGET = qtpf
 TEMPLATE = lib
 
+TARGET_OS=default
+unix: TARGET_OS=unix
+linux: TARGET_OS=linux
+android: TARGET_OS=android
+macx: TARGET_OS=macx
+win32: TARGET_OS=win32
+BUILD_TYPE=unknown
+CONFIG(debug,debug|release): BUILD_TYPE=debug
+CONFIG(release,debug|release): BUILD_TYPE=release
+
 contains(QT_VERSION, ^4\\..*) {
   message("Cannot build with Qt version $${QT_VERSION}.")
   error("Use Qt 5.")
@@ -23,15 +33,15 @@ contains(QT_VERSION, ^4\\..*) {
 
 DEFINES += LIBQTPF_LIBRARY
 
-exists(/usr/bin/ccache):QMAKE_CXX = ccache g++
+exists(/usr/bin/ccache):QMAKE_CXX = ccache $$QMAKE_CXX
 exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always
 QMAKE_CXXFLAGS += -Wextra -Woverloaded-virtual
-unix:CONFIG(debug,debug|release):QMAKE_CXXFLAGS += -ggdb
-unix {
-  OBJECTS_DIR = build-libqtpf-unix/obj
-  RCC_DIR = build-libqtpf-unix/rcc
-  MOC_DIR = build-libqtpf-unix/moc
-}
+CONFIG(debug,debug|release):QMAKE_CXXFLAGS += -ggdb
+
+OBJECTS_DIR = ../build-$$TARGET-$$TARGET_OS/$$BUILD_TYPE/obj
+RCC_DIR = ../build-$$TARGET-$$TARGET_OS/$$BUILD_TYPE/rcc
+MOC_DIR = ../build-$$TARGET-$$TARGET_OS/$$BUILD_TYPE/moc
+DESTDIR = ../build-$$TARGET-$$TARGET_OS/$$BUILD_TYPE
 
 SOURCES += \
     pf/pfutils.cpp \
