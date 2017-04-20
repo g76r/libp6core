@@ -10,7 +10,7 @@ to the desktop (widgets) and embedded (QML).
 
 It's splitted into several build subprojects and binary libraries to avoid
 too many dependencies. Subprojects are named using the "p6" prefix (short for
-pumpkin: p followed by 6 letters) and a suffix that follow more or less Qt 5
+pumpkin: p followed by 6 letters) and a suffix that follows more or less Qt 5
 libraries names: libp6core, libp6sql, etc.
 
 See http://libpumpkin.g76r.eu/ for more information.
