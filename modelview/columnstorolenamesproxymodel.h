@@ -1,20 +1,21 @@
-/* Copyright 2016 Hallowyn and others.
- * This file is part of qronometer, see <http://qronometer.hallowyn.com/>.
- * Qronometer is free software: you can redistribute it and/or modify
+/* Copyright 2016-2017 Hallowyn, Gregoire Barbier and others.
+ * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
+ * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * Qronometer is distributed in the hope that it will be useful,
+ * Libpumpkin is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
  * You should have received a copy of the GNU Affero General Public License
- * along with qronometer. If not, see <http://www.gnu.org/licenses/>.
+ * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef COLUMNSTOROLENAMESPROXYMODEL_H
 #define COLUMNSTOROLENAMESPROXYMODEL_H
 
 #include <QIdentityProxyModel>
+#include "libp6core_global.h"
 
 /** Proxy model for mapping source model column names to rolenames. Which is
  * very convenient for using a QSqlXxxModel or custom model from QML ListView
@@ -24,7 +25,8 @@
  * Also expose as slots some QAbstractItemModel methods to make them callable
  * from QML.
  */
-class ColumnsToRolenamesProxyModel : public QIdentityProxyModel {
+class LIBPUMPKINSHARED_EXPORT ColumnsToRolenamesProxyModel
+    : public QIdentityProxyModel {
   Q_OBJECT
   QHash<int, QByteArray> _roles;
   QHash<QString, int> _reverseRoles;
