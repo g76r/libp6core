@@ -1,15 +1,15 @@
-/* Copyright 2014-2015 Hallowyn and others.
- * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
- * Libqtssu is free software: you can redistribute it and/or modify
+/* Copyright 2014-2017 Hallowyn, Gregoire Barbier and others.
+ * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
+ * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * Libqtssu is distributed in the hope that it will be useful,
+ * Libpumpkin is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
  * You should have received a copy of the GNU Affero General Public License
- * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
+ * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef SHAREDUIITEM_H
 #define SHAREDUIITEM_H
@@ -68,7 +68,7 @@ class SharedUiItemParamsProvider;
 // LATER update guidelines with ways to have several level of subclasses, at
 // less this should require to have constructors protected in non-final levels
 // of subclasses
-class LIBQTSSUSHARED_EXPORT SharedUiItemData : public QSharedData {
+class LIBPUMPKINSHARED_EXPORT SharedUiItemData : public QSharedData {
 public:
   virtual ~SharedUiItemData();
   /** Return a string identifying the object among all other SharedUiItems
@@ -242,7 +242,7 @@ protected:
 // FooItem a subclass of SharedUiItem, SharedUiItem(aFooItem).aVirtualMethod()
 // would not call FooItem::aVirtualMethod() but SharedUiItem::aVirtualMethod()).
 //
-class LIBQTSSUSHARED_EXPORT SharedUiItem {
+class LIBPUMPKINSHARED_EXPORT SharedUiItem {
   QSharedDataPointer<SharedUiItemData> _data;
 
 protected:
@@ -420,7 +420,8 @@ Q_DECLARE_TYPEINFO(SharedUiItem, Q_MOVABLE_TYPE);
 /** ParamsProvider wrapper for SharedUiItem.
  * Its paramValue() implementation returns uiData(key.toInt()).
  */
-class LIBQTSSUSHARED_EXPORT SharedUiItemParamsProvider : public ParamsProvider {
+class LIBPUMPKINSHARED_EXPORT SharedUiItemParamsProvider
+    : public ParamsProvider {
   SharedUiItem _item;
   int _role;
 
@@ -438,6 +439,6 @@ inline SharedUiItemParamsProvider SharedUiItem::toParamsProvider() const {
 
 inline uint qHash(const SharedUiItem &i) { return qHash(i.id()); }
 
-QDebug LIBQTSSUSHARED_EXPORT operator<<(QDebug dbg, const SharedUiItem &i);
+QDebug LIBPUMPKINSHARED_EXPORT operator<<(QDebug dbg, const SharedUiItem &i);
 
 #endif // SHAREDUIITEM_H

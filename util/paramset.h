@@ -1,15 +1,15 @@
-/* Copyright 2012-2016 Hallowyn and others.
- * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
- * Libqtssu is free software: you can redistribute it and/or modify
+/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+ * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
+ * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * Libqtssu is distributed in the hope that it will be useful,
+ * Libpumpkin is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
  * You should have received a copy of the GNU Affero General Public License
- * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
+ * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef PARAMSET_H
 #define PARAMSET_H
@@ -204,7 +204,7 @@ class ParamSetData;
  * %{=random:6:1} -> a number between 1 and 6
  * %{=random:-8:-4} -> a number between -4 and 3
  */
-class LIBQTSSUSHARED_EXPORT ParamSet : public ParamsProvider {
+class LIBPUMPKINSHARED_EXPORT ParamSet : public ParamsProvider {
   friend class ParamsProviderMerger;
   QSharedDataPointer<ParamSetData> d;
   static bool _variableNotFoundLoggingEnabled;
@@ -412,9 +412,9 @@ private:
 Q_DECLARE_METATYPE(ParamSet)
 Q_DECLARE_TYPEINFO(ParamSet, Q_MOVABLE_TYPE);
 
-QDebug LIBQTSSUSHARED_EXPORT operator<<(QDebug dbg, const ParamSet &params);
+QDebug LIBPUMPKINSHARED_EXPORT operator<<(QDebug dbg, const ParamSet &params);
 
-LogHelper LIBQTSSUSHARED_EXPORT operator<<(LogHelper lh,
-                                            const ParamSet &params);
+LogHelper LIBPUMPKINSHARED_EXPORT operator<<(LogHelper lh,
+                                             const ParamSet &params);
 
 #endif // PARAMSET_H

@@ -1,14 +1,19 @@
-LIBQTSSU
-========
+LIBPUMPKIN
+==========
 
 ABOUT
 -----
 
-Libqtssu is a free software collection of tools for using Qt/C++ on
-the server side (logging framework, small REST webapps, etc.).
+Libpumpkin is a free software collection of tools on top of Qt/C++,
+from the server side (logging framework, small REST webapps, etc.)
+to the desktop (widgets) and embedded (QML).
 
-Its name stands for library (lib) Qt (qt) and server-side
-utils (ssu).
+It's splitted into several build subprojects and binary libraries to avoid
+too many dependencies. Subprojects are named using the "p6" prefix (short for
+pumpkin: p followed by 6 letters) and a suffix that follow more or less Qt 5
+libraries names: libp6core, libp6sql, etc.
+
+See http://libpumpkin.g76r.eu/ for more information.
 
 LICENSE
 -------

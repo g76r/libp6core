@@ -1,15 +1,15 @@
-/* Copyright 2014-2015 Hallowyn and others.
- * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
- * Libqtssu is free software: you can redistribute it and/or modify
+/* Copyright 2014-2017 Hallowyn, Gregoire Barbier and others.
+ * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
+ * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * Libqtssu is distributed in the hope that it will be useful,
+ * Libpumpkin is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
  * You should have received a copy of the GNU Affero General Public License
- * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
+ * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef UPLOADHTTPHANDLER_H
 #define UPLOADHTTPHANDLER_H
@@ -19,7 +19,7 @@
 #include <QSemaphore>
 
 /** HttpHandler to deal with uploading files or data. */
-class LIBQTSSUSHARED_EXPORT UploadHttpHandler : public HttpHandler {
+class LIBPUMPKINSHARED_EXPORT UploadHttpHandler : public HttpHandler {
   Q_OBJECT
   Q_DISABLE_COPY(UploadHttpHandler)
   QString _urlPathPrefix;

@@ -1,15 +1,15 @@
-/* Copyright 2013-2016 Hallowyn and others.
- * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
- * Libqtssu is free software: you can redistribute it and/or modify
+/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+ * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
+ * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * Libqtssu is distributed in the hope that it will be useful,
+ * Libpumpkin is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
  * You should have received a copy of the GNU Affero General Public License
- * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
+ * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef PARAMSPROVIDERMERGER_H
 #define PARAMSPROVIDERMERGER_H
@@ -24,7 +24,7 @@
  * ParamsProviderMerger before there destruction.
  * Therefore ParamsProviderMerger should only be used as a temporary object
  * around a call to some method taking a ParamsProvider as a parameter. */
-class LIBQTSSUSHARED_EXPORT ParamsProviderMerger : public ParamsProvider {
+class LIBPUMPKINSHARED_EXPORT ParamsProviderMerger : public ParamsProvider {
   class ProviderData : public QSharedData {
   public:
     const ParamsProvider *_paramsProvider;
@@ -138,7 +138,7 @@ public:
  *   // modify merger the way you want, it'll be restored when myfunc() exits
  * }
  */
-class LIBQTSSUSHARED_EXPORT ParamsProviderMergerRestorer {
+class LIBPUMPKINSHARED_EXPORT ParamsProviderMergerRestorer {
   ParamsProviderMerger *_merger;
   ParamsProviderMergerRestorer() = delete;
   ParamsProviderMergerRestorer(const ParamsProviderMergerRestorer &) = delete;

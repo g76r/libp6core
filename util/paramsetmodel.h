@@ -1,15 +1,15 @@
-/* Copyright 2012-2016 Hallowyn and others.
- * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
- * Libqtssu is free software: you can redistribute it and/or modify
+/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+ * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
+ * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * Libqtssu is distributed in the hope that it will be useful,
+ * Libpumpkin is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
  * You should have received a copy of the GNU Affero General Public License
- * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
+ * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef PARAMSETMODEL_H
 #define PARAMSETMODEL_H
@@ -32,7 +32,7 @@
  * @see ParamSet
  * @see QAbstractItemModel
  */
-class LIBQTSSUSHARED_EXPORT ParamSetModel : public QAbstractListModel {
+class LIBPUMPKINSHARED_EXPORT ParamSetModel : public QAbstractListModel {
   Q_OBJECT
   Q_DISABLE_COPY(ParamSetModel)
 

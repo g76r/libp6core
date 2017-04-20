@@ -1,15 +1,15 @@
-/* Copyright 2012-2016 Hallowyn and others.
- * This file is part of libqtssu, see <https://gitlab.com/g76r/libqtssu>.
- * Libqtssu is free software: you can redistribute it and/or modify
+/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+ * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
+ * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * Libqtssu is distributed in the hope that it will be useful,
+ * Libpumpkin is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
  * You should have received a copy of the GNU Affero General Public License
- * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
+ * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef HTTPREQUEST_H
 #define HTTPREQUEST_H
@@ -19,7 +19,7 @@
 #include <QUrl>
 #include <QUrlQuery>
 #include <QAbstractSocket>
-#include "libqtssu_global.h"
+#include "libp6core_global.h"
 #include <QExplicitlySharedDataPointer>
 #include "util/paramset.h"
 
@@ -31,7 +31,7 @@ class HttpRequestPseudoParamsProvider;
  * very low cost in thread-safe manner, however it must not be accessed from
  * several threads at a time.
  */
-class LIBQTSSUSHARED_EXPORT HttpRequest {
+class LIBPUMPKINSHARED_EXPORT HttpRequest {
 public:
   enum HttpRequestMethod { NONE = 0, HEAD = 1, GET = 2, POST = 4, PUT = 8,
                            DELETE = 16, ANY = 0x7fff} ;
@@ -107,7 +107,7 @@ private:
 };
 
 /** ParamsProvider wrapper for pseudo params. */
-class LIBQTSSUSHARED_EXPORT HttpRequestPseudoParamsProvider
+class LIBPUMPKINSHARED_EXPORT HttpRequestPseudoParamsProvider
     : public ParamsProvider {
   HttpRequest _request;
 
