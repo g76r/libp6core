@@ -31,6 +31,9 @@ GraphvizImageHttpHandler::GraphvizImageHttpHandler(QObject *parent,
 #if QT_VERSION >= 0x050600
   connect(_process, &QProcess::errorOccurred,
           this, &GraphvizImageHttpHandler::processError);
+#else
+  connect(_process, static_cast<void(QProcess::*)(QProcess::ProcessError)>(&QProcess::error),
+          this, &GraphvizImageHttpHandler::processError);
 #endif
   connect(_process, &QProcess::readyReadStandardOutput,
           this, &GraphvizImageHttpHandler::readyReadStandardOutput);
