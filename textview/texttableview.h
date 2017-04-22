@@ -58,6 +58,7 @@ public:
   /** @see setRowsPerPage() */
   int rowsPerPage() const { return _rowsPerPage; }
   /** Set model columns to be displayed.
+   * e.g. view->setColumnIndexes({0,3,4});
    * Default: all columns */
   void setColumnIndexes(QList<int> columnIndexes = QList<int>()) {
     _columnIndexes = columnIndexes; _effectiveColumnIndexes = columnIndexes;
