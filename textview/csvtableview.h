@@ -26,9 +26,11 @@ class LIBPUMPKINSHARED_EXPORT CsvTableView : public TextTableView,
   QString _tableHeader;
 
 public:
-  explicit CsvTableView(QObject *parent = 0,
+  /** Note that CsvTableView disables rowsPerPage by default, unlike
+   * TextTableView general case. */
+  explicit CsvTableView(QObject *parent = 0, QString objectName = QString(),
                         int cachedRows = defaultCachedRows,
-                        int rowsPerPage = defaultRowsPerPage);
+                        int rowsPerPage = -1);
 
 protected:
   void updateHeaderAndFooterCache();

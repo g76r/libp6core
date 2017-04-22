@@ -13,8 +13,9 @@
  */
 #include "csvtableview.h"
 
-CsvTableView::CsvTableView(QObject *parent, int cachedRows, int rowsPerPage)
-  : TextTableView(parent, QString(), cachedRows, rowsPerPage) {
+CsvTableView::CsvTableView(QObject *parent, QString objectName, int cachedRows,
+                           int rowsPerPage)
+  : TextTableView(parent, objectName, cachedRows, rowsPerPage) {
 }
 
 void CsvTableView::updateHeaderAndFooterCache() {
