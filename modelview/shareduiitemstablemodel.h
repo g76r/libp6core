@@ -60,7 +60,6 @@ public:
    * "Older" rows are determined as opposite sides from defaultInsertionPoint().
    * Default: INT_MAX */
   void setMaxrows(int maxrows) { _maxrows = maxrows; }
-  virtual void setItems(QList<SharedUiItem> items);
   void sortAndSetItems(QList<SharedUiItem> items) {
     qSort(items);
     setItems(items);
@@ -100,6 +99,9 @@ public:
   bool dropMimeData(
       const QMimeData *data, Qt::DropAction action, int targetRow,
       int targetColumn, const QModelIndex &droppedParent) override;
+
+public slots:
+  virtual void setItems(QList<SharedUiItem> items);
 
 private:
   // hide functions that cannot work with SharedUiItem paradigm to avoid
