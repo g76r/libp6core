@@ -26,9 +26,8 @@ GraphvizImageHttpHandler::GraphvizImageHttpHandler(QObject *parent,
     _renderingRunning(false), _renderingNeeded(0), _mutex(QMutex::Recursive),
     _process(new QProcess(this)), _refreshStrategy(refreshStrategy),
     _imageFormat(Png) {
-  // LATER use qOverload when possible
-  connect(_process, SIGNAL(finished(int,QProcess::ExitStatus)),
-          this, SLOT(processFinished(int,QProcess::ExitStatus)));
+  connect(_process, static_cast<void(QProcess::*)(int,QProcess::ExitStatus)>(&QProcess::finished),
+          this, &GraphvizImageHttpHandler::processFinished);
 #if QT_VERSION >= 0x050600
   connect(_process, &QProcess::errorOccurred,
           this, &GraphvizImageHttpHandler::processError);
