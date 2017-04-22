@@ -14,34 +14,10 @@
 #include "shareduiitemlist.h"
 #include "shareduiitem.h"
 
-template <class S>
-inline static QString generic_join(
-    const QList<SharedUiItem> *list, const S &separator, bool qualified) {
-  QString s;
-  bool first = true;
-  foreach (const SharedUiItem &item, *list) {
-    if (first)
-      first = false;
-    else
-      s += separator;
-    if (qualified) {
-      s += item.idQualifier();
-      s += ':';
-      s += item.id();
-    } else
-      s += item.id();
-  }
-  return s;
+static int staticInit() {
+  qMetaTypeId<SharedUiItemList<>>();
+  return 0;
 }
 
-template<>
-QString SharedUiItemList<SharedUiItem>::join(
-    const QString &separator, bool qualified) const {
-  return generic_join(this, separator, qualified);
-}
+Q_CONSTRUCTOR_FUNCTION(staticInit)
 
-template<>
-QString SharedUiItemList<SharedUiItem>::join(
-    const QChar separator, bool qualified) const {
-  return generic_join(this, separator, qualified);
-}
