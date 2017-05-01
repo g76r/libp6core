@@ -42,6 +42,11 @@ DESTDIR = ../build-$$TARGET-$$TARGET_OS/$$BUILD_TYPE
 #QMAKE_CXXFLAGS += -O0 -pg -fprofile-arcs -ftest-coverage
 #QMAKE_LFLAGS += -pg -fprofile-arcs
 
+# dependency libs
+INCLUDEPATH += ../libqtpf
+LIBS += -L../build-qtpf-$$TARGET_OS/$$BUILD_TYPE
+LIBS += -lqtpf
+
 SOURCES += \
     httpd/httpworker.cpp \
     httpd/httpserver.cpp \
@@ -115,8 +120,16 @@ SOURCES += \
     net/readonlyresourcescache.cpp \
     format/csvformatter.cpp \
     format/abstracttextformatter.cpp \
-    format/htmltableformatter.cpp
-
+    format/htmltableformatter.cpp \
+    message/tcplistener.cpp \
+    message/sessionmanager.cpp \
+    message/session.cpp \
+    message/message.cpp \
+    message/messagesender.cpp \
+    message/tcpconnectionhandler.cpp \
+    message/tcpclient.cpp \
+    message/incomingmessagedispatcher.cpp \
+    message/outgoingmessagedispatcher.cpp
 
 HEADERS +=\
     httpd/httpworker.h \
@@ -198,7 +211,17 @@ HEADERS +=\
     format/csvformatter.h \
     format/abstracttextformatter.h \
     format/htmltableformatter.h \
-    libp6core_global.h
+    libp6core_global.h \
+    message/tcplistener.h \
+    message/sessionmanager.h \
+    message/session.h \
+    message/message.h \
+    message/messagesender.h \
+    message/tcpconnectionhandler.h \
+    message/tcpclient.h \
+    message/incomingmessagedispatcher.h \
+    message/outgoingmessagedispatcher.h
+
 
 unix {
     target.path = /usr/lib
