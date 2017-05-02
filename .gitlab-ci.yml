@@ -5,7 +5,11 @@ stages:
 build_main:
   stage: build
   script:
-    - qmake
+    - cd ..
+    - git clone https://gitlab.com/g76r/libqtpf.git
+    - (cd libqtpf && qmake && make)
+    - cd -
+    - qmake INCLUDEPATH+=libqtpf
     - make
   tags:
     - qt
@@ -14,9 +18,13 @@ build_main:
 build_tests:
   stage: test
   script:
-   - qmake
-   - make
-   - cd tests && qmake && make 
+    - cd ..
+    - git clone https://gitlab.com/g76r/libqtpf.git
+    - (cd libqtpf && qmake && make)
+    - cd -
+    - qmake INCLUDEPATH+=libqtpf
+    - make
+    - cd tests && qmake && make 
   tags:
     - qt
     - c++
