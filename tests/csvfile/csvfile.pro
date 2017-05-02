@@ -30,8 +30,10 @@ CONFIG(release,debug|release): BUILD_TYPE=release
 
 # dependency libs
 INCLUDEPATH += ../..
-LIBS += -L../../../build-p6core-$$TARGET_OS/$$BUILD_TYPE
-LIBS += -lp6core
+LIBS += \
+    -L../../../build-qtpf-$$TARGET_OS/$$BUILD_TYPE \
+    -L../../../build-p6core-$$TARGET_OS/$$BUILD_TYPE
+LIBS += -lp6core -lqtpf
 
 exists(/usr/bin/ccache):QMAKE_CXX = ccache g++
 exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always
