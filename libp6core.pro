@@ -129,7 +129,10 @@ SOURCES += \
     message/tcpconnectionhandler.cpp \
     message/tcpclient.cpp \
     message/incomingmessagedispatcher.cpp \
-    message/outgoingmessagedispatcher.cpp
+    message/outgoingmessagedispatcher.cpp \
+    ostore/objectsstore.cpp \
+    ostore/objectslistmodel.cpp \
+    ostore/sqlobjectsstore.cpp
 
 HEADERS +=\
     httpd/httpworker.h \
@@ -220,8 +223,10 @@ HEADERS +=\
     message/tcpconnectionhandler.h \
     message/tcpclient.h \
     message/incomingmessagedispatcher.h \
-    message/outgoingmessagedispatcher.h
-
+    message/outgoingmessagedispatcher.h \
+    ostore/objectsstore.h \
+    ostore/objectslistmodel.h \
+    ostore/sqlobjectsstore.h
 
 unix {
     target.path = /usr/lib
