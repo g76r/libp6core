@@ -116,8 +116,8 @@ SOURCES += \
     ftp/ftpclient.cpp \
     ftp/ftpscript.cpp \
     format/stringutils.cpp \
-    net/dummysocket.cpp \
-    net/readonlyresourcescache.cpp \
+    io/dummysocket.cpp \
+    io/readonlyresourcescache.cpp \
     format/csvformatter.cpp \
     format/abstracttextformatter.cpp \
     format/htmltableformatter.cpp \
@@ -207,10 +207,10 @@ HEADERS +=\
     ftp/ftpclient.h \
     ftp/ftpscript.h \
     format/stringutils.h \
-    net/dummysocket.h \
+    io/dummysocket.h \
     util/containerutils.h \
     util/radixtree.h \
-    net/readonlyresourcescache.h \
+    io/readonlyresourcescache.h \
     format/csvformatter.h \
     format/abstracttextformatter.h \
     format/htmltableformatter.h \

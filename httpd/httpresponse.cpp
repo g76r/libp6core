@@ -19,7 +19,7 @@
 #include <QSharedData>
 #include <QMultiHash>
 #include "format/timeformats.h"
-#include "net/dummysocket.h"
+#include "io/dummysocket.h"
 
 class HttpResponseData : public QSharedData {
 public:
