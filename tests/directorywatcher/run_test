@@ -1,0 +1,2 @@
+#!/bin/sh
+LD_LIBRARY_PATH=../../../build-p6core-linux/release:../../../build-qtpf-linux/release:$LD_LIBRARY_PATH ./test

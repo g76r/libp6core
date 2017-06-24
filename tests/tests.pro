@@ -1,2 +1,2 @@
 TEMPLATE = subdirs
-SUBDIRS = circularbuffer csvfile radixtree
+SUBDIRS = circularbuffer csvfile directorywatcher radixtree

@@ -132,7 +132,8 @@ SOURCES += \
     message/outgoingmessagedispatcher.cpp \
     ostore/objectsstore.cpp \
     ostore/objectslistmodel.cpp \
-    ostore/sqlobjectsstore.cpp
+    ostore/sqlobjectsstore.cpp \
+    io/directorywatcher.cpp
 
 HEADERS +=\
     httpd/httpworker.h \
@@ -226,7 +227,8 @@ HEADERS +=\
     message/outgoingmessagedispatcher.h \
     ostore/objectsstore.h \
     ostore/objectslistmodel.h \
-    ostore/sqlobjectsstore.h
+    ostore/sqlobjectsstore.h \
+    io/directorywatcher.h
 
 unix {
     target.path = /usr/lib
