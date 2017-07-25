@@ -19,14 +19,6 @@
 #include <QString>
 #include <QHash>
 #include <QMap>
-//#include <QtDebug>
-/*#undef qDebug
-struct qDebug {
-  qDebug() { }
-  template <class T>
-  qDebug &operator<<(const T&) { return *this; }
-  qDebug &noquote() { return *this; }
-};*/
 
 /** Helper class to make it possible to initialize a RadixTree with such syntax:
  * RadixTree<int> foo { {"abc", 42, true}, { "xyz", -1 } };
@@ -81,7 +73,7 @@ class LIBPUMPKINSHARED_EXPORT RadixTree {
         _length((parent ? parent->_length : 0) + strlen(fragment)),
         _children(0), _childrenCount(0), _value(value) {
       Q_ASSERT(fragment);
-      //qDebug() << "new Node" << fragment << parent;
+      //qDebug() << "new Node" << fragment << parent << (parent ? parent->_fragment : "");
       _fragment = strdup(fragment);
       if (parent)
         parent->addChild(this);
@@ -128,14 +120,19 @@ class LIBPUMPKINSHARED_EXPORT RadixTree {
         //         << (i && key[i] ? "" : "without second child");
         auto oldChildren = _children;
         auto oldChildrenCount = _childrenCount;
+        auto oldFragment = _fragment;
         _children = 0;
         _childrenCount = 0;
-        _length -= strlen(_fragment)-i; // must be done before new Node()
-        auto mainChild = new Node(_fragment+i, _value, _isPrefix, this);
-        _fragment[i] = 0; // shorten _fragment without reallocating memory
+        _fragment = strdup(_fragment);
+        _fragment[i] = 0; // must be done before new Node()
+        _length = i;
+        auto mainChild = new Node(oldFragment+i, _value, _isPrefix, this);
         mainChild->_children = oldChildren;
         mainChild->_childrenCount = oldChildrenCount;
-        if (i && key[i]) { // inserted key > this node key, need a second child
+        free(oldFragment);
+        if (key[i]) {
+          // inserted key > this node key or totally different (for root node),
+          // need a second child
           _value = T();
           _isPrefix = false;
           new Node(key+i, value, isPrefix, this);
@@ -190,6 +187,7 @@ class LIBPUMPKINSHARED_EXPORT RadixTree {
         return true;
       }
       if (!key[i]) { // exact match -> select value if not null
+        // FIXME the special meaning of null is a bad idea, e.g. for RadixTree<int>
         //qDebug() << "Node::lookup exact match" << _fragment;
         if (value)
           *value = _value;
@@ -204,23 +202,26 @@ class LIBPUMPKINSHARED_EXPORT RadixTree {
       return lookupAmongChildren(key+i, value, _children, _childrenCount,
                                  matchedLength);
     }
-    QString toString(QString indentation = QString()) const {
-      QString s;
+    QString valueToDebugString() const {
+      // this method is overriden later, for known displayable types
+      return QString();
+    }
+    QString toDebugString(QString indentation = QString()) const {
+      QString s, v = valueToDebugString();
       s += indentation + _fragment + " " + QString::number(_length)
           //+ " " + (_value ? "set" : "null")
-          + " " + (_isPrefix ? "prefix" : "exact" ) + "\n";
-      //int n = strlen(_fragment);
-      //for (int i = 0; i < n; ++i)
+          + " " + (_isPrefix ? "prefix" : "exact" )
+          + (v.isNull() ? "" :  " -> " + v) + "\n";
       indentation += ' ';
       for (int i = 0; i < _childrenCount; ++i)
-        s += _children[i]->toString(indentation);
+        s += _children[i]->toDebugString(indentation);
       return s;
     }
 
   private:
     /// create a new sorted children list with one more child
     void addChild(Node *newChild) {
-      //qDebug() << "addChild" << newChild << this << _children  << _childrenCount << sizeof(Node);
+      //qDebug() << "addChild" << newChild << this << _children << _childrenCount << sizeof(Node);
       Node **newChildren = new Node*[_childrenCount+1];
       int k = _childrenCount;
       for (int i = 0, j = 0; i < _childrenCount; ++i, ++j) {
@@ -347,17 +348,87 @@ public:
     foreach (const T &key, map.keys())
       that.insert(map.value(key), key);
   }
-  void dumpContent() {
-    qDebug() << "RadixTree " << QString::number((quint64)this, 16);
-    if (d->_root) {
-      foreach(QString s, d->_root->toString().split('\n'))
-#if QT_VERSION >= 0x050400
-        qDebug().noquote() << s;
-#else
-        qDebug() << s;
-#endif
-    }
+  QString toDebugString() {
+    QString s = "RadixTree" + QString::number((quint64)this, 16) + '\n';
+    if (d->_root)
+      s += d->_root->toDebugString();
+    return s;
   }
 };
+
+template <>
+QString RadixTree<signed char>::Node::valueToDebugString() const {
+  return QString::number(_value);
+}
+
+template <>
+QString RadixTree<unsigned char>::Node::valueToDebugString() const {
+  return QString::number(_value);
+}
+
+template <>
+QString RadixTree<signed short>::Node::valueToDebugString() const {
+  return QString::number(_value);
+}
+
+template <>
+QString RadixTree<unsigned short>::Node::valueToDebugString() const {
+  return QString::number(_value);
+}
+
+template <>
+QString RadixTree<signed int>::Node::valueToDebugString() const {
+  return QString::number(_value);
+}
+
+template <>
+QString RadixTree<unsigned int>::Node::valueToDebugString() const {
+  return QString::number(_value);
+}
+
+template <>
+QString RadixTree<signed long>::Node::valueToDebugString() const {
+  return QString::number(_value);
+}
+
+template <>
+QString RadixTree<unsigned long>::Node::valueToDebugString() const {
+  return QString::number(_value);
+}
+
+template <>
+QString RadixTree<signed long long>::Node::valueToDebugString() const {
+  return QString::number(_value);
+}
+
+template <>
+QString RadixTree<unsigned long long>::Node::valueToDebugString() const {
+  return QString::number(_value);
+}
+
+template <>
+QString RadixTree<float>::Node::valueToDebugString() const {
+  return QString::number(_value);
+}
+
+template <>
+QString RadixTree<double>::Node::valueToDebugString() const {
+  return QString::number(_value);
+}
+
+template <>
+QString RadixTree<const void*>::Node::valueToDebugString() const {
+  return QString::number((qulonglong)_value, 16);
+}
+
+template <>
+QString RadixTree<QString>::Node::valueToDebugString() const {
+  return _value;
+}
+
+template <>
+QString RadixTree<const char *>::Node::valueToDebugString() const {
+  return QString::fromUtf8(_value);
+}
 
 #endif // RADIXTREE_H
