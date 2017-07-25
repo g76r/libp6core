@@ -31,5 +31,8 @@ int main(int, char **) {
   { "strs", :: strlen },
   };
   qDebug().noquote() << rt4.toDebugString();
+  RadixTree<int> rt5 { { "foo", 1 }, { "bar", 2 }, { "f", 3, true },
+                       { "fo", 4 } };
+  qDebug().noquote() << rt5.toDebugString();
   return 0;
 }

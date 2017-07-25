@@ -60,16 +60,16 @@ struct RadixTreeInitializerHelper {
  */
 template<class T>
 class LIBPUMPKINSHARED_EXPORT RadixTree {
+  enum NodeType : signed char { Empty = 0, Exact, Prefix };
   struct Node {
     char *_fragment;
-    bool _isPrefix;
+    NodeType _nodetype;
     int _length;
     Node **_children;
     int _childrenCount;
     T _value;
-    //Node() : _fragment(0), _isPrefix(false), _children(0), _childrenCount(0) { }
-    Node(const char *fragment, T value, bool isPrefix, Node *parent)
-      : _fragment(0), _isPrefix(isPrefix),
+    Node(const char *fragment, T value, NodeType nodetype, Node *parent)
+      : _fragment(0), _nodetype(nodetype),
         _length((parent ? parent->_length : 0) + strlen(fragment)),
         _children(0), _childrenCount(0), _value(value) {
       Q_ASSERT(fragment);
@@ -79,7 +79,7 @@ class LIBPUMPKINSHARED_EXPORT RadixTree {
         parent->addChild(this);
     }
     Node(const Node &other)
-      : _fragment(0), _isPrefix(other._isPrefix),
+      : _fragment(0), _nodetype(other._nodetype),
         _length(other._length), _children(0),
         _childrenCount(other._childrenCount), _value(other._value) {
       Q_ASSERT(other._fragment);
@@ -109,15 +109,15 @@ class LIBPUMPKINSHARED_EXPORT RadixTree {
         ;
       //qDebug() << "" << i << (int)key[i] << (int)_fragment[i] << key
       //         << _fragment << !!_isPrefix << !!isPrefix << _childrenCount;
-      if (!_fragment[i] && !key[i] && (!_isPrefix || isPrefix)) {
+      if (!_fragment[i] && !key[i] && (_nodetype != Prefix || isPrefix)) {
         // exact match -> override old value
         //qDebug() << "" << "exact match" << _fragment << key << this;
         _value = value;
-        _isPrefix = isPrefix;
+        _nodetype = isPrefix ? Prefix : Exact;
       } else if (_fragment[i]) {
         // have to split the tree -> make current and new content two children
         //qDebug() << "" << "have to split" << _fragment+i << key+i << this
-        //         << (i && key[i] ? "" : "without second child");
+        //         << (key[i] ? "" : "without second child");
         auto oldChildren = _children;
         auto oldChildrenCount = _childrenCount;
         auto oldFragment = _fragment;
@@ -126,7 +126,8 @@ class LIBPUMPKINSHARED_EXPORT RadixTree {
         _fragment = strdup(_fragment);
         _fragment[i] = 0; // must be done before new Node()
         _length = i;
-        auto mainChild = new Node(oldFragment+i, _value, _isPrefix, this);
+        auto mainChild = new Node(oldFragment+i, _value,
+                                  isPrefix ? Prefix : Exact, this);
         mainChild->_children = oldChildren;
         mainChild->_childrenCount = oldChildrenCount;
         free(oldFragment);
@@ -134,11 +135,11 @@ class LIBPUMPKINSHARED_EXPORT RadixTree {
           // inserted key > this node key or totally different (for root node),
           // need a second child
           _value = T();
-          _isPrefix = false;
-          new Node(key+i, value, isPrefix, this);
+          new Node(key+i, value, _nodetype, this);
+          _nodetype = Empty;
         } else { // inserted key is exactly this node key, override value
           _value = value;
-          _isPrefix = isPrefix;
+          _nodetype = isPrefix ? Prefix : Exact;
         }
       } else {
         //qDebug() << "" << "among children" << i << _fragment << key << this;
@@ -150,7 +151,7 @@ class LIBPUMPKINSHARED_EXPORT RadixTree {
             return;
           }
         }
-        new Node(key+i, value, isPrefix, this);
+        new Node(key+i, value, isPrefix ? Prefix : Exact, this);
       }
     }
     /** Recursively lookup the radix tree/branch
@@ -168,7 +169,7 @@ class LIBPUMPKINSHARED_EXPORT RadixTree {
         //qDebug() << "Node::lookup false" << i << _fragment << key;
         return false;
       }
-      if (_isPrefix) { // prefix match
+      if (_nodetype == Prefix) { // prefix match
         // -> check for a better (more precise) match among children
         bool amongChildren = lookupAmongChildren(key+i, value, _children,
                                                  _childrenCount, matchedLength);
@@ -186,8 +187,7 @@ class LIBPUMPKINSHARED_EXPORT RadixTree {
           *matchedLength = _length;
         return true;
       }
-      if (!key[i]) { // exact match -> select value if not null
-        // FIXME the special meaning of null is a bad idea, e.g. for RadixTree<int>
+      if (!key[i] && _nodetype == Exact) { // exact match -> select value
         //qDebug() << "Node::lookup exact match" << _fragment;
         if (value)
           *value = _value;
@@ -202,16 +202,27 @@ class LIBPUMPKINSHARED_EXPORT RadixTree {
       return lookupAmongChildren(key+i, value, _children, _childrenCount,
                                  matchedLength);
     }
+    static QString nodetypeToString(NodeType nodetype) {
+      switch (nodetype) {
+      case Exact:
+        return QStringLiteral("exact");
+      case Prefix:
+        return QStringLiteral("prefix");
+      case Empty:
+        return QStringLiteral("*EMPTY*");
+      }
+      return QStringLiteral("*UNKNOWN*");
+    }
     QString valueToDebugString() const {
-      // this method is overriden later, for known displayable types
+      // this method is overriden below, for known displayable types
       return QString();
     }
     QString toDebugString(QString indentation = QString()) const {
       QString s, v = valueToDebugString();
       s += indentation + _fragment + " " + QString::number(_length)
           //+ " " + (_value ? "set" : "null")
-          + " " + (_isPrefix ? "prefix" : "exact" )
-          + (v.isNull() ? "" :  " -> " + v) + "\n";
+          + " " + nodetypeToString(_nodetype)
+          + (_nodetype == Empty || v.isNull() ? "" :  " -> " + v) + "\n";
       indentation += ' ';
       for (int i = 0; i < _childrenCount; ++i)
         s += _children[i]->toDebugString(indentation);
@@ -298,7 +309,7 @@ public:
     if (d->_root)
       d->_root->insert(key, value, isPrefix);
     else
-      d->_root = new Node(key, value, isPrefix, 0);
+      d->_root = new Node(key, value, isPrefix ? Prefix : Exact, 0);
   }
   void insert(const QString &key, T value, bool isPrefix = false) {
     insert (key.toUtf8().constData(), value, isPrefix); }
