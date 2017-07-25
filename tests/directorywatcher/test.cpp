@@ -39,17 +39,19 @@ int main(int argc, char **argv) {
                    const QString &basename) {
     qDebug() << "fileChanged" << path << dirname << basename;
   });
-  system("touch /tmp/4");
-  system("touch /tmp/3");
+  system("mkdir -p /tmp/secondary");
+  system("touch /tmp/4 /tmp/secondary/3");
   dw.addDirectory("/tmp", "^4", true);
-  dw.addDirectory("/tmp", "^3");
-  QTimer::singleShot(3000, &app, &QCoreApplication::quit);
+  dw.addDirectory("/tmp/secondary", "^3");
+  QTimer::singleShot(30000, &app, &QCoreApplication::quit);
   QTimer::singleShot(1000, []() {
-      system("touch /tmp/4");
-      system("touch /tmp/3");
-      system("touch /tmp/44");
-      system("touch /tmp/33");
+      qDebug() << "---";
+      system("touch /tmp/4 /tmp/secondary/3 /tmp/44 /tmp/secondary/33");
   });
-  qDebug() << "---";
+  QTimer::singleShot(2000, []() {
+      qDebug() << "---";
+      //system("rm /tmp/4 /tmp/secondary/3 /tmp/44 /tmp/secondary/33");
+  });
   app.exec();
+  system("rmdir /tmp/secondary");
 }

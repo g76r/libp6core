@@ -33,6 +33,8 @@ class LIBPUMPKINSHARED_EXPORT DirectoryWatcher : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(DirectoryWatcher)
   QFileSystemWatcher *_qfsw;
+  // TODO should allow several addDirectory() per dirname, maybe renaming to addWatch()
+  // current semantics are misleading since the last addDirectory() overrides other ones
   QHash<QString,QRegularExpression> _watches; // dirname -> filepattern
   QHash<QString,QHash<QString,QDateTime>> _files; // dirname -> (basename,lastmodified)
   mutable QMutex _mutex;
