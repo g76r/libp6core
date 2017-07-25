@@ -18,11 +18,14 @@
 #include <string>
 
 int main(int, char **) {
+  int matchedLength = -1;
   RadixTree<int> rt1 { { "bar", 2 }, { "bar", 3 }, { "foo", 1 }, { "baz", 4 } };
   qDebug().noquote() << rt1.toDebugString();
   RadixTree<int> rt2 { { "foo", 1 }, { "bar", 2 }, { "", 6 } };
   qDebug().noquote() << rt2.toDebugString();
   RadixTree<int> rt3 { { "foo", 1 }, { "bar", 2 }, { "f", 3 }, { "fo", 4 } };
+  qDebug() << "lookup fo" << rt3.value("fo", -2, &matchedLength);
+  qDebug() << "" << matchedLength;
   qDebug().noquote() << rt3.toDebugString();
   RadixTree<std::function<int(const char*)>> rt4 {
   { "strlen", ::strlen },
@@ -32,7 +35,9 @@ int main(int, char **) {
   };
   qDebug().noquote() << rt4.toDebugString();
   RadixTree<int> rt5 { { "foo", 1 }, { "bar", 2 }, { "f", 3, true },
-                       { "fo", 4 } };
+                       { "fo", 4 }, };
   qDebug().noquote() << rt5.toDebugString();
+  RadixTree<int> rt6 { { "!foo", 1 }, { "", 7, true } };
+  qDebug().noquote() << rt6.toDebugString();
   return 0;
 }

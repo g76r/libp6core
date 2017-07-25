@@ -109,7 +109,7 @@ class LIBPUMPKINSHARED_EXPORT RadixTree {
         ;
       //qDebug() << "" << i << (int)key[i] << (int)_fragment[i] << key
       //         << _fragment << !!_isPrefix << !!isPrefix << _childrenCount;
-      if (!_fragment[i] && !key[i] && (_nodetype != Prefix || isPrefix)) {
+      if (!_fragment[i] && !key[i]) {
         // exact match -> override old value
         //qDebug() << "" << "exact match" << _fragment << key << this;
         _value = value;
@@ -123,24 +123,27 @@ class LIBPUMPKINSHARED_EXPORT RadixTree {
         auto oldFragment = _fragment;
         _children = 0;
         _childrenCount = 0;
-        _fragment = strdup(_fragment);
-        _fragment[i] = 0; // must be done before new Node()
-        _length = i;
-        auto mainChild = new Node(oldFragment+i, _value,
-                                  isPrefix ? Prefix : Exact, this);
-        mainChild->_children = oldChildren;
-        mainChild->_childrenCount = oldChildrenCount;
-        free(oldFragment);
-        if (key[i]) {
-          // inserted key > this node key or totally different (for root node),
-          // need a second child
-          _value = T();
-          new Node(key+i, value, _nodetype, this);
-          _nodetype = Empty;
-        } else { // inserted key is exactly this node key, override value
+        //_fragment = strdup(_fragment);
+        _length -= strlen(_fragment)-i; // must be done before new Node()
+        Node *mainChild;
+        if (/*oldFragment[i] && */!key[i]) {
+          // inserted key shorter than this node key
+          // override value and add a child for the remaining
+          mainChild = new Node(oldFragment+i, _value, _nodetype, this);
           _value = value;
           _nodetype = isPrefix ? Prefix : Exact;
+        } else {
+          //qDebug() << "full fork" << oldFragment << oldFragment+i << key+i << isPrefix << nodetypeToString(_nodetype);
+          // full fork
+          // reset value and add two children for both branches
+          mainChild = new Node(oldFragment+i, _value, _nodetype, this);
+          new Node(key+i, value, isPrefix ? Prefix : Exact, this);
+          _value = T();
+          _nodetype = Empty;
         }
+        mainChild->_children = oldChildren;
+        mainChild->_childrenCount = oldChildrenCount;
+        _fragment[i] = 0; // shorten _fragment without reallocating memory
       } else {
         //qDebug() << "" << "among children" << i << _fragment << key << this;
         for (int j = 0; j < _childrenCount; ++j) {
@@ -219,7 +222,7 @@ class LIBPUMPKINSHARED_EXPORT RadixTree {
     }
     QString toDebugString(QString indentation = QString()) const {
       QString s, v = valueToDebugString();
-      s += indentation + _fragment + " " + QString::number(_length)
+      s += indentation + '"'+ _fragment + "\" " + QString::number(_length)
           //+ " " + (_value ? "set" : "null")
           + " " + nodetypeToString(_nodetype)
           + (_nodetype == Empty || v.isNull() ? "" :  " -> " + v) + "\n";
@@ -281,7 +284,7 @@ public:
     for (const RadixTreeInitializerHelper<T> &helper : list)
       for (const char *key: helper._keys)
         insert(key, helper._value, helper._isPrefix);
-    //dumpContent();
+    //qDebug().noquote() << toDebugString();
   }
   RadixTree(QHash<QString,T> hash) : RadixTree() {
     foreach (const QString &key, hash.keys())
@@ -340,7 +343,6 @@ public:
     RadixTree<T> that;
     foreach (const T &key, hash.keys())
       that.insert(hash.value(key).toUtf8().constData(), key);
-    //that.dumpContent();
     return that;
   }
   static RadixTree<T> reversed(QHash<T,const char *> hash) {
@@ -360,7 +362,7 @@ public:
       that.insert(map.value(key), key);
   }
   QString toDebugString() {
-    QString s = "RadixTree" + QString::number((quint64)this, 16) + '\n';
+    QString s = "RadixTree 0x" + QString::number((quint64)this, 16) + '\n';
     if (d->_root)
       s += d->_root->toDebugString();
     return s;
