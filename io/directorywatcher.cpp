@@ -26,8 +26,9 @@ DirectoryWatcher::DirectoryWatcher(QObject *parent)
           this, &DirectoryWatcher::handleDirectoryChanged);
 }
 
-bool DirectoryWatcher::addDirectory(const QString &dirname,
-                                    const QRegularExpression &filepattern) {
+bool DirectoryWatcher::addDirectory(
+    const QString &dirname, const QRegularExpression &filepattern,
+    bool processExistingFilesAsAppearing) {
   QMutexLocker locker(&_mutex);
   QDir dir(dirname);
   QFileInfo fi(dirname);
@@ -57,6 +58,10 @@ bool DirectoryWatcher::addDirectory(const QString &dirname,
       continue;
     //qDebug() << "  fileInit" << fi.filePath() << dirname << basename;
     files.insert(basename, fi.lastModified());
+    if (processExistingFilesAsAppearing) {
+      //qDebug() << "  fileAppeared" << fi.filePath() << dirname << basename;
+      emit fileAppeared(fi.filePath(), dirname, basename);
+    }
   }
   _errorString = QString();
   return true;

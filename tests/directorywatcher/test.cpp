@@ -38,6 +38,7 @@ int main(int argc, char **argv) {
                    const QString &basename) {
     qDebug() << "fileChanged" << path << dirname << basename;
   });
-  dw.addDirectory("/tmp", "^4");
+  dw.addDirectory("/tmp", "^4", true);
+  dw.addDirectory("/tmp", "^3");
   app.exec();
 }

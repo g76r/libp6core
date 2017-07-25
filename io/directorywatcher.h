@@ -43,15 +43,22 @@ public:
   /** Add a directory to watch list, with given regexp filter.
    * E.g. "/tmp", "^a" will watch every file begining with a in /tmp
    * Sets errorString and return false on error.
+   * Emit fileAppeared() for preexisting files if
+   * processExistingFilesAsAppearing is true.
    * thread-safe */
   bool addDirectory(const QString &dirname,
-                    const QRegularExpression &filepattern);
+                    const QRegularExpression &filepattern,
+                    bool processExistingFilesAsAppearing = false);
   /** Add a directory to watch list, with given regexp filter.
    * E.g. "/tmp", "^a" will watch every file begining with a in /tmp
    * Sets errorString and return false on error.
+   * Emit fileAppeared() for preexisting files if
+   * processExistingFilesAsAppearing is true.
    * thread-safe */
-  bool addDirectory(const QString &dirname, const QString &filepattern) {
-    return addDirectory(dirname, QRegularExpression(filepattern)); }
+  bool addDirectory(const QString &dirname, const QString &filepattern,
+                    bool processExistingFilesAsAppearing = false) {
+    return addDirectory(dirname, QRegularExpression(filepattern),
+                        processExistingFilesAsAppearing); }
   /** Add a directory to watch list, watching any file without filter.
    * Sets errorString and return false on error.
    * thread-safe */
