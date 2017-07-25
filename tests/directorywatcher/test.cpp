@@ -15,6 +15,7 @@
 #include "io/directorywatcher.h"
 #include <QtDebug>
 #include <QCoreApplication>
+#include <QTimer>
 
 int main(int argc, char **argv) {
   QCoreApplication app(argc, argv);
@@ -38,7 +39,17 @@ int main(int argc, char **argv) {
                    const QString &basename) {
     qDebug() << "fileChanged" << path << dirname << basename;
   });
+  system("touch /tmp/4");
+  system("touch /tmp/3");
   dw.addDirectory("/tmp", "^4", true);
   dw.addDirectory("/tmp", "^3");
+  QTimer::singleShot(3000, &app, &QCoreApplication::quit);
+  QTimer::singleShot(1000, []() {
+      system("touch /tmp/4");
+      system("touch /tmp/3");
+      system("touch /tmp/44");
+      system("touch /tmp/33");
+  });
+  qDebug() << "---";
   app.exec();
 }
