@@ -357,77 +357,77 @@ public:
 };
 
 template <>
-QString RadixTree<signed char>::Node::valueToDebugString() const {
+inline QString RadixTree<signed char>::Node::valueToDebugString() const {
   return QString::number(_value);
 }
 
 template <>
-QString RadixTree<unsigned char>::Node::valueToDebugString() const {
+inline QString RadixTree<unsigned char>::Node::valueToDebugString() const {
   return QString::number(_value);
 }
 
 template <>
-QString RadixTree<signed short>::Node::valueToDebugString() const {
+inline QString RadixTree<signed short>::Node::valueToDebugString() const {
   return QString::number(_value);
 }
 
 template <>
-QString RadixTree<unsigned short>::Node::valueToDebugString() const {
+inline QString RadixTree<unsigned short>::Node::valueToDebugString() const {
   return QString::number(_value);
 }
 
 template <>
-QString RadixTree<signed int>::Node::valueToDebugString() const {
+inline QString RadixTree<signed int>::Node::valueToDebugString() const {
   return QString::number(_value);
 }
 
 template <>
-QString RadixTree<unsigned int>::Node::valueToDebugString() const {
+inline QString RadixTree<unsigned int>::Node::valueToDebugString() const {
   return QString::number(_value);
 }
 
 template <>
-QString RadixTree<signed long>::Node::valueToDebugString() const {
+inline QString RadixTree<signed long>::Node::valueToDebugString() const {
   return QString::number(_value);
 }
 
 template <>
-QString RadixTree<unsigned long>::Node::valueToDebugString() const {
+inline QString RadixTree<unsigned long>::Node::valueToDebugString() const {
   return QString::number(_value);
 }
 
 template <>
-QString RadixTree<signed long long>::Node::valueToDebugString() const {
+inline QString RadixTree<signed long long>::Node::valueToDebugString() const {
   return QString::number(_value);
 }
 
 template <>
-QString RadixTree<unsigned long long>::Node::valueToDebugString() const {
+inline QString RadixTree<unsigned long long>::Node::valueToDebugString() const {
   return QString::number(_value);
 }
 
 template <>
-QString RadixTree<float>::Node::valueToDebugString() const {
+inline QString RadixTree<float>::Node::valueToDebugString() const {
   return QString::number(_value);
 }
 
 template <>
-QString RadixTree<double>::Node::valueToDebugString() const {
+inline QString RadixTree<double>::Node::valueToDebugString() const {
   return QString::number(_value);
 }
 
 template <>
-QString RadixTree<const void*>::Node::valueToDebugString() const {
+inline QString RadixTree<const void*>::Node::valueToDebugString() const {
   return QString::number((qulonglong)_value, 16);
 }
 
 template <>
-QString RadixTree<QString>::Node::valueToDebugString() const {
+inline QString RadixTree<QString>::Node::valueToDebugString() const {
   return _value;
 }
 
 template <>
-QString RadixTree<const char *>::Node::valueToDebugString() const {
+inline QString RadixTree<const char *>::Node::valueToDebugString() const {
   return QString::fromUtf8(_value);
 }
 
