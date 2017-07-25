@@ -24,8 +24,7 @@ build_tests:
     - cd -
     - qmake INCLUDEPATH+=libqtpf
     - make
-    - cd tests && qmake && make
-    - (cd ..; for D in $(grep SUBDIRS ./tests.pro|cut -d= -f2); do (cd $D; echo ==== $D ====; [ -e ./run_test ] && ./run_test || ./test); done)
+    - (cd tests && qmake && make && for D in $(grep SUBDIRS ./tests.pro|cut -d= -f2); do (cd $D; echo ==== $D ====; [ -e ./run_test ] && ./run_test || ./test); done)
   tags:
     - qt
     - c++
