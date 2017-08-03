@@ -213,6 +213,11 @@ class LIBPUMPKINSHARED_EXPORT ParamSet : public ParamsProvider {
 
 public:
   ParamSet();
+  /** First item processe as a key, second one as the matching value and so on.
+   * If list size is odd the last key will be inserted with "" as value. */
+  ParamSet(std::initializer_list<QString> list);
+  ParamSet(std::initializer_list<std::pair<QString,QString>> list);
+  ParamSet(std::initializer_list<std::pair<QString,QVariant>> list);
   ParamSet(const ParamSet &other);
   ParamSet(QHash<QString,QString> params);
   /** For multi-valued keys, only most recently inserted value is kept. */

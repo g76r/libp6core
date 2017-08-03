@@ -123,6 +123,29 @@ public:
 ParamSet::ParamSet() {
 }
 
+ParamSet::ParamSet(std::initializer_list<QString> list) {
+  for (auto it = std::begin(list); it != std::end(list); ++it) {
+    auto key = *it;
+    ++it;
+    if (it != std::end(list)) {
+      setValue(key, *it);
+    } else {
+      setValue(key, QString(""));
+      break;
+    }
+  }
+}
+
+ParamSet::ParamSet(std::initializer_list<std::pair<QString,QString>> list) {
+  for (const std::pair<QString,QString> &p : list)
+    setValue(p.first, p.second);
+}
+
+ParamSet::ParamSet(std::initializer_list<std::pair<QString,QVariant>> list) {
+  for (const std::pair<QString,QVariant> &p : list)
+    setValue(p.first, p.second.toString());
+}
+
 ParamSet::ParamSet(const ParamSet &other) : d(other.d) {
 }
 
