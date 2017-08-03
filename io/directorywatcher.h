@@ -21,6 +21,7 @@
 #include <QHash>
 #include <QMutex>
 #include <QDateTime>
+#include <QVector>
 
 class QFileSystemWatcher;
 
@@ -33,9 +34,7 @@ class LIBPUMPKINSHARED_EXPORT DirectoryWatcher : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(DirectoryWatcher)
   QFileSystemWatcher *_qfsw;
-  // TODO should allow several addDirectory() per dirname, maybe renaming to addWatch()
-  // current semantics are misleading since the last addDirectory() overrides other ones
-  QHash<QString,QRegularExpression> _watches; // dirname -> filepattern
+  QHash<QString,QVector<QRegularExpression>> _watches; // dirname -> filepatterns (last inserted last in vector order)
   QHash<QString,QHash<QString,QDateTime>> _files; // dirname -> (basename,lastmodified)
   mutable QMutex _mutex;
   QString _errorString;
@@ -47,44 +46,67 @@ public:
    * Sets errorString and return false on error.
    * Emit fileAppeared() for preexisting files if
    * processExistingFilesAsAppearing is true.
+   * Do nothing if the watch already exists.
    * thread-safe */
-  bool addDirectory(const QString &dirname,
-                    const QRegularExpression &filepattern,
-                    bool processExistingFilesAsAppearing = false);
+  bool addWatch(const QString &dirname,
+                const QRegularExpression &filepattern,
+                bool processExistingFilesAsAppearing = false);
   /** Add a directory to watch list, with given regexp filter.
    * E.g. "/tmp", "^a" will watch every file begining with a in /tmp
    * Sets errorString and return false on error.
    * Emit fileAppeared() for preexisting files if
    * processExistingFilesAsAppearing is true.
+   * Do nothing if the watch already exists.
    * thread-safe */
-  bool addDirectory(const QString &dirname, const QString &filepattern,
-                    bool processExistingFilesAsAppearing = false) {
-    return addDirectory(dirname, QRegularExpression(filepattern),
-                        processExistingFilesAsAppearing); }
+  bool addWatch(const QString &dirname, const QString &filepattern,
+                bool processExistingFilesAsAppearing = false) {
+    return addWatch(dirname, QRegularExpression(filepattern),
+                    processExistingFilesAsAppearing); }
   /** Add a directory to watch list, watching any file without filter.
    * Sets errorString and return false on error.
+   * Do nothing if the watch already exists.
    * thread-safe */
   bool addDirectory(const QString &dirname) {
-    return addDirectory(dirname, QRegularExpression()); }
-  /** Remove directory from watch list
+    return addWatch(dirname, QRegularExpression()); }
+  /** Remove a watch from watch list
+   * Sets errorString and return false on error.
+   * thread-safe */
+  bool removeWatch(const QString &dirname,
+                   const QRegularExpression &filepattern);
+  /** Remove a watch from watch list
+   * Sets errorString and return false on error.
+   * thread-safe */
+  bool removeWatch(const QString &dirname,
+                   const QString &filepattern) {
+    return removeWatch(dirname, QRegularExpression(filepattern)); }
+  /** Remove whole directory (every watches) from watch list
    * Sets errorString and return false on error.
    * thread-safe */
   bool removeDirectory(const QString &dirname);
   /** Remove all directories from watch list
    * Sets errorString and return false on error.
    * thread-safe */
-  bool removeAllDirectories();
-  /** thread-safe */
+  bool removeAllWatches();
+  /** Give error message of last error.
+   * Thread-safe since it won't crash if called by several threads, but without
+   * guarantee that it's the right "last" message if several threads call
+   * addXxx() and removeXxx() methods at the same time.
+   * Actually DirectoryWatcher's thread-safety is mainly a matter of allowing
+   * several threads one for configuration operations and as many as needed for
+   * slots connected to its signals. */
   QString errorString() const;
 
 signals:
   void directoryChanged(const QString &dirname);
   void fileAppeared(const QString &path, const QString &dirname,
-                    const QString &basename);
+                    const QString &basename,
+                    const QRegularExpression &filepattern);
   void fileDisappeared(const QString &path, const QString &dirname,
-                       const QString &basename);
+                       const QString &basename,
+                       const QRegularExpression &filepattern);
   void fileChanged(const QString &path, const QString &dirname,
-                   const QString &basename);
+                   const QString &basename,
+                   const QRegularExpression &filepattern);
 
 private:
   void handleDirectoryChanged(const QString &path);

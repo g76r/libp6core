@@ -41,8 +41,8 @@ int main(int argc, char **argv) {
   });
   system("mkdir -p /tmp/secondary");
   system("touch /tmp/4 /tmp/secondary/3");
-  dw.addDirectory("/tmp", "^4", true);
-  dw.addDirectory("/tmp/secondary", "^3");
+  dw.addWatch("/tmp", "^4", true);
+  dw.addWatch("/tmp/secondary", "^3");
   QTimer::singleShot(30000, &app, &QCoreApplication::quit);
   QTimer::singleShot(1000, []() {
       qDebug() << "---";

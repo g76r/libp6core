@@ -26,7 +26,7 @@ DirectoryWatcher::DirectoryWatcher(QObject *parent)
           this, &DirectoryWatcher::handleDirectoryChanged);
 }
 
-bool DirectoryWatcher::addDirectory(
+bool DirectoryWatcher::addWatch(
     const QString &dirname, const QRegularExpression &filepattern,
     bool processExistingFilesAsAppearing) {
   QMutexLocker locker(&_mutex);
@@ -41,7 +41,7 @@ bool DirectoryWatcher::addDirectory(
         .arg(dirname);
     return false;
   }
-  // LATER check & warn for identical directories registred with different paths
+  // LATER check & warn for identical directories registred with different paths due to symlinks or multiple mounts
   if (!_watches.contains(dirname)) {
     if (!_qfsw->addPath(dirname)) {
       _errorString = tr("DirectoryWatcher: cannot subscribe to system events"
@@ -49,18 +49,41 @@ bool DirectoryWatcher::addDirectory(
       return false;
     }
   }
-  _watches.insert(dirname, filepattern);
-  dir.setFilter(QDir::Files|QDir::Hidden);
-  QHash<QString,QDateTime> &files = _files[dirname];
-  for (const QFileInfo &fi : dir.entryInfoList()) {
-    const QString basename = fi.fileName();
-    if (!filepattern.match(basename).hasMatch())
-      continue;
-    //qDebug() << "  fileInit" << fi.filePath() << dirname << basename;
-    files.insert(basename, fi.lastModified());
-    if (processExistingFilesAsAppearing) {
-      //qDebug() << "  fileAppeared" << fi.filePath() << dirname << basename;
-      emit fileAppeared(fi.filePath(), dirname, basename);
+  if (!_watches[dirname].contains(filepattern)) {
+    _watches[dirname].append(filepattern);
+    dir.setFilter(QDir::Files|QDir::Hidden);
+    QHash<QString,QDateTime> &files = _files[dirname];
+    for (const QFileInfo &fi : dir.entryInfoList()) {
+      const QString basename = fi.fileName();
+      if (!filepattern.match(basename).hasMatch())
+        continue;
+      //qDebug() << "  fileInit" << fi.filePath() << dirname << basename;
+      files.insert(basename, fi.lastModified());
+      if (processExistingFilesAsAppearing) {
+        //qDebug() << "  fileAppeared" << fi.filePath() << dirname << basename;
+        emit fileAppeared(fi.filePath(), dirname, basename, filepattern);
+      }
+    }
+  }
+  _errorString = QString();
+  return true;
+}
+
+bool DirectoryWatcher::removeWatch(const QString &dirname,
+                                   const QRegularExpression &filepattern) {
+  QMutexLocker locker(&_mutex);
+  if (!_watches.value(dirname).contains(filepattern)) {
+    _errorString = tr("DirectoryWatcher: cannot remove unknown watch %1 %2")
+        .arg(dirname).arg(filepattern.pattern());
+    return false;
+  }
+  _watches[dirname].removeAll(filepattern);
+  if (_watches[dirname].size()) {
+    _watches.remove(dirname);
+    if (!_qfsw->removePath(dirname)) {
+      _errorString = tr("DirectoryWatcher: cannot unsubscribe from system "
+                        "events on directory %1").arg(dirname);
+      return false;
     }
   }
   _errorString = QString();
@@ -84,7 +107,7 @@ bool DirectoryWatcher::removeDirectory(const QString &dirname) {
   return true;
 }
 
-bool DirectoryWatcher::removeAllDirectories() {
+bool DirectoryWatcher::removeAllWatches() {
   QMutexLocker locker(&_mutex);
   _errorString = QString();
   for (const QString &dirname : _watches.keys()) {
@@ -118,26 +141,40 @@ void DirectoryWatcher::handleDirectoryChanged(const QString &dirname) {
     if (files.contains(basename)) {
       const QDateTime oldLastModified = files.value(basename);
       if (oldLastModified != fi.lastModified()) {
-        //qDebug() << "  fileChanged" << fi.filePath() << dirname << basename;
-        //qDebug() << "    " << oldLastModified << fi.lastModified();
-        emit fileChanged(fi.filePath(), dirname, basename);
-        files.insert(basename, fi.lastModified());
+        for (const QRegularExpression &filepattern: _watches.value(dirname)) {
+          if (filepattern.match(basename).hasMatch()) {
+            //qDebug() << "  fileChanged" << fi.filePath() << dirname << basename;
+            //qDebug() << "    " << oldLastModified << fi.lastModified();
+            emit fileChanged(fi.filePath(), dirname, basename, filepattern);
+            files.insert(basename, fi.lastModified());
+            goto found;
+          }
+        }
+        files.remove(basename); // file no longer matched by any pattern
+        found:;
       }
     } else {
-      if (!_watches.value(dirname).match(basename).hasMatch())
-        continue;
-      //qDebug() << "  fileAppeared" << fi.filePath() << dirname << basename;
-      emit fileAppeared(fi.filePath(), dirname, basename);
-      files.insert(basename, fi.lastModified());
+      for (const QRegularExpression &filepattern: _watches.value(dirname)) {
+        if (filepattern.match(basename).hasMatch()) {
+          //qDebug() << "  fileAppeared" << fi.filePath() << dirname << basename;
+          emit fileAppeared(fi.filePath(), dirname, basename, filepattern);
+          files.insert(basename, fi.lastModified());
+        }
+      }
     }
   }
   for (const QString &basename : files.keys()) {
     if (!newFiles.contains(basename)) {
       files.remove(basename);
-      //qDebug() << "  fileDisappeared" << dirname+QDir::separator()+basename
-      //         << dirname << basename;
-      emit fileDisappeared(dirname+QDir::separator()+basename, dirname,
-                           basename);
+      for (const QRegularExpression &filepattern: _watches.value(dirname)) {
+        if (filepattern.match(basename).hasMatch()) {
+          //qDebug() << "  fileDisappeared" << dirname+QDir::separator()+basename
+          //         << dirname << basename;
+          emit fileDisappeared(dirname+QDir::separator()+basename, dirname,
+                               basename, filepattern);
+          break;
+        }
+      }
     }
   }
   emit directoryChanged(dirname);
