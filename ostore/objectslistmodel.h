@@ -45,19 +45,18 @@ public:
    * @param objectRoleName if empty, use snake cased class name of object
    */
   ObjectsListModel(QObject *parent, const QMetaObject *metaobject,
-                   QByteArray objectRoleName = QByteArray(),
-                   QByteArray rolePrefix = QByteArray(),
+                   QByteArray objectRoleName = { }, QByteArray rolePrefix = { },
                    int baseUserRole = Qt::UserRole);
   ObjectsListModel(const QMetaObject *metaobject,
-                   QByteArray objectRoleName = QByteArray(),
-                   QByteArray rolePrefix = QByteArray(),
+                   QByteArray objectRoleName = { }, QByteArray rolePrefix = { },
                    int baseUserRole = Qt::UserRole)
     : ObjectsListModel(nullptr, metaobject, objectRoleName, rolePrefix,
                        baseUserRole) { }
-  int rowCount(const QModelIndex &parent) const override;
-  QVariant data(const QModelIndex &index, int role) const override;
+  int rowCount(const QModelIndex &parent = { }) const override;
+  QVariant data(const QModelIndex &index,
+                int role = Qt::DisplayRole) const override;
   QVariant headerData(int section, Qt::Orientation orientation,
-                      int role) const override;
+                      int role = Qt::DisplayRole) const override;
   QHash<int, QByteArray> roleNames() const override;
 
 public slots:

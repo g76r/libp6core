@@ -48,7 +48,7 @@ public:
   SqlObjectsStore(
       const QMetaObject *metaobject, QSqlDatabase db, QObject *parent)
     : SqlObjectsStore(metaobject, db, QByteArray(), "id", parent) { }
-  Result create(const QHash<QString, QVariant> &params) override;
+  Result create(const QHash<QString, QVariant> &params = { }) override;
   Result fetch() override;
   Result persist(QObject *object) override;
   Result dispose(QObject *object, bool shouldDelete = true) override;

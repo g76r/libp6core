@@ -19,6 +19,7 @@
 #include <QMetaObject>
 #include <functional>
 #include "libp6core_global.h"
+#include <QVariant>
 
 /** Abstract container for persisting QObjects to either local database or
  * network/cloud store in a way their data attributes are their QObject's
@@ -47,7 +48,7 @@ class LIBPUMPKINSHARED_EXPORT ObjectsStore : public QObject {
     QString _message;
     QObject *_object;
     ResultData() : ResultData(false) { }
-    ResultData(bool success, int code = 0, QString message = QString(),
+    ResultData(bool success, int code = 0, QString message = { },
                QObject *object = nullptr)
       : _success(success), _code(code), _message(message), _object(object) { }
     ResultData(bool success, QObject *object)
@@ -63,7 +64,7 @@ public:
     QSharedDataPointer<ResultData> d;
   public:
     Result() { }
-    Result(bool success, int code = 0, QString message = QString())
+    Result(bool success, int code = 0, QString message = { })
       : d(new ResultData(success, code, message)) { }
     bool success() const { return d ? d->_success : false; }
     operator bool() const { return success(); }
@@ -72,7 +73,8 @@ public:
     QObject *object() const { return d ? d->_object : nullptr; }
   };
 
-  explicit ObjectsStore(const QMetaObject *metaobject, QObject *parent = 0)
+  explicit ObjectsStore(
+      const QMetaObject *metaobject, QObject *parent = nullptr)
     : QObject(parent), _metaobject(metaobject) { }
   /** Apply f to every object in the store.
    * Index is given in call order, without order warranty, and even without the
@@ -86,7 +88,8 @@ public slots:
   /** Create a new object in the store and fetch it.
    * fetched() is emitted
    * @param params: template that can contain some properties set */
-  virtual ObjectsStore::Result create(const QHash<QString,QVariant> &params) = 0;
+  virtual ObjectsStore::Result create(
+      const QHash<QString,QVariant> &params = { }) = 0;
   /** Persist an object in the store, i.e. ensure its state is saved. */
   virtual ObjectsStore::Result persist(QObject *object) = 0;
   /** Remove an object from the store and optionally delete it.
