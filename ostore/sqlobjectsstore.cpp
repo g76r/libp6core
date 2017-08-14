@@ -49,30 +49,32 @@ ObjectsStore::Result SqlObjectsStore::create(
     const QHash<QString,QVariant> &params) {
   // TODO sanitize table and keys names
   QSqlQuery query(_db);
-  QString text = "INSERT INTO "+_tableName;
+  QString sql = "INSERT INTO "+_tableName;
   QStringList keys = params.keys();
   keys.removeAll(_pkPropName); // won't try to set id on creation
   int size = keys.size();
   if (size) {
     qSort(keys);
-    text = text+" ("+keys.join(",")+") VALUES (";
+    sql = sql+" ("+keys.join(",")+") VALUES (";
     for (int i = 0; i < size; ++i) {
       if (i)
-        text += ",";
-      text += "?";
+        sql += ",";
+      sql += "?";
     }
-    text += ")";
+    sql += ")";
+  } else {
+    sql += " DEFAULT VALUES";
   }
-  query.prepare(text);
+  query.prepare(sql);
   for (int i = 0; i < size; ++i) {
     query.bindValue(i, params.value(keys.value(i)));
   }
   if (query.exec()) {
     // LATER support other RDBMS than sqlite
-    query.prepare("SELECT last_insert_rowid()");
+    query.prepare(sql = "SELECT last_insert_rowid()");
     if (query.exec() && query.next()) {
       QVariant rowid = query.value(0);
-      query.prepare("SELECT * from "+_tableName+" WHERE rowid = ?");
+      query.prepare(sql = "SELECT * from "+_tableName+" WHERE rowid = ?");
       query.bindValue(0, rowid);
       if (query.exec() && query.next()) {
         QSqlRecord r = query.record();
@@ -84,7 +86,7 @@ ObjectsStore::Result SqlObjectsStore::create(
   }
   QSqlError error = query.lastError();
   return Result(false, error.number(),
-                error.driverText()+" "+error.databaseText());
+                error.driverText()+" "+error.databaseText()+" : "+sql);
 }
 
 inline QObject *SqlObjectsStore::mapToObject(const QSqlRecord &r) {
@@ -134,7 +136,8 @@ ObjectsStore::Result SqlObjectsStore::fetch() {
   // TODO sanitize table and keys names
   // LATER limit fetched rows count
   QSqlQuery query(_db);
-  query.prepare("SELECT * from "+_tableName);
+  QString sql = "SELECT * from "+_tableName;
+  query.prepare(sql);
   if (query.exec()) {
     while (query.next())
       mapToObject(query.record());
@@ -142,7 +145,7 @@ ObjectsStore::Result SqlObjectsStore::fetch() {
   }
   QSqlError error = query.lastError();
   return Result(false, error.number(),
-                error.driverText()+" "+error.databaseText());
+                error.driverText()+" "+error.databaseText()+" : "+sql);
 }
 
 void SqlObjectsStore::persistSenderSlot() {
@@ -162,7 +165,7 @@ ObjectsStore::Result SqlObjectsStore::persist(QObject *object) {
   if (!pk.isValid())
     return Result(false, -2, "invalid primary key");
   QSqlQuery query(_db);
-  QString text = "UPDATE "+_tableName+" SET ";
+  QString sql = "UPDATE "+_tableName+" SET ";
   const QMetaObject *metaobject = object->metaObject();
   int first = metaobject->propertyOffset();
   int count = metaobject->propertyCount();
@@ -175,12 +178,12 @@ ObjectsStore::Result SqlObjectsStore::persist(QObject *object) {
       continue;
     props.append(prop);
     if (j)
-      text += ", ";
-    text += QString::fromLatin1(prop.name())+" = ?";
+      sql += ", ";
+    sql += QString::fromLatin1(prop.name())+" = ?";
     ++j;
   }
-  text += " WHERE "+_pkPropName+" = ?";
-  query.prepare(text);
+  sql += " WHERE "+_pkPropName+" = ?";
+  query.prepare(sql);
   int i = 0;
   for (const QMetaProperty &prop: props) {
     query.bindValue(i, prop.read(object));
@@ -194,9 +197,9 @@ ObjectsStore::Result SqlObjectsStore::persist(QObject *object) {
   QSqlError error = query.lastError();
   qWarning() << "cannot update database for object" << _metaobject->className()
              << pk << "error:" << error.number() << error.driverText()
-             << error.databaseText();
+             << error.databaseText() << "request:" << sql;
   return Result(false, error.number(),
-                error.driverText()+" "+error.databaseText());
+                error.driverText()+" "+error.databaseText()+" : "+sql);
 }
 
 ObjectsStore::Result SqlObjectsStore::dispose(
@@ -208,8 +211,8 @@ ObjectsStore::Result SqlObjectsStore::dispose(
   if (!pk.isValid())
     return Result(false, -2, "invalid primary key");
   QSqlQuery query(_db);
-  QString text = "DELETE FROM "+_tableName+" WHERE "+_pkPropName+" = ?";
-  query.prepare(text);
+  QString sql = "DELETE FROM "+_tableName+" WHERE "+_pkPropName+" = ?";
+  query.prepare(sql);
   query.bindValue(0, pk);
   if (query.exec()) {
     disconnect(object, 0, this, 0);
@@ -221,7 +224,7 @@ ObjectsStore::Result SqlObjectsStore::dispose(
   }
   QSqlError error = query.lastError();
   return Result(false, error.number(),
-                error.driverText()+" "+error.databaseText());
+                error.driverText()+" "+error.databaseText()+" : "+sql);
 }
 
 long SqlObjectsStore::apply(
