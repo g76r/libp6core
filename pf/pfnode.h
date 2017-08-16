@@ -1,4 +1,4 @@
-/* Copyright 2012-2016 Hallowyn and others.
+/* Copyright 2012-2017 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -35,16 +35,16 @@ class LIBQTPFSHARED_EXPORT PfNodeData : public QSharedData {
   PfArray _array;
 
 public:
-  explicit PfNodeData(QString name = QString()) : _name(name),
-    _isComment(false) { }
+  explicit PfNodeData(const QString &name = QString())
+    : _name(name), _isComment(false) { }
 
 private:
-  PfNodeData(QString name, QString content, bool isComment)
+  PfNodeData(const QString &name, const QString &content, bool isComment)
     : _name(name), _isComment(isComment) {
     if (!content.isEmpty())
       _fragments.append(PfFragment(content));
   }
-  PfNodeData(QString name, PfArray array)
+  PfNodeData(const QString &name, const PfArray &array)
     : _name(name), _isComment(false) {
     _array = array;
   }
@@ -71,16 +71,16 @@ private:
     }
     return s;
   }
-  qint64 writePf(QIODevice *target, PfOptions options) const;
-  qint64 writeFlatXml(QIODevice *target, PfOptions options) const;
+  qint64 writePf(QIODevice *target, const PfOptions &options) const;
+  qint64 writeFlatXml(QIODevice *target, const PfOptions &options) const;
   //qint64 writeCompatibleXml(QIODevice &target) const;
   //inline void buildChildrenFromArray() const;
-  inline qint64 internalWritePf(QIODevice *target, QString indent,
-                                PfOptions options) const;
-  inline qint64 internalWritePfSubNodes(QIODevice *target, QString indent,
-                                        PfOptions options) const;
-  inline qint64 internalWritePfContent(QIODevice *target, QString indent,
-                                       PfOptions options) const;
+  inline qint64 internalWritePf(
+      QIODevice *target, QString indent, const PfOptions &options) const;
+  inline qint64 internalWritePfSubNodes(
+      QIODevice *target, QString indent, const PfOptions &options) const;
+  inline qint64 internalWritePfContent(
+      QIODevice *target, const QString &indent, const PfOptions &options) const;
   /** Provide the content as a byte array.
     * If there are lazy-loaded binary fragments, they are loaded into memory,
     * in the returned QByteArray but do not keep them cached inside PfContent
@@ -90,13 +90,14 @@ private:
   QByteArray contentAsByteArray() const;
   /** Write content to target device in PF format (with escape sequences and
     * binary headers). */
-  qint64 writePfContent(QIODevice *target, PfOptions options) const;
+  qint64 writePfContent(QIODevice *target, const PfOptions &options) const;
   /** Write content to target device in raw data format (no PF escape sequences
     * but actual content). */
-  qint64 writeRawContent(QIODevice *target, PfOptions options) const;
+  qint64 writeRawContent(QIODevice *target, const PfOptions &options) const;
   /** Write content to target device in XML format, embeding binary fragments
     * using base64 encoding. */
-  qint64 writeXmlUsingBase64Content(QIODevice *target, PfOptions options) const;
+  qint64 writeXmlUsingBase64Content(
+      QIODevice *target, const PfOptions &options) const;
 
 };
 
@@ -112,66 +113,68 @@ public:
   PfNode() { }
   PfNode(const PfNode &other) : d(other.d) { }
   /** If name is empty, the node will be null. */
-  explicit PfNode(QString name)
+  explicit PfNode(const QString &name)
       : d(name.isEmpty() ? 0 : new PfNodeData(name)) { }
   /** If name is empty, the node will be null. */
-  PfNode(QString name, QString content)
+  PfNode(const QString &name, const QString &content)
     : d(name.isEmpty() ? 0 : new PfNodeData(name, content, false)) { }
   /** If name is empty, the node will be null. */
-  PfNode(QString name, qint64 content)
+  PfNode(const QString &name, qint64 content)
     : d(name.isEmpty()
         ? 0 : new PfNodeData(name, QString::number(content), false)) { }
   /** If name is empty, the node will be null. */
-  PfNode(QString name, quint64 content)
+  PfNode(const QString &name, quint64 content)
     : d(name.isEmpty()
         ? 0 : new PfNodeData(name, QString::number(content), false)) { }
   /** If name is empty, the node will be null. */
-  PfNode(QString name, qint32 content)
+  PfNode(const QString &name, qint32 content)
     : d(name.isEmpty()
         ? 0 : new PfNodeData(name, QString::number(content), false)) { }
   /** If name is empty, the node will be null. */
-  PfNode(QString name, quint32 content)
+  PfNode(const QString &name, quint32 content)
     : d(name.isEmpty()
         ? 0 : new PfNodeData(name, QString::number(content), false)) { }
   /** If name is empty, the node will be null. */
-  PfNode(QString name, qint16 content)
+  PfNode(const QString &name, qint16 content)
     : d(name.isEmpty()
         ? 0 : new PfNodeData(name, QString::number(content), false)) { }
   /** If name is empty, the node will be null. */
-  PfNode(QString name, quint16 content)
+  PfNode(const QString &name, quint16 content)
     : d(name.isEmpty()
         ? 0 : new PfNodeData(name, QString::number(content), false)) { }
   /** If name is empty, the node will be null. */
-  PfNode(QString name, double content)
+  PfNode(const QString &name, double content)
     : d(name.isEmpty()
         ? 0 : new PfNodeData(name, QString::number(content), false)) { }
   /** If name is empty, the node will be null. */
-  PfNode(QString name, float content)
+  PfNode(const QString &name, float content)
     : d(name.isEmpty()
         ? 0 : new PfNodeData(name, QString::number(content), false)) { }
   /** If name is empty, the node will be null. */
-  PfNode(QString name, PfArray array)
+  PfNode(const QString &name, const PfArray &array)
     : d(name.isEmpty() ? 0 : new PfNodeData(name, array)) { }
   /** If name is empty, the node will be null (and children ignored). */
-  PfNode(QString name, std::initializer_list<PfNode> children)
+  PfNode(const QString &name, std::initializer_list<PfNode> children)
       : d(name.isEmpty() ? 0 : new PfNodeData(name)) {
     if (!name.isEmpty())
       appendChildren(children);
   }
   /** If name is empty, the node will be null (and children ignored). */
-  PfNode(QString name, QString content, std::initializer_list<PfNode> children)
+  PfNode(const QString &name, const QString &content,
+         std::initializer_list<PfNode> children)
     : d(name.isEmpty() ? 0 : new PfNodeData(name, content, false)) {
     if (!name.isEmpty())
       appendChildren(children);
   }
   /** If name is empty, the node will be null (and children ignored). */
-  PfNode(QString name, PfArray array, std::initializer_list<PfNode> children)
+  PfNode(const QString &name, const PfArray &array,
+         std::initializer_list<PfNode> children)
     : d(name.isEmpty() ? 0 : new PfNodeData(name, array)) {
     if (!name.isEmpty())
       appendChildren(children);
   }
   /** Create a comment node. */
-  static PfNode createCommentNode(QString comment) {
+  static PfNode createCommentNode(const QString &comment) {
     return PfNode(new PfNodeData(QStringLiteral("comment"), comment, true)); }
   PfNode &operator=(const PfNode &other) { d = other.d; return *this; }
   /** Build a PfNode from PF external format.
@@ -183,7 +186,7 @@ public:
   /** A node has an empty string name if and only if the node is null. */
   QString name() const { return d ? d->_name : QString(); }
   /** Replace node name. If name is empty, the node will become null. */
-  PfNode &setName(QString name) {
+  PfNode &setName(const QString &name) {
     if (name.isEmpty())
       d = 0;
     else {
@@ -201,9 +204,9 @@ public:
   const QList<PfNode> children() const {
     return d ? d->_children : _emptyList; }
   /** prepend a child to existing children (do nothing if child.isNull()) */
-  inline PfNode &prependChild(PfNode child);
+  inline PfNode &prependChild(const PfNode &child);
   /** append a child to existing children (do nothing if child.isNull()) */
-  inline PfNode &appendChild(PfNode child);
+  inline PfNode &appendChild(const PfNode &child);
   PfNode &appendChildren(std::initializer_list<PfNode> children) {
     for (const PfNode &child : children)
       appendChild(child);
@@ -216,20 +219,20 @@ public:
     for (const PfNode &child : children)
       appendChild(child);
     return *this; }
-  PfNode &prependCommentChild(QString comment) {
+  PfNode &prependCommentChild(const QString &comment) {
     return prependChild(createCommentNode(comment)); }
-  PfNode &appendCommentChild(QString comment) {
+  PfNode &appendCommentChild(const QString &comment) {
     return appendChild(createCommentNode(comment)); }
   /** @return first text child by name
    * Most of the time one will use attribute() and xxxAttribute() methods rather
    * than directly calling firstTextChildByName(). */
-  PfNode firstTextChildByName(QString name) const;
+  PfNode firstTextChildByName(const QString &name) const;
   /** Return a child content knowing the child name.
     * QString() if no text child exists.
     * QString("") if child exists but has no content
     * If several children have the same name the first text one is choosen.
     * The goal is to emulate XML attributes, hence the name. */
-  QString attribute(QString name) const {
+  QString attribute(const QString &name) const {
     PfNode child = firstTextChildByName(name);
     return child.isNull() ? QString() : child.contentAsString(); }
   /** Return a child content knowing the child name.
@@ -237,14 +240,14 @@ public:
     * QString("") if child exists but has no content
     * If several children have the same name the first text one is choosen.
     * The goal is to emulate XML attributes, hence the name. */
-  QString attribute(QString name, QString defaultValue) const {
+  QString attribute(const QString &name, const QString &defaultValue) const {
     PfNode child = firstTextChildByName(name);
     return child.isNull() ? defaultValue : child.contentAsString(); }
   /** Return the content (as string) of every child with a given name.
    * This is the same as attribute() with multi-valued semantics.
    * Skip children with non-text content.
    * If no text child matches the name, the list is empty. */
-  QStringList stringChildrenByName(QString name) const;
+  QStringList stringChildrenByName(const QString &name) const;
   /** Return the string content of children, splited into string pairs at the
    * first whitespace, one list item per child.
    * Child whole content and both strings of the pair are trimmed.
@@ -252,36 +255,37 @@ public:
    * Chilren without whitespace will have the first pair item set to the whole
    * node content (which may be empty) and the second one to QString().
    * If no text child matches the name, the list is empty. */
-  QList<QPair<QString,QString> > stringsPairChildrenByName(QString name) const;
+  QList<QPair<QString,QString>> stringsPairChildrenByName(
+      const QString &name) const;
   /** Return the integer content of children, splited into pairs at the
    * first whitespace, one list item per child.
    * @see stringsPairChildrenByName() */
-  QList<QPair<QString, qint64> > stringLongPairChildrenByName(
-      QString name) const;
+  QList<QPair<QString, qint64>> stringLongPairChildrenByName(
+      const QString &name) const;
   /** @see contentAsLong() */
-  qint64 longAttribute(QString name, qint64 defaultValue = 0,
+  qint64 longAttribute(const QString &name, qint64 defaultValue = 0,
                        bool *ok = 0) const {
     return firstTextChildByName(name).contentAsLong(defaultValue, ok); }
   /** @see contentAsDouble() */
-  double doubleAttribute(QString name, double defaultValue,
+  double doubleAttribute(const QString &name, double defaultValue,
                          bool *ok = 0) const {
     return firstTextChildByName(name).contentAsDouble(defaultValue, ok); }
   // LATER contentAsDateTime()
   /** @see contentAsBool() */
-  bool boolAttribute(QString name, bool defaultValue = false,
+  bool boolAttribute(const QString &name, bool defaultValue = false,
                      bool *ok = 0) const {
     return firstTextChildByName(name).contentAsBool(defaultValue, ok); }
   /** @see contentAsStringList() */
-  QStringList stringListAttribute(QString name) const {
+  QStringList stringListAttribute(const QString &name) const {
     return firstTextChildByName(name).contentAsStringList(); }
   /** Set a child named 'name' with 'content' content and remove any other
     * child named 'name'. */
-  PfNode &setAttribute(QString name, QString content);
+  PfNode &setAttribute(const QString &name, const QString &content);
   /** Convenience method */
-  PfNode &setAttribute(QString name, QVariant content) {
+  PfNode &setAttribute(const QString &name, const QVariant &content) {
     return setAttribute(name, content.toString()); }
   /** Convenience method (assume content is UTF-8 encoded) */
-  PfNode &setAttribute(QString name, const char *content) {
+  PfNode &setAttribute(const QString &name, const char *content) {
     return setAttribute(name, QString::fromUtf8(content)); }
   // LATER setAttribute() for QDateTime, QDate, QTime and QStringList/QSet<QString>
   /** Set a child named 'name' with 'content' content and remove any other child
@@ -290,14 +294,14 @@ public:
    * backslash escapement for whitespace and backslashes).
    * @see contentAsStringList()
    */
-  PfNode &setAttribute(QString name, QStringList content);
+  PfNode &setAttribute(const QString &name, const QStringList &content);
   /** Construct a list of all children named 'name'. */
-  const QList<PfNode> childrenByName(QString name) const;
-  bool hasChild(QString name) const;
+  const QList<PfNode> childrenByName(const QString &name) const;
+  bool hasChild(const QString &name) const;
   /** This PfNode has no children. Null nodes are leaves */
   inline bool isLeaf() const;
   inline PfNode &removeAllChildren();
-  PfNode &removeChildrenByName(QString name);
+  PfNode &removeChildrenByName(const QString &name);
 
   // Content related methods //////////////////////////////////////////////////
 
@@ -347,7 +351,7 @@ public:
   /** @return PfArray() if not isArray() */
   PfArray contentAsArray() const { return d ? d->_array : PfArray(); }
   /** Append text fragment to context (and remove array if any). */
-  PfNode &appendContent(const QString text) {
+  PfNode &appendContent(const QString &text) {
     if (!d)
       d = new PfNodeData();
     d->_array.clear();
@@ -369,7 +373,7 @@ public:
   PfNode &appendContent(const char *utf8text) {
     return appendContent(QString::fromUtf8(utf8text)); }
   /** Append in-memory binary fragment to context (and remove array if any). */
-  PfNode &appendContent(QByteArray data, QString surface = QString()) {
+  PfNode &appendContent(QByteArray data, const QString &surface = QString()) {
     if (!d)
       d = new PfNodeData();
     d->_array.clear();
@@ -381,7 +385,7 @@ public:
   }
   /** Append lazy-loaded binary fragment to context (and remove array if any) */
   PfNode &appendContent(QIODevice *device, qint64 length, qint64 offset,
-                        QString surface = QString()) {
+                        const QString &surface = QString()) {
     if (!d)
       d = new PfNodeData();
     d->_array.clear();
@@ -391,19 +395,19 @@ public:
     return *this;
   }
   /** Replace current content with text fragment. */
-  PfNode &setContent(QString text) {
+  PfNode &setContent(const QString &text) {
     clearContent(); appendContent(text); return *this; }
   /** Replace current content with text fragment. */
   PfNode &setContent(const char *utf8text) {
     setContent(QString::fromUtf8(utf8text)); return *this; }
   /** Replace current content with in-memory binary fragment. */
-  PfNode &setContent(QByteArray data) {
+  PfNode &setContent(const QByteArray &data) {
     clearContent(); appendContent(data); return *this; }
   /** Replace current content with lazy-loaded binary fragment. */
   PfNode &setContent(QIODevice *device, qint64 length, qint64 offset) {
     clearContent(); appendContent(device, length, offset); return *this; }
   /** Replace current content with an array. */
-  PfNode &setContent(PfArray array) {
+  PfNode &setContent(const PfArray &array) {
     if (!d)
       d = new PfNodeData();
     d->_fragments.clear();
@@ -413,7 +417,7 @@ public:
   /** Replace current content with a text content containing a space separated
    * strings list. Backspaces and spaces inside strings are escaped with
    * backslash */
-  PfNode &setContent(QStringList strings);
+  PfNode &setContent(const QStringList &strings);
   /** Remove current content and make the node content empty (and thus text). */
   PfNode &clearContent() {
     if (d) {
@@ -444,7 +448,7 @@ public:
     * written as an XML element) and with binary content converted into
     * Base64 text. Encoding is always UTF-8. */
   qint64 writeFlatXml(QIODevice *target,
-                      PfOptions options = PfOptions()) const {
+                      const PfOptions &options = PfOptions()) const {
     return d ? d->writeFlatXml(target, options) : 0; }
   // LATER test, debug and uncomment method
   /* Write node and whole tree (children recursively) in compatible XML format.
@@ -478,7 +482,7 @@ inline PfNode &PfNode::removeAllChildren() {
   return *this;
 }
 
-inline PfNode &PfNode::prependChild(PfNode child) {
+inline PfNode &PfNode::prependChild(const PfNode &child) {
   if (!child.isNull()) {
     if (!d)
       d = new PfNodeData();
@@ -487,7 +491,7 @@ inline PfNode &PfNode::prependChild(PfNode child) {
   return *this;
 }
 
-inline PfNode &PfNode::appendChild(PfNode child) {
+inline PfNode &PfNode::appendChild(const PfNode &child) {
   if (!child.isNull()) {
     if (!d)
       d = new PfNodeData();

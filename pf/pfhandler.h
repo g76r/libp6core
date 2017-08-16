@@ -1,4 +1,4 @@
-/* Copyright 2012-2016 Hallowyn and others.
+/* Copyright 2012-2017 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -37,14 +37,14 @@ public:
   PfHandler();
   virtual ~PfHandler();
   QString errorString() const { return _errorString; }
-  void setErrorString(QString string) { _errorString = string; }
+  void setErrorString(const QString &string) { _errorString = string; }
   int errorLine() const { return _errorLine; }
   int errorColumn() const { return _errorColumn; }
   bool errorOccured() const { return _errorOccured; }
   /** Event method called once at document begining.
     * @return must return false iff an error occur (and optionaly set
     * errorString before) */
-  virtual bool startDocument(PfOptions options);
+  virtual bool startDocument(const PfOptions &options);
   /** Event method called each time a node is encountered, before any content
     * events (text() and binary()) and subnodes events.
     * @param names names of nodes path to current node, last item of 'names' is
@@ -52,11 +52,11 @@ public:
     *        in the list
     * @return must return false iff an error occur (and optionaly set
     * errorString before) */
-  virtual bool startNode(QVector<QString> names);
+  virtual bool startNode(const QVector<QString> &names);
   /** Event method called each time a text fragment is encountered.
     * @return must return false iff an error occur (and optionaly set
     * errorString before) */
-  virtual bool text(QString text);
+  virtual bool text(const QString &text);
   /** Event method called each time a binary fragment is encountered, if the
     * parser decided that the fragment should be lazy loaded.
     * Note that the handler can decided to load the data immediately, by reading
@@ -67,27 +67,27 @@ public:
     * @return must return false iff an error occur (and optionaly set
     * errorString before) */
   virtual bool binary(QIODevice *device, qint64 length, qint64 offset,
-                      QString surface);
+                      const QString &surface);
   /** Event method called each time a binary fragment is encountered, if the
     * parser decided to load the fragment immediately.
     * @return must return false iff an error occur (and optionaly set
     * errorString before) */
-  virtual bool binary(QByteArray data, QString surface);
+  virtual bool binary(const QByteArray &data, const QString &surface);
   /** Event method called each time an array is encountered.
     * @return must return false iff an error occur (and optionaly set
     * errorString before) */
-  virtual bool array(PfArray array);
+  virtual bool array(const PfArray &array);
   /** Event method called at end of node parsing, after any content
     * events (text() and binary()) and subnodes events.
     * @param names names of nodes path to current node, same as with startNode()
     * @return must return false iff an error occur (and optionaly set
     * errorString before) */
-  virtual bool endNode(QVector<QString> names);
+  virtual bool endNode(const QVector<QString> &names);
   /** Event method called each time a comment is encountered, but if
     * ignoreComments is set to true.
     * @return must return false iff an error occur (and optionaly set
     * errorString before) */
-  virtual bool comment(QString content);
+  virtual bool comment(const QString &content);
   /** Event method called once at document ending.
     * @return must return false iff an error occur (and optionaly set
     * errorString before) */

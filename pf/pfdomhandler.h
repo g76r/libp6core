@@ -1,4 +1,4 @@
-/* Copyright 2012-2016 Hallowyn and others.
+/* Copyright 2012-2017 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -34,16 +34,16 @@ public:
   /** @param ignoreComments if set, won't receive comment() calls */
   PfDomHandler();
   ~PfDomHandler();
-  bool startDocument(PfOptions options);
-  bool startNode(QVector<QString> names);
-  bool text(QString text);
+  bool startDocument(const PfOptions &options) override;
+  bool startNode(const QVector<QString> &names) override;
+  bool text(const QString &text) override;
   bool binary(QIODevice *device, qint64 length, qint64 offset,
-              QString surface);
-  bool binary(QByteArray data, QString surface);
-  bool array(PfArray array);
-  bool endNode(QVector<QString> names);
-  bool comment(QString content);
-  bool endDocument();
+              const QString &surface) override;
+  bool binary(const QByteArray &data, const QString &surface) override;
+  bool array(const PfArray &array) override;
+  bool endNode(const QVector<QString> &names) override;
+  bool comment(const QString &content) override;
+  bool endDocument() override;
   QList<PfNode> roots() const { return _roots; }
   void clear() { _path.clear(); _roots.clear(); }
 };

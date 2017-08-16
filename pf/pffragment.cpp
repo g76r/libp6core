@@ -1,4 +1,4 @@
-/* Copyright 2016 Hallowyn and others.
+/* Copyright 2016-2017 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -91,7 +91,7 @@ bool PfAbstractBinaryFragmentData::applySurface(
 }
 
 qint64 PfAbstractBinaryFragmentData::measureSurface(
-    QByteArray data, QString surface) const {
+    const QByteArray &data, QString surface) const {
   QString layer = takeFirstLayer(surface);
   if (layer.isEmpty() || layer == "null") {
     // do nothing
@@ -138,7 +138,7 @@ qint64 PfAbstractBinaryFragmentData::measureSurface(
 }
 
 void PfBinaryFragmentData::setSurface(
-    QString surface, bool shouldAdjustSize) {
+    const QString &surface, bool shouldAdjustSize) {
   _surface = PfOptions::normalizeSurface(surface);
   if (shouldAdjustSize && !_surface.isNull()) {
     QByteArray data = _data;
@@ -147,7 +147,7 @@ void PfBinaryFragmentData::setSurface(
 }
 
 void PfLazyBinaryFragmentData::setSurface(
-    QString surface, bool shouldAdjustSize) {
+    const QString &surface, bool shouldAdjustSize) {
   _surface = PfOptions::normalizeSurface(surface);
   if (shouldAdjustSize && !_surface.isNull()) {
     qint64 pos = _device->pos();
@@ -193,7 +193,7 @@ bool PfFragmentData::isLazyBinary() const {
 }
 
 qint64 PfTextFragmentData::write(
-    QIODevice *target, Format format, PfOptions options) const {
+    QIODevice *target, Format format, const PfOptions &options) const {
   switch (format) {
   case Raw:
     return target->write(_text.toUtf8());
@@ -218,12 +218,12 @@ bool PfAbstractBinaryFragmentData::isBinary() const {
 }
 
 qint64 PfBinaryFragmentData::write(
-    QIODevice *target, Format format, PfOptions options) const {
+    QIODevice *target, Format format, const PfOptions &options) const {
   return writeDataApplyingSurface(target, format, options, _data);
 }
 
 qint64 PfLazyBinaryFragmentData::write(
-    QIODevice *target, Format format, PfOptions options) const {
+    QIODevice *target, Format format, const PfOptions &options) const {
   qint64 total = 0, pos = 0;
   if (!_device || !target)
     goto error;
@@ -287,7 +287,7 @@ bool PfLazyBinaryFragmentData::isLazyBinary() const {
 }
 
 qint64 PfAbstractBinaryFragmentData::writeDataApplyingSurface(
-    QIODevice *target, Format format, PfOptions options,
+    QIODevice *target, Format format, const PfOptions &options,
     QByteArray data) const {
   QString outputSurface = options.outputSurface();
   if (outputSurface.isNull() && format == Pf)

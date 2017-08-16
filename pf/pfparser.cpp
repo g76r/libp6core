@@ -1,4 +1,4 @@
-/* Copyright 2012-2016 Hallowyn and others.
+/* Copyright 2012-2017 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -77,7 +77,7 @@ static inline bool finishArray(PfHandler *handler, PfArray *array,
 }
 
 // LATER make read and write timeout parameters
-bool PfParser::parse(QIODevice *source, PfOptions options) {
+bool PfParser::parse(QIODevice *source, const PfOptions &options) {
   bool lazyBinaryFragments = options.shouldLazyLoadBinaryFragments();
   if (!_handler) {
     qWarning() << "PfParser::parse called before setting a handler";
@@ -641,8 +641,8 @@ error:
   return false;
 }
 
-bool PfParser::parse(QByteArray source, PfOptions options) {
-  QBuffer buf(&source);
+bool PfParser::parse(const QByteArray &source, const PfOptions &options) {
+  QBuffer buf(const_cast<QByteArray*>(&source));
   if (!buf.open(QBuffer::ReadOnly))
     return false; // unlikely to occur
   return parse(&buf, options);
@@ -675,8 +675,8 @@ static qint64 copy(QIODevice *dest, QIODevice *src, qint64 max,
 }
 
 bool PfParser::readAndFinishBinaryFragment(
-    QIODevice *source, bool *lazyBinaryFragments, const QString surface,
-    qint64 l, PfOptions options) {
+    QIODevice *source, bool *lazyBinaryFragments, const QString &surface,
+    qint64 l, const PfOptions &options) {
   //qDebug() << "readAndFinishBinaryFragment" << lazyBinaryFragments
   //         << surface << l;
   if (l <= 0)
@@ -715,7 +715,7 @@ bool PfParser::readAndFinishBinaryFragment(
   return true;
 }
 
-bool PfParser::parse(QString pathOrUrl, PfOptions options) {
+bool PfParser::parse(const QString &pathOrUrl, const PfOptions &options) {
   QFile file(pathOrUrl);
   if (!_handler) {
     qWarning() << "PfParser::parse called before setting a handler";

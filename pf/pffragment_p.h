@@ -1,4 +1,4 @@
-/* Copyright 2016 Hallowyn and others.
+/* Copyright 2016-2017 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -26,7 +26,7 @@ protected:
 public:
   virtual ~PfFragmentData();
   virtual qint64 write(
-      QIODevice *target, Format format, PfOptions options) const = 0;
+      QIODevice *target, Format format, const PfOptions &options) const = 0;
   virtual bool isText() const;
   virtual QString text() const;
   virtual bool isEmpty() const;
@@ -37,10 +37,11 @@ public:
 class LIBQTPFSHARED_EXPORT PfTextFragmentData : public PfFragmentData {
   friend class PfFragment;
   QString _text;
-  explicit PfTextFragmentData(QString text) : _text(text) { }
-  qint64 write(QIODevice *target, Format format, PfOptions options) const;
-  bool isText() const;
-  QString text() const;
+  explicit PfTextFragmentData(const QString &text) : _text(text) { }
+  qint64 write(QIODevice *target, Format format,
+               const PfOptions &options) const override;
+  bool isText() const override;
+  QString text() const override;
 };
 
 class LIBQTPFSHARED_EXPORT PfAbstractBinaryFragmentData
@@ -49,26 +50,27 @@ class LIBQTPFSHARED_EXPORT PfAbstractBinaryFragmentData
 protected:
   QString _surface;
   qint64 _size; // real data size, surface removed
-  bool isBinary() const;
+  bool isBinary() const override;
 
   PfAbstractBinaryFragmentData() : _size(0) { }
   inline qint64 writeDataApplyingSurface(
-      QIODevice *target, Format format, PfOptions options,
+      QIODevice *target, Format format, const PfOptions &options,
       QByteArray data) const;
   inline QString takeFirstLayer(QString &surface) const;
   inline bool removeSurface(QByteArray &data, QString surface) const;
   inline bool applySurface(QByteArray &data, QString surface) const;
-  inline qint64 measureSurface(QByteArray data, QString surface) const;
+  inline qint64 measureSurface(const QByteArray &data, QString surface) const;
 };
 
 class LIBQTPFSHARED_EXPORT PfBinaryFragmentData
     : public PfAbstractBinaryFragmentData {
   friend class PfFragment;
   QByteArray _data;
-  PfBinaryFragmentData(QByteArray data, QString surface)
+  PfBinaryFragmentData(const QByteArray &data, const QString &surface)
     : _data(data) { setSurface(surface, true); }
-  void setSurface(QString surface, bool shouldAdjustSize);
-  qint64 write(QIODevice *target, Format format, PfOptions options) const;
+  void setSurface(const QString &surface, bool shouldAdjustSize);
+  qint64 write(QIODevice *target, Format format,
+               const PfOptions &options) const override;
 };
 
 class LIBQTPFSHARED_EXPORT PfLazyBinaryFragmentData
@@ -78,12 +80,13 @@ class LIBQTPFSHARED_EXPORT PfLazyBinaryFragmentData
   qint64 _length; // raw data length on device, surface applyied
   qint64 _offset;
   PfLazyBinaryFragmentData(
-      QIODevice *device, qint64 length, qint64 offset, QString surface)
+      QIODevice *device, qint64 length, qint64 offset, const QString &surface)
     : _device(device), _length(length), _offset(offset) {
     setSurface(surface, true); }
-  void setSurface(QString surface, bool shouldAdjustSize);
-  qint64 write(QIODevice *target, Format format, PfOptions options) const;
-  bool isLazyBinary() const;
+  void setSurface(const QString &surface, bool shouldAdjustSize);
+  qint64 write(QIODevice *target, Format format,
+               const PfOptions &options) const override;
+  bool isLazyBinary() const override;
 };
 
 /** Fragment of PF node content, this class is only for internal use of
@@ -105,10 +108,11 @@ public:
   PfFragment &operator =(const PfFragment &other) { d = other.d; return *this; }
 
 private:
-  explicit PfFragment(QString text) : d(new PfTextFragmentData(text)) { }
-  PfFragment(QIODevice *device, qint64 length, qint64 offset, QString surface)
+  explicit PfFragment(const QString &text) : d(new PfTextFragmentData(text)) { }
+  PfFragment(QIODevice *device, qint64 length, qint64 offset,
+             const  QString &surface)
     : d(new PfLazyBinaryFragmentData(device, length, offset, surface)) { }
-  PfFragment(QByteArray data, QString surface)
+  PfFragment(const QByteArray &data, const QString &surface)
     : d(new PfBinaryFragmentData(data, surface)) { }
   bool isEmpty() const { return d ? d->isEmpty() : true; }
   bool isText() const { return d ? d->isText() : true; }
@@ -117,15 +121,16 @@ private:
   /** .isNull() if binary fragment */
   QString text() const { return d ? d->text() : QString(); }
   /** Write content as PF-escaped string or binary with header. */
-  qint64 writePf(QIODevice *target, PfOptions options) const {
+  qint64 writePf(QIODevice *target, const PfOptions &options) const {
     return d ? d->write(target, PfFragmentData::Pf, options) : 0;
   }
   /** Write actual content in unescaped format. */
-  qint64 writeRaw(QIODevice *target, PfOptions options) const {
+  qint64 writeRaw(QIODevice *target, const PfOptions &options) const {
     return d ? d->write(target, PfFragmentData::Raw, options) : 0;
   }
   /** Write content as XML string, using base64 encoding for binary fragments */
-  qint64 writeXmlUsingBase64(QIODevice *target, PfOptions options) const {
+  qint64 writeXmlUsingBase64(QIODevice *target,
+                             const PfOptions &options) const {
     return d ? d->write(target, PfFragmentData::XmlBase64, options) : 0;
   }
 };

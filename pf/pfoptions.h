@@ -1,4 +1,4 @@
-/* Copyright 2012-2016 Hallowyn and others.
+/* Copyright 2012-2017 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -96,13 +96,13 @@ public:
     * defined when parsing or creating the fragment through API.
     * Default: QString(). */
   QString outputSurface() const { return d->_outputSurface; }
-  PfOptions &setOutputSurface(const QString value) {
+  PfOptions &setOutputSurface(const QString &value) {
     d->_outputSurface = normalizeSurface(value); return *this; }
   /** Normalize a surface string description, e.g. transform ":::null:zlib:hex:"
     * into "zlib:hex".
     * This method is rather intended for internal use by the PF library but it
     * is part of the public API and can be used by any user code. */
-  static QString normalizeSurface(QString surface);
+  static QString normalizeSurface(const QString &surface);
   /** Prefered method to protect special characters.
     * default: PfDoubleQuoteProtection. */
   PfPreferedCharactersProtection preferedCharactersProtection() const {

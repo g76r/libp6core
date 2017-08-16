@@ -1,4 +1,4 @@
-/* Copyright 2012-2016 Hallowyn and others.
+/* Copyright 2012-2017 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -38,7 +38,7 @@ public:
   /** Parse from a QIODevice source, such as a QFile or a QTcpSocket.
     * Support both sequential and seekable devices, but lazy-loading of
     * binary fragments will be disabled on sequential devices. */
-  bool parse(QIODevice *source, PfOptions options = PfOptions());
+  bool parse(QIODevice *source, const PfOptions &options = PfOptions());
   /** Parse from a QByteArray source.
     * The current implementation does not support lazy loading (i.e. every
     * binary fragment will be copied from the original QByteArray and thus
@@ -46,14 +46,14 @@ public:
     * Therefore the current implementation is only suitable for small
     * PF documents without binary fragments or if the source array is a
     * temporary array and will be deleted soon after parsing. */
-  bool parse(QByteArray source, PfOptions options = PfOptions());
+  bool parse(const QByteArray &source, const PfOptions &options = PfOptions());
   /** Open a file and call parse(QIODevice*,PfOptions). */
-  bool parse(QString pathOrUrl, PfOptions options = PfOptions());
+  bool parse(const QString &pathOrUrl, const PfOptions &options = PfOptions());
 
 private:
   inline bool readAndFinishBinaryFragment(
-      QIODevice *source, bool *lazyBinaryFragments, const QString surface,
-      qint64 l, PfOptions options);
+      QIODevice *source, bool *lazyBinaryFragments, const QString &surface,
+      qint64 l, const PfOptions &options);
 };
 
 #endif // PFPARSER_H

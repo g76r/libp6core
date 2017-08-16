@@ -1,4 +1,4 @@
-/* Copyright 2012-2016 Hallowyn and others.
+/* Copyright 2012-2017 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -67,7 +67,7 @@ inline QString pfquotechar(unsigned char c) {
       .append("0123456789abcdef"[c&0xf]);
 }
 
-inline QString pftoxmlname(QString string) {
+inline QString pftoxmlname(const QString &string) {
   QString s;
   for (int i = 0; i < string.size(); ++i) {
     QChar c = string.at(i);
@@ -83,7 +83,7 @@ inline QString pftoxmlname(QString string) {
   return s;
 }
 
-inline QString pftoxmltext(QString string) {
+inline QString pftoxmltext(const QString &string) {
   QString s;
   for (int i = 0; i < string.size(); ++i) {
     QChar c = string.at(i);

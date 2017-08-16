@@ -1,4 +1,4 @@
-/* Copyright 2012-2016 Hallowyn and others.
+/* Copyright 2012-2017 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -38,8 +38,9 @@ class LIBQTPFSHARED_EXPORT PfArray {
 public:
   PfArray() {  }
   PfArray(const PfArray &other) : d(other.d) { }
-  explicit PfArray(QList<QStringList> rows) { appendRows(rows); }
-  explicit PfArray(QStringList headers, QList<QStringList> rows) {
+  explicit PfArray(const QList<QStringList> &rows) { appendRows(rows); }
+  explicit PfArray(const QStringList &headers,
+                   const QList<QStringList> &rows) {
     appendHeaders(headers);
     appendRows(rows);
   }
@@ -76,7 +77,7 @@ public:
   /** set value in a given cell, autoenlarging array if indexes are out of range
     * @param row 0 for first row, not including headers
     * @param column 0 for first column */
-  void setCell(int row, int column, QString value) {
+  void setCell(int row, int column, const QString &value) {
     if (!d)
       d = new PfArrayData();
     for (int i = d->_headers.size(); i < column; ++i)
@@ -88,29 +89,29 @@ public:
       r.append(QString());
     r[column] = value;
   }
-  void appendHeader(QString value) {
+  void appendHeader(const QString &value) {
     if (!d)
       d = new PfArrayData();
     d->_headers.append(value);
   }
-  void appendHeaders(QStringList headers) {
+  void appendHeaders(const QStringList &headers) {
     if (!d)
       d = new PfArrayData();
     foreach (const QString &value, headers)
       d->_headers.append(value);
   }
-  void appendRow(QStringList values = QStringList()) {
+  void appendRow(const QStringList &values = QStringList()) {
     if (!d)
       d = new PfArrayData();
     d->_rows.append(values);
     for (int i = d->_headers.size(); i < values.size(); ++i)
       d->_headers.append(QString::number(i));
   }
-  void appendRows(QList<QStringList> rows) {
+  void appendRows(const QList<QStringList> &rows) {
     foreach (const QStringList &row, rows)
       appendRow(row);
   }
-  void appendCell(QString value) {
+  void appendCell(const QString &value) {
     if (!d)
       d = new PfArrayData();
     if (d->_rows.size() == 0)
@@ -133,13 +134,13 @@ public:
   /** Write array content in PF CSV-like format, escaping PF special characters.
     */
   qint64 writePf(QIODevice *target,
-                 PfOptions options = PfOptions()) const;
-  QString toPf(PfOptions options = PfOptions()) const;
+                 const PfOptions &options = PfOptions()) const;
+  QString toPf(const PfOptions &options = PfOptions()) const;
   /** Write array content in HTML-like table-tr-th-td format.
     * @param withHeaders if true include a header line
     */
   qint64 writeTrTd(QIODevice *target, bool withHeaders = true,
-                   PfOptions options = PfOptions()) const;
+                   const PfOptions &options = PfOptions()) const;
   /** Fill the target node (for instance the node containing this array) with
     * one child per row, named after the row number (begining with 0) and
     * itself having one child per cell, named after the column number and

@@ -1,4 +1,4 @@
-/* Copyright 2012-2016 Hallowyn and others.
+/* Copyright 2012-2017 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -34,7 +34,7 @@ Q_CONSTRUCTOR_FUNCTION(staticInit)
 static QRegularExpression _whitespace("\\s");
 static QRegularExpression _leadingwhitespace("\\A\\s+");
 
-qint64 PfNodeData::writePf(QIODevice *target, PfOptions options) const {
+qint64 PfNodeData::writePf(QIODevice *target, const PfOptions &options) const {
   if (options.shouldIndent())
     return internalWritePf(target, "", options);
   else
@@ -42,7 +42,7 @@ qint64 PfNodeData::writePf(QIODevice *target, PfOptions options) const {
 }
 
 qint64 PfNodeData::writeFlatXml(QIODevice *target,
-                                PfOptions options) const  {
+                                const PfOptions &options) const  {
   // may indent one day (however xmllint does that well)
   qint64 total = 0, r;
   // opening tag
@@ -161,8 +161,8 @@ qint64 PfNodeData::writeFlatXml(QIODevice *target,
   return total;
 }*/
 
-qint64 PfNodeData::internalWritePf(QIODevice *target, QString indent,
-                                   PfOptions options) const {
+qint64 PfNodeData::internalWritePf(
+    QIODevice *target, QString indent, const PfOptions &options) const {
   qint64 total = 0, r;
   if (isComment()) {
     // comment node
@@ -241,8 +241,8 @@ qint64 PfNodeData::internalWritePf(QIODevice *target, QString indent,
   return total;
 }
 
-qint64 PfNodeData::internalWritePfSubNodes(QIODevice *target, QString indent,
-                                       PfOptions options) const {
+qint64 PfNodeData::internalWritePfSubNodes(
+    QIODevice *target, QString indent, const PfOptions &options) const {
   qint64 total = 0, r;
   if(_children.size()) {
     if (!indent.isNull())
@@ -266,8 +266,8 @@ qint64 PfNodeData::internalWritePfSubNodes(QIODevice *target, QString indent,
   return total;
 }
 
-qint64 PfNodeData::internalWritePfContent(QIODevice *target, QString indent,
-                                      PfOptions options) const {
+qint64 PfNodeData::internalWritePfContent(
+    QIODevice *target, const QString &indent, const PfOptions &options) const {
   qint64 total = 0, r;
   if (isArray()) {
     if ((r = target->write("\n")) < 0)
@@ -306,7 +306,7 @@ qint64 PfNodeData::internalWritePfContent(QIODevice *target, QString indent,
   return total;
 }
 
-const QList<PfNode> PfNode::childrenByName(QString name) const {
+const QList<PfNode> PfNode::childrenByName(const QString &name) const {
   QList<PfNode> list;
   if (!name.isEmpty())
     foreach (PfNode child, children())
@@ -315,7 +315,7 @@ const QList<PfNode> PfNode::childrenByName(QString name) const {
   return list;
 }
 
-bool PfNode::hasChild(QString name) const {
+bool PfNode::hasChild(const QString &name) const {
   if (!name.isEmpty())
     foreach (PfNode child, children())
       if (!child.isNull() && child.d->_name == name)
@@ -323,7 +323,7 @@ bool PfNode::hasChild(QString name) const {
   return false;
 }
 
-PfNode PfNode::firstTextChildByName(QString name) const {
+PfNode PfNode::firstTextChildByName(const QString &name) const {
   if (!name.isEmpty())
     foreach (PfNode child, children())
       if (!child.isNull() && child.d->_name == name && child.isText())
@@ -331,7 +331,7 @@ PfNode PfNode::firstTextChildByName(QString name) const {
   return PfNode();
 }
 
-QStringList PfNode::stringChildrenByName(QString name) const {
+QStringList PfNode::stringChildrenByName(const QString &name) const {
   QStringList sl;
   if (!name.isEmpty())
     foreach (PfNode child, children())
@@ -341,7 +341,7 @@ QStringList PfNode::stringChildrenByName(QString name) const {
 }
 
 QList<QPair<QString,QString> > PfNode::stringsPairChildrenByName(
-    QString name) const {
+    const QString &name) const {
   QList<QPair<QString,QString> > l;
   if (!name.isEmpty())
     foreach (PfNode child, children())
@@ -356,9 +356,9 @@ QList<QPair<QString,QString> > PfNode::stringsPairChildrenByName(
   return l;
 }
 
-QList<QPair<QString, qint64> > PfNode::stringLongPairChildrenByName(
-    QString name) const {
-  QList<QPair<QString,qint64> > l;
+QList<QPair<QString, qint64>> PfNode::stringLongPairChildrenByName(
+    const QString &name) const {
+  QList<QPair<QString,qint64>> l;
   if (!name.isEmpty())
     foreach (PfNode child, children())
       if (!child.isNull() && child.d->_name == name && child.isText()) {
@@ -429,13 +429,13 @@ QStringList PfNode::contentAsTwoStringsList() const {
   return _twoStringsListRegexp.match(contentAsString()).capturedTexts();
 }
 
-PfNode &PfNode::setAttribute(QString name, QString content) {
+PfNode &PfNode::setAttribute(const QString &name, const QString &content) {
   removeChildrenByName(name);
   appendChild(PfNode(name, content));
   return *this;
 }
 
-PfNode &PfNode::setAttribute(QString name, QStringList content) {
+PfNode &PfNode::setAttribute(const QString &name, const QStringList &content) {
   removeChildrenByName(name);
   PfNode child(name);
   child.setContent(content);
@@ -443,7 +443,7 @@ PfNode &PfNode::setAttribute(QString name, QStringList content) {
   return *this;
 }
 
-PfNode &PfNode::setContent(QStringList strings) {
+PfNode &PfNode::setContent(const QStringList &strings) {
   QString v;
   foreach(QString s, strings) {
     s.replace('\\', "\\\\").replace(' ', "\\ ").replace('\t', "\\\t")
@@ -463,7 +463,7 @@ QByteArray PfNode::toPf(PfOptions options) const {
   return ba;
 }
 
-PfNode &PfNode::removeChildrenByName(QString name) {
+PfNode &PfNode::removeChildrenByName(const QString &name) {
   if (d)
     for (int i = 0; i < d->_children.size(); ) {
       PfNode child = d->_children.at(i);
@@ -485,7 +485,8 @@ PfNode PfNode::fromPf(QByteArray source, PfOptions options) {
   return PfNode();
 }
 
-qint64 PfNodeData::writePfContent(QIODevice *target, PfOptions options) const {
+qint64 PfNodeData::writePfContent(
+    QIODevice *target, const PfOptions &options) const {
   if (isArray()) {
     if (options.shouldTranslateArrayIntoTree()) {
       PfNode tmp;
@@ -511,7 +512,8 @@ qint64 PfNodeData::writePfContent(QIODevice *target, PfOptions options) const {
   return total;
 }
 
-qint64 PfNodeData::writeRawContent(QIODevice *target, PfOptions options) const {
+qint64 PfNodeData::writeRawContent(
+    QIODevice *target, const PfOptions &options) const {
   if (isArray())
     return _array.writePf(target, options);
   qint64 total = 0, r;
@@ -525,7 +527,7 @@ qint64 PfNodeData::writeRawContent(QIODevice *target, PfOptions options) const {
 }
 
 qint64 PfNodeData::writeXmlUsingBase64Content(
-    QIODevice *target, PfOptions options) const {
+    QIODevice *target, const PfOptions &options) const {
   if (isArray()) {
     if (options.shouldTranslateArrayIntoTree()) {
       PfNode tmp;
