@@ -23,10 +23,13 @@
 
 class LIBPUMPKINSHARED_EXPORT MailSender {
   QUrl _url;
+  int _smtpTimeoutMs;
 
 public:
   explicit MailSender(QUrl url);
   explicit MailSender(QString url);
+  MailSender(QUrl url, int smtpTimeoutMs);
+  MailSender(QString url, int smtpTimeoutMs);
   /** @return true only if SMTP server accepted to queue the mail */
   bool send(QString sender, QStringList recipients, QVariant body,
             QHash<QString, QString> headers, QList<QVariant> attachments,

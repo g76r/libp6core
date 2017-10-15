@@ -16,21 +16,30 @@
 #include <QTcpSocket>
 #include <QRegExp>
 
-MailSender::MailSender(QUrl url) : _url(url) {
-}
+static int _defaultSmtpTimeoutMs = 5000;
 
-MailSender::MailSender(QString url) : _url(url) {
+static int staticInit() {
+  char *value = getenv("MAILSENDER_SMTP_TIMEOUT");
+  if (value)
+    _defaultSmtpTimeoutMs = ::atoi(value);
+  return 0;
 }
+Q_CONSTRUCTOR_FUNCTION(staticInit)
+
+namespace {
 
 // LATER avoid this ugly QObject subclass without Q_OBJECT
 class EnhancedSocket : public QTcpSocket {
 private:
   QString _lastExpectLine;
+  int _smtpTimeoutMs;
 
 public:
+  EnhancedSocket(int smtpTimeoutMs = _defaultSmtpTimeoutMs)
+    : _smtpTimeoutMs(smtpTimeoutMs) { }
   bool expectPrefix(const QString &prefix,
                     Qt::CaseSensitivity cs = Qt::CaseSensitive) {
-    if (!waitForReadyRead(2000)) {
+    if (!waitForReadyRead(_smtpTimeoutMs)) {
       qWarning() << "read timeout on expectPrefix()" << prefix;
       return false;
     }
@@ -77,6 +86,25 @@ public:
   inline bool valid() const { return _valid; }
 };
 
+} // unnamed namespace
+
+MailSender::MailSender(QUrl url)
+  : _url(url), _smtpTimeoutMs(_defaultSmtpTimeoutMs) {
+}
+
+MailSender::MailSender(QString url)
+  : _url(url), _smtpTimeoutMs(_defaultSmtpTimeoutMs) {
+}
+
+MailSender::MailSender(QUrl url, int smtpTimeoutMs)
+  : _url(url), _smtpTimeoutMs(smtpTimeoutMs) {
+}
+
+MailSender::MailSender(QString url, int smtpTimeoutMs)
+  : _url(url), _smtpTimeoutMs(smtpTimeoutMs) {
+}
+
+
 bool MailSender::send(QString sender, QStringList recipients, QVariant body,
                       QHash<QString, QString> headers,
                       QList<QVariant> attachments, QString &errorString) {
@@ -86,9 +114,9 @@ bool MailSender::send(QString sender, QStringList recipients, QVariant body,
     errorString = "invalid sender address: "+sender;
     return false;
   }
-  EnhancedSocket socket;
+  EnhancedSocket socket(_smtpTimeoutMs);
   socket.connectToHost(_url.host(), _url.port(25));
-  if (!socket.waitForConnected(1000)) {
+  if (!socket.waitForConnected(_smtpTimeoutMs)) {
     errorString = "cannot connect to SMTP server "
         +_url.toString(QUrl::RemovePassword)+": "+socket.errorString();
     return false;
