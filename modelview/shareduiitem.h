@@ -327,6 +327,19 @@ public:
     }
     return QVariant();
   }
+  QVariant uiDataBySectionName(const QString &sectionName,
+                               int role = Qt::DisplayRole) const {
+    // LATER optimize
+    if (!_data)
+      return QVariant();
+    int count = uiSectionCount();
+    for (int section = 0; section < count; ++section) {
+      QString name = uiSectionName(section);
+      if (name == sectionName)
+        return uiData(section, role);
+    }
+    return QVariant();
+  }
   /** Convenience method for uiData(...).toString(). */
   QString uiString(int section, int role = Qt::DisplayRole) const {
     return uiData(section, role).toString(); }
