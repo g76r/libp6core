@@ -327,16 +327,45 @@ public:
     }
     return QVariant();
   }
-  QVariant uiDataBySectionName(const QString &sectionName,
-                               int role = Qt::DisplayRole) const {
+  /** @return section number knowing its name, or -1 */
+  int uiSectionByName(const QString &sectionName) const {
     // LATER optimize
     if (!_data)
-      return QVariant();
+      return -1;
     int count = uiSectionCount();
     for (int section = 0; section < count; ++section) {
       QString name = uiSectionName(section);
       if (name == sectionName)
-        return uiData(section, role);
+        return section;
+    }
+    return -1;
+  }
+  /** Return UI data, like QAbstractItemModel::data().
+   * Using IdRole, IdQualifierRole and QualifiedIdRole query
+   * SharedUiItemData::id() and/or SharedUiItemData::idQualifier() instead of
+   * SharedUiItem::uiData(), regardless the section.
+   * Using HeaderDisplayRole query
+   * SharedUiItemData::uiHeaderData(section, Qt::DisplayRole) instead of
+   * SharedUiItem::uiData(). */
+  QVariant uiDataBySectionName(const QString &sectionName,
+                               int role = Qt::DisplayRole) const {
+    if (_data) {
+      int section = uiSectionByName(sectionName);
+      switch (role) {
+      case IdRole:
+        return _data->id();
+      case IdQualifierRole:
+        return _data->idQualifier();
+      case QualifiedIdRole: {
+        QString qualifier = _data->idQualifier();
+        return qualifier.isEmpty() ? _data->id() : qualifier+":"+_data->id();
+      }
+      case HeaderDisplayRole:
+        return _data->uiHeaderData(section, Qt::DisplayRole);
+      default:
+        if (section >= 0)
+          return uiData(section, role);
+      }
     }
     return QVariant();
   }
