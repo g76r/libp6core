@@ -79,17 +79,21 @@ QVariant SharedUiItemParamsProvider::paramValue(
   Q_UNUSED(alreadyEvaluated)
   bool ok;
   int section = key.toInt(&ok);
+  if (!ok) {
+    if (key == "id")
+      return _item.id();
+    if (key == "idQualifier")
+      return _item.idQualifier();
+    if (key == "qualifiedId")
+      return _item.qualifiedId();
+    section = _item.uiSectionByName(key);
+    ok = section >= 0;
+  }
   if (ok) {
     QVariant value = _item.uiData(section, _role);
     if (value.isValid())
       return value;
   }
-  if (key == "id")
-    return _item.id();
-  if (key == "idQualifier")
-    return _item.idQualifier();
-  if (key == "qualifiedId")
-    return _item.qualifiedId();
   return defaultValue;
 }
 
