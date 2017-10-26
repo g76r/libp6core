@@ -51,6 +51,17 @@ public:
     SharedUiItem item = itemById(idQualifier, id);
     return static_cast<T&>(item);
   }
+  SharedUiItem itemById(QString qualifiedId) const {
+    int colon = qualifiedId.indexOf(':');
+    if (colon >= 0)
+        return itemById(qualifiedId.left(colon), qualifiedId.mid(colon+1));
+    return SharedUiItem();
+  }
+  template <class T>
+  inline T itemById(QString qualifiedId) const {
+    SharedUiItem item = itemById(qualifiedId);
+    return static_cast<T&>(item);
+  }
   SharedUiItemList<> itemsByIdQualifier(QString idQualifier) const;
   template <class T>
   inline SharedUiItemList<T> itemsByIdQualifier(QString idQualifier) const {
