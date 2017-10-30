@@ -81,6 +81,10 @@ private:
 
 public:
   inline SharedUiItemList() { }
+  inline SharedUiItemList(const SharedUiItem &item)
+    : QList<SharedUiItem>({ item }) { }
+  inline SharedUiItemList(std::initializer_list<SharedUiItem> &items)
+    : QList<SharedUiItem>(items) { }
   inline SharedUiItemList(const SharedUiItemList<SharedUiItem> &other)
     : QList<SharedUiItem>(other) { }
   inline SharedUiItemList(const QList<SharedUiItem> &other)
@@ -99,10 +103,10 @@ public:
     T *dummy;
     Q_UNUSED(static_cast<SharedUiItem*>(dummy)); // ensure T is a SharedUiItem
   }
-  QString join(const QString &separator, bool qualified) const {
+  QString join(const QString &separator, bool qualified = false) const {
     return generic_join(separator, qualified);
   }
-  QString join(const QChar separator, bool qualified) const {
+  QString join(const QChar separator, bool qualified = false) const {
     return generic_join(separator, qualified);
   }
 };
