@@ -144,10 +144,19 @@ void SharedUiItemsModel::setDocumentManager(
     disconnect(_documentManager, 0, this, 0);
   _documentManager = documentManager;
   resetData();
-  connect(_documentManager, &SharedUiItemDocumentManager::itemChanged,
-          this, &SharedUiItemsModel::changeItem);
-  connect(_documentManager, &SharedUiItemDocumentManager::dataReset,
-          this, &SharedUiItemsModel::resetData);
+  if (_documentManager) {
+    connect(_documentManager, &SharedUiItemDocumentManager::itemChanged,
+            this, &SharedUiItemsModel::changeItem);
+    connect(_documentManager, &SharedUiItemDocumentManager::dataReset,
+            this, &SharedUiItemsModel::resetData);
+    // LATER also populate data if _itemQualifierFilter is empty
+    for (const QString &idQualifier : _itemQualifierFilter) {
+      for (const SharedUiItem &item
+           : _documentManager->itemsByIdQualifier(idQualifier)) {
+        createOrUpdateItem(item);
+      }
+    }
+  }
 }
 
 void SharedUiItemsModel::resetData() {
