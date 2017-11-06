@@ -154,6 +154,11 @@ SharedUiItem SharedUiItemDocumentTransaction::createNewItem(
   }
 }
 
+QString SharedUiItemDocumentTransaction::generateNewId(
+    QString idQualifier, QString prefix) const {
+  return _dm->generateNewId(this, idQualifier, prefix);
+}
+
 SharedUiItemDocumentTransaction::ChangeItemCommand::ChangeItemCommand(
     SharedUiItemDocumentManager *dm, SharedUiItem newItem, SharedUiItem oldItem,
     QString idQualifier, CoreUndoCommand *parent)

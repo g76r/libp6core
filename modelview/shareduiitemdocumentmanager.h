@@ -300,7 +300,7 @@ protected:
    * one should choose idQualifier as prefix, which is the default (= if prefix
    * is left empty). */
   QString generateNewId(
-      SharedUiItemDocumentTransaction *transaction, QString idQualifier,
+      const SharedUiItemDocumentTransaction *transaction, QString idQualifier,
       QString prefix = QString()) const;
   /** Prepare change: ensure that the change can be performed, record them
    * through transaction->changeItem(), and return true only on success.

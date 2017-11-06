@@ -89,6 +89,8 @@ public:
   bool changeItem(SharedUiItem newItem, SharedUiItem oldItem,
                   QString idQualifier, QString *errorString);
   SharedUiItem createNewItem(QString idQualifier, QString *errorString);
+  /** @see SharedUiItemDocumentManager::generateNewId() */
+  QString generateNewId(QString idQualifier, QString prefix = QString()) const;
 
 private:
   void storeItemChange(SharedUiItem newItem, SharedUiItem oldItem,

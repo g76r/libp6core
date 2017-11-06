@@ -25,7 +25,7 @@ SharedUiItem SharedUiItemDocumentManager::itemById(QString qualifiedId) const {
 }
 
 QString SharedUiItemDocumentManager::generateNewId(
-    SharedUiItemDocumentTransaction *transaction, QString idQualifier,
+    const SharedUiItemDocumentTransaction *transaction, QString idQualifier,
     QString prefix) const {
   QString id;
   if (prefix.isEmpty())
