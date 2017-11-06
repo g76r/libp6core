@@ -102,13 +102,13 @@ void SharedUiItemDocumentManager::commitChangeItem(
 }
 
 SharedUiItem SharedUiItemDocumentManager::createNewItem(
-    QString idQualifier, QString *errorString) {
+    QString idQualifier, PostCreationModifier modifier, QString *errorString) {
   QString reason;
   if (!errorString)
     errorString = &reason;
   SharedUiItem newItem;
   SharedUiItemDocumentTransaction *transaction =
-      internalCreateNewItem(&newItem, idQualifier, errorString);
+      internalCreateNewItem(&newItem, idQualifier, modifier, errorString);
   if (transaction) {
     transaction->redo();
     delete transaction;
@@ -119,11 +119,12 @@ SharedUiItem SharedUiItemDocumentManager::createNewItem(
 
 SharedUiItemDocumentTransaction
 *SharedUiItemDocumentManager::internalCreateNewItem(
-    SharedUiItem *newItem, QString idQualifier, QString *errorString) {
+    SharedUiItem *newItem, QString idQualifier, PostCreationModifier modifier,
+    QString *errorString) {
   Q_ASSERT(newItem != 0);
   SharedUiItemDocumentTransaction *transaction =
       new SharedUiItemDocumentTransaction(this);
-  *newItem = transaction->createNewItem(idQualifier, errorString);
+  *newItem = transaction->createNewItem(idQualifier, modifier, errorString);
   if (newItem->isNull() || !delayedChecks(transaction, errorString)) {
     delete transaction;
     return 0;

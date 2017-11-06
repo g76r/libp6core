@@ -48,6 +48,8 @@ public:
   SharedUiItemDocumentTransaction *transaction, QString id,
   QString *errorString)>;
   using SimplestCreator = std::function<SharedUiItem(QString id)>;
+  using PostCreationModifier =
+  SharedUiItemDocumentTransaction::PostCreationModifier;
   using ChangeItemTrigger = std::function<bool(
   SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
   SharedUiItem oldItem, QString idQualifier, QString *errorString)>;
@@ -117,11 +119,24 @@ public:
    * No other class than DtpDocumentManager should override createNewItem().
    */
   virtual SharedUiItem createNewItem(
-      QString idQualifier, QString *errorString = 0);
+      QString idQualifier, PostCreationModifier modifier = 0,
+      QString *errorString = 0);
   /** Convenience template performing downcast. */
   template<class T>
-  T createNewItem(QString idQualifier, QString *errorString = 0) {
+  T createNewItem(QString idQualifier, PostCreationModifier modifier = 0,
+                  QString *errorString = 0) {
     SharedUiItem item = createNewItem(idQualifier, errorString);
+    return static_cast<T&>(item);
+  }
+  /** Convenience method with modifier = 0 */
+  SharedUiItem createNewItem(
+      QString idQualifier, QString *errorString) {
+    return createNewItem(idQualifier, 0, errorString);
+  }
+  /** Convenience template performing downcast. */
+  template<class T>
+  T createNewItem(QString idQualifier, QString *errorString) {
+    SharedUiItem item = createNewItem(idQualifier, 0, errorString);
     return static_cast<T&>(item);
   }
   /** Method that user interface should call to change an item, one field at a
@@ -347,7 +362,8 @@ protected:
   /** To be called by createNewItem().
    * Should never be overriden apart by DtpDocumentManagerWrapper. */
   virtual SharedUiItemDocumentTransaction *internalCreateNewItem(
-      SharedUiItem *newItem, QString idQualifier, QString *errorString);
+      SharedUiItem *newItem, QString idQualifier, PostCreationModifier modifier,
+      QString *errorString);
   /** To be called by changeItem().
    * Should never be overriden apart by DtpDocumentManagerWrapper. */
   virtual SharedUiItemDocumentTransaction *internalChangeItem(

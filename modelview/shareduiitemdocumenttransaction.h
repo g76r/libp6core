@@ -17,6 +17,7 @@
 #include <QPointer>
 #include "shareduiitemlist.h"
 #include "util/coreundocommand.h"
+#include <functional>
 
 class SharedUiItemDocumentManager;
 
@@ -29,6 +30,9 @@ class LIBPUMPKINSHARED_EXPORT SharedUiItemDocumentTransaction
   QHash<QString,QHash<QString,SharedUiItem>> _changingItems, _originalItems;
 
 public:
+  using PostCreationModifier = std::function<void(
+  SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
+  QString *errorString)>;
   class LIBPUMPKINSHARED_EXPORT ChangeItemCommand : public CoreUndoCommand {
     QPointer<SharedUiItemDocumentManager> _dm;
     SharedUiItem _newItem, _oldItem;
@@ -88,7 +92,8 @@ public:
       QString *errorString);
   bool changeItem(SharedUiItem newItem, SharedUiItem oldItem,
                   QString idQualifier, QString *errorString);
-  SharedUiItem createNewItem(QString idQualifier, QString *errorString);
+  SharedUiItem createNewItem(
+      QString idQualifier, PostCreationModifier modifier, QString *errorString);
   /** @see SharedUiItemDocumentManager::generateNewId() */
   QString generateNewId(QString idQualifier, QString prefix = QString()) const;
 

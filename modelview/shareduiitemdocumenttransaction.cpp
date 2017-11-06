@@ -133,7 +133,7 @@ bool SharedUiItemDocumentTransaction::changeItem(
 }
 
 SharedUiItem SharedUiItemDocumentTransaction::createNewItem(
-    QString idQualifier, QString *errorString) {
+    QString idQualifier, PostCreationModifier modifier, QString *errorString) {
   SharedUiItemDocumentManager::Creator creator =
       _dm->_creators.value(idQualifier);
   SharedUiItem nullItem;
@@ -143,6 +143,8 @@ SharedUiItem SharedUiItemDocumentTransaction::createNewItem(
     if (newItem.isNull()) {
       return nullItem;
     } else {
+      if (modifier)
+        modifier(this, &newItem, errorString);
       if (!_dm->processConstraintsAndPrepareChangeItem(
             this, newItem, nullItem, idQualifier, errorString))
         return nullItem;
