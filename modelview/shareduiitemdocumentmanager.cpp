@@ -24,7 +24,7 @@ SharedUiItem SharedUiItemDocumentManager::itemById(QString qualifiedId) const {
                      : itemById(qualifiedId.left(pos), qualifiedId.mid(pos+1));
 }
 
-QString SharedUiItemDocumentManager::genererateNewId(
+QString SharedUiItemDocumentManager::generateNewId(
     SharedUiItemDocumentTransaction *transaction, QString idQualifier,
     QString prefix) const {
   QString id;
@@ -188,6 +188,8 @@ bool SharedUiItemDocumentManager::processConstraintsAndPrepareChangeItem(
                                errorString)
           && processAfterDelete(transaction, oldItem, idQualifier, errorString);
     } else { // update (incl. renaming)
+      if (newItem.idQualifier() == "wfactionstriggergroup")
+        qDebug() << "processConstraintsAndPrepareChangeItem" << newItem.idQualifier();
       return processBeforeUpdate(transaction, &newItem, oldItem, idQualifier,
                                  errorString)
           && prepareChangeItem(transaction, newItem, oldItem, idQualifier,

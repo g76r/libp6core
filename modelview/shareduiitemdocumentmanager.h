@@ -265,9 +265,9 @@ public:
    * Generate id of the form prefix+number (e.g. "foobar1"), most of the time
    * one should choose idQualifier as prefix, which is the default (= if prefix
    * is left empty). */
-  QString genererateNewId(QString idQualifier,
+  QString generateNewId(QString idQualifier,
                           QString prefix = QString()) const {
-    return genererateNewId(0, idQualifier, prefix);
+    return generateNewId(0, idQualifier, prefix);
   }
 
 signals:
@@ -299,7 +299,7 @@ protected:
    * Generate id of the form prefix+number (e.g. "foobar1"), most of the time
    * one should choose idQualifier as prefix, which is the default (= if prefix
    * is left empty). */
-  QString genererateNewId(
+  QString generateNewId(
       SharedUiItemDocumentTransaction *transaction, QString idQualifier,
       QString prefix = QString()) const;
   /** Prepare change: ensure that the change can be performed, record them

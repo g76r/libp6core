@@ -138,7 +138,7 @@ SharedUiItem SharedUiItemDocumentTransaction::createNewItem(
       _dm->_creators.value(idQualifier);
   SharedUiItem nullItem;
   if (creator) {
-    QString id = _dm->genererateNewId(this, idQualifier);
+    QString id = _dm->generateNewId(this, idQualifier);
     SharedUiItem newItem = creator(this, id, errorString);
     if (newItem.isNull()) {
       return nullItem;
