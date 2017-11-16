@@ -1,0 +1,54 @@
+/* Copyright 2017 Hallowyn, Gregoire Barbier and others.
+ * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
+ * Libpumpkin is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * Libpumpkin is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
+ */
+#ifndef STRINGHASHMODEL_H
+#define STRINGHASHMODEL_H
+
+#include "libp6core_global.h"
+#include <QAbstractTableModel>
+#include <QHash>
+
+/** Model displaying a QHash<QString,QString> as a QAbstractTableModel.
+ * One key-value pair per row, key on column 0, value on column 1.
+ */
+class LIBPUMPKINSHARED_EXPORT StringHashModel : public QAbstractTableModel {
+  Q_OBJECT
+  Q_DISABLE_COPY(StringHashModel)
+  QHash<QString,QString> _values;
+  QStringList _rowNames;
+
+public:
+  StringHashModel(QObject *parent = 0);
+  int rowCount(const QModelIndex &parent) const override;
+  int columnCount(const QModelIndex &parent) const override;
+  QVariant data(const QModelIndex &index, int role) const override;
+  QVariant headerData(int section, Qt::Orientation orientation,
+                      int role) const override;
+  Qt::ItemFlags flags(const QModelIndex &index) const override;
+  bool setData(const QModelIndex &index, const QVariant &value,
+               int role) override;
+  bool removeRows(int row, int count, const QModelIndex &parent) override;
+  void clear();
+  void setValues(const QHash<QString,QString> &values);
+  QHash<QString,QString> values() const { return _values; }
+  /** @return row of the key */
+  int setValue(const QString &key, const QString &value);
+  void removeValue(const QString &key);
+  /** @return row of the new key */
+  int addNewKey();
+
+signals:
+  void valuesChanged(const QHash<QString,QString> &values);
+};
+
+#endif // STRINGHASHMODEL_H
