@@ -41,11 +41,12 @@ public:
   void clear();
   void setValues(const QHash<QString,QString> &values);
   QHash<QString,QString> values() const { return _values; }
-  /** @return row of the key */
-  int setValue(const QString &key, const QString &value);
+  void setValue(const QString &key, const QString &value);
   void removeValue(const QString &key);
-  /** @return row of the new key */
-  int addNewKey();
+  /** @return new key */
+  QString addNewKey();
+  /** @return -1 if not found */
+  int rowOf(const QString &key);
 
 signals:
   void valuesChanged(const QHash<QString,QString> &values);

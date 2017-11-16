@@ -120,17 +120,17 @@ bool StringHashModel::setData(const QModelIndex &index, const QVariant &value,
   return false;
 }
 
-int StringHashModel::setValue(const QString &key, const QString &value) {
+void StringHashModel::setValue(const QString &key, const QString &value) {
   int row = _rowNames.indexOf(key);
   if (row >= 0) { // key already exists
     if (_values.value(key) == value) // nothing to do
-      return row;
+      return;
     _values.insert(key, value);
     QModelIndex changedIndex = index(row, 1);
     emit dataChanged(changedIndex, changedIndex);
     emit valuesChanged(_values);
   } else if (key.isEmpty()) { // reject empty keys
-    return -1;
+    return;
   } else { // key does not exist, append new row
     row = _rowNames.size();
     beginInsertRows(QModelIndex(), row, row);
@@ -139,7 +139,6 @@ int StringHashModel::setValue(const QString &key, const QString &value) {
     endInsertRows();
     emit valuesChanged(_values);
   }
-  return row;
 }
 
 void StringHashModel::removeValue(const QString &key) {
@@ -153,7 +152,7 @@ void StringHashModel::removeValue(const QString &key) {
   emit valuesChanged(_values);
 }
 
-int StringHashModel::addNewKey() {
+QString StringHashModel::addNewKey() {
   QString key;
   for (int i = 1; i < 20; ++i) {
     key = tr("New Key ")+QString::number(i);
@@ -162,7 +161,12 @@ int StringHashModel::addNewKey() {
   }
   while (_values.contains(key))
     key = tr("New Key ")+QString::number(qrand());
-  return setValue(key, QString());
+  setValue(key, QString());
+  return key;
+}
+
+int StringHashModel::rowOf(const QString &key) {
+  return _rowNames.indexOf(key);
 }
 
 bool StringHashModel::removeRows(
