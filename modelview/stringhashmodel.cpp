@@ -12,6 +12,22 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stringhashmodel.h"
+#include <QSet>
+#include <QMimeData>
+#include "format/jsonformats.h"
+
+const QString StringHashModel::_keysMimeType {
+  "application/x-jsonarray-keys"
+};
+
+const QString StringHashModel::_valuesMimeType {
+  "application/x-jsonarray-values"
+};
+
+static QStringList _mimeTypes {
+  StringHashModel::_keysMimeType,
+  StringHashModel::_valuesMimeType,
+};
 
 StringHashModel::StringHashModel(QObject *parent)
   : QAbstractTableModel(parent) {
@@ -72,10 +88,9 @@ QVariant StringHashModel::headerData(
 }
 
 Qt::ItemFlags StringHashModel::flags(const QModelIndex &index) const {
-  Qt::ItemFlags flags = QAbstractTableModel::flags(index);
-  if (flags.testFlag(Qt::ItemIsEnabled))
-    flags |= Qt::ItemIsEditable;
-  return flags;
+  Q_UNUSED(index)
+  return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable
+      | Qt::ItemIsDragEnabled;
 }
 
 bool StringHashModel::setData(const QModelIndex &index, const QVariant &value,
@@ -182,4 +197,38 @@ bool StringHashModel::removeRows(
   endRemoveRows();
   emit valuesChanged(_values);
   return true;
+}
+
+QStringList StringHashModel::mimeTypes() const {
+  return _mimeTypes;
+}
+
+QMimeData *StringHashModel::mimeData(const QModelIndexList &indexes) const {
+  if (indexes.isEmpty())
+    return 0;
+  QMimeData *md = new QMimeData;
+  QSet<int> rowsSet;
+  QStringList keys, values;
+  for (const QModelIndex &index: indexes) {
+    rowsSet.insert(index.row());
+  }
+  QList<int> rows = rowsSet.toList();
+  qSort(rows);
+  for (int row : rows) {
+    if (row < 0 || row >= _rowNames.size())
+      continue;
+    keys.append(_rowNames.value(row));
+    values.append(_values.value(_rowNames.value(row)));
+  }
+  md->setData(_keysMimeType, JsonFormats::list2string(keys).toUtf8());
+  md->setData(_valuesMimeType, JsonFormats::list2string(values).toUtf8());
+  return md;
+}
+
+Qt::DropActions StringHashModel::supportedDragActions() const {
+  // support MoveAction in addition to CopyAction to make drag'n drop eordering
+  // work for views in InternalMove mode, since when in InternalMove, the view
+  // will force MoveAction if supported and do nothing if not supported,
+  // regardless its default action
+  return Qt::CopyAction | Qt::MoveAction;
 }

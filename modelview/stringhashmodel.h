@@ -24,6 +24,11 @@
 class LIBPUMPKINSHARED_EXPORT StringHashModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(StringHashModel)
+
+public:
+  static const QString _keysMimeType, _valuesMimeType;
+
+private:
   QHash<QString,QString> _values;
   QStringList _rowNames;
 
@@ -38,6 +43,9 @@ public:
   bool setData(const QModelIndex &index, const QVariant &value,
                int role) override;
   bool removeRows(int row, int count, const QModelIndex &parent) override;
+  QStringList mimeTypes() const override;
+  QMimeData *mimeData(const QModelIndexList &indexes) const override;
+  Qt::DropActions supportedDragActions() const override;
   void clear();
   void setValues(const QHash<QString,QString> &values);
   QHash<QString,QString> values() const { return _values; }
