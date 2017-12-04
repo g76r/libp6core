@@ -460,7 +460,9 @@ Q_DECLARE_METATYPE(SharedUiItem)
 Q_DECLARE_TYPEINFO(SharedUiItem, Q_MOVABLE_TYPE);
 
 /** ParamsProvider wrapper for SharedUiItem.
- * Its paramValue() implementation returns uiData(key.toInt()).
+ * Its paramValue() implementation returns uiData(key.toInt()) or
+ * id(), qualifiedId() or idQualifier() if key is "id", "qualifiedId" or
+ * "idQualifier", or uiData(uiSectionByName(key)).
  */
 class LIBPUMPKINSHARED_EXPORT SharedUiItemParamsProvider
     : public ParamsProvider {

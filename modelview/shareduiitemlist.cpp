@@ -21,3 +21,32 @@ static int staticInit() {
 
 Q_CONSTRUCTOR_FUNCTION(staticInit)
 
+QVariant SharedUiItemListParamsProvider::paramValue(
+    QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
+  Q_UNUSED(alreadyEvaluated)
+  int colon = key.indexOf(':');
+  QString idQualifier = colon >= 0 ? key.left(colon) : QString();
+  QString sectionName = key.mid(colon+1); // works even with colon=-1
+  for (auto item : _list) {
+    if (!idQualifier.isEmpty() && item.idQualifier() != idQualifier)
+      continue;
+    bool ok;
+    int section = sectionName.toInt(&ok);
+    if (!ok) {
+      if (sectionName == "id")
+        return item.id();
+      if (sectionName == "idQualifier")
+        return item.idQualifier();
+      if (sectionName == "qualifiedId")
+        return item.qualifiedId();
+      section = item.uiSectionByName(sectionName);
+      ok = section >= 0;
+    }
+    if (ok) {
+      QVariant value = item.uiData(section, _role);
+      if (value.isValid())
+        return value;
+    }
+  }
+  return defaultValue;
+}

@@ -19,6 +19,8 @@
 #include <QChar>
 #include <QString>
 
+class SharedUiItemListParamsProvider;
+
 /** Specializing QList for SharedUiItems, the same way QStringList does. */
 template <class T = SharedUiItem>
 class LIBPUMPKINSHARED_EXPORT SharedUiItemList : public QList<T> {
@@ -46,6 +48,11 @@ public:
   operator const SharedUiItemList<SharedUiItem> &() const {
     return reinterpret_cast<const SharedUiItemList<SharedUiItem>&>(*this);
   }
+  /** Make uiData() available through ParamsProvider interface, using
+   * a %{qualifierId:sectionNameOrNumber} or %{sectionNameOrNumber} syntax,
+   * the former being a filter among items depending of their qualifier/type.
+   * @see SharedUiItemParamsProvider */
+  inline SharedUiItemListParamsProvider toParamsProvider() const;
   // MAYDO add features
   //SharedUiItemList filterByQualifier(QString qualifier) const;
   //SharedUiItemList filterByQualifier(QRegularExpression qualifier) const;
@@ -109,6 +116,7 @@ public:
   QString join(const QChar separator, bool qualified = false) const {
     return generic_join(separator, qualified);
   }
+  inline SharedUiItemListParamsProvider toParamsProvider() const;
 };
 
 Q_DECLARE_METATYPE(SharedUiItemList<>)
@@ -125,6 +133,31 @@ inline QString SharedUiItemList<T>::join(
     const QChar separator, bool qualified) const {
   const SharedUiItemList<SharedUiItem> &upcasted = *this;
   return upcasted.join(separator, qualified);
+}
+
+/** ParamsProvider wrapper for SharedUiItemList. */
+class LIBPUMPKINSHARED_EXPORT SharedUiItemListParamsProvider
+    : public ParamsProvider {
+  SharedUiItemList<> _list;
+  int _role;
+
+public:
+  inline SharedUiItemListParamsProvider(
+      const SharedUiItemList<> &list, int role = Qt::DisplayRole)
+    : _list(list), _role(role) { }
+  QVariant paramValue(QString key, QVariant defaultValue = QVariant(),
+                      QSet<QString> alreadyEvaluated = QSet<QString>()) const;
+};
+
+template <class T>
+inline SharedUiItemListParamsProvider
+SharedUiItemList<T>::toParamsProvider() const {
+  return SharedUiItemListParamsProvider(*this);
+}
+
+inline SharedUiItemListParamsProvider
+SharedUiItemList<SharedUiItem>::toParamsProvider() const {
+  return SharedUiItemListParamsProvider(*this);
 }
 
 #endif // SHAREDUIITEMLIST_H
