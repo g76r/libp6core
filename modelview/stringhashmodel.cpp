@@ -64,7 +64,7 @@ int StringHashModel::columnCount(const QModelIndex &parent) const {
 
 QVariant StringHashModel::data(const QModelIndex &index, int role) const {
   if (!index.isValid() || index.row() < 0 || index.row() >= _rowNames.size()
-      || role != Qt::DisplayRole)
+      || (role != Qt::DisplayRole && role != Qt::EditRole))
     return QVariant();
   switch (index.column()) {
   case 0:
