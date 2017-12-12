@@ -17,6 +17,9 @@
 #include <QRegularExpression>
 #include <QtDebug>
 
+static QRegularExpression unallowedColumnCharsSequence {
+  "(^[^a-zA-Z_]+)|([^a-zA-Z0-9_]+)" };
+
 InMemoryDatabaseDocumentManager::InMemoryDatabaseDocumentManager(QObject *parent)
   : InMemorySharedUiItemDocumentManager(parent) {
 }
@@ -34,6 +37,7 @@ bool InMemoryDatabaseDocumentManager::registerItemType(
     errorString = &reason;
   InMemorySharedUiItemDocumentManager::registerItemType(
         idQualifier, setter, creator);
+  _orderedIdQualifiers.append(idQualifier);
   _idSections.insert(idQualifier, idSection);
   if (!createTableAndSelectData(idQualifier, setter, creator, idSection,
                                 errorString)) {
@@ -167,7 +171,7 @@ bool InMemoryDatabaseDocumentManager::setDatabase(
   emit dataReset();
   bool successful = true;
   QString reason;
-  foreach (const QString &idQualifier, _idSections.keys()) {
+  foreach (const QString &idQualifier, _orderedIdQualifiers) {
     QString oneReason;
     if (!createTableAndSelectData(
           idQualifier, _setters.value(idQualifier),
@@ -266,9 +270,6 @@ sqlite> drop table foo;
   }
   return true;
 }
-
-static QRegularExpression unallowedColumnCharsSequence {
-  "(^[^a-zA-Z_]+)|([^a-zA-Z0-9_]+)" };
 
 QString InMemoryDatabaseDocumentManager::protectedColumnName(QString columnName) {
   return columnName.replace(unallowedColumnCharsSequence,

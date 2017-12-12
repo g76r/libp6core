@@ -54,6 +54,7 @@ class LIBPUMPKINSHARED_EXPORT InMemoryDatabaseDocumentManager
   Q_DISABLE_COPY(InMemoryDatabaseDocumentManager)
   QSqlDatabase _db;
   QHash<QString,int> _idSections;
+  QList<QString> _orderedIdQualifiers; // in order of registration
 
 public:
   InMemoryDatabaseDocumentManager(QObject *parent = 0);
