@@ -175,6 +175,11 @@ signals:
    * Only changeItem() emits this signal, other methods that may change items,
    * like removeRows() don't emit this signal. */
   void itemChanged(SharedUiItem newItem, SharedUiItem oldItem);
+  /** Emited by resetData() after data has been reset.
+   * Only data is reset by resetData(), not metadata like when modelReset() is
+   * emited.
+   */
+  void dataReset();
 
 protected:
   /** Move children rows just before a given target row.

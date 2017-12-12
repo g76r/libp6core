@@ -163,6 +163,7 @@ void SharedUiItemsModel::resetData() {
   int rows = rowCount();
   if (rows)
     removeRows(0, rows);
+  emit dataReset();
 }
 
 void SharedUiItemsProxyModelHelper::setApparentModel(
