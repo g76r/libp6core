@@ -135,7 +135,8 @@ SOURCES += \
     ostore/sqlobjectsstore.cpp \
     io/directorywatcher.cpp \
     modelview/stringhashmodel.cpp \
-    format/jsonformats.cpp
+    format/jsonformats.cpp \
+    modelview/stringlistdiffmodel.cpp
 
 HEADERS +=\
     httpd/httpworker.h \
@@ -232,7 +233,8 @@ HEADERS +=\
     ostore/sqlobjectsstore.h \
     io/directorywatcher.h \
     modelview/stringhashmodel.h \ 
-    format/jsonformats.h
+    format/jsonformats.h \
+    modelview/stringlistdiffmodel.h
 
 unix {
     target.path = /usr/lib
