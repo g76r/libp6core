@@ -18,7 +18,7 @@ StringListDiffModel::StringListDiffModel(QObject *parent)
 }
 
 int StringListDiffModel::rowCount(const QModelIndex &parent) const {
-  return parent.isValid() ? 0 : _rowStatuses.size();
+  return parent.isValid() ? 0 : _lines.size();
 }
 
 int StringListDiffModel::columnCount(const QModelIndex &parent) const {
@@ -33,11 +33,11 @@ QVariant StringListDiffModel::data(
   case Qt::EditRole:
     switch(index.column()) {
     case 0:
-      return _beforeValues.value(index.row());
+      return _lines.value(index.row()).before();
     case 1:
-      return _afterValues.value(index.row());
+      return _lines.value(index.row()).after();
     case 2:
-      return _rowStatuses.value(index.row()); // FIXME toString
+      return QVariant::fromValue<Status>(_lines.value(index.row()).status());
     }
     break;
   }
@@ -72,28 +72,30 @@ void StringListDiffModel::setValues(const QList<QString> &beforeValues,
                                     const QList<QString> &afterValues) {
   clear();
   int n = std::max(beforeValues.size(), afterValues.size());
+  if (n <= 0)
+    return;
   beginInsertRows(QModelIndex(), 0, n);
   for (int i = 0; i < n; ++i) {
-    auto before = beforeValues.value(i);
-    auto after = afterValues.value(i);
-    if (before == after)
-      _rowStatuses.append(NoChange);
-    else if (before.isEmpty())
-      _rowStatuses.append(Added);
-    else if (after.isEmpty())
-      _rowStatuses.append(Removed);
+    DiffLine line;
+    line._before = beforeValues.value(i);
+    line._after = afterValues.value(i);
+    if (line._before == line._after)
+      line._status = NoChange;
+    else if (line._before.isEmpty())
+      line._status = Added;
+    else if (line._after.isEmpty())
+      line._status = Removed;
     else
-      _rowStatuses.append(Modified);
+      line._status = Modified;
+    _lines.append(line);
   }
-  _beforeValues = beforeValues;
-  _afterValues = afterValues;
   endInsertRows();
 }
 
 void StringListDiffModel::clear() {
+  if (rowCount() <= 0)
+    return;
   beginRemoveRows(QModelIndex(), 0, rowCount()-1);
-  _beforeValues.clear();
-  _afterValues.clear();
-  _rowStatuses.clear();
+  _lines.clear();
   endRemoveRows();
 }

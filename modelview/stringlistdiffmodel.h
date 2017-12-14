@@ -18,6 +18,9 @@
 #include <QAbstractTableModel>
 #include <QStringList>
 
+// LATER make this model writeable, at less make it possible to the user to
+// delete rows and so choose which diff lines he would like to apply
+
 /** Model displaying two QString list side by side with diff-like decoration
  * (background colors).
  */
@@ -28,10 +31,22 @@ class LIBPUMPKINSHARED_EXPORT StringListDiffModel : public QAbstractTableModel {
 public:
   enum Status { NoChange, Added, Removed, Modified };
   Q_ENUM(Status)
+  class DiffLine {
+    friend class StringListDiffModel;
+    QString _before, _after;
+    Status _status;
+
+  public:
+    DiffLine(const QString &before = { }, const QString &after = { },
+             Status status = NoChange)
+      : _before(before), _after(after), _status(status) { }
+    QString before() const { return _before; }
+    QString after() const { return _after; }
+    Status status() const { return _status; }
+  };
 
 private:
-  QStringList _beforeValues, _afterValues;
-  QList<Status> _rowStatuses;
+  QVector<DiffLine> _lines;
 
 public:
   StringListDiffModel(QObject *parent = 0);
@@ -44,10 +59,14 @@ public:
   void setValues(const QList<QString> &beforeValues,
                  const QList<QString> &afterValues);
   void clear();
+  QVector<DiffLine> lines() const { return _lines; }
+  DiffLine line(int row) const { return _lines.value(row); }
 
 protected:
-  Status rowStatus(int row) const { return _rowStatuses.value(row); }
+  Status rowStatus(int row) const { return line(row).status(); }
 };
 
+// LATER not sure:
+//Q_DECLARE_TYPEINFO(StringListDiffModel::DiffLine, Q_MOVABLE_TYPE);
 
 #endif // STRINGLISTDIFFMODEL_H
