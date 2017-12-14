@@ -17,6 +17,7 @@
 #include "libp6core_global.h"
 #include <QAbstractTableModel>
 #include <QHash>
+#include <QMap>
 
 /** Model displaying a QHash<QString,QString> as a QAbstractTableModel.
  * One key-value pair per row, key on column 0, value on column 1.
@@ -50,7 +51,9 @@ public:
   Qt::DropActions supportedDragActions() const override;
   void clear();
   void setValues(const QHash<QString,QString> &values);
+  void setValues(const QMap<QString,QString> &values);
   QHash<QString,QString> values() const { return _values; }
+  QMap<QString,QString> valuesAsMap() const;
   void setValue(const QString &key, const QString &value);
   void removeValue(const QString &key);
   /** @return new key */

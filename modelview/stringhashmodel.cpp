@@ -54,6 +54,21 @@ void StringHashModel::setValues(const QHash<QString,QString> &values) {
   }
 }
 
+void StringHashModel::setValues(const QMap<QString,QString> &values) {
+  QHash<QString,QString> hash;
+  for (auto key: values.keys())
+    hash.insert(key, values.value(key));
+  setValues(hash);
+}
+
+QMap<QString,QString> StringHashModel::valuesAsMap() const {
+  QHash<QString,QString> hash = values();
+  QMap<QString,QString> map;
+  for (auto key: hash.keys())
+    map.insert(key, hash.value(key));
+  return map;
+}
+
 int StringHashModel::rowCount(const QModelIndex &parent) const {
   return parent.isValid() ? 0 : _rowNames.size();
 }
