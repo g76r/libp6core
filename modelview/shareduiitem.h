@@ -19,6 +19,8 @@
 #include <QString>
 #include <QSharedData>
 #include <QSharedDataPointer>
+#include <QVariantHash>
+#include <QJsonObject>
 
 class QDebug;
 class SharedUiItemDocumentTransaction;
@@ -129,6 +131,11 @@ public:
   bool operator<=(const SharedUiItemData &other) const { return !(other<*this); }
   /** Calls operator<. Do not override. Override operator< instead. */
   bool operator>=(const SharedUiItemData &other) const { return !(*this<other); }
+  virtual QVariantHash toVariantHash(int role) const;
+  virtual bool setFromVariantHash(
+      const QVariantHash &hash, QString *errorString,
+      SharedUiItemDocumentTransaction *transaction,
+      const QSet<QString> &ignoredSections, int role);
 
 protected:
   // both default and copy constructor are declared protected to avoid being
@@ -218,6 +225,8 @@ protected:
  *       return ((FoobarData*)constData())->setUiData(section, value,
  *                                              errorString, transaction, role);
  *     }
+ * - Any other generic edition features SHOULD also be implemented as needed,
+ *   such as setFromVariantHash() or setFromJsonObject()
  * - There MUST NOT be several level of subclasses, i.e. you MUST NOT subclass
  *   SharedUiItem subclasses.
  *
@@ -397,6 +406,15 @@ public:
    * Default: return Qt::ItemIsEnabled */
   Qt::ItemFlags uiFlags(int section) const {
     return _data ? _data->uiFlags(section) : Qt::NoItemFlags; }
+  /** Convert to QVariantHash. */
+  inline QVariantHash toVariantHash(int role = Qt::DisplayRole) const  {
+    return _data ? _data->toVariantHash(role) : QVariantHash();
+  }
+  /** Convert to JSON object. */
+  inline QJsonObject toJsonObject(int role = Qt::DisplayRole) const {
+    return _data ? QJsonObject::fromVariantHash(_data->toVariantHash(role))
+                 : QJsonObject();
+  }
 
 protected:
   const SharedUiItemData *data() const { return _data.data(); }
@@ -454,6 +472,26 @@ protected:
   /** Make uiData() available through ParamsProvider interface.
    * @see SharedUiItemParamsProvider */
   inline SharedUiItemParamsProvider toParamsProvider() const;
+  /** Set ui data according to QVariantHash<sectionName,value> values.
+   * This method must be reimplemented and made public by subclasses in order
+   * to be usable.
+   * It cannot be done in a generic manner in base class because non-const
+   * access to data mustn't be performed in base class.
+   * @return true on success, false otherwise */
+  inline bool setFromVariantHash(
+      const QVariantHash &hash, QString *errorString,
+      SharedUiItemDocumentTransaction *transaction,
+      const QSet<QString> &ignoredSections = { }, int role = Qt::DisplayRole);
+  /** Set ui data according to JSON object values.
+   * This method must be reimplemented and made public by subclasses in order
+   * to be usable.
+   * It cannot be done in a generic manner in base class because non-const
+   * access to data mustn't be performed in base class.
+   * @return true on success, false otherwise */
+  inline bool setFromJsonObject(
+      const QJsonObject &json, QString *errorString,
+      SharedUiItemDocumentTransaction *transaction,
+      const QSet<QString> &ignoredSections = { }, int role = Qt::DisplayRole);
 };
 
 Q_DECLARE_METATYPE(SharedUiItem)

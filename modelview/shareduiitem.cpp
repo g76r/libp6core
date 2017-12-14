@@ -99,3 +99,25 @@ QVariant SharedUiItemParamsProvider::paramValue(
 bool SharedUiItemData::operator<(const SharedUiItemData &other) const {
   return idQualifier() < other.idQualifier() || id() < other.id();
 }
+
+QVariantHash SharedUiItemData::toVariantHash(int role) const {
+  QVariantHash hash;
+  int n = uiSectionCount();
+  for (int i = 0; i < n; ++i)
+    hash.insert(uiSectionName(i), uiData(i, role));
+  return hash;
+}
+
+bool SharedUiItemData::setFromVariantHash(
+    const QVariantHash &hash, QString *errorString,
+    SharedUiItemDocumentTransaction *transaction,
+    const QSet<QString> &ignoredSections, int role) {
+  int n = uiSectionCount();
+  for (int i = 0; i < n; ++i) {
+    auto name = uiSectionName(i);
+    if (hash.contains(name) && !ignoredSections.contains(name))
+      if (!setUiData(i, hash.value(name), errorString, transaction, role))
+        return false;
+  }
+  return true;
+}
