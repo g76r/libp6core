@@ -36,7 +36,6 @@ bool SharedUiItemData::setUiData(
   Q_UNUSED(role)
   Q_UNUSED(value)
   Q_UNUSED(transaction)
-  Q_ASSERT(transaction != 0);
   Q_ASSERT(errorString != 0);
   *errorString = "Field \""+uiHeaderData(section, Qt::DisplayRole).toString()
       +"\" is not ui-editable for item of type "+idQualifier()+"";
