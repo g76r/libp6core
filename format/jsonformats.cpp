@@ -19,18 +19,22 @@
 
 static QRegularExpression _linebreaksRE { "\\s*[\\n\\r]+\\s*" };
 
-QString JsonFormats::hash2string(const QHash<QString,QString> &hash) {
+namespace {
+
+template<class T>
+QString dict2string(const T &dict) {
   QJsonObject json;
-  for (const QString &key : hash.keys())
-    json.insert(key, hash.value(key));
+  for (const QString &key : dict.keys())
+    json.insert(key, dict.value(key));
   QJsonDocument doc;
   doc.setObject(json);
   return QString::fromUtf8(doc.toJson())
       .replace(_linebreaksRE, QStringLiteral(" "));
 }
 
-QHash<QString,QString> JsonFormats::string2hash(const QString &string) {
-  QHash<QString,QString> hash;
+template<class T>
+T string2dict(const QString &string) {
+  T dict;
   QJsonParseError error;
   QJsonDocument doc = QJsonDocument::fromJson(string.toUtf8(), &error);
   QJsonObject json = doc.object();
@@ -38,14 +42,14 @@ QHash<QString,QString> JsonFormats::string2hash(const QString &string) {
     QJsonValue v = json.value(key);
     switch (v.type()) {
     case QJsonValue::String:
-      hash.insert(key, v.toString());
+      dict.insert(key, v.toString());
       break;
     case QJsonValue::Bool:
-      hash.insert(key, v.toBool() ? QStringLiteral("true")
+      dict.insert(key, v.toBool() ? QStringLiteral("true")
                                   : QStringLiteral("false"));
       break;
     case QJsonValue::Double:
-      hash.insert(key, QString::number(v.toDouble()));
+      dict.insert(key, QString::number(v.toDouble()));
       break;
     case QJsonValue::Null:
     case QJsonValue::Array:
@@ -55,7 +59,25 @@ QHash<QString,QString> JsonFormats::string2hash(const QString &string) {
       break;
     }
   }
-  return hash;
+  return dict;
+}
+
+} // unnamed namespace
+
+QString JsonFormats::hash2string(const QHash<QString,QString> &hash) {
+  return dict2string(hash);
+}
+
+QHash<QString,QString> JsonFormats::string2hash(const QString &string) {
+  return string2dict<QHash<QString,QString>>(string);
+}
+
+QString JsonFormats::map2string(const QMap<QString,QString> &map) {
+  return dict2string(map);
+}
+
+QMap<QString,QString> JsonFormats::string2map(const QString &string) {
+  return string2dict<QMap<QString,QString>>(string);
 }
 
 QString JsonFormats::list2string(const QList<QString> &list) {

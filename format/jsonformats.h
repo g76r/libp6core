@@ -17,6 +17,7 @@
 #include "libp6core_global.h"
 #include <QStringList>
 #include <QHash>
+#include <QMap>
 
 /** Utilites to handle JSON formats. */
 class LIBPUMPKINSHARED_EXPORT JsonFormats {
@@ -27,6 +28,10 @@ public:
   static QString hash2string(const QHash<QString,QString> &hash);
   /** convert a JSON object formatted string to a QHash<QString,QString> */
   static QHash<QString,QString> string2hash(const QString &string);
+  /** convert a QMap<QString,QString> to a JSON object formatted string */
+  static QString map2string(const QMap<QString,QString> &hash);
+  /** convert a JSON object formatted string to a QMap<QString,QString> */
+  static QMap<QString,QString> string2map(const QString &string);
   /** convert a QList<QString> to a JSON array formatted string */
   static QString list2string(const QList<QString> &list);
   /** convert a JSON array formatted string to a QList<QString> */
