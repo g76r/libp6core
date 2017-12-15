@@ -415,6 +415,67 @@ public:
     return _data ? QJsonObject::fromVariantHash(_data->toVariantHash(role))
                  : QJsonObject();
   }
+  /** Copy a SharedUiItem using uiData() and setUiData() for every section but
+   * the one that are specified to be ignored.
+   * @param ignoredSections sections not to be copied, e.g. { 0 } */
+  template<class T>
+  static inline bool copy(
+      T *dest, const T &source,
+      QString *errorString, SharedUiItemDocumentTransaction *transaction,
+      const QSet<int> &ignoredSections, int role = Qt::DisplayRole) {
+    // LATER enforce dest and source are SUI subclasses
+    int n = source.uiSectionCount();
+    for (int i = 0; i < n; ++i) {
+      if (ignoredSections.contains(i))
+        continue;
+      if (!dest->setUiData(i, source.uiData(i, role), errorString, transaction,
+                           role))
+        return false;
+    }
+    return true;
+  }
+  /** Copy a SharedUiItem using uiData() and setUiData() for every section but
+   * the one that are specified to be ignored.
+   * @param ignoredSections sections not to be copied, e.g. { "id" } */
+  template<class T>
+  static inline bool copyBySectionName(
+      T *dest, const T &source,
+      QString *errorString, SharedUiItemDocumentTransaction *transaction,
+      const QSet<QString> &ignoredSections = { }, int role = Qt::DisplayRole) {
+    // LATER enforce dest and source are SUI subclasses
+    int n = source.uiSectionCount();
+    for (int i = 0; i < n; ++i) {
+      QString name = source.uiSectionName(i);
+      if (ignoredSections.contains(name))
+        continue;
+      if (!dest->setUiData(i, source.uiData(i, role), errorString, transaction,
+                           role))
+        return false;
+    }
+    return true;
+  }
+  /** Copy a SharedUiItem using uiData() and setUiData() for every section but
+   * the one that are specified to be ignored, supporting different kind of
+   * item, mapping their section names.
+   * @param ignoredSections sections not to be copied, e.g. { "id" } */
+  template<class D, class S>
+  static inline bool copyBySectionName(
+      D *dest, const S &source,
+      QString *errorString, SharedUiItemDocumentTransaction *transaction,
+      const QSet<QString> &ignoredSections = { }, int role = Qt::DisplayRole) {
+    // LATER enforce dest and source are SUI subclasses
+    int n = source.uiSectionCount();
+    for (int i = 0; i < n; ++i) {
+      QString name = source.uiSectionName(i);
+      if (ignoredSections.contains(name))
+        continue;
+      int j = dest->uiSectionByName(name);
+      if (!dest->setUiData(j, source.uiData(i, role), errorString, transaction,
+                           role))
+        return false;
+    }
+    return true;
+  }
 
 protected:
   const SharedUiItemData *data() const { return _data.data(); }
