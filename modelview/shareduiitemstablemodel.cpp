@@ -187,13 +187,13 @@ QMimeData *SharedUiItemsTableModel::mimeData(
     }
   }
   //qDebug() << "  list:" << ids << rows;
-  md->setData(suiQualifiedIdsListMimeType, ids.join(' ').toUtf8());
-  md->setData(suiPlacesMimeType, rows.join(' ').toUtf8());
+  md->setData(_suiQualifiedIdsListMimeType, ids.join(' ').toUtf8());
+  md->setData(_suiPlacesMimeType, rows.join(' ').toUtf8());
   return md;
 }
 
 QStringList SharedUiItemsTableModel::mimeTypes() const {
-  return suiMimeTypes;
+  return _suiMimeTypes;
 }
 
 // Support for moving rows by internal drag'n drop within the same view.
@@ -216,8 +216,8 @@ bool SharedUiItemsTableModel::dropMimeData(
     return false;
   //qDebug() << "SharedUiItemsTableModel::dropMimeData" << action;
   QList<QByteArray> idsArrays =
-      data->data(suiQualifiedIdsListMimeType).split(' ');
-  QList<QByteArray> rowsArrays = data->data(suiPlacesMimeType).split(' ');
+      data->data(_suiQualifiedIdsListMimeType).split(' ');
+  QList<QByteArray> rowsArrays = data->data(_suiPlacesMimeType).split(' ');
   SharedUiItemList<> items;
   QList<int> rows;
   if (droppedParent.isValid()) {

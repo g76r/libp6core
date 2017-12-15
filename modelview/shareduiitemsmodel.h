@@ -40,17 +40,19 @@ class LIBPUMPKINSHARED_EXPORT SharedUiItemsModel : public QAbstractItemModel {
   QHash<int,QByteArray> _roleNames;
   QStringList _itemQualifierFilter;
 
-protected:
-  SharedUiItemDocumentManager *_documentManager;
+public:
   /** Mime type for space-separated list of qualified ids, for drag'n drop */
-  static const QString suiQualifiedIdsListMimeType;
+  static const QString _suiQualifiedIdsListMimeType;
   /** Mime type for space-separated list of places of item, for drag'n drop,
    * especially internal drag'n drop used to reorder items.
    * In same order than qualified ids list. Place can be e.g. rownum for table
    * models or paths to id for tree models. */
-  static const QString suiPlacesMimeType;
+  static const QString _suiPlacesMimeType;
   /** List of previous mime types. */
-  static const QStringList suiMimeTypes;
+  static const QStringList _suiMimeTypes;
+
+protected:
+  SharedUiItemDocumentManager *_documentManager;
 
 public:
   explicit SharedUiItemsModel(QObject *parent = 0);

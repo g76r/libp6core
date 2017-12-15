@@ -310,13 +310,13 @@ QMimeData *SharedUiItemsTreeModel::mimeData(
       pathsSet.insert(path);
     }
   }
-  md->setData(suiQualifiedIdsListMimeType, ids.join(' ').toUtf8());
-  md->setData(suiPlacesMimeType, paths.join(' ').toUtf8());
+  md->setData(_suiQualifiedIdsListMimeType, ids.join(' ').toUtf8());
+  md->setData(_suiPlacesMimeType, paths.join(' ').toUtf8());
   return md;
 }
 
 QStringList SharedUiItemsTreeModel::mimeTypes() const {
-  return suiMimeTypes;
+  return _suiMimeTypes;
 }
 
 // Support for moving rows by internal drag'n drop within the same view.
@@ -344,8 +344,8 @@ bool SharedUiItemsTreeModel::dropMimeData(
   //         << QString::fromUtf8(data->data(suiQualifiedIdsListMimeType))
   //         << QString::fromUtf8(data->data(suiPlacesMimeType));
   QList<QByteArray> idsArrays =
-      data->data(suiQualifiedIdsListMimeType).split(' ');
-  QList<QByteArray> pathsArrays = data->data(suiPlacesMimeType).split(' ');
+      data->data(_suiQualifiedIdsListMimeType).split(' ');
+  QList<QByteArray> pathsArrays = data->data(_suiPlacesMimeType).split(' ');
   QString firstParentPath = splitPath(pathsArrays.value(0));
   QModelIndex sourceParent = indexFromPath(firstParentPath);
   QModelIndex targetParent = droppedParent;

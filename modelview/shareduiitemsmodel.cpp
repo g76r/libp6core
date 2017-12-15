@@ -18,17 +18,17 @@
 #include "shareduiitemlist.h"
 #include <QtDebug>
 
-const QString SharedUiItemsModel::suiQualifiedIdsListMimeType {
+const QString SharedUiItemsModel::_suiQualifiedIdsListMimeType {
   "application/shareduiitem-qualifiedid-list"
 };
 
-const QString SharedUiItemsModel::suiPlacesMimeType {
+const QString SharedUiItemsModel::_suiPlacesMimeType {
   "application/shareduiitem-places"
 };
 
-const QStringList SharedUiItemsModel::suiMimeTypes {
-  SharedUiItemsModel::suiQualifiedIdsListMimeType,
-  SharedUiItemsModel::suiPlacesMimeType
+const QStringList SharedUiItemsModel::_suiMimeTypes {
+  SharedUiItemsModel::_suiQualifiedIdsListMimeType,
+  SharedUiItemsModel::_suiPlacesMimeType
 };
 
 SharedUiItemsModel::SharedUiItemsModel(QObject *parent)
@@ -72,7 +72,7 @@ void SharedUiItemsModel::setHeaderDataFromTemplate(
   _mapRoleSectionHeader.insert(role, mapSectionHeader);
 }
 
-Qt::ItemFlags	SharedUiItemsModel::flags(const QModelIndex & index) const {
+Qt::ItemFlags SharedUiItemsModel::flags(const QModelIndex & index) const {
   // LATER have an orientation parameter, do not assume item section == column
   // LATER modify flags on the fly if dm is not set ?
   return itemAt(index).uiFlags(index.column());
