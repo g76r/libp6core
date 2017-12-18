@@ -153,7 +153,8 @@ ParamSet::ParamSet(QHash<QString,QString> params)
   : d(new ParamSetData(params)) {
 }
 
-ParamSet::ParamSet(QMap<QString,QString> params) {
+ParamSet::ParamSet(QMap<QString,QString> params)
+  : d(new ParamSetData) {
   foreach(QString key, params.keys())
     d->_params.insert(key, params.value(key));
 }
