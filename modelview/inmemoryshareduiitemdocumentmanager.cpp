@@ -12,6 +12,7 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "inmemoryshareduiitemdocumentmanager.h"
+#include <QtDebug>
 
 InMemorySharedUiItemDocumentManager::InMemorySharedUiItemDocumentManager(
     QObject *parent) : SharedUiItemDocumentManager(parent) {
@@ -44,6 +45,12 @@ SharedUiItem InMemorySharedUiItemDocumentManager::itemById(
 SharedUiItemList<SharedUiItem> InMemorySharedUiItemDocumentManager
 ::itemsByIdQualifier(QString idQualifier) const {
   SharedUiItemList<SharedUiItem> list;
+#ifdef QT_DEBUG
+  if (!_repository.contains(idQualifier))
+    qDebug() << "itemsByIdQualifier() called with id qualifier not found in "
+                "repository:"
+             << idQualifier;
+#endif
   foreach (SharedUiItem item, _repository.value(idQualifier))
     list.append(item);
   return list;
