@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2018 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -70,11 +70,12 @@ QString StringUtils::htmlEncode(
   return s;
 }
 
-QByteArray StringUtils::toSnakeCase(const QByteArray &anycase) {
-  QByteArray sc;
+template<class T>
+static T toSnakeCase(const T &anycase) {
+  T sc;
   bool leading = true;
   for (const QChar &c : anycase) {
-    if (c.isSpace()) {
+    if (c.isSpace() || c == '-' || c == '_') {
       sc.append('_');
       leading = false;
     } else if (c.isUpper()) {
@@ -91,3 +92,12 @@ QByteArray StringUtils::toSnakeCase(const QByteArray &anycase) {
   }
   return sc;
 }
+
+QByteArray StringUtils::toSnakeCase(const QByteArray &anycase) {
+    return ::toSnakeCase(anycase);
+}
+
+QString StringUtils::toSnakeCase(const QString &anycase) {
+    return ::toSnakeCase(anycase);
+}
+

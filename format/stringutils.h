@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2018 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -83,11 +83,26 @@ public:
   static QString htmlEncode(QString text, bool urlAsLinks = true,
                             bool newlineAsBr = true);
   /** Convert an identifier to snake case.
-   * E.g. "hello world" -> "hello_world", "HelloWorld" -> "hello_world".
+   * E.g. "hello world" -> "hello_world", "HelloWorld" -> "hello_world",
+   * "hello_world" -> "hello_world", "hello-World" -> "hello_world".
    */
   static QByteArray toSnakeCase(const QByteArray &anycase);
-  // LATER static QString toSnakeCase(const QString &anycase);
+  /** Convert an identifier to snake case.
+   * E.g. "hello world" -> "hello_world", "HelloWorld" -> "hello_world",
+   * "hello_world" -> "hello_world", "hello-World" -> "hello_world".
+   */
+  static QByteArray toSnakeCase(const char *anycase) {
+      return toSnakeCase(QByteArray(anycase)); }
+  /** Convert an identifier to snake case.
+   * E.g. "hello world" -> "hello_world", "HelloWorld" -> "hello_world",
+   * "hello_world" -> "hello_world", "hello-World" -> "hello_world".
+   */
   // LATER toCamelCase() etc.
+  static QString toSnakeCase(const QString &anycase);
+  /** Convert an identifier to kebab + upper camel case.
+   * E.g. "hello-world" -> "Hello-World", "HelloWorld" -> "Helloworld",
+   * "hello_world" -> "Hello_world", "Hello-world" -> "Hello-World".
+   */
 };
 
 #endif // STRINGUTILS_H
