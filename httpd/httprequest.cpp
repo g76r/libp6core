@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2018 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,6 +20,7 @@
 #include <QHash>
 #include "util/radixtree.h"
 #include "util/containerutils.h"
+#include "format/stringutils.h"
 
 class HttpRequestData : public QSharedData {
 public:
@@ -83,10 +84,10 @@ bool HttpRequest::parseAndAddHeader(QString rawHeader) {
     return false;
   // MAYDO remove special chars from keys and values?
   // TODO support multi-line headers
-  QString key = rawHeader.left(i).trimmed();
-  // TODO normalize key case
+  QString key = StringUtils::normalizeRfc841HeaderCase(
+              rawHeader.left(i).trimmed());
   QString value = rawHeader.right(rawHeader.size()-i-1).trimmed();
-  //qDebug() << "header:" << rawHeader << key << value;
+  qDebug() << "header:" << rawHeader << key << value;
   d->_headers.insertMulti(key, value);
   if (key.compare("Cookie", Qt::CaseInsensitive) == 0)
     parseAndAddCookie(value);
