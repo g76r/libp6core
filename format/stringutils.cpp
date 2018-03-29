@@ -101,3 +101,26 @@ QString StringUtils::toSnakeCase(const QString &anycase) {
     return ::toSnakeCase(anycase);
 }
 
+template<class T>
+static T normalizeRfc841HeaderCase(const T &anycase) {
+  T s;
+  bool leading = true;
+  for (const QChar &c : anycase) {
+    if (c == '-') {
+      s.append('-');
+      leading = true;
+    } else {
+      s.append(leading ? c.toUpper() : c.toLower());
+      leading = false;
+    }
+  }
+  return s;
+}
+
+QByteArray StringUtils::normalizeRfc841HeaderCase(const QByteArray &anycase) {
+  return ::normalizeRfc841HeaderCase(anycase);
+}
+
+QString StringUtils::normalizeRfc841HeaderCase(const QString &anycase) {
+  return ::normalizeRfc841HeaderCase(anycase);
+}

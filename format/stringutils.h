@@ -103,6 +103,18 @@ public:
    * E.g. "hello-world" -> "Hello-World", "HelloWorld" -> "Helloworld",
    * "hello_world" -> "Hello_world", "Hello-world" -> "Hello-World".
    */
+  static QByteArray normalizeRfc841HeaderCase(const QByteArray &anycase);
+  /** Convert an identifier to kebab + upper camel case.
+   * E.g. "hello-world" -> "Hello-World", "HelloWorld" -> "Helloworld",
+   * "hello_world" -> "Hello_world", "Hello-world" -> "Hello-World".
+   */
+  static QByteArray normalizeRfc841HeaderCase(const char *anycase) {
+      return normalizeRfc841HeaderCase(QByteArray(anycase)); }
+  /** Convert an identifier to kebab + upper camel case.
+   * E.g. "hello-world" -> "Hello-World", "HelloWorld" -> "Helloworld",
+   * "hello_world" -> "Hello_world", "Hello-world" -> "Hello-World".
+   */
+  static QString normalizeRfc841HeaderCase(const QString &anycase);
 };
 
 #endif // STRINGUTILS_H
