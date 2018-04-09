@@ -87,7 +87,7 @@ bool HttpRequest::parseAndAddHeader(QString rawHeader) {
   QString key = StringUtils::normalizeRfc841HeaderCase(
               rawHeader.left(i).trimmed());
   QString value = rawHeader.right(rawHeader.size()-i-1).trimmed();
-  qDebug() << "header:" << rawHeader << key << value;
+  //qDebug() << "header:" << rawHeader << key << value;
   d->_headers.insertMulti(key, value);
   if (key.compare("Cookie", Qt::CaseInsensitive) == 0)
     parseAndAddCookie(value);
