@@ -39,20 +39,22 @@ qint64 IOUtils::copy(QIODevice *dest, QIODevice *src, qint64 max,
   char buf[bufsize];
   int total = 0;
   while (total < max) {
-    int n, m;
-    if (src->bytesAvailable() < 1)
+    int shouldBeRead, actuallyRead, actuallyWritten;
+    shouldBeRead = std::min(bufsize, max-total);
+    if (src->bytesAvailable() < shouldBeRead) {
       src->waitForReadyRead(readTimeout);
-    n = src->read(buf, std::min(bufsize, max-total));
-    if (n < 0)
+    }
+    actuallyRead = src->read(buf, shouldBeRead);
+    if (actuallyRead < 0)
       return -1;
-    if (n == 0)
+    if (actuallyRead == 0)
       break;
-    m = dest->write(buf, n);
-    if (m != n)
+    actuallyWritten = dest->write(buf, actuallyRead);
+    if (actuallyWritten != actuallyRead)
       return -1;
     if (dest->bytesToWrite() > bufsize)
-      while (dest->waitForBytesWritten(writeTimeout) > bufsize);
-    total += n;
+      while (dest->waitForBytesWritten(writeTimeout));
+    total += actuallyRead;
   }
   return total;
 }
@@ -79,7 +81,7 @@ static inline qint64 grep(
       if (m != n)
         return -1;
       if (dest->bytesToWrite() > bufsize)
-        while (dest->waitForBytesWritten(writeTimeout) > bufsize);
+        while (dest->waitForBytesWritten(writeTimeout));
       total += n;
     }
   }
@@ -145,7 +147,7 @@ static inline qint64 grepWithContinuation(
       if (m != n)
         return -1;
       if (dest->bytesToWrite() > bufsize)
-        while (dest->waitForBytesWritten(writeTimeout) > bufsize);
+        while (dest->waitForBytesWritten(writeTimeout));
       total += n;
       continuation = true;
     } else
