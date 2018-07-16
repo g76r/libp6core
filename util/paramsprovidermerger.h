@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2018 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,7 +21,7 @@
  * Keep in mind that it does not take ownership on referenced ParamsProvider
  * objects and that these objects must not be deleted before the last call
  * to ParamsProviderList::paramValue() or must be removed from the
- * ParamsProviderMerger before there destruction.
+ * ParamsProviderMerger before their destruction.
  * Therefore ParamsProviderMerger should only be used as a temporary object
  * around a call to some method taking a ParamsProvider as a parameter. */
 class LIBPUMPKINSHARED_EXPORT ParamsProviderMerger : public ParamsProvider {

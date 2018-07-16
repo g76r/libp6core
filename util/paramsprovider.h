@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2018 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,6 +22,8 @@
 /** Base class for any class that may provide key/value parameters.
  * @see ParamSet */
 class LIBPUMPKINSHARED_EXPORT ParamsProvider {
+    static ParamsProvider *_environment;
+
 public:
   virtual ~ParamsProvider();
   /** Return a parameter value. */
@@ -33,6 +35,7 @@ public:
                       QSet<QString> alreadyEvaluated = QSet<QString>()) const {
     return paramValue(key, defaultValue, alreadyEvaluated).toString();
   }
+  static ParamsProvider *environment() { return _environment; }
 };
 
 #endif // PARAMSPROVIDER_H
