@@ -136,6 +136,11 @@ ParamSet::ParamSet(std::initializer_list<QString> list) {
   }
 }
 
+ParamSet::ParamSet(std::initializer_list<std::pair<QString,const char *>> list) {
+  for (const std::pair<QString,const char *> &p : list)
+    setValue(p.first, QString::fromUtf8(p.second));
+}
+
 ParamSet::ParamSet(std::initializer_list<std::pair<QString,QString>> list) {
   for (const std::pair<QString,QString> &p : list)
     setValue(p.first, p.second);
