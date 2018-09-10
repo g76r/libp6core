@@ -22,7 +22,9 @@ static int staticInit() {
 Q_CONSTRUCTOR_FUNCTION(staticInit)
 
 QVariant SharedUiItemListParamsProvider::paramValue(
-    QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
+        QString key, const ParamsProvider *context, QVariant defaultValue,
+        QSet<QString> alreadyEvaluated) const {
+  Q_UNUSED(context)
   Q_UNUSED(alreadyEvaluated)
   int colon = key.indexOf(':');
   QString idQualifier = colon >= 0 ? key.left(colon) : QString();

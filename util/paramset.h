@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2018 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -384,8 +384,10 @@ public:
    * this way).
    * Can be used as an input for QRegularExpression(QString) constructor. */
   static QString matchingRegexp(QString rawValue);
-  QVariant paramValue(QString key, QVariant defaultValue = QVariant(),
-                      QSet<QString> alreadyEvaluated = QSet<QString>()) const;
+  QVariant paramValue(QString key, const ParamsProvider *context,
+                      QVariant defaultValue = QVariant(),
+                      QSet<QString> alreadyEvaluated = QSet<QString>()
+          ) const override;
   bool isNull() const;
   int size() const;
   bool isEmpty() const;

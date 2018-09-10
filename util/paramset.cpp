@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2018 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -643,9 +643,10 @@ bool ParamSet::isEmpty() const {
 }
 
 QVariant ParamSet::paramValue(
-    QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
-  return evaluate(rawValue(key, defaultValue.toString(), true),
-                  true, 0, alreadyEvaluated);
+        QString key, const ParamsProvider *context, QVariant defaultValue,
+        QSet<QString> alreadyEvaluated) const {
+    return evaluate(rawValue(key, defaultValue.toString(), true),
+                    true, context, alreadyEvaluated);
 }
 
 QString ParamSet::toString(bool inherit, bool decorate) const {

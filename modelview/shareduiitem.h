@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2018 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -572,8 +572,10 @@ public:
   inline SharedUiItemParamsProvider(
       SharedUiItem item, int role = Qt::DisplayRole)
     : _item(item), _role(role) { }
-  QVariant paramValue(QString key, QVariant defaultValue = QVariant(),
-                      QSet<QString> alreadyEvaluated = QSet<QString>()) const;
+  QVariant paramValue(QString key, const ParamsProvider *context = 0,
+                      QVariant defaultValue = QVariant(),
+                      QSet<QString> alreadyEvaluated = QSet<QString>()
+          ) const override;
 };
 
 inline SharedUiItemParamsProvider SharedUiItem::toParamsProvider() const {

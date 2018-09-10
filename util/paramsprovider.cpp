@@ -17,12 +17,13 @@
 namespace {
 
 struct Environment : public ParamsProvider {
-    QVariant paramValue(QString key, QVariant defaultValue,
-                        QSet<QString> alreadyEvaluated) const {
-        const char *value = getenv(key.toUtf8());
-        return value ? ParamSet().evaluate(value, false, 0, alreadyEvaluated)
-                     : defaultValue;
-    }
+  QVariant paramValue(QString key, const ParamsProvider *context,
+                      QVariant defaultValue,
+                      QSet<QString> alreadyEvaluated) const override {
+    const char *value = getenv(key.toUtf8());
+    return value ? ParamSet().evaluate(value, false, context, alreadyEvaluated)
+                 : defaultValue;
+  }
 };
 
 } // unnamed namespace

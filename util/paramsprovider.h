@@ -26,14 +26,28 @@ class LIBPUMPKINSHARED_EXPORT ParamsProvider {
 
 public:
   virtual ~ParamsProvider();
-  /** Return a parameter value. */
+  /** Return a parameter value.
+    * @param context is an evaluation context */
   virtual QVariant paramValue(
-      QString key, QVariant defaultValue = QVariant(),
-      QSet<QString> alreadyEvaluated = QSet<QString>()) const = 0;
+          QString key, const ParamsProvider *context = 0,
+          QVariant defaultValue = QVariant(),
+          QSet<QString> alreadyEvaluated = QSet<QString>()) const = 0;
+  /** Backward compatibility and convenience method callable w/o context */
+  QVariant paramValue(
+          QString key, QVariant defaultValue,
+          QSet<QString> alreadyEvaluated = QSet<QString>()) const {
+    return paramValue(key, 0, defaultValue, alreadyEvaluated);
+  }
   /** Convenience method converting QVariant to QString. */
   QString paramString(QString key, QVariant defaultValue = QVariant(),
                       QSet<QString> alreadyEvaluated = QSet<QString>()) const {
     return paramValue(key, defaultValue, alreadyEvaluated).toString();
+  }
+  /** Convenience method converting QVariant to QString. */
+  QString paramString(QString key, const ParamsProvider *context,
+                      QVariant defaultValue = QVariant(),
+                      QSet<QString> alreadyEvaluated = QSet<QString>()) const {
+    return paramValue(key, context, defaultValue, alreadyEvaluated).toString();
   }
   static ParamsProvider *environment() { return _environment; }
 };

@@ -275,7 +275,9 @@ QStringList HttpRequest::clientAdresses() const {
 }
 
 QVariant HttpRequestPseudoParamsProvider::paramValue(
-    QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
+        QString key, const ParamsProvider *context, QVariant defaultValue,
+        QSet<QString> alreadyEvaluated) const {
+  Q_UNUSED(context)
   Q_UNUSED(alreadyEvaluated)
   if (key.startsWith('!')) {
     if (key == "!url") {

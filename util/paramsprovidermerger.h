@@ -121,8 +121,10 @@ public:
   void save();
   /** Restores the current state (pops a saved state off the stack). */
   void restore();
-  QVariant paramValue(QString key, QVariant defaultValue = QVariant(),
-                      QSet<QString> alreadyEvaluated = QSet<QString>()) const;
+  QVariant paramValue(QString key, const ParamsProvider *context = 0,
+                      QVariant defaultValue = QVariant(),
+                      QSet<QString> alreadyEvaluated = QSet<QString>()
+          ) const override;
   /** Give access to currently overriding params. */
   ParamSet overridingParams() const { return _overridingParams; }
 };

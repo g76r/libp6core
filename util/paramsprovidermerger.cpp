@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2018 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -12,27 +12,47 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "paramsprovidermerger.h"
-#include <QtDebug>
+#include "log/log.h"
+
+namespace {
+
+/** Two providers merger used internaly as an helper during evaluation. */
+class SimplerMerger : public ParamsProvider {
+    const ParamsProvider *_first;
+    const ParamsProvider *_second;
+public:
+    SimplerMerger(const ParamsProvider *first, const ParamsProvider *second)
+        : _first(first), _second(second) { }
+    /** Evaluate using second provider if first returns an invalid QVariant. */
+    QVariant paramValue(QString key, const ParamsProvider *context,
+                        QVariant defaultValue, QSet<QString> alreadyEvaluated
+                        ) const override {
+        QVariant v = _first->paramValue(key, context, defaultValue,
+                                        alreadyEvaluated);
+        if (!v.isValid() && _second)
+            _second->paramValue(key, context, defaultValue, alreadyEvaluated);
+        return v;
+    }
+};
+
+} // unnamed namespace
 
 QVariant ParamsProviderMerger::paramValue(
-    QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
-  QVariant v = _overridingParams.paramValue(key, QVariant(), alreadyEvaluated);
+        QString key, const ParamsProvider *context, QVariant defaultValue,
+        QSet<QString> alreadyEvaluated) const {
+  SimplerMerger sm(this, context);
+  QVariant v = _overridingParams.paramValue(key, &sm, QVariant(),
+                                            alreadyEvaluated);
   if (!v.isNull())
     return v;
   foreach (const Provider &provider, _providers) {
     if (provider.d->_paramsProvider) {
       QVariant v = provider.d->_paramsProvider
-          ->paramValue(key, QVariant(), alreadyEvaluated);
+          ->paramValue(key, &sm, QVariant(), alreadyEvaluated);
       if (!v.isNull())
         return v;
     } else {
-      // ParamSet is a special case since it is able to use the whole
-      // ParamsProviderMerger as an evaluation context instead of staying local
-      // to itself
-      // e.g. %foo can be evaluated even if foo is defined in another params
-      // provider of the ParamsProviderMerger than the current one
-      QString s = provider.d->_paramset
-          .value(key, true, this, alreadyEvaluated);
+      QString s = provider.d->_paramset.value(key, true, &sm, alreadyEvaluated);
       if (!s.isNull())
         return s;
     }
@@ -52,7 +72,7 @@ void ParamsProviderMerger::restore() {
     _overridingParams = _overridingParamsStack.first();
     _overridingParamsStack.removeFirst();
   } else {
-    qDebug() << "calling ParamsProviderMerger::restore() without previously "
-                "calling ParamsProviderMerger::save()";
+    Log::warning() << "calling ParamsProviderMerger::restore() without "
+                      "previously calling ParamsProviderMerger::save()";
   }
 }

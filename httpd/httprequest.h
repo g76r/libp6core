@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2018 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -114,8 +114,10 @@ class LIBPUMPKINSHARED_EXPORT HttpRequestPseudoParamsProvider
 public:
   inline HttpRequestPseudoParamsProvider(HttpRequest request)
     : _request(request) { }
-  QVariant paramValue(QString key, QVariant defaultValue = QVariant(),
-                      QSet<QString> alreadyEvaluated = QSet<QString>()) const;
+  QVariant paramValue(QString key, const ParamsProvider *context = 0,
+                      QVariant defaultValue = QVariant(),
+                      QSet<QString> alreadyEvaluated = QSet<QString>()
+          ) const override;
 };
 
 inline HttpRequestPseudoParamsProvider HttpRequest::pseudoParams() const {

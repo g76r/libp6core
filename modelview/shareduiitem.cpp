@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2018 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -74,7 +74,9 @@ QDebug operator<<(QDebug dbg, const SharedUiItem &i) {
 }
 
 QVariant SharedUiItemParamsProvider::paramValue(
-    QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
+        QString key, const ParamsProvider *context, QVariant defaultValue,
+        QSet<QString> alreadyEvaluated) const {
+  Q_UNUSED(context)
   Q_UNUSED(alreadyEvaluated)
   bool ok;
   int section = key.toInt(&ok);
