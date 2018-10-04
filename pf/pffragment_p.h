@@ -21,6 +21,7 @@ under the License.
 /** Internal class for Qt's implicit sharing idiom.
   * @see PfFragment */
 class LIBQTPFSHARED_EXPORT PfFragmentData : public QSharedData {
+  friend class PfFragment;
 protected:
   enum Format {Raw, Pf, XmlBase64 };
 public:
