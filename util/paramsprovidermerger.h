@@ -111,6 +111,10 @@ public:
   inline ParamsProviderMerger &overrideParamValue(
       QString key, const char *value){
     return overrideParamValue(key, QString(value)); }
+  /** Disambiguation method.
+   * Avoids implicit conversion of 0 to char* */
+  inline ParamsProviderMerger &overrideParamValue(QString key, int value){
+    return overrideParamValue(key, QVariant::fromValue(value)); }
   /** Remove all ParamsProvider and overriding params. */
   ParamsProviderMerger &clear() {
     _providers.clear();
