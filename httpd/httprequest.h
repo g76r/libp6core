@@ -1,4 +1,4 @@
-/* Copyright 2012-2018 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2019 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -34,7 +34,7 @@ class HttpRequestPseudoParamsProvider;
 class LIBPUMPKINSHARED_EXPORT HttpRequest {
 public:
   enum HttpRequestMethod { NONE = 0, HEAD = 1, GET = 2, POST = 4, PUT = 8,
-                           DELETE = 16, ANY = 0x7fff} ;
+                           DELETE = 16, OPTIONS = 32, ANY = 0x7fff} ;
 
 private:
   QExplicitlySharedDataPointer<HttpRequestData> d;

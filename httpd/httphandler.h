@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2019 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,6 +18,7 @@
 #include "httpresponse.h"
 #include "util/paramsprovidermerger.h"
 #include <QObject>
+#include <QRegularExpression>
 
 /** HttpHandler is responsible for handling every HTTP request the server
  * receives.
@@ -35,12 +36,20 @@ class LIBPUMPKINSHARED_EXPORT HttpHandler : public QObject {
   Q_DISABLE_COPY(HttpHandler)
   // LATER give handlers their own threads and make server and handler threads exchange signals
   QString _name;
+  QList<QRegularExpression> _corsOrigins;
 
 public:
-  explicit inline HttpHandler(QObject *parent = 0) : QObject(parent) { }
-  explicit inline HttpHandler(QString name, QObject *parent = 0)
-    : QObject(parent), _name(name) { }
+  HttpHandler(QString name, QObject *parent = 0);
+  HttpHandler(QObject *parent = 0) : HttpHandler(QString(), parent) { }
   virtual QString name() const;
+  QList<QRegularExpression> corsOrigins() const { return _corsOrigins; }
+  /** List of regular expression matching Origin: header.
+   * A star "*" as any element of the list or an empty list means "any origin".
+   * @default content of semi colon separated env var CORS_ORIGINS or if empty
+   *  CORS_DOMAINS.
+   */
+  void setCorsOrigins(QList<QRegularExpression> corsDomains) {
+    _corsOrigins = corsDomains; }
   /** Return true iff the handler accept to handle the request.
    * Thread-safe (called by several HttpWorker threads at the same time). */
   virtual bool acceptRequest(HttpRequest req) = 0;
@@ -59,6 +68,13 @@ public:
    */
   bool redirectForUrlCleanup(HttpRequest req, HttpResponse res,
                              ParamsProviderMerger *processingContext);
+  /** Handle OPTIONS preflight request.
+   * @return true iff the request was a preflight and was handled (therefore if
+   * handleRequest() should stop here rather than handling a GET/POST/whatever)
+   */
+  bool handlePreflight(HttpRequest req, HttpResponse res,
+                       ParamsProviderMerger *processingContext,
+                       QSet<QString> methods);
 };
 
 #endif // HTTPHANDLER_H

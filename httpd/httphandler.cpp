@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2019 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,6 +15,20 @@
 #include <QRegularExpression>
 
 static const QRegularExpression _multipleSlashRE("//+");
+
+HttpHandler::HttpHandler(QString name, QObject *parent)
+  : QObject(parent), _name(name) {
+  QByteArray origins = qgetenv("CORS_ORIGINS");
+  if (origins.isNull())
+    origins = qgetenv("CORS_DOMAINS");
+  for (const QString &origin : QString::fromUtf8(origins).split(';', QString::SkipEmptyParts)) {
+    if (origin == "*") {
+      _corsOrigins.clear();
+      return;
+    }
+    _corsOrigins.append(QRegularExpression(origin));
+  }
+}
 
 QString HttpHandler::name() const {
   if (!_name.isEmpty())
@@ -45,4 +59,30 @@ bool HttpHandler::redirectForUrlCleanup(
     return true;
   }
   return false;
+}
+
+bool HttpHandler::handlePreflight(
+    HttpRequest req, HttpResponse res, ParamsProviderMerger *processingContext,
+    QSet<QString> methods) {
+  if (req.method() != HttpRequest::OPTIONS)
+    return false;
+  QString origin = req.header("Origin");
+  QString allowed;
+  for (const QRegularExpression &re : _corsOrigins) {
+    if (re.match(origin).hasMatch()) {
+      allowed = origin;
+      break;
+    }
+  }
+  if (_corsOrigins.isEmpty())
+    allowed = "*";
+  if (allowed.isNull())
+    return false;
+  methods.insert("OPTIONS");
+  res.setHeader("Access-Control-Allow-Origin", allowed);
+  res.setHeader("Access-Control-Allow-Methods", methods.toList().join(", "));
+  res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Max-Age", "86400");
+  return true;
 }

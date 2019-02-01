@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2019 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,6 +17,8 @@
 #include "util/ioutils.h"
 #include <QtDebug>
 #include "format/timeformats.h"
+
+static QSet<QString> _methods { "GET", "HEAD" };
 
 FilesystemHttpHandler::FilesystemHttpHandler(
     QObject *parent, const QString urlPathPrefix, const QString documentRoot) :
@@ -55,6 +57,8 @@ bool FilesystemHttpHandler::handleRequest(
     res.output()->write("No document root.");
     return true;
   }
+  if (handlePreflight(req, res, processingContext, _methods))
+    return true;
   QString path = req.url().path().mid(_urlPathPrefix.length());
   if (path.endsWith('/'))
     path.chop(1);
