@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn and others.
+/* Copyright 2012-2019 Hallowyn, Grégoire Barbier and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -85,7 +85,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions &options) {
   }
   _handler->setErrorString(tr("unknown handler error"));
   int line = 1, column = 0, arrayColumn = 0;
-  quint8 c, quote = 0, escapeshift = 0;
+  char c = 0, quote = 0, escapeshift = 0;
   quint16 escaped = 0;
   qint8 digit;
   State state = TopLevel; // current state
@@ -106,7 +106,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions &options) {
   }
   while (source->bytesAvailable()
          || source->waitForReadyRead(options.readTimeout()),
-         source->getChar((char*)&c)) {
+         source->getChar(&c)) {
     ++column;
     switch(state) {
     case TopLevel:
@@ -230,6 +230,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions &options) {
         break;
       }
       // otherwise process as Content by falling into Content: label
+    [[clang::fallthrough]];
     case Content:
       if (c == ';') {
         // LATER warn if an array node has text or binary content
@@ -607,7 +608,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions &options) {
       state = escapedState;
       break;
     case EscapeHex:
-      digit = hexdigits[c];
+      digit = hexdigits[static_cast<unsigned char>(c)];
       if (digit < 0) {
         _handler->setErrorString("bad hexadecimal digit in escape sequence");
         goto error;
