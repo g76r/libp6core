@@ -140,12 +140,12 @@ Logger::Logger(Log::Severity minSeverity, ThreadModel threadModel)
   case DedicatedThread:
     _thread = new LoggerThread(this);
     _thread->setObjectName("Logger-"+Log::severityToString(minSeverity)
-                           +"-"+QString::number((long)this, 16));
+                           +"-"+QString::number((long long)this, 16));
     _buffer = new CircularBuffer<LogEntry>(12);
     break;
   case RootLogger:
     _thread = new LoggerThread(this);
-    _thread->setObjectName("RootLogger-"+QString::number((long)this, 16));
+    _thread->setObjectName("RootLogger-"+QString::number((long long)this, 16));
     _buffer = new CircularBuffer<LogEntry>(12);
     break;
   }
