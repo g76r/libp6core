@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2018 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -55,10 +55,10 @@ protected:
   SharedUiItemDocumentManager *_documentManager;
 
 public:
-  explicit SharedUiItemsModel(QObject *parent = 0);
-  QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
-  int columnCount(const QModelIndex &parent = QModelIndex()) const;
-  QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+  explicit SharedUiItemsModel(QObject *parent = nullptr);
+  QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+  int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+  QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
   /** Set header according to what template item returns.
    * Also set columns count. */
   virtual void setHeaderDataFromTemplate(SharedUiItem templateItem,
@@ -99,9 +99,9 @@ public:
   QModelIndex indexOf(QString idQualifier, QString id) const {
     return indexOf(SharedUiItem::qualifiedId(idQualifier, id)); }
   virtual QModelIndex indexOf(QString qualifiedId) const = 0;
-  Qt::ItemFlags	flags(const QModelIndex &index) const;
+  Qt::ItemFlags	flags(const QModelIndex &index) const override;
   bool setData(const QModelIndex &index, const QVariant &value,
-               int role = Qt::EditRole);
+               int role = Qt::EditRole) override;
   /** Insert an item before row 'row', or append it at the end if
    * row == rowCount().
    * @see QAbstractItemModel::insertRow */
@@ -206,7 +206,7 @@ class LIBPUMPKINSHARED_EXPORT SharedUiItemsProxyModelHelper {
   QList <QAbstractProxyModel*> _proxies;
 
 public:
-  SharedUiItemsProxyModelHelper() : _realModel(0) { }
+  SharedUiItemsProxyModelHelper() : _realModel(nullptr) { }
   SharedUiItemsProxyModelHelper(QAbstractItemModel *model) {
     setApparentModel(model); }
   void setApparentModel(QAbstractItemModel *model);

@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2018 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -72,7 +72,7 @@ public:
       QString continuationLinePrefix, qint64 max = LLONG_MAX,
       qint64 bufsize = 65536, int readTimeout = 30000,
       int writeTimeout = 30000) {
-    return grepWithContinuation(dest, src, pattern, continuationLinePrefix, max,
+    return grepWithContinuation(dest, src, QString::fromLatin1(pattern), continuationLinePrefix, max,
                                 bufsize, readTimeout, writeTimeout); }
   /** Copy at most max bytes from dest to src, copying only lines that match
    * regexp and those that follow it and begin with the continuationLinePrefix.

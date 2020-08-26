@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2018 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -109,7 +109,7 @@ protected:
   QMultiHash<QString,ChangeItemTrigger> _triggersAfterDelete;
 
 public:
-  explicit SharedUiItemDocumentManager(QObject *parent = 0);
+  explicit SharedUiItemDocumentManager(QObject *parent = nullptr);
   /** Method that user interface should call to create a new default item with
    * an automatically generated unique id.
    *
@@ -119,24 +119,25 @@ public:
    * No other class than DtpDocumentManager should override createNewItem().
    */
   virtual SharedUiItem createNewItem(
-      QString idQualifier, PostCreationModifier modifier = 0,
-      QString *errorString = 0);
+      QString idQualifier, PostCreationModifier modifier = nullptr,
+      QString *errorString = nullptr);
   /** Convenience template performing downcast. */
   template<class T>
-  T createNewItem(QString idQualifier, PostCreationModifier modifier = 0,
-                  QString *errorString = 0) {
+  T createNewItem(QString idQualifier, PostCreationModifier modifier = nullptr,
+                  QString *errorString = nullptr) {
+    Q_UNUSED(modifier)
     SharedUiItem item = createNewItem(idQualifier, errorString);
     return static_cast<T&>(item);
   }
   /** Convenience method with modifier = 0 */
   SharedUiItem createNewItem(
       QString idQualifier, QString *errorString) {
-    return createNewItem(idQualifier, 0, errorString);
+    return createNewItem(idQualifier, nullptr, errorString);
   }
   /** Convenience template performing downcast. */
   template<class T>
   T createNewItem(QString idQualifier, QString *errorString) {
-    SharedUiItem item = createNewItem(idQualifier, 0, errorString);
+    SharedUiItem item = createNewItem(idQualifier, nullptr, errorString);
     return static_cast<T&>(item);
   }
   /** Method that user interface should call to change an item, one field at a
@@ -151,7 +152,7 @@ public:
    */
   virtual bool changeItemByUiData(
       SharedUiItem oldItem, int section, const QVariant &value,
-      QString *errorString = 0);
+      QString *errorString = nullptr);
   /** Method that user interface or non-interactive code should call to change
    *
    * an item at whole.
@@ -177,7 +178,7 @@ public:
    * No other class than DtpDocumentManager should override changeItem().
    */
   virtual bool changeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                          QString idQualifier, QString *errorString = 0);
+                          QString idQualifier, QString *errorString = nullptr);
   virtual SharedUiItem itemById(QString idQualifier, QString id) const = 0;
   /** Default: parses qualifiedId and calls itemById(QString,QString). */
   virtual SharedUiItem itemById(QString qualifiedId) const;
@@ -282,7 +283,7 @@ public:
    * is left empty). */
   QString generateNewId(QString idQualifier,
                           QString prefix = QString()) const {
-    return generateNewId(0, idQualifier, prefix);
+    return generateNewId(nullptr, idQualifier, prefix);
   }
 
 signals:

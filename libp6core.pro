@@ -1,4 +1,4 @@
-# Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+# Copyright 2012-2018 Hallowyn, Gregoire Barbier and others.
 # This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
 # Libpumpkin is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
 
 QT -= gui
 QT += network sql
-CONFIG += largefile c++11
+CONFIG += largefile c++14 c++11
 
 TARGET = p6core
 TEMPLATE = lib
@@ -32,7 +32,7 @@ DEFINES += LIBPUMPKIN_LIBRARY
 
 exists(/usr/bin/ccache):QMAKE_CXX = ccache $$QMAKE_CXX
 exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always
-QMAKE_CXXFLAGS += -Wextra -Woverloaded-virtual -Wno-padding
+QMAKE_CXXFLAGS += -Wextra -Woverloaded-virtual -Wno-padded
 CONFIG(debug,debug|release):QMAKE_CXXFLAGS += -ggdb
 
 OBJECTS_DIR = ../build-$$TARGET-$$TARGET_OS/$$BUILD_TYPE/obj

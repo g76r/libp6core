@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2018 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -69,15 +69,15 @@ private:
 
 public:
   explicit ParamSetModel(
-      QObject *parent = 0, bool inherit = false, bool evaluate = false,
+      QObject *parent = nullptr, bool inherit = false, bool evaluate = false,
       bool displayOverriden = false, bool trimOnEdit = true);
   // LATER make column names customizable (e.g. "Variable" instead of "Key")
-  int rowCount(const QModelIndex &parent) const;
-  int columnCount(const QModelIndex &parent) const;
-  QVariant data(const QModelIndex &index, int role) const;
-  QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+  int rowCount(const QModelIndex &parent) const override;
+  int columnCount(const QModelIndex &parent) const override;
+  QVariant data(const QModelIndex &index, int role) const override;
+  QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
   bool setData(const QModelIndex &index, const QVariant &value,
-               int role = Qt::EditRole);
+               int role = Qt::EditRole) override;
   bool removeRows(int row, int count,
                   const QModelIndex &parent = QModelIndex()) override;
   QString createNewParam();

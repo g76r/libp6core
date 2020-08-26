@@ -18,8 +18,6 @@
 #include <QMetaProperty>
 #include "libp6core_global.h"
 
-class QMetaObject;
-
 /** Model for a list of same class QObjects, mapping their properties to roles,
  * and the QObject itself to an object role, in order to make the object and
  * its properties accessible to QML views.
