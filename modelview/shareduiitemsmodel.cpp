@@ -110,7 +110,7 @@ void SharedUiItemsModel::moveRowsByRownums(
   //         << parent.child(targetRow-1, 0).data()
   //         << "under:" << parent.data();
   // remove source rows
-  qSort(sourceRows);
+  std::sort(sourceRows.begin(), sourceRows.end());
   int rowsBeforeTarget = 0;
   for (int i = 0; i < sourceRows.size(); ++i) {
     if (sourceRows[i] < targetRow) {

@@ -1,4 +1,4 @@
-/* Copyright 2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2020 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -54,7 +54,7 @@ ObjectsStore::Result SqlObjectsStore::create(
   keys.removeAll(_pkPropName); // won't try to set id on creation
   int size = keys.size();
   if (size) {
-    qSort(keys);
+    std::sort(keys.begin(), keys.end());
     sql = sql+" ("+keys.join(",")+") VALUES (";
     for (int i = 0; i < size; ++i) {
       if (i)
@@ -85,7 +85,7 @@ ObjectsStore::Result SqlObjectsStore::create(
     }
   }
   QSqlError error = query.lastError();
-  return Result(false, error.number(),
+  return Result(false, error.nativeErrorCode(),
                 error.driverText()+" "+error.databaseText()+" : "+sql);
 }
 
@@ -144,7 +144,7 @@ ObjectsStore::Result SqlObjectsStore::fetch() {
     return Result(true);
   }
   QSqlError error = query.lastError();
-  return Result(false, error.number(),
+  return Result(false, error.nativeErrorCode(),
                 error.driverText()+" "+error.databaseText()+" : "+sql);
 }
 
@@ -160,10 +160,10 @@ void SqlObjectsStore::persistSenderSlot() {
 ObjectsStore::Result SqlObjectsStore::persist(QObject *object) {
   // TODO sanitize table and keys names
   if (!object)
-    return Result(false, -1, "null object");
+    return Result(false, "null", "null object");
   QVariant pk = object->property(_pkPropName);
   if (!pk.isValid())
-    return Result(false, -2, "invalid primary key");
+    return Result(false, "bad_pk", "invalid primary key");
   QSqlQuery query(_db);
   QString sql = "UPDATE "+_tableName+" SET ";
   const QMetaObject *metaobject = object->metaObject();
@@ -196,9 +196,9 @@ ObjectsStore::Result SqlObjectsStore::persist(QObject *object) {
   }
   QSqlError error = query.lastError();
   qWarning() << "cannot update database for object" << _metaobject->className()
-             << pk << "error:" << error.number() << error.driverText()
+             << pk << "error:" << error.nativeErrorCode() << error.driverText()
              << error.databaseText() << "request:" << sql;
-  return Result(false, error.number(),
+  return Result(false, error.nativeErrorCode(),
                 error.driverText()+" "+error.databaseText()+" : "+sql);
 }
 
@@ -206,10 +206,10 @@ ObjectsStore::Result SqlObjectsStore::dispose(
     QObject *object, bool shouldDelete) {
   // TODO sanitize table and keys names
   if (!object)
-    return Result(false, -1, "null object");
+    return Result(false, "null", "null object");
   QVariant pk = object->property(_pkPropName);
   if (!pk.isValid())
-    return Result(false, -2, "invalid primary key");
+    return Result(false, "bad_pk", "invalid primary key");
   QSqlQuery query(_db);
   QString sql = "DELETE FROM "+_tableName+" WHERE "+_pkPropName+" = ?";
   query.prepare(sql);
@@ -223,7 +223,7 @@ ObjectsStore::Result SqlObjectsStore::dispose(
     return Result(true);
   }
   QSqlError error = query.lastError();
-  return Result(false, error.number(),
+  return Result(false, error.nativeErrorCode(),
                 error.driverText()+" "+error.databaseText()+" : "+sql);
 }
 
@@ -236,4 +236,3 @@ long SqlObjectsStore::apply(
   }
   return i;
 }
-

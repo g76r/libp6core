@@ -61,7 +61,7 @@ public:
    * Default: INT_MAX */
   void setMaxrows(int maxrows) { _maxrows = maxrows; }
   void sortAndSetItems(QList<SharedUiItem> items) {
-    qSort(items);
+    std::sort(items.begin(), items.end());
     setItems(items);
   }
   template <class T> void setItems(QList<T> items) {
@@ -76,7 +76,7 @@ public:
     QList<SharedUiItem> castedItems;
     foreach (const SharedUiItem &i, items)
       castedItems.append(i);
-    qSort(castedItems);
+    std::sort(castedItems.begin(), castedItems.end());
     setItems(castedItems);
   }
   void insertItemAt(SharedUiItem newItem, int row,

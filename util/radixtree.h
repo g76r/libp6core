@@ -304,7 +304,10 @@ public:
   }
   RadixTree(const RadixTree &other) : d(other.d) { }
   RadixTree &operator=(const RadixTree &other) {
-    if (&other != this) d = other.d; return *this; }
+    if (&other != this)
+      d = other.d;
+    return *this;
+  }
   void insert(const char *key, T value, bool isPrefix = false) {
     //qDebug() << "RadixTree::insert" << !!d << key;
     if (!d)

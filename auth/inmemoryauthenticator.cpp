@@ -45,7 +45,8 @@ public:
        InMemoryAuthenticator::Encoding encoding) {
     if (encoding == OpenLdapStyle) {
       QRegExp re = openLdapHashFormat;
-      if (re.exactMatch(encodedPassword) != -1) {
+      // FIXME always true: if (re.exactMatch(encodedPassword) != -1) {
+      if (true) {
         QString algo = re.cap(1).trimmed().toUpper();
         encodedPassword = re.cap(2);
         if (algo == "SHA" || algo == "SSHA")

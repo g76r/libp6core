@@ -1,4 +1,4 @@
-/* Copyright 2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2020 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,6 +15,7 @@
 #include <QSet>
 #include <QMimeData>
 #include "format/jsonformats.h"
+#include <QRandomGenerator>
 
 const QString StringHashModel::_keysMimeType {
   "application/x-jsonarray-keys"
@@ -190,7 +191,8 @@ QString StringHashModel::addNewKey() {
       break;
   }
   while (_values.contains(key))
-    key = tr("New Key ")+QString::number(qrand());
+    key = tr("New Key ")+QString::number(
+          QRandomGenerator::global()->generate());
   setValue(key, QString());
   return key;
 }
@@ -227,8 +229,8 @@ QMimeData *StringHashModel::mimeData(const QModelIndexList &indexes) const {
   for (const QModelIndex &index: indexes) {
     rowsSet.insert(index.row());
   }
-  QList<int> rows = rowsSet.toList();
-  qSort(rows);
+  QList<int> rows = rowsSet.values();
+  std::sort(rows.begin(), rows.end());
   for (int row : rows) {
     if (row < 0 || row >= _rowNames.size())
       continue;

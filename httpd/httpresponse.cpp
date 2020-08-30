@@ -65,7 +65,8 @@ QAbstractSocket *HttpResponse::output() {
        << "\r\n";
     // LATER sanitize well-known headers (Content-Type...) values
     // LATER handle multi-line headers and special chars
-    foreach (QString name, d->_headers.keys().toSet())
+    foreach (QString name, QSet<QString>(d->_headers.keys().begin(),
+                                         d->_headers.keys().end()))
       foreach (QString value, d->_headers.values(name))
         ts << name << ": " << value << "\r\n";
     if (header(QStringLiteral("Content-Type")).isEmpty())
@@ -91,8 +92,7 @@ int HttpResponse::status() const {
 void HttpResponse::setHeader(QString name, QString value) {
   // LATER handle case insensitivity in header names
   if (d && !d->_headersSent) {
-    d->_headers.remove(name);
-    d->_headers.insert(name, value);
+    d->_headers.replace(name, value);
   } else
     Log::warning() << "HttpResponse: cannot set header after writing data";
 }
@@ -100,7 +100,7 @@ void HttpResponse::setHeader(QString name, QString value) {
 void HttpResponse::addHeader(QString name, QString value) {
   // LATER handle case insensitivity in header names
   if (d && !d->_headersSent) {
-    d->_headers.insertMulti(name, value);
+    d->_headers.insert(name, value);
   } else
     Log::warning() << "HttpResponse: cannot set header after writing data";
 }

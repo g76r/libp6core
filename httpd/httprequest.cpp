@@ -89,7 +89,7 @@ bool HttpRequest::parseAndAddHeader(QString rawHeader) {
               rawHeader.left(i).trimmed());
   QString value = rawHeader.right(rawHeader.size()-i-1).trimmed();
   //qDebug() << "header:" << rawHeader << key << value;
-  d->_headers.insertMulti(key, value);
+  d->_headers.insert(key, value);
   if (key.compare("Cookie", Qt::CaseInsensitive) == 0)
     parseAndAddCookie(value);
   return true;

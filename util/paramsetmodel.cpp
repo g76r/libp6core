@@ -14,6 +14,7 @@
 #include "paramsetmodel.h"
 #include <QtDebug>
 #include <QStringList>
+#include <QRandomGenerator>
 
 #define COLUMNS 4
 
@@ -133,7 +134,7 @@ static QString genererateNewKey(ParamSet params) {
       return key;
   }
   forever {
-    key = prefix+QString::number(qrand());
+    key = prefix+QString::number(QRandomGenerator::global()->generate());
     if (!params.contains(key, false))
       return key;
   }
@@ -180,8 +181,8 @@ void ParamSetModel::fillRows(
     if (!parent.isNull())
       fillRows(rows, parent, depth+1, allKeys);
   }
-  QStringList localKeys = params.keys(false).toList();
-  qSort(localKeys);
+  QStringList localKeys = params.keys(false).values();
+  std::sort(localKeys.begin(), localKeys.end());
   QString scope = _scopes.value(depth);
   if (scope.isEmpty() && depth)
     scope = _defaultScopeForInheritedParams;

@@ -1,4 +1,4 @@
-/* Copyright 2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2020 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -44,11 +44,11 @@ class LIBPUMPKINSHARED_EXPORT ObjectsStore : public QObject {
   Q_OBJECT
   struct ResultData : public QSharedData {
     bool _success;
-    int _code;
+    QString _code;
     QString _message;
     QObject *_object;
     ResultData() : ResultData(false) { }
-    ResultData(bool success, int code = 0, QString message = { },
+    ResultData(bool success, QString code = { }, QString message = { },
                QObject *object = nullptr)
       : _success(success), _code(code), _message(message), _object(object) { }
     ResultData(bool success, QObject *object)
@@ -64,11 +64,11 @@ public:
     QSharedDataPointer<ResultData> d;
   public:
     Result() { }
-    Result(bool success, int code = 0, QString message = { })
+    Result(bool success, QString code = { }, QString message = { })
       : d(new ResultData(success, code, message)) { }
     bool success() const { return d ? d->_success : false; }
     operator bool() const { return success(); }
-    int code() const { return d ? d->_code : 0; }
+    QString code() const { return d ? d->_code : QString(); }
     QString message() const { return d ? d->_message : QString(); }
     QObject *object() const { return d ? d->_object : nullptr; }
   };

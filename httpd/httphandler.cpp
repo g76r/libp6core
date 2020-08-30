@@ -21,7 +21,7 @@ HttpHandler::HttpHandler(QString name, QObject *parent)
   QByteArray origins = qgetenv("CORS_ORIGINS");
   if (origins.isNull())
     origins = qgetenv("CORS_DOMAINS");
-  for (const QString &origin : QString::fromUtf8(origins).split(';', QString::SkipEmptyParts)) {
+  for (const QString &origin : QString::fromUtf8(origins).split(';', Qt::SkipEmptyParts)) {
     if (origin == "*") {
       _corsOrigins.clear();
       return;
@@ -64,6 +64,7 @@ bool HttpHandler::redirectForUrlCleanup(
 bool HttpHandler::handlePreflight(
     HttpRequest req, HttpResponse res, ParamsProviderMerger *processingContext,
     QSet<QString> methods) {
+  Q_UNUSED(processingContext)
   if (req.method() != HttpRequest::OPTIONS)
     return false;
   QString origin = req.header("Origin");
@@ -80,7 +81,7 @@ bool HttpHandler::handlePreflight(
     return false;
   methods.insert("OPTIONS");
   res.setHeader("Access-Control-Allow-Origin", allowed);
-  res.setHeader("Access-Control-Allow-Methods", methods.toList().join(", "));
+  res.setHeader("Access-Control-Allow-Methods", methods.values().join(", "));
   res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Max-Age", "86400");

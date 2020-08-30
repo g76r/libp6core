@@ -106,7 +106,7 @@ MailSender::MailSender(QString url, int smtpTimeoutMs)
 
 
 bool MailSender::send(QString sender, QStringList recipients, QVariant body,
-                      QHash<QString, QString> headers,
+                      QMultiHash<QString, QString> headers,
                       QList<QVariant> attachments, QString &errorString) {
   Q_UNUSED(attachments)
   EmailAddress senderAddress(sender);

@@ -13,6 +13,7 @@
  */
 #include "shareduiitemdocumentmanager.h"
 #include <QtDebug>
+#include <QRandomGenerator>
 
 SharedUiItemDocumentManager::SharedUiItemDocumentManager(QObject *parent)
   : QObject(parent) {
@@ -41,7 +42,7 @@ QString SharedUiItemDocumentManager::generateNewId(
     }
   }
   forever {
-    id = prefix+QString::number(qrand());
+    id = prefix+QString::number(QRandomGenerator::global()->generate());
     if (transaction) {
       if (transaction->itemById(idQualifier, id).isNull())
         return id;
@@ -213,17 +214,17 @@ void SharedUiItemDocumentManager::addForeignKey(
 void SharedUiItemDocumentManager::addChangeItemTrigger(
     QString idQualifier, TriggerFlags flags, ChangeItemTrigger trigger) {
   if (flags & BeforeUpdate)
-    _triggersBeforeUpdate.insertMulti(idQualifier, trigger);
+    _triggersBeforeUpdate.insert(idQualifier, trigger);
   if (flags & AfterUpdate)
-    _triggersAfterUpdate.insertMulti(idQualifier, trigger);
+    _triggersAfterUpdate.insert(idQualifier, trigger);
   if (flags & BeforeCreate)
-    _triggersBeforeCreate.insertMulti(idQualifier, trigger);
+    _triggersBeforeCreate.insert(idQualifier, trigger);
   if (flags & AfterCreate)
-    _triggersAfterCreate.insertMulti(idQualifier, trigger);
+    _triggersAfterCreate.insert(idQualifier, trigger);
   if (flags & BeforeDelete)
-    _triggersBeforeDelete.insertMulti(idQualifier, trigger);
+    _triggersBeforeDelete.insert(idQualifier, trigger);
   if (flags & AfterDelete)
-    _triggersAfterDelete.insertMulti(idQualifier, trigger);
+    _triggersAfterDelete.insert(idQualifier, trigger);
 }
 
 bool SharedUiItemDocumentManager::checkIdsConstraints(

@@ -32,7 +32,7 @@ public:
   MailSender(QString url, int smtpTimeoutMs);
   /** @return true only if SMTP server accepted to queue the mail */
   bool send(QString sender, QStringList recipients, QVariant body,
-            QHash<QString, QString> headers, QList<QVariant> attachments,
+            QMultiHash<QString, QString> headers, QList<QVariant> attachments,
             QString &errorString);
   inline bool send(QString sender, QStringList recipients, QVariant body,
                    QHash<QString, QString> headers,
