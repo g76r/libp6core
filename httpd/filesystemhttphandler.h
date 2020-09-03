@@ -73,6 +73,8 @@ public:
   bool acceptRequest(HttpRequest req);
   bool handleRequest(HttpRequest req, HttpResponse res,
                      ParamsProviderMerger *processingContext);
+  bool sendFile(HttpRequest req, HttpResponse res, const QString &filename,
+                ParamsProviderMerger *processingContext);
 
 protected:
   /** Thread-safe (called by several HttpWorker threads at the same time). */

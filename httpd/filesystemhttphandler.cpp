@@ -89,6 +89,14 @@ bool FilesystemHttpHandler::handleRequest(
     res.setStatus(403);
     res.output()->write("Directory list denied.");
   }
+  sendFile(req, res, file.fileName(), processingContext);
+  return true;
+}
+
+bool FilesystemHttpHandler::sendFile(
+    HttpRequest req, HttpResponse res, const QString &filename,
+    ParamsProviderMerger *processingContext) {
+  QFile file(filename);
   if (file.open(QIODevice::ReadOnly)) {
     sendLocalResource(req, res, &file, processingContext);
     return true;
@@ -100,7 +108,7 @@ bool FilesystemHttpHandler::handleRequest(
     res.setStatus(404);
     res.output()->write("Document not found.");
   }
-  return true;
+  return false;
 }
 
 void FilesystemHttpHandler::sendLocalResource(
