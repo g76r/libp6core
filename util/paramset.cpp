@@ -619,8 +619,8 @@ QString ParamSet::matchingRegexp(QString rawValue) {
 QSet<QString> ParamSet::keys(bool inherit) const {
   QSet<QString> set;
   if (d) {
-    set = QSet<QString>(d->_params.keys().begin(),
-                        d->_params.keys().end());
+    auto keys = d->_params.keys();
+    set = QSet<QString>(keys.begin(), keys.end());
     if (inherit)
       set += parent().keys();
   }

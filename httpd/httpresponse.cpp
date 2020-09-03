@@ -65,8 +65,8 @@ QAbstractSocket *HttpResponse::output() {
        << "\r\n";
     // LATER sanitize well-known headers (Content-Type...) values
     // LATER handle multi-line headers and special chars
-    foreach (QString name, QSet<QString>(d->_headers.keys().begin(),
-                                         d->_headers.keys().end()))
+    auto keys = d->_headers.keys();
+    foreach (QString name, QSet<QString>(keys.begin(), keys.end()))
       foreach (QString value, d->_headers.values(name))
         ts << name << ": " << value << "\r\n";
     if (header(QStringLiteral("Content-Type")).isEmpty())
