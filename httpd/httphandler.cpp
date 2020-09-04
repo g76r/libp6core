@@ -65,9 +65,9 @@ bool HttpHandler::handlePreflight(
     HttpRequest req, HttpResponse res, ParamsProviderMerger *processingContext,
     QSet<QString> methods) {
   Q_UNUSED(processingContext)
-  if (req.method() != HttpRequest::OPTIONS)
-    return false;
   QString origin = req.header("Origin");
+  if (origin.isEmpty() && req.method() != HttpRequest::OPTIONS)
+    return false;
   QString allowed;
   for (const QRegularExpression &re : _corsOrigins) {
     if (re.match(origin).hasMatch()) {
@@ -76,7 +76,7 @@ bool HttpHandler::handlePreflight(
     }
   }
   if (_corsOrigins.isEmpty())
-    allowed = "*";
+    allowed = origin.isEmpty() ? "*" : origin;
   if (allowed.isNull())
     return false;
   methods.insert("OPTIONS");
@@ -84,6 +84,9 @@ bool HttpHandler::handlePreflight(
   res.setHeader("Access-Control-Allow-Methods", methods.values().join(", "));
   res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
   res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Max-Age", "86400");
-  return true;
+  if (req.method() == HttpRequest::OPTIONS) {
+    res.setHeader("Access-Control-Max-Age", "86400");
+    return true;
+  }
+  return false;
 }

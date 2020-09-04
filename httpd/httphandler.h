@@ -68,7 +68,8 @@ public:
    */
   bool redirectForUrlCleanup(HttpRequest req, HttpResponse res,
                              ParamsProviderMerger *processingContext);
-  /** Handle OPTIONS preflight request.
+  /** Handle OPTIONS CORS preflight request and CORS headers on non-OPTIONS
+   * requests.
    * @return true iff the request was a preflight and was handled (therefore if
    * handleRequest() should stop here rather than handling a GET/POST/whatever)
    */
