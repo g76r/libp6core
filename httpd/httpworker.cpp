@@ -36,6 +36,8 @@ static QRegularExpression _requestLineSeparators { "[ \t]+" };
 
 HttpWorker::HttpWorker(HttpServer *server)
   : _server(server), _thread(new QThread()) {
+  _defaultCacheControlHeader = ParamsProvider::environment()
+      ->paramValue("HTTP_DEFAULT_CACHE_CONTROL_HEADER", "no-cache").toString();
   _thread->setObjectName(QString("HttpWorker-%1")
                          .arg(_workersCounter.fetchAndAddOrdered(1)));
   connect(this, &HttpWorker::destroyed, _thread, &QThread::quit);
@@ -186,6 +188,8 @@ void HttpWorker::handleConnection(int socketDescriptor) {
     out << "HTTP/1.1 100 Continue\r\n\r\n";
     out.flush();
   }
+  if (!_defaultCacheControlHeader.isEmpty())
+    res.setHeader("Cache-Control", _defaultCacheControlHeader);
   handler->handleRequest(req, res, &processingContext);
   res.output()->flush(); // calling output() ensures that header was sent
   //qDebug() << req;
