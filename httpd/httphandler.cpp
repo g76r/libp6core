@@ -21,7 +21,11 @@ HttpHandler::HttpHandler(QString name, QObject *parent)
   QByteArray origins = qgetenv("CORS_ORIGINS");
   if (origins.isNull())
     origins = qgetenv("CORS_DOMAINS");
+#if QT_VERSION >= 0x050f00
   for (const QString &origin : QString::fromUtf8(origins).split(';', Qt::SkipEmptyParts)) {
+#else
+  for (const QString &origin : QString::fromUtf8(origins).split(';', QString::SkipEmptyParts)) {
+#endif
     if (origin == "*") {
       _corsOrigins.clear();
       return;

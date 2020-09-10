@@ -620,7 +620,11 @@ QSet<QString> ParamSet::keys(bool inherit) const {
   QSet<QString> set;
   if (d) {
     auto keys = d->_params.keys();
+#if QT_VERSION >= 0x050f00
     set = QSet<QString>(keys.begin(), keys.end());
+#else
+    set = keys.toSet();
+#endif
     if (inherit)
       set += parent().keys();
   }
