@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2020 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -105,6 +105,17 @@ void HttpResponse::addHeader(QString name, QString value) {
   // LATER handle case insensitivity in header names
   if (d && !d->_headersSent) {
     d->_headers.insert(name, value);
+  } else
+    Log::warning() << "HttpResponse: cannot set header after writing data";
+}
+
+void HttpResponse::appendValueToHeader(
+    QString name, QString value, const QString &separator) {
+  // LATER handle case insensitivity in header names
+  if (d && !d->_headersSent) {
+    QStringList values = d->_headers.values(name);
+    values.append(value);
+    d->_headers.insert(name, values.join(separator));
   } else
     Log::warning() << "HttpResponse: cannot set header after writing data";
 }

@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2020 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -125,6 +125,14 @@ public:
   /** Append a header regardless one already exists with the same name.
    * Must be called before output(). */
   void addHeader(QString name, QString value);
+  /** Append a value at the end of a header containing a separated list (e.g.
+   * a comma separated list).
+   * Also merge several headers if the header is already multi-valued
+   * e.g. Vary: Origin followed by Vary: X-MyHeader followed by a call to
+   * appendValueToHeader("Vary", "X-Login") will produce a mono-valued
+   * Vary: Origin, X-MyHeader, X-Login */
+  void appendValueToHeader(QString name, QString value,
+                           const QString &separator = { ", "});
   /** Value associated to a response header.
    * If the header is found several time, last value is returned. */
   QString header(QString name, QString defaultValue = QString()) const;
