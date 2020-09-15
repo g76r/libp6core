@@ -25,7 +25,7 @@
 class HttpRequestData : public QSharedData {
 public:
   QAbstractSocket *_input;
-  HttpRequest::HttpRequestMethod _method;
+  HttpRequest::HttpMethod _method;
   QMultiHash<QString,QString> _headers;
   QHash<QString,QString> _cookies, _paramsCache;
   QUrl _url;
@@ -54,7 +54,7 @@ HttpRequest &HttpRequest::operator=(const HttpRequest &other) {
   return *this;
 }
 
-static QHash<HttpRequest::HttpRequestMethod,QString> _methodToText {
+static QHash<HttpRequest::HttpMethod,QString> _methodToText {
   { HttpRequest::NONE, "NONE" },
   { HttpRequest::HEAD, "HEAD" },
   { HttpRequest::GET, "GET" },
@@ -65,15 +65,27 @@ static QHash<HttpRequest::HttpRequestMethod,QString> _methodToText {
   { HttpRequest::ANY, "ANY" },
 };
 
-static QHash<QString,HttpRequest::HttpRequestMethod> _methodFromText {
+static QHash<QString,HttpRequest::HttpMethod> _methodFromText {
   ContainerUtils::reversed(_methodToText)
 };
 
-QString HttpRequest::methodName(HttpRequestMethod method) {
+QSet<HttpRequest::HttpMethod> HttpRequest::_wellKnownMethods {
+  HttpRequest::HEAD, HttpRequest::GET, HttpRequest::POST, HttpRequest::PUT,
+      HttpRequest::DELETE, HttpRequest::OPTIONS,
+};
+
+QSet<QString> HttpRequest::_wellKnownMethodNames = []() {
+  QSet<QString> set;
+  for (HttpRequest::HttpMethod m : HttpRequest::_wellKnownMethods)
+    set.insert(HttpRequest::methodName(m));
+  return set;
+}();
+
+QString HttpRequest::methodName(HttpMethod method) {
   return _methodToText.value(method, QStringLiteral("UNKNOWN"));
 }
 
-HttpRequest::HttpRequestMethod HttpRequest::methodFromText(QString name) {
+HttpRequest::HttpMethod HttpRequest::methodFromText(QString name) {
   return _methodFromText.value(name, NONE);
 }
 
@@ -191,12 +203,12 @@ QAbstractSocket *HttpRequest::input() {
   return d ? d->_input : 0;
 }
 
-void HttpRequest::setMethod(HttpRequestMethod method) {
+void HttpRequest::setMethod(HttpMethod method) {
   if (d)
     d->_method = method;
 }
 
-HttpRequest::HttpRequestMethod HttpRequest::method() const {
+HttpRequest::HttpMethod HttpRequest::method() const {
   return d ? d->_method : NONE;
 }
 

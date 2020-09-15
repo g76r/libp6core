@@ -75,7 +75,7 @@ void HttpWorker::handleConnection(int socketDescriptor) {
   QTextStream out(socket);
   QString line;
   qint64 contentLength = 0;
-  HttpRequest::HttpRequestMethod method = HttpRequest::NONE;
+  HttpRequest::HttpMethod method = HttpRequest::NONE;
   if (!socket->canReadLine() && !socket->waitForReadyRead(MAXIMUM_READ_WAIT)) {
     sendError(out, "408 Request timeout");
     goto finally;

@@ -18,9 +18,7 @@ static const QRegularExpression _multipleSlashRE("//+");
 
 HttpHandler::HttpHandler(QString name, QObject *parent)
   : QObject(parent), _name(name) {
-  QByteArray origins = qgetenv("CORS_ORIGINS");
-  if (origins.isNull())
-    origins = qgetenv("CORS_DOMAINS");
+  QByteArray origins = qgetenv("HTTP_ALLOWED_CORS_ORIGINS");
 #if QT_VERSION >= 0x050f00
   for (const QString &origin : QString::fromUtf8(origins).split(';', Qt::SkipEmptyParts)) {
 #else
@@ -65,32 +63,30 @@ bool HttpHandler::redirectForUrlCleanup(
   return false;
 }
 
-bool HttpHandler::handlePreflight(
-    HttpRequest req, HttpResponse res, ParamsProviderMerger *processingContext,
-    QSet<QString> methods) {
-  Q_UNUSED(processingContext)
+bool HttpHandler::handleCORS(
+    HttpRequest req, HttpResponse res, QSet<QString> methods) {
+  if (!methods.contains("OPTIONS"))
+    qWarning() << "HttpHandler::handleCORS(): OPTIONS method should be included"
+                  " in methods set whereas it was not: " << methods;
+  res.appendValueToHeader("Vary", "Origin");
   QString origin = req.header("Origin");
-  if (origin.isEmpty() && req.method() != HttpRequest::OPTIONS)
-    return false;
-  QString allowed;
-  for (const QRegularExpression &re : _corsOrigins) {
-    if (re.match(origin).hasMatch()) {
-      allowed = origin;
-      break;
-    }
-  }
+  if (origin.isEmpty())
+    goto ignored;
   if (_corsOrigins.isEmpty())
-    allowed = origin.isEmpty() ? "*" : origin;
-  if (allowed.isNull())
-    return false;
-  methods.insert("OPTIONS");
-  res.setHeader("Access-Control-Allow-Origin", allowed);
-  res.setHeader("Access-Control-Allow-Methods", methods.values().join(", "));
-  res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
+    goto granted;
+  for (const QRegularExpression &re : _corsOrigins)
+    if (re.match(origin).hasMatch())
+      goto granted;
+  goto denied;
+granted:
+  res.setHeader("Access-Control-Allow-Origin", origin);
   if (req.method() == HttpRequest::OPTIONS) {
+    res.setHeader("Access-Control-Allow-Methods", methods.values().join(", "));
+    res.setHeader("Access-Control-Allow-Headers", "X-Requested-With, Content-Type"); // Origin, Accept, Authorization ?
+    res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Access-Control-Max-Age", "86400");
-    return true;
   }
-  return false;
+ignored:
+denied:
+  return req.method() == HttpRequest::OPTIONS;
 }

@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2020 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -32,6 +32,8 @@ bool ImageHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
   // TODO handle HTTP/304
   // LATER content type and content should be retrieve at once atomicaly
   // LATER pass params from request
+  if (handleCORS(req, res))
+    return true;
   res.setContentType(contentType(0));
   QString contentEncoding = this->contentEncoding(0);
   if (!contentEncoding.isEmpty())

@@ -1,4 +1,4 @@
-/* Copyright 2012-2019 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2020 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -33,11 +33,13 @@ class HttpRequestPseudoParamsProvider;
  */
 class LIBPUMPKINSHARED_EXPORT HttpRequest {
 public:
-  enum HttpRequestMethod { NONE = 0, HEAD = 1, GET = 2, POST = 4, PUT = 8,
+  enum HttpMethod { NONE = 0, HEAD = 1, GET = 2, POST = 4, PUT = 8,
                            DELETE = 16, OPTIONS = 32, ANY = 0x7fff} ;
 
 private:
   QExplicitlySharedDataPointer<HttpRequestData> d;
+  static QSet<HttpMethod> _wellKnownMethods;
+  static QSet<QString> _wellKnownMethodNames;
 
 public:
   HttpRequest(QAbstractSocket *input);
@@ -46,15 +48,17 @@ public:
   ~HttpRequest();
   HttpRequest &operator=(const HttpRequest &other);
   QAbstractSocket *input();
-  void setMethod(HttpRequestMethod method);
-  HttpRequest::HttpRequestMethod method() const;
+  void setMethod(HttpMethod method);
+  HttpRequest::HttpMethod method() const;
   /** @return protocol and human readable string, e.g. "GET" */
   QString methodName() const { return methodName(method()); }
   /** @return protocol and human readable string, e.g. "GET" */
-  static QString methodName(HttpRequestMethod method);
+  static QString methodName(HttpMethod method);
   /** @return enum from protocol and human readable string, e.g. "GET"
    * @param name case sensitive, must be upper case */
-  static HttpRequestMethod methodFromText(QString name);
+  static HttpMethod methodFromText(QString name);
+  static QSet<HttpMethod> wellKnownMethods() { return _wellKnownMethods; }
+  static QSet<QString> wellKnownMethodNames() { return _wellKnownMethodNames; }
   bool parseAndAddHeader(QString rawHeader);
   /** Value associated to a request header.
    * If the header is found several time, last value is returned. */

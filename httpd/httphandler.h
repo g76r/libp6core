@@ -42,14 +42,14 @@ public:
   HttpHandler(QString name, QObject *parent = 0);
   HttpHandler(QObject *parent = 0) : HttpHandler(QString(), parent) { }
   virtual QString name() const;
-  QList<QRegularExpression> corsOrigins() const { return _corsOrigins; }
-  /** List of regular expression matching Origin: header.
-   * A star "*" as any element of the list or an empty list means "any origin".
-   * @default content of semi colon separated env var CORS_ORIGINS or if empty
-   *  CORS_DOMAINS.
+  /** Allowed CORS origins.
+   * Default to containt of env variable HTTP_ALLOWED_CORS_ORIGINS which is
+   * a semi-colon separated list of regular expressions.
+   * An empty list means "any origin".
    */
-  void setCorsOrigins(QList<QRegularExpression> corsDomains) {
-    _corsOrigins = corsDomains; }
+  QList<QRegularExpression> corsOrigins() const { return _corsOrigins; }
+  void setCorsOrigins(QList<QRegularExpression> corsOrigins) {
+    _corsOrigins = corsOrigins; }
   /** Return true iff the handler accept to handle the request.
    * Thread-safe (called by several HttpWorker threads at the same time). */
   virtual bool acceptRequest(HttpRequest req) = 0;
@@ -68,14 +68,11 @@ public:
    */
   bool redirectForUrlCleanup(HttpRequest req, HttpResponse res,
                              ParamsProviderMerger *processingContext);
-  /** Handle OPTIONS CORS preflight request and CORS headers on non-OPTIONS
-   * requests.
-   * @return true iff the request was a preflight and was handled (therefore if
-   * handleRequest() should stop here rather than handling a GET/POST/whatever)
+  /** Handle CORS preflight request and CORS headers on non-OPTIONS requests.
+   * @return true iff the method is OPTIONS
    */
-  bool handlePreflight(HttpRequest req, HttpResponse res,
-                       ParamsProviderMerger *processingContext,
-                       QSet<QString> methods);
+  bool handleCORS(HttpRequest req, HttpResponse res,
+      QSet<QString> methods = HttpRequest::wellKnownMethodNames());
 };
 
 #endif // HTTPHANDLER_H
