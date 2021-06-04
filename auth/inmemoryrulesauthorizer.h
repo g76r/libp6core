@@ -28,7 +28,7 @@
  * (e.g. using QString() or QString("") or QRegularExpression() as
  * actionScopePattern will match any actionScope value). This is true even for
  * the roles criterion FIXME explain. */
-class LIBPUMPKINSHARED_EXPORT InMemoryRulesAuthorizer : public Authorizer {
+class LIBP6CORESHARED_EXPORT InMemoryRulesAuthorizer : public Authorizer {
   Q_OBJECT
   Q_DISABLE_COPY(InMemoryRulesAuthorizer)
   class Rule {

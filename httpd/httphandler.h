@@ -31,7 +31,7 @@
  * share the same thread than these objects (the main thread or a dedicated
  * one).
  */
-class LIBPUMPKINSHARED_EXPORT HttpHandler : public QObject {
+class LIBP6CORESHARED_EXPORT HttpHandler : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(HttpHandler)
   // LATER give handlers their own threads and make server and handler threads exchange signals

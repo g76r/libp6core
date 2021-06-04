@@ -16,7 +16,7 @@
 
 #include "logger.h"
 
-class LIBPUMPKINSHARED_EXPORT QtLogLogger : public Logger {
+class LIBP6CORESHARED_EXPORT QtLogLogger : public Logger {
   Q_OBJECT
   Q_DISABLE_COPY(QtLogLogger)
 public:

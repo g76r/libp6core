@@ -31,7 +31,7 @@ class HttpRequestPseudoParamsProvider;
  * very low cost in thread-safe manner, however it must not be accessed from
  * several threads at a time.
  */
-class LIBPUMPKINSHARED_EXPORT HttpRequest {
+class LIBP6CORESHARED_EXPORT HttpRequest {
 public:
   enum HttpMethod { NONE = 0, HEAD = 1, GET = 2, POST = 4, PUT = 8,
                            DELETE = 16, OPTIONS = 32, ANY = 0x7fff} ;
@@ -111,7 +111,7 @@ private:
 };
 
 /** ParamsProvider wrapper for pseudo params. */
-class LIBPUMPKINSHARED_EXPORT HttpRequestPseudoParamsProvider
+class LIBP6CORESHARED_EXPORT HttpRequestPseudoParamsProvider
     : public ParamsProvider {
   HttpRequest _request;
 

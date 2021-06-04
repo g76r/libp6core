@@ -32,7 +32,7 @@
  * @see ParamSet
  * @see QAbstractItemModel
  */
-class LIBPUMPKINSHARED_EXPORT ParamSetModel : public QAbstractListModel {
+class LIBP6CORESHARED_EXPORT ParamSetModel : public QAbstractListModel {
   Q_OBJECT
   Q_DISABLE_COPY(ParamSetModel)
 

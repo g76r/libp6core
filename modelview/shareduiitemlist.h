@@ -23,7 +23,7 @@ class SharedUiItemListParamsProvider;
 
 /** Specializing QList for SharedUiItems, the same way QStringList does. */
 template <class T = SharedUiItem>
-class LIBPUMPKINSHARED_EXPORT SharedUiItemList : public QList<T> {
+class LIBP6CORESHARED_EXPORT SharedUiItemList : public QList<T> {
 public:
   inline SharedUiItemList() {
     T *dummy;
@@ -64,7 +64,7 @@ public:
 
 /** Template specialization for SharedUiItemList<SharedUiItem> */
 template <>
-class LIBPUMPKINSHARED_EXPORT SharedUiItemList<SharedUiItem>
+class LIBP6CORESHARED_EXPORT SharedUiItemList<SharedUiItem>
     : public QList<SharedUiItem> {
 private:
   template <class S>
@@ -136,7 +136,7 @@ inline QString SharedUiItemList<T>::join(
 }
 
 /** ParamsProvider wrapper for SharedUiItemList. */
-class LIBPUMPKINSHARED_EXPORT SharedUiItemListParamsProvider
+class LIBP6CORESHARED_EXPORT SharedUiItemListParamsProvider
     : public ParamsProvider {
   SharedUiItemList<> _list;
   int _role;

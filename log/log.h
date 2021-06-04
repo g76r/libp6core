@@ -27,7 +27,7 @@ class LogHelper;
   * severities (whereas QtDebug does not) and write timestamped log files.
   * All public methods are threadsafe.
   */
-class LIBPUMPKINSHARED_EXPORT Log {
+class LIBP6CORESHARED_EXPORT Log {
 public:
   enum Severity { Debug, Info, Warning, Error, Fatal };
   /** Add a new logger.
@@ -137,7 +137,7 @@ private:
 
 Q_DECLARE_METATYPE(Log::Severity)
 
-class LIBPUMPKINSHARED_EXPORT LogHelper {
+class LIBP6CORESHARED_EXPORT LogHelper {
   mutable bool _logOnDestroy;
   Log::Severity _severity;
   QString _message, _task, _execId, _sourceCode;
@@ -170,8 +170,10 @@ public:
     _message.append(o); return *this; }
   inline LogHelper &operator<<(const QLatin1String &o) {
     _message.append(o); return *this; }
+#if QT_VERSION < 0x060000
   inline LogHelper &operator<<(const QStringRef &o) {
     _message.append(o); return *this; }
+#endif
   inline LogHelper &operator<<(const QByteArray &o) {
     _message.append(o); return *this; }
   inline LogHelper &operator<<(const QChar &o) {

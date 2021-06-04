@@ -27,7 +27,7 @@
  *      CharacterSeparatedExpression("/foo/bar/g")
  *      CharacterSeparatedExpression(",/,.,g")
  */
-class LIBPUMPKINSHARED_EXPORT CharacterSeparatedExpression
+class LIBP6CORESHARED_EXPORT CharacterSeparatedExpression
     : public QStringList {
   QChar _separator;
 
@@ -44,7 +44,7 @@ public:
   void parse(QString inputWithLeadingSeparator, int offset = 0);
   void parse(QChar separator, QString inputWithoutLeadingSeparator,
              int offset = 0);
-  inline void clear() { QStringList::clear(); _separator = 0; }
+  inline void clear() { QStringList::clear(); _separator = QChar(0); }
   inline QChar separator() const { return _separator; }
 
 private:

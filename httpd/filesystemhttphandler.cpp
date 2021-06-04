@@ -126,13 +126,8 @@ void FilesystemHttpHandler::sendLocalResource(
 
 void FilesystemHttpHandler::setMimeTypeByName(QString name, HttpResponse res) {
   // LATER check if performance can be enhanced (regexp)
-  typedef QPair<QRegExp,QString> QRegExpQString;
-  //qDebug() << "setMimeTypeByName" << name;
-  foreach (QRegExpQString pair, _mimeTypes) {
-    QRegExp re(pair.first);
-    //qDebug() << "check" << pair.first;
-    if (re.indexIn(name) >= 0) {
-      //qDebug() << "match" << pair.second;
+  for (auto pair : _mimeTypes) {
+    if (pair.first.match(name).hasMatch()) {
       res.setContentType(pair.second);
       return;
     }

@@ -22,7 +22,7 @@
  * @see SharedUiItemsModel
  * @see SharedUiItemParamsProvider
  */
-class LIBPUMPKINSHARED_EXPORT SharedUiItemsMatrixModel
+class LIBP6CORESHARED_EXPORT SharedUiItemsMatrixModel
     : public SharedUiItemsModel {
   Q_OBJECT
   Q_DISABLE_COPY(SharedUiItemsMatrixModel)

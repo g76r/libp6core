@@ -22,7 +22,7 @@
 /** Model displaying a QHash<QString,QString> as a QAbstractTableModel.
  * One key-value pair per row, key on column 0, value on column 1.
  */
-class LIBPUMPKINSHARED_EXPORT StringHashModel : public QAbstractTableModel {
+class LIBP6CORESHARED_EXPORT StringHashModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(StringHashModel)
 

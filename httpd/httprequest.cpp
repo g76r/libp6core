@@ -13,7 +13,7 @@
  */
 #include "httprequest.h"
 #include <QtDebug>
-#include <QRegExp>
+#include <QRegularExpression>
 #include "httpcommon.h"
 #include <QSharedData>
 #include <QHostAddress>
@@ -108,7 +108,7 @@ bool HttpRequest::parseAndAddHeader(QString rawHeader) {
 }
 
 // TODO use QRegularExpression instead, but not without regression/unit testing
-static const QRegExp cookieHeaderValue(
+static const QRegularExpression _cookieHeaderValue(
       "\\s*;?\\s*(" RFC2616_TOKEN_OCTET_RE "*)\\s*=\\s*(("
       RFC6265_COOKIE_OCTET_RE "*|\"" RFC6265_COOKIE_OCTET_RE
       "+\"))\\s*;?\\s*");
@@ -118,14 +118,11 @@ void HttpRequest::parseAndAddCookie(QString rawHeaderValue) {
   // LATER ensure that utf8 is supported as specified in RFC6265
   if (!d)
     return;
-  QRegExp re(cookieHeaderValue);
-  int pos = 0;
-  //qDebug() << "parseAndAddCookie" << rawHeaderValue;
-  while ((re.indexIn(rawHeaderValue, pos)) != -1) {
-    const QString name = re.cap(1), value = re.cap(2);
-    //qDebug() << "  " << name << value << pos;
+  auto i = _cookieHeaderValue.globalMatch(rawHeaderValue);
+  while (i.hasNext()) {
+    auto m = i.next();
+    const QString name = m.captured(1), value = m.captured(2);
     d->_cookies.insert(name, value);
-    pos += re.matchedLength();
   }
 }
 
@@ -253,7 +250,7 @@ QByteArray HttpRequest::base64BinaryCookie(QString name,
                     : QByteArray::fromBase64(cookie(name).toLatin1());
 }
 
-static QRegExp xffSeparator("\\s*,\\s*");
+static QRegularExpression xffSeparator("\\s*,\\s*");
 static QString xffHeader;
 
 namespace {

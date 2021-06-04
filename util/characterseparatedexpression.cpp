@@ -30,7 +30,7 @@ void CharacterSeparatedExpression::parse(
     _separator = inputWithLeadingSeparator[offset+0];
     inner_parse(inputWithLeadingSeparator, offset+1);
   } else {
-    _separator = 0;
+    _separator = QChar(0);
   }
 }
 

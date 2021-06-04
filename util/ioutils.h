@@ -20,7 +20,7 @@
 
 class QIODevice;
 
-class LIBPUMPKINSHARED_EXPORT IOUtils {
+class LIBP6CORESHARED_EXPORT IOUtils {
   IOUtils() = delete;
 
 public:
@@ -43,6 +43,7 @@ public:
                      int readTimeout = 30000, int writeTimeout = 30000) {
     return grep(dest, src, QString(pattern), useRegexp, max, bufsize,
                 readTimeout, writeTimeout); }
+#if QT_VERSION < 0x060000
   /** Copy at most max bytes from dest to src, copying only lines that match
    * regexp.
    * Filter may mismatch lines if they are longer than bufsize-1.
@@ -50,6 +51,7 @@ public:
   static qint64 grep(QIODevice *dest, QIODevice *src, QRegExp regexp,
                      qint64 max = LLONG_MAX, qint64 maxLineSize = 65535,
                      int readTimeout = 30000, int writeTimeout = 30000);
+#endif
   /** Copy at most max bytes from dest to src, copying only lines that match
    * regexp.
    * Filter may mismatch lines if they are longer than bufsize-1. */
@@ -74,6 +76,7 @@ public:
       int writeTimeout = 30000) {
     return grepWithContinuation(dest, src, QString::fromLatin1(pattern), continuationLinePrefix, max,
                                 bufsize, readTimeout, writeTimeout); }
+#if QT_VERSION < 0x060000
   /** Copy at most max bytes from dest to src, copying only lines that match
    * regexp and those that follow it and begin with the continuationLinePrefix.
    * Convenient for greping logfiles which continuation lines begin with "  ".
@@ -84,6 +87,7 @@ public:
       QString continuationLinePrefix, qint64 max = LLONG_MAX,
       qint64 bufsize = 65536, int readTimeout = 30000,
       int writeTimeout = 30000);
+#endif
   /** Copy at most max bytes from dest to src, copying only lines that match
    * regexp and those that follow it and begin with the continuationLinePrefix.
    * Convenient for greping logfiles which continuation lines begin with "  ".

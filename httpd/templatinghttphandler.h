@@ -70,7 +70,7 @@
  * examples:
  * - <?include:header.html?> includes a header file
  */
-class LIBPUMPKINSHARED_EXPORT TemplatingHttpHandler
+class LIBP6CORESHARED_EXPORT TemplatingHttpHandler
     : public FilesystemHttpHandler {
   Q_OBJECT
   Q_DISABLE_COPY(TemplatingHttpHandler)

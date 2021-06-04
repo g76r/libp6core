@@ -24,7 +24,7 @@
 /** Object responsible for processing an established TCP connection.
  * Managed by TcpListener on the server side and TcpClient on the the
  * client side. */
-class LIBPUMPKINSHARED_EXPORT TcpConnectionHandler : public MessageSender {
+class LIBP6CORESHARED_EXPORT TcpConnectionHandler : public MessageSender {
   Q_OBJECT
   QThread *_thread;
   QTcpSocket *_socket;

@@ -70,7 +70,7 @@ class SharedUiItemParamsProvider;
 // LATER update guidelines with ways to have several level of subclasses, at
 // less this should require to have constructors protected in non-final levels
 // of subclasses
-class LIBPUMPKINSHARED_EXPORT SharedUiItemData : public QSharedData {
+class LIBP6CORESHARED_EXPORT SharedUiItemData : public QSharedData {
 public:
   virtual ~SharedUiItemData();
   /** Return a string identifying the object among all other SharedUiItems
@@ -251,7 +251,7 @@ protected:
 // FooItem a subclass of SharedUiItem, SharedUiItem(aFooItem).aVirtualMethod()
 // would not call FooItem::aVirtualMethod() but SharedUiItem::aVirtualMethod()).
 //
-class LIBPUMPKINSHARED_EXPORT SharedUiItem {
+class LIBP6CORESHARED_EXPORT SharedUiItem {
   QSharedDataPointer<SharedUiItemData> _data;
 
 protected:
@@ -563,7 +563,7 @@ Q_DECLARE_TYPEINFO(SharedUiItem, Q_MOVABLE_TYPE);
  * id(), qualifiedId() or idQualifier() if key is "id", "qualifiedId" or
  * "idQualifier", or uiData(uiSectionByName(key)).
  */
-class LIBPUMPKINSHARED_EXPORT SharedUiItemParamsProvider
+class LIBP6CORESHARED_EXPORT SharedUiItemParamsProvider
     : public ParamsProvider {
   SharedUiItem _item;
   int _role;
@@ -584,6 +584,6 @@ inline SharedUiItemParamsProvider SharedUiItem::toParamsProvider() const {
 
 inline uint qHash(const SharedUiItem &i) { return qHash(i.id()); }
 
-QDebug LIBPUMPKINSHARED_EXPORT operator<<(QDebug dbg, const SharedUiItem &i);
+QDebug LIBP6CORESHARED_EXPORT operator<<(QDebug dbg, const SharedUiItem &i);
 
 #endif // SHAREDUIITEM_H

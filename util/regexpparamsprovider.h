@@ -19,7 +19,7 @@
 
 /** ParamsProvider evaluating QRegularExpressionMatch's catpure groups, both
  * numerical and named ones, as params. */
-class LIBPUMPKINSHARED_EXPORT RegexpParamsProvider : public ParamsProvider {
+class LIBP6CORESHARED_EXPORT RegexpParamsProvider : public ParamsProvider {
   QRegularExpressionMatch _match;
 
 public:

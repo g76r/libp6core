@@ -21,7 +21,7 @@
 #include <QList>
 #include <QHash>
 
-class LIBPUMPKINSHARED_EXPORT MailSender {
+class LIBP6CORESHARED_EXPORT MailSender {
   QUrl _url;
   int _smtpTimeoutMs;
 
@@ -35,13 +35,13 @@ public:
             QMultiHash<QString, QString> headers, QList<QVariant> attachments,
             QString &errorString);
   inline bool send(QString sender, QStringList recipients, QVariant body,
-                   QHash<QString, QString> headers,
+                   QMultiHash<QString, QString> headers,
                    QList<QVariant> attachments) {
     QString errorString;
     return send(sender, recipients, body, headers, attachments, errorString);
   }
   inline bool send(QString sender, QStringList recipients,
-                   QVariant body, QHash<QString, QString> headers) {
+                   QVariant body, QMultiHash<QString, QString> headers) {
     QString errorString;
     return send(sender, recipients, body, headers, QList<QVariant>(),
                 errorString);
@@ -49,7 +49,7 @@ public:
   inline bool send(QString sender, QStringList recipients,
                    QVariant body) {
     QString errorString;
-    return send(sender, recipients, body, QHash<QString,QString>(),
+    return send(sender, recipients, body, QMultiHash<QString,QString>(),
                 QList<QVariant>(), errorString);
   }
 };

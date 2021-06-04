@@ -19,7 +19,7 @@
 
 /** Formats various data types to HTML table row, whole table or table header.
  */
-class LIBPUMPKINSHARED_EXPORT HtmlTableFormatter
+class LIBP6CORESHARED_EXPORT HtmlTableFormatter
     : public AbstractTextFormatter {
 public:
   enum TextConversion { AsIs, HtmlEscaping, HtmlEscapingWithUrlAsLinks };

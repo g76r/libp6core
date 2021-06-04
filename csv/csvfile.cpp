@@ -128,7 +128,7 @@ bool CsvFile::readAll(QIODevice *input) {
       return false;
     if (!atEnd || !row.isEmpty())
       _rows.append(row);
-    _columnCount = std::max(_columnCount, row.size());
+    _columnCount = qMax(_columnCount, row.size());
   }
   return true;
 }

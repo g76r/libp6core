@@ -21,7 +21,7 @@
 
 /** Model holding SharedUiItems, one item per row, one item section per
  * column. */
-class LIBPUMPKINSHARED_EXPORT SharedUiItemsTableModel
+class LIBP6CORESHARED_EXPORT SharedUiItemsTableModel
     : public SharedUiItemsModel {
   Q_OBJECT
   Q_DISABLE_COPY(SharedUiItemsTableModel)

@@ -12,6 +12,7 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "dummysocket.h"
+#include <QVariant>
 
 Q_GLOBAL_STATIC(DummySocket, _singletonInstance)
 

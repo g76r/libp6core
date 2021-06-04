@@ -24,7 +24,7 @@
 /** Model displaying two QString list side by side with diff-like decoration
  * (background colors).
  */
-class LIBPUMPKINSHARED_EXPORT StringListDiffModel : public QAbstractTableModel {
+class LIBP6CORESHARED_EXPORT StringListDiffModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(StringListDiffModel)
 

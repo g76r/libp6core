@@ -21,7 +21,7 @@
 #include <QObject>
 
 /** Authentication service interface. */
-class LIBPUMPKINSHARED_EXPORT Authenticator : public QObject {
+class LIBP6CORESHARED_EXPORT Authenticator : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(Authenticator)
 

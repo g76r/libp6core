@@ -20,7 +20,7 @@
 // TODO add signals and slots communication with CsvFile to make this class work for real
 
 /** Wrap a CsvFile object to the Model-View framework. */
-class LIBPUMPKINSHARED_EXPORT CsvFileModel : public QAbstractTableModel {
+class LIBP6CORESHARED_EXPORT CsvFileModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(CsvFileModel)
   CsvFile *_csvFile;

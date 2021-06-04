@@ -20,7 +20,7 @@
 #include <QMap>
 
 /** Utilites to handle JSON formats. */
-class LIBPUMPKINSHARED_EXPORT JsonFormats {
+class LIBP6CORESHARED_EXPORT JsonFormats {
   JsonFormats() = delete;
 
 public:

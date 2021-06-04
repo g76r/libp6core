@@ -28,7 +28,7 @@
  *         [](QString id) -> SharedUiItem { return Foobar(id); });
  *
  */
-class LIBPUMPKINSHARED_EXPORT InMemorySharedUiItemDocumentManager
+class LIBP6CORESHARED_EXPORT InMemorySharedUiItemDocumentManager
     : public SharedUiItemDocumentManager {
   Q_OBJECT
   Q_DISABLE_COPY(InMemorySharedUiItemDocumentManager)

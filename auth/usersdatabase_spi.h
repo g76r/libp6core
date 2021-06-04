@@ -16,7 +16,7 @@
 
 #include "usersdatabase.h"
 
-class LIBPUMPKINSHARED_EXPORT UserDataData : public QSharedData {
+class LIBP6CORESHARED_EXPORT UserDataData : public QSharedData {
 public:
   virtual ~UserDataData();
   virtual QString userId() const = 0;

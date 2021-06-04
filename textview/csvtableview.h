@@ -20,7 +20,7 @@
 /** Display the model content as a CSV table. Only rows of the root index
   * are displayed. */
 // LATER add style options (separators, quotes, indentation string, columns selection, hide non-leaf rows...)
-class LIBPUMPKINSHARED_EXPORT CsvTableView : public TextTableView,
+class LIBP6CORESHARED_EXPORT CsvTableView : public TextTableView,
     public CsvFormatter {
   Q_OBJECT
   QString _tableHeader;

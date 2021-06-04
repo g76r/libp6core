@@ -18,12 +18,12 @@
 #include <QtDebug>
 #include <functional>
 
-static QRegularExpression slashBeforeDriveLetterRE{"^/[A-Z]:/"};
+static QRegularExpression _slashBeforeDriveLetterRE{"^/[A-Z]:/"};
 
 QString IOUtils::url2path(QUrl url) {
   if (url.scheme() == "file") {
     QString path = url.path();
-    if (slashBeforeDriveLetterRE.match(path).hasMatch())
+    if (_slashBeforeDriveLetterRE.match(path).hasMatch())
       return path.mid(1); // remove leading "/" in "/C:/path/to/file.jpg"
     return path;
   }
@@ -104,6 +104,7 @@ qint64 IOUtils::grep(QIODevice *dest, QIODevice *src, QString pattern,
           max, bufsize, readTimeout, writeTimeout);
 }
 
+#if QT_VERSION < 0x060000
 qint64 IOUtils::grep(QIODevice *dest, QIODevice *src,
                      QRegExp regexp, qint64 max, qint64 bufsize,
                      int readTimeout, int writeTimeout) {
@@ -112,6 +113,7 @@ qint64 IOUtils::grep(QIODevice *dest, QIODevice *src,
         [&regexp](QString line) { return regexp.indexIn(line) >= 0; },
         max, bufsize, readTimeout, writeTimeout);
 }
+#endif
 
 qint64 IOUtils::grep(QIODevice *dest, QIODevice *src,
                      QRegularExpression regexp, qint64 max, qint64 bufsize,
@@ -166,6 +168,7 @@ qint64 IOUtils::grepWithContinuation(
         continuationLinePrefix, max, bufsize, readTimeout, writeTimeout);
 }
 
+#if QT_VERSION < 0x060000
 qint64 IOUtils::grepWithContinuation(
     QIODevice *dest, QIODevice *src, QRegExp regexp,
     QString continuationLinePrefix, qint64 max, qint64 bufsize,
@@ -175,6 +178,7 @@ qint64 IOUtils::grepWithContinuation(
         [&regexp](QString line) { return regexp.indexIn(line) >= 0; },
         continuationLinePrefix, max, bufsize, readTimeout, writeTimeout);
 }
+#endif
 
 qint64 IOUtils::grepWithContinuation(
     QIODevice *dest, QIODevice *src, QRegularExpression regexp,

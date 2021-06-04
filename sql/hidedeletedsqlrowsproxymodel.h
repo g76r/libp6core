@@ -30,7 +30,7 @@
  *
  * @see QSqlTableModel
  */
-class LIBPUMPKINSHARED_EXPORT HideDeletedSqlRowsProxyModel
+class LIBP6CORESHARED_EXPORT HideDeletedSqlRowsProxyModel
     : public QSortFilterProxyModel {
   Q_OBJECT
 

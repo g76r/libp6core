@@ -20,7 +20,7 @@
 /** Whereas TextView is intended to be used with Qt's Model/View framework,
  * this view is a (trivial) example of a view fully independent of any model.
  */
-class LIBPUMPKINSHARED_EXPORT ClockView: public TextView {
+class LIBP6CORESHARED_EXPORT ClockView: public TextView {
   Q_OBJECT
   Q_DISABLE_COPY(ClockView)
 

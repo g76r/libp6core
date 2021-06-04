@@ -25,7 +25,7 @@
  * Also expose as slots some QAbstractItemModel methods to make them callable
  * from QML.
  */
-class LIBPUMPKINSHARED_EXPORT ColumnsToRolenamesProxyModel
+class LIBP6CORESHARED_EXPORT ColumnsToRolenamesProxyModel
     : public QIdentityProxyModel {
   Q_OBJECT
   QHash<int, QByteArray> _roles;

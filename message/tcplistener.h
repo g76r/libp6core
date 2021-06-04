@@ -22,7 +22,7 @@ class TcpConnectionHandler;
 /** Object responsible for listening and accepting new TCP connections.
  * Manage a pool of TcpConnectionHandlers that process established connections
  * and call IncomingMessageDispatcher when needed. */
-class LIBPUMPKINSHARED_EXPORT TcpListener : public QObject {
+class LIBP6CORESHARED_EXPORT TcpListener : public QObject {
   Q_OBJECT
   QThread *_thread;
   QTcpServer *_server;

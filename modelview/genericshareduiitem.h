@@ -21,7 +21,7 @@ class GenericSharedUiItemData;
 
 /** Util class to build a SharedUiItem from arbitrary ids and QVariant values.
  */
-class LIBPUMPKINSHARED_EXPORT GenericSharedUiItem : public SharedUiItem {
+class LIBP6CORESHARED_EXPORT GenericSharedUiItem : public SharedUiItem {
 public:
   GenericSharedUiItem();
   GenericSharedUiItem(const GenericSharedUiItem &other);

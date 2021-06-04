@@ -21,7 +21,7 @@
  *
  * %1 is replaced by first string and so on. %0 or numbers beyond the size of
  * the strings list are invalid. */
-class LIBPUMPKINSHARED_EXPORT StringsParamsProvider : public ParamsProvider {
+class LIBP6CORESHARED_EXPORT StringsParamsProvider : public ParamsProvider {
   QStringList _strings;
 
 public:

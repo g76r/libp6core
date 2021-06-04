@@ -22,7 +22,7 @@
 
 class HttpWorker;
 
-class LIBPUMPKINSHARED_EXPORT HttpServer : public QTcpServer {
+class LIBP6CORESHARED_EXPORT HttpServer : public QTcpServer {
   Q_OBJECT
   QMutex _handlersMutex;
   QList<HttpHandler *> _handlers;

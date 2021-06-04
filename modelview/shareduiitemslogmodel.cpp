@@ -17,7 +17,7 @@
 
 static QAtomicInt _sequence;
 
-class LIBPUMPKINSHARED_EXPORT SharedUiItemLogWrapperData
+class LIBP6CORESHARED_EXPORT SharedUiItemLogWrapperData
     : public SharedUiItemData {
 public:
   QString _id;
@@ -48,7 +48,7 @@ public:
   //  return _wrapped.setUiData(section, value, errorString, role, dm); }
 };
 
-class LIBPUMPKINSHARED_EXPORT SharedUiItemLogWrapper : public SharedUiItem {
+class LIBP6CORESHARED_EXPORT SharedUiItemLogWrapper : public SharedUiItem {
 public:
   SharedUiItemLogWrapper(SharedUiItem wrapped)
     : SharedUiItem(new SharedUiItemLogWrapperData(

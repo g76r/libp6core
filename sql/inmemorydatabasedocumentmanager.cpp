@@ -141,7 +141,7 @@ bool InMemoryDatabaseDocumentManager::insertItemInDatabase(
   Creator creator = _creators.value(newItem.idQualifier());
   if (newItem.isNull() || !creator) {
     *errorString = "cannot insert into database item: "+newItem.qualifiedId()
-        +" creator: "+!!creator;
+        +" creator: "+(creator?"true":"false");
     return false;
   }
   QString idQualifier = newItem.idQualifier();

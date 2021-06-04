@@ -48,7 +48,7 @@
  *   InMemoryDatabaseDocumentManager *configureDm
  *        = new InMemoryDatabaseDocumentManager(db, this);
  */
-class LIBPUMPKINSHARED_EXPORT InMemoryDatabaseDocumentManager
+class LIBP6CORESHARED_EXPORT InMemoryDatabaseDocumentManager
     : public InMemorySharedUiItemDocumentManager {
   Q_OBJECT
   Q_DISABLE_COPY(InMemoryDatabaseDocumentManager)

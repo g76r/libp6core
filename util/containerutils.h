@@ -20,7 +20,7 @@
 
 /** Container utilities.
  */
-class LIBPUMPKINSHARED_EXPORT ContainerUtils {
+class LIBP6CORESHARED_EXPORT ContainerUtils {
   ContainerUtils() = delete;
 
 public:

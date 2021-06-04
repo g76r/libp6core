@@ -13,7 +13,7 @@
 
 QT -= gui
 QT += network sql
-CONFIG += largefile c++14 c++11
+CONFIG += largefile c++20 c++17 c++14 c++11
 
 TARGET = p6core
 TEMPLATE = lib
@@ -28,7 +28,7 @@ BUILD_TYPE=unknown
 CONFIG(debug,debug|release): BUILD_TYPE=debug
 CONFIG(release,debug|release): BUILD_TYPE=release
 
-DEFINES += LIBPUMPKIN_LIBRARY
+DEFINES += LIBP6CORE_LIBRARY
 
 exists(/usr/bin/ccache):QMAKE_CXX = ccache $$QMAKE_CXX
 exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always

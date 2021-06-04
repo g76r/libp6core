@@ -22,7 +22,7 @@
 
 class UserDataData;
 
-class LIBPUMPKINSHARED_EXPORT UserData {
+class LIBP6CORESHARED_EXPORT UserData {
   QSharedDataPointer<UserDataData> d;
 
 public:
@@ -43,7 +43,7 @@ public:
 
 /** Users database service interface.
  * Provide information about a user knowing its (principal) id. */
-class LIBPUMPKINSHARED_EXPORT UsersDatabase : public QObject {
+class LIBP6CORESHARED_EXPORT UsersDatabase : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(UsersDatabase)
 

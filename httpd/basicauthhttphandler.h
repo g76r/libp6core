@@ -37,7 +37,7 @@
  * In all other cases the pipeline will continue (and authorization check of
  * authenticated users is up to the following handlers).
  */
-class LIBPUMPKINSHARED_EXPORT BasicAuthHttpHandler : public HttpHandler {
+class LIBP6CORESHARED_EXPORT BasicAuthHttpHandler : public HttpHandler {
   Q_OBJECT
   Q_DISABLE_COPY(BasicAuthHttpHandler)
   Authenticator *_authenticator;

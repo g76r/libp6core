@@ -26,7 +26,7 @@
  *
  * Should work nicely over IPv6 although not yet tested.
  */
-class LIBPUMPKINSHARED_EXPORT FtpClient : public QObject {
+class LIBP6CORESHARED_EXPORT FtpClient : public QObject {
   friend class FtpScript;
   friend class FtpScriptData;
   Q_OBJECT

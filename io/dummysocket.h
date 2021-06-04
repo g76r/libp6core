@@ -20,7 +20,7 @@
 /** Dummy network socket without anything to read from and always ready to write
  * to. Kind of network /dev/null.
  */
-class LIBPUMPKINSHARED_EXPORT DummySocket : public QAbstractSocket {
+class LIBP6CORESHARED_EXPORT DummySocket : public QAbstractSocket {
   Q_OBJECT
   Q_DISABLE_COPY(DummySocket)
 
@@ -55,7 +55,7 @@ protected:
 public:
   void resume() override;
   void connectToHost(const QString &hostName, quint16 port, OpenMode mode, NetworkLayerProtocol protocol) override;
-  void connectToHost(const QHostAddress &address, quint16 port, OpenMode mode) override;
+  void connectToHost(const QHostAddress &address, quint16 port, OpenMode mode);
   void disconnectFromHost() override;
   void setReadBufferSize(qint64 size) override;
   qintptr socketDescriptor() const override;

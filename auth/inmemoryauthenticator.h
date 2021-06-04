@@ -23,7 +23,7 @@
  * All of them also allow salt (right bytes of a hash, after its expected
  * length depending on the algorithm, are expected to be the salt bytes).
  */
-class LIBPUMPKINSHARED_EXPORT InMemoryAuthenticator : public Authenticator {
+class LIBP6CORESHARED_EXPORT InMemoryAuthenticator : public Authenticator {
   Q_OBJECT
   Q_DISABLE_COPY(InMemoryAuthenticator)
   class User;

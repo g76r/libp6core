@@ -20,7 +20,7 @@
 
 /** Dispatch incoming messages among registred handlers, depending on their
  * root node name. */
-class LIBPUMPKINSHARED_EXPORT IncomingMessageDispatcher {
+class LIBP6CORESHARED_EXPORT IncomingMessageDispatcher {
 
 public:
   using MessageHandler = std::function<void(Message)>;

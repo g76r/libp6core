@@ -44,7 +44,7 @@
  * @see QMutex
  */
 template <class T>
-class LIBPUMPKINSHARED_EXPORT AtomicValue {
+class LIBP6CORESHARED_EXPORT AtomicValue {
   T _data;
   mutable QMutex _mutex;
 

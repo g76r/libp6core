@@ -31,7 +31,7 @@
  * <li>cache content in members data updated by protected slots (such as
  * columnsInserted()) and implement text() to build actual full display data
  * using cached content. */
-class LIBPUMPKINSHARED_EXPORT TextView : public QObject {
+class LIBP6CORESHARED_EXPORT TextView : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(TextView)
 

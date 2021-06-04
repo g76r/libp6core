@@ -28,7 +28,7 @@ class HttpResponseData;
  * This class uses Qt explicit sharing idiom, i.e. it can be copied for a
  * very low cost in thread-safe manner, however it must not be accessed from
  * several threads at a time. */
-class LIBPUMPKINSHARED_EXPORT HttpResponse {
+class LIBP6CORESHARED_EXPORT HttpResponse {
 public:
   enum WellKnownStatusCode {
     Unknown,

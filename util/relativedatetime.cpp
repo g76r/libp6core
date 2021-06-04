@@ -15,15 +15,18 @@
 #include <QSharedData>
 #include <QMutex>
 #include <QHash>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QtDebug>
 
 #define TERM_RE "([+-][0-9]+)(ms|mil|s|min|h|d|w|mon|y)[a-z]*"
-static QRegExp wholeDateRE("(?:([0-9][0-9 t:,-]*[0-9])|([a-z]+))?((?:" TERM_RE ")*)");
-static QRegExp termRE(TERM_RE);
-static QRegExp weekdayRE("(mon|tue|wed|thu|fri|sat|sun)[a-z]*");
-static QRegExp isoLikeDateRE("(?:(?:(?:([0-9]{4})-)?(?:([0-9]{2})-))?([0-9]{2}))?");
-static QRegExp isoLikeTimeRE("([0-9]{2}):([0-9]{2})(?::([0-9]{2})(?:,([0-9]{3}))?)?");
+static QRegularExpression _wholeDateRE {
+  "\\A(?:([0-9][0-9 t:,-]*[0-9])|([a-z]+))?((?:" TERM_RE ")*)\\z" };
+static QRegularExpression _termRE { TERM_RE };
+static QRegularExpression _weekdayRE { "\\A(mon|tue|wed|thu|fri|sat|sun)[a-z]*\\z" };
+static QRegularExpression _isoLikeDateRE {
+  "\\A(?:(?:(?:([0-9]{4})-)?(?:([0-9]{2})-))?([0-9]{2}))?\\z" };
+static QRegularExpression _soLikeTimeRE {
+  "([0-9]{2}):([0-9]{2})(?::([0-9]{2})(?:,([0-9]{3}))?)?\\z" };
 
 class RelativeDateTimeData : public QSharedData {
   enum ReferenceMethod { Today = 0, DayOfWeek = 1, DayOfMonth, MonthAndDay,
@@ -36,14 +39,15 @@ public:
   RelativeDateTimeData() : _delta(0), _method(Today) { }
 
   RelativeDateTimeData(QString pattern) : _delta(0), _method(Today) {
-    QRegExp re = wholeDateRE;
     if (!pattern.isEmpty()) {
       //qDebug() << "RelativeDateTimeData" << pattern;
-      if (re.exactMatch(pattern)) {
-        QString timestamp = re.cap(1), weekday = re.cap(2), terms = re.cap(3);
-        re = weekdayRE;
-        if (!weekday.isEmpty() && re.exactMatch(weekday)) {
-          QString day = re.cap(1);
+      auto m = _wholeDateRE.match(pattern);
+      if (m.hasMatch()) {
+        QString timestamp = m.captured(1), weekday = m.captured(2),
+            terms = m.captured(3);
+        m = _weekdayRE.match(weekday);
+        if (m.hasMatch()) {
+          QString day = m.captured(1);
           _method = DayOfWeek;
           if (day == "thu") {
             _date = QDate(1970, 1, 1); // it was a thursday, trust me
@@ -62,22 +66,21 @@ public:
           }
           //qDebug() << "found day of week" << _date;
         } else if (!timestamp.isEmpty()) {
-          re = isoLikeTimeRE;
-          int pos;
-          if ((pos = re.indexIn(timestamp)) >= 0) {
-            int hour = re.cap(1).toInt();
-            int minute = re.cap(2).toInt();
-            int second = re.cap(3).toInt();
-            int ms = re.cap(4).toInt();
+          m = _soLikeTimeRE.match(timestamp);
+          if (m.hasMatch()) {
+            int hour = m.captured(1).toInt();
+            int minute = m.captured(2).toInt();
+            int second = m.captured(3).toInt();
+            int ms = m.captured(4).toInt();
             _time = QTime(hour, minute, second, ms);
             //qDebug() << "found time" << _time;
           }
-          if (pos != 0) { // either no time of day or time of day not at begining
-            re = isoLikeDateRE;
-            if (re.exactMatch(timestamp.left(pos-1))) { // left(<0) == whole string
-              int year = re.cap(1).toInt();
-              int month = re.cap(2).toInt();
-              int day = re.cap(3).toInt();
+          if (m.capturedStart() != 0) { // either no time of day or time of day not at begining
+            m = _isoLikeDateRE.match(timestamp.left(m.capturedStart()-1)); // left(<0) == whole string
+            if (m.hasMatch()) {
+              int year = m.captured(1).toInt();
+              int month = m.captured(2).toInt();
+              int day = m.captured(3).toInt();
               _date = QDate(year ? year : 1970, month ? month : 1,
                             day ? day : 1);
               if (year)
@@ -101,10 +104,11 @@ public:
         }*/
         }
         //qDebug() << "terms" << terms;
-        re = termRE;
-        for (int pos = -1; (pos = re.indexIn(terms, pos+1)) >= 0; ) {
-          qint64 ms = re.cap(1).toInt();
-          QString unit = re.cap(2);
+        auto it = _termRE.globalMatch(terms);
+        while (it.hasNext()) {
+          m = it.next();
+          qint64 ms = m.captured(1).toInt();
+          QString unit = m.captured(2);
           if (unit == "s") {
             ms *= 1000;
           } else if (unit == "min") {
@@ -167,21 +171,21 @@ public:
 RelativeDateTime::RelativeDateTime() {
 }
 
-static QMutex mutex;
-static QHash<QString, RelativeDateTime> cache;
+static QMutex _cacheMutex;
+static QHash<QString, RelativeDateTime> _cache;
 
 RelativeDateTime::RelativeDateTime(QString pattern) {
   if (!pattern.isEmpty()) {
     pattern = pattern.trimmed().toLower();
-    QMutexLocker locker(&mutex);
-    RelativeDateTime cached = cache.value(pattern);
+    QMutexLocker locker(&_cacheMutex);
+    RelativeDateTime cached = _cache.value(pattern);
     locker.unlock();
     if (!cached.isNull())
       d = cached.d;
     else {
       d = new RelativeDateTimeData(pattern);
       locker.relock();
-      cache.insert(pattern, *this);
+      _cache.insert(pattern, *this);
     }
   }
 }

@@ -20,7 +20,7 @@
 
 /** Like QUndoCommand without QtWidget and QtGui dependency.
  * @see QUndoCommand */
-class LIBPUMPKINSHARED_EXPORT CoreUndoCommand {
+class LIBP6CORESHARED_EXPORT CoreUndoCommand {
   Q_DISABLE_COPY(CoreUndoCommand)
 
   CoreUndoCommand *_parent;

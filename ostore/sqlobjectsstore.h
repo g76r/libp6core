@@ -22,7 +22,7 @@
  * Currently only SQLite is supported for real.
  * @see ObjectsStore
  */
-class LIBPUMPKINSHARED_EXPORT SqlObjectsStore : public ObjectsStore {
+class LIBP6CORESHARED_EXPORT SqlObjectsStore : public ObjectsStore {
   Q_OBJECT
   QSqlDatabase _db;
   QByteArray _tableName, _pkPropName;

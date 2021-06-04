@@ -28,7 +28,7 @@
  * - itemsByIdQualifier() (taking care not to hide overloaded forms)
  *
  * @see SharedUiItem */
-class LIBPUMPKINSHARED_EXPORT SharedUiItemDocumentManager : public QObject {
+class LIBP6CORESHARED_EXPORT SharedUiItemDocumentManager : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(SharedUiItemDocumentManager)
 

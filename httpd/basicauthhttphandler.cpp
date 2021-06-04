@@ -26,18 +26,18 @@ bool BasicAuthHttpHandler::acceptRequest(HttpRequest req) {
   return true;
 }
 
-static QRegExp headerRe("\\s*Basic\\s+(\\S+)\\s*");
-static QRegExp tokenRe("([^:]+):([^:]+)");
+static QRegularExpression _headerRe("\\A\\s*Basic\\s+(\\S+)\\s*\\z");
+static QRegularExpression _tokenRe("\\A([^:]+):([^:]+)\\z"); // LATER : in pwd ?
 
 bool BasicAuthHttpHandler::handleRequest(
     HttpRequest req, HttpResponse res, ParamsProviderMerger *processingContext) {
   QString header = req.header("Authorization"), token;
-  QRegExp re = headerRe;
-  if (re.exactMatch(header)) {
-    token = QString::fromUtf8(QByteArray::fromBase64(re.cap(1).toLatin1()));
-    re = tokenRe;
-    if (re.exactMatch(token)) {
-      QString login = re.cap(1), password = re.cap(2);
+  auto m = _headerRe.match(header);
+  if (m.hasMatch()) {
+    token = QString::fromUtf8(QByteArray::fromBase64(m.captured(1).toLatin1()));
+    m = _tokenRe.match(token);
+    if (m.hasMatch()) {
+      QString login = m.captured(1), password = m.captured(2);
       if (_authenticator) {
         QString userId = _authenticator->authenticate(login, password,
                                                       _authContext);

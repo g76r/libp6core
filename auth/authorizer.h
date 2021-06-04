@@ -20,7 +20,7 @@
 #include <QObject>
 
 /** Authorization service interface */
-class LIBPUMPKINSHARED_EXPORT Authorizer : public QObject {
+class LIBP6CORESHARED_EXPORT Authorizer : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(Authorizer)
   UsersDatabase *_usersDatabase;

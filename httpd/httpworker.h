@@ -20,7 +20,7 @@
 
 class QTcpSocket;
 
-class LIBPUMPKINSHARED_EXPORT HttpWorker : public QObject {
+class LIBP6CORESHARED_EXPORT HttpWorker : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(HttpWorker)
   HttpServer *_server;

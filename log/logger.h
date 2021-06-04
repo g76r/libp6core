@@ -31,7 +31,7 @@ class LoggerThread;
  * One must never delete a Logger, he must always call Logger::deleteLater()
  * instead.
  */
-class LIBPUMPKINSHARED_EXPORT Logger : public QObject {
+class LIBP6CORESHARED_EXPORT Logger : public QObject {
   friend class MultiplexerLogger;
   friend class LoggerThread;
 

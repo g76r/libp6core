@@ -13,7 +13,7 @@
  */
 #include "inmemoryauthenticator.h"
 #include <QCryptographicHash>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QString>
 //#include "log/log.h"
 
@@ -23,7 +23,8 @@
  KUbmLRQlC8vtgAavqEbbr2RfAXVncmVn
  */
 
-static QRegExp openLdapHashFormat{"\\s*\\{([^\\}]+)\\}(\\S*)\\s*"};
+static QRegularExpression _openLdapHashFormat{
+  "\\A\\s*\\{([^\\}]+)\\}(\\S*)\\s*\\z" };
 
 class InMemoryAuthenticator::User {
   class Data : public QSharedData {
@@ -44,11 +45,10 @@ public:
   User(QString userId, QString encodedPassword,
        InMemoryAuthenticator::Encoding encoding) {
     if (encoding == OpenLdapStyle) {
-      QRegExp re = openLdapHashFormat;
-      // FIXME always true: if (re.exactMatch(encodedPassword) != -1) {
-      if (true) {
-        QString algo = re.cap(1).trimmed().toUpper();
-        encodedPassword = re.cap(2);
+      auto m = _openLdapHashFormat.match(encodedPassword);
+      if (m.hasMatch()) {
+        QString algo = m.captured(1).trimmed().toUpper();
+        encodedPassword = m.captured(2);
         if (algo == "SHA" || algo == "SSHA")
           encoding = Sha1Base64;
         else if (algo == "MD5" || algo == "SMD5")

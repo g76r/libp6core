@@ -40,7 +40,7 @@
  * @see ObjectsListModel
  * @see ObjectsSqlStore
  */
-class LIBPUMPKINSHARED_EXPORT ObjectsStore : public QObject {
+class LIBP6CORESHARED_EXPORT ObjectsStore : public QObject {
   Q_OBJECT
   struct ResultData : public QSharedData {
     bool _success;

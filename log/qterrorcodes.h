@@ -19,7 +19,7 @@
 #include <QNetworkReply>
 
 /** Decoding QNetworkReply error codes. */
-QString LIBPUMPKINSHARED_EXPORT networkErrorAsString(
+QString LIBP6CORESHARED_EXPORT networkErrorAsString(
     QNetworkReply::NetworkError code);
 
 #endif // QTERRORCODES_H

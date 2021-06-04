@@ -42,7 +42,7 @@
  * or a queued QMetaObject::invokeMethod() call.
  */
 template <class T>
-class LIBPUMPKINSHARED_EXPORT CircularBuffer {
+class LIBP6CORESHARED_EXPORT CircularBuffer {
 public:
   long _sizeMinusOne, _putCounter, _getCounter, _free, _used;
   QMutex _mutex;

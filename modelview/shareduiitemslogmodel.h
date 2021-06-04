@@ -30,7 +30,7 @@
  *
  * @brief The SharedUiItemsLogModel class
  */
-class LIBPUMPKINSHARED_EXPORT SharedUiItemsLogModel
+class LIBP6CORESHARED_EXPORT SharedUiItemsLogModel
     : public SharedUiItemsTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(SharedUiItemsLogModel)

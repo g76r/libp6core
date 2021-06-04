@@ -110,7 +110,10 @@ void ReadOnlyResourcesCache::planResourceFetching(QString pathOrUrl) {
   request.setAttribute(QNetworkRequest::User, pathOrUrl);
 #if QT_VERSION >= 0x050600
   // LATER parametrize follow redirect features
+  QNetworkRequest nr;
+#if QT_VERSION < 0x060000
   request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+#endif
   request.setMaximumRedirectsAllowed(5);
 #endif
   QNetworkReply *reply = _nam->get(request);

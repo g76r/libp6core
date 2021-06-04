@@ -22,7 +22,7 @@
 class MessageData;
 
 /** Data object representing a message, regardless the network transport. */
-class LIBPUMPKINSHARED_EXPORT Message {
+class LIBP6CORESHARED_EXPORT Message {
   friend QDebug operator<<(QDebug dbg, const Message &message);
   friend LogHelper operator<<(LogHelper lh, const Message &message);
   QSharedDataPointer<MessageData> d;
@@ -44,9 +44,9 @@ private:
 Q_DECLARE_METATYPE(Message)
 Q_DECLARE_TYPEINFO(Message, Q_MOVABLE_TYPE);
 
-QDebug LIBPUMPKINSHARED_EXPORT operator<<(QDebug dbg, const Message &message);
+QDebug LIBP6CORESHARED_EXPORT operator<<(QDebug dbg, const Message &message);
 
-LogHelper LIBPUMPKINSHARED_EXPORT operator<<(LogHelper lh,
+LogHelper LIBP6CORESHARED_EXPORT operator<<(LogHelper lh,
                                              const Message &message);
 
 #endif // MESSAGE_H

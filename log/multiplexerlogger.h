@@ -21,7 +21,7 @@
 /** Logger for multiplexing to log writing to several loggers.
  * Mainly intended to be used internaly as a singleton by Log.
  * @see Log */
-class LIBPUMPKINSHARED_EXPORT MultiplexerLogger : public Logger {
+class LIBP6CORESHARED_EXPORT MultiplexerLogger : public Logger {
   Q_OBJECT
   Q_DISABLE_COPY(MultiplexerLogger)
   QList<Logger*> _loggers;

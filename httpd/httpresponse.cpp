@@ -14,7 +14,7 @@
 #include "httpresponse.h"
 #include <QTextStream>
 #include "httpcommon.h"
-#include <QRegExp>
+#include <QRegularExpression>
 #include "log/log.h"
 #include <QSharedData>
 #include <QMultiHash>
@@ -132,21 +132,24 @@ void HttpResponse::redirect(QString location, int status) {
                     "\">this link</a>").arg(location).toUtf8().constData());
 }
 
-// LATER convert to QRegularExpression, but not without regression/unit testing
-static const QRegExp nameRegexp(RFC2616_TOKEN_OCTET_RE "+");
-static const QRegExp valueRegexp(RFC6265_COOKIE_OCTET_RE "*");
-static const QRegExp pathRegexp(RFC6265_PATH_VALUE_RE);
-static const QRegExp domainRegexp(INTERNET_DOMAIN_RE);
+static const QRegularExpression _nameRegexp {
+  "\\A" RFC2616_TOKEN_OCTET_RE "+\\z" };
+static const QRegularExpression _valueRegexp {
+  "\\A" RFC6265_COOKIE_OCTET_RE "*\\z" };
+static const QRegularExpression _pathRegexp {
+  "\\A" RFC6265_PATH_VALUE_RE "\\z" };
+static const QRegularExpression _domainRegexp {
+  "\\A" INTERNET_DOMAIN_RE "\\z" };
 
 void HttpResponse::setCookie(QString name, QString value,
                              QDateTime expires, QString path,
                              QString domain, bool secure, bool httponly) {
-  if (!QRegExp(nameRegexp).exactMatch(name)) {
+  if (!_nameRegexp.match(name).hasMatch()) {
     Log::warning() << "HttpResponse: incorrect name when setting cookie: "
                    << name;
     return;
   }
-  if (!QRegExp(valueRegexp).exactMatch(value)) {
+  if (!_valueRegexp.match(value).hasMatch()) {
     Log::warning() << "HttpResponse: incorrect value when setting cookie: "
                    << value;
     return;
@@ -157,7 +160,7 @@ void HttpResponse::setCookie(QString name, QString value,
   if (!expires.isNull())
     s.append("; Expires=").append(TimeFormats::toRfc2822DateTime(expires));
   if (!path.isEmpty()) {
-    if (QRegExp(pathRegexp).exactMatch(path))
+    if (_pathRegexp.match(path).hasMatch())
       s.append("; Path=").append(path);
     else {
       Log::warning() << "HttpResponse: incorrect path when setting cookie: "
@@ -166,7 +169,7 @@ void HttpResponse::setCookie(QString name, QString value,
     }
   }
   if (!domain.isEmpty()) {
-    if (QRegExp(domainRegexp).exactMatch(domain))
+    if (_domainRegexp.match(domain).hasMatch())
       s.append("; Domain=").append(domain);
     else {
       Log::warning() << "HttpResponse: incorrect domain when setting cookie: "

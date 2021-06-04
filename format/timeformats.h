@@ -20,16 +20,11 @@
 #include <QTimeZone>
 #include "util/relativedatetime.h"
 
-class TimeFormatsPrivate;
-
 /** Utilites to handle date/time formats. */
-class LIBPUMPKINSHARED_EXPORT TimeFormats {
-  TimeFormatsPrivate *d;
-  static inline TimeFormatsPrivate *instance();
+class LIBP6CORESHARED_EXPORT TimeFormats {
 
 public:
-  /** Should never be called directly (only used for singleton init) */
-  TimeFormats();
+  TimeFormats() = delete;
   // TODO switch to QDateTime::toString(Qt::RFC2822Date) now that it exists
   static QString toRfc2822DateTime(QDateTime dt);
   static QDateTime fromRfc2822DateTime(QString rfc2822DateTime,

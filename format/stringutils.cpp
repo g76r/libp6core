@@ -70,9 +70,8 @@ QString StringUtils::htmlEncode(
   return s;
 }
 
-template<class T>
-static T toSnakeCase(const T &anycase) {
-  T sc;
+static QString toSnakeCase(const QString &anycase) {
+  QString sc;
   bool leading = true;
   for (const QChar &c : anycase) {
     if (c.isSpace() || c == '-' || c == '_') {
@@ -94,16 +93,15 @@ static T toSnakeCase(const T &anycase) {
 }
 
 QByteArray StringUtils::toSnakeCase(const QByteArray &anycase) {
-    return ::toSnakeCase(anycase);
+    return ::toSnakeCase(QString::fromUtf8(anycase)).toUtf8();
 }
 
 QString StringUtils::toSnakeCase(const QString &anycase) {
     return ::toSnakeCase(anycase);
 }
 
-template<class T>
-static T normalizeRfc841HeaderCase(const T &anycase) {
-  T s;
+static QString normalizeRfc841HeaderCase(const QString &anycase) {
+  QString s;
   bool leading = true;
   for (const QChar &c : anycase) {
     if (c == '-') {
@@ -118,7 +116,7 @@ static T normalizeRfc841HeaderCase(const T &anycase) {
 }
 
 QByteArray StringUtils::normalizeRfc841HeaderCase(const QByteArray &anycase) {
-  return ::normalizeRfc841HeaderCase(anycase);
+  return ::normalizeRfc841HeaderCase(QString::fromUtf8(anycase)).toUtf8();
 }
 
 QString StringUtils::normalizeRfc841HeaderCase(const QString &anycase) {

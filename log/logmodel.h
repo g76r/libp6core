@@ -25,7 +25,7 @@ class MemoryLogger;
  * Contains a log entry per row, the first row being the last recorded entry
  * when automatically collecting.
  * @see MemoryLogger */
-class LIBPUMPKINSHARED_EXPORT LogModel : public SharedUiItemsTableModel {
+class LIBP6CORESHARED_EXPORT LogModel : public SharedUiItemsTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(LogModel)
   MemoryLogger *_logger;

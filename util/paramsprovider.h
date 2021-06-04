@@ -21,7 +21,7 @@
 
 /** Base class for any class that may provide key/value parameters.
  * @see ParamSet */
-class LIBPUMPKINSHARED_EXPORT ParamsProvider {
+class LIBP6CORESHARED_EXPORT ParamsProvider {
     static ParamsProvider *_environment;
 
 public:

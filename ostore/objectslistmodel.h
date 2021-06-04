@@ -31,7 +31,7 @@
  *
  * @see ObjectsStore
  */
-class LIBPUMPKINSHARED_EXPORT ObjectsListModel : public QAbstractListModel {
+class LIBP6CORESHARED_EXPORT ObjectsListModel : public QAbstractListModel {
   Q_OBJECT
   QList<QObject*> _objects;
   QHash<int, QByteArray> _roleNames;

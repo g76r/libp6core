@@ -18,7 +18,7 @@
 
 /** Display the model content as a HTML table. Only rows of the root index
   * are displayed. */
-class LIBPUMPKINSHARED_EXPORT HtmlTableView : public TextTableView {
+class LIBP6CORESHARED_EXPORT HtmlTableView : public TextTableView {
   Q_OBJECT
   Q_DISABLE_COPY(HtmlTableView)
 public:

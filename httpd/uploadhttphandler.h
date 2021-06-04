@@ -19,7 +19,7 @@
 #include <QSemaphore>
 
 /** HttpHandler to deal with uploading files or data. */
-class LIBPUMPKINSHARED_EXPORT UploadHttpHandler : public HttpHandler {
+class LIBP6CORESHARED_EXPORT UploadHttpHandler : public HttpHandler {
   Q_OBJECT
   Q_DISABLE_COPY(UploadHttpHandler)
   QString _urlPathPrefix;

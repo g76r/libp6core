@@ -15,11 +15,11 @@
 #define GRAPHVIZIMAGEHTTPHANDLER_H
 
 #include "imagehttphandler.h"
-#include <QMutex>
+#include <QRecursiveMutex>
 #include <QProcess>
 #include <QBuffer>
 
-class LIBPUMPKINSHARED_EXPORT GraphvizImageHttpHandler
+class LIBP6CORESHARED_EXPORT GraphvizImageHttpHandler
     : public ImageHttpHandler {
   Q_OBJECT
   Q_DISABLE_COPY(GraphvizImageHttpHandler)
@@ -34,7 +34,7 @@ private:
   QString _source, _stderr, _contentType;
   bool _renderingRequested, _renderingRunning;
   int _renderingNeeded;
-  mutable QMutex _mutex;
+  mutable QRecursiveMutex _mutex;
   QProcess *_process;
   QByteArray _imageData, _tmp;
   RefreshStrategy _refreshStrategy;

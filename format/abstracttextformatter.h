@@ -20,7 +20,7 @@
 #include "modelview/shareduiitemlist.h"
 
 /** Convenience shared feature for text formatters. */
-class LIBPUMPKINSHARED_EXPORT AbstractTextFormatter {
+class LIBP6CORESHARED_EXPORT AbstractTextFormatter {
   QString _topLeftHeader;
   int _maxCellContentLength;
   bool _rowHeadersEnabled, _columnHeadersEnabled;

@@ -19,7 +19,7 @@
 /** Base class for text table views.
  * @see HtmlTableView
  * @see CsvTableView */
-class LIBPUMPKINSHARED_EXPORT TextTableView : public TextView {
+class LIBP6CORESHARED_EXPORT TextTableView : public TextView {
   Q_OBJECT
   Q_DISABLE_COPY(TextTableView)
 

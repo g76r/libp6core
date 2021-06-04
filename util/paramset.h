@@ -204,7 +204,7 @@ class ParamSetData;
  * %{=random:6:1} -> a number between 1 and 6
  * %{=random:-8:-4} -> a number between -4 and 3
  */
-class LIBPUMPKINSHARED_EXPORT ParamSet : public ParamsProvider {
+class LIBP6CORESHARED_EXPORT ParamSet : public ParamsProvider {
   friend class ParamsProviderMerger;
   QSharedDataPointer<ParamSetData> d;
   static bool _variableNotFoundLoggingEnabled;
@@ -418,9 +418,9 @@ private:
 Q_DECLARE_METATYPE(ParamSet)
 Q_DECLARE_TYPEINFO(ParamSet, Q_MOVABLE_TYPE);
 
-QDebug LIBPUMPKINSHARED_EXPORT operator<<(QDebug dbg, const ParamSet &params);
+QDebug LIBP6CORESHARED_EXPORT operator<<(QDebug dbg, const ParamSet &params);
 
-LogHelper LIBPUMPKINSHARED_EXPORT operator<<(LogHelper lh,
+LogHelper LIBP6CORESHARED_EXPORT operator<<(LogHelper lh,
                                              const ParamSet &params);
 
 #endif // PARAMSET_H

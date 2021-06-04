@@ -24,7 +24,7 @@
  * ParamsProviderMerger before their destruction.
  * Therefore ParamsProviderMerger should only be used as a temporary object
  * around a call to some method taking a ParamsProvider as a parameter. */
-class LIBPUMPKINSHARED_EXPORT ParamsProviderMerger : public ParamsProvider {
+class LIBP6CORESHARED_EXPORT ParamsProviderMerger : public ParamsProvider {
   class ProviderData : public QSharedData {
   public:
     const ParamsProvider *_paramsProvider;
@@ -144,7 +144,7 @@ public:
  *   // modify merger the way you want, it'll be restored when myfunc() exits
  * }
  */
-class LIBPUMPKINSHARED_EXPORT ParamsProviderMergerRestorer {
+class LIBP6CORESHARED_EXPORT ParamsProviderMergerRestorer {
   ParamsProviderMerger *_merger;
   ParamsProviderMergerRestorer() = delete;
   ParamsProviderMergerRestorer(const ParamsProviderMergerRestorer &) = delete;

@@ -26,7 +26,7 @@
   * In other words: if you are about to use this class, please consider other
   * options first and know why you use this one despite other options.
   */
-class LIBPUMPKINSHARED_EXPORT BlockingTimer {
+class LIBP6CORESHARED_EXPORT BlockingTimer {
 public:
   using ShouldStopFunction = std::function<bool()>;
 

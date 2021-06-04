@@ -17,7 +17,7 @@
 #include "libp6core_global.h"
 #include <QStringList>
 
-class LIBPUMPKINSHARED_EXPORT StringUtils {
+class LIBP6CORESHARED_EXPORT StringUtils {
   StringUtils() = delete;
 
 public:

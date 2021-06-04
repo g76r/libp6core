@@ -18,7 +18,7 @@
 #include "format/htmltableformatter.h"
 
 // LATER try to factorize code with TemplatingHttpHandler
-class LIBPUMPKINSHARED_EXPORT HtmlItemDelegate : public TextViewItemDelegate,
+class LIBP6CORESHARED_EXPORT HtmlItemDelegate : public TextViewItemDelegate,
     public HtmlTableFormatter {
   Q_OBJECT
   Q_DISABLE_COPY(HtmlItemDelegate)

@@ -19,7 +19,7 @@
 #include <QHash>
 #include <QMutex>
 
-class LIBPUMPKINSHARED_EXPORT SessionManager : public QObject {
+class LIBP6CORESHARED_EXPORT SessionManager : public QObject {
   Q_OBJECT
   QHash<qint64,Session> _sessions;
   QHash<qint64,QHash<const char*,QVariant>> _params;

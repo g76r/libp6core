@@ -20,7 +20,7 @@ class LogModel;
 
 /** Logger used internaly by LogModel.
  * @see LogModel */
-class LIBPUMPKINSHARED_EXPORT MemoryLogger : public Logger {
+class LIBP6CORESHARED_EXPORT MemoryLogger : public Logger {
   friend class LogModel;
   Q_OBJECT
   Q_DISABLE_COPY(MemoryLogger)

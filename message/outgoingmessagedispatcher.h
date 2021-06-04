@@ -21,7 +21,7 @@ class MessageSender;
 
 /** Dispatch outgoing messages among registred senders, depending on their
  * session id. */
-class LIBPUMPKINSHARED_EXPORT OutgoingMessageDispatcher {
+class LIBP6CORESHARED_EXPORT OutgoingMessageDispatcher {
 public:
   enum Behavior {
     DispatchAmongSessions, // intended for multiple peers (server)

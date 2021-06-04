@@ -22,7 +22,7 @@
  * QAbstractItemDelegate does for QAbstractItemView.
  * Default implementation only get string data from model through
  * data().toString() and headerData().toString() */
-class LIBPUMPKINSHARED_EXPORT TextViewItemDelegate : public QObject {
+class LIBP6CORESHARED_EXPORT TextViewItemDelegate : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(TextViewItemDelegate)
 public:

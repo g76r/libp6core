@@ -30,7 +30,7 @@
 /** Local cache for read-only resources, being them remote (http, ftp...) or
  * local (file).
  */
-class LIBPUMPKINSHARED_EXPORT ReadOnlyResourcesCache : public QObject {
+class LIBP6CORESHARED_EXPORT ReadOnlyResourcesCache : public QObject {
   Q_OBJECT
   QMutex _mutex;
   QHash<QString,QByteArray> _resources;

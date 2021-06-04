@@ -59,7 +59,7 @@ struct RadixTreeInitializerHelper {
  * This class implements Qt's implicit sharing pattern.
  */
 template<class T>
-class LIBPUMPKINSHARED_EXPORT RadixTree {
+class LIBP6CORESHARED_EXPORT RadixTree {
   enum NodeType : signed char { Empty = 0, Exact, Prefix };
   struct Node {
     char *_fragment;

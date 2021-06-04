@@ -19,7 +19,7 @@
 
 /** Thread class used internally by Logger when working with a dedicated thread.
  * @see Logger */
-class LIBPUMPKINSHARED_EXPORT LoggerThread : public QThread {
+class LIBP6CORESHARED_EXPORT LoggerThread : public QThread {
   Q_OBJECT
   Q_DISABLE_COPY(LoggerThread)
   Logger *_logger;

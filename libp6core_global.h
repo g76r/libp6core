@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,10 +16,10 @@
 
 #include <QtCore/qglobal.h>
 
-#if defined(LIBPUMPKIN_LIBRARY)
-#  define LIBPUMPKINSHARED_EXPORT Q_DECL_EXPORT
+#if defined(LIBP6CORE_LIBRARY)
+#  define LIBP6CORESHARED_EXPORT Q_DECL_EXPORT
 #else
-#  define LIBPUMPKINSHARED_EXPORT Q_DECL_IMPORT
+#  define LIBP6CORESHARED_EXPORT Q_DECL_IMPORT
 #endif
 
 #endif // LIBP6CORE_GLOBAL_H

@@ -12,7 +12,6 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "templatinghttphandler.h"
-#include <QRegExp>
 #include <QRegularExpression>
 #include <QFile>
 #include <QBuffer>
@@ -42,8 +41,7 @@ void TemplatingHttpHandler::sendLocalResource(
     ParamsProviderMerger *processingContext) {
   setMimeTypeByName(file->fileName(), res);
   foreach (QString filter, _filters) {
-    QRegExp re(filter);
-    if (re.indexIn(file->fileName()) >= 0) {
+    if (QRegularExpression(filter).match(file->fileName()).hasMatch()) {
       QString output;
       applyTemplateFile(req, res, file, processingContext, &output);
       QByteArray ba = output.toUtf8();

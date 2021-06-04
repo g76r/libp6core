@@ -21,14 +21,14 @@
 
 /** Model holding SharedUiItems, one item per row within a tree, one item
  * section per column. */
-class LIBPUMPKINSHARED_EXPORT SharedUiItemsTreeModel
+class LIBP6CORESHARED_EXPORT SharedUiItemsTreeModel
     : public SharedUiItemsModel {
   Q_OBJECT
   Q_DISABLE_COPY(SharedUiItemsTreeModel)
 
 protected:
   /** Item used by SharedUiItemsTreeModel and subclasses. */
-  class LIBPUMPKINSHARED_EXPORT TreeItem {
+  class LIBP6CORESHARED_EXPORT TreeItem {
     SharedUiItemsTreeModel *_model; // kind of java non-static inner class
     SharedUiItem _item;
     int _row;

@@ -76,7 +76,7 @@ class RelativeDateTimeData;
  * date and time are used (e.g. "-1min" for one minute ago from the reference
  * date and time, e.g. now).
  */
-class LIBPUMPKINSHARED_EXPORT RelativeDateTime {
+class LIBP6CORESHARED_EXPORT RelativeDateTime {
   QSharedDataPointer<RelativeDateTimeData> d;
 
 public:

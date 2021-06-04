@@ -18,7 +18,7 @@
 
 #define IMAGEHTTPHANDLER_DEFAULT_ONDEMAND_RENDERING_TIMEOUT 5000
 
-class LIBPUMPKINSHARED_EXPORT ImageHttpHandler : public HttpHandler {
+class LIBP6CORESHARED_EXPORT ImageHttpHandler : public HttpHandler {
   Q_OBJECT
   Q_DISABLE_COPY(ImageHttpHandler)
   QString _urlPathPrefix;

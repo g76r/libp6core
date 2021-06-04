@@ -24,7 +24,7 @@ class Session;
 /** Object responsible for (re)connecting to the server via TCP.
  * Create a TcpConnectionHandler that processes established connections
  * and call MessageDispatcher when needed. */
-class LIBPUMPKINSHARED_EXPORT TcpClient : public QObject {
+class LIBP6CORESHARED_EXPORT TcpClient : public QObject {
   Q_OBJECT
   QThread *_thread;
   IncomingMessageDispatcher *_dispatcher;

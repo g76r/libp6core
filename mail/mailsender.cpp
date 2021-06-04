@@ -14,7 +14,7 @@
 #include "mailsender.h"
 #include <QMutexLocker>
 #include <QTcpSocket>
-#include <QRegExp>
+#include <QRegularExpression>
 
 static int _defaultSmtpTimeoutMs = 5000;
 
@@ -56,29 +56,26 @@ public:
   inline const QString &lastExpectLine() const { return _lastExpectLine; }
 };
 
+static const QRegularExpression _simpleAddress {
+  "\\A\\s*[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+\\s*\\z" };
+static const QRegularExpression _addressWithDisplayName {
+  "\\A[^<@>]*(<[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+>)\\s*\\z" };
+
 class EmailAddress {
 private:
   QString _addr;
   bool _valid;
 
 public:
-  EmailAddress(const QString &addr) {
-    QRegExp simple("\\s*[a-z0-9_.-]+@[a-z0-9_.-]+\\s*",
-                   Qt::CaseInsensitive, QRegExp::RegExp2);
-    if (simple.exactMatch(addr)) {
+  EmailAddress(const QString &addr) : _valid(false) {
+    if (_simpleAddress.match(addr).hasMatch()) {
       _addr = QString("<%1>").arg(addr);
       _valid = true;
-      //qDebug() << "simple email address" << addr << _addr;
     } else {
-      QRegExp complex("[^<@>]*(<[a-z0-9_.-]+@[a-z0-9_.-]+>)\\s*",
-                      Qt::CaseInsensitive, QRegExp::RegExp2);
-      if (complex.exactMatch(addr)) {
-        _addr = complex.cap(1);
+      auto m = _addressWithDisplayName.match(addr);
+      if (m.hasMatch()) {
+        _addr = m.captured(1);
         _valid = true;
-        //qDebug() << "complex email address" << addr << _addr;
-      } else {
-        _valid = false;
-        //qDebug() << "bad email address" << addr;
       }
     }
   }

@@ -32,7 +32,7 @@ class SharedUiItemDocumentManager;
  * thread-safe view which is connected to this model and offer thread-safe read
  * methods, like TextTableView.
  */
-class LIBPUMPKINSHARED_EXPORT SharedUiItemsModel : public QAbstractItemModel {
+class LIBP6CORESHARED_EXPORT SharedUiItemsModel : public QAbstractItemModel {
   Q_OBJECT
   Q_DISABLE_COPY(SharedUiItemsModel)
   int _columnsCount;
@@ -201,7 +201,7 @@ protected:
  * but not specific SharedUiItem ones (such as indexOf(SharedUiItem) or signal
  * itemChanged()).
  */
-class LIBPUMPKINSHARED_EXPORT SharedUiItemsProxyModelHelper {
+class LIBP6CORESHARED_EXPORT SharedUiItemsProxyModelHelper {
   SharedUiItemsModel *_realModel;
   QList <QAbstractProxyModel*> _proxies;
 

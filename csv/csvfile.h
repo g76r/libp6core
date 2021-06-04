@@ -25,7 +25,7 @@
 // LATER implement quoting on write
 
 /** Give read/write access to a CSV file content. */
-class LIBPUMPKINSHARED_EXPORT CsvFile : public QObject {
+class LIBP6CORESHARED_EXPORT CsvFile : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(CsvFile)
   QString _filename;

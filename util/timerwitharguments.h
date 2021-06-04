@@ -31,7 +31,7 @@
  * regular QMetaObject (signals/slots and invokeMethod) mechanisms. In the
  * other hand, using QTimer needs the receiver class to hold the context
  * by itself since QTimer does not transmit it. */
-class LIBPUMPKINSHARED_EXPORT TimerWithArguments : public QTimer {
+class LIBP6CORESHARED_EXPORT TimerWithArguments : public QTimer {
   Q_OBJECT
   Q_DISABLE_COPY(TimerWithArguments)
 

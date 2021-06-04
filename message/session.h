@@ -24,7 +24,7 @@
  * SessionManager.
  * @see SessionManager
  */
-class LIBPUMPKINSHARED_EXPORT Session {
+class LIBP6CORESHARED_EXPORT Session {
   qint64 _id;
 
 public:
@@ -55,9 +55,9 @@ Q_DECLARE_TYPEINFO(Session, Q_MOVABLE_TYPE);
 
 inline uint qHash(const Session &session) { return qHash(session.id()); }
 
-QDebug LIBPUMPKINSHARED_EXPORT operator<<(QDebug dbg, const Session &session);
+QDebug LIBP6CORESHARED_EXPORT operator<<(QDebug dbg, const Session &session);
 
-LogHelper LIBPUMPKINSHARED_EXPORT operator<<(LogHelper lh,
+LogHelper LIBP6CORESHARED_EXPORT operator<<(LogHelper lh,
                                              const Session &session);
 
 #endif // SESSION_H

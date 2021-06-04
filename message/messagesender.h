@@ -19,7 +19,7 @@
 
 /** Abstract class to be extended by network transport implementation, such
  * as TcpConnectionHandler. */
-class LIBPUMPKINSHARED_EXPORT MessageSender : public QObject {
+class LIBP6CORESHARED_EXPORT MessageSender : public QObject {
   Q_OBJECT
 
 public:

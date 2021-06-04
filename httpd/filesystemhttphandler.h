@@ -37,12 +37,12 @@ class QFile;
  */
 // LATER accept several document roots to enable e.g. overriding embeded
 // resources with real local files
-class LIBPUMPKINSHARED_EXPORT FilesystemHttpHandler : public HttpHandler {
+class LIBP6CORESHARED_EXPORT FilesystemHttpHandler : public HttpHandler {
   Q_OBJECT
   Q_DISABLE_COPY(FilesystemHttpHandler)
   QString _urlPathPrefix, _documentRoot;
   QStringList _directoryIndex;
-  QList<QPair<QRegExp,QString> > _mimeTypes;
+  QList<QPair<QRegularExpression,QString>> _mimeTypes;
 
 public:
   /** @param documentRoot will be appended a / if not present */
@@ -64,10 +64,10 @@ public:
     _directoryIndex.prepend(index); }
   void clearDirectoryIndex() { _directoryIndex.clear(); }
   void appendMimeType(const QString pattern, const QString contentType) {
-    _mimeTypes.append(qMakePair(QRegExp(pattern, Qt::CaseInsensitive),
+    _mimeTypes.append(qMakePair(QRegularExpression(pattern, QRegularExpression::CaseInsensitiveOption),
                                 contentType)); }
   void prependMimeType(const QString pattern, const QString contentType) {
-    _mimeTypes.prepend(qMakePair(QRegExp(pattern, Qt::CaseInsensitive),
+    _mimeTypes.prepend(qMakePair(QRegularExpression(pattern, QRegularExpression::CaseInsensitiveOption),
                                  contentType)); }
   void clearMimeTypes() { _mimeTypes.clear(); }
   bool acceptRequest(HttpRequest req);

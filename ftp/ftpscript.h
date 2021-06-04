@@ -26,7 +26,7 @@ class FtpClient;
  * When executed, fails on first failed operation.
  * @see FtpClient
  */
-class LIBPUMPKINSHARED_EXPORT FtpScript {
+class LIBP6CORESHARED_EXPORT FtpScript {
   QSharedDataPointer<FtpScriptData> _data;
 
 public:

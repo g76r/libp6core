@@ -24,7 +24,7 @@ class SharedUiItemDocumentManager;
 /** Transaction that can be used by changeItem()/prepareChangeItem()/
  * commitChangeItem() to create ChangeItemCommands and access to changes
  * performed within the transaction but not yet commited to the DM. */
-class LIBPUMPKINSHARED_EXPORT SharedUiItemDocumentTransaction
+class LIBP6CORESHARED_EXPORT SharedUiItemDocumentTransaction
     : public CoreUndoCommand {
   SharedUiItemDocumentManager *_dm;
   QHash<QString,QHash<QString,SharedUiItem>> _changingItems, _originalItems;
@@ -33,7 +33,7 @@ public:
   using PostCreationModifier = std::function<void(
   SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
   QString *errorString)>;
-  class LIBPUMPKINSHARED_EXPORT ChangeItemCommand : public CoreUndoCommand {
+  class LIBP6CORESHARED_EXPORT ChangeItemCommand : public CoreUndoCommand {
     QPointer<SharedUiItemDocumentManager> _dm;
     SharedUiItem _newItem, _oldItem;
     QString _idQualifier;

@@ -21,7 +21,7 @@
 class QIODevice;
 class QThread;
 
-class LIBPUMPKINSHARED_EXPORT FileLogger : public Logger {
+class LIBP6CORESHARED_EXPORT FileLogger : public Logger {
   Q_OBJECT
   Q_DISABLE_COPY(FileLogger)
   QIODevice *_device;

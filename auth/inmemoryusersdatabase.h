@@ -17,7 +17,7 @@
 #include "usersdatabase.h"
 #include <QMutex>
 
-class LIBPUMPKINSHARED_EXPORT InMemoryUsersDatabase : public UsersDatabase {
+class LIBP6CORESHARED_EXPORT InMemoryUsersDatabase : public UsersDatabase {
   Q_OBJECT
   Q_DISABLE_COPY(InMemoryUsersDatabase)
   QHash<QString,UserData> _users;

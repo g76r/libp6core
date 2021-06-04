@@ -23,7 +23,7 @@
  *
  * Can optionaly sort columns and/or rows on the fly, by header names order.
  */
-class LIBPUMPKINSHARED_EXPORT TextMatrixModel : public QAbstractTableModel {
+class LIBP6CORESHARED_EXPORT TextMatrixModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(TextMatrixModel)
 

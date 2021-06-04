@@ -23,7 +23,7 @@
 GraphvizImageHttpHandler::GraphvizImageHttpHandler(QObject *parent,
                                                    RefreshStrategy refreshStrategy)
   : ImageHttpHandler(parent), _renderer(Dot), _renderingRequested(false),
-    _renderingRunning(false), _renderingNeeded(0), _mutex(QMutex::Recursive),
+    _renderingRunning(false), _renderingNeeded(0),
     _process(new QProcess(this)), _refreshStrategy(refreshStrategy),
     _imageFormat(Png) {
   connect(_process, static_cast<void(QProcess::*)(int,QProcess::ExitStatus)>(&QProcess::finished),

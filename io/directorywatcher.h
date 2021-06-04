@@ -30,7 +30,7 @@ class QFileSystemWatcher;
  * Uses QFileSystemWatcher internaly.
  * @see QFileSystemWatcher
  */
-class LIBPUMPKINSHARED_EXPORT DirectoryWatcher : public QObject {
+class LIBP6CORESHARED_EXPORT DirectoryWatcher : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(DirectoryWatcher)
   QFileSystemWatcher *_qfsw;

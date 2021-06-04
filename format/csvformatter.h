@@ -18,7 +18,7 @@
 #include <QAbstractItemModel>
 
 /** Formats various data types to CSV row, table or header. */
-class LIBPUMPKINSHARED_EXPORT CsvFormatter : public AbstractTextFormatter {
+class LIBP6CORESHARED_EXPORT CsvFormatter : public AbstractTextFormatter {
   QString _recordSeparator, _specialChars;
   QChar _fieldSeparator, _fieldQuote, _escapeChar, _replacementChar;
   static QString _defaultRecordSeparator;

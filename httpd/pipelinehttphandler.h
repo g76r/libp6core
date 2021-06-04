@@ -21,7 +21,7 @@
  * Usefull to prepend and append technical processing (authentication,
  * session data, etc.) to the main handler. */
 // LATER make this class really thread-safe, currently it is not if handlers are changed while handling requests
-class LIBPUMPKINSHARED_EXPORT PipelineHttpHandler : public HttpHandler {
+class LIBP6CORESHARED_EXPORT PipelineHttpHandler : public HttpHandler {
   Q_OBJECT
   Q_DISABLE_COPY(PipelineHttpHandler)
   QString _urlPathPrefix;
