@@ -62,7 +62,7 @@ inline QString pfquotechar(unsigned char c) {
   if (c == '\\')
     return "\\\\";
   if (c > 32 && c < 128)
-    return QString(c);
+    return QString(QChar(c));
   return QString("\\x").append("0123456789abcdef"[(c&0xf0)>>4])
       .append("0123456789abcdef"[c&0xf]);
 }

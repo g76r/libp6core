@@ -230,7 +230,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions &options) {
         break;
       }
       // otherwise process as Content by falling into Content: label
-    [[clang::fallthrough]];
+    Q_FALLTHROUGH();
     case Content:
       if (c == ';') {
         // LATER warn if an array node has text or binary content
@@ -620,7 +620,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions &options) {
         if (escaped > 0x7f)
           content.append(QString(QChar(escaped|digit)).toUtf8());
         else
-          content.append(QChar(escaped|digit));
+          content.append(QString(QChar(escaped|digit)).toUtf8());
         state = escapedState;
       }
       ++column;

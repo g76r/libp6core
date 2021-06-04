@@ -11,7 +11,7 @@
 # under the License.
 
 QT -= gui
-CONFIG += largefile c++11 c++14
+CONFIG += largefile c++17 c++14 c++11
 
 TARGET = qtpf
 TEMPLATE = lib

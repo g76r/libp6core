@@ -309,7 +309,7 @@ qint64 PfNodeData::internalWritePfContent(
 const QList<PfNode> PfNode::childrenByName(const QString &name) const {
   QList<PfNode> list;
   if (!name.isEmpty())
-    foreach (PfNode child, children())
+    for (auto child: children())
       if (!child.isNull() && child.d->_name == name)
         list.append(child);
   return list;
@@ -317,7 +317,7 @@ const QList<PfNode> PfNode::childrenByName(const QString &name) const {
 
 bool PfNode::hasChild(const QString &name) const {
   if (!name.isEmpty())
-    foreach (PfNode child, children())
+    for (auto child: children())
       if (!child.isNull() && child.d->_name == name)
         return true;
   return false;
@@ -325,7 +325,7 @@ bool PfNode::hasChild(const QString &name) const {
 
 PfNode PfNode::firstTextChildByName(const QString &name) const {
   if (!name.isEmpty())
-    foreach (PfNode child, children())
+    for (auto child: children())
       if (!child.isNull() && child.d->_name == name && child.isText())
         return child;
   return PfNode();
@@ -334,7 +334,7 @@ PfNode PfNode::firstTextChildByName(const QString &name) const {
 QStringList PfNode::stringChildrenByName(const QString &name) const {
   QStringList sl;
   if (!name.isEmpty())
-    foreach (PfNode child, children())
+    for (auto child: children())
       if (!child.isNull() && child.d->_name == name && child.isText())
         sl.append(child.contentAsString());
   return sl;
@@ -344,7 +344,7 @@ QList<QPair<QString,QString> > PfNode::stringsPairChildrenByName(
     const QString &name) const {
   QList<QPair<QString,QString> > l;
   if (!name.isEmpty())
-    foreach (PfNode child, children())
+    for (auto child: children())
       if (!child.isNull() && child.d->_name == name && child.isText()) {
         QString s = child.contentAsString().remove(_leadingwhitespace);
         int i = s.indexOf(_whitespace);
@@ -360,7 +360,7 @@ QList<QPair<QString, qint64>> PfNode::stringLongPairChildrenByName(
     const QString &name) const {
   QList<QPair<QString,qint64>> l;
   if (!name.isEmpty())
-    foreach (PfNode child, children())
+    for (auto child: children())
       if (!child.isNull() && child.d->_name == name && child.isText()) {
         QString s = child.contentAsString().remove(_leadingwhitespace);
         int i = s.indexOf(_whitespace);
