@@ -149,6 +149,14 @@ void SharedUiItemsModel::setDocumentManager(
             this, &SharedUiItemsModel::changeItem);
     connect(_documentManager, &SharedUiItemDocumentManager::dataReset,
             this, &SharedUiItemsModel::resetData);
+  }
+}
+
+void SharedUiItemsModel::resetData() {
+  int rows = rowCount();
+  if (rows)
+    removeRows(0, rows);
+  if (_documentManager) {
     // LATER also populate data if _itemQualifierFilter is empty
     for (const QString &idQualifier : _itemQualifierFilter) {
       for (const SharedUiItem &item
@@ -157,12 +165,6 @@ void SharedUiItemsModel::setDocumentManager(
       }
     }
   }
-}
-
-void SharedUiItemsModel::resetData() {
-  int rows = rowCount();
-  if (rows)
-    removeRows(0, rows);
   emit dataReset();
 }
 
