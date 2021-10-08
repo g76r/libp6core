@@ -1,4 +1,4 @@
-/* Copyright 2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -99,7 +99,7 @@ QString CsvFormatter::formatTableHeader(
     const QStringList &columnHeaders) const {
   QString s;
   if (rowHeadersEnabled())
-    s.append(topLeftHeader()).append(_fieldSeparator);
+    s.append(formatCell(topLeftHeader())).append(_fieldSeparator);
   bool first = true;
   for (const QString &header : columnHeaders) {
     if (first)
@@ -122,7 +122,7 @@ QString CsvFormatter::formatRow(const QStringList &cells,
                                 QString rowHeader) const {
   QString s;
   if (rowHeadersEnabled())
-    s.append(rowHeader).append(_fieldSeparator);
+    s.append(formatCell(rowHeader)).append(_fieldSeparator);
   bool first = true;
   for (const QString &cell : cells) {
     if (first)

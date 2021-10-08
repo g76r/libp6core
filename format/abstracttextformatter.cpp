@@ -1,4 +1,4 @@
-/* Copyright 2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -55,8 +55,7 @@ QString AbstractTextFormatter::formatTable(
       lastRow = model->rowCount(parent)-1;
     if (_rowHeadersEnabled) {
       for (int row = firstRow; row <= lastRow; ++row)
-        s.append(formatRowInternal(model, row, parent, role,
-                                   QString::number(row)));
+        s.append(formatRowInternal(model, row, parent, role));
     } else {
       for (int row = firstRow; row <= lastRow; ++row)
         s.append(formatRow(model, row, parent, role));
@@ -69,24 +68,45 @@ QString AbstractTextFormatter::formatTable(
 void AbstractTextFormatter::fetchHeaderList(
     QStringList *headers, const SharedUiItem &item) const {
   Q_ASSERT(headers);
-  if (_columnHeadersEnabled) {
-    int n = item.uiSectionCount();
-    for (int i = 0; i < n; ++i)
-      headers->append(item.uiHeaderString(i));
-  }
+  int n = item.uiSectionCount();
+  for (int i = 0; i < n; ++i)
+    headers->append(item.uiHeaderString(i));
 }
 
 void AbstractTextFormatter::fetchHeaderList(
     QStringList *headers, const QAbstractItemModel *model,
     const QModelIndex &parent, int role) const {
   Q_ASSERT(headers);
-  if (model && _columnHeadersEnabled) {
-    if (_rowHeadersEnabled)
-      headers->append(_topLeftHeader);
+  if (model) {
     int columns = model->columnCount(parent);
     for (int column = 0; column < columns; ++column) {
       headers->append(model->headerData(column, Qt::Horizontal, role)
                       .toString());
     }
   }
+}
+
+QString AbstractTextFormatter::formatRowInternal(
+    const QAbstractItemModel *model, int row,
+    const QModelIndex &parent, int role) const {
+  if (!model)
+    return QString();
+  QStringList cells;
+  int columns = model->columnCount(parent);
+  for (int column = 0; column < columns; ++column)
+    cells.append(
+          model->index(row, column, parent).data(role).toString());
+  QString rowHeader = model->headerData(row, Qt::Vertical, role).toString();
+  if (rowHeader.isNull())
+    rowHeader = QString::number(row);
+  return formatRow(cells, rowHeader);
+}
+
+QString AbstractTextFormatter::formatRowInternal(
+    const SharedUiItem &item, int role, QString rowHeader) const {
+  QStringList cells;
+  int n = item.uiSectionCount();
+  for (int i = 0; i < n; ++i)
+    cells.append(item.uiString(i, role));
+  return formatRow(cells, rowHeader.isNull() ? item.qualifiedId() : rowHeader);
 }

@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,8 +20,12 @@ CsvTableView::CsvTableView(QObject *parent, QString objectName, int cachedRows,
 
 void CsvTableView::updateHeaderAndFooterCache() {
   QStringList headers;
-  fetchHeaderList(&headers, model());
-  _tableHeader = formatTableHeader(headers);
+  if (columnHeadersEnabled()) {
+    fetchHeaderList(&headers, model());
+    _tableHeader = formatTableHeader(headers);
+  } else {
+    _tableHeader.clear();
+  }
 }
 
 QString CsvTableView::header(int currentPage, int lastPage,

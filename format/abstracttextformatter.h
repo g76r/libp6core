@@ -1,4 +1,4 @@
-/* Copyright 2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -65,7 +65,7 @@ public:
    * is HeaderDisplayRole, in which case topLeftHeader is used insted. */
   QString formatRow(
       const SharedUiItem &item, int role = Qt::DisplayRole) const {
-    return formatRowInternal(item, role, QString()); }
+    return formatRowInternal(item, role); }
   /** Format items in a list as a table.
    * If column headers are enabled, a header row is added first (even if list
    * is empty), using item's section names.
@@ -78,7 +78,7 @@ public:
   QString formatRow(const QAbstractItemModel *model, int row,
                     const QModelIndex &parent = QModelIndex(),
                     int role = Qt::DisplayRole) const {
-    return formatRowInternal(model, row, parent, role, QString()); }
+    return formatRowInternal(model, row, parent, role); }
   /** Format the row to which index belongs.
    * If column headers are never written, being them enabled or not.
    * If row headers are enabled, model's horizontal header is used. */
@@ -124,7 +124,9 @@ public:
                             QString rowHeader = QString()) const = 0;
 
 protected:
+  /** Fetch column headers, but topLeftHeader() even if rowHeadersEnabled() */
   void fetchHeaderList(QStringList *headers, const SharedUiItem &item) const;
+  /** Fetch column headers, but topLeftHeader() even if rowHeadersEnabled() */
   void fetchHeaderList(QStringList *headers, const QAbstractItemModel *model,
                        const QModelIndex &parent = QModelIndex(),
                        int role = Qt::DisplayRole) const ;
@@ -132,26 +134,11 @@ protected:
 private:
   /** Format a row, using model's vertical header if rowHeader.isNull() */
   QString formatRowInternal(const QAbstractItemModel *model, int row,
-                            const QModelIndex &parent, int role,
-                            QString rowHeader) const {
-    if (!model)
-      return QString();
-    QStringList cells;
-    int columns = model->columnCount(parent);
-    for (int column = 0; column < columns; ++column)
-      cells.append(
-            model->index(row, column, parent).data(role).toString());
-    return formatRow(cells, rowHeader);
-  }
-  /** Format a row, using item's id if rowHeader.isNull() */
+                            const QModelIndex &parent, int role) const;
+  /** Format a row, using item's id if rowHeader.isNull()
+    * @param rowHeader: use qualifiedId if null */
   QString formatRowInternal(const SharedUiItem &item, int role,
-                            QString rowHeader) const {
-    QStringList cells;
-    int n = item.uiSectionCount();
-    for (int i = 0; i < n; ++i)
-      cells.append(item.uiString(i, role));
-    return formatRow(cells, rowHeader);
-  }
+                            QString rowHeader = QString()) const;
 };
 
 #endif // ABSTRACTTEXTFORMATTER_H
