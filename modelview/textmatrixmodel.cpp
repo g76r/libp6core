@@ -15,7 +15,7 @@
 //#include "log/log.h"
 
 TextMatrixModel::TextMatrixModel(QObject *parent)
-  : QAbstractTableModel(parent), _shouldSortRows(false), _shouldSortColumns(false) {
+  : QAbstractTableModel(parent), _rowsSortEnabled(false), _columnsSortEnabled(false) {
 }
 
 int TextMatrixModel::rowCount(const QModelIndex &parent) const {
@@ -89,14 +89,14 @@ static inline int insertionPosition(QStringList &list, QString key,
 void TextMatrixModel::setCellValue(QString row, QString column, QString value) {
   //Log::fatal() << "TextMatrixModel::setCellValue " << row << " " << column << " " << value;
   // LATER optimize TextMatrixModel::setCellValue, complexity is O(4n) and should be at most O(log n)
-  int pos = insertionPosition(_rowNames, row, _shouldSortRows);
+  int pos = insertionPosition(_rowNames, row, _rowsSortEnabled);
   if (pos >= 0){
     //Log::fatal() << "insert row " << pos << " " << row;
     beginInsertRows(QModelIndex(), pos, pos);
     _rowNames.insert(pos, row);
     endInsertRows();
   }
-  pos = insertionPosition(_columnNames, column, _shouldSortColumns);
+  pos = insertionPosition(_columnNames, column, _columnsSortEnabled);
   if (pos >= 0) {
     //Log::fatal() << "insert column " << pos << " " << column;
     beginInsertColumns(QModelIndex(), pos, pos);

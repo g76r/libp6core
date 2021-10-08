@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -29,16 +29,16 @@ class LIBPUMPKINSHARED_EXPORT TextMatrixModel : public QAbstractTableModel {
 
   QStringList _columnNames, _rowNames;
   QHash<QString,QHash<QString,QString> > _values;
-  bool _shouldSortRows, _shouldSortColumns;
+  bool _rowsSortEnabled, _columnsSortEnabled;
 
 public:
   explicit TextMatrixModel(QObject *parent = 0);
   /** Should sort rows. Default: false. */
-  void setShouldSortRows(bool enabled = true) { _shouldSortRows = enabled; }
-  bool shouldSortRows() const { return _shouldSortRows; }
+  void enableRowsSort(bool enabled = true) { _rowsSortEnabled = enabled; }
+  bool rowsSortEnabled() const { return _rowsSortEnabled; }
   /** Should sort columns. Default: false. */
-  void setShouldSortColumns(bool enabled = true) { _shouldSortColumns = enabled; }
-  bool shouldSortColumns() const { return _shouldSortColumns; }
+  void enableColumnsSort(bool enabled = true) { _columnsSortEnabled = enabled; }
+  bool columnsSortEnabled() const { return _columnsSortEnabled; }
   int rowCount(const QModelIndex &parent = QModelIndex()) const;
   int columnCount(const QModelIndex &parent = QModelIndex()) const;
   QVariant data(const QModelIndex &index, int role) const;

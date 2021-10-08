@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -71,7 +71,7 @@ public slots:
   /** If no or bad basic auth, request auth (HTTP 401) and stop pipeline
    * (handRequest() returns false).
    * Otherwise let the page be served with no userId in HttpRequestContext. */
-  void setAuthIsMandatory(bool mandatory = true);
+  void enableMandatoryAuth(bool mandatory = true);
 };
 
 #endif // BASICAUTHHTTPHANDLER_H

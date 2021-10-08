@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -33,7 +33,7 @@ class LIBPUMPKINSHARED_EXPORT CsvFile : public QObject {
   QList<QStringList> _rows;
   QStringList _headers;
   QChar _fieldSeparator, _escapeChar, _quoteChar;
-  bool _areHeadersPresent;
+  bool _headersEnabled;
   int _columnCount;
 
 public:
@@ -72,10 +72,10 @@ public:
   /** Default: " (double quote) */
   CsvFile &setQuoteChar(QChar quoteChar) {
     _quoteChar = quoteChar; return *this; }
-  bool areHeadersPresent() const { return _areHeadersPresent; }
+  bool headersEnabled() const { return _headersEnabled; }
   /** Default: true (first file line contains headers rather than data) */
-  CsvFile &setAreHeadersPresent(bool areHeadersPresent = true) {
-    _areHeadersPresent = areHeadersPresent; return *this; }
+  CsvFile &enableHeaders(bool headersEnabled = true) {
+    _headersEnabled = headersEnabled; return *this; }
   bool setHeaders(QStringList data);
 
 public slots:

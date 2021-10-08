@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -39,7 +39,7 @@ private:
   _pageUrlPrefix;
   TextMapper _trClassMapper;
   int _rowAnchorColumn;
-  bool _columnHeaders, _rowHeaders;
+  bool _columnHeadersEnabled, _rowHeadersEnabled;
   static QString _defaultTableClass;
 
 public:
@@ -52,10 +52,10 @@ public:
     _tableClass = tableClass; updateHeaderAndFooterCache(); }
   void setTopLeftHeader(QString rawHtml) {
     _topLeftHeader = rawHtml; updateHeaderAndFooterCache(); }
-  void setColumnHeaders(bool set = true) {
-    _columnHeaders = set; updateHeaderAndFooterCache(); }
-  void setRowHeaders(bool set = true) {
-    _rowHeaders = set; updateHeaderAndFooterCache(); }
+  void enableColumnHeaders(bool set = true) {
+    _columnHeadersEnabled = set; updateHeaderAndFooterCache(); }
+  void enableRowHeaders(bool set = true) {
+    _rowHeadersEnabled = set; updateHeaderAndFooterCache(); }
   void setEmptyPlaceholder(QString rawText);
   void setEllipsePlaceholder(QString rawText);
   /** Add an "<a name=" anchor to every row, the anchor is prefix + content of

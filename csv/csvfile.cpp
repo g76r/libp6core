@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,7 +17,7 @@
 CsvFile::CsvFile(QObject *parent)
   : QObject(parent), _openMode(QIODevice::NotOpen),
     _fieldSeparator(','), _escapeChar('\\'), _quoteChar('"'),
-    _areHeadersPresent(true), _columnCount(0) {
+    _headersEnabled(true), _columnCount(0) {
 }
 
 CsvFile::CsvFile(QObject *parent, QString filename)
@@ -117,7 +117,7 @@ bool CsvFile::removeRows(int first, int last) {
 
 bool CsvFile::readAll(QIODevice *input) {
   bool atEnd = false;
-  if (_areHeadersPresent) {
+  if (_headersEnabled) {
     if (!readRow(input, &_headers, &atEnd))
       return false;
     _columnCount = _headers.size();
@@ -184,7 +184,7 @@ bool CsvFile::writeAll() {
       QString specialChars("\r\n");
       specialChars.append(_fieldSeparator).append(_escapeChar)
           .append(_quoteChar);
-      if (_areHeadersPresent)
+      if (_headersEnabled)
         if (!writeRow(&file, _headers, specialChars))
           return false;
       foreach (const QStringList &row, _rows)

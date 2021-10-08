@@ -22,7 +22,7 @@ HtmlTableView::HtmlTableView(QObject *parent, QString objectName,
                              int cachedRows, int rowsPerPage)
   : TextTableView(parent, objectName, cachedRows, rowsPerPage),
   _tableClass(_defaultTableClass), _pageUrlPrefix("?"),
-  _rowAnchorColumn(-1), _columnHeaders(true), _rowHeaders(false) {
+  _rowAnchorColumn(-1), _columnHeadersEnabled(true), _rowHeadersEnabled(false) {
   setEmptyPlaceholder("(empty)");
   setEllipsePlaceholder("...");
   setItemDelegate(new HtmlItemDelegate(this));
@@ -57,9 +57,9 @@ void HtmlTableView::updateHeaderAndFooterCache() {
         .arg(objectName());
   QAbstractItemModel *m = model();
   if (m) {
-    if (_columnHeaders) {
+    if (_columnHeadersEnabled) {
       v.append("<thead><tr>");
-      if (_rowHeaders)
+      if (_rowHeadersEnabled)
         v.append("<th>").append(_topLeftHeader).append("</th>");
       int displayedColumn = 0;
       foreach (int column, effectiveColumnIndexes()) {
@@ -164,7 +164,7 @@ QString HtmlTableView::rowText(int row) {
   if (!id.isNull())
     v.append(" id=\"").append(id).append('"');
   v.append(">");
-  if (_rowHeaders) {
+  if (_rowHeadersEnabled) {
     v.append("<th>");
     TextViewItemDelegate *d = itemDelegateForRowOrDefault(row);
     v.append(d ? d->headerText(row, Qt::Vertical, m)

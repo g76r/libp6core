@@ -70,6 +70,6 @@ void BasicAuthHttpHandler::setAuthorizer(Authorizer *authorizer) {
   _authorizer = authorizer;
 }
 
-void BasicAuthHttpHandler::setAuthIsMandatory(bool mandatory) {
+void BasicAuthHttpHandler::enableMandatoryAuth(bool mandatory) {
   _authIsMandatory = mandatory;
 }
