@@ -158,8 +158,9 @@ Logger::Logger(Log::Severity minSeverity, ThreadModel threadModel)
 Logger::~Logger() {
   //qDebug() << "~Logger" << this;
   if (_buffer) {
+    //printf("~Logger printf: %ld\n", _buffer->used());
     if (_thread) {
-      _buffer->clear();
+      //_buffer->clear();
       _thread->requestInterruption();
       _thread->wait();
     }
