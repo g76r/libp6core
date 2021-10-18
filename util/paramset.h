@@ -165,14 +165,14 @@ class ParamSetData;
  * %=htmlencode function: %{=htmlencode:input[:flags]}
  *
  * input is the data to transform, it is evaluated (%foo become the content of
- *   foo param) and can contain the separator character (e.g. :)
+ *   foo param) and cannot contain the separator character (e.g. :)
  * flags can contain following characters:
  *   u to surround url with links markups
  *   n to add br markup whenever a newline is encountered
  *
  * examples:
  * %{=htmlencode:1 < 2} -> 1 &lt; 2
- * %{=htmlencode:http://wwww.google.com/:u} -> <a href="http://wwww.google.com/">http://wwww.google.com/</a>
+ * %{=htmlencode,http://wwww.google.com/,u} -> <a href="http://wwww.google.com/">http://wwww.google.com/</a>
  * %{=htmlencode http://wwww.google.com/ u} -> same
  * %{=htmlencode|http://wwww.google.com/} -> http://wwww.google.com/
  *
@@ -207,8 +207,9 @@ class ParamSetData;
  * %=env function:
  *    %{=env:varname1[[:varname2[:...]]:defaultvalue]}
  *
- * lookup system environment variable (and evaluate)
+ * lookup system environment variable
  * varnames and defaultValue are evaluated
+ * beware that you must provide a default value if there are more than 1 varname
  *
  * exemples:
  * %{=env:SHELL}
