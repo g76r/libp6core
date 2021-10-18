@@ -57,9 +57,9 @@ class ParamSetData;
  *
  * take first non-empty expression in order: expr1 if not empty, expr2 if expr1
  * is empty, expr3 if neither expr1 nor expr2 are set, etc.
- * the function works like nvl/ifnull functions in sql
- *   and almost like %{variable:-value_if_not_set} in shell scripts
- * expr1..n are are evaluated
+ * the function works like nvl/coalesce/ifnull functions in sql
+ *   and almost like ${variable:-value_if_not_set} in shell scripts
+ * expr1..n are evaluated
  * value_if_not_set is evaluated hence %foo is replaced by foo's value
  *
  * examples:
@@ -200,9 +200,9 @@ class ParamSetData;
  *
  * examples:
  * %{=random} -> any integer number (32 or 64 bits, depending on platform)
- * %{=random:100} -> a number between 0 and 99
- * %{=random:6:1} -> a number between 1 and 6
- * %{=random:-8:-4} -> a number between -4 and 3
+ * %{=random:100} -> an integer between 0 and 99
+ * %{=random:6:1} -> an integer between 1 and 6
+ * %{=random:-8:-4} -> an integer between -4 and 3
  *
  * %=env function:
  *    %{=env:varname1[[:varname2[:...]]:defaultvalue]}
