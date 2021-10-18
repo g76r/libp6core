@@ -203,6 +203,20 @@ class ParamSetData;
  * %{=random:100} -> a number between 0 and 99
  * %{=random:6:1} -> a number between 1 and 6
  * %{=random:-8:-4} -> a number between -4 and 3
+ *
+ * %=env function:
+ *    %{=env:varname1[[:varname2[:...]]:defaultvalue]}
+ *
+ * lookup system environment variable (and evaluate)
+ * varnames and defaultValue are evaluated
+ *
+ * exemples:
+ * %{=env:SHELL}
+ * %{=env:EDITOR_FOR_%foo:vim}
+ * %{=env:USERNAME:%{=env:USER}}
+ * %{=env:USERNAME:USER:} (equivalent to previous line, note the trailing :)
+ * %{=env:EDITOR_FOR_%foo:${=env:EDITOR:vim}}
+ * %{=env,EDITOR_FOR_%foo,EDITOR,vim} (equivalent to previous line)
  */
 class LIBPUMPKINSHARED_EXPORT ParamSet : public ParamsProvider {
   friend class ParamsProviderMerger;
