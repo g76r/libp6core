@@ -501,6 +501,7 @@ bool ParamSet::appendVariableValue(
                       "variable \"" << variable << "\"";
     return false;
   }
+  alreadyEvaluated.insert(variable);
   QString s;
   int matchedLength;
   auto implicitVariable = implicitVariables.value(variable, &matchedLength);
