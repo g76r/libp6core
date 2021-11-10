@@ -57,9 +57,9 @@ class ParamSetData;
  *
  * take first non-empty expression in order: expr1 if not empty, expr2 if expr1
  * is empty, expr3 if neither expr1 nor expr2 are set, etc.
- * the function works like nvl/ifnull functions in sql
- *   and almost like %{variable:-value_if_not_set} in shell scripts
- * expr1..n are are evaluated
+ * the function works like nvl/coalesce/ifnull functions in sql
+ *   and almost like ${variable:-value_if_not_set} in shell scripts
+ * expr1..n are evaluated
  * value_if_not_set is evaluated hence %foo is replaced by foo's value
  *
  * examples:
@@ -165,14 +165,14 @@ class ParamSetData;
  * %=htmlencode function: %{=htmlencode:input[:flags]}
  *
  * input is the data to transform, it is evaluated (%foo become the content of
- *   foo param) and can contain the separator character (e.g. :)
+ *   foo param) and cannot contain the separator character (e.g. :)
  * flags can contain following characters:
  *   u to surround url with links markups
  *   n to add br markup whenever a newline is encountered
  *
  * examples:
  * %{=htmlencode:1 < 2} -> 1 &lt; 2
- * %{=htmlencode:http://wwww.google.com/:u} -> <a href="http://wwww.google.com/">http://wwww.google.com/</a>
+ * %{=htmlencode,http://wwww.google.com/,u} -> <a href="http://wwww.google.com/">http://wwww.google.com/</a>
  * %{=htmlencode http://wwww.google.com/ u} -> same
  * %{=htmlencode|http://wwww.google.com/} -> http://wwww.google.com/
  *
@@ -200,9 +200,24 @@ class ParamSetData;
  *
  * examples:
  * %{=random} -> any integer number (32 or 64 bits, depending on platform)
- * %{=random:100} -> a number between 0 and 99
- * %{=random:6:1} -> a number between 1 and 6
- * %{=random:-8:-4} -> a number between -4 and 3
+ * %{=random:100} -> an integer between 0 and 99
+ * %{=random:6:1} -> an integer between 1 and 6
+ * %{=random:-8:-4} -> an integer between -4 and 3
+ *
+ * %=env function:
+ *    %{=env:varname1[[:varname2[:...]]:defaultvalue]}
+ *
+ * lookup system environment variable
+ * varnames and defaultValue are evaluated
+ * beware that you must provide a default value if there are more than 1 varname
+ *
+ * exemples:
+ * %{=env:SHELL}
+ * %{=env:EDITOR_FOR_%foo:vim}
+ * %{=env:USERNAME:%{=env:USER}}
+ * %{=env:USERNAME:USER:} (equivalent to previous line, note the trailing :)
+ * %{=env:EDITOR_FOR_%foo:${=env:EDITOR:vim}}
+ * %{=env,EDITOR_FOR_%foo,EDITOR,vim} (equivalent to previous line)
  */
 class LIBP6CORESHARED_EXPORT ParamSet : public ParamsProvider {
   friend class ParamsProviderMerger;

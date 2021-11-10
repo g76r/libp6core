@@ -452,6 +452,8 @@ implicitVariables {
 { "=random", [](ParamSet, QString key, bool,
               const ParamsProvider *, QSet<QString>, int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
+  // TODO evaluate modulo and shift
+  // TODO replace rand with QRandomGenerator
   int modulo = abs(params.value(0).toInt());
   int shift = params.value(1).toInt();
   int i = ::rand();
@@ -459,7 +461,27 @@ implicitVariables {
     i %= modulo;
   i += shift;
   return QString::number(i);
-}, true}
+}, true},
+{ "=env", [](ParamSet paramset, QString key, bool inherit,
+              const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+              int matchedLength) {
+  CharacterSeparatedExpression params(key, matchedLength);
+  const char *name = 0;
+  int i = 0;
+  do {
+    QString rawName = paramset.evaluate(
+          params.value(i), inherit, context, alreadyEvaluated);
+    name = ::getenv(rawName.toUtf8());
+    if (name) {
+      QString value = paramset.evaluate(
+            name, inherit, context, alreadyEvaluated);
+      if (!value.isEmpty())
+        return value;
+    }
+    ++i;
+  } while (i < params.size()-1);
+  return paramset.evaluate(params.value(i), inherit, context, alreadyEvaluated);
+}, true},
 };
 
 // LATER add functions: %=ifgt %=ifgte %=iflt %=iflte %=calc=(2+2)%3
@@ -479,6 +501,7 @@ bool ParamSet::appendVariableValue(
                       "variable \"" << variable << "\"";
     return false;
   }
+  alreadyEvaluated.insert(variable);
   QString s;
   int matchedLength;
   auto implicitVariable = implicitVariables.value(variable, &matchedLength);
