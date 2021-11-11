@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn and others.
+/* Copyright 2012-2021 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -89,8 +89,7 @@ QString PfArray::toPf(const PfOptions &options) const {
   buf.open(QIODevice::WriteOnly);
   if (writePf(&buf, options) >= 0)
     return QString::fromUtf8(buf.data().constData()); // LATER optimize
-  else
-    return QString(); // LATER log error?
+  return QString(); // LATER log error?
 }
 
 void PfArray::convertToChildrenTree(PfNode *target,

@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 Hallowyn and others.
+/* Copyright 2016-2021 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -19,7 +19,7 @@ under the License.
 static QRegularExpression _surfaceHeadRE { "\\A([^:]*)(:|$)" };
 
 QString PfAbstractBinaryFragmentData::takeFirstLayer(
-    QString &surface) const {
+    QString &surface) {
   QRegularExpressionMatch match = _surfaceHeadRE.match(surface);
   if (!match.hasMatch())
     return surface = QString();
@@ -106,20 +106,18 @@ qint64 PfAbstractBinaryFragmentData::measureSurface(
             + ((quint64)data.at(4)<<32)
             + ((quint64)data.at(5)<<40)
             + ((quint64)data.at(6)<<48)
-            + ((quint64)data.at(7)<<56);
+            + ((quint64)(data.at(7)&0x7f)<<56);
         return l < 0 ? 0 : l;
-      } else {
-        qWarning("PF: cannot measure zlib surface");
-        return 0;
       }
-    } else
-      return measureSurface(qUncompress((const uchar *)data.constData()+4,
-                                        data.size()-4), surface);
+      qWarning("PF: cannot measure zlib surface");
+      return 0;
+    }
+    return measureSurface(qUncompress((const uchar *)data.constData()+4,
+                                      data.size()-4), surface);
   } else if (layer == "hex") {
     if (surface.isEmpty())
       return data.size()/2;
-    else
-      return measureSurface(QByteArray::fromHex(data), surface);
+    return measureSurface(QByteArray::fromHex(data), surface);
   } else if (layer == "base64") {
     if (surface.isEmpty()) {
       qint64 l = data.size()*3/4;
@@ -129,8 +127,8 @@ qint64 PfAbstractBinaryFragmentData::measureSurface(
           --l;
       }
       return l;
-    } else
-      return measureSurface(QByteArray::fromBase64(data), surface);
+    }
+    return measureSurface(QByteArray::fromBase64(data), surface);
   } else {
     qWarning() << "PF: cannot measure unknown surface" << layer;
   }

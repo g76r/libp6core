@@ -57,7 +57,7 @@ protected:
   inline qint64 writeDataApplyingSurface(
       QIODevice *target, Format format, const PfOptions &options,
       QByteArray data) const;
-  inline QString takeFirstLayer(QString &surface) const;
+  inline static QString takeFirstLayer(QString &surface);
   inline bool removeSurface(QByteArray &data, QString surface) const;
   inline bool applySurface(QByteArray &data, QString surface) const;
   inline qint64 measureSurface(const QByteArray &data, QString surface) const;

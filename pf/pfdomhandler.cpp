@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn and others.
+/* Copyright 2012-2021 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -15,7 +15,7 @@ under the License.
 #include "pfinternals_p.h"
 #include <QVector>
 
-PfDomHandler::PfDomHandler() : PfHandler() {
+PfDomHandler::PfDomHandler() {
 }
 
 PfDomHandler::~PfDomHandler() {
@@ -35,7 +35,7 @@ bool PfDomHandler::startNode(const QVector<QString> &names) {
 }
 
 bool PfDomHandler::text(const QString &text) {
-  if (_path.size() == 0) {
+  if (_path.isEmpty()) {
     setErrorString(tr("text data before root node"));
     return false;
   }
@@ -45,7 +45,7 @@ bool PfDomHandler::text(const QString &text) {
 
 bool PfDomHandler::binary(QIODevice *device, qint64 length, qint64 offset,
                           const QString &surface) {
-  if (_path.size() == 0) {
+  if (_path.isEmpty()) {
     setErrorString(tr("binary data before root node"));
     return false;
   }
@@ -54,7 +54,7 @@ bool PfDomHandler::binary(QIODevice *device, qint64 length, qint64 offset,
 }
 
 bool PfDomHandler::binary(const QByteArray &data, const QString &surface) {
-  if (_path.size() == 0) {
+  if (_path.isEmpty()) {
     setErrorString(tr("binary data before root node"));
     return false;
   }
@@ -63,7 +63,7 @@ bool PfDomHandler::binary(const QByteArray &data, const QString &surface) {
 }
 
 bool PfDomHandler::array(const PfArray &array) {
-  if (_path.size() == 0) {
+  if (_path.isEmpty()) {
     setErrorString(tr("array data before root node"));
     return false;
   }
@@ -89,10 +89,10 @@ bool PfDomHandler::endNode(const QVector<QString> &names) {
 
 bool PfDomHandler::comment(const QString &content) {
   PfNode node = PfNode::createCommentNode(content);
-  if (_path.size())
-    _path.last().appendChild(node);
-  else
+  if (_path.isEmpty())
     _roots.append(node);
+  else
+    _path.last().appendChild(node);
   return true;
 }
 

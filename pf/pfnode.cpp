@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn and others.
+/* Copyright 2012-2021 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -37,8 +37,7 @@ static QRegularExpression _leadingwhitespace("\\A\\s+");
 qint64 PfNodeData::writePf(QIODevice *target, const PfOptions &options) const {
   if (options.shouldIndent())
     return internalWritePf(target, "", options);
-  else
-    return internalWritePf(target, QString(), options);
+  return internalWritePf(target, QString(), options);
 }
 
 qint64 PfNodeData::writeFlatXml(QIODevice *target,
@@ -65,8 +64,8 @@ qint64 PfNodeData::writeFlatXml(QIODevice *target,
   }
   // subnodes
   //buildChildrenFromArray();
-  for (int i = 0; i < _children.size(); ++i) {
-    if ((r = _children.at(i).writeFlatXml(target, options)) < 0)
+  for (auto child: _children) {
+    if ((r = child.writeFlatXml(target, options)) < 0)
       return -1;
     total += r;
   }
@@ -218,7 +217,7 @@ qint64 PfNodeData::internalWritePf(
       total += r;
     }
     // closing parenthesis
-    if (!indent.isNull() && _children.size()) {
+    if (!indent.isNull() && !_children.isEmpty()) {
       if (!_children.last().isComment()) {
         if ((r = target->write(INDENTATION_EOL_STRING)) < 0)
           return -1;
@@ -244,7 +243,7 @@ qint64 PfNodeData::internalWritePf(
 qint64 PfNodeData::internalWritePfSubNodes(
     QIODevice *target, QString indent, const PfOptions &options) const {
   qint64 total = 0, r;
-  if(_children.size()) {
+  if(!_children.isEmpty()) {
     if (!indent.isNull())
       indent.append(INDENTATION_STRING);
     for (int i = 0; i < _children.size(); ++i) {
@@ -284,7 +283,7 @@ qint64 PfNodeData::internalWritePfContent(
     }
   } else if (!isEmpty()){
     // text or binary content
-    if (options.shouldWriteContentBeforeSubnodes() || _children.size() == 0) {
+    if (options.shouldWriteContentBeforeSubnodes() || _children.isEmpty()) {
       if ((r = target->write(" ")) < 0)
         return -1;
       total += r;
@@ -306,7 +305,7 @@ qint64 PfNodeData::internalWritePfContent(
   return total;
 }
 
-const QList<PfNode> PfNode::childrenByName(const QString &name) const {
+QList<PfNode> PfNode::childrenByName(const QString &name) const {
   QList<PfNode> list;
   if (!name.isEmpty())
     for (auto child: children())
@@ -347,7 +346,7 @@ QList<QPair<QString,QString> > PfNode::stringsPairChildrenByName(
     for (auto child: children())
       if (!child.isNull() && child.d->_name == name && child.isText()) {
         QString s = child.contentAsString().remove(_leadingwhitespace);
-        int i = s.indexOf(_whitespace);
+        qsizetype i = s.indexOf(_whitespace);
         if (i >= 0)
           l.append(QPair<QString,QString>(s.left(i), s.mid(i+1)));
         else
@@ -363,7 +362,7 @@ QList<QPair<QString, qint64>> PfNode::stringLongPairChildrenByName(
     for (auto child: children())
       if (!child.isNull() && child.d->_name == name && child.isText()) {
         QString s = child.contentAsString().remove(_leadingwhitespace);
-        int i = s.indexOf(_whitespace);
+        qsizetype i = s.indexOf(_whitespace);
         if (i >= 0)
           l.append(QPair<QString,qint64>(s.left(i),
                                          s.mid(i).trimmed().toLongLong(0, 0)));
@@ -479,7 +478,7 @@ PfNode PfNode::fromPf(QByteArray source, PfOptions options) {
   PfDomHandler h;
   PfParser p(&h);
   if (p.parse(source, options)) {
-    if (h.roots().size() > 0)
+    if (!h.roots().isEmpty())
       return h.roots().at(0);
   }
   return PfNode();
@@ -499,8 +498,8 @@ qint64 PfNodeData::writePfContent(
         total += r;
       }
       return total;
-    } else
-      return _array.writePf(target, options);
+    }
+    return _array.writePf(target, options);
   }
   qint64 total = 0, r;
   foreach (const PfFragment f, _fragments) {
@@ -540,8 +539,8 @@ qint64 PfNodeData::writeXmlUsingBase64Content(
         total += r;
       }
       return total;
-    } else
-      return _array.writeTrTd(target, true, options);
+    }
+    return _array.writeTrTd(target, true, options);
   }
   qint64 total = 0, r;
   foreach (const PfFragment f, _fragments) {

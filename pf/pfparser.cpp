@@ -146,7 +146,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions &options) {
           goto error;
         }
         nodes.removeLast();
-        state = nodes.size() ? Content : TopLevel;
+        state = nodes.isEmpty() ? TopLevel : Content;
         if (nodes.isEmpty()) {
           switch (options.rootNodesParsingPolicy()) {
           case StopAfterFirstRootNode:
@@ -266,7 +266,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions &options) {
           goto error;
         }
         nodes.removeLast();
-        state = nodes.size() ? Content : TopLevel;
+        state = nodes.isEmpty() ? TopLevel : Content;
         if (nodes.isEmpty()) {
           switch (options.rootNodesParsingPolicy()) {
           case StopAfterFirstRootNode:
@@ -468,7 +468,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions &options) {
           content.clear();
           if (!finishArray(_handler, &array, &nodes))
             goto error;
-          state = nodes.size() ? Content : TopLevel;
+          state = nodes.isEmpty() ? TopLevel : Content;
           if (nodes.isEmpty()) {
             switch (options.rootNodesParsingPolicy()) {
             case StopAfterFirstRootNode:
@@ -533,7 +533,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions &options) {
           content.clear();
           if (!finishArray(_handler, &array, &nodes))
             goto error;
-          state = nodes.size() ? Content : TopLevel;
+          state = nodes.isEmpty() ? TopLevel : Content;
           if (nodes.isEmpty()) {
             switch (options.rootNodesParsingPolicy()) {
             case StopAfterFirstRootNode:
@@ -617,10 +617,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions &options) {
         escaped |= digit << escapeshift;
         escapeshift -= 4;
       } else {
-        if (escaped > 0x7f)
-          content.append(QString(QChar(escaped|digit)).toUtf8());
-        else
-          content.append(QString(QChar(escaped|digit)).toUtf8());
+        content.append(QString(QChar(escaped|digit)).toUtf8());
         state = escapedState;
       }
       ++column;
@@ -655,9 +652,9 @@ static qint64 copy(QIODevice *dest, QIODevice *src, qint64 max,
   if (!dest || !src)
     return -1;
   char buf[bufsize];
-  int total = 0;
+  qint64 total = 0;
   while (total < max) {
-    int n, m;
+    qint64 n, m;
     if (src->bytesAvailable() < 1)
       src->waitForReadyRead(readTimeout);
     n = src->read(buf, std::min(bufsize, max-total));
