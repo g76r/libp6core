@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -108,24 +108,17 @@ void ReadOnlyResourcesCache::planResourceFetching(QString pathOrUrl) {
   QUrl url(realUrl);
   QNetworkRequest request(url);
   request.setAttribute(QNetworkRequest::User, pathOrUrl);
-#if QT_VERSION >= 0x050600
   // LATER parametrize follow redirect features
   QNetworkRequest nr;
-#if QT_VERSION < 0x050900
-  request.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
-#endif
+  request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                       QNetworkRequest::NoLessSafeRedirectPolicy);
   request.setMaximumRedirectsAllowed(5);
-#endif
   QNetworkReply *reply = _nam->get(request);
   //Log::fatal() << "ReadOnlyResourceCache::planResourceFetching " << pathOrUrl;
   //qDebug() << "reply:" << reply->thread() << reply->parent();
   if (!reply)
     return;
-#if QT_VERSION >= 0x050400
   QTimer::singleShot(_defaultRequestTimeout*1000, reply, &QNetworkReply::abort);
-#else
-  QTimer::singleShot(_defaultRequestTimeout*1000, reply, "abort");
-#endif
   // LATER set a maximum data size
   _fetching.insert(pathOrUrl);
   _errorStrings.insert(pathOrUrl, QStringLiteral("Still fetching..."));

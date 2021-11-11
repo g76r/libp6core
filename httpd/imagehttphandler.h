@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,9 +25,9 @@ class LIBP6CORESHARED_EXPORT ImageHttpHandler : public HttpHandler {
 public:
   explicit ImageHttpHandler(QObject *parent = 0);
   explicit ImageHttpHandler(QString urlPathPrefix, QObject *parent = 0);
-  bool acceptRequest(HttpRequest req);
+  bool acceptRequest(HttpRequest req) override;
   bool handleRequest(HttpRequest req, HttpResponse res,
-                     ParamsProviderMerger *processingContext);
+                     ParamsProviderMerger *processingContext) override;
   /** This method must be thread-safe for the same reasons than
    * handleRequest()
    * @param timeoutMillis maximum acceptable time if the image rendering is

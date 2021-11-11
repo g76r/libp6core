@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -36,12 +36,10 @@ QString networkErrorAsString(QNetworkReply::NetworkError code) {
     return QObject::tr("network session failed");
   case QNetworkReply::BackgroundRequestNotAllowedError:
     return QObject::tr("background request not allowed");
-#if QT_VERSION >= 0x050600
   case QNetworkReply::TooManyRedirectsError:
     return QObject::tr("too many redirects");
   case QNetworkReply::InsecureRedirectError:
     return QObject::tr("insecure redirect");
-#endif
   case QNetworkReply::ProxyConnectionRefusedError:
     return QObject::tr("proxy connection refused");
   case QNetworkReply::ProxyConnectionClosedError:

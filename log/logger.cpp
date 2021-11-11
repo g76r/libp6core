@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -192,11 +192,7 @@ void Logger::log(const LogEntry &entry) {
         qint64 now = QDateTime::currentMSecsSinceEpoch();
         if (now - _lastBufferOverflownWarning > _bufferOverflownWarningIntervalMs) {
           _lastBufferOverflownWarning = now;
-#if QT_VERSION >= 0x050400
           qWarning().noquote()
-#else
-          qWarning()
-#endif
               << QDateTime::currentDateTime().toString(ISO8601) << this
               << "Logger::log discarded at less one log entry due to "
                  "thread buffer full" << entry.message()

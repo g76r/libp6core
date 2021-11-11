@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -45,10 +45,10 @@ public:
       QObject *parent = 0, RefreshStrategy refreshStrategy = OnDemandWithCache);
   QByteArray imageData(
       ParamsProvider *params = 0, int timeoutMillis
-      = IMAGEHTTPHANDLER_DEFAULT_ONDEMAND_RENDERING_TIMEOUT);
-  QString contentType(ParamsProvider *params = 0) const;
-  QString contentEncoding(ParamsProvider *params) const;
-  QString source(ParamsProvider *params = 0) const;
+      = IMAGEHTTPHANDLER_DEFAULT_ONDEMAND_RENDERING_TIMEOUT) override;
+  QString contentType(ParamsProvider *params = 0) const override;
+  QString contentEncoding(ParamsProvider *params) const override;
+  QString source(ParamsProvider *params = 0) const override;
   GraphvizRenderer renderer() const { return _renderer; }
   void setRenderer(GraphvizRenderer renderer) { _renderer = renderer; }
   RefreshStrategy refreshStrategy() const { return _refreshStrategy; }
@@ -61,7 +61,7 @@ public slots:
   void setSource(QString source);
 
 protected:
-  void customEvent(QEvent *event);
+  void customEvent(QEvent *event) override;
 
 private slots:
   void processError(QProcess::ProcessError error);

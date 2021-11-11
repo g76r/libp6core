@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -156,11 +156,9 @@ static void qtLogSamePatternWrapper(QtMsgType type, const QMessageLogContext &,
   case QtDebugMsg:
     severity = severityDebug;
     break;
-#if QT_VERSION >= 0x050500
   case QtInfoMsg:
     severity = severityInfo;
     break;
-#endif
   case QtWarningMsg:
     severity = severityWarning;
     break;

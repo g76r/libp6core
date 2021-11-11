@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,33 +20,20 @@ QtLogLogger::QtLogLogger(Log::Severity minSeverity)
 
 void QtLogLogger::doLog(const LogEntry &entry) {
   QString header = QString("%1 %2/%3 %4 %5")
-      .arg(entry.timestamp().toString("yyyy-MM-ddThh:mm:ss,zzz"))
-      .arg(entry.task()).arg(entry.execId()).arg(entry.sourceCode())
-      .arg(entry.severityToString());
+      .arg(entry.timestamp().toString("yyyy-MM-ddThh:mm:ss,zzz"), entry.task(),
+           entry.execId(), entry.sourceCode(), entry.severityToString());
   // LATER try to use QLoggingCategory e.g. using task as a category
   switch(entry.severity()) {
   case Log::Debug:
   case Log::Info:
-#if QT_VERSION >= 0x050400
     qDebug().noquote() << header << entry.message();
-#else
-    qDebug() << header << entry.message();
-#endif
     break;
   case Log::Warning:
   case Log::Error:
-#if QT_VERSION >= 0x050400
     qWarning().noquote() << header << entry.message();
-#else
-    qWarning() << header << entry.message();
-#endif
     break;
   case Log::Fatal:
-#if QT_VERSION >= 0x050400
     qCritical().noquote() << header << entry.message();
-#else
-    qCritical() << header << entry.message();
-#endif
     break;
   }
 }

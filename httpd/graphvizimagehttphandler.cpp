@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,7 +19,6 @@
 
 #define UPDATE_EVENT (QEvent::Type(QEvent::User+1))
 
-
 GraphvizImageHttpHandler::GraphvizImageHttpHandler(QObject *parent,
                                                    RefreshStrategy refreshStrategy)
   : ImageHttpHandler(parent), _renderer(Dot), _renderingRequested(false),
@@ -28,13 +27,8 @@ GraphvizImageHttpHandler::GraphvizImageHttpHandler(QObject *parent,
     _imageFormat(Png) {
   connect(_process, static_cast<void(QProcess::*)(int,QProcess::ExitStatus)>(&QProcess::finished),
           this, &GraphvizImageHttpHandler::processFinished);
-#if QT_VERSION >= 0x050600
   connect(_process, &QProcess::errorOccurred,
           this, &GraphvizImageHttpHandler::processError);
-#else
-  connect(_process, static_cast<void(QProcess::*)(QProcess::ProcessError)>(&QProcess::error),
-          this, &GraphvizImageHttpHandler::processError);
-#endif
   connect(_process, &QProcess::readyReadStandardOutput,
           this, &GraphvizImageHttpHandler::readyReadStandardOutput);
   connect(_process, &QProcess::readyReadStandardError,
@@ -242,8 +236,6 @@ void GraphvizImageHttpHandler::setImageFormat(ImageFormat imageFormat) {
     _contentType = "image/png";
     break;
   case Svg:
-    _contentType = "image/svg+xml";
-    break;
   case Svgz:
     _contentType = "image/svg+xml";
     break;
