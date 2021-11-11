@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn and others.
+/* Copyright 2012-2021 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -46,7 +46,7 @@ public:
     * Therefore the current implementation is only suitable for small
     * PF documents without binary fragments or if the source array is a
     * temporary array and will be deleted soon after parsing. */
-  bool parse(const QByteArray &source, const PfOptions &options = PfOptions());
+  bool parse(QByteArray source, const PfOptions &options = PfOptions());
   /** Open a file and call parse(QIODevice*,PfOptions). */
   bool parse(const QString &pathOrUrl, const PfOptions &options = PfOptions());
 

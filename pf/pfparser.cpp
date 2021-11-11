@@ -1,4 +1,4 @@
-/* Copyright 2012-2019 Hallowyn, Grégoire Barbier and others.
+/* Copyright 2012-2021 Hallowyn, Grégoire Barbier and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -642,8 +642,8 @@ error:
   return false;
 }
 
-bool PfParser::parse(const QByteArray &source, const PfOptions &options) {
-  QBuffer buf(const_cast<QByteArray*>(&source));
+bool PfParser::parse(QByteArray source, const PfOptions &options) {
+  QBuffer buf(&source);
   if (!buf.open(QBuffer::ReadOnly))
     return false; // unlikely to occur
   return parse(&buf, options);
