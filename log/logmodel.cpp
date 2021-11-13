@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2020 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,7 +23,7 @@ LogModel::LogModel(QObject *parent, Log::Severity minSeverity, int maxrows,
   setHeaderDataFromTemplate(
         Logger::LogEntry(QDateTime(), QString(), Log::Debug, QString(),
                          QString(), QString()));
-  Log::addLogger(_logger, false, false);
+  Log::addLogger(_logger, false, true);
 }
 
 LogModel::LogModel(QObject *parent, int maxrows)
