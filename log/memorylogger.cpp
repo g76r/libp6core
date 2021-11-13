@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,8 +24,7 @@ MemoryLogger::MemoryLogger(
 void MemoryLogger::doLog(const LogEntry &entry) {
   if (!_prefixFilter.isNull() && !entry.message().startsWith(_prefixFilter))
     return;
-  QMetaObject::invokeMethod(_model, "changeItem",
-                            Q_ARG(SharedUiItem, entry),
-                            Q_ARG(SharedUiItem, SharedUiItem()),
-                            Q_ARG(QString, entry.idQualifier()));
+  QMetaObject::invokeMethod(_model, [entry,this](){
+    _model->changeItem(entry, SharedUiItem(), entry.idQualifier());
+  });
 }

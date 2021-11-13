@@ -42,11 +42,11 @@ public:
     : _id(QString::number(_sequence.fetchAndAddOrdered(1))),
       _timestamp(timestamp), _message(message), _severity(severity),
       _task(task), _execId(execId), _sourceCode(sourceCode) { }
-  QVariant uiData(int section, int role) const;
-  QVariant uiHeaderData(int section, int role) const;
-  int uiSectionCount() const;
-  QString id() const { return _id; }
-  QString idQualifier() const { return "logentry"; }
+  QVariant uiData(int section, int role) const override;
+  QVariant uiHeaderData(int section, int role) const override;
+  int uiSectionCount() const override;
+  QString id() const override { return _id; }
+  QString idQualifier() const override { return "logentry"; }
 };
 
 Logger::LogEntry::LogEntry(QDateTime timestamp, QString message,
