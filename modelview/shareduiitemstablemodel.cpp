@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -72,7 +72,7 @@ void SharedUiItemsTableModel::insertItemAt(SharedUiItem newItem,
   if (toBeRemoved > 0) {
     int deletionPoint =
         (_defaultInsertionPoint == FirstItem) ? (_maxrows-toBeRemoved+1) : 0;
-    beginRemoveRows(QModelIndex(), deletionPoint, deletionPoint+toBeRemoved);
+    beginRemoveRows(QModelIndex(), deletionPoint, deletionPoint+toBeRemoved-1);
     for (; toBeRemoved; --toBeRemoved) {
       //emit itemChanged(SharedUiItem(), _items.value(deletionPoint));
       _items.removeAt(deletionPoint);
