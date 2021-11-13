@@ -48,7 +48,7 @@ QModelIndex SharedUiItemsTableModel::parent(const QModelIndex &child) const {
   return QModelIndex();
 }
 
-void SharedUiItemsTableModel::setItems(QList<SharedUiItem> items) {
+void SharedUiItemsTableModel::setItems(SharedUiItemList<> items) {
   if (!_items.isEmpty()) {
     beginRemoveRows(QModelIndex(), 0, _items.size()-1);
     _items.clear();

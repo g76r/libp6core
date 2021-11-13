@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,6 +16,7 @@
 
 #include "shareduiitemsmodel.h"
 #include <QSet>
+#include "modelview/shareduiitemlist.h"
 
 // LATER provides a circular buffer implementation, in addition to QList
 
@@ -60,24 +61,9 @@ public:
    * "Older" rows are determined as opposite sides from defaultInsertionPoint().
    * Default: INT_MAX */
   void setMaxrows(int maxrows) { _maxrows = maxrows; }
-  void sortAndSetItems(QList<SharedUiItem> items) {
+  void sortAndSetItems(SharedUiItemList<> items) {
     std::sort(items.begin(), items.end());
     setItems(items);
-  }
-  template <class T> void setItems(QList<T> items) {
-    // LATER try to find a more efficient cast method
-    QList<SharedUiItem> castedItems;
-    foreach (const SharedUiItem &i, items)
-      castedItems.append(i);
-    setItems(castedItems);
-  }
-  template <class T> void sortAndSetItems(QList<T> items) {
-    // LATER try to find a more efficient cast method
-    QList<SharedUiItem> castedItems;
-    foreach (const SharedUiItem &i, items)
-      castedItems.append(i);
-    std::sort(castedItems.begin(), castedItems.end());
-    setItems(castedItems);
   }
   void insertItemAt(SharedUiItem newItem, int row,
                     QModelIndex parent = QModelIndex()) override;
@@ -101,7 +87,7 @@ public:
       int targetColumn, const QModelIndex &droppedParent) override;
 
 public slots:
-  virtual void setItems(QList<SharedUiItem> items);
+  virtual void setItems(SharedUiItemList<> items);
 
 private:
   // hide functions that cannot work with SharedUiItem paradigm to avoid
