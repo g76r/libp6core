@@ -17,7 +17,6 @@ under the License.
 #include "libqtpf_global.h"
 #include "pfhandler.h"
 #include "pfnode.h"
-#include <QList>
 
 /** Handler for loading the whole PF document into memory (except lazy-loaded
   * binary fragments).
@@ -35,13 +34,13 @@ public:
   PfDomHandler();
   ~PfDomHandler();
   bool startDocument(const PfOptions &options) override;
-  bool startNode(const QVector<QString> &names) override;
+  bool startNode(const QStringList &names) override;
   bool text(const QString &text) override;
   bool binary(QIODevice *device, qint64 length, qint64 offset,
               const QString &surface) override;
   bool binary(const QByteArray &data, const QString &surface) override;
   bool array(const PfArray &array) override;
-  bool endNode(const QVector<QString> &names) override;
+  bool endNode(const QStringList &names) override;
   bool comment(const QString &content) override;
   bool endDocument() override;
   QList<PfNode> roots() const { return _roots; }

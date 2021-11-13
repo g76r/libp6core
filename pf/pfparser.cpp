@@ -54,15 +54,15 @@ static const qint8 hexdigits[] = {
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
-static inline QVector<QString> names(QVector<Node> nodes) {
-  QVector<QString> names;
+static inline QStringList names(QList<Node> nodes) {
+  QStringList names(nodes.size());
   for (const Node &node : nodes)
     names.append(node._name);
   return names;
 }
 
 static inline bool finishArray(PfHandler *handler, PfArray *array,
-                               QVector<Node> *nodes) {
+                               QList<Node> *nodes) {
   if (!(handler->array(*array))) {
     array->clear();
     handler->setErrorString(tr("cannot handle array fragment"));
@@ -92,7 +92,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions &options) {
   State quotedState = TopLevel; // saved state for quotes and comments
   State escapedState = TopLevel; // saved state for escapes
   QByteArray content, comment, surface;
-  QVector<Node> nodes;
+  QList<Node> nodes;
   bool firstNode = true;
   PfArray array;
   if (!source->isOpen() && !source->open(QIODevice::ReadOnly)) {
@@ -140,7 +140,7 @@ bool PfParser::parse(QIODevice *source, const PfOptions &options) {
       } else if (c == ')') {
         nodes.append(QString::fromUtf8(content));
         content.clear();
-        QVector<QString> names = ::names(nodes);
+        auto names = ::names(nodes);
         if (!_handler->startNode(names) || !_handler->endNode(names)) {
           _handler->setErrorString(tr("cannot handle end of node"));
           goto error;

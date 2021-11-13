@@ -21,7 +21,9 @@ under the License.
 #include <QVariant>
 #include <QStringList>
 #include <QBuffer>
+#if QT_VERSION < 0x060000
 #include <QVector>
+#endif
 
 class PfNode;
 
