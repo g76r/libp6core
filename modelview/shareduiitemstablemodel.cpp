@@ -114,6 +114,7 @@ void SharedUiItemsTableModel::changeItem(
       removeItems(oldIndex.row(), oldIndex.row());
     } else {
       // ignore changeItem(null,null)
+      return;
     }
   } else {
     if (oldItem.isNull()) {
