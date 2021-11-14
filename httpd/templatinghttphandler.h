@@ -116,11 +116,10 @@ public:
    * setting the parameter.
    * It is convenient for instance before the url path is overriden to force
    * using an on-disk resource at a different path than the url.
-   * @return "!pathtoroot" value
    * @param processingContext failsafe if null, but won't set param to context
    */
-  QString computePathToRoot(const HttpRequest &req,
-                            ParamsProviderMerger *processingContext) const;
+  void computePathToRoot(const HttpRequest &req,
+                         ParamsProviderMerger *processingContext) const;
 
 protected:
   void sendLocalResource(HttpRequest req, HttpResponse res, QFile *file,

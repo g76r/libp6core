@@ -43,6 +43,7 @@ void TemplatingHttpHandler::sendLocalResource(
   foreach (QString filter, _filters) {
     if (QRegularExpression(filter).match(file->fileName()).hasMatch()) {
       QString output;
+      computePathToRoot(req, processingContext);
       applyTemplateFile(req, res, file, processingContext, &output);
       QByteArray ba = output.toUtf8();
       res.setContentLength(ba.size());
@@ -61,10 +62,13 @@ void TemplatingHttpHandler::sendLocalResource(
 
 }
 
-QString TemplatingHttpHandler::computePathToRoot(const HttpRequest &req, ParamsProviderMerger *processingContext) const {
+void TemplatingHttpHandler::computePathToRoot(
+    const HttpRequest &req, ParamsProviderMerger *processingContext) const {
   // note that FileSystemHttpHandler enforces that:
   // - the path never contains several adjacent / (would have been redirected)
   // - the path never points on a directory (would've been redirected to index)
+  if (processingContext->overridingParams().contains("!pathtoroot"))
+    return;
   const QString prefix = urlPathPrefix();
   const QString path = req.url().path().mid(urlPathPrefix().length());
   bool ignoreOneSlash = prefix.isEmpty() ? path.startsWith('/')
@@ -75,7 +79,6 @@ QString TemplatingHttpHandler::computePathToRoot(const HttpRequest &req, ParamsP
   if (processingContext)
     processingContext->overrideParamValue(QStringLiteral("!pathtoroot"),
                                           pathToRoot);
-  return pathToRoot;
 }
 
 void TemplatingHttpHandler::applyTemplateFile(
