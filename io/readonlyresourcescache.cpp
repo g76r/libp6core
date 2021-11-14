@@ -83,8 +83,9 @@ QByteArray ReadOnlyResourcesCache::fetchResourceFromCache(
     if (triggerAsyncFetchingIfNotFound
         && _ageTimestamp.value(pathOrUrl) <= now) {
       ml.unlock();
-      QMetaObject::invokeMethod(this, "planResourceFetching",
-                                Q_ARG(QString, pathOrUrl));
+      QMetaObject::invokeMethod(this, [this,pathOrUrl]() {
+          planResourceFetching(pathOrUrl);
+        });
     }
   } else {
     _resources.remove(pathOrUrl);
@@ -92,8 +93,9 @@ QByteArray ReadOnlyResourcesCache::fetchResourceFromCache(
     _ageTimestamp.remove(pathOrUrl);
     if (triggerAsyncFetchingIfNotFound) {
       ml.unlock();
-      QMetaObject::invokeMethod(this, "planResourceFetching",
-                                Q_ARG(QString, pathOrUrl));
+      QMetaObject::invokeMethod(this, [this,pathOrUrl]() {
+          planResourceFetching(pathOrUrl);
+        });
     }
   }
   return resource;

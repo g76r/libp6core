@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -48,7 +48,6 @@ signals:
   void handlerReleased(TcpConnectionHandler *handler);
 
 private:
-  Q_INVOKABLE void doProcessConnection(QTcpSocket *, const Session &);
   void releaseHandler();
 };
 

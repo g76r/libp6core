@@ -36,15 +36,11 @@ TcpClient::TcpClient(IncomingMessageDispatcher *dispatcher)
 }
 
 void TcpClient::connectToHost(const QHostAddress &address, quint16 port) {
-  QMetaObject::invokeMethod(this, "doConnectToHost", Qt::QueuedConnection,
-                            Q_ARG(QHostAddress, address),
-                            Q_ARG(quint16, port));
-}
-
-void TcpClient::doConnectToHost(const QHostAddress &address, quint16 port) {
-  _address = address;
-  _port = port;
-  tryConnect(0);
+  QMetaObject::invokeMethod(this, [this,address,port]() {
+    _address = address;
+    _port = port;
+    tryConnect(0);
+  }, Qt::QueuedConnection);
 }
 
 void TcpClient::tryConnect(TcpConnectionHandler*) {
@@ -57,8 +53,9 @@ void TcpClient::tryConnect(TcpConnectionHandler*) {
   qDebug() << "waitForConnected" << result;
   if (!result) {
     Log::warning() << "cannot connect to server: " << socket->errorString();
-    QMetaObject::invokeMethod(this, "tryConnect", Qt::QueuedConnection,
-                              Q_ARG(TcpConnectionHandler*, 0));
+    QMetaObject::invokeMethod(this, [this](){
+      tryConnect(0);
+    }, Qt::QueuedConnection);
     // FIXME need to delete again socket after solving multithread issue
     //delete socket;
     return;

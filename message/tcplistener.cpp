@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -44,18 +44,15 @@ bool TcpListener::listen(const QHostAddress &address, quint16 port) {
   // the constructor calls moveToThread() and QTcpServer::listen must be called
   // by owner thread (at less because it creates QObjects using this as parent)
   bool success;
+  if (!_server) // should never happen
+    return false;
   if (_thread == QThread::currentThread())
     success = _server->listen(address, port);
   else
-    QMetaObject::invokeMethod(this, "doListen", Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(bool, success),
-                              Q_ARG(QHostAddress, address),
-                              Q_ARG(quint16, port));
+    QMetaObject::invokeMethod(this, [this,&success,address,port](){
+      success = _server->listen(address, port);
+    }, Qt::BlockingQueuedConnection);
   return success;
-}
-
-bool TcpListener::doListen(const QHostAddress &address, quint16 port) {
-  return _server ? _server->listen(address, port) : false;
 }
 
 void TcpListener::newConnection() {

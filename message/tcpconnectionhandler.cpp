@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -46,40 +46,35 @@ void TcpConnectionHandler::processConnection(
   // deleted before processing the call otherwise it wouldn't
   // this is guaranted because the only way to delete it is calling
   // releaseHandler() which is only called by doProcessConnection
-  QMetaObject::invokeMethod(this, "doProcessConnection",
-                            Q_ARG(QTcpSocket*, socket),
-                            Q_ARG(Session, session));
-}
-
-void TcpConnectionHandler::doProcessConnection(QTcpSocket *, const Session &) {
-  QString clientaddr = _session.string("clientaddr");
-  Log::debug(_session.id()) << "processing new connection " << clientaddr
-                            << _socket << _session;
-  PfDomHandler handler;
-  PfParser parser(&handler);
-  PfOptions options = PfOptions().stopAfterFirstRootNode()
-      .setReadTimeout(ACTIVITY_TIMEOUT);
-  forever {
-    if (!parser.parse(_socket, options)) {
-      Log::warning(_session.id()) << "cannot parse pf document: " << clientaddr
-                                  << " : " << handler.errorString();
-      releaseHandler();
-      break;
-    }
-    if (handler.roots().isEmpty()) {
-      Log::debug(_session.id()) << "peer disconnected or timed out: "
-                                << clientaddr;
-      releaseHandler();
-      break;
-    } else {
+  QMetaObject::invokeMethod(this, [this](){
+    QString clientaddr = _session.string("clientaddr");
+    Log::debug(_session.id()) << "processing new connection " << clientaddr
+                              << _socket << _session;
+    PfDomHandler handler;
+    PfParser parser(&handler);
+    PfOptions options = PfOptions().stopAfterFirstRootNode()
+        .setReadTimeout(ACTIVITY_TIMEOUT);
+    forever {
+      if (!parser.parse(_socket, options)) {
+        Log::warning(_session.id()) << "cannot parse pf document: " << clientaddr
+                                    << " : " << handler.errorString();
+        releaseHandler();
+        break;
+      }
+      if (handler.roots().isEmpty()) {
+        Log::debug(_session.id()) << "peer disconnected or timed out: "
+                                  << clientaddr;
+        releaseHandler();
+        break;
+      }
       Message message(_session, handler.roots().first());
       Log::debug(_session.id()) << "<<< "
                                 << QString::fromUtf8(message.node().toPf());
       _dispatcher->dispatch(message);
+      handler.clear();
+      QCoreApplication::processEvents();
     }
-    handler.clear();
-    QCoreApplication::processEvents();
-  }
+  });
 }
 
 void TcpConnectionHandler::sendOutgoingMessage(Message message) {

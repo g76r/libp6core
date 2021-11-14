@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -37,7 +37,6 @@ public:
   bool listen(quint16 port) { return listen(QHostAddress::Any, port); }
 
 private:
-  Q_INVOKABLE bool doListen(const QHostAddress &address, quint16 port);
   void newConnection();
   void handlerReleased(TcpConnectionHandler *handler);
 };

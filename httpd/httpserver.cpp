@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -42,22 +42,21 @@ HttpServer::~HttpServer() {
 }
 
 void HttpServer::incomingConnection(qintptr socketDescriptor)  {
-  //qDebug()<< "HttpServer::incomingConnection" << socketDescriptor
-  //        << QThread::currentThread();
-  if (_workersPool.size() > 0) {
+  int fd = (int)socketDescriptor;
+  if (!_workersPool.isEmpty()) {
     HttpWorker *worker = _workersPool.takeFirst();
-    connect(worker, &HttpWorker::connectionHandled,
-            this, &HttpServer::connectionHandled);
-    // LATER replace double signal with simple invokeMethod
-    QMetaObject::invokeMethod(worker, "handleConnection",
-                              Q_ARG(int, socketDescriptor));
+    QMetaObject::invokeMethod(worker, [this,worker,fd](){
+      worker->handleConnection(fd, [this,worker](){
+        connectionHandled(worker);
+      });
+    });
   } else {
     if (_queuedSockets.size() < _maxQueuedSockets) {
-      _queuedSockets.append(socketDescriptor);
+      _queuedSockets.append(fd);
     } else {
       Log::error() << "no HttpWorker available in pool and maximum queue size"
-                      "reached, throwing incoming connection away";
-      ::close(socketDescriptor);
+                      "reached, rejecting incoming connection";
+      ::close(fd);
     }
   }
 }
@@ -65,11 +64,13 @@ void HttpServer::incomingConnection(qintptr socketDescriptor)  {
 void HttpServer::connectionHandled(HttpWorker *worker) {
   if (_queuedSockets.isEmpty()) {
     _workersPool.append(worker);
-    disconnect(worker, &HttpWorker::connectionHandled,
-               this, &HttpServer::connectionHandled);
   } else {
-    QMetaObject::invokeMethod(worker, "handleConnection",
-                              Q_ARG(int, _queuedSockets.takeFirst()));
+    int fd = _queuedSockets.takeFirst();
+    QMetaObject::invokeMethod(worker, [this,worker,fd](){
+      worker->handleConnection(fd, [this,worker](){
+        connectionHandled(worker);
+      });
+    });
   }
 }
 
@@ -103,15 +104,10 @@ bool HttpServer::listen(QHostAddress address, quint16 port) {
   // by owner thread (at less because it creates QObjects using this as parent)
   bool success;
   if (_thread == QThread::currentThread())
-    success = doListen(address, port);
+    success = QTcpServer::listen(address, port);
   else
-    QMetaObject::invokeMethod(this, "doListen", Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(bool, success),
-                              Q_ARG(QHostAddress, address),
-                              Q_ARG(quint16, port));
+    QMetaObject::invokeMethod(this, [this,&success,address,port](){
+      success = QTcpServer::listen(address, port);
+    }, Qt::BlockingQueuedConnection);
   return success;
-}
-
-bool HttpServer::doListen(QHostAddress address, quint16 port) {
-  return QTcpServer::listen(address, port);
 }
