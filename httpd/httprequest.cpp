@@ -1,4 +1,4 @@
-/* Copyright 2012-2020 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -301,7 +301,7 @@ QVariant HttpRequestPseudoParamsProvider::paramValue(
     } else if (key.startsWith("!param")) {
       return _request.param(key.mid(7));
     } else if (key.startsWith("!header")) {
-      return _request.header(key.mid(7));
+      return _request.header(key.mid(8));
     }
   }
   return defaultValue;
