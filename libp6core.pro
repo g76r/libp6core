@@ -60,7 +60,6 @@ SOURCES += \
     util/ioutils.cpp \
     httpd/templatinghttphandler.cpp \
     mail/mailsender.cpp \
-    util/timerwitharguments.cpp \
     textview/clockview.cpp \
     util/paramset.cpp \
     log/memorylogger.cpp \
@@ -151,7 +150,6 @@ HEADERS +=\
     util/ioutils.h \
     httpd/templatinghttphandler.h \
     mail/mailsender.h \
-    util/timerwitharguments.h \
     textview/clockview.h \
     util/paramset.h \
     log/memorylogger.h \
