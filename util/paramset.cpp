@@ -685,8 +685,9 @@ bool ParamSet::isEmpty() const {
 QVariant ParamSet::paramValue(
         QString key, const ParamsProvider *context, QVariant defaultValue,
         QSet<QString> alreadyEvaluated) const {
-    return evaluate(rawValue(key, defaultValue.toString(), true),
-                    true, context, alreadyEvaluated);
+  QString v = evaluate(rawValue(key, defaultValue.toString(), true),
+                       true, context, alreadyEvaluated);
+  return v.isNull() ? QVariant() : v;
 }
 
 QString ParamSet::toString(bool inherit, bool decorate) const {
