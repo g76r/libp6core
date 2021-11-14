@@ -55,6 +55,8 @@ static inline QString sanitizeMessage(QString string) {
 }
 
 void Log::addLogger(Logger *logger, bool autoRemovable, bool takeOwnership) {
+  if (logger->threadModel() == Logger::DirectCall)
+    logger->moveToThread(rootLogger()->thread());
   rootLogger()->addLogger(logger, autoRemovable, takeOwnership);
 }
 

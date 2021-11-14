@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -74,6 +74,7 @@ private:
   // LATER make _bufferOverflownWarningIntervalMs configurable
   qint64 _bufferOverflownWarningIntervalMs = 10*60*1000; // 10'
   CircularBuffer<LogEntry> *_buffer;
+  ThreadModel _threadModel;
 
 public:
   // Loggers never have a parent (since they are owned and destroyed by Log
@@ -95,6 +96,7 @@ public:
   Log::Severity minSeverity() const { return _minSeverity; }
   /** Delete later both this and, if any, its dedicated thread. */
   void deleteLater();
+  ThreadModel threadModel() const { return _threadModel; }
 
 protected:
   /** Method to be implemented by the actual logger.

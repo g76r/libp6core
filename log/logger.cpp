@@ -129,7 +129,7 @@ int Logger::LogEntryData::uiSectionCount() const {
 
 Logger::Logger(Log::Severity minSeverity, ThreadModel threadModel)
   : QObject(0), _thread(0), _minSeverity(minSeverity), _autoRemovable(true),
-    _lastBufferOverflownWarning(0), _buffer(0) {
+    _lastBufferOverflownWarning(0), _buffer(0), _threadModel(threadModel) {
   // LATER make buffer size parametrable
   //qDebug() << "*** Logger::Logger " << this << " " << minSeverity
   //         << " " << threadModel;
