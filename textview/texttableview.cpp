@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -87,7 +87,6 @@ void TextTableView::invalidateCache() {
 }
 
 void TextTableView::resetAll() {
-  //qDebug() << "TextTableView::resetAll" << objectName() << metaObject()->className();
   layoutChanged();
   QAbstractItemModel *m = model();
   _rows.clear();
@@ -97,39 +96,30 @@ void TextTableView::resetAll() {
 
 void TextTableView::dataChanged(const QModelIndex &topLeft,
                                 const QModelIndex &bottomRight) {
-  //Log::fatal() << "TextTableView::dataChanged " << objectName() << " "
-  //             << metaObject()->className() << " " << topLeft.row()
-  //             << "," << topLeft.column() << " " << bottomRight.row()
-  //             << "," << bottomRight.column();
   QAbstractItemModel *m = model();
   int start = topLeft.row(), end = bottomRight.row();
-  //qDebug() << "TextTableView::dataChanged" << start << end;
+  qsizetype size = _rows.size();
   if (!topLeft.isValid() || !bottomRight.isValid() || topLeft.parent().isValid()
-      || bottomRight.parent().isValid() || !m || start >= _rows.size())
+      || bottomRight.parent().isValid() || !m || start >= size)
     return;
-  if (end >= _rows.size())
-    end = _rows.size();
-  for (int i = start; i <= end; ++i)
-    _rows.removeAt(start);
+  if (end > size)
+    end = (int)size;
+  _rows.remove(start, end-start+1);
   rowsInserted(QModelIndex(), start, end);
 }
 
-void TextTableView::rowsRemoved(const QModelIndex &parent, int start,
-                                         int end) {
-  //qDebug() << "TextTableView::rowsRemoved" << start << end;
+void TextTableView::rowsRemoved(const QModelIndex &parent, int start, int end) {
   QAbstractItemModel *m = model();
-  if (parent.isValid() || !m || start >= _rows.size())
+  qsizetype size = _rows.size();
+  if (parent.isValid() || !m || start >= size)
     return;
-  if (end >= _rows.size())
-    end = _rows.size();
-  for (int i = start; i <= end; ++i)
-    _rows.removeAt(start);
-  // TODO add more rows if maxrows (and insert one more than maxrows if available)
+  if (end > size)
+    end = (int)size;
+  _rows.remove(start, end-start+1);
 }
 
 void TextTableView::rowsInserted (const QModelIndex &parent, int start,
                                   int end) {
-  //qDebug() << "TextTableView::rowsInserted" << start << end;
   QAbstractItemModel *m = model();
   if (parent.isValid() || !m)
     return;

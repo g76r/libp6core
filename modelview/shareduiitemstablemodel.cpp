@@ -73,10 +73,7 @@ void SharedUiItemsTableModel::insertItemAt(SharedUiItem newItem,
     int deletionPoint =
         (_defaultInsertionPoint == FirstItem) ? (_maxrows-toBeRemoved+1) : 0;
     beginRemoveRows(QModelIndex(), deletionPoint, deletionPoint+toBeRemoved-1);
-    for (; toBeRemoved; --toBeRemoved) {
-      //emit itemChanged(SharedUiItem(), _items.value(deletionPoint));
-      _items.removeAt(deletionPoint);
-    }
+    _items.remove(deletionPoint, toBeRemoved);
     endRemoveRows();
   }
   //emit itemChanged(item, SharedUiItem());
