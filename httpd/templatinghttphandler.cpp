@@ -61,7 +61,8 @@ void TemplatingHttpHandler::sendLocalResource(
 
 }
 
-QString TemplatingHttpHandler::computePathToRoot(const HttpRequest &req, ParamsProviderMerger *processingContext) const {
+QString TemplatingHttpHandler::computePathToRoot(
+    const HttpRequest &req, ParamsProviderMerger *processingContext) const {
   // note that FileSystemHttpHandler enforces that:
   // - the path never contains several adjacent / (would have been redirected)
   // - the path never points on a directory (would've been redirected to index)
@@ -168,9 +169,20 @@ void TemplatingHttpHandler::applyTemplateFile(
                           "null key in file " << file->fileName();
         } else {
           QString value = processingContext->overridingParams().evaluate(
-                markupParams.value(1), processingContext);
+                  markupParams.value(1), processingContext);
           processingContext->overrideParamValue(key, value);
         }
+      } else if (markupId == QStringLiteral("header")) {
+        // syntax: <?header:headername:defaultvalue?>
+        CharacterSeparatedExpression markupParams(markupContent, separatorPos);
+        QString key = markupParams.value(0);
+        if (key.isEmpty()) {
+          Log::debug() << "TemplatingHttpHandler cannot read header with "
+                          "null key in file " << file->fileName();
+        } else {
+          QString value = req.header(key, markupParams.value(1));
+          convertData(&value, false);
+          output->append(value);        }
       } else {
         Log::warning() << "TemplatingHttpHandler found unsupported markup: <?"
                        << markupContent << "?>";
