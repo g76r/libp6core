@@ -76,3 +76,28 @@ void ParamsProviderMerger::restore() {
                       "previously calling ParamsProviderMerger::save()";
   }
 }
+
+QDebug operator<<(QDebug dbg, const ParamsProviderMerger *merger) {
+  if (!merger) {
+    dbg.nospace() << "nullptr";
+    return dbg.space();
+  }
+  dbg.nospace() << "{";
+  for (auto provider: merger->_providers) {
+    dbg.space() << "provider: " << provider.d->_paramsProvider << " " << provider.d->_paramset << ",";
+  }
+  dbg.space() << "overridingParams: " << merger->overridingParams() << ",";
+  dbg.space() << "stack size: " << merger->_providersStack.size() << " }";
+  return dbg.space();
+}
+
+LogHelper operator<<(LogHelper lh, const ParamsProviderMerger *merger) {
+  if (!merger)
+    return lh << "nullptr";
+  lh << "{ ";
+  for (auto provider: merger->_providers) {
+    lh << " provider: " << provider.d->_paramsProvider << " " << provider.d->_paramset << ",";
+  }
+  lh << " overridingParams: " << merger->overridingParams() << ",";
+  return lh << " stack size: " << merger->_providersStack.size() << " }";
+}

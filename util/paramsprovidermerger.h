@@ -25,6 +25,11 @@
  * Therefore ParamsProviderMerger should only be used as a temporary object
  * around a call to some method taking a ParamsProvider as a parameter. */
 class LIBP6CORESHARED_EXPORT ParamsProviderMerger : public ParamsProvider {
+  friend QDebug LIBP6CORESHARED_EXPORT operator<<(
+      QDebug dbg, const ParamsProviderMerger *params);
+  friend LogHelper LIBP6CORESHARED_EXPORT operator<<(
+      LogHelper lh, const ParamsProviderMerger *merger);
+
   class ProviderData : public QSharedData {
   public:
     const ParamsProvider *_paramsProvider;
@@ -160,5 +165,11 @@ public:
       _merger->restore();
   }
 };
+
+QDebug LIBP6CORESHARED_EXPORT operator<<(
+    QDebug dbg, const ParamsProviderMerger *params);
+
+LogHelper LIBP6CORESHARED_EXPORT operator<<(
+    LogHelper lh, const ParamsProviderMerger *merger);
 
 #endif // PARAMSPROVIDERMERGER_H
