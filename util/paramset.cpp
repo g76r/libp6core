@@ -1,4 +1,4 @@
-/* Copyright 2012-2018 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -150,7 +150,19 @@ ParamSet::ParamSet(QHash<QString,QString> params)
 
 ParamSet::ParamSet(QMap<QString,QString> params)
   : d(new ParamSetData) {
-  foreach(QString key, params.keys())
+  for (auto key: params.keys())
+    d->_params.insert(key, params.value(key));
+}
+
+ParamSet::ParamSet(QMultiMap<QString,QString> params)
+  : d(new ParamSetData) {
+  for (auto key: params.keys())
+    d->_params.insert(key, params.value(key));
+}
+
+ParamSet::ParamSet(QMultiHash<QString,QString> params)
+  : d(new ParamSetData) {
+  for (auto key: params.keys())
     d->_params.insert(key, params.value(key));
 }
 

@@ -1,4 +1,4 @@
-/* Copyright 2012-2018 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -234,8 +234,11 @@ public:
   ParamSet(std::initializer_list<std::pair<QString,QVariant>> list);
   ParamSet(const ParamSet &other);
   ParamSet(QHash<QString,QString> params);
-  /** For multi-valued keys, only most recently inserted value is kept. */
   explicit ParamSet(QMap<QString,QString> params);
+  /** For multi-valued keys, only most recently inserted value is kept. */
+  explicit ParamSet(QMultiMap<QString,QString> params);
+  /** For multi-valued keys, only most recently inserted value is kept. */
+  explicit ParamSet(QMultiHash<QString,QString> params);
   ~ParamSet();
   ParamSet &operator=(const ParamSet &other);
   ParamSet parent() const;
