@@ -35,7 +35,7 @@ private:
   int _maxrows;
 
 protected:
-  QList<SharedUiItem> _items;
+  SharedUiItemList<> _items;
 
 public:
   explicit SharedUiItemsTableModel(QObject *parent = 0);
@@ -85,6 +85,7 @@ public:
   bool dropMimeData(
       const QMimeData *data, Qt::DropAction action, int targetRow,
       int targetColumn, const QModelIndex &droppedParent) override;
+  SharedUiItemList<> items() const { return _items; }
 
 public slots:
   virtual void setItems(SharedUiItemList<> items);
