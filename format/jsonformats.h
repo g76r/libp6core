@@ -1,4 +1,4 @@
-/* Copyright 2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,6 +18,7 @@
 #include <QStringList>
 #include <QHash>
 #include <QMap>
+#include <QJsonObject>
 
 /** Utilites to handle JSON formats. */
 class LIBP6CORESHARED_EXPORT JsonFormats {
@@ -36,6 +37,16 @@ public:
   static QString list2string(const QList<QString> &list);
   /** convert a JSON array formatted string to a QList<QString> */
   static QStringList string2list(const QString &string);
+  /** insert value in a descendant object using a dot separated path
+   *  e.g. recursive_insert(o, "foo.bar", "a") sets bar=a in foo child
+   *  actually: creates foo if neeeded then calls QJsonObject::insert("bar","a")
+   *  on it
+   *  if path is empty (or only contains dots), do nothing */
+  static void recursive_insert(
+      QJsonObject &target, QString path, const QJsonValue &value) {
+    recursive_insert(target, path.split('.', Qt::SkipEmptyParts), value); }
+  static void recursive_insert(
+      QJsonObject &target, QStringList path, const QJsonValue &value);
 };
 
 #endif // JSONFORMATS_H

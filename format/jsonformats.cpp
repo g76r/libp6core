@@ -1,4 +1,4 @@
-/* Copyright 2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -116,4 +116,22 @@ QStringList JsonFormats::string2list(const QString &string) {
     }
   }
   return list;
+}
+
+void JsonFormats::recursive_insert(
+    QJsonObject &target, QStringList path, const QJsonValue &value) {
+  qDebug() << "insert_in_descendant" << target << path << value;
+  if (path.isEmpty())
+    return;
+  auto name = path.takeFirst();
+  if (path.isEmpty()) {
+    target[name] = value;
+    return;
+  }
+  QJsonObject newChild;
+  QJsonValue oldValue = target.value(name);
+  if (oldValue.isObject())
+    newChild = oldValue.toObject();
+  recursive_insert(newChild, path, value);
+  target.insert(name, newChild);
 }
