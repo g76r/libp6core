@@ -53,6 +53,15 @@ class ParamSetData;
  * %{=date,,,UTC}
  * %{=date!hh:mm:ss,zzz!01-01T20:02-2w+1d!GMT}
  *
+ * %=coarsetimeinterval function: %{=coarsetimeinterval:seconds}
+ *
+ * formats a time interval as a coarse human readable expression
+ *
+ * examples:
+ * %{=coarsetimeinterval:1.250} -> "1.250 seconds"
+ * %{=coarsetimeinterval:125.35} -> "2 minutes 5 seconds"
+ * %{=coarsetimeinterval:86402.21} -> "1 days 0 hours"
+ *
  * %=default function: %{=default!expr1[!expr2[...]][!value_if_not_set]}
  *
  * take first non-empty expression in order: expr1 if not empty, expr2 if expr1
@@ -117,7 +126,7 @@ class ParamSetData;
  *   foo param)
  * s-expression is a substitution expression like those taken by sed's s
  *   command, e.g. /foo/bar/gi or ,.*,,
- *   replacement par is evaluated and both regular params substitution and
+ *   replacement is evaluated and both regular params substitution and
  *   regexp substitution are available, e.g. %1 will be replaced by first
  *   capture group and %name will be replaced by named capture group if
  *   availlable or param

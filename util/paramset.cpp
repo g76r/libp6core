@@ -228,10 +228,21 @@ QString(ParamSet params, QString key, bool inherit,
 const ParamsProvider *context, QSet<QString> alreadyEvaluated,
         int matchedLength)>>
 implicitVariables {
-{ "=date", [](ParamSet, QString key, bool,
-              const ParamsProvider *, QSet<QString>, int matchedLength) {
+{ "=date", [](ParamSet paramset, QString key, bool inherit,
+     const ParamsProvider *context, QSet<QString> alreayEvaluated,
+     int matchedLength) {
   return TimeFormats::toMultifieldSpecifiedCustomTimestamp(
-        QDateTime::currentDateTime(), key.mid(matchedLength));
+        QDateTime::currentDateTime(), key.mid(matchedLength), paramset,
+        inherit, context, alreayEvaluated);
+}, true},
+{ "=coarsetimeinterval", [](ParamSet paramset, QString key, bool inherit,
+     const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+     int matchedLength) {
+  CharacterSeparatedExpression params(key, matchedLength);
+  qint64 msecs = (qint64)(
+        paramset.evaluate(params.value(0), inherit, context, alreadyEvaluated)
+        .toDouble()*1000);
+  return TimeFormats::toCoarseHumanReadableTimeInterval(msecs);
 }, true},
 { "=default", [](ParamSet paramset, QString key, bool inherit,
               const ParamsProvider *context, QSet<QString> alreadyEvaluated,
