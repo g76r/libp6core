@@ -120,7 +120,6 @@ QStringList JsonFormats::string2list(const QString &string) {
 
 void JsonFormats::recursive_insert(
     QJsonObject &target, QStringList path, const QJsonValue &value) {
-  qDebug() << "insert_in_descendant" << target << path << value;
   if (path.isEmpty())
     return;
   auto name = path.takeFirst();
