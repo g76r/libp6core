@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -29,6 +29,9 @@ class RelativeDateTimeData;
  * Support for a consise notation for relative (or even absolute) time
  * expression like those:
  * "2014-06-26T23:02:43,221"
+ * "2014-06-26 23:02:43,221"
+ * "2014-06-26T23:02:43.221+06:00"
+ * "2014-06-26Z"
  * "12:02:43" -> today at 12:02:43 p.m.
  * "-4d" -> 4 days ago
  * "00:00" -> today at midnight
@@ -41,6 +44,7 @@ class RelativeDateTimeData;
  * "00:00-1d" -> yesterday at midnight.
  * "-3months" -> same time 93 days ago
  * "12:02:43-3months" -> 12:02:43 p.m. 93 days ago
+ * "12:02:43Z-3months" -> 12:02:43 p.m. UTC 93 days ago
  *
  * More formally the expression is a sum which first term can be either an
  * absolute timestamp or an incomplete (hence relative) timestamp or week

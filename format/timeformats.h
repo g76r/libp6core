@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,6 +19,7 @@
 #include <QDateTime>
 #include <QTimeZone>
 #include "util/relativedatetime.h"
+#include "util/paramset.h"
 
 /** Utilites to handle date/time formats. */
 class LIBP6CORESHARED_EXPORT TimeFormats {
@@ -46,7 +47,8 @@ public:
    */
   static QString toCustomTimestamp(
       QDateTime dt, QString format = QString(),
-      RelativeDateTime relativeDateTime = RelativeDateTime());
+      RelativeDateTime relativeDateTime = RelativeDateTime(),
+      QTimeZone tz = QTimeZone());
   /** Syntactic sugar over toCustomTimestamp with an multifieldSpecifiedFormat
    * parameter of the form !format!relativedatetime!timezone
    *
@@ -58,13 +60,10 @@ public:
    * accepts any character beside / as a regular expression separator).
    *
    * examples:
-   * %=date
-   * %{=date!yyyy-MM-dd}
-   * %{=date,yyyy-MM-dd}
-   * %{=date!!-2days}
-   * %{=date::-2days}
-   * %{=date!!!UTC}
-   * %{=date!hh:mm:ss,zzz!01-01T20:02-2w+1d!GMT}
+   * !yyyy-MM-dd
+   * ::-2days
+   * !!!UTC
+   * !hh:mm:ss,zzz!01-01T20:02-2w+1d!GMT
    *
    * This method is used by ParamSet for its %=date function:
    * %=date!format!relativedatetime!timezone
@@ -72,7 +71,18 @@ public:
    * ParamsProvider.
    */
   static QString toMultifieldSpecifiedCustomTimestamp(
-      QDateTime dt, QString multifieldSpecifiedFormat);
+      QDateTime dt, QString multifieldSpecifiedFormat,
+      ParamSet paramset = ParamSet(), bool inherit = true,
+      const ParamsProvider *context = 0,
+      QSet<QString> alreadyEvaluated = QSet<QString>());
+  /** Creates a QTimeZone from an ISO 8601 pattern.
+   *  Returns UTC on "+00:00" "-00:00" and "Z".
+   *  Returns UTC offset timezone on other "+-nn:nn" patterns.
+   *  Returns defaultValue if empty or invalid.
+   *  Trims before analyzing pattern.
+   */
+  static QTimeZone tzFromIso8601(
+      QString offset, QTimeZone defaultValue = QTimeZone());
 };
 
 #endif // TIMEFORMATS_H

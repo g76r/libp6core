@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,16 +17,22 @@
 #include <QHash>
 #include <QRegularExpression>
 #include <QtDebug>
+#include <QTimeZone>
+#include "format/timeformats.h"
 
 #define TERM_RE "([+-][0-9]+)(ms|mil|s|min|h|d|w|mon|y)[a-z]*"
+#define TZ_RE "(?:Z|(?:[+-][0-9]{2}:[0-9]{2}))"
 static QRegularExpression _wholeDateRE {
-  "\\A(?:([0-9][0-9 t:,-]*[0-9])|([a-z]+))?((?:" TERM_RE ")*)\\z" };
+  "\\A(?:([0-9][0-9 T:,.-]*[0-9](" TZ_RE ")?)|([a-zA-Z]+))?((?:" TERM_RE ")*)\\z" };
 static QRegularExpression _termRE { TERM_RE };
 static QRegularExpression _weekdayRE { "\\A(mon|tue|wed|thu|fri|sat|sun)[a-z]*\\z" };
 static QRegularExpression _isoLikeDateRE {
-  "\\A(?:(?:(?:([0-9]{4})-)?(?:([0-9]{2})-))?([0-9]{2}))?\\z" };
-static QRegularExpression _soLikeTimeRE {
-  "([0-9]{2}):([0-9]{2})(?::([0-9]{2})(?:,([0-9]{3}))?)?\\z" };
+  "\\A(?:(?:(?:([0-9]{4})-)?(?:([0-9]{2})-))?([0-9]{2}))?" };
+static QRegularExpression _isoLikeTimeRE {
+  "(?:\\A|[T ])([0-9]{2}):([0-9]{2})(?::([0-9]{2})(?:[,.]([0-9]{3}))?)?(" TZ_RE ")?\\z" };
+
+static QMutex _cacheMutex;
+static QHash<QString, RelativeDateTime> _cache;
 
 class RelativeDateTimeData : public QSharedData {
   enum ReferenceMethod { Today = 0, DayOfWeek = 1, DayOfMonth, MonthAndDay,
@@ -34,6 +40,7 @@ class RelativeDateTimeData : public QSharedData {
   qint64 _delta; // difference with reference, in milliseconds
   QDate _date; // reference date, interpreted depending on method
   QTime _time; // reference time, interpreted depending on method
+  QTimeZone _tz; // reference timezone, interpreted depending on method
   ReferenceMethod _method; // method used to interpret reference date and time
 public:
   RelativeDateTimeData() : _delta(0), _method(Today) { }
@@ -43,8 +50,8 @@ public:
       //qDebug() << "RelativeDateTimeData" << pattern;
       auto m = _wholeDateRE.match(pattern);
       if (m.hasMatch()) {
-        QString timestamp = m.captured(1), weekday = m.captured(2),
-            terms = m.captured(3);
+        QString timestamp = m.captured(1), tz = m.captured(2),
+            weekday = m.captured(3).toLower(), terms = m.captured(4);
         m = _weekdayRE.match(weekday);
         if (m.hasMatch()) {
           QString day = m.captured(1);
@@ -66,7 +73,7 @@ public:
           }
           //qDebug() << "found day of week" << _date;
         } else if (!timestamp.isEmpty()) {
-          m = _soLikeTimeRE.match(timestamp);
+          m = _isoLikeTimeRE.match(timestamp);
           if (m.hasMatch()) {
             int hour = m.captured(1).toInt();
             int minute = m.captured(2).toInt();
@@ -91,10 +98,14 @@ public:
                 _method = DayOfMonth;
               //qDebug() << "found date" << year << month << day << _date << _method;
             } else {
-              qDebug() << "RelativeDateTimeData : invalid timestamp :"
-                       << pattern;
+              qDebug() << "RelativeDateTime : invalid timestamp :"
+                       << pattern << "date does not match" << timestamp;
               return;
             }
+          }
+          if (!tz.isEmpty()) {
+            _tz = TimeFormats::tzFromIso8601(tz);
+            //qDebug() << "RelativeDateTime with timezone" << pattern << tz << _tz;
           }
           /*if (_method != Today) {
           // in case method is not Today, it is more efficient to convert time
@@ -129,7 +140,8 @@ public:
           //qDebug() << "found term" << ms << unit << _delta;
         }
       } else {
-        qDebug() << "RelativeDateTimeData : invalid pattern :" << pattern;
+        qDebug() << "RelativeDateTime : invalid pattern :" << pattern
+                 << "whole expression does not match";
         return;
       }
     }
@@ -159,9 +171,15 @@ public:
       date = _date;
       break;
     }
-    reference.setDate(date);
-    if (!_time.isNull())
+    if (!_time.isNull() || _method != Today)
       reference.setTime(_time);
+    reference.setDate(date); // also sets time to midnight is time is null
+    if (_tz.isValid()) {
+      //qDebug() << "RelativeDateTime::apply is converting timezones"
+      //         << reference << _tz << reference.toTimeZone(_tz);
+      //reference = reference.toTimeZone(_tz);
+      reference.setTimeZone(_tz);
+    }
     reference = reference.addMSecs(_delta);
     //qDebug() << "applied:" << origin;
     return reference;
@@ -171,12 +189,9 @@ public:
 RelativeDateTime::RelativeDateTime() {
 }
 
-static QMutex _cacheMutex;
-static QHash<QString, RelativeDateTime> _cache;
-
 RelativeDateTime::RelativeDateTime(QString pattern) {
   if (!pattern.isEmpty()) {
-    pattern = pattern.trimmed().toLower();
+    pattern = pattern.trimmed();
     QMutexLocker locker(&_cacheMutex);
     RelativeDateTime cached = _cache.value(pattern);
     locker.unlock();

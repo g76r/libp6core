@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,14 +22,14 @@
 // [english-day-of-week3,] day-of-month english-month-name3 year4 hour24:min:sec { {+|-}0000 | zone-name3 }
 // Wed   ,   1  Jan   2013   23:59:62+0400
 // Wed, 01 Jan 2013 23:59:62 GMT
-QRegularExpression _rfc2822DateTimeRE(
+static const QRegularExpression _rfc2822DateTimeRE(
     "\\A"
     "(\\s*([a-zA-Z]{3})\\s*,)?" // day of week
     "\\s*(\\d{1,2})\\s+([a-zA-Z]{3})\\s+(\\d{4})" // date
     "\\s+(\\d{2}):(\\d{2}):(\\d{2})" // time
     "\\s*(([+-]\\d{4})|([A-Z]{1,4}))" // timezone
     "\\s*\\z");
-QHash<QString,int> _fromDaysOfWeek3 {
+static const QHash<QString,int> _fromDaysOfWeek3 {
   { "mon", 1 },
   { "tue", 2 },
   { "wed", 3 },
@@ -38,7 +38,7 @@ QHash<QString,int> _fromDaysOfWeek3 {
   { "sat", 6 },
   { "sun", 7 },
 };
-QHash<int,QString> _toDaysOfWeek3 {
+static const QHash<int,QString> _toDaysOfWeek3 {
   { 1, "Mon" },
   { 2, "Tue" },
   { 3, "Wed" },
@@ -48,7 +48,7 @@ QHash<int,QString> _toDaysOfWeek3 {
   { 7, "Sun" },
   { 0, "Sun" },
 };
-QHash<QString,int> _fromMonth3 {
+static const QHash<QString,int> _fromMonth3 {
   { "jan", 1 },
   { "fev", 2 },
   { "mar", 3 },
@@ -62,7 +62,7 @@ QHash<QString,int> _fromMonth3 {
   { "nov", 11 },
   { "dec", 12 },
 };
-QHash<int,QString> _toMonth3 {
+static const QHash<int,QString> _toMonth3 {
   { 1, "Jan" },
   { 2, "Fev" },
   { 3, "Mar" },
@@ -77,6 +77,10 @@ QHash<int,QString> _toMonth3 {
   { 12, "Dec" },
   { 0, "Dec" },
 };
+static const QRegularExpression _iso8601timezoneOffsetRe {
+  "\\A([+-])([0-9]{2}):([0-9]{2})\\z"
+};
+
 
 // [english-day-of-week3,] day-of-month english-month-name3 year4 hour24:min:sec { {+|-}0000 | zone-name3 }
 // Wed   ,   1  Jan   2013   23:59:62+0400
@@ -305,30 +309,47 @@ int main(int argc, char *argv[]) {
 */
 
 QString TimeFormats::toCustomTimestamp(
-    QDateTime dt, QString format, RelativeDateTime relativeDateTime) {
-  dt = relativeDateTime.apply(dt);
-  if (format.isEmpty()) {
+    QDateTime dt, QString format, RelativeDateTime relativeDateTime,
+    QTimeZone tz) {
+  /*if (tz.isValid())
+    qDebug() << "TimeFormats::toCustomTimestamp converting tz"
+             << dt << tz << relativeDateTime.apply(dt)
+             << relativeDateTime.apply(dt).toTimeZone(tz);*/
+  if (!tz.isValid())
+    tz = QTimeZone::systemTimeZone();
+  dt = relativeDateTime.apply(dt).toTimeZone(tz);
+  if (format.isEmpty())
     return dt.toString("yyyy-MM-dd hh:mm:ss,zzz");
-  } else {
-    if (format == "ms1970") {
-      return QString::number(dt.toMSecsSinceEpoch());
-    } else if (format == "s1970") {
-      return QString::number(dt.toMSecsSinceEpoch()/1000);
-    } else {
-      return dt.toString(format);
-    }
-  }
+  if (format == "ms1970")
+    return QString::number(dt.toMSecsSinceEpoch());
+  if (format == "s1970")
+    return QString::number(dt.toMSecsSinceEpoch()/1000);
+  return dt.toString(format);
 }
 
 QString TimeFormats::toMultifieldSpecifiedCustomTimestamp(
-    QDateTime dt, QString multifieldSpecifiedFormat) {
+    QDateTime dt, QString multifieldSpecifiedFormat, ParamSet paramset,
+    bool inherit, const ParamsProvider *context,
+    QSet<QString> alreadyEvaluated) {
   CharacterSeparatedExpression params(multifieldSpecifiedFormat);
-  //qDebug() << "TimeFormats::toMultifieldSpecifiedCustomTimestamp"
-  //         << multifieldSpecifiedFormat << params.size() << params;
-  QString format = params.value(0).trimmed();
-  QString relativedatetime = params.value(1).trimmed().toLower();
-  QTimeZone timezone(params.value(2).trimmed().toUtf8());
-  if (timezone.isValid())
-    dt = dt.toTimeZone(timezone);
-  return toCustomTimestamp(dt, format, RelativeDateTime(relativedatetime));
+  QString format = paramset.evaluate(
+        params.value(0), inherit, context, alreadyEvaluated);
+  QString relativedatetime = paramset.evaluate(
+        params.value(1), inherit, context, alreadyEvaluated);;
+  QTimeZone tz = QTimeZone(
+        paramset.evaluate(params.value(2), inherit, context,
+                          alreadyEvaluated).trimmed().toUtf8());
+  return toCustomTimestamp(dt, format, RelativeDateTime(relativedatetime), tz);
+}
+
+QTimeZone TimeFormats::tzFromIso8601(
+    QString offset, QTimeZone defaultValue) {
+  offset = offset.trimmed();
+  if (offset == "Z")
+    return QTimeZone::utc();
+  auto m = _iso8601timezoneOffsetRe.match(offset);
+  if (m.hasMatch())
+    return QTimeZone((m.captured(1) == "-" ? -1 : +1)
+                     *(m.captured(2).toInt()*3600 + m.captured(3).toInt()*60));
+  return defaultValue;
 }
