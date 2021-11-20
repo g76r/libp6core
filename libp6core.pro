@@ -13,7 +13,7 @@
 
 QT -= gui
 QT += network sql
-CONFIG += largefile c++20 c++17 c++14 c++11
+CONFIG += largefile c++20 c++17 c++14 c++11 force_debug_info
 
 TARGET = p6core
 TEMPLATE = lib
@@ -32,7 +32,7 @@ DEFINES += LIBP6CORE_LIBRARY
 
 exists(/usr/bin/ccache):QMAKE_CXX = ccache $$QMAKE_CXX
 exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always
-QMAKE_CXXFLAGS += -Wextra -Woverloaded-virtual -Wno-padded -Wno-deprecated-copy
+QMAKE_CXXFLAGS += -Wextra -Woverloaded-virtual -Wno-padded -Wno-deprecated-copy -ggdb
 CONFIG(debug,debug|release):QMAKE_CXXFLAGS += -ggdb
 
 OBJECTS_DIR = ../build-$$TARGET-$$TARGET_OS/$$BUILD_TYPE/obj
