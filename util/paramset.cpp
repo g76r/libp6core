@@ -244,6 +244,20 @@ implicitVariables {
         .toDouble()*1000);
   return TimeFormats::toCoarseHumanReadableTimeInterval(msecs);
 }, true},
+{ "=eval", [](ParamSet paramset, QString key, bool inherit,
+     const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+     int matchedLength) {
+  QString value = paramset.evaluate(
+        key.mid(matchedLength+1), inherit, context, alreadyEvaluated);
+  return paramset.evaluate(value, inherit, context, alreadyEvaluated);
+}, true},
+{ "=escape", [](ParamSet paramset, QString key, bool inherit,
+     const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+     int matchedLength) {
+  QString value = paramset.evaluate(
+        key.mid(matchedLength+1), inherit, context, alreadyEvaluated);
+  return ParamSet::escape(value);
+}, true},
 { "=default", [](ParamSet paramset, QString key, bool inherit,
               const ParamsProvider *context, QSet<QString> alreadyEvaluated,
               int matchedLength) {
@@ -489,20 +503,16 @@ implicitVariables {
               const ParamsProvider *context, QSet<QString> alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
-  const char *name = 0;
   int i = 0;
   do {
-    QString rawName = paramset.evaluate(
+    QString name = paramset.evaluate(
           params.value(i), inherit, context, alreadyEvaluated);
-    name = ::getenv(rawName.toUtf8());
-    if (name) {
-      QString value = paramset.evaluate(
-            name, inherit, context, alreadyEvaluated);
-      if (!value.isEmpty())
-        return value;
-    }
+    const char *value = ::getenv(name.toUtf8());
+    if (value && *value)
+      return QString::fromUtf8(value);
     ++i;
-  } while (i < params.size()-1);
+  } while (i < params.size()-1); // first param and then all but last one
+  // otherwise last one if there are at less 2, otherwise a non-existent one
   return paramset.evaluate(params.value(i), inherit, context, alreadyEvaluated);
 }, true},
 };

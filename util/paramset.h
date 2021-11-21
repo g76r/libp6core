@@ -36,7 +36,7 @@ class ParamSetData;
  * same way sed commands do (e.g. s/foo/bar/ is the same than s,foo,bar,).
  *
  * Here are supported functions:
- *
+ ******************************************************************************
  * %=date function: %{=date!format!relativedatetime!timezone}
  *
  * format defaults to pseudo-iso-8601 "yyyy-MM-dd hh:mm:ss,zzz"
@@ -52,7 +52,7 @@ class ParamSetData;
  * %{=date!!!UTC}
  * %{=date,,,UTC}
  * %{=date!hh:mm:ss,zzz!01-01T20:02-2w+1d!GMT}
- *
+ ******************************************************************************
  * %=coarsetimeinterval function: %{=coarsetimeinterval:seconds}
  *
  * formats a time interval as a coarse human readable expression
@@ -61,7 +61,7 @@ class ParamSetData;
  * %{=coarsetimeinterval:1.250} -> "1.250 seconds"
  * %{=coarsetimeinterval:125.35} -> "2 minutes 5 seconds"
  * %{=coarsetimeinterval:86402.21} -> "1 days 0 hours"
- *
+ ******************************************************************************
  * %=default function: %{=default!expr1[!expr2[...]][!value_if_not_set]}
  *
  * take first non-empty expression in order: expr1 if not empty, expr2 if expr1
@@ -78,20 +78,21 @@ class ParamSetData;
  * %{=default:%foo:%bar:neither foo nor bar are set!!!}
  * %{=default!%foo!%bar}
  * %{=default!%foo}
- *
+ ******************************************************************************
  * %=rawvalue function: %{=rawvalue!variable[!flags]}
  *
  * the function return unevaluated value of a variable
  * flags is a combination of letters with the following meaning:
  * e %-escape value (in case it will be further %-evaluated)
  * h html encode value
- * u html encode try to detect urls and to transform them into a links
- * n html encode add br whenever it founds a newline
+ * u html encode will transform urls them into a links
+ * n html encode will add br whenever it founds a newline
  *
  * example:
  * %{=rawvalue!foo}
  * %{=rawvalue!foo!hun}
- *
+ * %{=rawvalue!foo!e} is an equivalent to %{=escape!%foo}
+ ******************************************************************************
  * %=ifneq function: %{=ifneq!input!reference!value_if_not_equal[!value_else]}
  *
  * test inequality of an input and replace it with another
@@ -102,7 +103,7 @@ class ParamSetData;
  * %{=ifneq:%foo:0:true:false} -> "true" if not null, else "false"
  * %{=ifneq:%foo::notempty} -> "notempty" if not empty, else ""
  * %{=ifneq:%foo::<a href="page?param=%foo>%foo</a>} -> html link if %foo is set
- *
+ ******************************************************************************
  * %=switch function: %{=switch:value[:case1:value1[:case2:value2[...]]][:default_value]}
  * test an input against different reference values and replace it according to
  * matching case
@@ -119,7 +120,7 @@ class ParamSetData;
  * %{=switch:%foo:0:false:true} -> if 0: false else: true
  * %{=switch:%foo:0:false} -> if 0: false else: %foo
  * %{=switch:%foo} -> always return %foo, but won't warn if foo is not defined
- *
+ ******************************************************************************
  * %=sub function: %{=sub!input!s-expression!...}
  *
  * input is the data to transform, it is evaluated (%foo become the content of
@@ -137,7 +138,7 @@ class ParamSetData;
  * %{=sub!foo!/o/O}
  * %{=sub;%foo;/a/b/g;/([a-z]+)[0-9]/%1%bar/g}"
  * %{=sub;2015-04-17;~.*-(?<month>[0-9]+)-.*~%month}
- *
+ ******************************************************************************
  * %=left function: %{=left:input:length}
  *
  * input is the data to transform, it is evaluated (%foo become the content of
@@ -147,7 +148,7 @@ class ParamSetData;
  *
  * examples:
  * %{=left:%foo:4}
- *
+ ******************************************************************************
  * %=right function: %{=right:input:length}
  *
  * input is the data to transform, it is evaluated (%foo become the content of
@@ -157,7 +158,7 @@ class ParamSetData;
  *
  * examples:
  * %{=right:%foo:4}
- *
+ ******************************************************************************
  * %=mid function: %{=mid:input:position[:length]}
  *
  * input is the data to transform, it is evaluated (%foo become the content of
@@ -170,7 +171,7 @@ class ParamSetData;
  * examples:
  * %{=mid:%foo:4:5}
  * %{=mid:%foo:4}
- *
+ ******************************************************************************
  * %=htmlencode function: %{=htmlencode:input[:flags]}
  *
  * input is the data to transform, it is evaluated (%foo become the content of
@@ -184,7 +185,7 @@ class ParamSetData;
  * %{=htmlencode,http://wwww.google.com/,u} -> <a href="http://wwww.google.com/">http://wwww.google.com/</a>
  * %{=htmlencode http://wwww.google.com/ u} -> same
  * %{=htmlencode|http://wwww.google.com/} -> http://wwww.google.com/
- *
+ ******************************************************************************
  * %=elideright,=elideleft,=elidemiddle functions:
  *    %{=elidexxx:input:length[:placeholder]}
  *
@@ -200,7 +201,7 @@ class ParamSetData;
  * %{=elideright:Hello World !:10:(...)} -> Hello(...)
  * %{=elideleft:Hello World !:10} -> ...World !
  * %{=elidemiddle:Hello World !:10} -> Hell...d !
- *
+ ******************************************************************************
  * %=random function: %{=random[:modulo[:shift]]
  *
  * produce a pseudo-random integer number between shift (default: 0) and
@@ -212,13 +213,15 @@ class ParamSetData;
  * %{=random:100} -> an integer between 0 and 99
  * %{=random:6:1} -> an integer between 1 and 6
  * %{=random:-8:-4} -> an integer between -4 and 3
- *
+ ******************************************************************************
  * %=env function:
  *    %{=env:varname1[[:varname2[:...]]:defaultvalue]}
  *
- * lookup system environment variable
- * varnames and defaultValue are evaluated
- * beware that you must provide a default value if there are more than 1 varname
+ * lookup system environment variable.
+ * varnames and defaultValue are evaluated.
+ * values of envvars themselves are not evaluated (USER=%foo will remain %foo),
+ * but you can still use %=eval if needed.
+ * you must provide a default value if there are more than 1 varname
  *
  * exemples:
  * %{=env:SHELL}
@@ -227,6 +230,30 @@ class ParamSetData;
  * %{=env:USERNAME:USER:} (equivalent to previous line, note the trailing :)
  * %{=env:EDITOR_FOR_%foo:${=env:EDITOR:vim}}
  * %{=env,EDITOR_FOR_%foo,EDITOR,vim} (equivalent to previous line)
+ * %{=eval!%{=env:FOO}} allows evaluation of % in FOO value
+ ******************************************************************************
+ * %=eval function: %{=eval!expression}
+ *
+ * double-evaluate expression to provide a way to force %-evaluation of a
+ * variable (or expression) value
+ *
+ * examples:
+ * instance %{=eval!%foo} returns "baz" if foo is "%bar" and bar is "baz"
+ * %{=eval!%{=env:FOO}} allows evaluation of % in FOO env var value
+ * %{=eval!%{=rawvalue:foo}} is an equivalent of %foo
+ ******************************************************************************
+ * %=escape function: %{=escape!expression}
+ *
+ * escape %-evaluation special characters from expression result (i.e. replace
+ * "%" with "%%"), which is the opposite from %=eval
+ *
+ * examples:
+ * %{=escape!%foo} returns "%%bar" if foo is "%bar"
+ * %{=rawvalue!foo!e} is an equivalent to %{=escape!%foo}
+ * %{=escape!%foo-%baz} returns "%%bar-42" if foo is "%bar" and baz is "42"
+ * %{=eval:%{=escape!%foo}} is an equivalent of %{=rawvalue:foo}
+ ******************************************************************************
+ *
  */
 class LIBP6CORESHARED_EXPORT ParamSet : public ParamsProvider {
   friend class ParamsProviderMerger;
@@ -400,8 +427,9 @@ public:
   QStringList splitAndEvaluate(
       QString rawValue, QString separators, bool inherit,
       const ParamsProvider *context, QSet<QString> alreadyEvaluated) const;
-  /** Escape all characters in string so that they no longer have speciale
-   * meaning for evaluate() and splitAndEvaluate() methods. */
+  /** Escape all characters in string so that they no longer have special
+   * meaning for evaluate() and splitAndEvaluate() methods.
+   * That is: replace % with %% within the string. */
   static QString escape(QString string);
   /** Return a regular expression that matches any string that can result
    * in evaluation of the rawValue.
