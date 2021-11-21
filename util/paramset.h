@@ -275,17 +275,60 @@ class ParamSetData;
  * examples:
  * %{=md5:%%baz} returns "96ab86a37cef7e27d8d45af9c29dc974"
  ******************************************************************************
- * %=hex function: %{=hex!expression[!separtor]}
+ * %=hex function: %{=hex!expression[!separtor[!flags]]}
  *
  * hexadecimal representation of utf-8 form of evaluated expression
  * can optionnaly use a one-latin1-character separator between bytes
+ * flags is a combination of letters with the following meaning:
+ * b process expression value as binary, not utf-8
  *
  * examples:
  * %{=hex:%%baz} returns "2562617a"
  * %{=hex:%%baz: } returns "25 62 61 7a"
  * %{=hex!%%baz!:} returns "25:62:61:7a"
+ * %{=hex:%{=fromhex!fbff61!b}::b} returns "fbff61"
+ * %{=hex:%{=fromhex!fbff61}::b} returns "3f3f61" (\x3f is '?' placeholder)
  ******************************************************************************
+ * %=fromhex function: %{=fromhex!expression[!flags]}
  *
+ * convert an hexadecimal representation to actual data
+ * ignore invalid characters in input, hence tolerate separators if any
+ * flags is a combination of letters with the following meaning:
+ * b produces binary result, not utf-8
+ *
+ * examples:
+ * %{=fromhex!2562617a!} returns "%%baz"
+ * %{=fromhex!25:62/61 7a!} returns "%%baz"
+ * %{=hex:%{=fromhex!fbff61!b}::b} returns "fbff61"
+ * %{=hex:%{=fromhex!fbff61}::b} returns "3f3f61" (\x3f is '?' placeholder)
+ ******************************************************************************
+ * %=base64 function: %{=base64!expression[!flags]}
+ *
+ * base64 representation of utf-8 form of evaluated expression
+ * flags is a combination of letters with the following meaning:
+ * b process expression value as binary, not utf-8
+ * u encode using base64url instead of base64 (use - and _ instead of + and /)
+ * t omit trailing =
+ *
+ * examples:
+ * %{=base64:§} returns "wqc="
+ * %{=base64!%{=fromhex:fbff61:b}!b} returns "+/9h"
+ * %{=base64!%{=fromhex:fbff61:b}!utb} returns "-_9h"
+ * Basic %{=base64!login:password} returns "Basic QmFzaWMgbG9naW46cGFzc3dvcmQ="
+ ******************************************************************************
+ * %=frombase64 function: %{=frombase64!expression[!flags]}
+ *
+ * convert a base64 representation to actual data
+ * flags is a combination of letters with the following meaning:
+ * b produces binary result, not utf-8
+ * u decode using base64url instead of base64 (use - and _ instead of + and /)
+ *
+ * examples:
+ * %{=frombase64:wqc=} returns "§"
+ * %{=hex!%{=frombase64:+/9h:b}!!b} returns "fbff61"
+ * %{=hex!%{=frombase64:-_9h:ub}!!b} returns "fbff61"
+ * %{=frombase64!QmFzaWMgbG9naW46cGFzc3dvcmQ=} returns "login:password"
+ ******************************************************************************
  */
 class LIBP6CORESHARED_EXPORT ParamSet : public ParamsProvider {
   friend class ParamsProviderMerger;

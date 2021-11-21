@@ -549,16 +549,61 @@ implicitVariables {
   QString value = paramset.evaluate(
         params.value(0), inherit, context, alreadyEvaluated);
   QString separator = params.value(1);
+  QString flags = params.value(2);
+  QByteArray data = flags.contains('b') ? value.toLatin1() : value.toUtf8();
   if (separator.isEmpty())
-    return value.toUtf8().toHex();
-  return value.toUtf8().toHex(separator.at(0).toLatin1());
+    data = data.toHex();
+  else
+    data = data.toHex(separator.at(0).toLatin1());
+  return QString::fromLatin1(data);
+}, true},
+{ "=fromhex", [](ParamSet paramset, QString key, bool inherit,
+     const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+     int matchedLength) {
+  CharacterSeparatedExpression params(key, matchedLength);
+  QString value = paramset.evaluate(
+        params.value(0), inherit, context, alreadyEvaluated);
+  QString flags = params.value(1);
+  QByteArray data = QByteArray::fromHex(value.toLatin1());
+  if (flags.contains('b'))
+    return QString::fromLatin1(data);
+  return QString::fromUtf8(data);
+}, true},
+{ "=base64", [](ParamSet paramset, QString key, bool inherit,
+     const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+     int matchedLength) {
+  CharacterSeparatedExpression params(key, matchedLength);
+  QString value = paramset.evaluate(
+        params.value(0), inherit, context, alreadyEvaluated);
+  QString flags = params.value(1);
+  QByteArray data = flags.contains('b') ? value.toLatin1() : value.toUtf8();
+  data = data.toBase64(
+        (flags.contains('u') ? QByteArray::Base64UrlEncoding
+                             : QByteArray::Base64Encoding)
+        |(flags.contains('t') ? QByteArray::OmitTrailingEquals
+                              : QByteArray::KeepTrailingEquals)
+        );
+  return data;
+}, true},
+{ "=frombase64", [](ParamSet paramset, QString key, bool inherit,
+     const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+     int matchedLength) {
+  CharacterSeparatedExpression params(key, matchedLength);
+  QString value = paramset.evaluate(
+        params.value(0), inherit, context, alreadyEvaluated);
+  QString flags = params.value(1);
+  QByteArray data = QByteArray::fromBase64(
+        value.toLatin1(),
+        (flags.contains('u') ? QByteArray::Base64UrlEncoding
+                             : QByteArray::Base64Encoding)
+        |(flags.contains('a') ? QByteArray::AbortOnBase64DecodingErrors
+                              : QByteArray::IgnoreBase64DecodingErrors)
+        );
+  if (flags.contains('b'))
+    return QString::fromLatin1(data);
+  return QString::fromUtf8(data);
 }, true},
 };
-
-// LATER add functions: %=ifgt %=ifgte %=iflt %=iflte %=calc=(2+2)%3
-// LATER enhance %=random w/ dice expressions: %=random:3d6-1D4+3+1
-// or include dice expresions into %=calc: %=calc:(3d6+7)%0xf
-// more fun: supports 3d6k2 or 1d100e100 like ruby's dicebag library
 
 bool ParamSet::appendVariableValue(
     QString *value, QString variable, bool inherit,
