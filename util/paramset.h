@@ -135,9 +135,10 @@ class ParamSetData;
  *   are almost identical to Perl's regexps
  *
  * examples:
- * %{=sub!foo!/o/O}
+ * %{=sub!foo!/o/O} returns "fOo"
+ * %{=sub!foo!/o/O/g} returns "fOO"
  * %{=sub;%foo;/a/b/g;/([a-z]+)[0-9]/%1%bar/g}"
- * %{=sub;2015-04-17;~.*-(?<month>[0-9]+)-.*~%month}
+ * %{=sub;2015-04-17;~.*-(?<month>[0-9]+)-.*~%month} returns "04"
  ******************************************************************************
  * %=left function: %{=left:input:length}
  *
@@ -238,7 +239,7 @@ class ParamSetData;
  * variable (or expression) value
  *
  * examples:
- * instance %{=eval!%foo} returns "baz" if foo is "%bar" and bar is "baz"
+ * %{=eval!%foo} returns "baz" if foo is "%bar" and bar is "baz"
  * %{=eval!%{=env:FOO}} allows evaluation of % in FOO env var value
  * %{=eval!%{=rawvalue:foo}} is an equivalent of %foo
  ******************************************************************************

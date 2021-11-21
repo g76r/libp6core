@@ -384,11 +384,13 @@ implicitVariables {
         // skip current match for next iteration
         offset = match.capturedEnd();
       } else {
+        // stop matching
+        repeat = false;
+      }
+      if (!repeat) {
         //qDebug() << "no more match:" << value.mid(offset);
         // append text between previous match and end of value
         transformed += value.mid(offset);
-        // stop matching
-        repeat = false;
       }
       //qDebug() << "transformed:" << transformed;
     } while(repeat);
