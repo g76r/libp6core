@@ -254,6 +254,37 @@ class ParamSetData;
  * %{=escape!%foo-%baz} returns "%%bar-42" if foo is "%bar" and baz is "42"
  * %{=eval:%{=escape!%foo}} is an equivalent of %{=rawvalue:foo}
  ******************************************************************************
+ * %=sha1 function: %{=sha1!expression}
+ *
+ * compute sha1 of evaluated expression
+ *
+ * examples:
+ * %{=sha1:%%baz} returns "3d8555b0a81f8344fd128060117b985ce9de6bd5"
+ ******************************************************************************
+ * %=sha256 function: %{=sha256!expression}
+ *
+ * compute sha256 of evaluated expression
+ *
+ * examples:
+ * %{=sha256:%%baz} returns "48b56c9eb1d1d80188aeda808c72a047cd15803c57117bec272c75145f84f525"
+ ******************************************************************************
+ * %=md5 function: %{=md5!expression}
+ *
+ * compute md5 of evaluated expression
+ *
+ * examples:
+ * %{=md5:%%baz} returns "96ab86a37cef7e27d8d45af9c29dc974"
+ ******************************************************************************
+ * %=hex function: %{=hex!expression[!separtor]}
+ *
+ * hexadecimal representation of utf-8 form of evaluated expression
+ * can optionnaly use a one-latin1-character separator between bytes
+ *
+ * examples:
+ * %{=hex:%%baz} returns "2562617a"
+ * %{=hex:%%baz: } returns "25 62 61 7a"
+ * %{=hex!%%baz!:} returns "25:62:61:7a"
+ ******************************************************************************
  *
  */
 class LIBP6CORESHARED_EXPORT ParamSet : public ParamsProvider {

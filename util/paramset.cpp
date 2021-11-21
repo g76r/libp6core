@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include "radixtree.h"
 #include <functional>
+#include <QCryptographicHash>
 
 bool ParamSet::_variableNotFoundLoggingEnabled { false };
 const QString ParamSet::_true { "true" };
@@ -516,6 +517,41 @@ implicitVariables {
   } while (i < params.size()-1); // first param and then all but last one
   // otherwise last one if there are at less 2, otherwise a non-existent one
   return paramset.evaluate(params.value(i), inherit, context, alreadyEvaluated);
+}, true},
+{ "=sha1", [](ParamSet paramset, QString key, bool inherit,
+     const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+     int matchedLength) {
+  QString value = paramset.evaluate(
+        key.mid(matchedLength+1), inherit, context, alreadyEvaluated);
+  return QCryptographicHash::hash(
+        value.toUtf8(), QCryptographicHash::Sha1).toHex();
+}, true},
+{ "=sha256", [](ParamSet paramset, QString key, bool inherit,
+     const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+     int matchedLength) {
+  QString value = paramset.evaluate(
+        key.mid(matchedLength+1), inherit, context, alreadyEvaluated);
+  return QCryptographicHash::hash(
+        value.toUtf8(), QCryptographicHash::Sha256).toHex();
+}, true},
+{ "=md5", [](ParamSet paramset, QString key, bool inherit,
+     const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+     int matchedLength) {
+  QString value = paramset.evaluate(
+        key.mid(matchedLength+1), inherit, context, alreadyEvaluated);
+  return QCryptographicHash::hash(
+        value.toUtf8(), QCryptographicHash::Md5).toHex();
+}, true},
+{ "=hex", [](ParamSet paramset, QString key, bool inherit,
+     const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+     int matchedLength) {
+  CharacterSeparatedExpression params(key, matchedLength);
+  QString value = paramset.evaluate(
+        params.value(0), inherit, context, alreadyEvaluated);
+  QString separator = params.value(1);
+  if (separator.isEmpty())
+    return value.toUtf8().toHex();
+  return value.toUtf8().toHex(separator.at(0).toLatin1());
 }, true},
 };
 
