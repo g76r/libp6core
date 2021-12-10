@@ -430,6 +430,10 @@ public:
     }
     return *this;
   }
+  /** Compares contentAsString() */
+  bool operator<(const PfNode &other) const {
+    return contentAsString() < other.contentAsString();
+  }
 
   // Output methods ///////////////////////////////////////////////////////////
 
