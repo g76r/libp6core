@@ -415,10 +415,12 @@ public:
     return evaluate(rawValue(key, inherit), inherit, context, alreadyEvaluated);
   }
   /** Return a value splitted into strings after parameters substitution. */
-  QStringList valueAsStrings(QString key, QString separators = " ",
+  QStringList valueAsStrings(QString key, QString defaultRawValue = QString(),
                              bool inherit = true,
-                             const ParamsProvider *context = 0) const {
-    return splitAndEvaluate(rawValue(key), separators, inherit, context); }
+                             const ParamsProvider *context = 0,
+                             QString separators = " ") const {
+    return splitAndEvaluate(rawValue(key, defaultRawValue), separators,
+                            inherit, context); }
   /** Return a value splitted at first whitespace. Both strings are trimmed.
    * E.g. a raw value of "  foo    bar baz  " is returned as a
    * QPair<>("foo", "bar baz"). */
