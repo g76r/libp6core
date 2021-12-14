@@ -301,6 +301,7 @@ public:
   PfNode &setAttribute(const QString &name, const QStringList &content);
   /** Construct a list of all children named 'name'. */
   QList<PfNode> childrenByName(const QString &name) const;
+  QList<PfNode> childrenByName(const QStringList &names) const;
   bool hasChild(const QString &name) const;
   /** This PfNode has no children. Null nodes are leaves */
   inline bool isLeaf() const;

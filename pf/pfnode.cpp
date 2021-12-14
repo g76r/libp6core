@@ -314,6 +314,15 @@ QList<PfNode> PfNode::childrenByName(const QString &name) const {
   return list;
 }
 
+QList<PfNode> PfNode::childrenByName(const QStringList &names) const {
+  QList<PfNode> list;
+  if (!names.isEmpty())
+    for (auto child: children())
+      if (!child.isNull() && names.contains(child.d->_name))
+        list.append(child);
+  return list;
+}
+
 bool PfNode::hasChild(const QString &name) const {
   if (!name.isEmpty())
     for (auto child: children())
