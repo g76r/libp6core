@@ -338,7 +338,32 @@ implicitVariables {
     // otherwise left input as is
     return input;
   }
-  //qDebug() << "%=switch function invalid syntax:" << key;
+  return QString();
+}, true},
+{ "=match", [](ParamSet paramset, QString key, bool inherit,
+              const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+              int matchedLength) {
+  CharacterSeparatedExpression params(key, matchedLength);
+  if (params.size() >= 1) {
+    QString input = paramset.evaluate(params.value(0), inherit, context,
+                                      alreadyEvaluated);
+    // evaluating :case:value params, if any
+    int n = (params.size() - 1) / 2;
+    for (int i = 0; i < n; ++i) {
+      QString ref = paramset.evaluate(params.value(1+i*2), inherit, context,
+                                      alreadyEvaluated);
+      if (QRegularExpression(ref).match(input).hasMatch())
+        return paramset.evaluate(params.value(1+i*2+1), inherit, context,
+                                 alreadyEvaluated);
+    }
+    // evaluating :default param, if any
+    if (params.size() % 2 == 0) {
+      return paramset.evaluate(params.value(params.size()-1), inherit, context,
+                               alreadyEvaluated);
+    }
+    // otherwise left input as is
+    return input;
+  }
   return QString();
 }, true},
 { "=sub", [](ParamSet paramset, QString key, bool inherit,

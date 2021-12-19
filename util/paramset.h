@@ -109,6 +109,7 @@ class ParamSetData;
  * matching case
  * all parameters are evaluated, hence %foo is replaced by foo's value
  * if default_value is not specified, left input as is if no case matches
+ * see also %=match, with regexps
  *
  * %=switch can be used as would be an %=ifeq function since those two lines
  * are strictly equivalent:
@@ -120,6 +121,18 @@ class ParamSetData;
  * %{=switch:%foo:0:false:true} -> if 0: false else: true
  * %{=switch:%foo:0:false} -> if 0: false else: %foo
  * %{=switch:%foo} -> always return %foo, but won't warn if foo is not defined
+ ******************************************************************************
+ * %=match function: %{=match:value[:case1:regexp1[:case2:regexp2[...]]][:default_value]}
+ * test an input against different reference regexps and replace it according to
+ * matching case
+ * all parameters are evaluated, hence %foo is replaced by foo's value
+ * if default_value is not specified, left input as is if no case matches
+ * see also %=switch if regexps are not needed
+ *
+ * examples:
+ * %{=match:%foo:^a:false:true} -> if starts with 'a': false else: true
+ * %{=match:%foo:[0-9]+:true} -> if only digits: true else: %foo
+ * %{=match:%foo} -> always return %foo, but won't warn if foo is not defined
  ******************************************************************************
  * %=sub function: %{=sub!input!s-expression!...}
  *
