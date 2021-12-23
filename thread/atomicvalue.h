@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -58,6 +58,10 @@ public:
     QMutexLocker ml(&_mutex);
     return _data;
   }
+  const T* operator->() const {
+    QMutexLocker ml(&_mutex);
+    return &_data;
+  }
   /** Convenience operator for data() */
   T operator*() const { return this->data(); }
   /** Convenience operator for data() */
@@ -102,6 +106,21 @@ public:
   /** Unlock when previously locked by lockData() or tryLockData(). */
   void unlockData() {
     _mutex.unlock();
+  }
+  class LockedValue {
+    friend class AtomicValue<T>;
+    AtomicValue<T> *_v;
+    QMutexLocker<QMutex> _ml;
+    LockedValue(AtomicValue<T> *v) : _v(v), _ml(&v->_mutex) { }
+  public:
+    //operator T&() { return _v->_data; }
+    T& operator*() { return _v->_data; }
+    T* operator->() { return &_v->_data; }
+  };
+  /** Lock and keep locked until LockedValue is destroyed, same RAII pattern
+   * than QMutexLocker and QPointer combined */
+  LockedValue lockedValue() {
+    return LockedValue(this);
   }
 };
 
