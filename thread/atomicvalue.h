@@ -14,7 +14,6 @@
 #ifndef ATOMICVALUE_H
 #define ATOMICVALUE_H
 
-#include <QMutex>
 #include <QMutexLocker>
 #include "libp6core_global.h"
 
@@ -26,19 +25,62 @@
  * 64 bits integers on 32 bits platforms or implicitly shared objects (e.g.
  * QString, QDateTime).
  *
+ * Warning: Qt implicit sharing mechanisms perform shallow copy, which is ok
+ * only provided every copy is used read-only in every thread. That is: nobody
+ * ever modify an object received through AtomicValue::data(), the only "write"
+ * operation allowed is replacing the data using AtomicValue::setData() or its
+ * convenience operator =. This is obviously also true for containers (QList...)
+ * for which a shallow copy means that the contained objects are not copied at
+ * all. More or less this is ok if holded data is immutable or used as such.
+ *
+ * Qt implictly shared types (e.g. QString, QDateTime and containers e.g. QList,
+ * QHash) can also be holded and copied fully thread-safe if calling
+ * detachedData() instead of data(), which will perform the deep copy within the
+ * mutex critic section, provided the type have a detach() method.
+ *
+ * The alternative, more explicit and with longer critical sections way to use
+ * AtomicValue, either with lockData() and unlockData() methods or using the
+ * RAII helper returned by lockedData(), works with any kind of holded data,
+ * being it a simple type, an implicitly shared ones or anything. Provided locks
+ * and unlocks are done without programmatic errors.
+ *
  * Usage examples:
+ * AtomicValue<quint64> threadSafeLongLong; // safe 64 bits on 32 bits platforms
+ * ...
+ * quint64 ll = threadSafeLongLong.data(); // mutex-protected (deep) copy
+ * ++ll;  // safe since main data is not accessed
+ * threadSafeLongLong = ll; // mutex-protected (deep) copy
+ *
  * AtomicValue<QString> threadSafeString;
  * ...
- * QString string = threadSafeString; // a mutex protects the (shallow) copy
+ * QString string = threadSafeString.detachedData();// mutex-protected deep copy
  * string.replace("foo", "bar"); // safe since main object is not accessed
  * // but another thread can read or set threadSafeString meanwhile
- * threadSafeString = string; // the same mutex protects the (deep) copy
+ * threadSafeString = string; // mutex-protected (deep) copy
  * ...
  * QString &ref = threadSafeString.lockData(); // explicit lock
  * ref.replace("foo", "bar"); // safe since main object is locked
  * // no other thread can read or set threadSafeString meanwhile
  * // the lock is holded longer and the syntax is more explicit
  * threadSafeString.unlockData(); // explicit unlock
+ *
+ * Same with the RAII helper:
+ * auto string = threadSafeString.lockedData(); // explicit lock
+ * string.replace("foo", "bar"); // safe since main object is locked
+ * string.unlock(); // or wait for string destructor to unlock the mutex
+ *
+ * If an implictly-shared type is used only as read-only after being set in the
+ * AtomicValue<> data() is enough and detach() method is not needed. AtamicValue
+ * will still ensure that setting and getting data from it is thread-safe and
+ * (hence the name) atomic. Example:
+ *
+ * AtomicValue<QString> threadSafeStringHodler;
+ * ...
+ * threadSafeStringHodler = "any text";
+ * ...
+ * // in another thread
+ * QString string = threadSafeStringHodler;
+ * qDebug() << string; // or any other read-only usage
  *
  * @see QAtomicInteger
  * @see QMutex
@@ -52,20 +94,25 @@ public:
   AtomicValue() {}
   explicit AtomicValue(T data) : _data(data) { }
   explicit AtomicValue(const AtomicValue<T> &other) : _data(other.data()) { }
-  /** Get (take a copy of) holded data.
+  /** Take a copy of holded data.
+   * Warning: if holded data needs a deep copy, rather use detachedData() or
+   * lockedData().
+   * @see detachedData()
+   * @see lockedData()
    * This method is thread-safe. */
   T data() const {
     QMutexLocker ml(&_mutex);
     return _data;
   }
-  const T* operator->() const {
+  /** Take a deep copy of holded data, calling T.detach().
+   * Works with Qt implicitly shared types that have a detach() method.
+   * This method is thread-safe. */
+  T detachedData() const {
     QMutexLocker ml(&_mutex);
-    return &_data;
+    T data = _data; // shallow copy
+    data.detach(); // deep copy
+    return data;
   }
-  /** Convenience operator for data() */
-  T operator*() const { return this->data(); }
-  /** Convenience operator for data() */
-  operator T() const { return this->data(); }
   /** Set (overwrite) holded data.
    * This method is thread-safe. */
   void setData(T other) {
@@ -78,7 +125,7 @@ public:
   void setData(const AtomicValue<T> &other) { setData(other.data()); }
   /** Convenience operator for setData() */
   AtomicValue<T> &operator=(const AtomicValue<T> &other) {
-    setData(other);
+    setData(other.data());
     return *this;
   }
   /** Lock and get (take a copy of) holded data, which disable any read and
@@ -107,20 +154,22 @@ public:
   void unlockData() {
     _mutex.unlock();
   }
-  class LockedValue {
+  class LockedData {
     friend class AtomicValue<T>;
     AtomicValue<T> *_v;
     QMutexLocker<QMutex> _ml;
-    LockedValue(AtomicValue<T> *v) : _v(v), _ml(&v->_mutex) { }
+    LockedData(AtomicValue<T> *v) : _v(v), _ml(&v->_mutex) { }
   public:
-    //operator T&() { return _v->_data; }
     T& operator*() { return _v->_data; }
     T* operator->() { return &_v->_data; }
+    operator T*() { return &_v->_data; }
+    void unlock() { _ml.unlock(); }
+    void relock() { _ml.relock(); }
   };
-  /** Lock and keep locked until LockedValue is destroyed, same RAII pattern
-   * than QMutexLocker and QPointer combined */
-  LockedValue lockedValue() {
-    return LockedValue(this);
+  /** Lock and keep locked until LockedData is destroyed, same pattern
+   * than QMutexLocker (RAII) and QPointer (smart pointer) combined */
+  LockedData lockedData() {
+    return LockedData(this);
   }
 };
 
