@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2021 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -71,7 +71,7 @@ void SharedUiItemsLogModel::setHeaderDataFromTemplate(
 }
 
 void SharedUiItemsLogModel::logItem(SharedUiItem newItem) {
-  if (newItem)
+  if (!newItem.isNull())
     SharedUiItemsTableModel::changeItem(
           SharedUiItemLogWrapper(newItem), SharedUiItem(),
           newItem.idQualifier());
