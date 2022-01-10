@@ -26,6 +26,7 @@
 #include "radixtree.h"
 #include <functional>
 #include <QCryptographicHash>
+#include <QRandomGenerator>
 
 bool ParamSet::_variableNotFoundLoggingEnabled { false };
 const QString ParamSet::_true { "true" };
@@ -518,10 +519,9 @@ implicitVariables {
               const ParamsProvider *, QSet<QString>, int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   // TODO evaluate modulo and shift
-  // TODO replace rand with QRandomGenerator
   int modulo = abs(params.value(0).toInt());
   int shift = params.value(1).toInt();
-  int i = ::rand();
+  quint32 i = QRandomGenerator::global()->generate();
   if (modulo)
     i %= modulo;
   i += shift;

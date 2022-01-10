@@ -223,7 +223,7 @@ class ParamSetData;
  * negative modulos are silently converted to their absolute values.
  *
  * examples:
- * %{=random} -> any integer number (32 or 64 bits, depending on platform)
+ * %{=random} -> any integer number (at less 32 bits, maybe more)
  * %{=random:100} -> an integer between 0 and 99
  * %{=random:6:1} -> an integer between 1 and 6
  * %{=random:-8:-4} -> an integer between -4 and 3
