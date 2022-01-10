@@ -357,7 +357,7 @@ public:
   ParamSet(std::initializer_list<QString> list);
   ParamSet(std::initializer_list<std::pair<QString,QVariant>> list);
   ParamSet(const ParamSet &other);
-  ParamSet(QHash<QString,QString> params);
+  explicit ParamSet(QHash<QString,QString> params);
   explicit ParamSet(QMap<QString,QString> params);
   /** For multi-valued keys, only most recently inserted value is kept. */
   explicit ParamSet(QMultiMap<QString,QString> params);
@@ -550,6 +550,8 @@ public:
    * environment variable is set to "true". */
   static void enableVariableNotFoundLogging(bool enabled = true) {
     _variableNotFoundLoggingEnabled = enabled; }
+  QHash<QString,QString> toHash(bool inherit = true) const;
+  QMap<QString,QString> toMap(bool inherit = true) const;
 
 private:
   inline bool appendVariableValue(

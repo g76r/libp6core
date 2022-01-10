@@ -836,6 +836,20 @@ QString ParamSet::toString(bool inherit, bool decorate) const {
   return s;
 }
 
+QHash<QString,QString> ParamSet::toHash(bool inherit) const {
+  QHash<QString,QString> hash;
+  for (auto key: keys(inherit))
+    hash.insert(key, rawValue(key));
+  return hash;
+}
+
+QMap<QString,QString> ParamSet::toMap(bool inherit) const {
+  QMap<QString,QString> map;
+  for (auto key: keys(inherit))
+    map.insert(key, rawValue(key));
+  return map;
+}
+
 QDebug operator<<(QDebug dbg, const ParamSet &params) {
   dbg.nospace() << "{";
   foreach(QString key, params.keys())
