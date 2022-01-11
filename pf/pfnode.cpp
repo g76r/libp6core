@@ -1,4 +1,4 @@
-/* Copyright 2012-2021 Hallowyn and others.
+/* Copyright 2012-2022 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -320,6 +320,25 @@ QList<PfNode> PfNode::childrenByName(const QStringList &names) const {
     for (auto child: children())
       if (!child.isNull() && names.contains(child.d->_name))
         list.append(child);
+  return list;
+}
+
+QList<PfNode> PfNode::grandChildrenByChildrenName(const QString &name) const {
+  QList<PfNode> list;
+  if (!name.isEmpty())
+    for (auto child: children())
+      if (!child.isNull() && child.d->_name == name)
+        list.append(child.children());
+  return list;
+}
+
+QList<PfNode> PfNode::grandChildrenByChildrenName(
+    const QStringList &names) const {
+  QList<PfNode> list;
+  if (!names.isEmpty())
+    for (auto child: children())
+      if (!child.isNull() && names.contains(child.d->_name))
+        list.append(child.children());
   return list;
 }
 

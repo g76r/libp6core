@@ -1,4 +1,4 @@
-/* Copyright 2012-2021 Hallowyn and others.
+/* Copyright 2012-2022 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -302,6 +302,9 @@ public:
   /** Construct a list of all children named 'name'. */
   QList<PfNode> childrenByName(const QString &name) const;
   QList<PfNode> childrenByName(const QStringList &names) const;
+  /** Construct a list of all children of children named 'name'. */
+  QList<PfNode> grandChildrenByChildrenName(const QString &name) const;
+  QList<PfNode> grandChildrenByChildrenName(const QStringList &names) const;
   bool hasChild(const QString &name) const;
   /** This PfNode has no children. Null nodes are leaves */
   inline bool isLeaf() const;
