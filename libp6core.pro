@@ -13,7 +13,7 @@
 
 QT -= gui
 QT += network sql
-CONFIG += largefile c++2a c++17 c++14 c++11 force_debug_info
+CONFIG += largefile c++17 c++14 c++11 force_debug_info
 
 TARGET = p6core
 TEMPLATE = lib
