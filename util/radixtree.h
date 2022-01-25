@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,6 +19,7 @@
 #include <QString>
 #include <QHash>
 #include <QMap>
+#include <QSet>
 
 /** Helper class to make it possible to initialize a RadixTree with such syntax:
  * RadixTree<int> foo { {"abc", 42, true}, { "xyz", -1 } };
@@ -272,6 +273,7 @@ class LIBP6CORESHARED_EXPORT RadixTree {
 
   struct RadixTreeData : QSharedData {
     Node *_root;
+    QSet<QString> _keys;
     RadixTreeData() : _root(0) { }
   };
 
@@ -316,6 +318,7 @@ public:
       d->_root->insert(key, value, isPrefix);
     else
       d->_root = new Node(key, value, isPrefix ? Prefix : Exact, 0);
+    d->_keys.insert(key);
   }
   void insert(const QString &key, T value, bool isPrefix = false) {
     insert (key.toUtf8().constData(), value, isPrefix); }
@@ -342,6 +345,9 @@ public:
   }
   bool contains(const QString &key) const {
     return value(key.toUtf8().constData()); }
+  QSet<QString> keys() const {
+    return d ? d->_keys : QSet<QString>();
+  }
   static RadixTree<T> reversed(QHash<T,QString> hash) {
     RadixTree<T> that;
     foreach (const T &key, hash.keys())
