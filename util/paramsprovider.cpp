@@ -13,6 +13,7 @@
  */
 #include "paramsprovider.h"
 #include "paramset.h"
+
 extern char **environ;
 
 namespace {
@@ -51,3 +52,11 @@ ParamsProvider *ParamsProvider::_empty = new Empty();
 
 ParamsProvider::~ParamsProvider() {
 }
+
+ParamSet ParamsProvider::snapshot() const {
+  ParamSet snapshot;
+  for (auto key: keys())
+    snapshot.setValue(key, ParamSet::escape(paramValue(key).toString()));
+  return snapshot;
+}
+

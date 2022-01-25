@@ -19,6 +19,8 @@
 #include <QSet>
 #include "libp6core_global.h"
 
+class ParamSet;
+
 /** Base class for any class that may provide key/value parameters.
  * @see ParamSet */
 class LIBP6CORESHARED_EXPORT ParamsProvider {
@@ -52,6 +54,9 @@ public:
   virtual QSet<QString> keys() const = 0;
   static ParamsProvider *environment() { return _environment; }
   static ParamsProvider *empty() { return _empty; }
+  /** take an key-values snapshot that no longer depend on ParamsProvider* not
+   * being deleted nor on %-evaluation */
+  virtual ParamSet snapshot() const;
 };
 
 #endif // PARAMSPROVIDER_H
