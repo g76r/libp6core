@@ -483,7 +483,8 @@ public:
   }
   /** Return all keys for which the ParamSet or one of its parents hold a value.
     */
-  QSet<QString> keys(bool inherit = true) const;
+  QSet<QString> keys(bool inherit) const;
+  QSet<QString> keys() const;
   /** Return true if key is set. */
   bool contains(QString key, bool inherit = true) const;
   /** Perform parameters substitution within the string. */

@@ -1,4 +1,4 @@
-/* Copyright 2013-2018 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,6 +13,7 @@
  */
 #include "paramsprovider.h"
 #include "paramset.h"
+extern char **environ;
 
 namespace {
 
@@ -24,11 +25,29 @@ struct Environment : public ParamsProvider {
     return value ? ParamSet().evaluate(value, false, context, alreadyEvaluated)
                  : defaultValue;
   }
+  QSet<QString> keys() const override {
+    QSet<QString> keys;
+    for (char **e = environ; *e != nullptr; ++e)
+      keys << *e;
+    return keys;
+  }
+};
+
+struct Empty : public ParamsProvider {
+  QVariant paramValue(QString, const ParamsProvider *, QVariant defaultValue,
+                      QSet<QString>) const override {
+    return defaultValue;
+  }
+  QSet<QString> keys() const override {
+    return QSet<QString>();
+  }
 };
 
 } // unnamed namespace
 
 ParamsProvider *ParamsProvider::_environment = new Environment();
+
+ParamsProvider *ParamsProvider::_empty = new Empty();
 
 ParamsProvider::~ParamsProvider() {
 }

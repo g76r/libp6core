@@ -1,4 +1,4 @@
-/* Copyright 2015-2018 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,4 +21,11 @@ QVariant StringsParamsProvider::paramValue(
   bool ok;
   int i = key.toInt(&ok);
   return (ok && i >= 1 && _strings.size() <= i) ? _strings[i-1] : defaultValue;
+}
+
+QSet<QString> StringsParamsProvider::keys() const {
+  QSet<QString> keys;
+  for (int i = 0; i < _strings.size(); ++i)
+    keys << QString::number(i+1);
+  return keys;
 }

@@ -795,6 +795,10 @@ QSet<QString> ParamSet::keys(bool inherit) const {
   return set;
 }
 
+QSet<QString> ParamSet::keys() const {
+  return keys(true);
+}
+
 bool ParamSet::contains(QString key, bool inherit) const {
   return d && (d->_params.contains(key) || (inherit && parent().contains(key)));
 }

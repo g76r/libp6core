@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -51,4 +51,28 @@ QVariant SharedUiItemListParamsProvider::paramValue(
     }
   }
   return defaultValue;
+}
+
+QSet<QString> SharedUiItemListParamsProvider::keys() const {
+  QSet<QString> keys;
+  QSet<QString> qualifiers;
+  for (auto item: _list) {
+    auto q = item.idQualifier();
+    if (qualifiers.contains(q))
+      continue;
+    qualifiers << q;
+    keys << q+":id";
+    keys << q+":idQualifier";
+    keys << q+":qualifiedId";
+    for (int i = 0; i < item.uiSectionCount(); ++i) {
+      keys << q+":"+QString::number(i);
+      keys << QString::number(i);
+      auto name = item.uiSectionName(i);
+      if (name.isEmpty())
+        continue;
+      keys << q+":"+name;
+      keys << name;
+    }
+  }
+  return keys;
 }

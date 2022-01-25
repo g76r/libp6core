@@ -156,6 +156,14 @@ ParamSet HttpRequest::paramsAsParamSet() const {
     return ParamSet();
 }
 
+QHash<QString,QString> HttpRequest::paramsAsHash() const {
+  if (d) {
+    cacheAllParams();
+    return d->_paramsCache;
+  }
+  return QHash<QString,QString>();
+}
+
 void HttpRequest::cacheAllParams() const {
   if (!d)
     return;
@@ -250,6 +258,12 @@ QByteArray HttpRequest::base64BinaryCookie(QString name,
                     : QByteArray::fromBase64(cookie(name).toLatin1());
 }
 
+QHash<QString,QString> HttpRequest::cookies() const {
+  if (!d)
+    return QHash<QString,QString>();
+  return d->_cookies;
+}
+
 static QRegularExpression xffSeparator("\\s*,\\s*");
 static QString xffHeader;
 
@@ -297,7 +311,7 @@ QVariant HttpRequestPseudoParamsProvider::paramValue(
     } else if (key == "!clientaddresses") {
       return _request.clientAdresses().join(' ');
     } else if (key.startsWith("!cookie")) {
-      return _request.base64Cookie(key.mid(8));
+      return _request.cookie(key.mid(8));
     } else if (key.startsWith("!param")) {
       return _request.param(key.mid(7));
     } else if (key.startsWith("!header")) {
@@ -305,4 +319,15 @@ QVariant HttpRequestPseudoParamsProvider::paramValue(
     }
   }
   return defaultValue;
+}
+
+QSet<QString> HttpRequestPseudoParamsProvider::keys() const {
+  QSet<QString> keys { "!url", "!method", "!clientaddresses" };
+  for (auto s: _request.cookies().keys())
+    keys << "!cookie:"+s;
+  for (auto s: _request.paramsAsHash().keys())
+    keys << "!param:"+s;
+  for (auto s: _request.headers().keys())
+    keys << "!header:"+s;
+  return keys;
 }

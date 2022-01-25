@@ -1,4 +1,4 @@
-/* Copyright 2013-2018 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -32,6 +32,9 @@ public:
         if (!v.isValid() && _second)
             _second->paramValue(key, context, defaultValue, alreadyEvaluated);
         return v;
+    }
+    QSet<QString> keys() const override {
+      return QSet<QString>();
     }
 };
 
@@ -75,6 +78,18 @@ void ParamsProviderMerger::restore() {
     Log::warning() << "calling ParamsProviderMerger::restore() without "
                       "previously calling ParamsProviderMerger::save()";
   }
+}
+
+QSet<QString> ParamsProviderMerger::keys() const {
+  QSet<QString> keys { _overridingParams.keys() };
+  for (auto provider: _providers) {
+    if (provider.d->_paramsProvider) {
+      keys += provider.d->_paramsProvider->keys();
+    } else {
+      keys += provider.d->_paramset.keys();
+    }
+  }
+  return keys;
 }
 
 QDebug operator<<(QDebug dbg, const ParamsProviderMerger *merger) {

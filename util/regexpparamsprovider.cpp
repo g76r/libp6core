@@ -1,4 +1,4 @@
-/* Copyright 2015-2018 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -31,4 +31,14 @@ QVariant RegexpParamsProvider::paramValue(
       return value;
   }
   return defaultValue;
+}
+
+QSet<QString> RegexpParamsProvider::keys() const {
+  QSet<QString> keys;
+  for (int i = 0; i < _match.capturedTexts().size(); ++i)
+    keys << QString::number(i);
+  for (auto key: _match.regularExpression().namedCaptureGroups())
+    if (!key.isEmpty())
+      keys << key;
+  return keys;
 }

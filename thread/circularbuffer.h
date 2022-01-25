@@ -91,7 +91,7 @@ public:
    * @return true on success */
   inline bool tryPut(T data, int timeout) {
     QMutexLocker locker(&_mutex);
-    if (_free == 0 && !_notFull.wait(&_mutex, timeout))
+    if (_free == 0 && !_notFull.wait(&_mutex, timeout)) // QDeadlineTimer(timeout, Qt::PreciseTimer)
       return false;
     // since size is a power of 2, % size === &(size-1)
     _buffer[_putCounter & (_sizeMinusOne)] = data;

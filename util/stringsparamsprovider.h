@@ -1,4 +1,4 @@
-/* Copyright 2015-2018 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,6 +16,7 @@
 
 #include "paramsprovider.h"
 #include <QStringList>
+#include <QSet>
 
 /** ParamsProvider evaluating numerical params name among a string list.
  *
@@ -34,6 +35,7 @@ public:
                       QVariant defaultValue = QVariant(),
                       QSet<QString> alreadyEvaluated = QSet<QString>()
           ) const override;
+  QSet<QString> keys() const override;
 };
 
 #endif // STRINGSPARAMSPROVIDER_H

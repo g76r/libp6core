@@ -1,4 +1,4 @@
-/* Copyright 2014-2018 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -97,6 +97,20 @@ QVariant SharedUiItemParamsProvider::paramValue(
   }
   return defaultValue;
 }
+
+QSet<QString> SharedUiItemParamsProvider::keys() const {
+  QSet<QString> keys { "id", "idQualifier", "qualifiedId" };
+  int count = _item.uiSectionCount();
+  for (int section = 0; section < count; ++section) {
+    keys << QString::number(section);
+    auto name = _item.uiSectionName(section);
+    if (name.isEmpty())
+      continue;
+    keys << name;
+  }
+  return keys;
+}
+
 
 bool SharedUiItemData::operator<(const SharedUiItemData &other) const {
   return idQualifier() < other.idQualifier() || id() < other.id();
