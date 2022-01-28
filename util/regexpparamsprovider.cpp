@@ -17,10 +17,10 @@
 static QRegularExpression integerRE("\\A\\d+\\z");
 
 QVariant RegexpParamsProvider::paramValue(
-        QString key, const ParamsProvider *context, QVariant defaultValue,
-        QSet<QString> alreadyEvaluated) const {
-  Q_UNUSED(context)
-  Q_UNUSED(alreadyEvaluated)
+    QString key, const ParamsProvider *, QVariant defaultValue,
+    QSet<QString>) const {
+  if (key.isEmpty())
+    return defaultValue;
   QString value = _match.captured(key);
   if (!value.isNull())
     return value;
