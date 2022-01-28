@@ -90,6 +90,14 @@ public:
       _providers.prepend(provider);
     return *this;
   }
+  ParamsProviderMerger &pop_front() {
+    _providers.pop_front();
+    return *this;
+  }
+  ParamsProviderMerger &pop_back() {
+    _providers.pop_back();
+    return *this;
+  }
   /** Convenience operator for append() */
   ParamsProviderMerger &operator()(const ParamsProvider *provider) {
     if (provider)
