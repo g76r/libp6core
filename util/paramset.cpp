@@ -856,7 +856,9 @@ QMap<QString,QString> ParamSet::toMap(bool inherit) const {
 
 QDebug operator<<(QDebug dbg, const ParamSet &params) {
   dbg.nospace() << "{";
-  foreach(QString key, params.keys())
+  auto keys = params.keys().values();
+  std::sort(keys.begin(), keys.end());
+  for (auto key: keys)
     dbg.space() << key << "=" << params.rawValue(key) << ",";
   dbg.nospace() << "}";
   return dbg.space();
@@ -864,7 +866,9 @@ QDebug operator<<(QDebug dbg, const ParamSet &params) {
 
 LogHelper operator<<(LogHelper lh, const ParamSet &params) {
   lh << "{ ";
-  foreach(QString key, params.keys())
+  auto keys = params.keys().values();
+  std::sort(keys.begin(), keys.end());
+  for (auto key: keys)
     lh << key << "=" << params.rawValue(key) << " ";
   return lh << "}";
 }
