@@ -320,6 +320,8 @@ QString TimeFormats::toCustomTimestamp(
   dt = relativeDateTime.apply(dt).toTimeZone(tz);
   if (format.isEmpty())
     return dt.toString("yyyy-MM-dd hh:mm:ss,zzz");
+  if (format == "iso")
+    return dt.toString("yyyy-MM-ddThh:mm:ss,zzz");
   if (format == "ms1970")
     return QString::number(dt.toMSecsSinceEpoch());
   if (format == "s1970")

@@ -52,6 +52,9 @@ class ParamSetData;
  * %{=date!!!UTC}
  * %{=date,,,UTC}
  * %{=date!hh:mm:ss,zzz!01-01T20:02-2w+1d!GMT}
+ * %{=date!iso} short for %{=date!yyyy-MM-ddThh:mm:ss,zzz}
+ * %{=date!ms1970} milliseconds since 1970-01-01 00:00:00,000
+ * %{=date!s1970} seconds since 1970
  ******************************************************************************
  * %=coarsetimeinterval function: %{=coarsetimeinterval:seconds}
  *
