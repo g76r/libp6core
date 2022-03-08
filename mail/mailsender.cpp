@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,6 +15,7 @@
 #include <QMutexLocker>
 #include <QTcpSocket>
 #include <QRegularExpression>
+#include "mailaddress.h"
 
 static int _defaultSmtpTimeoutMs = 5000;
 
@@ -56,33 +57,6 @@ public:
   inline const QString &lastExpectLine() const { return _lastExpectLine; }
 };
 
-static const QRegularExpression _simpleAddress {
-  "\\A\\s*[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+\\s*\\z" };
-static const QRegularExpression _addressWithDisplayName {
-  "\\A[^<@>]*(<[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+>)\\s*\\z" };
-
-class EmailAddress {
-private:
-  QString _addr;
-  bool _valid;
-
-public:
-  EmailAddress(const QString &addr) : _valid(false) {
-    if (_simpleAddress.match(addr).hasMatch()) {
-      _addr = QString("<%1>").arg(addr);
-      _valid = true;
-    } else {
-      auto m = _addressWithDisplayName.match(addr);
-      if (m.hasMatch()) {
-        _addr = m.captured(1);
-        _valid = true;
-      }
-    }
-  }
-  inline const QString &addr() const { return _addr; }
-  inline bool valid() const { return _valid; }
-};
-
 } // unnamed namespace
 
 MailSender::MailSender(QUrl url)
@@ -106,8 +80,8 @@ bool MailSender::send(QString sender, QStringList recipients, QVariant body,
                       QMultiHash<QString, QString> headers,
                       QList<QVariant> attachments, QString &errorString) {
   Q_UNUSED(attachments)
-  EmailAddress senderAddress(sender);
-  if (!senderAddress.valid()) {
+  MailAddress senderAddress(sender);
+  if (!senderAddress.isValid()) {
     errorString = "invalid sender address: "+sender;
     return false;
   }
@@ -130,8 +104,7 @@ bool MailSender::send(QString sender, QStringList recipients, QVariant body,
     return false;
   }
   // LATER check if addresses should be written in ASCII or in another code
-  socket.write(QString("MAIL From: %1\r\n").arg(senderAddress.addr())
-               .toLatin1());
+  socket.write(QString("MAIL From: %1\r\n").arg(senderAddress).toLatin1());
   if (!socket.expectPrefix("2")) {
     errorString = "bad MAIL response on SMTP server "
         +_url.toString(QUrl::RemovePassword)+" for sender "+sender+": "
@@ -139,9 +112,9 @@ bool MailSender::send(QString sender, QStringList recipients, QVariant body,
     return false;
   }
   foreach (QString recipient, recipients) {
-    EmailAddress addr(recipient);
-    if (addr.valid()) {
-      socket.write(QString("RCPT To: %1\r\n").arg(addr.addr()).toLatin1());
+    MailAddress addr(recipient);
+    if (addr.isValid()) {
+      socket.write(QString("RCPT To: %1\r\n").arg(addr).toLatin1());
       if (!socket.expectPrefix("2")) {
         errorString = "bad RCPT response on SMTP server "
             +_url.toString(QUrl::RemovePassword)+" for recipient "+recipient

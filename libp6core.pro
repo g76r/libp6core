@@ -48,6 +48,7 @@ LIBS += -L../build-qtpf-$$TARGET_OS/$$BUILD_TYPE
 LIBS += -lqtpf
 
 SOURCES += \
+    mail/mailaddress.cpp \
     httpd/httpworker.cpp \
     httpd/httpserver.cpp \
     httpd/httpresponse.cpp \
@@ -138,6 +139,7 @@ SOURCES += \
     modelview/stringlistdiffmodel.cpp
 
 HEADERS +=\
+    mail/mailaddress.h \
     httpd/httpworker.h \
     httpd/httpserver.h \
     httpd/httpresponse.h \
