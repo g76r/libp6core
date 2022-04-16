@@ -60,3 +60,7 @@ ParamSet ParamsProvider::snapshot() const {
   return snapshot;
 }
 
+QString ParamsProvider::evaluate(
+    QString rawValue, QSet<QString> alreadyEvaluated) const {
+  return ParamSet().evaluate(rawValue, false, this, alreadyEvaluated);
+}

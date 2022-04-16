@@ -57,6 +57,10 @@ public:
   /** take an key-values snapshot that no longer depend on ParamsProvider* not
    * being deleted nor on %-evaluation */
   virtual ParamSet snapshot() const;
+  /** evaluate a %-expression within this context.
+   * short for ParamSet().evaluate(rawValue, false, this, alreadyEvaluated); */
+  QString evaluate(QString rawValue,
+                   QSet<QString> alreadyEvaluated = QSet<QString>()) const;
 };
 
 #endif // PARAMSPROVIDER_H
