@@ -394,7 +394,7 @@ public:
   void setValue(QString key, double value, char format='g', int precision=6) {
     setValue(key, QString::number(value, format, precision)); }
   void setValue(QString key, float value, char format='g', int precision=6) {
-    setValue(key, QString::number(value, format, precision)); }
+    setValue(key, QString::number((double)value, format, precision)); }
   void clear();
   void removeValue(QString key);
   /** Return a value without performing parameters substitution.
@@ -487,7 +487,7 @@ public:
   /** Return all keys for which the ParamSet or one of its parents hold a value.
     */
   QSet<QString> keys(bool inherit) const;
-  QSet<QString> keys() const;
+  QSet<QString> keys() const override;
   /** Return true if key is set. */
   bool contains(QString key, bool inherit = true) const;
   /** Perform parameters substitution within the string. */
