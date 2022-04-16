@@ -21,6 +21,7 @@
 #include "paramsprovider.h"
 
 class ParamSetData;
+class PfNode;
 
 /** String key-value parameter set with inheritance, substitution macro-language
  * and syntaxic sugar for converting values to non-string types.
@@ -366,6 +367,12 @@ public:
   explicit ParamSet(QMultiMap<QString,QString> params);
   /** For multi-valued keys, only most recently inserted value is kept. */
   explicit ParamSet(QMultiHash<QString,QString> params);
+  /** Takes params from PfNode children given an attribute name,
+   *  parsing their text content as key-whitespace-value.
+   *  e.g.: with ParamSet(node, "param")
+   *  (node (param foo bar)(param bar baz)) -> { "foo" = "baz", "bar" = "baz" }
+   */
+  ParamSet(PfNode parentnode, QString attrname);
   ~ParamSet();
   ParamSet &operator=(const ParamSet &other);
   ParamSet parent() const;

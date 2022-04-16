@@ -27,6 +27,7 @@
 #include <functional>
 #include <QCryptographicHash>
 #include <QRandomGenerator>
+#include "pf/pfnode.h"
 
 bool ParamSet::_variableNotFoundLoggingEnabled { false };
 const QString ParamSet::_true { "true" };
@@ -166,6 +167,19 @@ ParamSet::ParamSet(QMultiHash<QString,QString> params)
   : d(new ParamSetData) {
   for (auto key: params.keys())
     d->_params.insert(key, params.value(key));
+}
+
+ParamSet::ParamSet(PfNode parentnode, QString attrname)
+  : d(new ParamSetData) {
+  QListIterator<QPair<QString,QString> > it(
+    parentnode.stringsPairChildrenByName(attrname));
+  while (it.hasNext()) {
+    const QPair<QString,QString> &p(it.next());
+    if (p.first.isEmpty())
+      continue;
+    QString value = p.second;
+    d->_params.insert(p.first, value.isNull() ? QStringLiteral("") : value);
+  }
 }
 
 ParamSet::~ParamSet() {
