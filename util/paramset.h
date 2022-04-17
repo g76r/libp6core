@@ -351,8 +351,6 @@ class LIBP6CORESHARED_EXPORT ParamSet : public ParamsProvider {
   friend class ParamsProviderMerger;
   QSharedDataPointer<ParamSetData> d;
   static bool _variableNotFoundLoggingEnabled;
-  static const QString _true;
-  static const QString _false;
 
 public:
   ParamSet();
@@ -381,7 +379,7 @@ public:
   void setValue(QString key, QVariant value) {
     setValue(key, value.toString()); }
   void setValue(QString key, bool value) {
-    setValue(key, value ? _true : _false); }
+    setValue(key, value ? QStringLiteral("true") : QStringLiteral("false")); }
   void setValue(QString key, qint8 value, int base = 10) {
     setValue(key, QString::number(value, base)); }
   void setValue(QString key, qint16 value, int base = 10) {
@@ -471,22 +469,22 @@ public:
                               const ParamsProvider *context = 0) const {
     bool ok;
     double  v = evaluate(rawValue(key, QString(), inherit), inherit,
-                         context).toLongLong(&ok);
+                         context).toDouble(&ok);
     return ok ? v : defaultValue; }
-  /** "false" and "0" are interpreted as false, "true" and any non null
-   * valid integer number are interpreted as true. Spaces and case are
+  /** "faLsE" and "0" are interpreted as false, "trUe" and any non null
+   * valid integer number are interpreted as true. whitespace and case are
    * ignored. */
   inline bool valueAsBool(QString key, bool defaultValue = false,
                           bool inherit = true,
                           const ParamsProvider *context = 0) const {
     QString v = evaluate(rawValue(key, QString(), inherit), inherit, context)
         .trimmed().toLower();
-    if (v == _true)
+    if (v == QLatin1String("true"))
       return true;
-    if (v == _false)
+    if (v == QLatin1String("false"))
       return false;
     bool ok;
-    int i = v.toInt(&ok);
+    int i = v.toInt(&ok, 0);
     if (ok)
       return i == 0 ? false : true;
     return defaultValue;

@@ -30,8 +30,6 @@
 #include "pf/pfnode.h"
 
 bool ParamSet::_variableNotFoundLoggingEnabled { false };
-const QString ParamSet::_true { "true" };
-const QString ParamSet::_false { "false" };
 
 static int staticInit() {
   qMetaTypeId<ParamSet>();
