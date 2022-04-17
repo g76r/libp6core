@@ -402,7 +402,30 @@ QList<QPair<QString, qint64>> PfNode::stringLongPairChildrenByName(
 
 qint64 PfNode::contentAsLong(qint64 defaultValue, bool *ok) const {
   bool myok;
-  qint64 v = contentAsString().trimmed().toLongLong(&myok, 0);
+  auto s = contentAsString().trimmed();
+  auto len = s.size();
+  if (len >= 2 && s.at(1) == 'x') {
+    switch(s.at(len-1).toLatin1()) {
+      case 'k':
+        s = s.left(len-1)+"000";
+        break;
+      case 'M':
+      case 'm':
+        s = s.left(len-1)+"000000";
+        break;
+      case 'G':
+      case 'b':
+        s = s.left(len-1)+"000000000";
+        break;
+      case 'T':
+        s = s.left(len-1)+"000000000000";
+        break;
+      case 'P':
+        s = s.left(len-1)+"000000000000000";
+        break;
+    }
+  }
+  qint64 v = s.toLongLong(&myok, 0);
   if (ok)
     *ok = myok;
   return myok ? v : defaultValue;

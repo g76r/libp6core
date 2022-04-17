@@ -328,7 +328,11 @@ public:
    * if isText() even if isEmpty() */
   QString contentAsString() const {
     return d ? d->contentAsString() : QString(); }
-  /** @return integer value if the string content T a valid C-like integer */
+  /** @return integer value if the string content is a valid integer
+   * C-like prefixes are supported and both kmb and kMGTP suffixes are supported
+   * surrounding whitespace is trimmed
+   * e.g. 0x1f means 15, 12k means 12000, 12b and 12G mean 12000000000.
+   * however mixing them is not supported e.g. 0x1fG isn't. */
   qint64 contentAsLong(qint64 defaultValue = 0, bool *ok = 0) const;
   /** @return decimal value if the string content is a valid E notation number
    * the implementation does not fully support the PF specications since it
