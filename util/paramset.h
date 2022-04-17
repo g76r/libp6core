@@ -448,13 +448,40 @@ public:
   QPair<QString,QString> valueAsStringsPair(
       QString key, bool inherit = true,
       const ParamsProvider *context = 0) const;
-  /** Syntaxic sugar. */
+  /** @return integer value if the string content is a valid integer
+   * C-like prefixes are supported and both kmb and kMGTP suffixes are supported
+   * surrounding whitespace is trimmed
+   * e.g. 0x1f means 15, 12k means 12000, 12b and 12G mean 12000000000.
+   * however mixing them is not supported e.g. 0x1fG isn't. */
   inline qlonglong valueAsLong(QString key, qlonglong defaultValue = 0,
                                bool inherit = true,
                                const ParamsProvider *context = 0) const {
     bool ok;
-    qlonglong v = evaluate(rawValue(key, QString(), inherit),  inherit,
-                           context).toLongLong(&ok);
+    auto s = evaluate(rawValue(key, QString(), inherit), inherit,
+                      context).trimmed();
+    auto len = s.size();
+    if (len >= 2 && s.at(1) == 'x') {
+      switch(s.at(len-1).toLatin1()) {
+        case 'k':
+          s = s.left(len-1)+"000";
+          break;
+        case 'M':
+        case 'm':
+          s = s.left(len-1)+"000000";
+          break;
+        case 'G':
+        case 'b':
+          s = s.left(len-1)+"000000000";
+          break;
+        case 'T':
+          s = s.left(len-1)+"000000000000";
+          break;
+        case 'P':
+          s = s.left(len-1)+"000000000000000";
+          break;
+      }
+    }
+    qlonglong v = s.toLongLong(&ok, 0);
     return ok ? v : defaultValue; }
   /** Syntaxic sugar. */
   inline int valueAsInt(QString key, int defaultValue = 0, bool inherit = true,
