@@ -134,6 +134,12 @@ Logger::Logger(Log::Severity minSeverity, ThreadModel threadModel)
   //qDebug() << "*** Logger::Logger " << this << " " << minSeverity
   //         << " " << threadModel;
   //qDebug() << "Logger" << QString::number((long)this, 16);
+  int logBufferSizeLog2 =
+    ParamsProvider::environment()->paramValue("LOG_BUFFER_SIZE_LOG2").toInt();
+  if (logBufferSizeLog2 < 6)
+    logBufferSizeLog2 = 12;
+  if (logBufferSizeLog2 > 27)
+    logBufferSizeLog2 = 27;
   switch(threadModel) {
   case DirectCall:
     break;
@@ -141,12 +147,12 @@ Logger::Logger(Log::Severity minSeverity, ThreadModel threadModel)
     _thread = new LoggerThread(this);
     _thread->setObjectName("Logger-"+Log::severityToString(minSeverity)
                            +"-"+QString::number((long long)this, 16));
-    _buffer = new CircularBuffer<LogEntry>(12);
+    _buffer = new CircularBuffer<LogEntry>(logBufferSizeLog2);
     break;
   case RootLogger:
     _thread = new LoggerThread(this);
     _thread->setObjectName("RootLogger-"+QString::number((long long)this, 16));
-    _buffer = new CircularBuffer<LogEntry>(12);
+    _buffer = new CircularBuffer<LogEntry>(logBufferSizeLog2);
     break;
   }
   if (_thread) {
