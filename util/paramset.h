@@ -66,22 +66,21 @@ class PfNode;
  * %{=coarsetimeinterval:125.35} -> "2 minutes 5 seconds"
  * %{=coarsetimeinterval:86402.21} -> "1 days 0 hours"
  ******************************************************************************
- * %=default function: %{=default!expr1[!expr2[...]][!value_if_not_set]}
+ * %=default function: %{=default!expr1[!expr2[...]]}
  *
  * take first non-empty expression in order: expr1 if not empty, expr2 if expr1
  * is empty, expr3 if neither expr1 nor expr2 are set, etc.
  * the function works like nvl/coalesce/ifnull functions in sql
  *   and almost like ${variable:-value_if_not_set} in shell scripts
- * expr1..n are evaluated
- * value_if_not_set is evaluated hence %foo is replaced by foo's value
+ * expr1..n are evaluated (%foo is replaced by foo's value)
  *
  * examples:
- * %{=default!%foo!null}
+ * %{=default!%foo!null} -> return foo's value or "null" instead if it's empty
  * %{=default!%foo!foo not set}
  * %{=default:%foo:foo not set!!!}
  * %{=default:%foo:%bar:neither foo nor bar are set!!!}
  * %{=default!%foo!%bar}
- * %{=default!%foo}
+ * %{=default!%foo} -> always return %foo, but won't warn if foo is not defined
  ******************************************************************************
  * %=rawvalue function: %{=rawvalue!variable[!flags]}
  *
@@ -108,7 +107,7 @@ class PfNode;
  * %{=ifneq:%foo::notempty} -> "notempty" if not empty, else ""
  * %{=ifneq:%foo::<a href="page?param=%foo>%foo</a>} -> html link if %foo is set
  ******************************************************************************
- * %=switch function: %{=switch:value[:case1:value1[:case2:value2[...]]][:default_value]}
+ * %=switch function: %{=switch:input[:case1:value1[:case2:value2[...]]][:default_value]}
  * test an input against different reference values and replace it according to
  * matching case
  * all parameters are evaluated, hence %foo is replaced by foo's value
@@ -126,11 +125,11 @@ class PfNode;
  * %{=switch:%foo:0:false} -> if 0: false else: %foo
  * %{=switch:%foo} -> always return %foo, but won't warn if foo is not defined
  ******************************************************************************
- * %=match function: %{=match:value[:case1:regexp1[:case2:regexp2[...]]][:default_value]}
+ * %=match function: %{=match:input[:regexp1:value1[:regexp2:value2[...]]][:default_value]}
  * test an input against different reference regexps and replace it according to
  * matching case
  * all parameters are evaluated, hence %foo is replaced by foo's value
- * if default_value is not specified, left input as is if no case matches
+ * if default_value is not specified, leave input as is if no case matches
  * see also %=switch if regexps are not needed
  *
  * examples:

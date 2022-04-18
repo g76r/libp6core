@@ -277,15 +277,12 @@ implicitVariables {
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   QString value;
-  for (int i = 0; i < params.size()-1; ++i) {
+  for (int i = 0; i < params.size(); ++i) {
     value = paramset.evaluate(params.value(i), inherit, context,
                               alreadyEvaluated);
     if (!value.isEmpty())
-      return value;
+      break;
   }
-  if (params.size() >= 2)
-    value = paramset.evaluate(params.value(params.size()-1), inherit, context,
-                              alreadyEvaluated);
   return value;
 }, true},
 { "=rawvalue", [](ParamSet paramset, QString key, bool,
