@@ -51,20 +51,22 @@ public:
 
 public:
   /** @param sizePowerOf2 size of buffer (e.g. 10 means 1024 slots) */
-  inline CircularBuffer(unsigned sizePowerOf2)
+  explicit inline CircularBuffer(unsigned sizePowerOf2)
     : _sizeMinusOne((1 << sizePowerOf2) - 1), _putCounter(0), _getCounter(0),
       _free(_sizeMinusOne+1), _used(0), _buffer(new T[_sizeMinusOne+1]) {
     if (sizePowerOf2 >= sizeof(_sizeMinusOne)*8)
       qWarning() << "CircularBuffer cannot hold buffer as large as 2 ^ "
                  << sizePowerOf2;
   }
+  CircularBuffer(const CircularBuffer&) = delete;
+  CircularBuffer &operator=(const CircularBuffer &) = delete;
   inline ~CircularBuffer() {
     delete[] _buffer;
   }
   /** Put data. If needed, wait until there are enough room in the buffer. */
   inline void put(T data) {
-    QMutexLocker locker(&_mutex);
-    if (_free == 0)
+    _mutex.lock();
+    while (_free == 0)
       _notFull.wait(&_mutex);
     // since size is a power of 2, % size === &(size-1)
     _buffer[_putCounter & (_sizeMinusOne)] = data;
@@ -72,39 +74,48 @@ public:
     --_free;
     ++_used;
     _notEmpty.wakeAll();
+    _mutex.unlock();
   }
   /** Put data only if there are enough room for it.
    * @return true on success */
   inline bool tryPut(T data) {
-    QMutexLocker locker(&_mutex);
-    if (_free == 0)
+    _mutex.lock();
+    if (_free == 0) {
+      _mutex.unlock();
       return false;
+    }
     // since size is a power of 2, % size === &(size-1)
     _buffer[_putCounter & (_sizeMinusOne)] = data;
     ++_putCounter;
     --_free;
     ++_used;
     _notEmpty.wakeAll();
+    _mutex.unlock();
     return true;
   }
   /** Put data only if there are enough room for it within timeout milliseconds.
    * @return true on success */
   inline bool tryPut(T data, int timeout) {
-    QMutexLocker locker(&_mutex);
-    if (_free == 0 && !_notFull.wait(&_mutex, timeout)) // QDeadlineTimer(timeout, Qt::PreciseTimer)
-      return false;
+    _mutex.lock();
+    while (_free == 0 ) {
+      if (!_notFull.wait(&_mutex, timeout)) { // QDeadlineTimer(timeout, Qt::PreciseTimer)
+        _mutex.unlock();
+        return false;
+      }
+    }
     // since size is a power of 2, % size === &(size-1)
     _buffer[_putCounter & (_sizeMinusOne)] = data;
     ++_putCounter;
     --_free;
     ++_used;
     _notEmpty.wakeAll();
+    _mutex.unlock();
     return true;
   }
   /** Get data. If needed, wait until it become available. */
   inline T get() {
-    QMutexLocker locker(&_mutex);
-    if (_used == 0)
+    _mutex.lock();
+    while (_used == 0)
       _notEmpty.wait(&_mutex);
     // since size is a power of 2, % size === &(size-1)
     T t = _buffer[_getCounter & (_sizeMinusOne)];
@@ -113,14 +124,19 @@ public:
     --_used;
     ++_free;
     _notFull.wakeAll();
+    _mutex.unlock();
     return t;
   }
   /** Get data only if it is available.
    * @return true on success */
   inline bool tryGet(T *data) {
-    QMutexLocker locker(&_mutex);
-    if (!data || _used == 0)
+    if (!data)
       return false;
+    _mutex.lock();
+    if (_used == 0) {
+      _mutex.unlock();
+      return false;
+    }
     // since size is a power of 2, % size === &(size-1)
     *data = _buffer[_getCounter & (_sizeMinusOne)];
     _buffer[_getCounter & (_sizeMinusOne)] = T();
@@ -128,14 +144,21 @@ public:
     --_used;
     ++_free;
     _notFull.wakeAll();
+    _mutex.unlock();
     return true;
   }
   /** Get data only if it is available within timeout milliseconds.
    * @return true on success */
   inline bool tryGet(T *data, int timeout) {
-    QMutexLocker locker(&_mutex);
-    if (!data || (_used == 0 && !_notEmpty.wait(&_mutex, timeout)))
+    if (!data)
       return false;
+    _mutex.lock();
+    while (_used == 0) {
+      if (!_notEmpty.wait(&_mutex, timeout)) {
+        _mutex.unlock();
+        return false;
+      }
+    }
     // since size is a power of 2, % size === &(size-1)
     *data = _buffer[_getCounter & (_sizeMinusOne)];
     _buffer[_getCounter & (_sizeMinusOne)] = T();
@@ -143,15 +166,17 @@ public:
     --_used;
     ++_free;
     _notFull.wakeAll();
+    _mutex.unlock();
     return true;
   }
   /** Discard all data. If needed, wait until it become available. */
   void clear() {
-    QMutexLocker locker(&_mutex);
+    _mutex.lock();
     _getCounter = _putCounter;
     _used = 0;
     _free = _sizeMinusOne+1;
     _notFull.wakeAll();
+    _mutex.unlock();
   }
   /** Total size of buffer. */
   inline long size() const { return _sizeMinusOne+1; }
