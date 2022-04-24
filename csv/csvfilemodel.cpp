@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,6 +21,8 @@ CsvFileModel::CsvFileModel(CsvFile *csvFile, QObject *parent)
   : QAbstractTableModel(parent), _csvFile(csvFile) {
 }
 
+CsvFileModel::~CsvFileModel() {
+}
 
 int CsvFileModel::columnCount(const QModelIndex &parent) const {
   return _csvFile && !parent.isValid() ? _csvFile->columnCount() : 0;

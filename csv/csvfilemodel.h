@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -28,6 +28,7 @@ class LIBP6CORESHARED_EXPORT CsvFileModel : public QAbstractTableModel {
 public:
   explicit CsvFileModel(QObject *parent = 0);
   explicit CsvFileModel(CsvFile *csvFile, QObject *parent = 0);
+  ~CsvFileModel();
   int columnCount(const QModelIndex &parent) const;
   int rowCount(const QModelIndex &parent) const;
   QVariant data(const QModelIndex &index, int role) const;
