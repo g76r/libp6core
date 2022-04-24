@@ -180,6 +180,12 @@ ParamSet::ParamSet(PfNode parentnode, QString attrname)
   }
 }
 
+ParamSet::ParamSet(PfNode parentnode, QSet<QString> attrnames) {
+  for (const PfNode &child : parentnode.children())
+    if (attrnames.contains(child.name()))
+      d->_params.insert(child.name(), child.contentAsString());
+}
+
 ParamSet::~ParamSet() {
 }
 
@@ -204,6 +210,11 @@ void ParamSet::setValue(QString key, QString value) {
   if (!d)
     d = new ParamSetData();
   d->_params.insert(key, value);
+}
+
+void ParamSet::setValues(ParamSet params, bool inherit) {
+  for (auto k: params.keys(inherit))
+    d->_params.insert(k, params.value(k));
 }
 
 void ParamSet::removeValue(QString key) {

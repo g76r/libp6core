@@ -370,6 +370,12 @@ public:
    *  (node (param foo bar)(param bar baz)) -> { "foo" = "baz", "bar" = "baz" }
    */
   ParamSet(PfNode parentnode, QString attrname);
+  /** Takes params from PfNode children given their attribute names,
+   *  using their content as value.
+   *  e.g.: with ParamSet(node, { "path", "tmp" } )
+   *  (node (path /foo/bar)(truncate)) -> { "path" = "/foo/bar", "tmp" = "" }
+   */
+  ParamSet(PfNode parentnode, QSet<QString> attrnames);
   ~ParamSet();
   ParamSet &operator=(const ParamSet &other);
   ParamSet parent() const;
@@ -399,6 +405,10 @@ public:
     setValue(key, QString::number(value, format, precision)); }
   void setValue(QString key, float value, char format='g', int precision=6) {
     setValue(key, QString::number((double)value, format, precision)); }
+  /** merge (override) params using another ParamSet content */
+  void setValues(ParamSet params, bool inherit = true);
+  /** short for setValues(other) */
+  ParamSet &operator<<(const ParamSet &other){ setValues(other); return *this; }
   void clear();
   void removeValue(QString key);
   /** Return a value without performing parameters substitution.
