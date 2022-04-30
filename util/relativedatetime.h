@@ -1,4 +1,4 @@
-/* Copyright 2014-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,7 +22,7 @@
 class RelativeDateTimeData;
 
 /** Represents a point in time relative to another point. Like natural language
- * expression like "two days ago", "tomorrow" or "last monday at 1 a.m." do.
+ * expression "two days ago", "tomorrow" or "last monday at 1 a.m." do.
  * Or more formally "two days before", "the day after" or "previous monday at
  * 1 a.m." since the reference point may be different of "now".
  *
@@ -51,7 +51,7 @@ class RelativeDateTimeData;
  * day in english (e.g. "monday"). Following terms are of the form
  * "([+-][0-9.]+[a-z]+)+" (e.g. "-1day+2hours").
  *
- * Supported timestamp are ISO8601-like. As compared to strict ISO8601, they
+ * Supported timestamp are ISO8601-like. As compared to real ISO8601, they
  * support space instead of T between date and time, they can be truncated to
  * partial forms in reverse order as compared to what ISO8601 permits, like
  * this: "06-26 12:02" "26T12:02" "12:02" "26", but not in the way ISO8601
@@ -78,19 +78,19 @@ class RelativeDateTimeData;
  * Case is not significant.
  * When no reference (being it a timestamp or week day) is specified, reference
  * date and time are used (e.g. "-1min" for one minute ago from the reference
- * date and time, e.g. now).
+ * date and time).
  */
 class LIBP6CORESHARED_EXPORT RelativeDateTime {
   QSharedDataPointer<RelativeDateTimeData> d;
 
 public:
   RelativeDateTime();
-  RelativeDateTime(QString pattern);
+  RelativeDateTime(QString expression);
   RelativeDateTime(const RelativeDateTime &);
   RelativeDateTime &operator=(const RelativeDateTime &);
   ~RelativeDateTime();
   bool isNull();
-  /** Apply relative date pattern to 'reference'.
+  /** Apply relative date expression to 'reference'.
    * If RelativeDateTime is null, return 'reference' as is. */
   QDateTime apply(QDateTime reference = QDateTime::currentDateTime());
 };

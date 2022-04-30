@@ -1,4 +1,4 @@
-/* Copyright 2014-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -45,10 +45,10 @@ class RelativeDateTimeData : public QSharedData {
 public:
   RelativeDateTimeData() : _delta(0), _method(Today) { }
 
-  RelativeDateTimeData(QString pattern) : _delta(0), _method(Today) {
-    if (!pattern.isEmpty()) {
-      //qDebug() << "RelativeDateTimeData" << pattern;
-      auto m = _wholeDateRE.match(pattern);
+  RelativeDateTimeData(QString expression) : _delta(0), _method(Today) {
+    if (!expression.isEmpty()) {
+      //qDebug() << "RelativeDateTimeData" << expression;
+      auto m = _wholeDateRE.match(expression);
       if (m.hasMatch()) {
         QString timestamp = m.captured(1), tz = m.captured(2),
             weekday = m.captured(3).toLower(), terms = m.captured(4);
@@ -99,13 +99,13 @@ public:
               //qDebug() << "found date" << year << month << day << _date << _method;
             } else {
               qDebug() << "RelativeDateTime : invalid timestamp :"
-                       << pattern << "date does not match" << timestamp;
+                       << expression << "date does not match" << timestamp;
               return;
             }
           }
           if (!tz.isEmpty()) {
             _tz = TimeFormats::tzFromIso8601(tz);
-            //qDebug() << "RelativeDateTime with timezone" << pattern << tz << _tz;
+            //qDebug() << "RelativeDateTime with timezone" << expression << tz << _tz;
           }
           /*if (_method != Today) {
           // in case method is not Today, it is more efficient to convert time
@@ -140,7 +140,7 @@ public:
           //qDebug() << "found term" << ms << unit << _delta;
         }
       } else {
-        qDebug() << "RelativeDateTime : invalid pattern :" << pattern
+        qDebug() << "RelativeDateTime : invalid expression :" << expression
                  << "whole expression does not match";
         return;
       }
@@ -189,18 +189,18 @@ public:
 RelativeDateTime::RelativeDateTime() {
 }
 
-RelativeDateTime::RelativeDateTime(QString pattern) {
-  if (!pattern.isEmpty()) {
-    pattern = pattern.trimmed();
+RelativeDateTime::RelativeDateTime(QString expression) {
+  if (!expression.isEmpty()) {
+    expression = expression.trimmed();
     QMutexLocker locker(&_cacheMutex);
-    RelativeDateTime cached = _cache.value(pattern);
+    RelativeDateTime cached = _cache.value(expression);
     locker.unlock();
     if (!cached.isNull())
       d = cached.d;
     else {
-      d = new RelativeDateTimeData(pattern);
+      d = new RelativeDateTimeData(expression);
       locker.relock();
-      _cache.insert(pattern, *this);
+      _cache.insert(expression, *this);
     }
   }
 }
