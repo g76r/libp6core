@@ -244,3 +244,6 @@ unix {
     target.path = /usr/lib
     INSTALLS += target
 }
+
+DISTFILES += \
+    util/paramset_percent_eval_functions.md
