@@ -495,10 +495,8 @@ public:
   /** Syntaxic sugar. */
   inline int valueAsInt(QString key, int defaultValue = 0, bool inherit = true,
                         const ParamsProvider *context = 0) const {
-    bool ok;
-    int v = evaluate(rawValue(key, QString(), inherit), inherit,
-                     context).toInt(&ok);
-    return ok ? v : defaultValue; }
+    qlonglong l = valueAsLong(key, defaultValue, inherit, context);
+    return (l > INT_MAX || l < INT_MIN) ? defaultValue : l; }
   /** Syntaxic sugar. */
   inline double valueAsDouble(QString key, double defaultValue = 0,
                               bool inherit = true,
