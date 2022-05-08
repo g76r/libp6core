@@ -178,6 +178,8 @@ ParamSet::ParamSet(PfNode parentnode, QString attrname)
     QString value = p.second;
     d->_params.insert(p.first, value.isNull() ? QStringLiteral("") : value);
   }
+  if (d->_params.isEmpty())
+    d.reset();
 }
 
 ParamSet::ParamSet(PfNode parentnode, QSet<QString> attrnames) {
