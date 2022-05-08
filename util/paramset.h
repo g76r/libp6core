@@ -109,6 +109,8 @@ public:
   void setValues(ParamSet params, bool inherit = true);
   /** short for setValues(other) */
   ParamSet &operator<<(const ParamSet &other){ setValues(other); return *this; }
+  /** short for setValues(other) */
+  ParamSet &operator+=(const ParamSet &other){ setValues(other); return *this; }
   void clear();
   void removeValue(QString key);
   /** Return a value without performing parameters substitution.
