@@ -213,6 +213,8 @@ void ParamSet::setValue(QString key, QString value) {
 }
 
 void ParamSet::setValues(ParamSet params, bool inherit) {
+  if (!d)
+    d = new ParamSetData();
   for (auto k: params.keys(inherit))
     d->_params.insert(k, params.value(k));
 }
