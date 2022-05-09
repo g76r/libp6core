@@ -218,7 +218,7 @@ void ParamSet::setValues(ParamSet params, bool inherit) {
   if (!d)
     d = new ParamSetData();
   for (auto k: params.keys(inherit))
-    d->_params.insert(k, params.value(k));
+    d->_params.insert(k, params.rawValue(k));
 }
 
 void ParamSet::removeValue(QString key) {
