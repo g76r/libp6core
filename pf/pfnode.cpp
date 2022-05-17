@@ -442,9 +442,9 @@ double PfNode::contentAsDouble(double defaultValue, bool *ok) const {
 bool PfNode::contentAsBool(bool defaultValue, bool *ok) const {
   QString s = contentAsString().trimmed();
   bool myok = true, v;
-  if (s.compare("true", Qt::CaseInsensitive))
+  if (s.compare("true", Qt::CaseInsensitive) == 0)
     v = true;
-  else if (s.compare("false", Qt::CaseInsensitive))
+  else if (s.compare("false", Qt::CaseInsensitive) == 0)
     v = false;
   else
     v = s.toLongLong(&myok, 0) != 0;
