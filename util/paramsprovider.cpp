@@ -28,8 +28,12 @@ struct Environment : public ParamsProvider {
   }
   QSet<QString> keys() const override {
     QSet<QString> keys;
-    for (char **e = environ; *e != nullptr; ++e)
-      keys << *e;
+    for (char **e = environ; *e != nullptr; ++e) {
+      int i = 0;
+      while ((*e)[i] != '\0' && (*e)[i] != '=')
+        ++i;
+      keys << QString::fromUtf8(*e, i);
+    }
     return keys;
   }
 };
