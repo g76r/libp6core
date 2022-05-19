@@ -69,13 +69,14 @@ public:
    *  e.g.: with ParamSet(node, "param")
    *  (node (param foo bar)(param bar baz)) -> { "foo" = "baz", "bar" = "baz" }
    */
-  ParamSet(PfNode parentnode, QString attrname);
+  ParamSet(PfNode parentnode, QString attrname, ParamSet parent = ParamSet());
   /** Takes params from PfNode children given their attribute names,
    *  using their content as value.
    *  e.g.: with ParamSet(node, { "path", "tmp" } )
    *  (node (path /foo/bar)(truncate)) -> { "path" = "/foo/bar", "tmp" = "" }
    */
-  ParamSet(PfNode parentnode, QSet<QString> attrnames);
+  ParamSet(PfNode parentnode, QSet<QString> attrnames,
+           ParamSet parent = ParamSet());
   ~ParamSet();
   ParamSet &operator=(const ParamSet &other);
   ParamSet parent() const;

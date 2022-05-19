@@ -119,6 +119,7 @@ public:
   QHash<QString,QString> _params;
   ParamSetData() { }
   ParamSetData(QHash<QString,QString> params) : _params(params) { }
+  ParamSetData(ParamSet parent) : _parent(parent) { }
 };
 
 ParamSet::ParamSet() {
@@ -167,8 +168,8 @@ ParamSet::ParamSet(QMultiHash<QString,QString> params)
     d->_params.insert(key, params.value(key));
 }
 
-ParamSet::ParamSet(PfNode parentnode, QString attrname)
-  : d(new ParamSetData) {
+ParamSet::ParamSet(PfNode parentnode, QString attrname, ParamSet parent)
+  : d(new ParamSetData(parent)) {
   QListIterator<QPair<QString,QString> > it(
     parentnode.stringsPairChildrenByName(attrname));
   while (it.hasNext()) {
@@ -178,14 +179,17 @@ ParamSet::ParamSet(PfNode parentnode, QString attrname)
     QString value = p.second;
     d->_params.insert(p.first, value.isNull() ? QStringLiteral("") : value);
   }
-  if (d->_params.isEmpty())
+  if (d->_params.isEmpty() && parent.isNull())
     d.reset();
 }
 
-ParamSet::ParamSet(PfNode parentnode, QSet<QString> attrnames) {
+ParamSet::ParamSet(PfNode parentnode, QSet<QString> attrnames, ParamSet parent)
+  : d(new ParamSetData(parent)) {
   for (const PfNode &child : parentnode.children())
     if (attrnames.contains(child.name()))
       d->_params.insert(child.name(), child.contentAsString());
+  if (d->_params.isEmpty() && parent.isNull())
+    d.reset();
 }
 
 ParamSet::~ParamSet() {
