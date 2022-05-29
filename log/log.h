@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,6 +14,7 @@
 #ifndef LOG_H
 #define LOG_H
 
+#include <type_traits>
 #include <QString>
 #include <QtDebug>
 #include <QVariant>
@@ -170,39 +171,14 @@ public:
     _message.append(o); return *this; }
   inline LogHelper &operator<<(const QLatin1String &o) {
     _message.append(o); return *this; }
-#if QT_VERSION < 0x060000
-  inline LogHelper &operator<<(const QStringRef &o) {
-    _message.append(o); return *this; }
-#endif
   inline LogHelper &operator<<(const QByteArray &o) {
     _message.append(o); return *this; }
   inline LogHelper &operator<<(const QChar &o) {
     _message.append(o); return *this; }
   inline LogHelper &operator<<(const char *o) {
     _message.append(o); return *this; }
-  inline LogHelper &operator<<(qint8 o) {
-    _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator<<(quint8 o) {
-    _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator<<(short o) {
-    _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator<<(ushort o) {
-    _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator<<(int o) {
-    _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator<<(uint o) {
-    _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator<<(long o) {
-    _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator<<(ulong o) {
-    _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator<<(qlonglong o) {
-    _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator<<(qulonglong o) {
-    _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator<<(double o) {
-    _message.append(QString::number(o)); return *this; }
-  inline LogHelper &operator<<(float o) {
+  template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+  inline LogHelper &operator<<(T o) {
     _message.append(QString::number(o)); return *this; }
   inline LogHelper &operator<<(bool o) {
     _message.append(o ? QStringLiteral("true") : QStringLiteral("false"));
@@ -211,17 +187,47 @@ public:
     _message.append(o.toString()); return *this; }
   inline LogHelper &operator<<(const QList<QString> &o) {
     _message.append("{ ");
-    foreach (QString s, o) {
+    for (auto s: o) {
       s.replace('\\', "\\\\").replace('"', "\\\"");
       _message.append("\"").append(s).append("\" ");
     }
     _message.append("}");
     return *this; }
+  inline LogHelper &operator<<(const QList<bool> &o) {
+    _message.append("{ ");
+    for (auto i: o) {
+      _message.append(i ? u"true"_qs : u"false"_qs).append(' ');
+    }
+    _message.append("}");
+    return *this; }
+  template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+  inline LogHelper &operator<<(const QList<T> &o) {
+    _message.append("{ ");
+    for (auto i: o) {
+      _message.append(QString::number(i)).append(' ');
+    }
+    _message.append("}");
+    return *this; }
   inline LogHelper &operator<<(const QSet<QString> &o) {
     _message.append("{ ");
-    foreach (QString s, o) {
+    for (auto s: o) {
       s.replace('\\', "\\\\").replace('"', "\\\"");
       _message.append("\"").append(s).append("\" ");
+    }
+    _message.append("}");
+    return *this; }
+  inline LogHelper &operator<<(const QSet<bool> &o) {
+    _message.append("{ ");
+    for (auto i: o) {
+      _message.append(i ? u"true"_qs : u"false"_qs).append(' ');
+    }
+    _message.append("}");
+    return *this; }
+  template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+  inline LogHelper &operator<<(const QSet<T> &o) {
+    _message.append("{ ");
+    for (auto i: o) {
+      _message.append(QString::number(i)).append(' ');
     }
     _message.append("}");
     return *this; }

@@ -1,4 +1,4 @@
-/* Copyright 2013-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -158,7 +158,7 @@ void GraphvizImageHttpHandler::startRendering() {
   if (written != ba.size())
     Log::debug() << "cannot write to graphviz processor "
                  << written << " " << ba.size() << " "
-                 << _process->error() << " " << _process->errorString();
+                 << (int)_process->error() << " " << _process->errorString();
   _process->closeWriteChannel();
 }
 
@@ -166,7 +166,7 @@ void GraphvizImageHttpHandler::processError(QProcess::ProcessError error) {
   readyReadStandardError();
   readyReadStandardOutput();
   Log::warning() << "graphviz rendering process crashed with "
-                    "QProcess::ProcessError code " << error << " ("
+                    "QProcess::ProcessError code " << (int)error << " ("
                  << _process->errorString() << ") and stderr content: "
                  << _stderr;
   _process->kill();
@@ -183,12 +183,12 @@ void GraphvizImageHttpHandler::processFinished(
   bool success = (exitStatus == QProcess::NormalExit && exitCode == 0);
   if (success) {
     Log::debug() << "graphviz rendering process successful with return code "
-                 << exitCode << " and QProcess::ExitStatus " << exitStatus
+                 << exitCode << " and QProcess::ExitStatus " << (int)exitStatus
                  << " having produced a " << _tmp.size() << " bytes output";
     _imageData = _tmp;
   } else {
     Log::warning() << "graphviz rendering process failed with return code "
-                   << exitCode << ", QProcess::ExitStatus " << exitStatus
+                   << exitCode << ", QProcess::ExitStatus " << (int)exitStatus
                    << " and stderr content: " << _stderr;
     //_contentType = "text/plain;charset=UTF-8";
     _imageData = _stderr.toUtf8(); // LATER placeholder image
