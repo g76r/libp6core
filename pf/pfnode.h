@@ -354,6 +354,7 @@ public:
   /** Split text content into two strings on first non-leading whitespace.
    * e.g. "foo bar baz" and "    foo  bar baz" are both interpreted as the same
    * 2 items list: { "foo", "bar baz" }.
+   * List may contain only 1 or 0 element, depending on node content.
    * Whitespace cannot be escaped. */
   QStringList contentAsTwoStringsList() const;
   /** @return QByteArray() if isEmpty() otherwise raw content (no escape

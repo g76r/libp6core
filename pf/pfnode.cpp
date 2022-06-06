@@ -473,10 +473,16 @@ QStringList PfNode::contentAsStringList() const {
   return l;
 }
 
-static QRegularExpression _twoStringsListRegexp("\\A\\s*(\\S+)\\s*(.*)\\z");
-
 QStringList PfNode::contentAsTwoStringsList() const {
-  return _twoStringsListRegexp.match(contentAsString()).capturedTexts();
+  static QRegularExpression _whitespace { "\\s+" };
+  QString s = contentAsString().trimmed();
+  if (s.isEmpty())
+    return { };
+  int i = s.indexOf(_whitespace);
+  if (i <= 0)
+    return { s };
+  return
+    { s.left(i), s.mid(i+1).trimmed() };
 }
 
 PfNode &PfNode::setAttribute(const QString &name, const QString &content) {
