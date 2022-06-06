@@ -15,11 +15,7 @@
 #define SHAREDUIITEM_H
 
 #include "util/paramsprovider.h"
-#include <QVariant>
-#include <QString>
 #include <QSharedData>
-#include <QSharedDataPointer>
-#include <QVariantHash>
 #include <QJsonObject>
 
 class QDebug;

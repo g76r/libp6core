@@ -16,8 +16,6 @@
 
 #include "shareduiitem.h"
 #include <QList>
-#include <QChar>
-#include <QString>
 
 class SharedUiItemListParamsProvider;
 

@@ -14,10 +14,10 @@
 #ifndef PARAMSPROVIDER_H
 #define PARAMSPROVIDER_H
 
+#include "libp6core_global.h"
 #include <QVariant>
 #include <QList>
 #include <QSet>
-#include "libp6core_global.h"
 
 class ParamSet;
 
