@@ -16,10 +16,7 @@ under the License.
 
 #include "pffragment_p.h"
 #include "pfarray.h"
-#include <QString>
-#include <QList>
 #include <QVariant>
-#include <QStringList>
 #include <QBuffer>
 #if QT_VERSION < 0x060000
 #include <QVector>

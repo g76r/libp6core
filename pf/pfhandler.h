@@ -1,4 +1,4 @@
-/* Copyright 2012-2021 Hallowyn and others.
+/* Copyright 2012-2022 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -15,13 +15,11 @@ under the License.
 #define PFHANDLER_H
 
 #include "libqtpf_global.h"
-#include <QString>
-#include <QStringList>
-#include <QIODevice>
-#include <QByteArray>
 #include "pfparser.h"
 #include "pfarray.h"
-#include "pfoptions.h"
+
+class QIODevice;
+class QByteArray;
 
 /** Handler for event-oriented (SAX-like) PF parser.
   * @see PfParser
