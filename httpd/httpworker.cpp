@@ -141,7 +141,7 @@ void HttpWorker::handleConnection(
   // unless QUrl implements a full HTML form encoding (including + for space)
   // in addition to current QUrl::FullyDecoded
   // see (among other references) QTBUG-10146
-  uri.replace('+', ' ');
+  uri.replace(QChar('+'), QChar(' '));
   // ensure uri starts with /
   if (uri.isEmpty() || uri[0] != '/')
     uri.insert(0, '/');
@@ -176,6 +176,9 @@ void HttpWorker::handleConnection(
           goto finally;
         }
       }
+      // replacing + with space in URI since this cannot be done in HttpRequest
+      // see above
+      line.replace(QChar('+'), QChar(' '));
       foreach (const auto &p, QUrlQuery(line).queryItems(QUrl::FullyDecoded))
         req.overrideParam(p.first, p.second);
     }

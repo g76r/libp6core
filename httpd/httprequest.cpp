@@ -132,6 +132,8 @@ QString HttpRequest::param(QString key) const {
   if (d) {
     if (d->_paramsCache.contains(key))
       return d->_paramsCache.value(key);
+    // note: + in values is replaced with space in HttpWorker::handleConnection()
+    // so even if QUrl::FullyDecoded does not decode + it will be decoded anyway
     value = d->_query.queryItemValue(key, QUrl::FullyDecoded);
     d->_paramsCache.insert(key, value);
   }
@@ -167,6 +169,8 @@ QHash<QString,QString> HttpRequest::paramsAsHash() const {
 void HttpRequest::cacheAllParams() const {
   if (!d)
     return;
+  // note: + in values is replaced with space in HttpWorker::handleConnection()
+  // so even if QUrl::FullyDecoded does not decode + it will be decoded anyway
   foreach (const auto &p, d->_query.queryItems(QUrl::FullyDecoded))
     if (!d->_paramsCache.contains(p.first))
       d->_paramsCache.insert(p.first, p.second);
