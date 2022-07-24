@@ -35,7 +35,7 @@ exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always
 QMAKE_CXXFLAGS += -Wextra -Woverloaded-virtual \
   -Wfloat-equal -Wdouble-promotion -Wimplicit-fallthrough=5 -Wtrampolines \
   -Wduplicated-branches -Wduplicated-cond -Wlogical-op \
-  -Wno-padded -Wno-deprecated-copy \
+  -Wno-padded -Wno-deprecated-copy -Wsuggest-attribute=noreturn \
   -ggdb
 CONFIG(debug,debug|release):QMAKE_CXXFLAGS += -ggdb
 
