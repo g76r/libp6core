@@ -253,7 +253,7 @@ QString HttpRequest::base64Cookie(QString name, QString defaultValue) const {
                     : QString::fromUtf8(QByteArray::fromBase64(v.toLatin1()));
 }
 
-QByteArray HttpRequest::base64BinaryCookie(QString name,
+QByteArray HttpRequest::base64BinCookie(QString name,
                                            QByteArray defaultValue) const {
   if (!d)
     return defaultValue;
@@ -316,6 +316,10 @@ QVariant HttpRequestPseudoParamsProvider::paramValue(
       return _request.clientAdresses().join(' ');
     } else if (key.startsWith("!cookie")) {
       return _request.cookie(key.mid(8));
+    } else if (key.startsWith("!base64cookie")) {
+      return _request.base64Cookie(key.mid(14));
+    } else if (key.startsWith("!base64bincookie")) {
+      return _request.base64BinCookie(key.mid(17));
     } else if (key.startsWith("!param")) {
       return _request.param(key.mid(7));
     } else if (key.startsWith("!header")) {

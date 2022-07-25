@@ -44,7 +44,7 @@ QString TextTableView::text(ParamsProvider *params, QString scope) const {
   if (params) {
     QVariant v = params->paramValue(pageVariableName);
     if (v.isNull())
-      v = params->paramValue("!cookie:"+pageVariableName);
+      v = params->paramValue("!base64cookie:"+pageVariableName);
     if (v.isNull())
       v = params->paramValue("!param:"+pageVariableName);
     pageVariableValue = v.toString();

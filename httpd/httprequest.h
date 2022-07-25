@@ -74,7 +74,7 @@ public:
   QString base64Cookie(QString name, QString defaultValue = QString()) const;
   /* Value of a given cookie, decoded from base64 (implies that the cookie
    * content was encoded using base64). */
-  QByteArray base64BinaryCookie(QString name,
+  QByteArray base64BinCookie(QString name,
                                 QByteArray defaultValue = QByteArray()) const;
   QHash<QString,QString> cookies() const;
   /** Replace url. If params have already been queried and new url has
