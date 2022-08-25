@@ -436,7 +436,7 @@ inline QString RadixTree<unsigned long long>::Node::valueToDebugString() const {
 
 template <>
 inline QString RadixTree<float>::Node::valueToDebugString() const {
-  return QString::number(_value);
+  return QString::number((double)_value);
 }
 
 template <>
