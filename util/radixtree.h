@@ -370,6 +370,12 @@ public:
     foreach (const T &key, map.keys())
       that.insert(map.value(key), key);
   }
+  QMap<QString,T> toStringMap() {
+    QMap<QString,T> map;
+    for (auto key : keys())
+      map.insert(key, value(key));
+    return map;
+  }
   QString toDebugString() {
     QString s = "RadixTree 0x" + QString::number((quint64)this, 16) + '\n';
     if (d->_root)
