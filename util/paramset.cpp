@@ -28,6 +28,7 @@
 #include <QCryptographicHash>
 #include <QRandomGenerator>
 #include "pf/pfnode.h"
+#include "util/mathexpr.h"
 
 bool ParamSet::_variableNotFoundLoggingEnabled { false };
 
@@ -655,6 +656,12 @@ implicitVariables {
   if (flags.contains('b'))
     return QString::fromLatin1(data);
   return QString::fromUtf8(data);
+}, true},
+{ "=rpn", [](ParamSet paramset, QString key, bool,
+      const ParamsProvider *context, QSet<QString> alreadyEvaluated, int matchedLength) {
+   MathExpr expr(key.mid(matchedLength), MathExpr::CharacterSeparatedRpn);
+   auto ppm = ParamsProviderMerger(paramset)(context);
+   return expr.evaluate(&ppm, QString(), alreadyEvaluated).toString();
 }, true},
 };
 

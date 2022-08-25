@@ -403,3 +403,39 @@ examples:
 * `%{=hex!%{=frombase64:+/9h:b}!!b}` returns "fbff61"
 * `%{=hex!%{=frombase64:-_9h:ub}!!b}` returns "fbff61"
 * `%{=frombase64!QmFzaWMgbG9naW46cGFzc3dvcmQ=}` returns "login:password"
+
+%=rpn
+-----
+`%{=rpn,term1[,term2[,...]]}`
+
+compute a reverse polish notation mathematical expression
+terms are considered as constants if the begins (and optionnaly ends) with
+a simple quote and are considered variables (and will be %-evaluated) otherwise
+
+following operators are supported with there usual (C, C++, Java...) priorities
+binary operators: `+ - * / % */* .. <=> <= >= < > == != ~= && ^^ ||`
+unary operators: `! !! ~`
+ternary operator: `?:`
+please note that:
+- there are no unary - and + operators
+- .. is a string concatenation operator whereas + is always a numerical operator
+- ~= is a regexp matching operator (right operand is a regexp)
+- !! is a shortcut for boolean conversion (%{=rpn,1,!!} -> true)
+
+see also MathExpr which operates with QVariant args and not only strings and is
+used as %=rpn engine. of course there are plenty of implicit type conversions,
+such as integer promotions and converting non null numbers to true booleans.
+
+examples:
+* `%{=rpn,'1','2',+}` returns "3"
+* `%{=rpn,'1,'2,..}` returns "12"
+* `%{=rpn,'1,x,+}` returns "2" if x is "1"
+* `%{=rpn,'0x20,x,+}` returns "33.5" if x is "1.5"
+* `%{=rpn,'1,',+}` returns "" (because second operand is not a number)
+* `%{=rpn,'1,'true,+}` returns "2"
+* `%{=rpn,'1,'true,&&}` returns "true"
+* `%{=rpn,'1,'true,==}` returns "false"
+* `%{=rpn,'42,!!,'true,==}` returns "true"
+* `%{=rpn,'1,'2,==,'3,'4,?:}` returns "4"
+* `%{=rpn,'aabcdaa,'a$,~=` returns "true"
+* `%{=rpn,'aabcdaa,'c$,~=` returns "false"
