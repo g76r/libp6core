@@ -66,6 +66,8 @@ SOURCES += \
     httpd/templatinghttphandler.cpp \
     mail/mailsender.cpp \
     textview/clockview.cpp \
+    util/mathexpr.cpp \
+    util/mathutils.cpp \
     util/paramset.cpp \
     log/memorylogger.cpp \
     log/logmodel.cpp \
@@ -157,6 +159,8 @@ HEADERS +=\
     httpd/templatinghttphandler.h \
     mail/mailsender.h \
     textview/clockview.h \
+    util/mathexpr.h \
+    util/mathutils.h \
     util/paramset.h \
     log/memorylogger.h \
     log/logmodel.h \
