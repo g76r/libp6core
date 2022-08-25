@@ -56,7 +56,7 @@ public:
    */
   static QString elideMiddle(const QString &string, int maxsize,
                             const QString &placeholder = _ellipsis) {
-    if (maxsize < 0 || string.size() < maxsize)
+    if (maxsize < 0 || string.size() <= maxsize)
       return string;
     if (placeholder.size() > maxsize)
       return placeholder.left(maxsize);
