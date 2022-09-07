@@ -89,6 +89,26 @@ RadixTree<OperatorDef> operatordefs {
              auto x = args.value(0)(context, alreadyEvaluated).toBool();
              return QVariant(x);
            } }, true },
+  { "?-", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
+                           QSet<QString> alreadyEvaluated) {
+             auto x = args.value(0)(context, alreadyEvaluated);
+             return !x.isValid() || x.isNull(); // is null
+          } }, true },
+  { "!-", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
+                           QSet<QString> alreadyEvaluated) {
+             auto x = args.value(0)(context, alreadyEvaluated);
+             return x.isValid() && !x.isNull(); // is not null
+           } }, true },
+  { "?/", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
+                           QSet<QString> alreadyEvaluated) {
+             auto x = args.value(0)(context, alreadyEvaluated).toString();
+             return x.isEmpty();
+           } }, true },
+  { "!/", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
+                           QSet<QString> alreadyEvaluated) {
+             auto x = args.value(0)(context, alreadyEvaluated).toString();
+             return !x.isEmpty();
+           } }, true },
   { "~", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
                           QSet<QString> alreadyEvaluated) {
             bool ok;
