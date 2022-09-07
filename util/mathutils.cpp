@@ -13,6 +13,7 @@
  */
 #include "mathutils.h"
 #include <QHash>
+#include <QDateTime>
 
 static int numericsPromotion(int typeId) {
   switch(typeId) {
@@ -40,32 +41,44 @@ static int numericsPromotion(int typeId) {
   return QMetaType::UnknownType;
 }
 
-static bool convertStringToBestNumericTypeIfPossible(
+static bool convertOtherTypesToBestNumericTypeIfPossible(
   QVariant *a, int *ta, int *tta) {
   if (*ta == QMetaType::QByteArray) {
     a->setValue(QString::fromUtf8(a->toByteArray()));
     *ta = QMetaType::QString;
   }
-  if (*ta == QMetaType::QString) {
-    auto s = a->toString();
-    bool ok;
-    auto ll = s.toLongLong(&ok, 0);
-    if (ok) {
-      a->setValue(ll);
-      *tta = QMetaType::LongLong;
-      return true;
+  switch(*ta) {
+    case QMetaType::QString: {
+      auto s = a->toString();
+      bool ok;
+      auto ll = s.toLongLong(&ok, 0);
+      if (ok) {
+        a->setValue(ll);
+        *tta = QMetaType::LongLong;
+        return true;
+      }
+      auto ull = s.toLongLong(&ok, 0);
+      if (ok) {
+        a->setValue(ull);
+        *tta = QMetaType::ULongLong;
+        return true;
+      }
+      auto d = s.toDouble(&ok);
+      if (ok) {
+        a->setValue(d);
+        *tta = QMetaType::Double;
+        return true;
+      }
     }
-    auto ull = s.toLongLong(&ok, 0);
-    if (ok) {
-      a->setValue(ull);
-      *tta = QMetaType::ULongLong;
-      return true;
-    }
-    auto d = s.toDouble(&ok);
-    if (ok) {
-      a->setValue(d);
-      *tta = QMetaType::Double;
-      return true;
+    case QMetaType::QDate:
+    case QMetaType::QTime:
+    case QMetaType::QDateTime: {
+      auto dt = a->toDateTime();
+      if (dt.isValid()) {
+        a->setValue(dt.toMSecsSinceEpoch());
+        *tta = QMetaType::LongLong;
+      }
+
     }
   }
   return false;
@@ -74,7 +87,7 @@ static bool convertStringToBestNumericTypeIfPossible(
 bool MathUtils::promoteToBestNumericType(QVariant *a) {
   int ta = a->metaType().id();
   int tta = numericsPromotion(ta);
-  convertStringToBestNumericTypeIfPossible(a, &ta, &tta);
+  convertOtherTypesToBestNumericTypeIfPossible(a, &ta, &tta);
   switch (tta) {
     case QMetaType::ULongLong:
     case QMetaType::LongLong:
@@ -92,8 +105,8 @@ bool MathUtils::promoteToBestNumericType(QVariant *a, QVariant *b) {
   int tb = b->metaType().id();
   int tta = numericsPromotion(ta);
   int ttb = numericsPromotion(tb);
-  convertStringToBestNumericTypeIfPossible(a, &ta, &tta);
-  convertStringToBestNumericTypeIfPossible(b, &tb, &ttb);
+  convertOtherTypesToBestNumericTypeIfPossible(a, &ta, &tta);
+  convertOtherTypesToBestNumericTypeIfPossible(b, &tb, &ttb);
   //qDebug() << "promoteToBestNumericType " << ta << " " << tb << " " << tta
   //         << " " << ttb;
   if (tta == QMetaType::UnknownType || ttb == QMetaType::UnknownType)

@@ -28,6 +28,7 @@ public:
    * If one is any floating point type both become double
    * String types are first converted to qlonglong if possible, or double if
    * possible, then above rules apply as if they were qlonglong or double.
+   * QDateTime,QDate,QTime are converted to msecs since 1970.
    * @return true on success false on failure
    */
   static bool promoteToBestNumericType(QVariant *a, QVariant *b);
