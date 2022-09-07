@@ -182,6 +182,7 @@ RadixTree<OperatorDef> operatordefs {
             auto x = args.value(0)(context, alreadyEvaluated);
             auto y = args.value(1)(context, alreadyEvaluated);
             auto po = MathUtils::compareQVariantAsNumber(x, y);
+            //qDebug() << "evaluating <" << x << y;
             if (po == QPartialOrdering::Less)
               return QVariant(true);
             if (po == QPartialOrdering::Greater
@@ -227,6 +228,7 @@ RadixTree<OperatorDef> operatordefs {
              auto y = args.value(1)(context, alreadyEvaluated);
              // QVariant compare same types, or different types if both numerics
              // or one numeric and a string that can be converted to numeric
+             //qDebug() << "evaluating !=" << x << y;
              return x != y;
            } }, true },
   { "~=", { 2, 10, false, [](QList<Operand> args, const ParamsProvider *context,
@@ -244,6 +246,7 @@ RadixTree<OperatorDef> operatordefs {
                              QSet<QString> alreadyEvaluated) {
              auto x = args.value(0)(context, alreadyEvaluated).toBool();
              auto y = args.value(1)(context, alreadyEvaluated).toBool();
+             //qDebug() << "evaluating &&" << x << y;
              return QVariant(x && y);
            } }, true },
   { "^^", { 2, 15, false, [](QList<Operand> args, const ParamsProvider *context,
@@ -328,7 +331,9 @@ static Operand compileRpn(QList<QString> terms, bool *ok) {
 
 class MathExprData : public QSharedData {
   Operand _root;
-  MathExprData(Operand root) : _root(root) { }
+  QString _expr;
+  MathExprData(Operand root, QString expr) : _root(root), _expr(expr) {
+  }
 public:
   MathExprData() { };
   static MathExprData *fromExpr(
@@ -339,7 +344,7 @@ public:
       CharacterSeparatedExpression terms(expr);
       auto root = compileRpn(terms, &ok);
       if (ok)
-        d = new MathExprData(root);
+        d = new MathExprData(root, expr);
     } else {
       qWarning() << "Cannot create MathExprData with unsupported dialect type "
                  << dialect;
@@ -350,6 +355,7 @@ public:
                            QSet<QString> alreadyEvaluated) const {
     return _root(context, alreadyEvaluated);
   }
+  inline QString expr() const { return _expr; }
 };
 
 MathExpr::MathExpr(const QString expr, MathDialect dialect)
@@ -372,4 +378,19 @@ QVariant MathExpr::evaluate(
   const ParamsProvider *context, QVariant defaultValue,
   QSet<QString> alreadyEvaluated) const {
   return d ? d->evaluate(context, alreadyEvaluated) : defaultValue;
+}
+
+QString MathExpr::expr() const {
+  return d ? d->expr() : QString();
+}
+
+QDebug operator<<(QDebug dbg, const MathExpr &expr) {
+  dbg.nospace() << "{";
+  dbg.space() << expr.expr() << "}";
+  return dbg.space();
+}
+
+LogHelper operator<<(LogHelper lh, const MathExpr &expr) {
+  lh << "{ ";
+  return lh << expr.expr() << " }";
 }
