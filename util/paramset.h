@@ -171,7 +171,7 @@ public:
     auto s = evaluate(rawValue(key, QString(), inherit), inherit,
                       context).trimmed();
     auto len = s.size();
-    if (len >= 2 && s.at(1) == 'x') {
+    if (len >= 2) {
       switch(s.at(len-1).toLatin1()) {
         case 'k':
           s = s.left(len-1)+"000";
