@@ -63,4 +63,26 @@ public:
                    QSet<QString> alreadyEvaluated = QSet<QString>()) const;
 };
 
+/** Map of params without inheritance, evaluation or any other advanced
+ *  features: just a simple QString->QVariant map. */
+class LIBP6CORESHARED_EXPORT RawParamsProvider : public ParamsProvider {
+private:
+  QMap<QString,QVariant> _params;
+
+public:
+  RawParamsProvider(QMap<QString,QVariant> params = QMap<QString,QVariant>())
+    : _params(params) { }
+  RawParamsProvider(std::initializer_list<std::pair<QString,QVariant>> list) {
+    for (auto &p : list)
+      _params.insert(p.first, p.second);
+  }
+
+public:
+  QVariant paramValue(
+    QString key, const ParamsProvider *context, QVariant defaultValue,
+    QSet<QString> alreadyEvaluated) const override;
+  QSet<QString> keys() const override;
+  QMap<QString,QVariant> toMap() const { return _params; }
+};
+
 #endif // PARAMSPROVIDER_H

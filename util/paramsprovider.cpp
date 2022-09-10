@@ -68,3 +68,14 @@ QString ParamsProvider::evaluate(
     QString rawValue, QSet<QString> alreadyEvaluated) const {
   return ParamSet().evaluate(rawValue, false, this, alreadyEvaluated);
 }
+
+QVariant RawParamsProvider::paramValue(
+  QString key, const ParamsProvider *, QVariant defaultValue,
+  QSet<QString>) const {
+  return _params.value(key, defaultValue);
+}
+
+QSet<QString> RawParamsProvider::keys() const {
+  auto keys = _params.keys();
+  return QSet<QString>(keys.begin(), keys.end());
+}
