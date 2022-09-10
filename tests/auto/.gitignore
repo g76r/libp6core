@@ -1,0 +1,8 @@
+.qt/
+CMakeCache.txt
+CMakeFiles/
+CTestTestfile.cmake
+cmake_install.cmake
+config.tests/
+*_autogen/
+/mathexpr
