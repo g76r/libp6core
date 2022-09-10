@@ -382,7 +382,9 @@ implicitVariables {
     for (int i = 0; i < n; ++i) {
       QString ref = paramset.evaluate(params.value(1+i*2), inherit, context,
                                       alreadyEvaluated);
-      if (QRegularExpression(ref).match(input).hasMatch())
+      QRegularExpression re(ref, QRegularExpression::DotMatchesEverythingOption // can be canceled with (?-s)
+                            );
+      if (re.match(input).hasMatch())
         return paramset.evaluate(params.value(1+i*2+1), inherit, context,
                                  alreadyEvaluated);
     }
@@ -407,10 +409,11 @@ implicitVariables {
     CharacterSeparatedExpression sFields(params[i]);
     //qDebug() << "pattern" << i << params[i] << sFields.size() << sFields;
     QString optionsString = sFields.value(2);
-    QRegularExpression::PatternOption patternOptions
-        = QRegularExpression::NoPatternOption;
+    QRegularExpression::PatternOptions patternOptions
+        = QRegularExpression::DotMatchesEverythingOption // can be canceled with (?-s)
+      ;
     if (optionsString.contains('i'))
-      patternOptions = QRegularExpression::CaseInsensitiveOption;
+      patternOptions |= QRegularExpression::CaseInsensitiveOption;
     // LATER add support for other available options: s,x...
     // LATER add a regexp cache because same =sub is likely to be evaluated several times
     // options must be part of the cache key
@@ -780,12 +783,12 @@ QStringList ParamSet::splitAndEvaluate(
   return values;
 }
 
-static QRegularExpression whitespace("\\s");
+static QRegularExpression _whitespace("\\s");
 
 QPair<QString,QString> ParamSet::valueAsStringsPair(
     QString key, bool inherit, const ParamsProvider *context) const {
   QString v = rawValue(key, inherit).trimmed();
-  int i = v.indexOf(whitespace);
+  int i = v.indexOf(_whitespace);
   if (i == -1)
     return QPair<QString,QString>(v,QString());
   return QPair<QString,QString>(v.left(i),
