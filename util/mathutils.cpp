@@ -49,7 +49,7 @@ static bool convertOtherTypesToBestNumericTypeIfPossible(
   }
   switch(*ta) {
     case QMetaType::QString: {
-      auto s = a->toString();
+      auto s = a->toString().trimmed();
       bool ok;
       auto ll = s.toLongLong(&ok, 0);
       if (ok) {
@@ -69,17 +69,35 @@ static bool convertOtherTypesToBestNumericTypeIfPossible(
         *tta = QMetaType::Double;
         return true;
       }
+      if (s.compare("true", Qt::CaseInsensitive) == 0) {
+        a->setValue(1LL);
+        *tta = QMetaType::LongLong;
+        return true;
+      }
+      if (s.compare("false", Qt::CaseInsensitive) == 0) {
+        a->setValue(0LL);
+        *tta = QMetaType::LongLong;
+        return true;
+      }
     }
+    break;
     case QMetaType::QDate:
-    case QMetaType::QTime:
     case QMetaType::QDateTime: {
       auto dt = a->toDateTime();
       if (dt.isValid()) {
         a->setValue(dt.toMSecsSinceEpoch());
         *tta = QMetaType::LongLong;
       }
-
     }
+    break;
+    case QMetaType::QTime:  {
+      auto t = a->toTime();
+      if (t.isValid()) {
+        a->setValue(t.msecsSinceStartOfDay());
+        *tta = QMetaType::LongLong;
+      }
+    }
+    break;
   }
   return false;
 }
@@ -93,6 +111,42 @@ bool MathUtils::promoteToBestNumericType(QVariant *a) {
     case QMetaType::LongLong:
     case QMetaType::Double:
       a->convert(QMetaType(tta));
+      return true;
+  }
+  return false;
+}
+
+bool MathUtils::convertToString(QVariant *a) {
+  if (!a)
+    return false;
+  int ta = a->metaType().id();
+  switch(a->typeId()) {
+    case QMetaType::Bool:
+    case QMetaType::Int:
+    case QMetaType::UInt:
+    case QMetaType::QChar:
+    case QMetaType::Long:
+    case QMetaType::LongLong:
+    case QMetaType::Short:
+    case QMetaType::Char:
+    case QMetaType::Char16:
+    case QMetaType::Char32:
+    case QMetaType::ULong:
+    case QMetaType::UShort:
+    case QMetaType::SChar:
+    case QMetaType::UChar:
+    case QMetaType::Double:
+    case QMetaType::Float:
+    case QMetaType::ULongLong:
+    case QMetaType::QDateTime:
+    case QMetaType::QDate:
+    case QMetaType::QTime:
+      *a = a->toString();
+      return true;
+    case QMetaType::QString:
+      return true;
+    case QMetaType::QStringList:
+      *a = a->toStringList().join(" ");
       return true;
   }
   return false;
@@ -136,7 +190,7 @@ bool MathUtils::promoteToBestNumericType(QVariant *a, QVariant *b) {
     // same, swaping a and b
     if (b->toULongLong() <= (ULLONG_MAX >> 1)) {
       a->convert(QMetaType(QMetaType::LongLong));
-      b->setValue((qlonglong) a->toULongLong());
+      b->setValue((qlonglong) b->toULongLong());
       return true;
     } else if (a->toLongLong() >= 0) {
       a->setValue((qulonglong) a->toLongLong());
@@ -154,10 +208,29 @@ bool MathUtils::promoteToBestNumericType(QVariant *a, QVariant *b) {
   return false;
 }
 
-QPartialOrdering MathUtils::compareQVariantAsNumber(QVariant a, QVariant b) {
-  if (!promoteToBestNumericType(&a, &b))
-    return QPartialOrdering::Unordered;
-  return QVariant::compare(a, b);
+QPartialOrdering MathUtils::compareQVariantAsNumber(
+  QVariant a, QVariant b, bool anyStringRepresentation) {
+  auto a0 = a, b0 = b;
+  //qDebug() << "compareQVariantAsNumber" << a << b;
+  if (promoteToBestNumericType(&a, &b)) {
+    //qDebug() << "  promoted" << a << b;
+    return QVariant::compare(a, b);
+  }
+  if (anyStringRepresentation) {
+    convertToString(&a0);
+    convertToString(&b0);
+    auto c = a0.toString().compare(b0.toString());
+    //qDebug() << "  stringified(any)" << a0 << b0 << c;
+    return c > 0 ? QPartialOrdering::Greater
+           : c < 0 ? QPartialOrdering::Less
+                   : QPartialOrdering::Equivalent;
+  }
+  if (convertToString(&a0) && convertToString(&b0)) {
+    //qDebug() << "  stringified" << a0 << b0;
+    return QVariant::compare(a0, b0);
+  }
+  //qDebug() << "  unordered";
+  return QPartialOrdering::Unordered;
 }
 
 QVariant MathUtils::addQVariantAsNumber(QVariant a, QVariant b) {

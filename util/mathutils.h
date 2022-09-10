@@ -32,16 +32,31 @@ public:
    * @return true on success false on failure
    */
   static bool promoteToBestNumericType(QVariant *a, QVariant *b);
-  /** same as QVariant::compare() but can compare string representations of
-   *  numbers, and can compare signed and unsigned in most cases (provided
-   *  the unsigned one is lower than signed long long positive max).
+  /** same as QVariant::compare() but:
+   *  - first try to promote numbers to best integer or decimal representation
+   *  and to convert strings if they are valid representations of numbers
+   *  (such as: "1" "8e-10" "0x20" "true"), to convert dates and
+   *  datetimes to msecs since 1970, times to msecs since midnight, booleans to
+   *  1 or 0. try to compare signed and unsigned whenever possible
+   *  (provided the unsigned one is lower than signed long long positive max).
+   *  - then if anyStringRepresentation is false (the default) :
+   *  if a or b cannot be converted to a number but both can be converted as
+   *  strings, compare them as strings (for instance: QDateTime
+   *  compared to an ISO timestamp in a QString)
+   *  - or, if anyStringRepresentation is true: compare the string
+   *  representation of variants, whatever they are. including invalid objects
+   *  that will be processed as if they were an empty string (so using
+   *  anyStringRepresentation == true, QVariant() is equal to an QString("")
+   *  and to QDateTime())
    */
-  static QPartialOrdering compareQVariantAsNumber(QVariant a, QVariant b);
+  static QPartialOrdering compareQVariantAsNumber(
+    QVariant a, QVariant b, bool anyStringRepresentation = false);
   static QVariant addQVariantAsNumber(QVariant a, QVariant b);
   static QVariant subQVariantAsNumber(QVariant a, QVariant b);
   static QVariant mulQVariantAsNumber(QVariant a, QVariant b);
   static QVariant divQVariantAsNumber(QVariant a, QVariant b);
   static QVariant modQVariantAsNumber(QVariant a, QVariant b);
+  static bool convertToString(QVariant *a);
 };
 
 #endif // MATHUTILS_H
