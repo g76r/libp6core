@@ -146,7 +146,9 @@ public:
                        QSet<QString> alreadyEvaluated) const {
     return evaluate(rawValue(key, inherit), inherit, context, alreadyEvaluated);
   }
-  /** Return a value splitted into strings after parameters substitution. */
+  /** Return a value splitted into strings, %-substitution is done after the
+   * split (i.e. "%foo bar" has two elements, regardless the number of spaces
+   * in %foo value). */
   QStringList valueAsStrings(QString key, QString defaultRawValue = QString(),
                              bool inherit = true,
                              const ParamsProvider *context = 0,
