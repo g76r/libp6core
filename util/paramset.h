@@ -21,6 +21,7 @@
 
 class ParamSetData;
 class PfNode;
+class QSqlDatabase;
 
 /** String key-value parameter set with inheritance, substitution macro-language
  * and syntaxic sugar for converting values to non-string types.
@@ -75,6 +76,16 @@ public:
    *  (node (path /foo/bar)(truncate)) -> { "path" = "/foo/bar", "tmp" = "" }
    */
   ParamSet(PfNode parentnode, QSet<QString> attrnames,
+           ParamSet parent = ParamSet());
+  /** Takes params from columns values of an SQL query.
+   *  SQL query is %-evaluated within parent context.
+   *  QSqlDatabase must already be open.
+   *  e.g.: with Paramset(db, "select distinct foo, null from t1 union select
+   *  null, bar from t2", {{ 0, "foos"}, {1, "bars"}}) foos will be a space
+   *  separated list of unique non null non empty values in column foo of table
+   *  t1 and bars of non null non empty values in column bar of table t2.
+   */
+  ParamSet(QSqlDatabase db, QString sql, QMap<int,QString> bindings,
            ParamSet parent = ParamSet());
   ~ParamSet();
   ParamSet &operator=(const ParamSet &other);

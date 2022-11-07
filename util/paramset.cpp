@@ -29,6 +29,11 @@
 #include <QRandomGenerator>
 #include "pf/pfnode.h"
 #include "util/mathexpr.h"
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlRecord>
+#include <QSqlField>
+#include <QSqlError>
 
 bool ParamSet::_variableNotFoundLoggingEnabled { false };
 
@@ -191,6 +196,36 @@ ParamSet::ParamSet(PfNode parentnode, QSet<QString> attrnames, ParamSet parent)
       d->_params.insert(child.name(), child.contentAsString());
   if (d->_params.isEmpty() && parent.isNull())
     d.reset();
+}
+
+ParamSet::ParamSet(QSqlDatabase db, QString sql, QMap<int,QString> bindings,
+                   ParamSet parent)
+  : d(new ParamSetData(parent)) {
+  QSqlQuery query(db);
+  query.prepare(parent.evaluate(sql));
+  if (!query.exec()) {
+    QSqlError error = query.lastError();
+    Log::warning() << "failure trying to load params from SQL query: "
+                   << " error: " << error.nativeErrorCode() << " "
+                   << error.driverText() << " " << error.databaseText()
+                   << " " << sql;
+    return;
+  }
+  QMultiMap<int,QString> values;
+  while (query.next()) {
+    auto r = query.record();
+    for (int i = 0; i < r.count(); ++i) {
+      if (!bindings.contains(i))
+        continue;
+      auto s = r.field(i).value().toString();
+      if (s.isEmpty()) // ignoring both nulls and empty strings
+        continue;
+      values.insert(i, escape(s));
+    }
+  }
+  for (auto i: bindings.keys()) {
+    setValue(bindings.value(i), values.values(i).join(" "));
+  }
 }
 
 ParamSet::~ParamSet() {
