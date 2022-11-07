@@ -66,10 +66,19 @@ public:
   explicit ParamSet(QMultiHash<QString,QString> params);
   /** Takes params from PfNode children given an attribute name,
    *  parsing their text content as key-whitespace-value.
+   *  Optionnaly a second attribute name is used for "const" params, that is
+   *  parameters that are %-evaluated now and have their value %-escaped so
+   *  that they won't ever change again later.
    *  e.g.: with ParamSet(node, "param")
    *  (node (param foo bar)(param bar baz)) -> { "foo" = "baz", "bar" = "baz" }
+   *  e.g.: with ParamSet(node, "param", "constparam")
+   *  (node (param foo bar)(param bar baz)(constparam now "%{=date}"))
+   *  -> now's value won't change later and will stay as a timestamp of ParamSet
+   *  construction
    */
-  ParamSet(PfNode parentnode, QString attrname, ParamSet parent = ParamSet());
+  ParamSet(PfNode parentnode, QString attrname,
+           QString constattrname = QString(), ParamSet parent = ParamSet());
+  ParamSet(PfNode parentnode, QString attrname, ParamSet parent);
   /** Takes params from PfNode children given their attribute names,
    *  using their content as value.
    *  e.g.: with ParamSet(node, { "path", "tmp" } )

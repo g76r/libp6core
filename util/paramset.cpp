@@ -174,19 +174,27 @@ ParamSet::ParamSet(QMultiHash<QString,QString> params)
     d->_params.insert(key, params.value(key));
 }
 
-ParamSet::ParamSet(PfNode parentnode, QString attrname, ParamSet parent)
+ParamSet::ParamSet(
+  PfNode parentnode, QString attrname, QString constattrname, ParamSet parent)
   : d(new ParamSetData(parent)) {
-  QListIterator<QPair<QString,QString> > it(
-    parentnode.stringsPairChildrenByName(attrname));
-  while (it.hasNext()) {
-    const QPair<QString,QString> &p(it.next());
+  for (auto p: parentnode.stringsPairChildrenByName(attrname)) {
     if (p.first.isEmpty())
       continue;
-    QString value = p.second;
+    auto value = p.second;
+    d->_params.insert(p.first, value.isNull() ? QStringLiteral("") : value);
+  }
+  for (auto p: parentnode.stringsPairChildrenByName(constattrname)) {
+    if (p.first.isEmpty())
+      continue;
+    auto value = escape(evaluate(p.second));
     d->_params.insert(p.first, value.isNull() ? QStringLiteral("") : value);
   }
   if (d->_params.isEmpty() && parent.isNull())
     d.reset();
+}
+
+ParamSet::ParamSet(PfNode parentnode, QString attrname, ParamSet parent)
+  : ParamSet(parentnode, attrname, QString(), parent) {
 }
 
 ParamSet::ParamSet(PfNode parentnode, QSet<QString> attrnames, ParamSet parent)
@@ -953,7 +961,8 @@ ParamSet ParamSet::createChild() const {
 }
 
 QString ParamSet::escape(QString string) {
-  return string.replace(QStringLiteral("%"), QStringLiteral("%%"));
+  return string.isNull() ? string : string.replace(QStringLiteral("%"),
+                                                   QStringLiteral("%%"));
 }
 
 void ParamSet::detach() {
