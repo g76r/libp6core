@@ -962,3 +962,28 @@ QString ParamSet::escape(QString string) {
 void ParamSet::detach() {
   d.detach();
 }
+
+void ParamSet::setValuesFromSqlDb(
+  QSqlDatabase db, QString sql, QMap<int,QString> bindings) {
+  ParamSet params(db, sql, bindings, *this);
+  this->setValues(params, false);
+}
+
+void ParamSet::setValuesFromSqlDb(
+  QString dbname, QString sql, QMap<int,QString> bindings) {
+  setValuesFromSqlDb(QSqlDatabase::database(dbname), sql, bindings);
+}
+
+void ParamSet::setValuesFromSqlDb(
+  QString dbname, QString sql, QStringList bindings) {
+  setValuesFromSqlDb(QSqlDatabase::database(dbname), sql, bindings);
+}
+
+void ParamSet::setValuesFromSqlDb(
+  QSqlDatabase db, QString sql, QStringList bindings) {
+  QMap<int,QString> map;
+  int i = 0;
+  for (auto key: bindings)
+    map.insert(i++, key);
+  setValuesFromSqlDb(db, sql, map);
+}

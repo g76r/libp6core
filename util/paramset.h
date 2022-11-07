@@ -127,6 +127,29 @@ public:
     setValue(key, QString::number((double)value, format, precision)); }
   /** merge (override) params using another ParamSet content */
   void setValues(ParamSet params, bool inherit = true);
+  /** merge (override) params taking them from a SQL database query
+   *  SQL query is %-evaluated within parent context.
+   *  QSqlDatabase must already be open.
+   *  e.g.: with setValuesFromSqlDb(db, "select distinct foo, null from t1
+   *  union select null, bar from t2", {{ 0, "foos"}, {1, "bars"}}),
+   *  foos will be a space separated list of unique non null non empty values
+   *  in column foo of table t1
+   *  and bars of non null non empty values in column bar of table t2.
+   */
+  void setValuesFromSqlDb(
+    QSqlDatabase db, QString sql, QMap<int,QString> bindings);
+  /** merge (override) params taking them from a SQL database query.
+   *  convenience method resolving sql database name. */
+  void setValuesFromSqlDb(QString dbname, QString sql, QMap<int,QString> bindings);
+  /** merge (override) params taking them from a SQL database query.
+   *  convenience method mapping each column in order
+   *  e.g. "foo bar" is equivalent to {{0,"foo"},{1,"bar"}}. */
+  void setValuesFromSqlDb(QSqlDatabase db, QString sql, QStringList bindings);
+  /** merge (override) params taking them from a SQL database query.
+   *  convenience method resolving sql database name and mapping each column
+   *  in order
+   *  e.g. "foo bar" is equivalent to {{0,"foo"},{1,"bar"}}. */
+  void setValuesFromSqlDb(QString dbname, QString sql, QStringList bindings);
   /** short for setValues(other) */
   ParamSet &operator<<(const ParamSet &other){ setValues(other); return *this; }
   /** short for setValues(other) */
