@@ -58,6 +58,7 @@ SOURCES += \
     httpd/httpresponse.cpp \
     httpd/httprequest.cpp \
     httpd/httphandler.cpp \
+    sql/sqlutils.cpp \
     thread/blockingtimer.cpp \
     textview/htmltableview.cpp \
     textview/textview.cpp \
@@ -151,6 +152,7 @@ HEADERS +=\
     httpd/httpresponse.h \
     httpd/httprequest.h \
     httpd/httphandler.h \
+    sql/sqlutils.h \
     thread/blockingtimer.h \
     textview/htmltableview.h \
     textview/textview.h \
