@@ -308,8 +308,6 @@ public:
    * @param inherit include params inherited from parents
    * @param decorate surround with curly braces */
   QString toString(bool inherit = true, bool decorate = true) const;
-  /** Create an empty ParamSet having this one for parent. */
-  ParamSet createChild() const;
   /** Record debug log messages when a variable evaluation is required and not
    * found.
    * Applicable to all params sets in the applicatoin (global parameter).

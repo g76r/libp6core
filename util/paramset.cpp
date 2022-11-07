@@ -954,12 +954,6 @@ LogHelper operator<<(LogHelper lh, const ParamSet &params) {
   return lh << "}";
 }
 
-ParamSet ParamSet::createChild() const {
-  ParamSet params;
-  params.setParent(*this);
-  return params;
-}
-
 QString ParamSet::escape(QString string) {
   return string.isNull() ? string : string.replace(QStringLiteral("%"),
                                                    QStringLiteral("%%"));
