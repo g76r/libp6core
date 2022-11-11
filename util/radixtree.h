@@ -162,8 +162,8 @@ class LIBP6CORESHARED_EXPORT RadixTree {
      * @return true if found
      * @param value receive a copy of the value if found and value!=0
      */
-    bool inline lookup(const char *key, T *value = 0,
-                       int *matchedLength = 0) const {
+    [[gnu::hot]] bool inline lookup(
+      const char *key, T *value = 0, int *matchedLength = 0) const {
       Q_ASSERT(key);
       Q_ASSERT(_fragment);
       int i = 0;
@@ -255,7 +255,7 @@ class LIBP6CORESHARED_EXPORT RadixTree {
       //qDebug() << "/addChild" << this << _children << _childrenCount;
     }
     /// binary search among children and recurse lookup
-    static inline bool lookupAmongChildren(
+    [[gnu::hot]] static inline bool lookupAmongChildren(
         const char *key, T *value, const Node * const *children,
         int childrenCount, int *matchedLength) {
       if (childrenCount <= 0)
@@ -322,8 +322,8 @@ public:
   }
   void insert(const QString &key, T value, bool isPrefix = false) {
     insert (key.toUtf8().constData(), value, isPrefix); }
-  const T value(const char *key, T defaultValue = T(),
-                int *matchedLength = 0) const {
+  [[gnu::hot]] const T value(const char *key, T defaultValue = T(),
+                             int *matchedLength = 0) const {
     T value = defaultValue;
     if (matchedLength)
       *matchedLength = 0;
@@ -331,19 +331,20 @@ public:
       d->_root->lookup(key, &value, matchedLength);
     return value;
   }
-  const T value(const char *key, int *matchedLength) const {
+  [[gnu::hot]] const T value(const char *key, int *matchedLength) const {
     return value(key, T(), matchedLength); }
-  const T value(const QString &key, T defaultValue = T(),
-                int *matchedLength = 0) const {
+  [[gnu::hot]] const T value(const QString &key, T defaultValue = T(),
+                             int *matchedLength = 0) const {
     return value(key.toUtf8().constData(), defaultValue, matchedLength); }
-  const T value(const QString &key, int *matchedLength) const {
+  [[gnu::hot]] const T value(const QString &key, int *matchedLength) const {
     return value(key.toUtf8().constData(), T(), matchedLength); }
-  const T operator[](const QString &key) const { return value(key); }
-  const T operator[](const char *key) const { return value(key); }
-  bool contains(const char *key) const {
+  [[gnu::hot]] const T operator[](const QString &key) const {
+    return value(key); }
+  [[gnu::hot]] const T operator[](const char *key) const { return value(key); }
+  [[gnu::hot]] bool contains(const char *key) const {
     return (d && d->_root) ? d->_root->lookup(key) : false;
   }
-  bool contains(const QString &key) const {
+  [[gnu::hot]] bool contains(const QString &key) const {
     return value(key.toUtf8().constData()); }
   QSet<QString> keys() const {
     return d ? d->_keys : QSet<QString>();
