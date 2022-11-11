@@ -59,6 +59,11 @@ void SqlUtils::configureSqlDatabasesFromChildren(
 
 }
 
+void SqlUtils::configureSqlDatabasesFromChildren(
+  PfNode config, QString childname, ParamSet context) {
+  configureSqlDatabasesFromChildren(config, childname, &context);
+}
+
 void SqlUtils::setSqlParamsFromChildren(
   PfNode config, ParamSet *params, QString childname) {
   if (!params)

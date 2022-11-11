@@ -43,6 +43,8 @@ public:
    */
   static void configureSqlDatabasesFromChildren(
     PfNode config, QString childname, ParamsProvider *context = 0);
+  static void configureSqlDatabasesFromChildren(
+    PfNode config, QString childname, ParamSet context);
   /** calls ParamSet::setValuesFromSqlDb for each child with a given name,
    *  using its children "db", "sql" and "bindings" as parameters.
    *  e.g.
