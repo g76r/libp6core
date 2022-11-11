@@ -119,8 +119,7 @@ bool MathUtils::promoteToBestNumericType(QVariant *a) {
 bool MathUtils::convertToString(QVariant *a) {
   if (!a)
     return false;
-  int ta = a->metaType().id();
-  switch(a->typeId()) {
+  switch(a->metaType().id()) {
     case QMetaType::Bool:
     case QMetaType::Int:
     case QMetaType::UInt:
