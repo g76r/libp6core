@@ -1,4 +1,4 @@
-/* Copyright 2013-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,9 +22,12 @@ class LIBP6CORESHARED_EXPORT ImageHttpHandler : public HttpHandler {
   Q_OBJECT
   Q_DISABLE_COPY(ImageHttpHandler)
   QString _urlPathPrefix;
-public:
+
+protected:
   explicit ImageHttpHandler(QObject *parent = 0);
   explicit ImageHttpHandler(QString urlPathPrefix, QObject *parent = 0);
+
+public:
   bool acceptRequest(HttpRequest req) override;
   bool handleRequest(HttpRequest req, HttpResponse res,
                      ParamsProviderMerger *processingContext) override;

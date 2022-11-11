@@ -1,4 +1,4 @@
-/* Copyright 2013-2020 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -52,5 +52,13 @@ QString ImageHttpHandler::source(ParamsProvider *params) const {
 
 QString ImageHttpHandler::contentEncoding(ParamsProvider *params) const {
   Q_UNUSED(params)
+  return QString();
+}
+
+QByteArray ImageHttpHandler::imageData(ParamsProvider *, int) {
+  return QByteArray();
+}
+
+QString ImageHttpHandler::contentType(ParamsProvider *) const {
   return QString();
 }

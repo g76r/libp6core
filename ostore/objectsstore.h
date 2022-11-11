@@ -1,4 +1,4 @@
-/* Copyright 2017-2020 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -59,6 +59,10 @@ class LIBP6CORESHARED_EXPORT ObjectsStore : public QObject {
 protected:
   const QMetaObject *_metaobject;
 
+  explicit ObjectsStore(
+    const QMetaObject *metaobject, QObject *parent = nullptr)
+    : QObject(parent), _metaobject(metaobject) { }
+
 public:
   class Result {
     QSharedDataPointer<ResultData> d;
@@ -73,9 +77,6 @@ public:
     QObject *object() const { return d ? d->_object : nullptr; }
   };
 
-  explicit ObjectsStore(
-      const QMetaObject *metaobject, QObject *parent = nullptr)
-    : QObject(parent), _metaobject(metaobject) { }
   /** Apply f to every object in the store.
    * Index is given in call order, without order warranty, and even without the
    * warranty that the order will be the same every time apply() is called. */

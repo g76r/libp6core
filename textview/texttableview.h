@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -31,10 +31,12 @@ class LIBP6CORESHARED_EXPORT TextTableView : public TextView {
 public:
   const static int defaultCachedRows = 100, defaultRowsPerPage = 25;
 
-public:
+protected:
   explicit TextTableView(QObject *parent = 0, QString objectName = QString(),
                          int cachedRows = defaultCachedRows,
                          int rowsPerPage = defaultRowsPerPage);
+
+public:
   /** Provide the HTML table view of the model, including headers and footers.
    * If params is set, param named scope+".page" (or "page" if scope is not set)
    * is expected to contain either "disabled" or the current page number, e.g.

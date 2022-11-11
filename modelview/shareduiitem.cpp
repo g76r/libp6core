@@ -68,6 +68,10 @@ QString SharedUiItemData::uiSectionName(int section) const {
       .toLower().replace(nonAlphanum, QStringLiteral("_"));
 }
 
+QString SharedUiItemData::idQualifier() const {
+  return QString();
+}
+
 QDebug operator<<(QDebug dbg, const SharedUiItem &i) {
   dbg.nospace() << i.qualifiedId();
   return dbg.space();

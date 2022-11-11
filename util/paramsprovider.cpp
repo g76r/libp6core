@@ -69,6 +69,15 @@ QString ParamsProvider::evaluate(
   return ParamSet().evaluate(rawValue, false, this, alreadyEvaluated);
 }
 
+QVariant ParamsProvider::paramValue(
+  QString, const ParamsProvider *, QVariant, QSet<QString>) const {
+  return QVariant();
+}
+
+QSet<QString> ParamsProvider::keys() const {
+  return QSet<QString>();
+}
+
 QVariant RawParamsProvider::paramValue(
   QString key, const ParamsProvider *, QVariant defaultValue,
   QSet<QString>) const {
@@ -79,3 +88,4 @@ QSet<QString> RawParamsProvider::keys() const {
   auto keys = _params.keys();
   return QSet<QString>(keys.begin(), keys.end());
 }
+

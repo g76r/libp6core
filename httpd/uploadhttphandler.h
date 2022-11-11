@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -27,7 +27,7 @@ class LIBP6CORESHARED_EXPORT UploadHttpHandler : public HttpHandler {
   quint64 _maxBytesPerUpload;
   QSemaphore _maxSimultaneousUploads;
 
-public:
+protected:
   explicit UploadHttpHandler(QObject *parent = 0)
     : HttpHandler(parent), _maxBytesPerUpload(2L*1024*1024),
       _maxSimultaneousUploads(1) { }
@@ -39,6 +39,8 @@ public:
     : HttpHandler(parent), _urlPathPrefix(urlPathPrefix),
       _maxBytesPerUpload(2*1024*1024),
       _maxSimultaneousUploads(maxSimultaneousUploads) { }
+
+public:
   QString urlPathPrefix() const;
   void setUrlPathPrefix(const QString &urlPathPrefix);
   QString tempFileTemplate() const;

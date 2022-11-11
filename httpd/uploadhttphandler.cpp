@@ -1,4 +1,4 @@
-/* Copyright 2014-2020 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -86,4 +86,8 @@ bool UploadHttpHandler::handleRequest(
   }
   delete file;
   return true;
+}
+
+void UploadHttpHandler::processUploadedFile(
+  HttpRequest, HttpResponse, ParamsProviderMerger *, QFile *) {
 }

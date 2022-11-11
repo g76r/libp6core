@@ -1,4 +1,4 @@
-/* Copyright 2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -27,4 +27,20 @@ ObjectsStore::Result ObjectsStore::withdraw(
 
 long ObjectsStore::apply(std::function<void(QObject*)> f) {
   return apply([&f](QObject *o, ObjectsStore*, long) { f(o); });
+}
+
+ObjectsStore::Result ObjectsStore::create(const QHash<QString,QVariant> &){
+  return Result();
+}
+
+ObjectsStore::Result ObjectsStore::persist(QObject *) {
+  return Result();
+}
+
+ObjectsStore::Result ObjectsStore::dispose(QObject *, bool) {
+  return Result();
+}
+
+ObjectsStore::Result ObjectsStore::fetch() {
+  return Result();
 }

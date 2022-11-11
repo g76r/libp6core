@@ -1,4 +1,4 @@
-/* Copyright 2015-2018 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -108,8 +108,9 @@ protected:
   QMultiHash<QString,ChangeItemTrigger> _triggersBeforeDelete;
   QMultiHash<QString,ChangeItemTrigger> _triggersAfterDelete;
 
-public:
   explicit SharedUiItemDocumentManager(QObject *parent = nullptr);
+
+public:
   /** Method that user interface should call to create a new default item with
    * an automatically generated unique id.
    *

@@ -1,4 +1,4 @@
-/* Copyright 2014-2018 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -54,8 +54,9 @@ public:
 protected:
   SharedUiItemDocumentManager *_documentManager;
 
-public:
   explicit SharedUiItemsModel(QObject *parent = nullptr);
+
+public:
   QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
   int columnCount(const QModelIndex &parent = QModelIndex()) const override;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const override;

@@ -1,4 +1,4 @@
-/* Copyright 2013-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -76,10 +76,12 @@ private:
   CircularBuffer<LogEntry> *_buffer;
   ThreadModel _threadModel;
 
-public:
+protected:
   // Loggers never have a parent (since they are owned and destroyed by Log
   // static methods)
   Logger(Log::Severity minSeverity, ThreadModel threadModel);
+
+public:
   /** This method is thread-safe. */
   void log(const LogEntry &entry);
   ~Logger();

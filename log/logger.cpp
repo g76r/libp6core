@@ -1,4 +1,4 @@
-/* Copyright 2013-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -224,4 +224,7 @@ QString Logger::pathPattern() const {
 
 QString Logger::pathMatchingRegexp() const {
   return ParamSet::matchingRegexp(pathPattern());
+}
+
+void Logger::doLog(const LogEntry &) {
 }

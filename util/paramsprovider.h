@@ -24,7 +24,10 @@ class ParamSet;
 /** Base class for any class that may provide key/value parameters.
  * @see ParamSet */
 class LIBP6CORESHARED_EXPORT ParamsProvider {
-    static ParamsProvider *_environment, *_empty;
+  static ParamsProvider *_environment, *_empty;
+
+protected:
+  ParamsProvider() { }
 
 public:
   virtual ~ParamsProvider();

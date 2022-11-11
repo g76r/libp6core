@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,4 +17,8 @@ Authenticator::Authenticator(QObject *parent) : QObject(parent) {
 }
 
 Authenticator::~Authenticator() {
+}
+
+QString Authenticator::authenticate(QString, QString, ParamSet) const {
+  return QString();
 }

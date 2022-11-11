@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -449,4 +449,19 @@ reference_still_exists:;
     }
   }
   return true;
+}
+
+SharedUiItem SharedUiItemDocumentManager::itemById(QString, QString) const {
+  return SharedUiItem();
+}
+
+SharedUiItemList<SharedUiItem> SharedUiItemDocumentManager::itemsByIdQualifier(
+  QString) const {
+  return SharedUiItemList<SharedUiItem>();
+}
+
+bool SharedUiItemDocumentManager::prepareChangeItem(
+  SharedUiItemDocumentTransaction *, SharedUiItem, SharedUiItem, QString,
+  QString *) {
+  return false;
 }

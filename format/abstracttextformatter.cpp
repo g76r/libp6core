@@ -1,4 +1,4 @@
-/* Copyright 2017-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -109,4 +109,20 @@ QString AbstractTextFormatter::formatRowInternal(
   for (int i = 0; i < n; ++i)
     cells.append(item.uiString(i, role));
   return formatRow(cells, rowHeader.isNull() ? item.qualifiedId() : rowHeader);
+}
+
+QString AbstractTextFormatter::formatTableHeader(const QStringList &) const {
+  return QString();
+}
+
+QString AbstractTextFormatter::formatTableFooter(const QStringList &) const {
+  return QString();
+}
+
+QString AbstractTextFormatter::formatCell(QString) const {
+  return QString();
+}
+
+QString AbstractTextFormatter::formatRow(const QStringList &, QString) const {
+  return QString();
 }

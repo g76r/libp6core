@@ -1,4 +1,4 @@
-/* Copyright 2017-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -26,15 +26,17 @@ class LIBP6CORESHARED_EXPORT AbstractTextFormatter {
   bool _rowHeadersEnabled, _columnHeadersEnabled;
   static int _defaultMaxCellContentLength;
 
-public:
+protected:
   explicit AbstractTextFormatter(
-      int maxCellContentLength, bool rowHeadersEnabled = false,
-      bool columnHeadersEnabled = true)
+    int maxCellContentLength, bool rowHeadersEnabled = false,
+    bool columnHeadersEnabled = true)
     : _maxCellContentLength(maxCellContentLength),
-      _rowHeadersEnabled(rowHeadersEnabled),
-      _columnHeadersEnabled(columnHeadersEnabled) { }
+    _rowHeadersEnabled(rowHeadersEnabled),
+    _columnHeadersEnabled(columnHeadersEnabled) { }
   AbstractTextFormatter()
     : AbstractTextFormatter(_defaultMaxCellContentLength) { }
+
+public:
   virtual ~AbstractTextFormatter();
   void setTopLeftHeader(QString rawText) { _topLeftHeader = rawText; }
   QString topLeftHeader() const { return _topLeftHeader; }
