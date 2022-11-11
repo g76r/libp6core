@@ -219,7 +219,7 @@ ParamSet::ParamSet(QSqlDatabase db, QString sql, QMap<int,QString> bindings,
                    << " " << sql;
     return;
   }
-  QMultiMap<int,QString> values;
+  QMap<int,QStringList> values;
   while (query.next()) {
     auto r = query.record();
     for (int i = 0; i < r.count(); ++i) {
@@ -228,11 +228,11 @@ ParamSet::ParamSet(QSqlDatabase db, QString sql, QMap<int,QString> bindings,
       auto s = r.field(i).value().toString();
       if (s.isEmpty()) // ignoring both nulls and empty strings
         continue;
-      values.insert(i, escape(s));
+      values[i].append(escape(s));
     }
   }
   for (auto i: bindings.keys()) {
-    setValue(bindings.value(i), values.values(i).join(" "));
+    setValue(bindings.value(i), values[i].join(" "));
   }
 }
 
