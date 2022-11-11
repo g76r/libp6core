@@ -535,6 +535,13 @@ implicitVariables {
   }
   return input;
 }, true},
+{ "=trim", [](ParamSet paramset, QString key, bool inherit,
+             const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+             int matchedLength) {
+   auto input = paramset.evaluate(key.mid(matchedLength), inherit, context,
+                                  alreadyEvaluated);
+   return input.trimmed();
+}, true},
 { "=elideright", [](ParamSet paramset, QString key, bool inherit,
               const ParamsProvider *context, QSet<QString> alreadyEvaluated,
               int matchedLength) {

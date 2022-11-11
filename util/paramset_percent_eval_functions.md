@@ -213,6 +213,18 @@ examples:
 * `%{=mid:%foo:4:5}`
 * `%{=mid:%foo:4}`
 
+%=trim
+-----
+`%{=trim:input}`
+
+removes whitespace at begining and end of input
+* input is the data to transform, it is evaluated (%foo become the content of
+foo param)
+
+examples:
+* `%{=trim:%foo}`
+* `%{=trim:  bar}`
+
 %=htmlencode
 ------------
 `%{=htmlencode:input[:flags]}`
