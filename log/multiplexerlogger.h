@@ -56,7 +56,8 @@ public:
   QStringList pathsToAllLogs();
 
 protected:
-  void doLog(const LogEntry &entry);
+  void doLog(const LogEntry &entry) override;
+  void doShutdown() override;
 
 private:
   inline void doReplaceLoggers(QList<Logger*> newLoggers, bool takeOwnership);

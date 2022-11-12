@@ -176,6 +176,31 @@ QStringList MultiplexerLogger::pathsToAllLogs() {
 
 void MultiplexerLogger::doLog(const LogEntry &entry) {
   QMutexLocker locker(&_loggersMutex);
-  foreach (Logger *logger, _loggers)
+  for (auto logger : _loggers)
     logger->log(entry);
+  if (_threadModel == RootLogger && _loggers.isEmpty() && !entry.isNull()) {
+    switch(entry.severity()) {
+      case Log::Debug:
+        qDebug() << entry.message() << "(no logger configured)";
+        break;
+      case Log::Info:
+        qInfo() << entry.message() << "(no logger configured)";
+        break;
+      case Log::Warning:
+      case Log::Error:
+      case Log::Fatal:
+        qWarning() << entry.message() << "(no logger configured)";
+    }
+  }
+}
+
+void MultiplexerLogger::doShutdown() {
+  QMutexLocker locker(&_loggersMutex);
+  for (auto logger : _loggers) {
+    logger->shutdown();
+    // LATER should delete after last message processing
+    //if (_ownedLoggers.contains(logger))
+    //  logger->deleteLater();
+  }
+  _loggers.clear();
 }

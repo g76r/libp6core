@@ -107,6 +107,10 @@ void Log::log(QString message, Severity severity, QString task, QString execId,
                                      realExecId, realSourceCode));
 }
 
+void Log::shutdown() {
+  _rootLogger->shutdown();
+}
+
 QString Log::severityToString(Severity severity) {
   switch (severity) {
   case Debug:

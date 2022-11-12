@@ -84,6 +84,8 @@ protected:
 public:
   /** This method is thread-safe. */
   void log(const LogEntry &entry);
+  /** This method is thread-safe. */
+  void shutdown();
   ~Logger();
   /** Return current logging path, e.g. "/var/log/qron-20181231.log"
    * To be used by implementation only when relevant.
@@ -106,6 +108,8 @@ protected:
    * method must be threadsafe (= able to handle calls from any thread at any
    * time). */
   virtual void doLog(const LogEntry &entry) = 0;
+  /** Perform shutdown tasks, such as flushing. */
+  virtual void doShutdown();
 };
 
 Q_DECLARE_METATYPE(Logger::LogEntry)

@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -73,15 +73,15 @@ void FileLogger::doLog(const LogEntry &entry) {
     _currentPath = ParamSet().evaluate(_pathPattern);
     _device = new QFile(_currentPath);
     if (!_device->open(_buffered ? QIODevice::WriteOnly|QIODevice::Append
-                       : QIODevice::WriteOnly|QIODevice::Append
-                       |QIODevice::Unbuffered)) {
+                                 : QIODevice::WriteOnly|QIODevice::Append
+                                     |QIODevice::Unbuffered)) {
       // TODO warn, but only once
       //qWarning() << "cannot open log file" << _currentPath << ":"
       //           << _device->errorString();
       delete _device;
       _device = 0;
     } else {
-      _lastOpen = now;
+      _lastOpen = QDateTime::currentDateTime();
       //qDebug() << "opened log file" << _currentPath;
     }
   }
@@ -106,5 +106,13 @@ void FileLogger::doLog(const LogEntry &entry) {
     // TODO warn, but only once
     //qWarning() << "error while writing log: null log device";
     //qWarning() << line;
+  }
+}
+
+void FileLogger::doShutdown() {
+  _buffered = false;
+  if (_device && !_pathPattern.isEmpty()) {
+    _device->close();
+    _device->open(QIODevice::WriteOnly|QIODevice::Append|QIODevice::Unbuffered);
   }
 }

@@ -214,6 +214,14 @@ void Logger::log(const LogEntry &entry) {
   }
 }
 
+void Logger::shutdown() {
+  //qDebug() << "Logger::shutdown" << this << _thread << _buffer->used() << "---";
+  if (_thread)
+    _buffer->tryPut(LogEntry());
+  else
+    doShutdown();
+}
+
 QString Logger::currentPath() const {
   return QString();
 }
@@ -227,4 +235,7 @@ QString Logger::pathMatchingRegexp() const {
 }
 
 void Logger::doLog(const LogEntry &) {
+}
+
+void Logger::doShutdown() {
 }

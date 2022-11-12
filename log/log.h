@@ -63,6 +63,8 @@ public:
   static void replaceLoggersPlusConsole(
       Log::Severity consoleLoggerSeverity, QList<Logger*> newLoggers,
       bool takeOwnership);
+  /** flush remove any logger */
+  static void shutdown();
   static void log(QString message, Severity severity = Info,
                   QString task = QString(), QString execId = QString(),
                   QString sourceCode = QString());

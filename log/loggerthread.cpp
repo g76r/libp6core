@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -30,8 +30,17 @@ LoggerThread::~LoggerThread() {
 void LoggerThread::run() {
   while (!isInterruptionRequested()) {
     Logger::LogEntry le;
-    if (_logger->_buffer->tryGet(&le, 500))
-      _logger->doLog(le);
+    if (_logger->_buffer->tryGet(&le, 500)) {
+      /*fputs(("===LoggerThread got entry "+objectName()+" "
+             +QString::number(_logger->_buffer->used())+" "
+             +(le.isNull() ? "===STOP===" : le.message())+"\n"
+             ).toLatin1(), stderr);
+      fflush(stderr);*/
+      if (le.isNull())
+        _logger->doShutdown();
+      else
+        _logger->doLog(le);
+    }
   }
   //qDebug() << "LoggerThread received stop message" << this << _logger;
   // only connect deleteLater() now because in case of unwanted thread stop,
