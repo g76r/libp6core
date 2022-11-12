@@ -134,8 +134,8 @@ Logger::Logger(Log::Severity minSeverity, ThreadModel threadModel)
   //qDebug() << "*** Logger::Logger " << this << " " << minSeverity
   //         << " " << threadModel;
   //qDebug() << "Logger" << QString::number((long)this, 16);
-  int logBufferSizeLog2 =
-    ParamsProvider::environment()->paramValue("LOG_BUFFER_SIZE_LOG2").toInt();
+  char *envvar = getenv("LOG_BUFFER_SIZE_LOG2");
+  int logBufferSizeLog2 = envvar ? QString::fromLatin1(envvar).toInt(0, 0) : 0;
   if (logBufferSizeLog2 < 6)
     logBufferSizeLog2 = 12;
   if (logBufferSizeLog2 > 27)
