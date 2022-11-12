@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -31,6 +31,7 @@ class LIBP6CORESHARED_EXPORT MultiplexerLogger : public Logger {
 public:
   explicit MultiplexerLogger(Log::Severity minSeverity = Log::Debug,
                              bool isRootLogger = false);
+  ~MultiplexerLogger();
   /** Add logger to loggers list and optionaly take ownership of it, i.e. will
    * delete it on removal. */
   void addLogger(Logger *logger, bool autoRemovable, bool takeOwnership);

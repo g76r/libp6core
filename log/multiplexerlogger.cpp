@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2022 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,6 +21,13 @@ MultiplexerLogger::MultiplexerLogger(
     Log::Severity minSeverity, bool isRootLogger)
   : Logger(minSeverity, isRootLogger ? Logger::RootLogger
                                      : Logger::DirectCall) {
+}
+
+MultiplexerLogger::~MultiplexerLogger() {
+  QMutexLocker locker(&_loggersMutex);
+  for (auto logger : _loggers)
+    if (_ownedLoggers.contains(logger))
+      logger->deleteLater();
 }
 
 void MultiplexerLogger::addLogger(
