@@ -12,7 +12,7 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "uploadhttphandler.h"
-#include "util/ioutils.h"
+#include "io/ioutils.h"
 
 QString UploadHttpHandler::urlPathPrefix() const {
   return _urlPathPrefix;

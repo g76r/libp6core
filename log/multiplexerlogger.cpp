@@ -15,7 +15,7 @@
 #include "filelogger.h"
 #include "qtloglogger.h"
 #include <QFile>
-#include "util/ioutils.h"
+#include "io/ioutils.h"
 
 MultiplexerLogger::MultiplexerLogger(
     Log::Severity minSeverity, bool isRootLogger)

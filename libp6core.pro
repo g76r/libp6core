@@ -1,4 +1,4 @@
-# Copyright 2012-2021 Hallowyn, Gregoire Barbier and others.
+# Copyright 2012-2022 Hallowyn, Gregoire Barbier and others.
 # This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
 # Libpumpkin is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -63,7 +63,7 @@ SOURCES += \
     textview/htmltableview.cpp \
     textview/textview.cpp \
     httpd/filesystemhttphandler.cpp \
-    util/ioutils.cpp \
+    io/ioutils.cpp \
     httpd/templatinghttphandler.cpp \
     mail/mailsender.cpp \
     textview/clockview.cpp \
@@ -157,7 +157,7 @@ HEADERS +=\
     textview/htmltableview.h \
     textview/textview.h \
     httpd/filesystemhttphandler.h \
-    util/ioutils.h \
+    io/ioutils.h \
     httpd/templatinghttphandler.h \
     mail/mailsender.h \
     textview/clockview.h \
