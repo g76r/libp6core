@@ -95,16 +95,16 @@ void Log::log(QString message, Severity severity, QString task, QString execId,
   realTask = sanitizeField(realTask);
   if (realTask.isEmpty())
     realTask = QStringLiteral("?");
-  QString realExecId = sanitizeField(execId);
-  if (realExecId.isEmpty())
-    realExecId = QStringLiteral("0");
-  QString realSourceCode = sanitizeField(sourceCode);
+  execId = sanitizeField(execId);
+  if (execId.isEmpty())
+    execId = QStringLiteral("0");
+  sourceCode = sanitizeField(sourceCode);
   if (sourceCode.isEmpty())
     sourceCode = QStringLiteral(":");
   QDateTime now = QDateTime::currentDateTime();
   message = sanitizeMessage(message);
   _rootLogger->log(Logger::LogEntry(now, message, severity, realTask,
-                                     realExecId, realSourceCode));
+                                    execId, sourceCode));
 }
 
 void Log::shutdown() {
