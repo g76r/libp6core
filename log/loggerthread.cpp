@@ -12,6 +12,7 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "loggerthread.h"
+#include <QCoreApplication>
 
 LoggerThread::LoggerThread(Logger *logger)
   : QThread(0), _logger(logger) {
@@ -19,12 +20,6 @@ LoggerThread::LoggerThread(Logger *logger)
 }
 
 LoggerThread::~LoggerThread() {
-  //qDebug() << "~LoggerThread" << QString::number((long)_logger, 16) << _logger->metaObject()->className();
-  // deleting Logger is safe because LoggerThread::deleteLater is called from
-  // within Logger::deleteLater() which is itself called from within
-  // MultiplexerLogger::replaceLogger*() only when removing the Logger from
-  // loggers list, therefore no log entry can be added to the Logger after that
-  delete _logger;
 }
 
 void LoggerThread::run() {
@@ -36,15 +31,14 @@ void LoggerThread::run() {
              +(le.isNull() ? "===STOP===" : le.message())+"\n"
              ).toLatin1(), stderr);
       fflush(stderr);*/
-      if (le.isNull())
+      if (le.isNull()) {
         _logger->doShutdown();
-      else
-        _logger->doLog(le);
+        break;
+      }
+      _logger->doLog(le);
     }
   }
   //qDebug() << "LoggerThread received stop message" << this << _logger;
-  // only connect deleteLater() now because in case of unwanted thread stop,
-  // i.e. before Logger calls QThread::requestInterruption(), deleting QThread
-  // object would lead to dandling pointer on it in Logger object
-  connect(this, &LoggerThread::finished, this, &LoggerThread::deleteLater);
+  _logger->moveToThread(QCoreApplication::instance()->thread());
+  deleteLater();
 }

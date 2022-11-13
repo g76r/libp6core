@@ -28,8 +28,11 @@ class LoggerThread;
  * Handle common behavior to all loggers, including optionnaly a
  * queuing mechanism using a dedicated thread intended for loggers that
  * may block (filesystem, network...).
- * One must never delete a Logger, he must always call Logger::deleteLater()
- * instead.
+ *
+ * One must never delete a Logger nor call Logger::deleteLater(), but rather
+ * call Logger::shutdown() instead, which will handle logger thread (when
+ * applicable) graceful shutdown and deleteLater() in addition to logger
+ * deleteLater().
  */
 class LIBP6CORESHARED_EXPORT Logger : public QObject {
   friend class MultiplexerLogger;
@@ -98,8 +101,6 @@ public:
   /** Return the path regexp pattern, e.g. "/var/log/qron-.*\\.log" */
   QString pathMatchingRegexp() const;
   Log::Severity minSeverity() const { return _minSeverity; }
-  /** Delete later both this and, if any, its dedicated thread. */
-  void deleteLater();
   ThreadModel threadModel() const { return _threadModel; }
 
 protected:
@@ -110,6 +111,10 @@ protected:
   virtual void doLog(const LogEntry &entry) = 0;
   /** Perform shutdown tasks, such as flushing. */
   virtual void doShutdown();
+
+private:
+  /** Should not call deleteLater() from elsewhere, rather call shutdown(). */
+  using QObject::deleteLater;
 };
 
 Q_DECLARE_METATYPE(Logger::LogEntry)

@@ -26,7 +26,7 @@ MultiplexerLogger::MultiplexerLogger(
 MultiplexerLogger::~MultiplexerLogger() {
   QMutexLocker locker(&_loggersMutex);
   for (auto logger : _loggers)
-    logger->deleteLater();
+    logger->shutdown();
 }
 
 void MultiplexerLogger::addLogger(Logger *logger, bool autoRemovable) {
@@ -50,7 +50,7 @@ void MultiplexerLogger::removeLogger(Logger *logger) {
   QMutexLocker locker(&_loggersMutex);
   foreach(Logger *l, _loggers)
     if (l == logger) {
-      logger->deleteLater();
+      logger->shutdown();
       _loggers.removeAll(logger);
       break;
     }
@@ -96,7 +96,7 @@ void MultiplexerLogger::doReplaceLoggers(QList<Logger*> newLoggers) {
   foreach(Logger *logger, _loggers)
     if (logger->_autoRemovable) {
       if (!newLoggers.contains(logger))
-        logger->deleteLater();
+        logger->shutdown();
       _loggers.removeAll(logger);
     }
   foreach (Logger *logger, newLoggers) {
@@ -180,11 +180,7 @@ void MultiplexerLogger::doLog(const LogEntry &entry) {
 
 void MultiplexerLogger::doShutdown() {
   QMutexLocker locker(&_loggersMutex);
-  for (auto logger : _loggers) {
+  for (auto logger : _loggers)
     logger->shutdown();
-    // LATER should delete after last message processing
-    //if (_ownedLoggers.contains(logger))
-    //  logger->deleteLater();
-  }
   _loggers.clear();
 }

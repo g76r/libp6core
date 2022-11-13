@@ -148,6 +148,7 @@ Logger::Logger(Log::Severity minSeverity, ThreadModel threadModel)
     _thread->setObjectName("Logger-"+Log::severityToString(minSeverity)
                            +"-"+QString::number((long long)this, 16));
     _buffer = new CircularBuffer<LogEntry>(logBufferSizeLog2);
+    connect(_thread, &QThread::destroyed, this, &QObject::deleteLater);
     break;
   case RootLogger:
     _thread = new LoggerThread(this);
@@ -163,25 +164,17 @@ Logger::Logger(Log::Severity minSeverity, ThreadModel threadModel)
 
 Logger::~Logger() {
   //qDebug() << "~Logger" << this;
+  shutdown();
   if (_buffer) {
-    //printf("~Logger printf: %ld\n", _buffer->used());
+    printf("~Logger printf: %ld %p %s\n", _buffer->used(), this,
+           objectName().toUtf8().constData());
+    fflush(stdout);
     if (_thread) {
-      //_buffer->clear();
-      _thread->requestInterruption();
-      _thread->wait();
+      _thread->wait(10'000);
+      _buffer->clear();
+      _thread->wait(1'000);
     }
     delete _buffer;
-  }
-}
-
-void Logger::deleteLater() {
-  if (_thread) {
-    _thread->requestInterruption();
-    // cannot access or modify any member data after _thread->requestInterruption()
-    // since *this can have been deleted meanwhile (it would create a race
-    // condition)
-  } else {
-    QObject::deleteLater();
   }
 }
 
@@ -216,10 +209,12 @@ void Logger::log(const LogEntry &entry) {
 
 void Logger::shutdown() {
   //qDebug() << "Logger::shutdown" << this << _thread << _buffer->used() << "---";
-  if (_thread)
+  if (_thread) {
     _buffer->tryPut(LogEntry());
-  else
+  } else {
     doShutdown();
+    QObject::deleteLater();
+  }
 }
 
 QString Logger::currentPath() const {
