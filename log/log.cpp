@@ -178,10 +178,13 @@ static void qtLogSamePatternWrapper(QtMsgType type, const QMessageLogContext &,
       severity = Log::severityToString(Log::Fatal);
       break;
   }
+  QString taskName = sanitizeField(QThread::currentThread()->objectName());
+  if (taskName.isEmpty())
+    taskName = "?";
   QString localMsg =
     QDateTime::currentDateTime().toString(QStringLiteral(
-      "yyyy-MM-ddThh:mm:ss,zzz"))+" ?/0 : "+severity+" "+sanitizeMessage(msg)
-    +"\n";
+      "yyyy-MM-ddThh:mm:ss,zzz"))+" "+taskName+"/0 : "+severity+" qtdebug: "
+    +sanitizeMessage(msg)+"\n";
   fputs(localMsg.toLocal8Bit(), stderr);
   if (type == QtFatalMsg)
     abort();
