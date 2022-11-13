@@ -52,6 +52,7 @@ LIBS += -L../build-qtpf-$$TARGET_OS/$$BUILD_TYPE
 LIBS += -lqtpf
 
 SOURCES += \
+    io/unixsignalmanager.cpp \
     mail/mailaddress.cpp \
     httpd/httpworker.cpp \
     httpd/httpserver.cpp \
@@ -146,6 +147,7 @@ SOURCES += \
     modelview/stringlistdiffmodel.cpp
 
 HEADERS +=\
+    io/unixsignalmanager.h \
     mail/mailaddress.h \
     httpd/httpworker.h \
     httpd/httpserver.h \
