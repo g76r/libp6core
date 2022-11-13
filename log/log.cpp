@@ -52,10 +52,10 @@ static inline QString sanitizeMessage(QString string) {
   return s;
 }
 
-void Log::addLogger(Logger *logger, bool autoRemovable, bool takeOwnership) {
+void Log::addLogger(Logger *logger, bool autoRemovable) {
   if (logger->threadModel() == Logger::DirectCall)
     logger->moveToThread(_rootLogger->thread());
-  _rootLogger->addLogger(logger, autoRemovable, takeOwnership);
+  _rootLogger->addLogger(logger, autoRemovable);
 }
 
 void Log::removeLogger(Logger *logger) {
@@ -70,18 +70,18 @@ void Log::addQtLogger(Severity severity, bool autoRemovable) {
   _rootLogger->addQtLogger(severity, autoRemovable);
 }
 
-void Log::replaceLoggers(Logger *newLogger, bool takeOwnership) {
-  _rootLogger->replaceLoggers(newLogger, takeOwnership);
+void Log::replaceLoggers(Logger *newLogger) {
+  _rootLogger->replaceLoggers(newLogger);
 }
 
-void Log::replaceLoggers(QList<Logger*> newLoggers, bool takeOwnership) {
-  _rootLogger->replaceLoggers(newLoggers, takeOwnership);
+void Log::replaceLoggers(QList<Logger*> newLoggers) {
+  _rootLogger->replaceLoggers(newLoggers);
 }
 
 void Log::replaceLoggersPlusConsole(Log::Severity consoleLoggerSeverity,
-                                    QList<Logger*> newLoggers, bool takeOwnership) {
+                                    QList<Logger*> newLoggers) {
   _rootLogger->replaceLoggersPlusConsole(
-        consoleLoggerSeverity, newLoggers, takeOwnership);
+        consoleLoggerSeverity, newLoggers);
 }
 
 void Log::log(QString message, Severity severity, QString task, QString execId,

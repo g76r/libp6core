@@ -25,16 +25,15 @@ class LIBP6CORESHARED_EXPORT MultiplexerLogger : public Logger {
   Q_OBJECT
   Q_DISABLE_COPY(MultiplexerLogger)
   QList<Logger*> _loggers;
-  QSet<Logger*> _ownedLoggers;
   QMutex _loggersMutex;
 
 public:
   explicit MultiplexerLogger(Log::Severity minSeverity = Log::Debug,
                              bool isRootLogger = false);
   ~MultiplexerLogger();
-  /** Add logger to loggers list and optionaly take ownership of it, i.e. will
+  /** Add logger to loggers list and take ownership of it, i.e. will
    * delete it on removal. */
-  void addLogger(Logger *logger, bool autoRemovable, bool takeOwnership);
+  void addLogger(Logger *logger, bool autoRemovable);
   /** Remove and delete a logger. Will only delete the object if it is currently
    * registred in the logger list, otherwise the method does nothing. */
   void removeLogger(Logger *logger);
@@ -42,15 +41,15 @@ public:
   void addQtLogger(Log::Severity severity, bool autoRemovable);
   /** Replace current auto-removable loggers with a new one.
    * This method is thread-safe and switches loggers in an atomic way. */
-  void replaceLoggers(Logger *newLogger, bool takeOwnership);
+  void replaceLoggers(Logger *newLogger);
   /** Replace current auto-removable loggers with new ones.
    * This method is thread-safe and switches loggers in an atomic way. */
-  void replaceLoggers(QList<Logger*> newLoggers, bool takeOwnership);
+  void replaceLoggers(QList<Logger*> newLoggers);
   /** Replace current auto-removable loggers with new ones plus a new
    * console logger with given logger severity.
    * This method is thread-safe and switches loggers in an atomic way. */
   void replaceLoggersPlusConsole(Log::Severity consoleLoggerSeverity,
-                                 QList<Logger*> newLoggers, bool takeOwnership);
+                                 QList<Logger*> newLoggers);
   QString pathToLastFullestLog();
   QStringList pathsToFullestLogs();
   QStringList pathsToAllLogs();
@@ -60,7 +59,7 @@ protected:
   void doShutdown() override;
 
 private:
-  inline void doReplaceLoggers(QList<Logger*> newLoggers, bool takeOwnership);
+  inline void doReplaceLoggers(QList<Logger*> newLoggers);
 };
 
 #endif // MULTIPLEXERLOGGER_H

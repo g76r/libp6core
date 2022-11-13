@@ -41,8 +41,7 @@ public:
    * change configuration on the fly without loosing any log entry on the
    * hard-wired loggers and the configuration code does not have to recreate/
    * remember the hard-wired loggers. */
-  static void addLogger(Logger *logger, bool autoRemovable,
-                        bool takeOwnership);
+  static void addLogger(Logger *logger, bool autoRemovable);
   /** Remove a logger (and delete it), even if it is not autoremovable. */
   static void removeLogger(Logger *logger);
   /** Wrap Qt's log framework to make its output look like Log one. */
@@ -55,14 +54,13 @@ public:
                           bool autoRemovable = false);
   /** Remove loggers that are autoremovable. */
   /** Remove loggers that are autoremovable and replace them with a new one. */
-  static void replaceLoggers(Logger *newLogger, bool takeOwnership);
+  static void replaceLoggers(Logger *newLogger);
   /** Remove loggers that are autoremovable and replace them with new ones. */
-  static void replaceLoggers(QList<Logger*> newLoggers, bool takeOwnership);
+  static void replaceLoggers(QList<Logger*> newLoggers);
   /** Remove loggers that are autoremovable and replace them with new ones
    * plus a console logger.*/
   static void replaceLoggersPlusConsole(
-      Log::Severity consoleLoggerSeverity, QList<Logger*> newLoggers,
-      bool takeOwnership);
+      Log::Severity consoleLoggerSeverity, QList<Logger*> newLoggers);
   /** flush remove any logger */
   static void shutdown();
   static void log(QString message, Severity severity = Info,
