@@ -18,8 +18,6 @@
 #include <unistd.h>
 
 #ifdef Q_OS_UNIX
-//#include <sys/types.h>
-//#include <sys/socket.h>
 #include <unistd.h>
 #include <fcntl.h>
 #endif
@@ -81,38 +79,28 @@ static QMutex *_instance_mutex = new QMutex;
 
 [[gnu::unused]] void UnixSignalManagerImpl::signal_handler(int signal_number) {
   char a = signal_number;
-  ::write(_instance->_socketpair[1], &a, sizeof(a));
+  ::write(_instance->_pipe[1], &a, sizeof(a));
 }
 
 } // namespace
 
-UnixSignalManager::~UnixSignalManager() {
-  qDebug() << "~UnixSignalManager() -*-";
-}
-
 UnixSignalManager::UnixSignalManager() {
 #ifdef Q_OS_UNIX
-  //if (::socketpair(AF_UNIX, SOCK_STREAM, 0, _socketpair))
-  if (::pipe2(_socketpair, O_NONBLOCK))
-    Log::error() << "UnixSignalManager could not create socketpair, errno: "
+  if (::pipe2(_pipe, O_NONBLOCK))
+    Log::error() << "UnixSignalManager could not create pipe, errno: "
                  << "errno";
 #endif
-  _sn = new QSocketNotifier(_socketpair[0], QSocketNotifier::Read, this);
+  _sn = new QSocketNotifier(_pipe[0], QSocketNotifier::Read, this);
   connect(_sn, &QSocketNotifier::activated,
-          this, &UnixSignalManager::readSocketPair, Qt::QueuedConnection);
-  /*Log::debug() << "socket notifier: " << _socketpair[0] << " " << _socketpair[1]
-               << " " << QThread::currentThread() << " / "
-               << " " << _sn << " " << _sn->thread()
-               << " / " << this->thread() << " " << this << " "
-               << _sn->isEnabled() << " " << _sn->isValid();*/
+          this, &UnixSignalManager::readPipe, Qt::QueuedConnection);
 }
 
-void UnixSignalManager::readSocketPair() {
+void UnixSignalManager::readPipe() {
   _sn->setEnabled(false);
   int r = 0;
   forever {
     char a;
-    r = ::read(_socketpair[0], &a, sizeof(a));
+    r = ::read(_pipe[0], &a, sizeof(a));
     if (r <= 0)
       break;
     int signal_number = a;
@@ -130,7 +118,6 @@ UnixSignalManager *UnixSignalManager::instance() {
 
 void UnixSignalManager::setCatchList(std::initializer_list<int> list) {
   UnixSignalManager::instance();
-  //Log::debug() << "setCatchList " << _instance;
   QMutexLocker locker(&_instance->_list_mutex);
   auto old_numbers = _instance->_sig_numbers;
   _instance->_sig_numbers.clear();
@@ -148,7 +135,6 @@ void UnixSignalManager::setCatchList(std::initializer_list<int> list) {
 
 void UnixSignalManager::addToCatchList(std::initializer_list<int> list) {
   UnixSignalManager::instance();
-  //Log::debug() << "addToCatchList " << _instance;
   QMutexLocker locker(&_instance->_list_mutex);
   bool changed = false;
   for (int i : list) {

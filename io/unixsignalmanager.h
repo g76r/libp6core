@@ -22,17 +22,26 @@
 
 class QSocketNotifier;
 
+/** Install Unix signals handlers for specified signals and send Qt
+ * signals when they occur.
+ * One must specify which signals to receive with addToCatchList() or
+ * setCatchList() and connect to signalCaught().
+ * Keep in mind that signalCaught() is fired every time a signal on the
+ * catch list occurs, including signals another part of the application has
+ * subscribed. Connected slot must be able to bear (and ignore) signals
+ * numbers it does not want.
+ * This is a singleton.
+ */
 class LIBP6CORESHARED_EXPORT UnixSignalManager : public QObject {
   Q_OBJECT
 protected:
-  int _socketpair[2] { -1, -1 };
+  int _pipe[2] { -1, -1 };
   QSocketNotifier *_sn;
 
   UnixSignalManager();
-  void readSocketPair();
+  void readPipe();
 
 public:
-  ~UnixSignalManager();
   static UnixSignalManager *instance();
   static void setCatchList(std::initializer_list<int> list);
   static void addToCatchList(std::initializer_list<int> list);
