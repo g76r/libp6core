@@ -61,6 +61,10 @@ void MultiplexerLogger::addConsoleLogger(
   QFile *console = new QFile;
   console->open(1, QIODevice::WriteOnly|QIODevice::Unbuffered);
   FileLogger *logger = new FileLogger(console, severity);
+  auto name = "Console"+logger->objectName();
+  logger->setObjectName(name);
+  if (logger->thread())
+    logger->thread()->setObjectName(name);
   addLogger(logger, autoRemovable);
 }
 

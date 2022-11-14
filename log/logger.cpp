@@ -130,52 +130,41 @@ int Logger::LogEntryData::uiSectionCount() const {
 Logger::Logger(Log::Severity minSeverity, ThreadModel threadModel)
   : QObject(0), _thread(0), _minSeverity(minSeverity), _autoRemovable(true),
     _lastBufferOverflownWarning(0), _buffer(0), _threadModel(threadModel) {
-  // LATER make buffer size parametrable
   //qDebug() << "*** Logger::Logger " << this << " " << minSeverity
-  //         << " " << threadModel;
-  //qDebug() << "Logger" << QString::number((long)this, 16);
+  //         << " " << threadModel << " " << QThread::currentThread();
+  //qDebug() << "Logger" << QString::number((qlonglong)this, 16);
   char *envvar = getenv("LOG_BUFFER_SIZE_LOG2");
   int logBufferSizeLog2 = envvar ? QString::fromLatin1(envvar).toInt(0, 0) : 0;
   if (logBufferSizeLog2 < 6)
     logBufferSizeLog2 = 12;
   if (logBufferSizeLog2 > 27)
     logBufferSizeLog2 = 27;
+  auto name = "Logger-"+Log::severityToString(minSeverity)
+              +"-"+QString::number((long long)this, 16);
   switch(threadModel) {
   case DirectCall:
     break;
   case DedicatedThread:
     _thread = new LoggerThread(this);
-    _thread->setObjectName("Logger-"+Log::severityToString(minSeverity)
-                           +"-"+QString::number((long long)this, 16));
     _buffer = new CircularBuffer<LogEntry>(logBufferSizeLog2);
-    connect(_thread, &QThread::destroyed, this, &QObject::deleteLater);
     break;
   case RootLogger:
+    name = "Root"+name;
     _thread = new LoggerThread(this);
-    _thread->setObjectName("RootLogger-"+QString::number((long long)this, 16));
     _buffer = new CircularBuffer<LogEntry>(logBufferSizeLog2);
     break;
   }
+  setObjectName(name);
   if (_thread) {
+    _thread->setObjectName(name);
     _thread->start();
     moveToThread(_thread);
   }
 }
 
 Logger::~Logger() {
-  //qDebug() << "~Logger" << this;
-  shutdown();
-  if (_buffer) {
-    printf("~Logger printf: %ld %p %s\n", _buffer->used(), this,
-           objectName().toUtf8().constData());
-    fflush(stdout);
-    if (_thread) {
-      _thread->wait(10'000);
-      _buffer->clear();
-      _thread->wait(1'000);
-    }
+  if (_buffer)
     delete _buffer;
-  }
 }
 
 void Logger::log(const LogEntry &entry) {

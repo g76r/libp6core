@@ -16,21 +16,22 @@
 
 LoggerThread::LoggerThread(Logger *logger)
   : QThread(0), _logger(logger) {
-  //qDebug() << "LoggerThread" << QString::number((long)_logger, 16) << _logger->metaObject()->className();
+  connect(this, &QThread::finished, [this](){
+    auto app = QCoreApplication::instance();
+    _logger->moveToThread(app ? app->thread() : thread());
+    deleteLater();
+    _logger->deleteLater();
+  });
 }
 
 LoggerThread::~LoggerThread() {
+  fflush(stdout);
 }
 
 void LoggerThread::run() {
   while (!isInterruptionRequested()) {
     Logger::LogEntry le;
     if (_logger->_buffer->tryGet(&le, 500)) {
-      /*fputs(("===LoggerThread got entry "+objectName()+" "
-             +QString::number(_logger->_buffer->used())+" "
-             +(le.isNull() ? "===STOP===" : le.message())+"\n"
-             ).toLatin1(), stderr);
-      fflush(stderr);*/
       if (le.isNull()) {
         _logger->doShutdown();
         break;
@@ -38,7 +39,4 @@ void LoggerThread::run() {
       _logger->doLog(le);
     }
   }
-  //qDebug() << "LoggerThread received stop message" << this << _logger;
-  _logger->moveToThread(QCoreApplication::instance()->thread());
-  deleteLater();
 }
