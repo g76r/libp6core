@@ -49,10 +49,6 @@ public:
   /** Add a logger to stdout. */
   static void addConsoleLogger(Log::Severity severity = Log::Warning,
                                bool autoRemovable = false);
-  /** Add a logger to Qt's log framework. */
-  static void addQtLogger(Log::Severity severity = Log::Warning,
-                          bool autoRemovable = false);
-  /** Remove loggers that are autoremovable. */
   /** Remove loggers that are autoremovable and replace them with a new one. */
   static void replaceLoggers(Logger *newLogger);
   /** Remove loggers that are autoremovable and replace them with new ones. */

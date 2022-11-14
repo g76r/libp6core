@@ -13,7 +13,6 @@
  */
 #include "multiplexerlogger.h"
 #include "filelogger.h"
-#include "qtloglogger.h"
 #include <QFile>
 #include "io/ioutils.h"
 
@@ -65,12 +64,6 @@ void MultiplexerLogger::addConsoleLogger(
   logger->setObjectName(name);
   if (logger->thread())
     logger->thread()->setObjectName(name);
-  addLogger(logger, autoRemovable);
-}
-
-void MultiplexerLogger::addQtLogger(
-  Log::Severity severity, bool autoRemovable) {
-  QtLogLogger *logger = new QtLogLogger(severity);
   addLogger(logger, autoRemovable);
 }
 

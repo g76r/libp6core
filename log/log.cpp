@@ -66,10 +66,6 @@ void Log::addConsoleLogger(Severity severity, bool autoRemovable) {
   _rootLogger->addConsoleLogger(severity, autoRemovable);
 }
 
-void Log::addQtLogger(Severity severity, bool autoRemovable) {
-  _rootLogger->addQtLogger(severity, autoRemovable);
-}
-
 void Log::replaceLoggers(Logger *newLogger) {
   _rootLogger->replaceLoggers(newLogger);
 }

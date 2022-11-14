@@ -98,7 +98,6 @@ SOURCES += \
     modelview/shareduiitem.cpp \
     modelview/shareduiitemstablemodel.cpp \
     modelview/shareduiitemsmodel.cpp \
-    log/qtloglogger.cpp \
     modelview/shareduiitemstreemodel.cpp \
     util/relativedatetime.cpp \
     log/loggerthread.cpp \
@@ -195,7 +194,6 @@ HEADERS +=\
     modelview/shareduiitem.h \
     modelview/shareduiitemstablemodel.h \
     modelview/shareduiitemsmodel.h \
-    log/qtloglogger.h \
     modelview/shareduiitemstreemodel.h \
     util/relativedatetime.h \
     log/loggerthread.h \
