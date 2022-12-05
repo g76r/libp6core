@@ -15,6 +15,18 @@
 #include <QHash>
 #include <QDateTime>
 
+/** following constants are not compliant to C++ standard since they assume that
+ * integers are implemented with 2's complement
+ * however this is compliant with real world
+ * see proposal P0907R4
+ * https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0907r4.html
+ */
+#define INT_MAX_AS_LL ((1LL<<(8*sizeof(int)-1))-1)
+#define INT_MIN_AS_LL (-(1LL<<(8*sizeof(int)-1)))
+#define INT_MAX_AS_ULL ((1ULL<<(8*sizeof(int)-1))-1)
+#define UINT_MAX_AS_LL ((1LL<<(8*sizeof(int)))-1)
+#define UINT_MAX_AS_ULL ((1ULL<<(8*sizeof(int)))-1)
+
 static int numericsPromotion(int typeId) {
   switch(typeId) {
     case QMetaType::Bool:
