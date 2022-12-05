@@ -28,31 +28,47 @@
  *   { "round", ::round },
  *   { { "opposite", "-" }, [](double d){ return -d; } }
  * };
+ * keys are encoded in local8bit (see QString::toLocal8Bit()), that is in utf8
+ * on unix
  */
 template<class T>
 struct RadixTreeInitializerHelper {
   std::vector<const char *> _keys;
   T _value;
   bool _isPrefix;
-  RadixTreeInitializerHelper(std::vector<const char *>key, T value,
-                             bool isPrefix = false)
+  RadixTreeInitializerHelper(
+    std::vector<const char *> key, T value, bool isPrefix = false)
     : _keys(key), _value(value), _isPrefix(isPrefix) { }
-  RadixTreeInitializerHelper(const char *key, T value, bool isPrefix = false)
+  RadixTreeInitializerHelper(
+    const char *key, T value, bool isPrefix = false)
     : _value(value), _isPrefix(isPrefix) { _keys.push_back(key); }
+  RadixTreeInitializerHelper(
+    QStringView key, T value, bool isPrefix = false)
+    : _value(value), _isPrefix(isPrefix) {
+    _keys.push_back(key.toLocal8Bit().constData());
+  }
+  // cannot support std::vector<QStringView> cstr because it conflicts with
+  // std::vector<const char *> one
+  // cannot support QLatin1String cstr because it conflicts with
+  // std::vector<const char *> (on 2 items vectors, because of
+  // QLatin1String(first,last))
 };
 
 /** Lookup-optimized dictionary for a large number of strings or string prefixes
  * as keys, based on a radix tree.
  *
- * When isPrefix=false for every key, it behaves like a QMap<K,T> with K = utf8
+ * When isPrefix=false for every key, it behaves like a QMap<K,T> with K =
  * characters string.
  * If at less on key is set with isPrefix=true, it becomes more powerful than
  * a map and can e.g. match "/rest/customers/434909" with "/rest/customers/"
  * key.
  *
  * The class is optimized for handling const char *, any QString parameter is
- * first converted to const char * using QString::toUtf8().constData() which is
- * not costless.
+ * first converted to const char * using QString::toLocal8Bit().constData()
+ * which is not costless.
+ *
+ * keys are expected to be encoded in local8bit (see QString::toLocal8Bit()),
+ * that is in utf8 on unix
  *
  * See e.g. https://en.wikipedia.org/wiki/Radix_tree for a more detailed
  * explanation of radix tree internals.
@@ -286,22 +302,21 @@ public:
     for (const RadixTreeInitializerHelper<T> &helper : list)
       for (const char *key: helper._keys)
         insert(key, helper._value, helper._isPrefix);
-    //qDebug().noquote() << toDebugString();
   }
   RadixTree(QHash<QString,T> hash) : RadixTree() {
-    foreach (const QString &key, hash.keys())
-      insert(key.toUtf8().constData(), hash.value(key));
+    for (const QString &key: hash.keys())
+      insert(key.toLocal8Bit().constData(), hash.value(key));
   }
   RadixTree(QHash<const char *,T> hash) : RadixTree() {
-    foreach (const char *key, hash.keys())
+    for (const char *key: hash.keys())
       insert(key, hash.value(key));
   }
   RadixTree(QMap<QString,T> map) : RadixTree() {
     foreach (const QString &key, map.keys())
-      insert(key.toUtf8().constData(), map.value(key));
+      insert(key.toLocal8Bit().constData(), map.value(key));
   }
   RadixTree(QMap<const char *,T> map) : RadixTree() {
-    foreach (const char *key, map.keys())
+    for (const char *key: map.keys())
       insert(key, map.value(key));
   }
   RadixTree(const RadixTree &other) : d(other.d) { }
@@ -311,7 +326,6 @@ public:
     return *this;
   }
   void insert(const char *key, T value, bool isPrefix = false) {
-    //qDebug() << "RadixTree::insert" << !!d << key;
     if (!d)
       return;
     if (d->_root)
@@ -320,8 +334,8 @@ public:
       d->_root = new Node(key, value, isPrefix ? Prefix : Exact, 0);
     d->_keys.insert(key);
   }
-  void insert(const QString &key, T value, bool isPrefix = false) {
-    insert (key.toUtf8().constData(), value, isPrefix); }
+  void insert(QStringView key, T value, bool isPrefix = false) {
+    insert (key.toLocal8Bit().constData(), value, isPrefix); }
   [[gnu::hot]] const T value(const char *key, T defaultValue = T(),
                              int *matchedLength = 0) const {
     T value = defaultValue;
@@ -333,26 +347,35 @@ public:
   }
   [[gnu::hot]] const T value(const char *key, int *matchedLength) const {
     return value(key, T(), matchedLength); }
-  [[gnu::hot]] const T value(const QString &key, T defaultValue = T(),
+  [[gnu::hot]] const T value(QLatin1String key, T defaultValue = T(),
                              int *matchedLength = 0) const {
-    return value(key.toUtf8().constData(), defaultValue, matchedLength); }
-  [[gnu::hot]] const T value(const QString &key, int *matchedLength) const {
-    return value(key.toUtf8().constData(), T(), matchedLength); }
-  [[gnu::hot]] const T operator[](const QString &key) const {
-    return value(key); }
+    return value(key.data(), defaultValue, matchedLength); }
+  [[gnu::hot]] const T value(QLatin1String key, int *matchedLength) const {
+    return value(key.data(), T(), matchedLength); }
+  [[gnu::hot]] const T value(QStringView key, T defaultValue = T(),
+                             int *matchedLength = 0) const {
+    return value(key.toLocal8Bit().constData(), defaultValue, matchedLength); }
+  [[gnu::hot]] const T value(QStringView key, int *matchedLength) const {
+    return value(key.toLocal8Bit().constData(), T(), matchedLength); }
   [[gnu::hot]] const T operator[](const char *key) const { return value(key); }
+  [[gnu::hot]] const T operator[](QLatin1String key) const {
+    return value(key); }
+  [[gnu::hot]] const T operator[](QStringView key) const {
+    return value(key); }
   [[gnu::hot]] bool contains(const char *key) const {
     return (d && d->_root) ? d->_root->lookup(key) : false;
   }
-  [[gnu::hot]] bool contains(const QString &key) const {
-    return value(key.toUtf8().constData()); }
+  [[gnu::hot]] bool contains(QLatin1String key) const {
+    return contains(key.data()); }
+  [[gnu::hot]] bool contains(QStringView key) const {
+    return contains(key.toLocal8Bit().constData()); }
   QSet<QString> keys() const {
     return d ? d->_keys : QSet<QString>();
   }
   static RadixTree<T> reversed(QHash<T,QString> hash) {
     RadixTree<T> that;
     foreach (const T &key, hash.keys())
-      that.insert(hash.value(key).toUtf8().constData(), key);
+      that.insert(hash.value(key).toLocal8Bit().constData(), key);
     return that;
   }
   static RadixTree<T> reversed(QHash<T,const char *> hash) {
@@ -364,7 +387,7 @@ public:
   static RadixTree<T> reversed(QMap<T,QString> map) {
     RadixTree<T> that;
     foreach (const T &key, map.keys())
-      that.insert(map.value(key).toUtf8().constData(), key);
+      that.insert(map.value(key).toLocal8Bit().constData(), key);
   }
   static RadixTree<T> reversed(QMap<T,const char *> map) {
     RadixTree<T> that;
