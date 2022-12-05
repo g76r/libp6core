@@ -148,7 +148,7 @@ public:
   /** If name is empty, the node will be null. */
   PfNode(const QString &name, float content)
     : d(name.isEmpty()
-        ? 0 : new PfNodeData(name, QString::number(content), false)) { }
+        ? 0 : new PfNodeData(name, QString::number((double)content), false)) { }
   /** If name is empty, the node will be null. */
   PfNode(const QString &name, const PfArray &array)
     : d(name.isEmpty() ? 0 : new PfNodeData(name, array)) { }

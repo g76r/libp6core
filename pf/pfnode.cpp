@@ -401,88 +401,23 @@ QList<QPair<QString, qint64>> PfNode::stringLongPairChildrenByName(
 }
 
 qint64 PfNode::contentAsLong(qint64 defaultValue, bool *ok) const {
-  bool myok;
-  auto s = contentAsString().trimmed();
-  auto len = s.size();
-  if (len >= 2 && s.at(1) == 'x') {
-    switch(s.at(len-1).toLatin1()) {
-      case 'k':
-        s = s.left(len-1)+"000";
-        break;
-      case 'M':
-      case 'm':
-        s = s.left(len-1)+"000000";
-        break;
-      case 'G':
-      case 'b':
-        s = s.left(len-1)+"000000000";
-        break;
-      case 'T':
-        s = s.left(len-1)+"000000000000";
-        break;
-      case 'P':
-        s = s.left(len-1)+"000000000000000";
-        break;
-    }
-  }
-  qint64 v = s.toLongLong(&myok, 0);
-  if (ok)
-    *ok = myok;
-  return myok ? v : defaultValue;
+  return PfUtils::stringAsLongLong(contentAsString(), defaultValue, ok);
 }
 
 double PfNode::contentAsDouble(double defaultValue, bool *ok) const {
-  bool myok;
-  double v = contentAsString().trimmed().toDouble(&myok);
-  if (ok)
-    *ok = myok;
-  return myok ? v : defaultValue;
+  return PfUtils::stringAsDouble(contentAsString(), defaultValue, ok);
 }
 
 bool PfNode::contentAsBool(bool defaultValue, bool *ok) const {
-  QString s = contentAsString().trimmed();
-  bool myok = true, v;
-  if (s.compare("true", Qt::CaseInsensitive) == 0)
-    v = true;
-  else if (s.compare("false", Qt::CaseInsensitive) == 0)
-    v = false;
-  else
-    v = s.toLongLong(&myok, 0) != 0;
-  if (ok)
-    *ok = myok;
-  return myok ? v : defaultValue;
+  return PfUtils::stringAsBool(contentAsString(), defaultValue, ok);
 }
 
 QStringList PfNode::contentAsStringList() const {
-  QString v = contentAsString(), s;
-  QStringList l;
-  for (int i = 0; i < v.size(); ++i) {
-    const QChar &c = v[i];
-    if (c == '\\') {
-      if (++i < v.size())
-        s.append(v[i]);
-    } else if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
-      if (!s.isNull())
-        l.append(s);
-      s = QString();
-    } else
-      s.append(c);
-  }
-  if (!s.isEmpty())
-    l.append(s);
-  return l;
+  return PfUtils::stringSplittedOnWhitespace(contentAsString());
 }
 
 QStringList PfNode::contentAsTwoStringsList() const {
-  static QRegularExpression _whitespace { "\\s+" };
-  QString s = contentAsString().trimmed();
-  if (s.isEmpty())
-    return { };
-  int i = s.indexOf(_whitespace);
-  if (i <= 0)
-    return { s };
-  return
-    { s.left(i), s.mid(i+1).trimmed() };
+  return PfUtils::stringSplittedOnFirstWhitespace(contentAsString());
 }
 
 PfNode &PfNode::setAttribute(const QString &name, const QString &content) {
