@@ -34,6 +34,7 @@
 #include <QSqlRecord>
 #include <QSqlField>
 #include <QSqlError>
+#include "pf/pfutils.h"
 
 bool ParamSet::_variableNotFoundLoggingEnabled { false };
 
@@ -993,4 +994,32 @@ void ParamSet::setValuesFromSqlDb(
   for (auto key: bindings)
     map.insert(i++, key);
   setValuesFromSqlDb(db, sql, map);
+}
+
+qlonglong ParamSet::valueAsLong(
+  QString key, qlonglong defaultValue, bool inherit,
+  const ParamsProvider *context) const {
+  auto s = evaluate(rawValue(key, QString(), inherit), inherit, context);
+  return PfUtils::stringAsLongLong(s, defaultValue);
+}
+
+int ParamSet::valueAsInt(
+  QString key, int defaultValue, bool inherit,
+  const ParamsProvider *context) const {
+  auto s = evaluate(rawValue(key, QString(), inherit), inherit, context);
+  return PfUtils::stringAsInt(s, defaultValue);
+}
+
+double ParamSet::valueAsDouble(
+  QString key, double defaultValue, bool inherit,
+  const ParamsProvider *context) const {
+  auto s = evaluate(rawValue(key, QString(), inherit), inherit, context);
+  return PfUtils::stringAsDouble(s, defaultValue);
+}
+
+bool ParamSet::valueAsBool(
+  QString key, bool defaultValue, bool inherit,
+  const ParamsProvider *context) const {
+  QString v = evaluate(rawValue(key, QString(), inherit), inherit, context);
+  return PfUtils::stringAsBool(v, defaultValue);
 }

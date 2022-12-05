@@ -208,68 +208,22 @@ public:
    * C-like prefixes are supported and both kmb and kMGTP suffixes are supported
    * surrounding whitespace is trimmed
    * e.g. 0x1f means 15, 12k means 12000, 12b and 12G mean 12000000000.
-   * however mixing them is not supported e.g. 0x1fG isn't. */
-  inline qlonglong valueAsLong(QString key, qlonglong defaultValue = 0,
-                               bool inherit = true,
-                               const ParamsProvider *context = 0) const {
-    bool ok;
-    auto s = evaluate(rawValue(key, QString(), inherit), inherit,
-                      context).trimmed();
-    auto len = s.size();
-    if (len >= 2) {
-      switch(s.at(len-1).toLatin1()) {
-        case 'k':
-          s = s.left(len-1)+"000";
-          break;
-        case 'M':
-        case 'm':
-          s = s.left(len-1)+"000000";
-          break;
-        case 'G':
-        case 'b':
-          s = s.left(len-1)+"000000000";
-          break;
-        case 'T':
-          s = s.left(len-1)+"000000000000";
-          break;
-        case 'P':
-          s = s.left(len-1)+"000000000000000";
-          break;
-      }
-    }
-    qlonglong v = s.toLongLong(&ok, 0);
-    return ok ? v : defaultValue; }
+   * T and P are supported with long long, not int. */
+  qlonglong valueAsLong(QString key, qlonglong defaultValue = 0,
+                        bool inherit = true,
+                        const ParamsProvider *context = 0) const;
+  int valueAsInt(QString key, int defaultValue = 0, bool inherit = true,
+                 const ParamsProvider *context = 0) const;
   /** Syntaxic sugar. */
-  inline int valueAsInt(QString key, int defaultValue = 0, bool inherit = true,
-                        const ParamsProvider *context = 0) const {
-    qlonglong l = valueAsLong(key, defaultValue, inherit, context);
-    return (l > INT_MAX || l < INT_MIN) ? defaultValue : l; }
-  /** Syntaxic sugar. */
-  inline double valueAsDouble(QString key, double defaultValue = 0,
-                              bool inherit = true,
-                              const ParamsProvider *context = 0) const {
-    bool ok;
-    double  v = evaluate(rawValue(key, QString(), inherit), inherit,
-                         context).toDouble(&ok);
-    return ok ? v : defaultValue; }
+  double valueAsDouble(QString key, double defaultValue = 0,
+                       bool inherit = true,
+                       const ParamsProvider *context = 0) const;
   /** "faLsE" and "0" are interpreted as false, "trUe" and any non null
    * valid integer number are interpreted as true. whitespace and case are
    * ignored. */
-  inline bool valueAsBool(QString key, bool defaultValue = false,
+  bool valueAsBool(QString key, bool defaultValue = false,
                           bool inherit = true,
-                          const ParamsProvider *context = 0) const {
-    QString v = evaluate(rawValue(key, QString(), inherit), inherit, context)
-        .trimmed().toLower();
-    if (v == QLatin1String("true"))
-      return true;
-    if (v == QLatin1String("false"))
-      return false;
-    bool ok;
-    int i = v.toInt(&ok, 0);
-    if (ok)
-      return i == 0 ? false : true;
-    return defaultValue;
-  }
+                          const ParamsProvider *context = 0) const;
   /** Return all keys for which the ParamSet or one of its parents hold a value.
     */
   QSet<QString> keys(bool inherit) const;
