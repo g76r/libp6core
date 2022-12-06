@@ -36,20 +36,23 @@ public:
    * @param timeoutMillis maximum acceptable time if the image rendering is
    *   performed on demand */
   virtual QByteArray imageData(
-      ParamsProvider *params = 0, int timeoutMillis
-      = IMAGEHTTPHANDLER_DEFAULT_ONDEMAND_RENDERING_TIMEOUT) = 0;
+    HttpRequest req, ParamsProviderMerger *processingContext, int timeoutMillis
+    = IMAGEHTTPHANDLER_DEFAULT_ONDEMAND_RENDERING_TIMEOUT) = 0;
   /** This method must be thread-safe for the same reasons than
    * handleRequest() */
-  virtual QString contentType(ParamsProvider *params = 0) const = 0;
+  virtual QString contentType(
+    HttpRequest req, ParamsProviderMerger *processingContext = 0) const = 0;
   /** This method must be thread-safe for the same reasons than
    * handleRequest()
    * @return QString() by default */
-  virtual QString contentEncoding(ParamsProvider *params = 0) const;
+  virtual QString contentEncoding(
+    HttpRequest req, ParamsProviderMerger *processingContext = 0) const;
   /** Return a source code or text for image, if any.
    * Default: QString()
    * This method must be thread-safe for the same reasons than
    * handleRequest() */
-  virtual QString source(ParamsProvider *params = 0) const;
+  virtual QString source(
+    HttpRequest req, ParamsProviderMerger *processingContext = 0) const;
   // LATER sourceMimeType and imageMimeType
 
 signals:

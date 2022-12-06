@@ -27,8 +27,6 @@ bool ImageHttpHandler::acceptRequest(HttpRequest req) {
 
 bool ImageHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
                                      ParamsProviderMerger *processingContext) {
-  Q_UNUSED(req)
-  Q_UNUSED(processingContext)
   // TODO handle HTTP/304
   // LATER content type and content should be retrieve at once atomicaly
   // LATER pass params from request
@@ -38,27 +36,29 @@ bool ImageHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
   QString contentEncoding = this->contentEncoding(0);
   if (!contentEncoding.isEmpty())
     res.setHeader("Content-Encoding", contentEncoding);
-  QByteArray data = imageData(0);
+  QByteArray data = imageData(req, processingContext, 0);
   res.setContentLength(data.size());
   if (req.method() != HttpRequest::HEAD)
     res.output()->write(data);
   return true;
 }
 
-QString ImageHttpHandler::source(ParamsProvider *params) const {
-  Q_UNUSED(params);
+QString ImageHttpHandler::source(
+  HttpRequest, ParamsProviderMerger *) const {
   return QString();
 }
 
-QString ImageHttpHandler::contentEncoding(ParamsProvider *params) const {
-  Q_UNUSED(params)
+QString ImageHttpHandler::contentEncoding(
+  HttpRequest, ParamsProviderMerger *) const {
   return QString();
 }
 
-QByteArray ImageHttpHandler::imageData(ParamsProvider *, int) {
+QByteArray ImageHttpHandler::imageData(
+  HttpRequest, ParamsProviderMerger *, int) {
   return QByteArray();
 }
 
-QString ImageHttpHandler::contentType(ParamsProvider *) const {
+QString ImageHttpHandler::contentType(
+  HttpRequest, ParamsProviderMerger *) const {
   return QString();
 }

@@ -35,9 +35,8 @@ GraphvizImageHttpHandler::GraphvizImageHttpHandler(QObject *parent,
           this, &GraphvizImageHttpHandler::readyReadStandardError);
 }
 
-QByteArray GraphvizImageHttpHandler::imageData(ParamsProvider *params,
-                                               int timeoutMillis) {
-  Q_UNUSED(params)
+QByteArray GraphvizImageHttpHandler::imageData(
+  HttpRequest, ParamsProviderMerger *, int timeoutMillis) {
   QMutexLocker ml(&_mutex);
   if (_refreshStrategy == OnDemandWithCache && _renderingNeeded) {
     //Log::debug() << "imageData() with rendering needed";
@@ -64,21 +63,20 @@ QByteArray GraphvizImageHttpHandler::imageData(ParamsProvider *params,
   return _imageData;
 }
 
-QString GraphvizImageHttpHandler::contentType(ParamsProvider *params) const {
-  Q_UNUSED(params)
+QString GraphvizImageHttpHandler::contentType(
+  HttpRequest, ParamsProviderMerger *) const {
   QMutexLocker ml(&_mutex);
   return _contentType;
 }
 
 QString GraphvizImageHttpHandler::contentEncoding(
-    ParamsProvider *params) const {
-  Q_UNUSED(params)
+    HttpRequest, ParamsProviderMerger *) const {
   QMutexLocker ml(&_mutex);
   return (_imageFormat == Svgz) ? "gzip" : QString();
 }
 
-QString GraphvizImageHttpHandler::source(ParamsProvider *params) const {
-  Q_UNUSED(params)
+QString GraphvizImageHttpHandler::source(
+  HttpRequest, ParamsProviderMerger *) const {
   QMutexLocker ml(&_mutex);
   return _source;
 }

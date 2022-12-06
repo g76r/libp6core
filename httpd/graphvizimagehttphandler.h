@@ -44,11 +44,14 @@ public:
   explicit GraphvizImageHttpHandler(
       QObject *parent = 0, RefreshStrategy refreshStrategy = OnDemandWithCache);
   QByteArray imageData(
-      ParamsProvider *params = 0, int timeoutMillis
+      HttpRequest req, ParamsProviderMerger *params = 0, int timeoutMillis
       = IMAGEHTTPHANDLER_DEFAULT_ONDEMAND_RENDERING_TIMEOUT) override;
-  QString contentType(ParamsProvider *params = 0) const override;
-  QString contentEncoding(ParamsProvider *params) const override;
-  QString source(ParamsProvider *params = 0) const override;
+  QString contentType(
+    HttpRequest req, ParamsProviderMerger *processingContext) const override;
+  QString contentEncoding(
+    HttpRequest req, ParamsProviderMerger *processingContext) const override;
+  QString source(
+    HttpRequest req, ParamsProviderMerger *processingContext) const override;
   GraphvizRenderer renderer() const { return _renderer; }
   void setRenderer(GraphvizRenderer renderer) { _renderer = renderer; }
   RefreshStrategy refreshStrategy() const { return _refreshStrategy; }
