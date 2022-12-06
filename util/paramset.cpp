@@ -617,13 +617,14 @@ _implicitVariables {
               const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
+  auto env = ParamsProvider::environment();
   int i = 0;
   do {
-    QString name = paramset.evaluate(
-          params.value(i), inherit, context, alreadyEvaluated);
-    const char *value = ::getenv(name.toUtf8());
-    if (value && *value)
-      return QString::fromUtf8(value);
+    QString name = paramset.evaluate(params.value(i), inherit, context,
+                                     alreadyEvaluated);
+    auto v = env->paramValue(name, context, QVariant(), alreadyEvaluated);
+    if (v.isValid())
+      return v.toString();
     ++i;
   } while (i < params.size()-1); // first param and then all but last one
   // otherwise last one if there are at less 2, otherwise a non-existent one
