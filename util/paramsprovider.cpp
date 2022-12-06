@@ -23,9 +23,11 @@ struct Environment : public ParamsProvider {
     const QString &key, const ParamsProvider *context,
     const QVariant &defaultValue,
     QSet<QString> *alreadyEvaluated) const override {
-    const char *value = getenv(key.toUtf8());
-    return value ? ParamSet().evaluate(value, false, context, alreadyEvaluated)
-                 : defaultValue;
+    auto rawValue = qgetenv(key.toLocal8Bit());
+    if (rawValue.isNull())
+      return defaultValue;
+    return ParamSet().evaluate(QString::fromLocal8Bit(rawValue), false,
+                               context, alreadyEvaluated);
   }
   const QSet<QString> keys() const override {
     QSet<QString> keys;
@@ -33,7 +35,7 @@ struct Environment : public ParamsProvider {
       int i = 0;
       while ((*e)[i] != '\0' && (*e)[i] != '=')
         ++i;
-      keys << QString::fromUtf8(*e, i);
+      keys << QString::fromLocal8Bit(*e, i);
     }
     return keys;
   }

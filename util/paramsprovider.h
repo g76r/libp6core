@@ -71,7 +71,9 @@ public:
     const QString &key, const QVariant &defaultValue) const {
     return paramValue(key, defaultValue).toString(); }
   virtual const QSet<QString> keys() const = 0;
+  /** Singleton wrapper to environment variables */
   static ParamsProvider *environment() { return _environment; }
+  /** Singleton empty ParamsProvider */
   static ParamsProvider *empty() { return _empty; }
   /** take an key-values snapshot that no longer depend on ParamsProvider* not
    * being deleted nor on %-evaluation */
@@ -85,7 +87,7 @@ public:
 };
 
 /** Map of params without inheritance, evaluation or any other advanced
- *  features: just a simple QString->QVariant map. */
+ *  features as compared to ParamSet: just a simple QString->QVariant map. */
 class LIBP6CORESHARED_EXPORT RawParamsProvider : public ParamsProvider {
 private:
   QMap<QString,QVariant> _params;

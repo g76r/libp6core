@@ -20,9 +20,10 @@
 static int _defaultSmtpTimeoutMs = 5000;
 
 static int staticInit() {
-  char *value = getenv("MAILSENDER_SMTP_TIMEOUT");
-  if (value)
-    _defaultSmtpTimeoutMs = ::atoi(value);
+  bool ok;
+  int i = QString::fromLocal8Bit(qgetenv("MAILSENDER_SMTP_TIMEOUT")).toInt(&ok);
+  if (ok)
+    _defaultSmtpTimeoutMs = i;
   return 0;
 }
 Q_CONSTRUCTOR_FUNCTION(staticInit)

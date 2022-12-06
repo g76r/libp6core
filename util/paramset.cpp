@@ -40,8 +40,7 @@ bool ParamSet::_variableNotFoundLoggingEnabled { false };
 
 static int staticInit() {
   qMetaTypeId<ParamSet>();
-  char *value = getenv("ENABLE_PARAMSET_VARIABLE_NOT_FOUND_LOGGING");
-  if (value && strcmp(value, "true") == 0)
+  if (qgetenv("ENABLE_PARAMSET_VARIABLE_NOT_FOUND_LOGGING") == "true")
     ParamSet::enableVariableNotFoundLogging();
   return 0;
 }
