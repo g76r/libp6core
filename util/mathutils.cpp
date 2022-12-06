@@ -14,6 +14,7 @@
 #include "mathutils.h"
 #include <QHash>
 #include <QDateTime>
+#include <cmath>
 
 /** following constants are not compliant to C++ standard since they assume that
  * integers are implemented with 2's complement
@@ -63,13 +64,14 @@ static bool convertOtherTypesToBestNumericTypeIfPossible(
     case QMetaType::QString: {
       auto s = a->toString().trimmed();
       bool ok;
+      // LATER support kmb and kMGTP suffixes
       auto ll = s.toLongLong(&ok, 0);
       if (ok) {
         a->setValue(ll);
         *tta = QMetaType::LongLong;
         return true;
       }
-      auto ull = s.toLongLong(&ok, 0);
+      auto ull = s.toULongLong(&ok, 0);
       if (ok) {
         a->setValue(ull);
         *tta = QMetaType::ULongLong;
@@ -248,13 +250,30 @@ QVariant MathUtils::addQVariantAsNumber(QVariant a, QVariant b) {
   if (!promoteToBestNumericType(&a, &b))
     return QVariant();
   //qDebug() << "addQVariantAsNumber " << a.metaType().id();
+#if __has_builtin(__builtin_add_overflow)
+  qlonglong i;
+  qulonglong u;
+  bool o = false;
+#else
+#warning MathUtils::addQVariantAsNumber() without overflow handling
+#endif
   switch (a.metaType().id()) {
     case QMetaType::Double:
       return QVariant(a.toDouble() + b.toDouble());
     case QMetaType::LongLong:
+#if __has_builtin(__builtin_add_overflow)
+      o = __builtin_saddll_overflow(a.toLongLong(), b.toLongLong(), &i);
+      return o ? QVariant() : i;
+#else
       return QVariant(a.toLongLong() + b.toLongLong());
+#endif
     case QMetaType::ULongLong:
+#if __has_builtin(__builtin_add_overflow)
+      o = __builtin_uaddll_overflow(a.toULongLong(), b.toULongLong(), &u);
+      return o ? QVariant() : u;
+#else
       return QVariant(a.toULongLong() + b.toULongLong());
+#endif
   };
   return QVariant();
 }
@@ -262,13 +281,30 @@ QVariant MathUtils::addQVariantAsNumber(QVariant a, QVariant b) {
 QVariant MathUtils::subQVariantAsNumber(QVariant a, QVariant b) {
   if (!promoteToBestNumericType(&a, &b))
     return QVariant();
+#if __has_builtin(__builtin_sub_overflow)
+  qlonglong i;
+  qulonglong u;
+  bool o = false;
+#else
+#warning MathUtils::subQVariantAsNumber() without overflow handling
+#endif
   switch (a.metaType().id()) {
     case QMetaType::Double:
       return QVariant(a.toDouble() - b.toDouble());
     case QMetaType::LongLong:
+#if __has_builtin(__builtin_sub_overflow)
+      o = __builtin_ssubll_overflow(a.toLongLong(), b.toLongLong(), &i);
+      return o ? QVariant() : i;
+#else
       return QVariant(a.toLongLong() - b.toLongLong());
+#endif
     case QMetaType::ULongLong:
+#if __has_builtin(__builtin_sub_overflow)
+      o = __builtin_usubll_overflow(a.toULongLong(), b.toULongLong(), &u);
+      return o ? QVariant() : u;
+#else
       return QVariant(a.toULongLong() - b.toULongLong());
+#endif
   };
   return QVariant();
 }
@@ -276,13 +312,30 @@ QVariant MathUtils::subQVariantAsNumber(QVariant a, QVariant b) {
 QVariant MathUtils::mulQVariantAsNumber(QVariant a, QVariant b) {
   if (!promoteToBestNumericType(&a, &b))
     return QVariant();
+#if __has_builtin(__builtin_mul_overflow)
+  qlonglong i;
+  qulonglong u;
+  bool o = false;
+#else
+#warning MathUtils::mulQVariantAsNumber() without overflow handling
+#endif
   switch (a.metaType().id()) {
     case QMetaType::Double:
       return QVariant(a.toDouble() * b.toDouble());
     case QMetaType::LongLong:
+#if __has_builtin(__builtin_mul_overflow)
+      o = __builtin_smulll_overflow(a.toLongLong(), b.toLongLong(), &i);
+      return o ? QVariant() : i;
+#else
       return QVariant(a.toLongLong() * b.toLongLong());
+#endif
     case QMetaType::ULongLong:
+#if __has_builtin(__builtin_mul_overflow)
+      o = __builtin_umulll_overflow(a.toULongLong(), b.toULongLong(), &u);
+      return o ? QVariant() : u;
+#else
       return QVariant(a.toULongLong() * b.toULongLong());
+#endif
   };
   return QVariant();
 }
@@ -306,7 +359,7 @@ QVariant MathUtils::modQVariantAsNumber(QVariant a, QVariant b) {
     return QVariant();
   switch (a.metaType().id()) {
     case QMetaType::Double:
-      return QVariant((long long)a.toDouble() % (long long)b.toDouble());
+      return QVariant(std::fmod(a.toDouble(), b.toDouble()));
     case QMetaType::LongLong:
       return QVariant(a.toLongLong() % b.toLongLong());
     case QMetaType::ULongLong:
