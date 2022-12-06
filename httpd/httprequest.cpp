@@ -302,11 +302,9 @@ QStringList HttpRequest::clientAdresses() const {
   return d->_clientAdresses;
 }
 
-QVariant HttpRequestPseudoParamsProvider::paramValue(
-        QString key, const ParamsProvider *context, QVariant defaultValue,
-        QSet<QString> alreadyEvaluated) const {
-  Q_UNUSED(context)
-  Q_UNUSED(alreadyEvaluated)
+const QVariant HttpRequestPseudoParamsProvider::paramValue(
+  const QString &key, const ParamsProvider *, const QVariant &defaultValue,
+  QSet<QString> *) const {
   if (key.startsWith('!')) {
     if (key == "!url") {
       return _request.url().toString(QUrl::RemovePassword);
@@ -329,7 +327,7 @@ QVariant HttpRequestPseudoParamsProvider::paramValue(
   return defaultValue;
 }
 
-QSet<QString> HttpRequestPseudoParamsProvider::keys() const {
+const QSet<QString> HttpRequestPseudoParamsProvider::keys() const {
   QSet<QString> keys { "!url", "!method", "!clientaddresses" };
   for (auto s: _request.cookies().keys())
     keys << "!cookie:"+s;

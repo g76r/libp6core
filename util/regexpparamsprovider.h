@@ -28,11 +28,12 @@ public:
     : _match(match) { }
   QRegularExpressionMatch match() const { return _match; }
   void setMatch(QRegularExpressionMatch  match) { _match = match; }
-  QVariant paramValue(QString key, const ParamsProvider *context = 0,
-                      QVariant defaultValue = QVariant(),
-                      QSet<QString> alreadyEvaluated = QSet<QString>()
-          ) const override;
-  QSet<QString> keys() const override;
+  using ParamsProvider::paramValue;
+  const QVariant paramValue(
+    const QString &key, const ParamsProvider *context,
+    const QVariant &defaultValue,
+    QSet<QString> *alreadyEvaluated) const override;
+  const QSet<QString> keys() const override;
 };
 
 #endif // REGEXPPARAMSPROVIDER_H

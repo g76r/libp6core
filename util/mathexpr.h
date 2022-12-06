@@ -31,10 +31,14 @@ public:
   MathExpr &operator=(const MathExpr &other);
   ~MathExpr();
   bool isValid() const { return !d; }
-  QString expr() const;
-  QVariant evaluate(
-    const ParamsProvider *context = 0, QVariant defaultValue = QVariant(),
-    QSet<QString> alreadyEvaluated = QSet<QString>()) const;
+  const QString expr() const;
+  const QVariant evaluate(
+    const ParamsProvider *context, const QVariant &defaultValue,
+    QSet<QString> *alreadyEvaluated) const;
+  inline const QVariant evaluate(
+    const ParamsProvider *context = 0,
+    const QVariant &defaultValue = QVariant()) const {
+    QSet<QString> ae; return evaluate(context, defaultValue, &ae); }
 };
 
 Q_DECLARE_METATYPE(MathExpr)

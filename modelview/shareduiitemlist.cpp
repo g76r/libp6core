@@ -21,11 +21,9 @@ static int staticInit() {
 
 Q_CONSTRUCTOR_FUNCTION(staticInit)
 
-QVariant SharedUiItemListParamsProvider::paramValue(
-        QString key, const ParamsProvider *context, QVariant defaultValue,
-        QSet<QString> alreadyEvaluated) const {
-  Q_UNUSED(context)
-  Q_UNUSED(alreadyEvaluated)
+const QVariant SharedUiItemListParamsProvider::paramValue(
+  const QString &key, const ParamsProvider *, const QVariant &defaultValue,
+  QSet<QString> *) const {
   int colon = key.indexOf(':');
   QString idQualifier = colon >= 0 ? key.left(colon) : QString();
   QString sectionName = key.mid(colon+1); // works even with colon=-1
@@ -53,7 +51,7 @@ QVariant SharedUiItemListParamsProvider::paramValue(
   return defaultValue;
 }
 
-QSet<QString> SharedUiItemListParamsProvider::keys() const {
+const QSet<QString> SharedUiItemListParamsProvider::keys() const {
   QSet<QString> keys;
   QSet<QString> qualifiers;
   for (auto item: _list) {

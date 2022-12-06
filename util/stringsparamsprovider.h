@@ -26,16 +26,17 @@ class LIBP6CORESHARED_EXPORT StringsParamsProvider : public ParamsProvider {
   QStringList _strings;
 
 public:
-  StringsParamsProvider(QStringList strings) : _strings(strings) { }
-  StringsParamsProvider(QString string) : _strings(string) { }
+  StringsParamsProvider(const QStringList &strings) : _strings(strings) { }
+  StringsParamsProvider(const QString &string) : _strings(string) { }
   StringsParamsProvider() { }
-  QStringList strings() const { return _strings; }
-  void setStrings(QStringList strings) { _strings = strings; }
-  QVariant paramValue(QString key, const ParamsProvider *context = 0,
-                      QVariant defaultValue = QVariant(),
-                      QSet<QString> alreadyEvaluated = QSet<QString>()
-          ) const override;
-  QSet<QString> keys() const override;
+  const QStringList strings() const { return _strings; }
+  void setStrings(const QStringList &strings) { _strings = strings; }
+  using ParamsProvider::paramValue;
+  const QVariant paramValue(
+    const QString &key, const ParamsProvider *context,
+    const QVariant &defaultValue,
+    QSet<QString> *alreadyEvaluated) const override;
+  const QSet<QString> keys() const override;
 };
 
 #endif // STRINGSPARAMSPROVIDER_H

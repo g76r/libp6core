@@ -24,25 +24,26 @@ public:
     SimplerMerger(const ParamsProvider *first, const ParamsProvider *second)
         : _first(first), _second(second) { }
     /** Evaluate using second provider if first returns an invalid QVariant. */
-    QVariant paramValue(QString key, const ParamsProvider *context,
-                        QVariant defaultValue, QSet<QString> alreadyEvaluated
-                        ) const override {
-        QVariant v = _first->paramValue(key, context, defaultValue,
-                                        alreadyEvaluated);
-        if (!v.isValid() && _second)
-            _second->paramValue(key, context, defaultValue, alreadyEvaluated);
-        return v;
+    const QVariant paramValue(
+      const QString &key, const ParamsProvider *context,
+      const QVariant &defaultValue,
+      QSet<QString> *alreadyEvaluated) const override {
+      QVariant v = _first->paramValue(key, context, defaultValue,
+                                      alreadyEvaluated);
+      if (!v.isValid() && _second)
+        _second->paramValue(key, context, defaultValue, alreadyEvaluated);
+      return v;
     }
-    QSet<QString> keys() const override {
+    const QSet<QString> keys() const override {
       return QSet<QString>();
     }
 };
 
 } // unnamed namespace
 
-QVariant ParamsProviderMerger::paramValue(
-        QString key, const ParamsProvider *context, QVariant defaultValue,
-        QSet<QString> alreadyEvaluated) const {
+const QVariant ParamsProviderMerger::paramValue(
+  const QString &key, const ParamsProvider *context,
+  const QVariant &defaultValue, QSet<QString> *alreadyEvaluated) const {
   SimplerMerger sm(this, context);
   QVariant v = _overridingParams.paramValue(key, &sm, QVariant(),
                                             alreadyEvaluated);
@@ -80,7 +81,7 @@ void ParamsProviderMerger::restore() {
   }
 }
 
-QSet<QString> ParamsProviderMerger::keys() const {
+const QSet<QString> ParamsProviderMerger::keys() const {
   QSet<QString> keys { _overridingParams.keys() };
   for (auto provider: _providers) {
     if (provider.d->_paramsProvider) {

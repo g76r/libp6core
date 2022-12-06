@@ -70,19 +70,27 @@ public:
    * and is usable by any other kind of timestamp formating within a
    * ParamsProvider.
    */
-  static QString toMultifieldSpecifiedCustomTimestamp(
-      QDateTime dt, QString multifieldSpecifiedFormat,
-      ParamSet paramset = ParamSet(), bool inherit = true,
-      const ParamsProvider *context = 0,
-      QSet<QString> alreadyEvaluated = QSet<QString>());
+  static const QString toMultifieldSpecifiedCustomTimestamp(
+    const QDateTime &dt, const QString &multifieldSpecifiedFormat,
+    const ParamSet &paramset, bool inherit,
+    const ParamsProvider *context,
+    QSet<QString> *alreadyEvaluated);
+  static inline const QString toMultifieldSpecifiedCustomTimestamp(
+    const QDateTime &dt, const QString &multifieldSpecifiedFormat,
+    const ParamSet &paramset = ParamSet(), bool inherit = true,
+    const ParamsProvider *context = 0) {
+    QSet<QString> ae;
+    return toMultifieldSpecifiedCustomTimestamp(
+      dt, multifieldSpecifiedFormat, paramset, inherit, context, &ae);
+  }
   /** Creates a QTimeZone from an ISO 8601 pattern.
    *  Returns UTC on "+00:00" "-00:00" and "Z".
    *  Returns UTC offset timezone on other "+-nn:nn" patterns.
    *  Returns defaultValue if empty or invalid.
    *  Trims before analyzing pattern.
    */
-  static QTimeZone tzFromIso8601(
-      QString offset, QTimeZone defaultValue = QTimeZone());
+  static const QTimeZone tzFromIso8601(
+    const QStringView &offset, const QTimeZone &defaultValue = QTimeZone());
 };
 
 #endif // TIMEFORMATS_H

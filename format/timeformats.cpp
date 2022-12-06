@@ -329,10 +329,11 @@ QString TimeFormats::toCustomTimestamp(
   return dt.toString(format);
 }
 
-QString TimeFormats::toMultifieldSpecifiedCustomTimestamp(
-    QDateTime dt, QString multifieldSpecifiedFormat, ParamSet paramset,
-    bool inherit, const ParamsProvider *context,
-    QSet<QString> alreadyEvaluated) {
+const QString TimeFormats::toMultifieldSpecifiedCustomTimestamp(
+  const QDateTime &dt, const QString &multifieldSpecifiedFormat,
+  const ParamSet &paramset,
+  bool inherit, const ParamsProvider *context,
+  QSet<QString> *alreadyEvaluated) {
   CharacterSeparatedExpression params(multifieldSpecifiedFormat);
   QString format = paramset.evaluate(
         params.value(0), inherit, context, alreadyEvaluated);
@@ -344,12 +345,12 @@ QString TimeFormats::toMultifieldSpecifiedCustomTimestamp(
   return toCustomTimestamp(dt, format, RelativeDateTime(relativedatetime), tz);
 }
 
-QTimeZone TimeFormats::tzFromIso8601(
-    QString offset, QTimeZone defaultValue) {
-  offset = offset.trimmed();
-  if (offset == "Z")
+const QTimeZone TimeFormats::tzFromIso8601(
+    const QStringView &offset, const QTimeZone &defaultValue) {
+  auto o = offset.trimmed();
+  if (o == QLatin1String("Z"))
     return QTimeZone::utc();
-  auto m = _iso8601timezoneOffsetRe.match(offset);
+  auto m = _iso8601timezoneOffsetRe.match(o);
   if (m.hasMatch())
     return QTimeZone((m.captured(1) == "-" ? -1 : +1)
                      *(m.captured(2).toInt()*3600 + m.captured(3).toInt()*60));

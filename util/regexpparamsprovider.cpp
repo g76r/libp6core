@@ -16,9 +16,9 @@
 
 static QRegularExpression integerRE("\\A\\d+\\z");
 
-QVariant RegexpParamsProvider::paramValue(
-    QString key, const ParamsProvider *, QVariant defaultValue,
-    QSet<QString>) const {
+const QVariant RegexpParamsProvider::paramValue(
+  const QString &key, const ParamsProvider *, const QVariant &defaultValue,
+  QSet<QString> *) const {
   if (key.isEmpty())
     return defaultValue;
   QString value = _match.captured(key);
@@ -33,7 +33,7 @@ QVariant RegexpParamsProvider::paramValue(
   return defaultValue;
 }
 
-QSet<QString> RegexpParamsProvider::keys() const {
+const QSet<QString> RegexpParamsProvider::keys() const {
   QSet<QString> keys;
   for (int i = 0; i < _match.capturedTexts().size(); ++i)
     keys << QString::number(i);

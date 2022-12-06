@@ -18,10 +18,9 @@
 
 /** This class builds up several ParamsProvider into only one, chaining
  * calls to paramValue().
- * Keep in mind that it does not take ownership on referenced ParamsProvider
- * objects and that these objects must not be deleted before the last call
- * to ParamsProviderList::paramValue() or must be removed from the
- * ParamsProviderMerger before their destruction.
+ * Does not take ownership on referenced ParamsProvider, these objects must
+ * not be deleted before the last call to ParamsProviderList::paramValue()
+ * or must be removed from the ParamsProviderMerger before their destruction.
  * Therefore ParamsProviderMerger should only be used as a temporary object
  * around a call to some method taking a ParamsProvider as a parameter. */
 class LIBP6CORESHARED_EXPORT ParamsProviderMerger : public ParamsProvider {
@@ -138,13 +137,14 @@ public:
   void save();
   /** Restores the current state (pops a saved state off the stack). */
   void restore();
-  QVariant paramValue(QString key, const ParamsProvider *context = 0,
-                      QVariant defaultValue = QVariant(),
-                      QSet<QString> alreadyEvaluated = QSet<QString>()
-          ) const override;
+  using ParamsProvider::paramValue;
+  const QVariant paramValue(
+    const QString &key, const ParamsProvider *context,
+    const QVariant &defaultValue,
+    QSet<QString> *alreadyEvaluated) const override;
   /** Give access to currently overriding params. */
-  ParamSet overridingParams() const { return _overridingParams; }
-  QSet<QString> keys() const override;
+  const ParamSet overridingParams() const { return _overridingParams; }
+  const QSet<QString> keys() const override;
 };
 
 /** RAII helper for ParamsProviderMerger save/restore.

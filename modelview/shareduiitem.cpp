@@ -77,11 +77,9 @@ QDebug operator<<(QDebug dbg, const SharedUiItem &i) {
   return dbg.space();
 }
 
-QVariant SharedUiItemParamsProvider::paramValue(
-        QString key, const ParamsProvider *context, QVariant defaultValue,
-        QSet<QString> alreadyEvaluated) const {
-  Q_UNUSED(context)
-  Q_UNUSED(alreadyEvaluated)
+const QVariant SharedUiItemParamsProvider::paramValue(
+  const QString &key, const ParamsProvider *, const QVariant &defaultValue,
+  QSet<QString> *) const {
   bool ok;
   int section = key.toInt(&ok);
   if (!ok) {
@@ -102,7 +100,7 @@ QVariant SharedUiItemParamsProvider::paramValue(
   return defaultValue;
 }
 
-QSet<QString> SharedUiItemParamsProvider::keys() const {
+const QSet<QString> SharedUiItemParamsProvider::keys() const {
   QSet<QString> keys { "id", "idQualifier", "qualifiedId" };
   int count = _item.uiSectionCount();
   for (int section = 0; section < count; ++section) {

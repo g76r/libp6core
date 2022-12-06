@@ -33,37 +33,55 @@ public:
   virtual ~ParamsProvider();
   /** Return a parameter value.
     * @param context is an evaluation context */
-  virtual QVariant paramValue(
-          QString key, const ParamsProvider *context = 0,
-          QVariant defaultValue = QVariant(),
-          QSet<QString> alreadyEvaluated = QSet<QString>()) const = 0;
-  /** Backward compatibility and convenience method callable w/o context */
-  QVariant paramValue(
-          QString key, QVariant defaultValue,
-          QSet<QString> alreadyEvaluated = QSet<QString>()) const {
-    return paramValue(key, 0, defaultValue, alreadyEvaluated);
-  }
-  /** Convenience method converting QVariant to QString. */
-  QString paramString(QString key, QVariant defaultValue = QVariant(),
-                      QSet<QString> alreadyEvaluated = QSet<QString>()) const {
-    return paramValue(key, defaultValue, alreadyEvaluated).toString();
-  }
-  /** Convenience method converting QVariant to QString. */
-  QString paramString(QString key, const ParamsProvider *context,
-                      QVariant defaultValue = QVariant(),
-                      QSet<QString> alreadyEvaluated = QSet<QString>()) const {
+  virtual const QVariant paramValue(
+    const QString &key, const ParamsProvider *context,
+    const QVariant &defaultValue, QSet<QString> *alreadyEvaluated) const = 0;
+  /** Convenience method */
+  inline const QVariant paramValue(
+    const QString &key, const ParamsProvider *context = 0,
+    const QVariant &defaultValue = QVariant()) const {
+    QSet<QString> ae; return paramValue(key, context, defaultValue, &ae); }
+  /** Convenience method */
+  inline const QVariant paramValue(
+    const QString &key, const QVariant &defaultValue,
+    QSet<QString> *alreadyEvaluated) const {
+    return paramValue(key, 0, defaultValue, alreadyEvaluated); }
+  /** Convenience method */
+  inline const QVariant paramValue(
+    const QString &key, const QVariant &defaultValue) const {
+    return paramValue(key, 0, defaultValue); }
+  /** Convenience method */
+  inline const QString paramString(
+    const QString key, const ParamsProvider *context,
+    const QVariant defaultValue, QSet<QString> *alreadyEvaluated) const {
     return paramValue(key, context, defaultValue, alreadyEvaluated).toString();
   }
-  virtual QSet<QString> keys() const = 0;
+  /** Convenience method */
+  inline const QString paramString(
+    const QString key, const ParamsProvider *context = 0,
+    const QVariant defaultValue = QVariant()) const {
+    return paramValue(key, context, defaultValue).toString(); }
+  /** Convenience method */
+  inline const QString paramString(
+    const QString &key, const QVariant &defaultValue,
+    QSet<QString> *alreadyEvaluated) const {
+    return paramValue(key, defaultValue, alreadyEvaluated).toString(); }
+  /** Convenience method */
+  inline const QString paramString(
+    const QString &key, const QVariant &defaultValue) const {
+    return paramValue(key, defaultValue).toString(); }
+  virtual const QSet<QString> keys() const = 0;
   static ParamsProvider *environment() { return _environment; }
   static ParamsProvider *empty() { return _empty; }
   /** take an key-values snapshot that no longer depend on ParamsProvider* not
    * being deleted nor on %-evaluation */
-  virtual ParamSet snapshot() const;
+  virtual const ParamSet snapshot() const;
   /** evaluate a %-expression within this context.
    * short for ParamSet().evaluate(rawValue, false, this, alreadyEvaluated); */
-  QString evaluate(QString rawValue,
-                   QSet<QString> alreadyEvaluated = QSet<QString>()) const;
+  const QString evaluate(
+    const QString &rawValue, QSet<QString> *alreadyEvaluated) const;
+  inline const QString evaluate(const QString &rawValue) const {
+    QSet<QString> ae; return evaluate(rawValue, &ae); }
 };
 
 /** Map of params without inheritance, evaluation or any other advanced
@@ -81,11 +99,11 @@ public:
   }
 
 public:
-  QVariant paramValue(
-    QString key, const ParamsProvider *context, QVariant defaultValue,
-    QSet<QString> alreadyEvaluated) const override;
-  QSet<QString> keys() const override;
-  QMap<QString,QVariant> toMap() const { return _params; }
+  const QVariant paramValue(
+    const QString &key, const ParamsProvider *context,
+    const QVariant &defaultValue, QSet<QString> *alreadyEvaluated) const override;
+  const QSet<QString> keys() const override;
+  const QMap<QString,QVariant> toMap() const { return _params; }
 };
 
 #endif // PARAMSPROVIDER_H

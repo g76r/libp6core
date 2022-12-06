@@ -13,17 +13,15 @@
  */
 #include "stringsparamsprovider.h"
 
-QVariant StringsParamsProvider::paramValue(
-        QString key, const ParamsProvider *context, QVariant defaultValue,
-        QSet<QString> alreadyEvaluated) const {
-  Q_UNUSED(context)
-  Q_UNUSED(alreadyEvaluated)
+const QVariant StringsParamsProvider::paramValue(
+  const QString &key, const ParamsProvider *, const QVariant &defaultValue,
+  QSet<QString> *) const {
   bool ok;
   int i = key.toInt(&ok);
   return (ok && i >= 1 && _strings.size() <= i) ? _strings[i-1] : defaultValue;
 }
 
-QSet<QString> StringsParamsProvider::keys() const {
+const QSet<QString> StringsParamsProvider::keys() const {
   QSet<QString> keys;
   for (int i = 0; i < _strings.size(); ++i)
     keys << QString::number(i+1);

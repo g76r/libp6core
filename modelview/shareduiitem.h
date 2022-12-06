@@ -566,11 +566,12 @@ public:
   inline SharedUiItemParamsProvider(
       SharedUiItem item, int role = Qt::DisplayRole)
     : _item(item), _role(role) { }
-  QVariant paramValue(QString key, const ParamsProvider *context = 0,
-                      QVariant defaultValue = QVariant(),
-                      QSet<QString> alreadyEvaluated = QSet<QString>()
-          ) const override;
-  QSet<QString> keys() const override;
+  using ParamsProvider::paramValue;
+  const QVariant paramValue(
+    const QString &key, const ParamsProvider *context,
+    const QVariant &defaultValue,
+    QSet<QString> *alreadyEvaluated) const override;
+  const QSet<QString> keys() const override;
 };
 
 inline SharedUiItemParamsProvider SharedUiItem::toParamsProvider() const {

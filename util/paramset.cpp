@@ -139,7 +139,7 @@ ParamSet::ParamSet(std::initializer_list<QString> list) {
     if (it != std::end(list)) {
       setValue(key, *it);
     } else {
-      setValue(key, QString(""));
+      setValue(key, QStringLiteral(""));
       break;
     }
   }
@@ -153,30 +153,31 @@ ParamSet::ParamSet(std::initializer_list<std::pair<QString,QVariant>> list) {
 ParamSet::ParamSet(const ParamSet &other) : d(other.d) {
 }
 
-ParamSet::ParamSet(QHash<QString,QString> params)
+ParamSet::ParamSet(const QHash<QString, QString> &params)
   : d(new ParamSetData(params)) {
 }
 
-ParamSet::ParamSet(QMap<QString,QString> params)
+ParamSet::ParamSet(const QMap<QString, QString> &params)
   : d(new ParamSetData) {
   for (auto key: params.keys())
     d->_params.insert(key, params.value(key));
 }
 
-ParamSet::ParamSet(QMultiMap<QString,QString> params)
+ParamSet::ParamSet(const QMultiMap<QString, QString> &params)
   : d(new ParamSetData) {
   for (auto key: params.keys())
     d->_params.insert(key, params.value(key));
 }
 
-ParamSet::ParamSet(QMultiHash<QString,QString> params)
+ParamSet::ParamSet(const QMultiHash<QString, QString> &params)
   : d(new ParamSetData) {
   for (auto key: params.keys())
     d->_params.insert(key, params.value(key));
 }
 
 ParamSet::ParamSet(
-  PfNode parentnode, QString attrname, QString constattrname, ParamSet parent)
+  const PfNode &parentnode, const QString &attrname,
+  const QString &constattrname, const ParamSet &parent)
   : d(new ParamSetData(parent)) {
   for (auto p: parentnode.stringsPairChildrenByName(attrname)) {
     if (p.first.isEmpty())
@@ -194,12 +195,14 @@ ParamSet::ParamSet(
     d.reset();
 }
 
-ParamSet::ParamSet(PfNode parentnode, QString attrname, ParamSet parent)
+ParamSet::ParamSet(
+  const PfNode &parentnode, const QString &attrname, const ParamSet &parent)
   : ParamSet(parentnode, attrname, QString(), parent) {
 }
 
-ParamSet::ParamSet(PfNode parentnode, QSet<QString> attrnames, ParamSet parent)
-  : d(new ParamSetData(parent)) {
+ParamSet::ParamSet(
+  const PfNode &parentnode, const QSet<QString> &attrnames,
+  const ParamSet &parent) : d(new ParamSetData(parent)) {
   for (const PfNode &child : parentnode.children())
     if (attrnames.contains(child.name()))
       d->_params.insert(child.name(), child.contentAsString());
@@ -207,9 +210,9 @@ ParamSet::ParamSet(PfNode parentnode, QSet<QString> attrnames, ParamSet parent)
     d.reset();
 }
 
-ParamSet::ParamSet(QSqlDatabase db, QString sql, QMap<int,QString> bindings,
-                   ParamSet parent)
-  : d(new ParamSetData(parent)) {
+ParamSet::ParamSet(
+  const QSqlDatabase &db, const QString &sql, const QMap<int,QString> &bindings,
+  const ParamSet &parent) : d(new ParamSetData(parent)) {
   QSqlQuery query(db);
   query.prepare(parent.evaluate(sql));
   if (!query.exec()) {
@@ -291,8 +294,8 @@ QString ParamSet::rawValue(QString key, QString defaultValue,
 }
 
 QString ParamSet::evaluate(
-    QString rawValue, bool inherit, const ParamsProvider *context,
-    QSet<QString> alreadyEvaluated) const {
+  QString rawValue, bool inherit, const ParamsProvider *context,
+    QSet<QString> *alreadyEvaluated) const {
   //Log::debug() << "evaluate " << rawValue << " " << QString::number((qint64)context, 16);
   QStringList values = splitAndEvaluate(rawValue, QString(), inherit, context,
                                         alreadyEvaluated);
@@ -301,43 +304,44 @@ QString ParamSet::evaluate(
   return values.first();
 }
 
+// FIXME signature
 static RadixTree<std::function<
-QString(ParamSet params, QString key, bool inherit,
-const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+QString(const ParamSet &params, const QString &key, bool inherit,
+const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
         int matchedLength)>>
-implicitVariables {
-{ "=date", [](ParamSet paramset, QString key, bool inherit,
-     const ParamsProvider *context, QSet<QString> alreayEvaluated,
+_implicitVariables {
+{ "=date", [](const ParamSet &paramset, const QString &key, bool inherit,
+     const ParamsProvider *context, QSet<QString> *alreayEvaluated,
      int matchedLength) {
   return TimeFormats::toMultifieldSpecifiedCustomTimestamp(
         QDateTime::currentDateTime(), key.mid(matchedLength), paramset,
         inherit, context, alreayEvaluated);
 }, true},
-{ "=coarsetimeinterval", [](ParamSet paramset, QString key, bool inherit,
-     const ParamsProvider *context, QSet<QString> alreadyEvaluated,
-     int matchedLength) {
+{ "=coarsetimeinterval", [](const ParamSet &paramset, const QString &key,
+     bool inherit, const ParamsProvider *context,
+     QSet<QString> *alreadyEvaluated, int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   qint64 msecs = (qint64)(
         paramset.evaluate(params.value(0), inherit, context, alreadyEvaluated)
         .toDouble()*1000);
   return TimeFormats::toCoarseHumanReadableTimeInterval(msecs);
 }, true},
-{ "=eval", [](ParamSet paramset, QString key, bool inherit,
-     const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=eval", [](const ParamSet &paramset, const QString &key, bool inherit,
+     const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
      int matchedLength) {
   QString value = paramset.evaluate(
         key.mid(matchedLength+1), inherit, context, alreadyEvaluated);
   return paramset.evaluate(value, inherit, context, alreadyEvaluated);
 }, true},
-{ "=escape", [](ParamSet paramset, QString key, bool inherit,
-     const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=escape", [](const ParamSet &paramset, const QString &key, bool inherit,
+     const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
      int matchedLength) {
   QString value = paramset.evaluate(
         key.mid(matchedLength+1), inherit, context, alreadyEvaluated);
   return ParamSet::escape(value);
 }, true},
-{ "=default", [](ParamSet paramset, QString key, bool inherit,
-              const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=default", [](const ParamSet &paramset, const QString &key, bool inherit,
+              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   QString value;
@@ -349,8 +353,8 @@ implicitVariables {
   }
   return value;
 }, true},
-{ "=rawvalue", [](ParamSet paramset, QString key, bool,
-              const ParamsProvider *, QSet<QString>, int matchedLength) {
+{ "=rawvalue", [](const ParamSet &paramset, const QString &key, bool,
+              const ParamsProvider *, QSet<QString> *, int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   if (params.size() < 1)
     return QString();
@@ -368,8 +372,8 @@ implicitVariables {
   }
   return value;
 }, true},
-{ "=ifneq", [](ParamSet paramset, QString key, bool inherit,
-              const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=ifneq", [](const ParamSet &paramset, const QString &key, bool inherit,
+              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   if (params.size() >= 3) {
@@ -388,8 +392,8 @@ implicitVariables {
   //qDebug() << "%=ifneq function invalid syntax:" << key;
   return QString();
 }, true},
-{ "=switch", [](ParamSet paramset, QString key, bool inherit,
-              const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=switch", [](const ParamSet &paramset, const QString &key, bool inherit,
+              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   if (params.size() >= 1) {
@@ -414,8 +418,8 @@ implicitVariables {
   }
   return QString();
 }, true},
-{ "=match", [](ParamSet paramset, QString key, bool inherit,
-              const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=match", [](const ParamSet &paramset, const QString &key, bool inherit,
+              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   if (params.size() >= 1) {
@@ -442,8 +446,8 @@ implicitVariables {
   }
   return QString();
 }, true},
-{ "=sub", [](ParamSet paramset, QString key, bool inherit,
-              const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=sub", [](const ParamSet &paramset, const QString &key, bool inherit,
+              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   //qDebug() << "%=sub:" << key << params.size() << params;
@@ -502,8 +506,8 @@ implicitVariables {
   //qDebug() << "value:" << value;
   return value;
 }, true},
-{ "=left", [](ParamSet paramset, QString key, bool inherit,
-              const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=left", [](const ParamSet &paramset, const QString &key, bool inherit,
+              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   QString input = paramset.evaluate(params.value(0), inherit, context,
@@ -512,8 +516,8 @@ implicitVariables {
   int i = params.value(1).toInt(&ok);
   return ok ? input.left(i) : input;
 }, true},
-{ "=right", [](ParamSet paramset, QString key, bool inherit,
-              const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=right", [](const ParamSet &paramset, const QString &key, bool inherit,
+              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   QString input = paramset.evaluate(params.value(0), inherit, context,
@@ -522,8 +526,8 @@ implicitVariables {
   int i = params.value(1).toInt(&ok);
   return ok ? input.right(i) : input;
 }, true},
-{ "=mid", [](ParamSet paramset, QString key, bool inherit,
-              const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=mid", [](const ParamSet &paramset, const QString &key, bool inherit,
+              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   QString input = paramset.evaluate(params.value(0), inherit, context,
@@ -536,15 +540,15 @@ implicitVariables {
   }
   return input;
 }, true},
-{ "=trim", [](ParamSet paramset, QString key, bool inherit,
-             const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=trim", [](const ParamSet &paramset, const QString &key, bool inherit,
+             const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
              int matchedLength) {
    auto input = paramset.evaluate(key.mid(matchedLength), inherit, context,
                                   alreadyEvaluated);
    return input.trimmed();
 }, true},
-{ "=elideright", [](ParamSet paramset, QString key, bool inherit,
-              const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=elideright", [](const ParamSet &paramset, const QString &key, bool inherit,
+              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   QString input = paramset.evaluate(params.value(0), inherit, context,
@@ -556,8 +560,8 @@ implicitVariables {
     return input;
   return StringUtils::elideRight(input, i, placeHolder);
 }, true},
-{ "=elideleft", [](ParamSet paramset, QString key, bool inherit,
-              const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=elideleft", [](const ParamSet &paramset, const QString &key, bool inherit,
+              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   QString input = paramset.evaluate(params.value(0), inherit, context,
@@ -569,8 +573,8 @@ implicitVariables {
     return input;
   return StringUtils::elideLeft(input, i, placeHolder);
 }, true},
-{ "=elidemiddle", [](ParamSet paramset, QString key, bool inherit,
-              const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=elidemiddle", [](const ParamSet &paramset, const QString &key, bool inherit,
+              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   QString input = paramset.evaluate(params.value(0), inherit, context,
@@ -582,8 +586,8 @@ implicitVariables {
     return input;
   return StringUtils::elideMiddle(input, i, placeHolder);
 }, true},
-{ "=htmlencode", [](ParamSet paramset, QString key, bool inherit,
-              const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=htmlencode", [](const ParamSet &paramset, const QString &key, bool inherit,
+              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   if (params.size() < 1)
@@ -598,8 +602,8 @@ implicitVariables {
   }
   return StringUtils::htmlEncode(input, false, false);
 }, true},
-{ "=random", [](ParamSet, QString key, bool,
-              const ParamsProvider *, QSet<QString>, int matchedLength) {
+{ "=random", [](const ParamSet &, const QString &key, bool,
+              const ParamsProvider *, QSet<QString> *, int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   // TODO evaluate modulo and shift
   int modulo = abs(params.value(0).toInt());
@@ -610,8 +614,8 @@ implicitVariables {
   i += shift;
   return QString::number(i);
 }, true},
-{ "=env", [](ParamSet paramset, QString key, bool inherit,
-              const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=env", [](const ParamSet &paramset, const QString &key, bool inherit,
+              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   int i = 0;
@@ -626,32 +630,32 @@ implicitVariables {
   // otherwise last one if there are at less 2, otherwise a non-existent one
   return paramset.evaluate(params.value(i), inherit, context, alreadyEvaluated);
 }, true},
-{ "=sha1", [](ParamSet paramset, QString key, bool inherit,
-     const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=sha1", [](const ParamSet &paramset, const QString &key, bool inherit,
+     const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
      int matchedLength) {
   QString value = paramset.evaluate(
         key.mid(matchedLength+1), inherit, context, alreadyEvaluated);
   return QCryptographicHash::hash(
         value.toUtf8(), QCryptographicHash::Sha1).toHex();
 }, true},
-{ "=sha256", [](ParamSet paramset, QString key, bool inherit,
-     const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=sha256", [](const ParamSet &paramset, const QString &key, bool inherit,
+     const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
      int matchedLength) {
   QString value = paramset.evaluate(
         key.mid(matchedLength+1), inherit, context, alreadyEvaluated);
   return QCryptographicHash::hash(
         value.toUtf8(), QCryptographicHash::Sha256).toHex();
 }, true},
-{ "=md5", [](ParamSet paramset, QString key, bool inherit,
-     const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=md5", [](const ParamSet &paramset, const QString &key, bool inherit,
+     const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
      int matchedLength) {
   QString value = paramset.evaluate(
         key.mid(matchedLength+1), inherit, context, alreadyEvaluated);
   return QCryptographicHash::hash(
         value.toUtf8(), QCryptographicHash::Md5).toHex();
 }, true},
-{ "=hex", [](ParamSet paramset, QString key, bool inherit,
-     const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=hex", [](const ParamSet &paramset, const QString &key, bool inherit,
+     const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
      int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   QString value = paramset.evaluate(
@@ -665,8 +669,8 @@ implicitVariables {
     data = data.toHex(separator.at(0).toLatin1());
   return QString::fromLatin1(data);
 }, true},
-{ "=fromhex", [](ParamSet paramset, QString key, bool inherit,
-     const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=fromhex", [](const ParamSet &paramset, const QString &key, bool inherit,
+     const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
      int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   QString value = paramset.evaluate(
@@ -677,8 +681,8 @@ implicitVariables {
     return QString::fromLatin1(data);
   return QString::fromUtf8(data);
 }, true},
-{ "=base64", [](ParamSet paramset, QString key, bool inherit,
-     const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=base64", [](const ParamSet &paramset, const QString &key, bool inherit,
+     const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
      int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   QString value = paramset.evaluate(
@@ -693,8 +697,8 @@ implicitVariables {
         );
   return data;
 }, true},
-{ "=frombase64", [](ParamSet paramset, QString key, bool inherit,
-     const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+{ "=frombase64", [](const ParamSet &paramset, const QString &key, bool inherit,
+     const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
      int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   QString value = paramset.evaluate(
@@ -711,8 +715,9 @@ implicitVariables {
     return QString::fromLatin1(data);
   return QString::fromUtf8(data);
 }, true},
-{ "=rpn", [](ParamSet paramset, QString key, bool,
-      const ParamsProvider *context, QSet<QString> alreadyEvaluated, int matchedLength) {
+{ "=rpn", [](const ParamSet &paramset, const QString &key, bool,
+      const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+      int matchedLength) {
    MathExpr expr(key.mid(matchedLength), MathExpr::CharacterSeparatedRpn);
    auto ppm = ParamsProviderMerger(paramset)(context);
    return expr.evaluate(&ppm, QString(), alreadyEvaluated).toString();
@@ -720,21 +725,27 @@ implicitVariables {
 };
 
 bool ParamSet::appendVariableValue(
-    QString *value, QString variable, bool inherit,
-    const ParamsProvider *context, QSet<QString> alreadyEvaluated,
-    bool logIfVariableNotFound) const {
+  QString *value, const QString &variable, bool inherit,
+  const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+  bool logIfVariableNotFound) const {
   if (variable.isEmpty()) {
     Log::warning() << "unsupported variable substitution: empty variable name";
     return false;
-  } else if (alreadyEvaluated.contains(variable)) {
+  }
+  if (!alreadyEvaluated) {
+    Log::warning() << "unsupported variable substitution: loop detection is "
+                      "broken";
+    return false;
+  }
+  if (alreadyEvaluated->contains(variable)) {
     Log::warning() << "unsupported variable substitution: loop detected with "
                       "variable \"" << variable << "\"";
     return false;
   }
-  alreadyEvaluated.insert(variable);
+  alreadyEvaluated->insert(variable);
   QString s;
   int matchedLength;
-  auto implicitVariable = implicitVariables.value(variable, &matchedLength);
+  auto implicitVariable = _implicitVariables.value(variable, &matchedLength);
   //qDebug() << "implicitVariable" << variable << !!implicitVariable;
   if (implicitVariable) {
     s = implicitVariable(*this, variable, inherit, context,
@@ -766,8 +777,8 @@ bool ParamSet::appendVariableValue(
 }
 
 QStringList ParamSet::splitAndEvaluate(
-    QString rawValue, QString separators, bool inherit,
-    const ParamsProvider *context, QSet<QString> alreadyEvaluated) const {
+  QString rawValue, QString separators, bool inherit,
+    const ParamsProvider *context, QSet<QString> *alreadyEvaluated) const {
   QStringList values;
   QString value, variable;
   int i = 0;
@@ -836,17 +847,16 @@ QStringList ParamSet::splitAndEvaluate(
 
 static QRegularExpression _whitespace("\\s");
 
-QPair<QString,QString> ParamSet::valueAsStringsPair(
-    QString key, bool inherit, const ParamsProvider *context) const {
+const QPair<QString, QString> ParamSet::valueAsStringsPair(
+  QString key, bool inherit, const ParamsProvider *context) const {
   QString v = rawValue(key, inherit).trimmed();
   int i = v.indexOf(_whitespace);
   if (i == -1)
-    return QPair<QString,QString>(v,QString());
-  return QPair<QString,QString>(v.left(i),
-                                evaluate(v.mid(i+1).trimmed(), context));
+    return { v, {} };
+  return { v.left(i), evaluate(v.mid(i+1).trimmed(), context) };
 }
 
-QString ParamSet::matchingRegexp(QString rawValue) {
+const QString ParamSet::matchingRegexp(QString rawValue) {
   int i = 0, len = rawValue.size();
   QString value;
   while (i < len) {
@@ -869,12 +879,12 @@ QString ParamSet::matchingRegexp(QString rawValue) {
   return value;
 }
 
-QSet<QString> ParamSet::keys(bool inherit) const {
+const QSet<QString> ParamSet::keys(bool inherit) const {
   QSet<QString> set;
   if (d) {
     auto keys = d->_params.keys();
 #if QT_VERSION >= 0x050f00
-    set = QSet<QString>(keys.begin(), keys.end());
+    set = { keys.begin(), keys.end() };
 #else
     set = keys.toSet();
 #endif
@@ -884,7 +894,7 @@ QSet<QString> ParamSet::keys(bool inherit) const {
   return set;
 }
 
-QSet<QString> ParamSet::keys() const {
+const QSet<QString> ParamSet::keys() const {
   return keys(true);
 }
 
@@ -904,15 +914,15 @@ bool ParamSet::isEmpty() const {
   return d ? d->_params.isEmpty() : true;
 }
 
-QVariant ParamSet::paramValue(
-        QString key, const ParamsProvider *context, QVariant defaultValue,
-        QSet<QString> alreadyEvaluated) const {
+const QVariant ParamSet::paramValue(
+  const QString &key, const ParamsProvider *context,
+  const QVariant &defaultValue, QSet<QString> *alreadyEvaluated) const {
   QString v = evaluate(rawValue(key, defaultValue.toString(), true),
                        true, context, alreadyEvaluated);
   return v.isNull() ? QVariant() : v;
 }
 
-QString ParamSet::toString(bool inherit, bool decorate) const {
+const QString ParamSet::toString(bool inherit, bool decorate) const {
   QString s;
   if (decorate)
     s.append("{ ");
@@ -929,14 +939,14 @@ QString ParamSet::toString(bool inherit, bool decorate) const {
   return s;
 }
 
-QHash<QString,QString> ParamSet::toHash(bool inherit) const {
+const QHash<QString, QString> ParamSet::toHash(bool inherit) const {
   QHash<QString,QString> hash;
   for (auto key: keys(inherit))
     hash.insert(key, rawValue(key));
   return hash;
 }
 
-QMap<QString,QString> ParamSet::toMap(bool inherit) const {
+const QMap<QString,QString> ParamSet::toMap(bool inherit) const {
   QMap<QString,QString> map;
   for (auto key: keys(inherit))
     map.insert(key, rawValue(key));

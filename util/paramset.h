@@ -54,16 +54,16 @@ class LIBP6CORESHARED_EXPORT ParamSet : public ParamsProvider {
 public:
   ParamSet();
   /** First item processed as a key, second one as the matching value and so on.
-   * If list size is odd the last key will be inserted with "". */
+   * If list size is odd the last key will be inserted with "" value. */
   ParamSet(std::initializer_list<QString> list);
   ParamSet(std::initializer_list<std::pair<QString,QVariant>> list);
   ParamSet(const ParamSet &other);
-  explicit ParamSet(QHash<QString,QString> params);
-  explicit ParamSet(QMap<QString,QString> params);
+  explicit ParamSet(const QHash<QString,QString> &params);
+  explicit ParamSet(const QMap<QString,QString> &params);
   /** For multi-valued keys, only most recently inserted value is kept. */
-  explicit ParamSet(QMultiMap<QString,QString> params);
+  explicit ParamSet(const QMultiMap<QString,QString> &params);
   /** For multi-valued keys, only most recently inserted value is kept. */
-  explicit ParamSet(QMultiHash<QString,QString> params);
+  explicit ParamSet(const QMultiHash<QString,QString> &params);
   /** Takes params from PfNode children given an attribute name,
    *  parsing their text content as key-whitespace-value.
    *  Optionnaly a second attribute name is used for "const" params, that is
@@ -76,16 +76,18 @@ public:
    *  -> now's value won't change later and will stay as a timestamp of ParamSet
    *  construction
    */
-  ParamSet(PfNode parentnode, QString attrname,
-           QString constattrname = QString(), ParamSet parent = ParamSet());
-  ParamSet(PfNode parentnode, QString attrname, ParamSet parent);
+  ParamSet(const PfNode &parentnode, const QString &attrname,
+           const QString &constattrname = QString(),
+           const ParamSet &parent = ParamSet());
+  ParamSet(const PfNode &parentnode, const QString &attrname,
+           const ParamSet &parent);
   /** Takes params from PfNode children given their attribute names,
    *  using their content as value.
    *  e.g.: with ParamSet(node, { "path", "tmp" } )
    *  (node (path /foo/bar)(truncate)) -> { "path" = "/foo/bar", "tmp" = "" }
    */
-  ParamSet(PfNode parentnode, QSet<QString> attrnames,
-           ParamSet parent = ParamSet());
+  ParamSet(const PfNode &parentnode, const QSet<QString> &attrnames,
+           const ParamSet &parent = ParamSet());
   /** Takes params from columns values of an SQL query.
    *  SQL query is %-evaluated within parent context.
    *  QSqlDatabase must already be open.
@@ -94,8 +96,9 @@ public:
    *  separated list of unique non null non empty values in column foo of table
    *  t1 and bars of non null non empty values in column bar of table t2.
    */
-  ParamSet(QSqlDatabase db, QString sql, QMap<int,QString> bindings,
-           ParamSet parent = ParamSet());
+  ParamSet(const QSqlDatabase &db, const QString &sql,
+           const QMap<int, QString> &bindings,
+           const ParamSet &parent = ParamSet());
   ~ParamSet();
   ParamSet &operator=(const ParamSet &other);
   ParamSet parent() const;
@@ -186,7 +189,7 @@ public:
   inline QString value(QString key, const ParamsProvider *context) const {
     return evaluate(rawValue(key, QString(), true), true, context); }
   inline QString value(QString key, bool inherit, const ParamsProvider *context,
-                       QSet<QString> alreadyEvaluated) const {
+                       QSet<QString> *alreadyEvaluated) const {
     return evaluate(rawValue(key, inherit), inherit, context, alreadyEvaluated);
   }
   /** Return a value splitted into strings, %-substitution is done after the
@@ -201,7 +204,7 @@ public:
   /** Return a value splitted at first whitespace. Both strings are trimmed.
    * E.g. a raw value of "  foo    bar baz  " is returned as a
    * QPair<>("foo", "bar baz"). */
-  QPair<QString,QString> valueAsStringsPair(
+  const QPair<QString,QString> valueAsStringsPair(
       QString key, bool inherit = true,
       const ParamsProvider *context = 0) const;
   /** @return integer value if the string content is a valid integer
@@ -226,24 +229,25 @@ public:
                           const ParamsProvider *context = 0) const;
   /** Return all keys for which the ParamSet or one of its parents hold a value.
     */
-  QSet<QString> keys(bool inherit) const;
-  QSet<QString> keys() const override;
+  const QSet<QString> keys(bool inherit) const;
+  const QSet<QString> keys() const override;
   /** Return true if key is set. */
   bool contains(QString key, bool inherit = true) const;
   /** Perform parameters substitution within the string. */
   QString evaluate(QString rawValue, bool inherit = true,
                    const ParamsProvider *context = 0) const {
-    return evaluate(rawValue, inherit, context, QSet<QString>()); }
+    QSet<QString> ae;
+    return evaluate(rawValue, inherit, context, &ae); }
   QString evaluate(QString rawValue, const ParamsProvider *context) const {
     return evaluate(rawValue, true, context); }
   QString evaluate(QString rawValue, bool inherit,
                    const ParamsProvider *context,
-                   QSet<QString> alreadyEvaluated) const;
+                   QSet<QString> *alreadyEvaluated) const;
   QStringList splitAndEvaluate(
       QString rawValue, QString separators = " ", bool inherit = true,
       const ParamsProvider *context = 0) const {
-    return splitAndEvaluate(rawValue, separators, inherit, context,
-                            QSet<QString>());
+    QSet<QString> ae;
+    return splitAndEvaluate(rawValue, separators, inherit, context, &ae);
   }
   QStringList splitAndEvaluate(QString rawValue,
                                const ParamsProvider *context) const {
@@ -260,7 +264,7 @@ public:
    */
   QStringList splitAndEvaluate(
       QString rawValue, QString separators, bool inherit,
-      const ParamsProvider *context, QSet<QString> alreadyEvaluated) const;
+      const ParamsProvider *context, QSet<QString> *alreadyEvaluated) const;
   /** Escape all characters in string so that they no longer have special
    * meaning for evaluate() and splitAndEvaluate() methods.
    * That is: replace % with %% within the string. */
@@ -272,11 +276,12 @@ public:
    * the second pattern is returned, not the first one, and it's likely to stay
    * this way).
    * Can be used as an input for QRegularExpression(QString) constructor. */
-  static QString matchingRegexp(QString rawValue);
-  QVariant paramValue(QString key, const ParamsProvider *context,
-                      QVariant defaultValue = QVariant(),
-                      QSet<QString> alreadyEvaluated = QSet<QString>()
-          ) const override;
+  static const QString matchingRegexp(QString rawValue);
+  using ParamsProvider::paramValue;
+  const QVariant paramValue(
+    const QString &key, const ParamsProvider *context,
+    const QVariant &defaultValue,
+    QSet<QString> *alreadyEvaluated) const override;
   bool isNull() const;
   int size() const;
   bool isEmpty() const;
@@ -284,7 +289,7 @@ public:
   /** Turn the paramset into a human readable string showing its content.
    * @param inherit include params inherited from parents
    * @param decorate surround with curly braces */
-  QString toString(bool inherit = true, bool decorate = true) const;
+  const QString toString(bool inherit = true, bool decorate = true) const;
   /** Record debug log messages when a variable evaluation is required and not
    * found.
    * Applicable to all params sets in the applicatoin (global parameter).
@@ -292,17 +297,14 @@ public:
    * environment variable is set to "true". */
   static void enableVariableNotFoundLogging(bool enabled = true) {
     _variableNotFoundLoggingEnabled = enabled; }
-  QHash<QString,QString> toHash(bool inherit = true) const;
-  QMap<QString,QString> toMap(bool inherit = true) const;
+  const QHash<QString,QString> toHash(bool inherit = true) const;
+  const QMap<QString, QString> toMap(bool inherit = true) const;
 
 private:
   inline bool appendVariableValue(
-      QString *value, QString variable, bool inherit,
-      const ParamsProvider *context, QSet<QString> alreadyEvaluated,
+      QString *value, const QString &variable, bool inherit,
+      const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
       bool logIfVariableNotFound) const;
-  inline QString evaluateImplicitVariable(
-      QString key, bool inherit, const ParamsProvider *context,
-      QSet<QString> alreadyEvaluated) const;
 };
 
 Q_DECLARE_METATYPE(ParamSet)

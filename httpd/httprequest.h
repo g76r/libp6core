@@ -120,11 +120,12 @@ class LIBP6CORESHARED_EXPORT HttpRequestPseudoParamsProvider
 public:
   inline HttpRequestPseudoParamsProvider(HttpRequest request)
     : _request(request) { }
-  QVariant paramValue(QString key, const ParamsProvider *context = 0,
-                      QVariant defaultValue = QVariant(),
-                      QSet<QString> alreadyEvaluated = QSet<QString>()
-          ) const override;
-  QSet<QString> keys() const override;
+  using ParamsProvider::paramValue;
+  const QVariant paramValue(
+    const QString &key, const ParamsProvider *context,
+    const QVariant &defaultValue,
+    QSet<QString> *alreadyEvaluated) const override;
+  const QSet<QString> keys() const override;
 };
 
 inline HttpRequestPseudoParamsProvider HttpRequest::pseudoParams() const {
