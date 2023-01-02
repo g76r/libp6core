@@ -310,7 +310,7 @@ RadixTree<OperatorDef> operatordefs {
                return QVariant(true);
              return QVariant(false);
             } }, true },
-  { "~=", { 2, 10, false, [](QList<Operand> args, const ParamsProvider *context,
+  { "=~", { 2, 10, false, [](QList<Operand> args, const ParamsProvider *context,
                             QSet<QString> *alreadyEvaluated) {
              auto x = args.value(0)(context, alreadyEvaluated).toString();
              auto y = args.value(1)(context, alreadyEvaluated);
@@ -320,7 +320,7 @@ RadixTree<OperatorDef> operatordefs {
                  : QRegularExpression(y.toString(), _defaultReOpts);
              return QVariant(re.match(x).hasMatch());
            } }, true },
-  { "!~=", { 2, 10, false, [](QList<Operand> args, const ParamsProvider *context,
+  { "!=~", { 2, 10, false, [](QList<Operand> args, const ParamsProvider *context,
                              QSet<QString> *alreadyEvaluated) {
              auto x = args.value(0)(context, alreadyEvaluated).toString();
              auto y = args.value(1)(context, alreadyEvaluated);
