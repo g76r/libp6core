@@ -148,6 +148,12 @@ RadixTree<OperatorDef> operatordefs {
             auto x = args.value(0)(context, alreadyEvaluated).toLongLong(&ok);
             return ok ? QVariant(~x) : QVariant();
           } }, true },
+  { "~~", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
+                          QSet<QString> *alreadyEvaluated) {
+            bool ok;
+            auto x = args.value(0)(context, alreadyEvaluated).toLongLong(&ok);
+            return ok ? QVariant(x) : QVariant();
+          } }, true },
   { "*", { 2, 5, false, [](QList<Operand> args, const ParamsProvider *context,
                            QSet<QString> *alreadyEvaluated) {
             return MathUtils::mulQVariantAsNumber(
