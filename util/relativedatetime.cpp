@@ -27,7 +27,7 @@ static QRegularExpression _wholeDateRE {
 static QRegularExpression _termRE { TERM_RE };
 static QRegularExpression _weekdayRE { "\\A(mon|tue|wed|thu|fri|sat|sun)[a-z]*\\z" };
 static QRegularExpression _isoLikeDateRE {
-  "\\A(?:(?:(?:([0-9]{4})-)?(?:([0-9]{2})-))?([0-9]{2}))?" };
+  "\\A(?:(?:([0-9]{4})-)?(?:([0-9]{2})-))?([0-9]{2})" };
 static QRegularExpression _isoLikeTimeRE {
   "(?:\\A|[T ])([0-9]{2}):([0-9]{2})(?::([0-9]{2})(?:[,.]([0-9]{3}))?)?(" TZ_RE ")?\\z" };
 
@@ -83,7 +83,9 @@ public:
             //qDebug() << "found time" << _time;
           }
           if (m.capturedStart() != 0) { // either no time of day or time of day not at begining
-            m = _isoLikeDateRE.match(timestamp.left(m.capturedStart()-1)); // left(<0) == whole string
+            // try to parse as a date either the part before the time (if time
+            // was found) or the whole string (left(-1) returns the whole string)
+            m = _isoLikeDateRE.match(timestamp.left(m.capturedStart()));
             if (m.hasMatch()) {
               int year = m.captured(1).toInt();
               int month = m.captured(2).toInt();
@@ -148,7 +150,7 @@ public:
   }
 
   QDateTime apply(QDateTime reference) {
-    //qDebug() << "applying" << _method << _date << _time << _delta << "to" << origin;
+    //qDebug() << "applying" << _method << _date << _time << _delta << "to" << reference;
     QDate date = reference.date();
     switch (_method) {
     case Today:
@@ -173,7 +175,7 @@ public:
     }
     if (!_time.isNull() || _method != Today)
       reference.setTime(_time);
-    reference.setDate(date); // also sets time to midnight is time is null
+    reference.setDate(date); // also sets time to midnight if time is null
     if (_tz.isValid()) {
       //qDebug() << "RelativeDateTime::apply is converting timezones"
       //         << reference << _tz << reference.toTimeZone(_tz);
@@ -181,7 +183,7 @@ public:
       reference.setTimeZone(_tz);
     }
     reference = reference.addMSecs(_delta);
-    //qDebug() << "applied:" << origin;
+    //qDebug() << "applied:" << reference;
     return reference;
   }
 };
