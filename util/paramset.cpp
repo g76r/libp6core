@@ -743,26 +743,27 @@ bool ParamSet::appendVariableValue(
                       "variable \"" << variable << "\"";
     return false;
   }
-  alreadyEvaluated->insert(variable);
+  QSet<QString> newAlreadyEvaluated = *alreadyEvaluated;
+  newAlreadyEvaluated.insert(variable);
   QString s;
   int matchedLength;
   auto implicitVariable = _implicitVariables.value(variable, &matchedLength);
   //qDebug() << "implicitVariable" << variable << !!implicitVariable;
   if (implicitVariable) {
     s = implicitVariable(*this, variable, inherit, context,
-                         alreadyEvaluated, matchedLength);
+                         &newAlreadyEvaluated, matchedLength);
     //qDebug() << "" << s;
     value->append(s);
     return true;
   }
   if (context) {
-    s = context->paramValue(variable, QVariant(), alreadyEvaluated).toString();
+    s = context->paramValue(variable, QVariant(), &newAlreadyEvaluated).toString();
     if (!s.isNull()) {
       value->append(s);
       return true;
     }
   }
-  s = this->value(variable, inherit, context, alreadyEvaluated);
+  s = this->value(variable, inherit, context, &newAlreadyEvaluated);
   if (!s.isNull()) {
     value->append(s);
     return true;
