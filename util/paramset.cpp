@@ -619,10 +619,11 @@ _implicitVariables {
   CharacterSeparatedExpression params(key, matchedLength);
   auto env = ParamsProvider::environment();
   int i = 0;
+  auto ppm = ParamsProviderMerger(paramset)(context);
   do {
     QString name = paramset.evaluate(params.value(i), inherit, context,
                                      alreadyEvaluated);
-    auto v = env->paramValue(name, context, QVariant(), alreadyEvaluated);
+    auto v = env->paramValue(name, &ppm, QVariant(), alreadyEvaluated);
     if (v.isValid())
       return v.toString();
     ++i;
