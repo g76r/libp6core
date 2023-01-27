@@ -1,4 +1,4 @@
-/* Copyright 2012-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -178,17 +178,20 @@ ParamSet::ParamSet(
   const PfNode &parentnode, const QString &attrname,
   const QString &constattrname, const ParamSet &parent)
   : d(new ParamSetData(parent)) {
-  for (auto p: parentnode.stringsPairChildrenByName(attrname)) {
-    if (p.first.isEmpty())
-      continue;
-    auto value = p.second;
-    d->_params.insert(p.first, value.isNull() ? QStringLiteral("") : value);
+  if (!attrname.isEmpty()) {
+    for (auto p: parentnode.stringsPairChildrenByName(attrname)) {
+      if (p.first.isEmpty())
+        continue;
+      auto value = p.second;
+      d->_params.insert(p.first, value.isNull() ? QStringLiteral("") : value);
+    }
   }
-  for (auto p: parentnode.stringsPairChildrenByName(constattrname)) {
-    if (p.first.isEmpty())
-      continue;
-    auto value = escape(evaluate(p.second));
-    d->_params.insert(p.first, value.isNull() ? QStringLiteral("") : value);
+  if (!constattrname.isEmpty()) {
+    ParamSet constparams(parentnode, constattrname, QString(), ParamSet());
+    for (auto k: constparams.keys()) {
+      auto value = escape(constparams.value(k, this));
+      d->_params.insert(k, value.isNull() ? QStringLiteral("") : value);
+    }
   }
   if (d->_params.isEmpty() && parent.isNull())
     d.reset();
