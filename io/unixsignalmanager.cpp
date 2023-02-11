@@ -1,4 +1,4 @@
-/* Copyright 2022 Gregoire Barbier and others.
+/* Copyright 2022-2023 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -78,7 +78,7 @@ static UnixSignalManagerImpl *_instance = nullptr;
 static QMutex *_instance_mutex = new QMutex;
 
 [[gnu::unused]] void UnixSignalManagerImpl::signal_handler(int signal_number) {
-  char a = signal_number;
+  signed char a = signal_number;
   ::write(_instance->_pipe[1], &a, sizeof(a));
 }
 
@@ -86,9 +86,11 @@ static QMutex *_instance_mutex = new QMutex;
 
 UnixSignalManager::UnixSignalManager() {
 #ifdef Q_OS_UNIX
-  if (::pipe2(_pipe, O_NONBLOCK))
+  if (::pipe(_pipe))
     Log::error() << "UnixSignalManager could not create pipe, errno: "
                  << "errno";
+  fcntl(_pipe[0], F_SETFL, fcntl(_pipe[0], F_GETFL, 0) | O_NONBLOCK);
+  fcntl(_pipe[1], F_SETFL, fcntl(_pipe[1], F_GETFL, 0) | O_NONBLOCK);
 #endif
   _sn = new QSocketNotifier(_pipe[0], QSocketNotifier::Read, this);
   connect(_sn, &QSocketNotifier::activated,
@@ -99,7 +101,7 @@ void UnixSignalManager::readPipe() {
   _sn->setEnabled(false);
   int r = 0;
   forever {
-    char a;
+    signed char a;
     r = ::read(_pipe[0], &a, sizeof(a));
     if (r <= 0)
       break;
