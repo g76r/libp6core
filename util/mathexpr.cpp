@@ -407,14 +407,6 @@ static Operand compileRpn(QList<QString> terms, bool *ok) {
       //qDebug() << "prepended constant " << term.mid(1, n);
       continue;
     }
-    if (term.size() && term.at(0) == '{') {
-      qsizetype n = term.size()-1;
-      if (term.at(n) == '}')
-        --n;
-      stack.prepend(Operand(term.mid(1, n), QVariant()));
-      //qDebug() << "prepended variable " << term.mid(1, n) << " " << stack.size();
-      continue;
-    }
     stack.prepend(Operand(term, QVariant()));
     //qDebug() << "prepended variable " << term << " " << stack.size();
   }
