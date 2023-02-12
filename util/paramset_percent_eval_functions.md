@@ -451,3 +451,20 @@ examples:
 * `%{=rpn,'1,'2,==,'3,'4,?:}` returns "4"
 * `%{=rpn,'aabcdaa,'a$,~=` returns "true"
 * `%{=rpn,'aabcdaa,'c$,~=` returns "false"
+
+%'
+--
+
+`%{'anything}`
+
+returns "anything" without evaluating it
+
+this is usefull when an application process an input as always %-evaluated
+(being in config files or elsewhere) because it make it possible to provide
+a constant anyway
+
+examples:
+* `%{'foo}` returns "foo" whereas `%{foo}` would have returned the value of foo
+* `%{=rawvalue!'foo}` returns "foo" whereas  `%{=rawvalue!foo}` would have
+   returned the value of foo (without %-evaluating the value)
+

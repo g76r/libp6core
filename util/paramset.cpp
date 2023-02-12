@@ -311,6 +311,10 @@ QString(const ParamSet &params, const QString &key, bool inherit,
 const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
         int matchedLength)>>
 _functions {
+{ "'", [](const ParamSet &, const QString &key, bool, const ParamsProvider *,
+          QSet<QString> *, int) {
+  return key.mid(1);
+ }, true},
 { "=date", [](const ParamSet &paramset, const QString &key, bool inherit,
      const ParamsProvider *context, QSet<QString> *alreayEvaluated,
      int matchedLength) {
