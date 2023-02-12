@@ -1,4 +1,4 @@
-/* Copyright 2012-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -297,6 +297,10 @@ public:
    * environment variable is set to "true". */
   static void enableVariableNotFoundLogging(bool enabled = true) {
     _variableNotFoundLoggingEnabled = enabled; }
+  /** Evaluate %= functions out of ParamSet context */
+  static QString evaluateFunction(
+    const ParamSet &paramset, const QString &key, bool inherit,
+    const ParamsProvider *context, QSet<QString> *alreayEvaluated, bool *found);
   const QHash<QString,QString> toHash(bool inherit = true) const;
   const QMap<QString, QString> toMap(bool inherit = true) const;
 

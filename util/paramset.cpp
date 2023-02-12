@@ -306,12 +306,11 @@ QString ParamSet::evaluate(
   return values.first();
 }
 
-// FIXME signature
 static RadixTree<std::function<
 QString(const ParamSet &params, const QString &key, bool inherit,
 const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
         int matchedLength)>>
-_implicitVariables {
+_functions {
 { "=date", [](const ParamSet &paramset, const QString &key, bool inherit,
      const ParamsProvider *context, QSet<QString> *alreayEvaluated,
      int matchedLength) {
@@ -728,6 +727,23 @@ _implicitVariables {
 }, true},
 };
 
+QString ParamSet::evaluateFunction(
+  const ParamSet &paramset, const QString &key, bool inherit,
+  const ParamsProvider *context, QSet<QString> *alreayEvaluated, bool *found) {
+  int matchedLength;
+  auto implicitVariable = _functions.value(key, &matchedLength);
+  if (implicitVariable) {
+    auto s = implicitVariable(paramset, key, inherit, context,
+                              alreayEvaluated, matchedLength);
+    if (found)
+      *found = true;
+    return s;
+  }
+  if (found)
+    *found = false;
+  return QString();
+}
+
 bool ParamSet::appendVariableValue(
   QString *value, const QString &variable, bool inherit,
   const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
@@ -748,14 +764,10 @@ bool ParamSet::appendVariableValue(
   }
   QSet<QString> newAlreadyEvaluated = *alreadyEvaluated;
   newAlreadyEvaluated.insert(variable);
-  QString s;
-  int matchedLength;
-  auto implicitVariable = _implicitVariables.value(variable, &matchedLength);
-  //qDebug() << "implicitVariable" << variable << !!implicitVariable;
-  if (implicitVariable) {
-    s = implicitVariable(*this, variable, inherit, context,
-                         &newAlreadyEvaluated, matchedLength);
-    //qDebug() << "" << s;
+  bool functionFound = false;
+  auto s = evaluateFunction(*this, variable, inherit, context,
+                            &newAlreadyEvaluated, &functionFound);
+  if (functionFound) {
     value->append(s);
     return true;
   }
