@@ -1,4 +1,4 @@
-# Copyright 2012-2022 Hallowyn, Gregoire Barbier and others.
+# Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
 # This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
 # Libpumpkin is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
 
 QT -= gui
 QT += network sql
-CONFIG += largefile c++17 c++14 c++11 force_debug_info
+CONFIG += largefile c++17 c++20 force_debug_info
 
 TARGET = p6core
 TEMPLATE = lib
