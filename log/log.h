@@ -1,4 +1,4 @@
-/* Copyright 2012-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -192,7 +192,7 @@ public:
   inline LogHelper &operator<<(const QList<bool> &o) {
     _message.append("{ ");
     for (auto i: o) {
-      _message.append(i ? u"true"_qs : u"false"_qs).append(' ');
+      _message.append(i ? QStringLiteral("true ") : QStringLiteral("false "));
     }
     _message.append("}");
     return *this; }
@@ -215,7 +215,7 @@ public:
   inline LogHelper &operator<<(const QSet<bool> &o) {
     _message.append("{ ");
     for (auto i: o) {
-      _message.append(i ? u"true"_qs : u"false"_qs).append(' ');
+      _message.append(i ? QStringLiteral("true ") : QStringLiteral("false "));
     }
     _message.append("}");
     return *this; }
