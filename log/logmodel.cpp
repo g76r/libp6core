@@ -1,4 +1,4 @@
-/* Copyright 2013-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,14 +15,14 @@
 #include "memorylogger.h"
 
 LogModel::LogModel(QObject *parent, Log::Severity minSeverity, int maxrows,
-                   QString prefixFilter)
+                   QByteArray prefixFilter)
   : SharedUiItemsTableModel(parent),
     _logger(new MemoryLogger(minSeverity, prefixFilter, this)) {
   setMaxrows(maxrows);
   setDefaultInsertionPoint(SharedUiItemsTableModel::FirstItem);
   setHeaderDataFromTemplate(
-        Logger::LogEntry(QDateTime(), QString(), Log::Debug, QString(),
-                         QString(), QString()));
+        Logger::LogEntry(QDateTime(), QByteArray(), Log::Debug, QByteArray(),
+                         QByteArray(), QByteArray()));
   Log::addLogger(_logger, false);
 }
 
@@ -31,8 +31,8 @@ LogModel::LogModel(QObject *parent, int maxrows)
   setMaxrows(maxrows);
   setDefaultInsertionPoint(SharedUiItemsTableModel::FirstItem);
   setHeaderDataFromTemplate(
-        Logger::LogEntry(QDateTime(), QString(), Log::Debug, QString(),
-                         QString(), QString()));
+        Logger::LogEntry(QDateTime(), QByteArray(), Log::Debug, QByteArray(),
+                         QByteArray(), QByteArray()));
 }
 
 LogModel::~LogModel() {

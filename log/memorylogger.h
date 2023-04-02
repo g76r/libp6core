@@ -24,12 +24,12 @@ class LIBP6CORESHARED_EXPORT MemoryLogger : public Logger {
   friend class LogModel;
   Q_OBJECT
   Q_DISABLE_COPY(MemoryLogger)
-  QString _prefixFilter;
+  QByteArray _prefixFilter;
   LogModel *_model;
 
   // only LogModel can create a MemoryLogger object, ensuring they share the
   // same thread, therefore the constructor must not be public
-  MemoryLogger(Log::Severity minSeverity, QString prefixFilter,
+  MemoryLogger(Log::Severity minSeverity, QByteArray prefixFilter,
                LogModel *logmodel);
 
 protected:

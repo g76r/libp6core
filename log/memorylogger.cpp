@@ -1,4 +1,4 @@
-/* Copyright 2013-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,7 +16,7 @@
 #include <QMetaObject>
 
 MemoryLogger::MemoryLogger(
-    Log::Severity minSeverity, QString prefixFilter, LogModel *logmodel)
+    Log::Severity minSeverity, QByteArray prefixFilter, LogModel *logmodel)
   : Logger(minSeverity, Logger::DirectCall), _prefixFilter(prefixFilter),
     _model(logmodel) {
 }

@@ -1,4 +1,4 @@
-/* Copyright 2013-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -34,11 +34,11 @@ class Logger::LogEntryData : public SharedUiItemData {
 public:
   QString _id;
   QDateTime _timestamp;
-  QString _message;
+  QByteArray _message;
   Log::Severity _severity;
-  QString _task, _execId, _sourceCode;
-  LogEntryData(QDateTime timestamp, QString message, Log::Severity severity,
-               QString task, QString execId, QString sourceCode)
+  QByteArray _task, _execId, _sourceCode;
+  LogEntryData(QDateTime timestamp, QByteArray message, Log::Severity severity,
+               QByteArray task, QByteArray execId, QByteArray sourceCode)
     : _id(QString::number(_sequence.fetchAndAddOrdered(1))),
       _timestamp(timestamp), _message(message), _severity(severity),
       _task(task), _execId(execId), _sourceCode(sourceCode) { }
@@ -49,9 +49,9 @@ public:
   QString idQualifier() const override { return "logentry"; }
 };
 
-Logger::LogEntry::LogEntry(QDateTime timestamp, QString message,
-                           Log::Severity severity, QString task,
-                           QString execId, QString sourceCode)
+Logger::LogEntry::LogEntry(QDateTime timestamp, QByteArray message,
+                           Log::Severity severity, QByteArray task,
+                           QByteArray execId, QByteArray sourceCode)
   : SharedUiItem(new LogEntryData(timestamp, message, severity, task, execId,
                                   sourceCode)) {
 
@@ -68,28 +68,28 @@ QDateTime Logger::LogEntry::timestamp() const {
   return isNull() ? QDateTime() : data()->_timestamp;
 }
 
-QString Logger::LogEntry::message() const {
-  return isNull() ? QString() : data()->_message;
+QByteArray Logger::LogEntry::message() const {
+  return isNull() ? QByteArray() : data()->_message;
 }
 
 Log::Severity Logger::LogEntry::severity() const {
   return isNull() ? Log::Debug : data()->_severity;
 }
 
-QString Logger::LogEntry::severityToString() const {
+QByteArray Logger::LogEntry::severityToString() const {
   return Log::severityToString(isNull() ? Log::Debug : data()->_severity);
 }
 
-QString Logger::LogEntry::task() const {
-  return isNull() ? QString() : data()->_task;
+QByteArray Logger::LogEntry::task() const {
+  return isNull() ? QByteArray() : data()->_task;
 }
 
-QString Logger::LogEntry::execId() const {
-  return isNull() ? QString() : data()->_execId;
+QByteArray Logger::LogEntry::execId() const {
+  return isNull() ? QByteArray() : data()->_execId;
 }
 
-QString Logger::LogEntry::sourceCode() const {
-  return isNull() ? QString() : data()->_sourceCode;
+QByteArray Logger::LogEntry::sourceCode() const {
+  return isNull() ? QByteArray() : data()->_sourceCode;
 }
 
 QVariant Logger::LogEntryData::uiData(int section, int role) const {

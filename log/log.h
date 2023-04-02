@@ -59,71 +59,107 @@ public:
       Log::Severity consoleLoggerSeverity, QList<Logger*> newLoggers);
   /** flush remove any logger */
   static void shutdown();
-  static void log(QString message, Severity severity = Info,
-                  QString task = QString(), QString execId = QString(),
-                  QString sourceCode = QString());
-  static QString severityToString(Severity severity);
+  static void log(QByteArray message, Severity severity = Info,
+                  QByteArray task = QByteArray(),
+                  QByteArray execId = QByteArray(),
+                  QByteArray sourceCode = QByteArray());
+  static QByteArray severityToString(Severity severity);
   /** Very tolerant severity mnemonic reader.
    * Read first character of string in a case insensitive manner, e.g.
    * "W", "warn", "warning", and "war against terror" are all interpreted
    * as Log::Warning.
    * Unmatched letters ar interpreted as Log::Debug, therefore "D", "Debug",
    * or even "Global Warming" and "" are all interpreted as Log::Debug. */
-  static Log::Severity severityFromString(QString string);
-  static inline LogHelper log(Log::Severity severity,
-                              QString task = QString(),
-                              QString execId = QString(),
-                              QString sourceCode = QString());
-  static inline LogHelper debug(QString task = QString(),
-                                QString execId = QString(),
-                                QString sourceCode = QString());
-  static inline LogHelper info(QString task = QString(),
-                               QString execId = QString(),
-                               QString sourceCode = QString());
-  static inline LogHelper warning(QString task = QString(),
-                                  QString execId = QString(),
-                                  QString sourceCode = QString());
-  static inline LogHelper error(QString task = QString(),
-                                QString execId = QString(),
-                                QString sourceCode = QString());
-  static inline LogHelper fatal(QString task = QString(),
-                                QString execId = QString(),
-                                QString sourceCode = QString());
-  static inline LogHelper log(Log::Severity severity, QString task,
-                              quint64 execId,
-                              QString sourceCode = QString());
-  static inline LogHelper debug(QString task, quint64 execId,
-                                QString sourceCode = QString());
-  static inline LogHelper info(QString task, quint64 execId,
-                               QString sourceCode = QString());
-  static inline LogHelper warning(QString task, quint64 execId,
-                                  QString sourceCode = QString());
-  static inline LogHelper error(QString task, quint64 execId,
-                                QString sourceCode = QString());
-  static inline LogHelper fatal(QString task, quint64 execId,
-                                QString sourceCode = QString());
-  static inline LogHelper debug(QString task, qint64 execId,
-                                QString sourceCode = QString());
-  static inline LogHelper info(QString task, qint64 execId,
-                               QString sourceCode = QString());
-  static inline LogHelper warning(QString task, qint64 execId,
-                                  QString sourceCode = QString());
-  static inline LogHelper error(QString task, qint64 execId,
-                                QString sourceCode = QString());
-  static inline LogHelper fatal(QString task, qint64 execId,
-                                QString sourceCode = QString());
-  static inline LogHelper debug(quint64 execId, QString sourceCode = QString());
-  static inline LogHelper info(quint64 execId, QString sourceCode = QString());
-  static inline LogHelper warning(quint64 execId,
-                                  QString sourceCode = QString());
-  static inline LogHelper error(quint64 execId, QString sourceCode = QString());
-  static inline LogHelper fatal(quint64 execId, QString sourceCode = QString());
-  static inline LogHelper debug(qint64 execId, QString sourceCode = QString());
-  static inline LogHelper info(qint64 execId, QString sourceCode = QString());
-  static inline LogHelper warning(qint64 execId,
-                                  QString sourceCode = QString());
-  static inline LogHelper error(qint64 execId, QString sourceCode = QString());
-  static inline LogHelper fatal(qint64 execId, QString sourceCode = QString());
+  static Log::Severity severityFromString(QByteArray string);
+  static inline LogHelper log(
+      Log::Severity severity, QByteArray task = QByteArray(),
+      QByteArray execId = QByteArray(), QByteArray sourceCode = QByteArray());
+  static inline LogHelper debug(
+      QByteArray task = QByteArray(), QByteArray execId = QByteArray(),
+      QByteArray sourceCode = QByteArray());
+  static inline LogHelper info(
+      QByteArray task = QByteArray(), QByteArray execId = QByteArray(),
+      QByteArray sourceCode = QByteArray());
+  static inline LogHelper warning(
+      QByteArray task = QByteArray(), QByteArray execId = QByteArray(),
+      QByteArray sourceCode = QByteArray());
+  static inline LogHelper error(
+      QByteArray task = QByteArray(), QByteArray execId = QByteArray(),
+      QByteArray sourceCode = QByteArray());
+  static inline LogHelper fatal(
+      QByteArray task = QByteArray(), QByteArray execId = QByteArray(),
+      QByteArray sourceCode = QByteArray());
+  static inline LogHelper log(
+      Log::Severity severity, QByteArray task, quint64 execId,
+      QByteArray sourceCode = QByteArray());
+  static inline LogHelper debug(
+      QByteArray task, quint64 execId, QByteArray sourceCode = QByteArray());
+  static inline LogHelper info(
+      QByteArray task, quint64 execId, QByteArray sourceCode = QByteArray());
+  static inline LogHelper warning(
+      QByteArray task, quint64 execId, QByteArray sourceCode = QByteArray());
+  static inline LogHelper error(
+      QByteArray task, quint64 execId, QByteArray sourceCode = QByteArray());
+  static inline LogHelper fatal(
+      QByteArray task, quint64 execId, QByteArray sourceCode = QByteArray());
+  static inline LogHelper debug(
+      QByteArray task, qint64 execId, QByteArray sourceCode = QByteArray());
+  static inline LogHelper info(
+      QByteArray task, qint64 execId, QByteArray sourceCode = QByteArray());
+  static inline LogHelper warning(
+      QByteArray task, qint64 execId, QByteArray sourceCode = QByteArray());
+  static inline LogHelper error(
+      QByteArray task, qint64 execId, QByteArray sourceCode = QByteArray());
+  static inline LogHelper fatal(
+      QByteArray task, qint64 execId, QByteArray sourceCode = QByteArray());
+  static inline LogHelper debug(
+      quint64 execId, QByteArray sourceCode = QByteArray());
+  static inline LogHelper info(
+      quint64 execId, QByteArray sourceCode = QByteArray());
+  static inline LogHelper warning(
+      quint64 execId, QByteArray sourceCode = QByteArray());
+  static inline LogHelper error(
+      quint64 execId, QByteArray sourceCode = QByteArray());
+  static inline LogHelper fatal(
+      quint64 execId, QByteArray sourceCode = QByteArray());
+  static inline LogHelper debug(
+      qint64 execId, QByteArray sourceCode = QByteArray());
+  static inline LogHelper info(
+      qint64 execId, QByteArray sourceCode = QByteArray());
+  static inline LogHelper warning(
+      qint64 execId, QByteArray sourceCode = QByteArray());
+  static inline LogHelper error(
+      qint64 execId, QByteArray sourceCode = QByteArray());
+  static inline LogHelper fatal(
+      qint64 execId, QByteArray sourceCode = QByteArray());
+  /* temporary backward compatibility with QString API */
+  static inline LogHelper log(
+      Log::Severity severity, QString task,
+      QString execId = QString(), QString sourceCode = QString());
+  static inline LogHelper debug(
+      QString task, QString execId = QString(), QString sourceCode = QString());
+  static inline LogHelper info(
+      QString task, QString execId = QString(), QString sourceCode = QString());
+  static inline LogHelper warning(
+      QString task, QString execId = QString(), QString sourceCode = QString());
+  static inline LogHelper error(
+      QString task, QString execId = QString(), QString sourceCode = QString());
+  static inline LogHelper fatal(
+      QString task, QString execId = QString(), QString sourceCode = QString());
+  static inline LogHelper log(
+      Log::Severity severity, QString task,
+      quint64 execId, QString sourceCode = QString());
+  static inline LogHelper debug(
+      QString task, quint64 execId, QString sourceCode = QString());
+  static inline LogHelper info(
+      QString task, quint64 execId, QString sourceCode = QString());
+  static inline LogHelper warning(
+      QString task, quint64 execId, QString sourceCode = QString());
+  static inline LogHelper error(
+      QString task, quint64 execId, QString sourceCode = QString());
+  static inline LogHelper fatal(
+      QString task, quint64 execId, QString sourceCode = QString());
+  /* /temporary backward compatibility with QString API */
   static QString pathToLastFullestLog();
   static QStringList pathsToFullestLogs();
   static QStringList pathsToAllLogs();
@@ -137,11 +173,11 @@ Q_DECLARE_METATYPE(Log::Severity)
 class LIBP6CORESHARED_EXPORT LogHelper {
   mutable bool _logOnDestroy;
   Log::Severity _severity;
-  QString _message, _task, _execId, _sourceCode;
+  QByteArray _message, _task, _execId, _sourceCode;
 
 public:
-  inline LogHelper(Log::Severity severity, QString task, QString execId,
-                   QString sourceCode)
+  inline LogHelper(Log::Severity severity, QByteArray task, QByteArray execId,
+                   QByteArray sourceCode)
     : _logOnDestroy(true), _severity(severity), _task(task), _execId(execId),
       _sourceCode(sourceCode) {
   }
@@ -164,35 +200,37 @@ public:
     }
   }
   inline LogHelper &operator<<(const QString &o) {
-    _message.append(o); return *this; }
+    _message.append(o.toUtf8()); return *this; }
   inline LogHelper &operator<<(const QLatin1String &o) {
-    _message.append(o); return *this; }
+    _message.append(o.toString().toUtf8()); return *this; }
   inline LogHelper &operator<<(const QByteArray &o) {
-    _message.append(o); return *this; }
-  inline LogHelper &operator<<(const QChar &o) {
     _message.append(o); return *this; }
   inline LogHelper &operator<<(const char *o) {
     _message.append(o); return *this; }
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
   inline LogHelper &operator<<(T o) {
-    _message.append(QString::number(o)); return *this; }
+    _message.append(QByteArray::number(o)); return *this; }
   inline LogHelper &operator<<(bool o) {
-    _message.append(o ? QStringLiteral("true") : QStringLiteral("false"));
+    _message.append(o ? QByteArrayLiteral("true") : QByteArrayLiteral("false"));
     return *this; }
   inline LogHelper &operator<<(const QVariant &o) {
-    _message.append(o.toString()); return *this; }
+    _message.append(o.canConvert<QByteArray>()
+                    ? o.toByteArray()
+                    : o.toString().toUtf8());
+    return *this; }
   inline LogHelper &operator<<(const QList<QString> &o) {
     _message.append("{ ");
     for (auto s: o) {
       s.replace('\\', "\\\\").replace('"', "\\\"");
-      _message.append("\"").append(s).append("\" ");
+      _message.append("\"").append(s.toUtf8()).append("\" ");
     }
     _message.append("}");
     return *this; }
   inline LogHelper &operator<<(const QList<bool> &o) {
     _message.append("{ ");
     for (auto i: o) {
-      _message.append(i ? QStringLiteral("true ") : QStringLiteral("false "));
+      _message.append(i ? QByteArrayLiteral("true ")
+                        : QByteArrayLiteral("false "));
     }
     _message.append("}");
     return *this; }
@@ -200,7 +238,7 @@ public:
   inline LogHelper &operator<<(const QList<T> &o) {
     _message.append("{ ");
     for (auto i: o) {
-      _message.append(QString::number(i)).append(' ');
+      _message.append(QByteArray::number(i)).append(' ');
     }
     _message.append("}");
     return *this; }
@@ -208,14 +246,15 @@ public:
     _message.append("{ ");
     for (auto s: o) {
       s.replace('\\', "\\\\").replace('"', "\\\"");
-      _message.append("\"").append(s).append("\" ");
+      _message.append("\"").append(s.toUtf8()).append("\" ");
     }
     _message.append("}");
     return *this; }
   inline LogHelper &operator<<(const QSet<bool> &o) {
     _message.append("{ ");
     for (auto i: o) {
-      _message.append(i ? QStringLiteral("true ") : QStringLiteral("false "));
+      _message.append(i ? QByteArrayLiteral("true ")
+                        : QByteArrayLiteral("false "));
     }
     _message.append("}");
     return *this; }
@@ -223,7 +262,7 @@ public:
   inline LogHelper &operator<<(const QSet<T> &o) {
     _message.append("{ ");
     for (auto i: o) {
-      _message.append(QString::number(i)).append(' ');
+      _message.append(QByteArray::number(i)).append(' ');
     }
     _message.append("}");
     return *this; }
@@ -231,127 +270,188 @@ public:
     const QMetaObject *mo = o ? o->metaObject() : 0;
     if (mo)
       _message.append(mo->className()).append("(0x")
-          .append(QString::number(reinterpret_cast<qintptr>(o), 16))
-          .append(", \"").append(o->objectName()).append("\")");
+          .append(QByteArray::number(reinterpret_cast<qintptr>(o), 16))
+          .append(", \"").append(o->objectName().toUtf8()).append("\")");
     else
       _message.append("QObject(0x0)");
     return *this; }
   inline LogHelper &operator<<(const QObject &o) {
     return operator<<(&o); }
   inline LogHelper &operator<<(const void *o) {
-    _message.append("0x").append(QString::number((quint64)o, 16));
+    _message.append("0x").append(QByteArray::number((quint64)o, 16));
     return *this; }
 };
 
 
-LogHelper Log::log(Log::Severity severity, QString task,
-                   QString execId, QString sourceCode) {
+LogHelper Log::log(Log::Severity severity, QByteArray task,
+                   QByteArray execId, QByteArray sourceCode) {
   return LogHelper(severity, task, execId, sourceCode);
 }
 
-LogHelper Log::debug(QString task, QString execId, QString sourceCode) {
+LogHelper Log::debug(
+    QByteArray task, QByteArray execId, QByteArray sourceCode) {
   return LogHelper(Log::Debug, task, execId, sourceCode);
 }
 
-LogHelper Log::info(QString task, QString execId, QString sourceCode) {
+LogHelper Log::info(QByteArray task, QByteArray execId, QByteArray sourceCode) {
   return LogHelper(Log::Info, task, execId, sourceCode);
 }
 
-LogHelper Log::warning(QString task, QString execId, QString sourceCode) {
+LogHelper Log::warning(
+    QByteArray task, QByteArray execId, QByteArray sourceCode) {
   return LogHelper(Log::Warning, task, execId, sourceCode);
 }
 
-LogHelper Log::error(QString task, QString execId, QString sourceCode) {
+LogHelper Log::error(
+    QByteArray task, QByteArray execId, QByteArray sourceCode) {
   return LogHelper(Log::Error, task, execId, sourceCode);
 }
 
-LogHelper Log::fatal(QString task, QString execId, QString sourceCode) {
+LogHelper Log::fatal(
+    QByteArray task, QByteArray execId, QByteArray sourceCode) {
   return LogHelper(Log::Fatal, task, execId, sourceCode);
 }
 
-LogHelper Log::log(Log::Severity severity, QString task, quint64 execId,
-                   QString sourceCode) {
-  return log(severity, task, QString::number(execId), sourceCode);
+LogHelper Log::log(Log::Severity severity, QByteArray task, quint64 execId,
+                   QByteArray sourceCode) {
+  return log(severity, task, QByteArray::number(execId), sourceCode);
 }
 
-LogHelper Log::debug(QString task, quint64 execId, QString sourceCode) {
-  return debug(task, QString::number(execId), sourceCode);
+LogHelper Log::debug(QByteArray task, quint64 execId, QByteArray sourceCode) {
+  return debug(task, QByteArray::number(execId), sourceCode);
 }
 
-LogHelper Log::info(QString task, quint64 execId, QString sourceCode) {
-  return info(task, QString::number(execId), sourceCode);
+LogHelper Log::info(QByteArray task, quint64 execId, QByteArray sourceCode) {
+  return info(task, QByteArray::number(execId), sourceCode);
 }
 
-LogHelper Log::warning(QString task, quint64 execId, QString sourceCode) {
-  return warning(task, QString::number(execId), sourceCode);
+LogHelper Log::warning(QByteArray task, quint64 execId, QByteArray sourceCode) {
+  return warning(task, QByteArray::number(execId), sourceCode);
 }
 
-LogHelper Log::error(QString task, quint64 execId, QString sourceCode) {
-  return error(task, QString::number(execId), sourceCode);
+LogHelper Log::error(QByteArray task, quint64 execId, QByteArray sourceCode) {
+  return error(task, QByteArray::number(execId), sourceCode);
 }
 
-LogHelper Log::fatal(QString task, quint64 execId,QString sourceCode) {
-  return fatal(task, QString::number(execId), sourceCode);
+LogHelper Log::fatal(QByteArray task, quint64 execId, QByteArray sourceCode) {
+  return fatal(task, QByteArray::number(execId), sourceCode);
 }
 
-LogHelper Log::debug(QString task, qint64 execId, QString sourceCode) {
-  return debug(task, QString::number(execId), sourceCode);
+LogHelper Log::debug(QByteArray task, qint64 execId, QByteArray sourceCode) {
+  return debug(task, QByteArray::number(execId), sourceCode);
 }
 
-LogHelper Log::info(QString task, qint64 execId, QString sourceCode) {
-  return info(task, QString::number(execId), sourceCode);
+LogHelper Log::info(QByteArray task, qint64 execId, QByteArray sourceCode) {
+  return info(task, QByteArray::number(execId), sourceCode);
 }
 
-LogHelper Log::warning(QString task, qint64 execId, QString sourceCode) {
-  return warning(task, QString::number(execId), sourceCode);
+LogHelper Log::warning(QByteArray task, qint64 execId, QByteArray sourceCode) {
+  return warning(task, QByteArray::number(execId), sourceCode);
 }
 
-LogHelper Log::error(QString task, qint64 execId, QString sourceCode) {
-  return error(task, QString::number(execId), sourceCode);
+LogHelper Log::error(QByteArray task, qint64 execId, QByteArray sourceCode) {
+  return error(task, QByteArray::number(execId), sourceCode);
 }
 
-LogHelper Log::fatal(QString task, qint64 execId,QString sourceCode) {
-  return fatal(task, QString::number(execId), sourceCode);
+LogHelper Log::fatal(QByteArray task, qint64 execId,QByteArray sourceCode) {
+  return fatal(task, QByteArray::number(execId), sourceCode);
 }
 
-LogHelper Log::debug(quint64 execId, QString sourceCode) {
-  return debug(QString(), QString::number(execId), sourceCode);
+LogHelper Log::debug(quint64 execId, QByteArray sourceCode) {
+  return debug(QByteArray(), QByteArray::number(execId), sourceCode);
 }
 
-LogHelper Log::info(quint64 execId, QString sourceCode) {
-  return info(QString(), QString::number(execId), sourceCode);
+LogHelper Log::info(quint64 execId, QByteArray sourceCode) {
+  return info(QByteArray(), QByteArray::number(execId), sourceCode);
 }
 
-LogHelper Log::warning(quint64 execId, QString sourceCode) {
-  return warning(QString(), QString::number(execId), sourceCode);
+LogHelper Log::warning(quint64 execId, QByteArray sourceCode) {
+  return warning(QByteArray(), QByteArray::number(execId), sourceCode);
 }
 
-LogHelper Log::error(quint64 execId, QString sourceCode) {
-  return error(QString(), QString::number(execId), sourceCode);
+LogHelper Log::error(quint64 execId, QByteArray sourceCode) {
+  return error(QByteArray(), QByteArray::number(execId), sourceCode);
 }
 
-LogHelper Log::fatal(quint64 execId,QString sourceCode) {
-  return fatal(QString(), QString::number(execId), sourceCode);
+LogHelper Log::fatal(quint64 execId,QByteArray sourceCode) {
+  return fatal(QByteArray(), QByteArray::number(execId), sourceCode);
 }
 
-LogHelper Log::debug(qint64 execId, QString sourceCode) {
-  return debug(QString(), QString::number(execId), sourceCode);
+LogHelper Log::debug(qint64 execId, QByteArray sourceCode) {
+  return debug(QByteArray(), QByteArray::number(execId), sourceCode);
 }
 
-LogHelper Log::info(qint64 execId, QString sourceCode) {
-  return info(QString(), QString::number(execId), sourceCode);
+LogHelper Log::info(qint64 execId, QByteArray sourceCode) {
+  return info(QByteArray(), QByteArray::number(execId), sourceCode);
 }
 
-LogHelper Log::warning(qint64 execId, QString sourceCode) {
-  return warning(QString(), QString::number(execId), sourceCode);
+LogHelper Log::warning(qint64 execId, QByteArray sourceCode) {
+  return warning(QByteArray(), QByteArray::number(execId), sourceCode);
 }
 
-LogHelper Log::error(qint64 execId, QString sourceCode) {
-  return error(QString(), QString::number(execId), sourceCode);
+LogHelper Log::error(qint64 execId, QByteArray sourceCode) {
+  return error(QByteArray(), QByteArray::number(execId), sourceCode);
 }
 
-LogHelper Log::fatal(qint64 execId,QString sourceCode) {
-  return fatal(QString(), QString::number(execId), sourceCode);
+LogHelper Log::fatal(qint64 execId,QByteArray sourceCode) {
+  return fatal(QByteArray(), QByteArray::number(execId), sourceCode);
+}
+
+LogHelper Log::log(
+    Log::Severity severity, QString task, QString execId, QString sourceCode) {
+  return log(severity, task.toUtf8(), execId.toUtf8(), sourceCode.toUtf8());
+}
+LogHelper Log::debug(
+    QString task, QString execId, QString sourceCode) {
+  return log(Log::Debug, task.toUtf8(), execId.toUtf8(), sourceCode.toUtf8());
+}
+LogHelper Log::info(
+    QString task, QString execId, QString sourceCode) {
+  return log(Log::Info, task.toUtf8(), execId.toUtf8(), sourceCode.toUtf8());
+}
+LogHelper Log::warning(
+    QString task, QString execId, QString sourceCode) {
+  return log(Log::Warning, task.toUtf8(), execId.toUtf8(),
+             sourceCode.toUtf8());
+}
+LogHelper Log::error(
+    QString task, QString execId, QString sourceCode) {
+  return log(Log::Error, task.toUtf8(), execId.toUtf8(), sourceCode.toUtf8());
+}
+LogHelper Log::fatal(
+    QString task, QString execId, QString sourceCode) {
+  return log(Log::Fatal, task.toUtf8(), execId.toUtf8(), sourceCode.toUtf8());
+}
+
+LogHelper Log::log(
+    Log::Severity severity, QString task, quint64 execId, QString sourceCode) {
+  return log(severity, task.toUtf8(), QByteArray::number(execId),
+             sourceCode.toUtf8());
+}
+LogHelper Log::debug(
+    QString task, quint64 execId, QString sourceCode) {
+  return log(Log::Debug, task.toUtf8(), QByteArray::number(execId),
+             sourceCode.toUtf8());
+}
+LogHelper Log::info(
+    QString task, quint64 execId, QString sourceCode) {
+  return log(Log::Info, task.toUtf8(), QByteArray::number(execId),
+             sourceCode.toUtf8());
+}
+LogHelper Log::warning(
+    QString task, quint64 execId, QString sourceCode) {
+  return log(Log::Warning, task.toUtf8(), QByteArray::number(execId),
+             sourceCode.toUtf8());
+}
+LogHelper Log::error(
+    QString task, quint64 execId, QString sourceCode) {
+  return log(Log::Error, task.toUtf8(), QByteArray::number(execId),
+             sourceCode.toUtf8());
+}
+LogHelper Log::fatal(
+    QString task, quint64 execId, QString sourceCode) {
+  return log(Log::Fatal, task.toUtf8(), QByteArray::number(execId),
+             sourceCode.toUtf8());
 }
 
 #endif // LOG_H

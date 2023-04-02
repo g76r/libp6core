@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -33,13 +33,13 @@ class LIBP6CORESHARED_EXPORT LogModel : public SharedUiItemsTableModel {
 public:
   /** Create a model that collects log entries with severity >= minSeverity. */
   LogModel(QObject *parent, Log::Severity minSeverity, int maxrows = 100,
-           QString prefixFilter = QString());
+           QByteArray prefixFilter = QByteArray());
   /** Create a model that collects log entries with severity >= minSeverity. */
   explicit LogModel(Log::Severity minSeverity, int maxrows = 100,
-                    QString prefixFilter = QString())
+                    QByteArray prefixFilter = QByteArray())
     : LogModel(0, minSeverity, maxrows, prefixFilter) { }
   /** Create a model that collects log entries with severity >= minSeverity. */
-  LogModel(Log::Severity minSeverity, QString prefixFilter)
+  LogModel(Log::Severity minSeverity, QByteArray prefixFilter)
     : LogModel(0, minSeverity, 100, prefixFilter) { }
   /** Create a model that collects log entries with severity >= minSeverity. */
   LogModel(Log::Severity minSeverity, const char *prefixFilter)

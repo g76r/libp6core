@@ -1,4 +1,4 @@
-/* Copyright 2012-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,6 +20,8 @@
 #include <QThread>
 #include <time.h>
 
+#define ISO8601 QStringLiteral("yyyy-MM-ddThh:mm:ss,zzz")
+
 static MultiplexerLogger *_rootLogger = nullptr;
 static QRegularExpression *_whitespaceRE = nullptr;
 static QMutex *_qtHandlerMutex = nullptr;
@@ -39,17 +41,16 @@ static int staticInit() {
 }
 Q_CONSTRUCTOR_FUNCTION(staticInit)
 
-static inline QString sanitizeField(QString string) {
-  QString s(string);
-  // LATER optimize: avoid using a regexp 3 times per log line
-  s.replace(*_whitespaceRE, QStringLiteral("_"));
-  return s;
+static inline void sanitizeField(QByteArray *ba) {
+  if (ba->isNull())
+    return;
+  for (char *s = ba->data(); *s; ++s)
+    if (::isspace(*s))
+      *s = '_';
 }
 
-static inline QString sanitizeMessage(QString string) {
-  QString s(string);
-  s.replace(QChar('\n'), QStringLiteral("\n "));
-  return s;
+static inline void sanitizeMessage(QByteArray *ba) {
+  ba->replace("\n","\n ");
 }
 
 void Log::addLogger(Logger *logger, bool autoRemovable) {
@@ -80,25 +81,26 @@ void Log::replaceLoggersPlusConsole(Log::Severity consoleLoggerSeverity,
         consoleLoggerSeverity, newLoggers);
 }
 
-void Log::log(QString message, Severity severity, QString task, QString execId,
-              QString sourceCode) {
-  QString realTask(task);
+void Log::log(
+    QByteArray message, Severity severity, QByteArray task, QByteArray execId,
+    QByteArray sourceCode) {
+  QByteArray realTask = task;
   if (realTask.isNull()) {
-    QThread *t(QThread::currentThread());
+    QThread *t = QThread::currentThread();
     if (t)
-      realTask = t->objectName();
+      realTask = t->objectName().toUtf8();
   }
-  realTask = sanitizeField(realTask);
+  sanitizeField(&realTask);
   if (realTask.isEmpty())
-    realTask = QStringLiteral("?");
-  execId = sanitizeField(execId);
+    realTask = QByteArrayLiteral("?");
+  sanitizeField(&execId);
   if (execId.isEmpty())
-    execId = QStringLiteral("0");
-  sourceCode = sanitizeField(sourceCode);
+    execId = QByteArrayLiteral("0");
+  sanitizeField(&sourceCode);
   if (sourceCode.isEmpty())
-    sourceCode = QStringLiteral(":");
+    sourceCode = QByteArrayLiteral(":");
   QDateTime now = QDateTime::currentDateTime();
-  message = sanitizeMessage(message);
+  sanitizeMessage(&message);
   _rootLogger->log(Logger::LogEntry(now, message, severity, realTask,
                                     execId, sourceCode));
 }
@@ -107,25 +109,26 @@ void Log::shutdown() {
   _rootLogger->shutdown();
 }
 
-QString Log::severityToString(Severity severity) {
+QByteArray Log::severityToString(Severity severity) {
   switch (severity) {
   case Debug:
-    return QStringLiteral("DEBUG");
+    return QByteArrayLiteral("DEBUG");
   case Info:
-    return QStringLiteral("INFO");
+    return QByteArrayLiteral("INFO");
   case Warning:
-    return QStringLiteral("WARNING");
+    return QByteArrayLiteral("WARNING");
   case Error:
-    return QStringLiteral("ERROR");
+    return QByteArrayLiteral("ERROR");
   case Fatal:
-    return QStringLiteral("FATAL");
+    return QByteArrayLiteral("FATAL");
   }
-  return QStringLiteral("UNKNOWN");
+  return QByteArrayLiteral("UNKNOWN");
 }
 
-Log::Severity Log::severityFromString(QString string) {
-  if (!string.isEmpty())
-    switch (string.at(0).toLatin1()) {
+Log::Severity Log::severityFromString(QByteArray string) {
+  if (string.isEmpty())
+    return Debug;
+  switch (string.at(0)) {
     case 'I':
     case 'i':
       return Info;
@@ -138,7 +141,7 @@ Log::Severity Log::severityFromString(QString string) {
     case 'F':
     case 'f':
       return Fatal;
-    }
+  }
   return Debug;
 }
 
@@ -154,9 +157,9 @@ QStringList Log::pathsToAllLogs() {
   return _rootLogger->pathsToAllLogs();
 }
 
-static void qtLogSamePatternWrapper(QtMsgType type, const QMessageLogContext &,
-                                    const QString &msg) {
-  QString severity = QStringLiteral("UNKNOWN");
+static void qtLogSamePatternWrapper(
+    QtMsgType type, const QMessageLogContext &context, const QString &msg) {
+  QByteArray severity = QByteArrayLiteral("UNKNOWN");
   switch (type) {
     case QtDebugMsg:
       severity = Log::severityToString(Log::Debug);
@@ -174,14 +177,20 @@ static void qtLogSamePatternWrapper(QtMsgType type, const QMessageLogContext &,
       severity = Log::severityToString(Log::Fatal);
       break;
   }
-  QString taskName = sanitizeField(QThread::currentThread()->objectName());
+  QByteArray taskName = QThread::currentThread()->objectName().toUtf8();
+  sanitizeField(&taskName);
   if (taskName.isEmpty())
-    taskName = "?";
-  QString localMsg =
-    QDateTime::currentDateTime().toString(QStringLiteral(
-      "yyyy-MM-ddThh:mm:ss,zzz"))+" "+taskName+"/0 : "+severity+" qtdebug: "
-    +sanitizeMessage(msg)+"\n";
-  fputs(localMsg.toLocal8Bit(), stderr);
+    taskName = QByteArrayLiteral("?");
+  QByteArray realMsg = msg.toUtf8();
+  sanitizeMessage(&realMsg);
+  QByteArray source =
+      context.file ? QByteArray(context.file).append(":")
+                     .append(QByteArray::number(context.line))
+                   : QByteArrayLiteral(":");
+  QByteArray localMsg =
+    QDateTime::currentDateTime().toString(ISO8601).toUtf8()
+      +" "+taskName+"/0 "+source+" "+severity+" qtdebug: "+realMsg+"\n";
+  fputs(localMsg, stderr);
   if (type == QtFatalMsg)
     abort();
 }

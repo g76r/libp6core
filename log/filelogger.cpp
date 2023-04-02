@@ -1,4 +1,4 @@
-/* Copyright 2012-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,6 +17,11 @@
 #include <QtDebug>
 #include <QThread>
 #include "util/paramset.h"
+
+#define ISO8601 QStringLiteral("yyyy-MM-ddThh:mm:ss,zzz")
+#define SPACE QByteArrayLiteral(" ")
+#define SLASH QByteArrayLiteral("/")
+#define NEWLINE QByteArrayLiteral("\n")
 
 FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity,
                        bool buffered)
@@ -87,16 +92,14 @@ void FileLogger::doLog(const LogEntry &entry) {
   }
   if (_device) {
     // TODO move this to LogEntry::asLogLine()
-    QString line = QStringLiteral("%1 %2/%3 %4 %5 %6")
-        .arg(entry.timestamp()
-             .toString(QStringLiteral("yyyy-MM-ddThh:mm:ss,zzz")))
-        .arg(entry.task()).arg(entry.execId()).arg(entry.sourceCode())
-        .arg(entry.severityToString()).arg(entry.message()).append('\n');
+    QByteArray line =
+        entry.timestamp().toString(ISO8601).toUtf8()+SPACE
+        +entry.task()+SLASH+entry.execId()+SPACE+entry.sourceCode()+SPACE
+        +entry.severityToString()+SPACE+entry.message()+NEWLINE;
     //qDebug() << "***log" << line;
-    QByteArray ba = line.toUtf8();
     //if (_pathPattern.endsWith(".slow") && (QTime::currentTime().second()/10)%2)
     //  ::usleep(1000000);
-    if (_device->write(ba) != ba.size()) {
+    if (_device->write(line) != line.size()) {
       // TODO warn, but only once
       //qWarning() << "error while writing log:" << _device
       //           << _device->errorString();
