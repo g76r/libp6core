@@ -145,6 +145,13 @@ public:
       QString task, quint64 execId, QString sourceCode = {});
   static inline LogHelper fatal(
       QString task, quint64 execId, QString sourceCode = {});
+  static inline LogHelper log(
+      Log::Severity severity, const char *task);
+  static inline LogHelper debug(const char *task);
+  static inline LogHelper info(const char *task);
+  static inline LogHelper warning(const char *task);
+  static inline LogHelper error(const char *task);
+  static inline LogHelper fatal(const char *task);
   /* /temporary backward compatibility with QString API */
   static QString pathToLastFullestLog();
   static QStringList pathsToFullestLogs();
@@ -435,6 +442,24 @@ LogHelper Log::fatal(
     QString task, quint64 execId, QString sourceCode) {
   return log(Log::Fatal, task.toUtf8(), QByteArray::number(execId),
              sourceCode.toUtf8());
+}
+LogHelper Log::log(Log::Severity severity, const char *task) {
+  return log(severity, QByteArray(task));
+}
+LogHelper Log::debug(const char *task) {
+  return debug(QByteArray(task));
+}
+LogHelper Log::info(const char *task) {
+  return info(QByteArray(task));
+}
+LogHelper Log::warning(const char *task) {
+  return warning(QByteArray(task));
+}
+LogHelper Log::error(const char *task) {
+  return error(QByteArray(task));
+}
+LogHelper Log::fatal(const char *task) {
+  return fatal(QByteArray(task));
 }
 
 #endif // LOG_H
