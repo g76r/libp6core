@@ -17,7 +17,7 @@
 #include "util/paramset.h"
 #include "format/timeformats.h"
 
-#define ISO8601 QStringLiteral("yyyy-MM-ddThh:mm:ss,zzz")
+#define ISO8601 u"yyyy-MM-ddThh:mm:ss,zzz"_s
 
 static QString _uiHeaderNames[] = {
   "Timestamp", // 0

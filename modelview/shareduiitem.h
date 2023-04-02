@@ -18,6 +18,8 @@
 #include <QSharedData>
 #include <QJsonObject>
 
+using namespace Qt::Literals::StringLiterals;
+
 class QDebug;
 class SharedUiItemDocumentTransaction;
 class SharedUiItemParamsProvider;

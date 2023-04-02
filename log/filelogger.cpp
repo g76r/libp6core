@@ -18,10 +18,10 @@
 #include <QThread>
 #include "util/paramset.h"
 
-#define ISO8601 QStringLiteral("yyyy-MM-ddThh:mm:ss,zzz")
-#define SPACE QByteArrayLiteral(" ")
-#define SLASH QByteArrayLiteral("/")
-#define NEWLINE QByteArrayLiteral("\n")
+#define ISO8601 u"yyyy-MM-ddThh:mm:ss,zzz"_s
+#define SPACE " "_ba
+#define SLASH "/"_ba
+#define NEWLINE "\n"_ba
 
 FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity,
                        bool buffered)

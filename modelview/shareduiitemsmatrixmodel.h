@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -69,10 +69,10 @@ public:
   QHash<int, QByteArray> roleNames() const;
   virtual void bindHeader(int section, Qt::Orientation orientation,
                           SharedUiItem item,
-                          QString display = QStringLiteral("%id"),
+                          QString display = u"%id"_s,
                           QString tooltip = QString());
   virtual void bindCell(int row, int column, SharedUiItem item,
-                        QString display = QStringLiteral("%id"),
+                        QString display = u"%id"_s,
                         QString tooltip = QString(),
                         int editableSection = -1);
   virtual void clearBindings();

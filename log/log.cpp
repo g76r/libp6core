@@ -20,7 +20,7 @@
 #include <QThread>
 #include <time.h>
 
-#define ISO8601 QStringLiteral("yyyy-MM-ddThh:mm:ss,zzz")
+#define ISO8601 u"yyyy-MM-ddThh:mm:ss,zzz"_s
 
 static MultiplexerLogger *_rootLogger = nullptr;
 static QRegularExpression *_whitespaceRE = nullptr;
@@ -92,13 +92,13 @@ void Log::log(
   }
   sanitizeField(&realTask);
   if (realTask.isEmpty())
-    realTask = QByteArrayLiteral("?");
+    realTask = "?"_ba;
   sanitizeField(&execId);
   if (execId.isEmpty())
-    execId = QByteArrayLiteral("0");
+    execId = "0"_ba;
   sanitizeField(&sourceCode);
   if (sourceCode.isEmpty())
-    sourceCode = QByteArrayLiteral(":");
+    sourceCode = ":"_ba;
   QDateTime now = QDateTime::currentDateTime();
   sanitizeMessage(&message);
   _rootLogger->log(Logger::LogEntry(now, message, severity, realTask,
@@ -112,17 +112,17 @@ void Log::shutdown() {
 QByteArray Log::severityToString(Severity severity) {
   switch (severity) {
   case Debug:
-    return QByteArrayLiteral("DEBUG");
+    return "DEBUG"_ba;
   case Info:
-    return QByteArrayLiteral("INFO");
+    return "INFO"_ba;
   case Warning:
-    return QByteArrayLiteral("WARNING");
+    return "WARNING"_ba;
   case Error:
-    return QByteArrayLiteral("ERROR");
+    return "ERROR"_ba;
   case Fatal:
-    return QByteArrayLiteral("FATAL");
+    return "FATAL"_ba;
   }
-  return QByteArrayLiteral("UNKNOWN");
+  return "UNKNOWN"_ba;
 }
 
 Log::Severity Log::severityFromString(QByteArray string) {
@@ -159,7 +159,7 @@ QStringList Log::pathsToAllLogs() {
 
 static void qtLogSamePatternWrapper(
     QtMsgType type, const QMessageLogContext &context, const QString &msg) {
-  QByteArray severity = QByteArrayLiteral("UNKNOWN");
+  QByteArray severity = "UNKNOWN"_ba;
   switch (type) {
     case QtDebugMsg:
       severity = Log::severityToString(Log::Debug);
@@ -180,16 +180,17 @@ static void qtLogSamePatternWrapper(
   QByteArray taskName = QThread::currentThread()->objectName().toUtf8();
   sanitizeField(&taskName);
   if (taskName.isEmpty())
-    taskName = QByteArrayLiteral("?");
+    taskName = "?"_ba;
   QByteArray realMsg = msg.toUtf8();
   sanitizeMessage(&realMsg);
   QByteArray source =
-      context.file ? QByteArray(context.file).append(":")
+      context.file ? QByteArray(context.file).append(":"_ba)
                      .append(QByteArray::number(context.line))
-                   : QByteArrayLiteral(":");
+                   : ":"_ba;
   QByteArray localMsg =
     QDateTime::currentDateTime().toString(ISO8601).toUtf8()
-      +" "+taskName+"/0 "+source+" "+severity+" qtdebug: "+realMsg+"\n";
+      +" "_ba+taskName+"/0 "_ba+source+" "_ba+severity+" qtdebug: "_ba+realMsg
+      +"\n"_ba;
   fputs(localMsg, stderr);
   if (type == QtFatalMsg)
     abort();

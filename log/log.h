@@ -21,6 +21,8 @@
 #include <QStringList>
 #include "libp6core_global.h"
 
+using namespace Qt::Literals::StringLiterals;
+
 class Logger;
 class LogHelper;
 
@@ -211,7 +213,7 @@ public:
   inline LogHelper &operator<<(T o) {
     _message.append(QByteArray::number(o)); return *this; }
   inline LogHelper &operator<<(bool o) {
-    _message.append(o ? QByteArrayLiteral("true") : QByteArrayLiteral("false"));
+    _message.append(o ? "true"_ba : "false"_ba);
     return *this; }
   inline LogHelper &operator<<(const QVariant &o) {
     _message.append(o.canConvert<QByteArray>()
@@ -229,8 +231,7 @@ public:
   inline LogHelper &operator<<(const QList<bool> &o) {
     _message.append("{ ");
     for (auto i: o) {
-      _message.append(i ? QByteArrayLiteral("true ")
-                        : QByteArrayLiteral("false "));
+      _message.append(i ? "true "_ba : "false "_ba);
     }
     _message.append("}");
     return *this; }
@@ -253,8 +254,7 @@ public:
   inline LogHelper &operator<<(const QSet<bool> &o) {
     _message.append("{ ");
     for (auto i: o) {
-      _message.append(i ? QByteArrayLiteral("true ")
-                        : QByteArrayLiteral("false "));
+      _message.append(i ? "true "_ba : "false"_ba);
     }
     _message.append("}");
     return *this; }
