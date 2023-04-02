@@ -77,6 +77,7 @@ template<class T>
 class LIBP6CORESHARED_EXPORT RadixTree {
   enum NodeType : signed char { Empty = 0, Exact, Prefix };
   using Visitor = std::function<void(const QByteArray *, NodeType, T)>;
+  using AbortableVisitor = std::function<bool(const QByteArray *, NodeType, T)>;
   struct Node {
     char *_fragment;
     NodeType _nodetype;
@@ -224,6 +225,15 @@ class LIBP6CORESHARED_EXPORT RadixTree {
       for (int i = 0; i < _childrenCount; ++i)
         _children[i]->visit(visitor, key_prefix);
     }
+    /** Visit tree in depth-first order, abort if visitor returns false */
+    void inline visit(AbortableVisitor visitor, QByteArray *key_prefix) const {
+      key_prefix->append(_fragment);
+      if (!visitor(key_prefix->constData(), _nodetype, _value))
+        return;
+      for (int i = 0; i < _childrenCount; ++i)
+        if (!_children[i]->visit(visitor, key_prefix))
+          return;
+    }
     static QString nodetypeToString(NodeType nodetype) {
       switch (nodetype) {
       case Exact:
@@ -347,6 +357,11 @@ public:
       });
   }
   void visit(Visitor visitor) const {
+      QByteArray key_prefix;
+      if (d->_root)
+          d->_root->visit(visitor, &key_prefix);
+  }
+  void visit(AbortableVisitor visitor) const {
       QByteArray key_prefix;
       if (d->_root)
           d->_root->visit(visitor, &key_prefix);
