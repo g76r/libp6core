@@ -1,4 +1,4 @@
-/* Copyright 2012-2020 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -261,8 +261,8 @@ public:
               path, domain, false, false);
   }
   // LATER session
-  QString statusAsString() { return statusAsString(status()); }
-  static QString statusAsString(int status);
+  QByteArray statusAsString() { return statusAsString(status()); }
+  static QByteArray statusAsString(int status);
 
 private:
   void setCookie(QString name, QString value, QDateTime expires, QString path,

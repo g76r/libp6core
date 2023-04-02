@@ -1,4 +1,4 @@
-/* Copyright 2012-2020 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -12,7 +12,6 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "httpresponse.h"
-#include <QTextStream>
 #include "httpcommon.h"
 #include <QRegularExpression>
 #include "log/log.h"
@@ -20,6 +19,8 @@
 #include <QMultiHash>
 #include "format/timeformats.h"
 #include "io/dummysocket.h"
+
+using namespace Qt::Literals::StringLiterals;
 
 class HttpResponseData : public QSharedData {
 public:
@@ -60,23 +61,23 @@ QAbstractSocket *HttpResponse::output() {
   if (!d)
     return DummySocket::singletonInstance();
   if (!d->_headersSent) {
-    QTextStream ts(d->_output);
-    ts << "HTTP/1.1 " << d->_status << " " << statusAsString(d->_status)
-       << "\r\n";
+    QByteArray ba;
+    ba = "HTTP/1.1 "_ba + QByteArray::number(d->_status) + " "_ba
+        + statusAsString(d->_status) + "\r\n"_ba;
     // LATER sanitize well-known headers (Content-Type...) values
     // LATER handle multi-line headers and special chars
     auto keys = d->_headers.keys();
 #if QT_VERSION >= 0x050f00
-    foreach (QString name, QSet<QString>(keys.begin(), keys.end()))
+    for (auto name: QSet<QString>(keys.begin(), keys.end()))
 #else
-    foreach (QString name, keys.toSet())
+    for (auto name: keys.toSet())
 #endif
-      foreach (QString value, d->_headers.values(name))
-        ts << name << ": " << value << "\r\n";
-    if (header(QStringLiteral("Content-Type")).isEmpty())
-      ts << "Content-Type: text/plain;charset=UTF-8\r\n";
-    ts << "Connection: close\r\n";
-    ts << "\r\n";
+      for (auto value: d->_headers.values(name))
+        ba += name.toUtf8() + ": "_ba + value.toUtf8() + "\r\n"_ba;
+    if (header(u"Content-Type"_s).isEmpty())
+      ba += "Content-Type: text/plain;charset=UTF-8\r\n"_ba;
+    ba += "Connection: close\r\n\r\n"_ba;
+    d->_output->write(ba);
     d->_headersSent = true;
   }
   return d->_disableBodyOutput ? DummySocket::singletonInstance() : d->_output;
@@ -204,60 +205,59 @@ QMultiHash<QString,QString> HttpResponse::headers() const {
   return d ? d->_headers : QMultiHash<QString,QString>();
 }
 
-QString HttpResponse::statusAsString(int status) {
+QByteArray HttpResponse::statusAsString(int status) {
   switch(status) {
-  // LATER other statuses
   case 200:
-    return QStringLiteral("Ok");
+    return "Ok"_ba;
   case 201:
-    return QStringLiteral("Created");
+    return "Created"_ba;
   case 202:
-    return QStringLiteral("Accepted");
+    return "Accepted"_ba;
   case 300:
-    return QStringLiteral("Multiple choices");
+    return "Multiple choices"_ba;
   case 301:
-    return QStringLiteral("Moving permantently");
+    return "Moving permantently"_ba;
   case 302:
-    return QStringLiteral("Found");
+    return "Found"_ba;
   case 303:
-    return QStringLiteral("See other");
+    return "See other"_ba;
   case 304:
-    return QStringLiteral("Not modified");
+    return "Not modified"_ba;
   case 305:
-    return QStringLiteral("Use proxy");
+    return "Use proxy"_ba;
   case 306:
-    return QStringLiteral("Switch proxy");
+    return "Switch proxy"_ba;
   case 307:
-    return QStringLiteral("Temporary redirect");
+    return "Temporary redirect"_ba;
   case 308:
-    return QStringLiteral("Permanent redirect");
+    return "Permanent redirect"_ba;
   case 400:
-    return QStringLiteral("Bad request");
+    return "Bad request"_ba;
   case 401:
-    return QStringLiteral("Authentication required");
+    return "Authentication required"_ba;
   case 402:
-    return QStringLiteral("Insert coin");
+    return "Insert coin"_ba;
   case 403:
-    return QStringLiteral("Forbidden");
+    return "Forbidden"_ba;
   case 404:
-    return QStringLiteral("Not Found");
+    return "Not Found"_ba;
   case 405:
-    return QStringLiteral("Method not allowed");
+    return "Method not allowed"_ba;
   case 408:
-    return QStringLiteral("Request timeout");
+    return "Request timeout"_ba;
   case 413:
-    return QStringLiteral("Request entity too large");
+    return "Request entity too large"_ba;
   case 414:
-    return QStringLiteral("Request URI too large");
+    return "Request URI too large"_ba;
   case 415:
-    return QStringLiteral("Unsupported media type");
+    return "Unsupported media type"_ba;
   case 418:
-    return QStringLiteral("I'm a teapot");
+    return "I'm a teapot"_ba;
   case 500:
-    return QStringLiteral("Internal server error");
+    return "Internal server error"_ba;
   case 501:
-    return QStringLiteral("Not implemented");
+    return "Not implemented"_ba;
   default:
-    return QStringLiteral("Status %1").arg(status);
+    return "Status "_ba+QByteArray::number(status);
   }
 }
