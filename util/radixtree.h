@@ -349,8 +349,8 @@ public:
   }
   void insert(QStringView key, T value, bool isPrefix = false) {
     insert (key.toUtf8().constData(), value, isPrefix); }
-  void insert(QUtf8StringView key, T value, bool isPrefix = false) {
-    insert (key.utf8(), value, isPrefix); }
+  void insert(QByteArray key, T value, bool isPrefix = false) {
+    insert (key.constData(), value, isPrefix); }
   void insert(const RadixTree<T> &other) {
       other.visit([this](const QByteArray *key, NodeType nodetype, T value) {
           insert(key, value, nodetype == Node::Prefix);
@@ -381,11 +381,6 @@ public:
   /** assumes that key is UTF-8 (or of course ASCII) */
   [[gnu::hot]] const T value(const char *key, int *matchedLength) const {
     return value(key, T(), matchedLength); }
-  [[gnu::hot]] const T value(QUtf8StringView key, T defaultValue = T(),
-                             int *matchedLength = 0) const {
-    return value(key.data(), defaultValue, matchedLength); }
-  [[gnu::hot]] const T value(QUtf8StringView key, int *matchedLength) const {
-    return value(key.data(), T(), matchedLength); }
   [[gnu::hot]] const T value(QStringView key, T defaultValue = T(),
                              int *matchedLength = 0) const {
     return value(key.toUtf8().constData(), defaultValue, matchedLength); }
@@ -393,15 +388,11 @@ public:
     return value(key.toUtf8().constData(), T(), matchedLength); }
   /** assumes that key is UTF-8 (or of course ASCII) */
   [[gnu::hot]] const T operator[](const char *key) const { return value(key); }
-  [[gnu::hot]] const T operator[](QUtf8StringView key) const {
-    return value(key); }
   [[gnu::hot]] const T operator[](QStringView key) const {
-    return value(key); }
+    return value(key.toUtf8().constData()); }
   [[gnu::hot]] bool contains(const char *key) const {
     return (d && d->_root) ? d->_root->lookup(key) : false;
   }
-  [[gnu::hot]] bool contains(QUtf8StringView key) const {
-    return contains(key.data()); }
   [[gnu::hot]] bool contains(QStringView key) const {
     return contains(key.toUtf8().constData()); }
   QSet<QString> keys() const {
