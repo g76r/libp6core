@@ -137,6 +137,9 @@ public:
   /** merge (override) params taking them from a SQL database query
    *  SQL query is %-evaluated within parent context.
    *  QSqlDatabase must already be open.
+   *  e.g.: with setValuesFromSqlDb(db, "select foo, bar from t1
+   *  where id=42 limit 1", {{ 0, "foo"}, {1, "bar"}}),
+   *  foo will contain value of column 1 and bar value of column 2.
    *  e.g.: with setValuesFromSqlDb(db, "select distinct foo, null from t1
    *  union select null, bar from t2", {{ 0, "foos"}, {1, "bars"}}),
    *  foos will be a space separated list of unique non null non empty values
@@ -147,7 +150,8 @@ public:
     QSqlDatabase db, QString sql, QMap<int,QString> bindings);
   /** merge (override) params taking them from a SQL database query.
    *  convenience method resolving sql database name. */
-  void setValuesFromSqlDb(QString dbname, QString sql, QMap<int,QString> bindings);
+  void setValuesFromSqlDb(
+      QString dbname, QString sql, QMap<int,QString> bindings);
   /** merge (override) params taking them from a SQL database query.
    *  convenience method mapping each column in order
    *  e.g. {"foo","bar"} is equivalent to {{0,"foo"},{1,"bar"}}. */
