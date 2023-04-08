@@ -104,10 +104,14 @@ public:
   ParamSet parent() const;
   void setParent(ParamSet parent);
   void setValue(QString key, QString value);
+  void setValue(QString key, QByteArray value) {
+    setValue(key, QString::fromUtf8(value)); }
+  void setValue(QString key, const char *value) {
+    setValue(key, QString::fromUtf8(value)); }
   void setValue(QString key, QVariant value) {
     setValue(key, value.toString()); }
   void setValue(QString key, bool value) {
-    setValue(key, value ? QStringLiteral("true") : QStringLiteral("false")); }
+    setValue(key, value ? u"true"_s : u"false"_s); }^M
   void setValue(QString key, qint8 value, int base = 10) {
     setValue(key, QString::number(value, base)); }
   void setValue(QString key, qint16 value, int base = 10) {
@@ -146,12 +150,12 @@ public:
   void setValuesFromSqlDb(QString dbname, QString sql, QMap<int,QString> bindings);
   /** merge (override) params taking them from a SQL database query.
    *  convenience method mapping each column in order
-   *  e.g. "foo bar" is equivalent to {{0,"foo"},{1,"bar"}}. */
+   *  e.g. {"foo","bar"} is equivalent to {{0,"foo"},{1,"bar"}}. */
   void setValuesFromSqlDb(QSqlDatabase db, QString sql, QStringList bindings);
   /** merge (override) params taking them from a SQL database query.
    *  convenience method resolving sql database name and mapping each column
    *  in order
-   *  e.g. "foo bar" is equivalent to {{0,"foo"},{1,"bar"}}. */
+   *  e.g. {"foo","bar"} is equivalent to {{0,"foo"},{1,"bar"}}. */
   void setValuesFromSqlDb(QString dbname, QString sql, QStringList bindings);
   /** short for setValues(other) */
   ParamSet &operator<<(const ParamSet &other){ setValues(other); return *this; }
