@@ -211,65 +211,73 @@ public:
                     ? o.toByteArray()
                     : o.toString().toUtf8());
     return *this; }
+  inline LogHelper &operator<<(const QList<QByteArray> &o) {
+    _message += "{ "_ba;
+    for (auto ba: o)
+      _message += '"' + ba.replace('\\', "\\\\"_ba)
+          .replace('"', "\\\""_ba) + "\" "_ba;
+    _message += "}"_ba;
+    return *this; }
   inline LogHelper &operator<<(const QList<QString> &o) {
-    _message.append("{ ");
-    for (auto s: o) {
-      s.replace('\\', "\\\\").replace('"', "\\\"");
-      _message.append("\"").append(s.toUtf8()).append("\" ");
-    }
-    _message.append("}");
+    _message += "{ "_ba;
+    for (auto s: o)
+      _message += '"' + s.toUtf8().replace('\\', "\\\\"_ba)
+          .replace('"', "\\\""_ba) + "\" "_ba;
+    _message += "}"_ba;
     return *this; }
   inline LogHelper &operator<<(const QList<bool> &o) {
-    _message.append("{ ");
-    for (auto i: o) {
-      _message.append(i ? "true "_ba : "false "_ba);
-    }
-    _message.append("}");
+    _message += "{ "_ba;
+    for (auto b: o)
+      _message += b ? "true "_ba : "false "_ba;
+    _message += "}"_ba;
     return *this; }
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
   inline LogHelper &operator<<(const QList<T> &o) {
-    _message.append("{ ");
-    for (auto i: o) {
-      _message.append(QByteArray::number(i)).append(' ');
-    }
-    _message.append("}");
+    _message += "{ "_ba;
+    for (auto i: o)
+      _message += QByteArray::number(i) + ' ';
+    _message += "}"_ba;
+    return *this; }
+  inline LogHelper &operator<<(const QSet<QByteArray> &o) {
+    _message += "{ "_ba;
+    for (auto ba: o)
+      _message += '"' + ba.replace('\\', "\\\\"_ba)
+          .replace('"', "\\\""_ba) + "\" "_ba;
+    _message += "}"_ba;
     return *this; }
   inline LogHelper &operator<<(const QSet<QString> &o) {
-    _message.append("{ ");
-    for (auto s: o) {
-      s.replace('\\', "\\\\").replace('"', "\\\"");
-      _message.append("\"").append(s.toUtf8()).append("\" ");
-    }
-    _message.append("}");
+    _message += "{ "_ba;
+    for (auto s: o)
+      _message += '"' + s.toUtf8().replace('\\', "\\\\"_ba)
+          .replace('"', "\\\""_ba) + "\" "_ba;
+    _message += "}"_ba;
     return *this; }
   inline LogHelper &operator<<(const QSet<bool> &o) {
-    _message.append("{ ");
-    for (auto i: o) {
-      _message.append(i ? "true "_ba : "false"_ba);
-    }
-    _message.append("}");
+    _message += "{ "_ba;
+    for (auto b: o)
+      _message += b ? "true "_ba : "false "_ba;
+    _message += "}"_ba;
     return *this; }
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
   inline LogHelper &operator<<(const QSet<T> &o) {
-    _message.append("{ ");
-    for (auto i: o) {
-      _message.append(QByteArray::number(i)).append(' ');
-    }
-    _message.append("}");
+    _message += "{ "_ba;
+    for (auto i: o)
+      _message += QByteArray::number(i) + ' ';
+    _message += "}"_ba;
     return *this; }
   inline LogHelper &operator<<(const QObject *o) {
     const QMetaObject *mo = o ? o->metaObject() : 0;
     if (mo)
-      _message.append(mo->className()).append("(0x")
-          .append(QByteArray::number(reinterpret_cast<qintptr>(o), 16))
-          .append(", \"").append(o->objectName().toUtf8()).append("\")");
+      _message += mo->className() + "(0x"_ba
+          + QByteArray::number(reinterpret_cast<qintptr>(o), 16) + ", \""_ba
+          + o->objectName().toUtf8() + "\")"_ba;
     else
-      _message.append("QObject(0x0)");
+      _message += "QObject(0x0)"_ba;
     return *this; }
   inline LogHelper &operator<<(const QObject &o) {
     return operator<<(&o); }
   inline LogHelper &operator<<(const void *o) {
-    _message.append("0x").append(QByteArray::number((quint64)o, 16));
+    _message += "0x"_ba + QByteArray::number((qintptr)o, 16);
     return *this; }
 };
 
