@@ -45,12 +45,10 @@ struct RadixTreeInitializerHelper {
     const char *key, T value, bool isPrefix = false)
     : _value(value), _isPrefix(isPrefix) { _keys.push_back(key); }
   RadixTreeInitializerHelper(
-    QStringView key, T value, bool isPrefix = false)
+    const QString &key, T value, bool isPrefix = false)
     : _value(value), _isPrefix(isPrefix) {
     _keys.push_back(key.toUtf8().constData());
   }
-  // cannot support std::vector<QStringView> cstr because it conflicts with
-  // std::vector<const char *> one
 };
 
 /** Lookup-optimized dictionary for a large number of strings or string prefixes
@@ -347,9 +345,9 @@ public:
       d->_root = new Node(key, value, isPrefix ? Prefix : Exact, 0);
     d->_keys.insert(QString::fromUtf8(key));
   }
-  void insert(QStringView key, T value, bool isPrefix = false) {
+  void insert(const QString &key, T value, bool isPrefix = false) {
     insert (key.toUtf8().constData(), value, isPrefix); }
-  void insert(QByteArray key, T value, bool isPrefix = false) {
+  void insert(const QByteArray &key, T value, bool isPrefix = false) {
     insert (key.constData(), value, isPrefix); }
   void insert(const RadixTree<T> &other) {
       other.visit([this](const QByteArray *key, NodeType nodetype, T value) {
@@ -372,29 +370,37 @@ public:
     T value = defaultValue;
     int ignored_length;
     if (!matchedLength)
-      matchedLength = & ignored_length;
-    if (d && d->_root)
-      d->_root->lookup(key, &value, matchedLength);
-    *matchedLength = 0;
+      matchedLength = &ignored_length;
+    if (!d || !d->_root || !d->_root->lookup(key, &value, matchedLength))
+      *matchedLength = 0;
     return value;
   }
   /** assumes that key is UTF-8 (or of course ASCII) */
   [[gnu::hot]] const T value(const char *key, int *matchedLength) const {
     return value(key, T(), matchedLength); }
-  [[gnu::hot]] const T value(QStringView key, T defaultValue = T(),
+  [[gnu::hot]] const T value(const QString &key, T defaultValue = T(),
                              int *matchedLength = 0) const {
     return value(key.toUtf8().constData(), defaultValue, matchedLength); }
-  [[gnu::hot]] const T value(QStringView key, int *matchedLength) const {
+  [[gnu::hot]] const T value(const QString &key, int *matchedLength) const {
     return value(key.toUtf8().constData(), T(), matchedLength); }
+  [[gnu::hot]] const T value(const QByteArray &key, T defaultValue = T(),
+                             int *matchedLength = 0) const {
+    return value(key.constData(), defaultValue, matchedLength); }
+  [[gnu::hot]] const T value(const QByteArray &key, int *matchedLength) const {
+    return value(key.constData(), T(), matchedLength); }
   /** assumes that key is UTF-8 (or of course ASCII) */
   [[gnu::hot]] const T operator[](const char *key) const { return value(key); }
-  [[gnu::hot]] const T operator[](QStringView key) const {
+  [[gnu::hot]] const T operator[](const QString &key) const {
     return value(key.toUtf8().constData()); }
+  [[gnu::hot]] const T operator[](const QByteArray &key) const {
+    return value(key.constData()); }
   [[gnu::hot]] bool contains(const char *key) const {
     return (d && d->_root) ? d->_root->lookup(key) : false;
   }
-  [[gnu::hot]] bool contains(QStringView key) const {
+  [[gnu::hot]] bool contains(const QString &key) const {
     return contains(key.toUtf8().constData()); }
+  [[gnu::hot]] bool contains(const QByteArray &key) const {
+    return contains(key.constData()); }
   QSet<QString> keys() const {
     return d ? d->_keys : QSet<QString>();
   }
