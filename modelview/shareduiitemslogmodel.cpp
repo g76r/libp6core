@@ -1,4 +1,4 @@
-/* Copyright 2015-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,25 +20,26 @@ static QAtomicInt _sequence;
 class LIBP6CORESHARED_EXPORT SharedUiItemLogWrapperData
     : public SharedUiItemData {
 public:
-  QString _id;
+  QByteArray _id;
   SharedUiItem _wrapped;
   QDateTime _timestamp;
   int _timestampSection;
 
   SharedUiItemLogWrapperData(SharedUiItem wrapped, QDateTime timestamp)
-    : _id(QString::number(_sequence.fetchAndAddOrdered(1))),
+    : _id(QByteArray::number(_sequence.fetchAndAddOrdered(1))),
       _wrapped(wrapped), _timestamp(timestamp),
       _timestampSection(wrapped.uiSectionCount()) { }
   SharedUiItemLogWrapperData() : _timestampSection(0) { }
-  QString id() const { return _id; }
-  QString idQualifier() const { return QStringLiteral("suilogwrapper"); }
+  QByteArray id() const { return _id; }
+  QByteArray idQualifier() const { return QByteArrayLiteral("suilogwrapper"); }
   int uiSectionCount() const { return _timestampSection+1; }
   QVariant uiData(int section, int role) const {
     return (role == Qt::DisplayRole && section == _timestampSection)
         ? _timestamp : _wrapped.uiData(section, role); }
   QVariant uiHeaderData(int section, int role) const {
     return (role == Qt::DisplayRole && section == _timestampSection)
-        ? QStringLiteral("Timestamp") : _wrapped.uiHeaderData(section, role); }
+        ? QByteArrayLiteral("Timestamp")
+        : _wrapped.uiHeaderData(section, role); }
   Qt::ItemFlags uiFlags(int section) const {
   return (section == _timestampSection)
       ? Qt::ItemIsSelectable|Qt::ItemIsEnabled : _wrapped.uiFlags(section); }

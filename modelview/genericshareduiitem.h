@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,25 +25,38 @@ class LIBP6CORESHARED_EXPORT GenericSharedUiItem : public SharedUiItem {
 public:
   GenericSharedUiItem();
   GenericSharedUiItem(const GenericSharedUiItem &other);
-  GenericSharedUiItem(QString idQualifier, QString id, QVariantList headers,
-                      QVariantList values);
+  GenericSharedUiItem(
+      QByteArray idQualifier, QByteArray id, QVariantList headers,
+      QVariantList values);
   /** Convenience constructor, with idQualifier="generic" */
-  GenericSharedUiItem(QString id, QVariantList headers, QVariantList values)
-    : GenericSharedUiItem(QStringLiteral("generic"), id, headers, values) { }
+  GenericSharedUiItem(QByteArray id, QVariantList headers, QVariantList values)
+    : GenericSharedUiItem("generic"_ba, id, headers, values) { }
   /** Convenience constructor, with idQualifier="generic" and id=values[0] */
   GenericSharedUiItem(QVariantList headers, QVariantList values)
-    : GenericSharedUiItem(QStringLiteral("generic"),
-                          values.size() > 0 ? values[0].toString() : QString(),
-                          headers, values) { }
+    : GenericSharedUiItem(
+        "generic"_ba, values.size() > 0 ? values[0].toByteArray() :QByteArray(),
+        headers, values) { }
   /** Create empty item, without data or headers. */
-  GenericSharedUiItem(QString idQualifier, QString id);
+  GenericSharedUiItem(QByteArray idQualifier, QByteArray id);
   /** Create empty item, without data or headers, by parsing qualifiedId. */
-  explicit GenericSharedUiItem(QString qualifiedId);
+  explicit GenericSharedUiItem(QByteArray qualifiedId);
+  [[deprecated("Use QByteArray API instead of QString")]]
+  GenericSharedUiItem(QString idQualifier, QString id, QVariantList headers,
+                      QVariantList values)
+    : GenericSharedUiItem(idQualifier.toUtf8(), id.toUtf8(), headers, values) {}
+  [[deprecated("Use QByteArray API instead of QString")]]
+  GenericSharedUiItem(QString id, QVariantList headers, QVariantList values)
+    : GenericSharedUiItem("generic"_ba, id.toUtf8(), headers, values) { }
+  [[deprecated("Use QByteArray API instead of QString")]]
+  GenericSharedUiItem(QString idQualifier, QString id)
+  : GenericSharedUiItem(idQualifier.toUtf8(), id.toUtf8()) { }
+  [[deprecated("Use QByteArray API instead of QString")]]
+  explicit GenericSharedUiItem(QString qualifiedId)
+    : GenericSharedUiItem(qualifiedId.toUtf8()) { }
   GenericSharedUiItem &operator=(const GenericSharedUiItem &other) {
     SharedUiItem::operator=(other); return *this; }
-  static QList<GenericSharedUiItem> fromCsv(
-      CsvFile *csvFile, int idColumn = 0,
-      QString idQualifier = QStringLiteral("generic"));
+  static QList<GenericSharedUiItem> fromCsv(CsvFile *csvFile, int idColumn = 0,
+      QByteArray idQualifier = "generic"_ba);
   // LATER another fromCsv(), with idQualifierColumn
   /** Not only set ui data but also update id if updated section is id section.
    */

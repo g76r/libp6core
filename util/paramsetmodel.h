@@ -1,4 +1,4 @@
-/* Copyright 2012-2018 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -41,13 +41,13 @@ public:
    * To be connected to changeParams() slot. */
   template <class T>
   using ChangedSignal = void (T::*)(ParamSet newParams, ParamSet oldParams,
-  QString paramsetId);
+  QByteArray paramsetId);
   /** Pointer to document manager's method to propagate a user interface
    * change occuring through the model.
    * To be connected to paramsChanged() signal. */
   template <class T>
   using ChangeSetter = void (T::*)(ParamSet newParams, ParamSet oldParams,
-  QString paramsetId);
+  QByteArray paramsetId);
 
 private:
   struct ParamSetRow {
@@ -60,11 +60,12 @@ private:
         _inherited(inherited) { }
   };
   ParamSet _params;
-  QString _paramsetId, _idQualifier;
+  QByteArray _paramsetId, _idQualifier;
   QVector<ParamSetRow> _rows;
   QVector<QString> _scopes;
   bool _inherit, _evaluate, _displayOverriden, _trimOnEdit;
-  QString _changeParamsIdFilter, _defaultScopeForInheritedParams = "inherited";
+  QByteArray _changeParamsIdFilter;
+  QString _defaultScopeForInheritedParams = "inherited";
   QVariant _overridenDecoration, _localDecoration, _inheritedDecoration;
 
 public:
@@ -91,7 +92,7 @@ public:
   QVector<QString> scopes() const { return _scopes; }
   void setScopes(QVector<QString> scopes) { _scopes = scopes; }
   void setchangeParamsIdFilter(QString changeParamsIdFilter) {
-    _changeParamsIdFilter = changeParamsIdFilter; }
+    _changeParamsIdFilter = changeParamsIdFilter.toUtf8(); }
   void setchangeParamsIdFilter(const char *changeParamsIdFilter) {
     _changeParamsIdFilter = changeParamsIdFilter; }
   QVariant overridenDecoration() const { return _overridenDecoration; }
@@ -121,10 +122,11 @@ public:
    * slot filter, and scopes. */
   template <class T>
   void connectToDocumentManager(
-      T *documentManager, ParamSet initialParams, QString changeParamsIdFilter,
-      QString idQualifier, ParamSetModel::ChangedSignal<T> changedSignal,
+      T *documentManager, ParamSet initialParams,
+      QByteArray changeParamsIdFilter, QByteArray idQualifier,
+      ParamSetModel::ChangedSignal<T> changedSignal,
       ParamSetModel::ChangeSetter<T> changeSetter,
-      QVector<QString> scopes = QVector<QString>()) {
+      QVector<QString> scopes = {}) {
     _scopes = scopes;
     _idQualifier = idQualifier;
     if (!changeParamsIdFilter.isEmpty())
@@ -138,14 +140,15 @@ public:
   /** Convenience method */
   template <class T>
   void connectToDocumentManager(
-      T *documentManager, ParamSet initialParams, QString changeParamsIdFilter,
-      QString idQualifier, ParamSetModel::ChangedSignal<T> changedSignal,
+      T *documentManager, ParamSet initialParams,
+      QByteArray changeParamsIdFilter, QByteArray idQualifier,
+      ParamSetModel::ChangedSignal<T> changedSignal,
       ParamSetModel::ChangeSetter<T> changeSetter, QString localScope) {
     QVector<QString> scopes;
     scopes.append(localScope);
     connectToDocumentManager(
           documentManager, initialParams, changeParamsIdFilter, idQualifier,
-          changedSignal, changeSetter, scopes);
+          changedSignal, changeSetter, {scopes});
   }
 
 public slots:
@@ -153,14 +156,14 @@ public slots:
   // TODO use ParamSet,ParamSet,QString signature and add filter, the SUIM way
   // then update DM signature and web console connections to use only one signal
   void changeParams(ParamSet newParams, ParamSet oldParams,
-                    QString paramsetId);
+                    QByteArray paramsetId);
 
 signals:
   /** Signal emited whenever user interface change occured, e.g. setData()
    * or removeRows() is called.
    * Not emited when changeParams() is called. */
   void paramsChanged(ParamSet newParams, ParamSet oldParams,
-                     QString paramsetId);
+                     QByteArray paramsetId);
 
 private:
   inline void fillRows(QVector<ParamSetRow> *rows, ParamSet params, int depth,

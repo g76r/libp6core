@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -30,7 +30,7 @@ InMemoryDatabaseDocumentManager::InMemoryDatabaseDocumentManager(
 }
 
 bool InMemoryDatabaseDocumentManager::registerItemType(
-    QString idQualifier, Setter setter, Creator creator, int idSection,
+    QByteArray idQualifier, Setter setter, Creator creator, int idSection,
     QString *errorString) {
   QString reason;
   if (!errorString)
@@ -49,8 +49,8 @@ bool InMemoryDatabaseDocumentManager::registerItemType(
 }
 
 bool InMemoryDatabaseDocumentManager::prepareChangeItem(
-    SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem, SharedUiItem oldItem,
-    QString idQualifier, QString *errorString) {
+    SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
+    SharedUiItem oldItem, QByteArray idQualifier, QString *errorString) {
   Q_ASSERT(errorString != 0);
   if (!changeItemInDatabase(transaction, newItem, oldItem, idQualifier,
                             errorString, true)) {
@@ -63,7 +63,7 @@ bool InMemoryDatabaseDocumentManager::prepareChangeItem(
 }
 
 void InMemoryDatabaseDocumentManager::commitChangeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
+    SharedUiItem newItem, SharedUiItem oldItem, QByteArray idQualifier) {
   QString errorString;
   SharedUiItemDocumentTransaction transaction(this);
   if (!changeItemInDatabase(&transaction, newItem, oldItem, idQualifier,
@@ -171,7 +171,7 @@ bool InMemoryDatabaseDocumentManager::setDatabase(
   emit dataReset();
   bool successful = true;
   QString reason;
-  foreach (const QString &idQualifier, _orderedIdQualifiers) {
+  for (auto idQualifier: _orderedIdQualifiers) {
     QString oneReason;
     if (!createTableAndSelectData(
           idQualifier, _setters.value(idQualifier),
@@ -190,7 +190,7 @@ bool InMemoryDatabaseDocumentManager::setDatabase(
 }
 
 bool InMemoryDatabaseDocumentManager::createTableAndSelectData(
-    QString idQualifier, Setter setter, Creator creator, int idSection,
+    QByteArray idQualifier, Setter setter, Creator creator, int idSection,
     QString *errorString) {
   Q_ASSERT(errorString != 0);
   Q_UNUSED(idSection)
@@ -199,8 +199,7 @@ bool InMemoryDatabaseDocumentManager::createTableAndSelectData(
              "invalid parameters");
   QStringList columnNames;
   SharedUiItemDocumentTransaction transaction(this);
-  SharedUiItem item = creator(&transaction, QStringLiteral("dummy"),
-                              errorString);
+  SharedUiItem item = creator(&transaction, "dummy"_ba, errorString);
   if (!_db.isOpen())
     return true; // do nothing without a valid opened database
   if (item.isNull()) {
@@ -248,7 +247,7 @@ sqlite> drop table foo;
   }
   //qDebug() << "***** selected:" << query.executedQuery();
   while (query.next()) {
-    item = creator(&transaction, QStringLiteral("dummy"), errorString);
+    item = creator(&transaction, "dummy"_ba, errorString);
     if (item.isNull()) {
       qWarning() << "InMemoryDatabaseDocumentManager cannot create empty "
                     "item of type" << idQualifier << ":" << *errorString;

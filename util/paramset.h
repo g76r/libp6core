@@ -111,7 +111,7 @@ public:
   void setValue(QString key, QVariant value) {
     setValue(key, value.toString()); }
   void setValue(QString key, bool value) {
-    setValue(key, value ? u"true"_s : u"false"_s); }^M
+    setValue(key, value ? u"true"_s : u"false"_s); }
   void setValue(QString key, qint8 value, int base = 10) {
     setValue(key, QString::number(value, base)); }
   void setValue(QString key, qint16 value, int base = 10) {

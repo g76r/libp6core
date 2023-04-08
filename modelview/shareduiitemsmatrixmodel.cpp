@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -58,7 +58,7 @@ SharedUiItemsMatrixModel::cellBindingAt(const QModelIndex &index) const {
   return nullBinding;
 }
 
-QModelIndex SharedUiItemsMatrixModel::indexOf(QString qualifiedId) const {
+QModelIndex SharedUiItemsMatrixModel::indexOf(QByteArray qualifiedId) const {
   GenericSharedUiItem oldItem(qualifiedId);
   for (int i = 0; i < _cells.size(); ++i) {
     const QVector<ItemBinding> &row = _cells[i];
@@ -82,7 +82,7 @@ void SharedUiItemsMatrixModel::insertItemAt(
 }
 
 void SharedUiItemsMatrixModel::changeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
+    SharedUiItem newItem, SharedUiItem oldItem, QByteArray idQualifier) {
   Q_UNUSED(idQualifier)
   //qDebug() << "SharedUiItemsMatrixModel::changeItem" << newItem << oldItem
   //         << idQualifier;

@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,15 +19,15 @@ InMemorySharedUiItemDocumentManager::InMemorySharedUiItemDocumentManager(
 }
 
 bool InMemorySharedUiItemDocumentManager::prepareChangeItem(
-    SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem, SharedUiItem oldItem,
-    QString idQualifier, QString *errorString) {
+    SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
+    SharedUiItem oldItem, QByteArray idQualifier, QString *errorString) {
   Q_UNUSED(errorString)
   storeItemChange(transaction, newItem, oldItem, idQualifier);
   return true; // cannot fail
 }
 
 void InMemorySharedUiItemDocumentManager::commitChangeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
+    SharedUiItem newItem, SharedUiItem oldItem, QByteArray idQualifier) {
   if (!oldItem.isNull() && newItem != oldItem) { // renamed or deleted
     _repository[idQualifier].remove(oldItem.id());
   }
@@ -38,12 +38,12 @@ void InMemorySharedUiItemDocumentManager::commitChangeItem(
 }
 
 SharedUiItem InMemorySharedUiItemDocumentManager::itemById(
-    QString idQualifier, QString id) const {
+    QByteArray idQualifier, QByteArray id) const {
   return _repository.value(idQualifier).value(id);
 }
 
 SharedUiItemList<SharedUiItem> InMemorySharedUiItemDocumentManager
-::itemsByIdQualifier(QString idQualifier) const {
+::itemsByIdQualifier(QByteArray idQualifier) const {
   SharedUiItemList<SharedUiItem> list;
 #ifdef QT_DEBUG
   if (!_repository.contains(idQualifier))

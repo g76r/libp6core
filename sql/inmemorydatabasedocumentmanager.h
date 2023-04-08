@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -54,7 +54,7 @@ class LIBP6CORESHARED_EXPORT InMemoryDatabaseDocumentManager
   Q_DISABLE_COPY(InMemoryDatabaseDocumentManager)
   QSqlDatabase _db;
   QHash<QString,int> _idSections;
-  QList<QString> _orderedIdQualifiers; // in order of registration
+  QByteArrayList _orderedIdQualifiers; // in order of registration
 
 public:
   InMemoryDatabaseDocumentManager(QObject *parent = 0);
@@ -63,15 +63,15 @@ public:
   bool isDatabaseOpen() const { return _db.isOpen(); }
   /** As compared to base class, registerItemType also need section number to
    * be used to store item id (which is recommended to be 0). */
-  bool registerItemType(QString idQualifier, Setter setter, Creator creator,
+  bool registerItemType(QByteArray idQualifier, Setter setter, Creator creator,
                         int idSection, QString *errorString = 0);
   /** Convenience method. */
-  bool registerItemType(QString idQualifier, Setter setter,
+  bool registerItemType(QByteArray idQualifier, Setter setter,
                         SimplestCreator creator,
                         int idSection, QString *errorString = 0) {
     return registerItemType(idQualifier, setter, [creator](
                             SharedUiItemDocumentTransaction *,
-                            QString id, QString *) {
+                            QByteArray id, QString *) {
       return creator(id);
     }, idSection, errorString);
   }
@@ -89,7 +89,7 @@ public:
   }
   /** Convenience method. */
   template <class T>
-  void registerItemType(QString idQualifier, MemberSetter<T> setter,
+  void registerItemType(QByteArray idQualifier, MemberSetter<T> setter,
                         SimplestCreator creator, int idSection,
                         QString *errorString = 0) {
     registerItemType(idQualifier, [setter](SharedUiItem *item, int section,
@@ -97,20 +97,21 @@ public:
                      SharedUiItemDocumentTransaction *transaction, int role ){
       return (item->*static_cast<MemberSetter<SharedUiItem>>(setter))(
             section, value, errorString, transaction, role);
-    }, [creator](SharedUiItemDocumentTransaction *, QString id, QString *) {
+    }, [creator](SharedUiItemDocumentTransaction *, QByteArray id, QString *) {
       return creator(id);
     }, idSection, errorString);
   }
   bool prepareChangeItem(
       SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
-      SharedUiItem oldItem, QString idQualifier, QString *errorString) override;
+      SharedUiItem oldItem, QByteArray idQualifier,
+      QString *errorString) override;
   void commitChangeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                        QString idQualifier) override;
+                        QByteArray idQualifier) override;
   // TODO add a way to notify user of database errors, such as a signal
 
 private:
   bool createTableAndSelectData(
-      QString idQualifier, Setter setter, Creator creator,
+      QByteArray idQualifier, Setter setter, Creator creator,
       int idSection, QString *errorString);
   static inline QString protectedColumnName(QString columnName);
   bool insertItemInDatabase(SharedUiItemDocumentTransaction *transaction,

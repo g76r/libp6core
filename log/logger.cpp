@@ -19,7 +19,7 @@
 
 #define ISO8601 u"yyyy-MM-ddThh:mm:ss,zzz"_s
 
-static QString _uiHeaderNames[] = {
+static QByteArray _uiHeaderNames[] = {
   "Timestamp", // 0
   "Task",
   "Execution id",
@@ -32,21 +32,21 @@ static QAtomicInt _sequence;
 
 class Logger::LogEntryData : public SharedUiItemData {
 public:
-  QString _id;
+  QByteArray _id;
   QDateTime _timestamp;
   QByteArray _message;
   Log::Severity _severity;
   QByteArray _task, _execId, _sourceCode;
   LogEntryData(QDateTime timestamp, QByteArray message, Log::Severity severity,
                QByteArray task, QByteArray execId, QByteArray sourceCode)
-    : _id(QString::number(_sequence.fetchAndAddOrdered(1))),
+    : _id(QByteArray::number(_sequence.fetchAndAddOrdered(1))),
       _timestamp(timestamp), _message(message), _severity(severity),
       _task(task), _execId(execId), _sourceCode(sourceCode) { }
   QVariant uiData(int section, int role) const override;
   QVariant uiHeaderData(int section, int role) const override;
   int uiSectionCount() const override;
-  QString id() const override { return _id; }
-  QString idQualifier() const override { return "logentry"; }
+  QByteArray id() const override { return _id; }
+  QByteArray idQualifier() const override { return "logentry"_ba; }
 };
 
 Logger::LogEntry::LogEntry(QDateTime timestamp, QByteArray message,

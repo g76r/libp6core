@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,7 +20,7 @@
 SharedUiItemsTreeModel::TreeItem::TreeItem(
     SharedUiItemsTreeModel *model, SharedUiItem item, TreeItem *parent,
     int row) : _model(model), _item(item), _row(row), _parent(parent) {
-  QString id = item.qualifiedId();
+  QByteArray id = item.qualifiedId();
   if (parent) {
     parent->_children.insert(row, this);
     for (++row; row < parent->_children.size(); ++row)
@@ -113,13 +113,13 @@ SharedUiItem SharedUiItemsTreeModel::itemAt(const QModelIndex &index) const {
   return treeItemByIndex(index)->item();
 }
 
-QModelIndex SharedUiItemsTreeModel::indexOf(QString qualifiedId) const {
+QModelIndex SharedUiItemsTreeModel::indexOf(QByteArray qualifiedId) const {
   TreeItem *treeItem = _itemsIndex.value(qualifiedId);
   return treeItem ? createIndex(treeItem->row(), 0, treeItem) : QModelIndex();
 }
 
 void SharedUiItemsTreeModel::changeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
+    SharedUiItem newItem, SharedUiItem oldItem, QByteArray idQualifier) {
   if (!itemQualifierFilter().isEmpty()
       && !itemQualifierFilter().contains(idQualifier))
     return;
@@ -162,7 +162,7 @@ void SharedUiItemsTreeModel::changeItem(
       QModelIndex oldIndex = indexOf(oldItem);
       TreeItem *treeItem = treeItemByIndex(oldIndex);
       QModelIndex oldParent = oldIndex.parent(), newParent = oldParent;
-      QString newId = newItem.qualifiedId(), oldId = oldItem.qualifiedId();
+      QByteArray newId = newItem.qualifiedId(), oldId = oldItem.qualifiedId();
       int newRow = -1; // -1 will be replaced by size() in adjustTreeItemAndRow()
       determineItemPlaceInTree(newItem, &newParent, &newRow);
       TreeItem *newParentTreeItem = treeItemByIndex(newParent);
@@ -199,7 +199,7 @@ void SharedUiItemsTreeModel::changeItem(
 }
 
 void SharedUiItemsTreeModel::updateIndexIfIdChanged(
-    QString newId, QString oldId, TreeItem *newTreeItem) {
+    QByteArray newId, QByteArray oldId, TreeItem *newTreeItem) {
   if (newId != oldId) {
     _itemsIndex.remove(oldId);
     _itemsIndex.insert(newId, newTreeItem);
@@ -343,7 +343,7 @@ bool SharedUiItemsTreeModel::dropMimeData(
   //         << "pos:" << targetRow << targetColumn << droppedParent.data() << "data:"
   //         << QString::fromUtf8(data->data(suiQualifiedIdsListMimeType))
   //         << QString::fromUtf8(data->data(suiPlacesMimeType));
-  QList<QByteArray> idsArrays =
+  QByteArrayList idsArrays =
       data->data(_suiQualifiedIdsListMimeType).split(' ');
   QList<QByteArray> pathsArrays = data->data(_suiPlacesMimeType).split(' ');
   QString firstParentPath = splitPath(pathsArrays.value(0));
@@ -384,7 +384,7 @@ bool SharedUiItemsTreeModel::dropMimeData(
     return false;
   }
   for (int i = 0; i < idsArrays.size(); ++ i) {
-    QString qualifiedId = QString::fromUtf8(idsArrays[i]);
+    QByteArray qualifiedId = idsArrays[i];
     int row;
     // can only move items if they are all child of same parent
     if (splitPath(QString::fromLatin1(pathsArrays[i]), &row)

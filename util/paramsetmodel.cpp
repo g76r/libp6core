@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -103,7 +103,7 @@ bool ParamSetModel::setData(const QModelIndex &index, const QVariant &value,
   if (_rows[index.row()]._inherited)
     return false; // cannot modify inherited rows (such rows are not selectable)
   ParamSet newParams = _params, oldParams = _params;
-  QString s = _trimOnEdit ? value.toString().trimmed() : value.toString();
+  auto s = _trimOnEdit ? value.toString().trimmed() : value.toString();
   switch (index.column()) {
   case 0:
     if (s.isEmpty())
@@ -127,7 +127,7 @@ bool ParamSetModel::setData(const QModelIndex &index, const QVariant &value,
 }
 
 static QString genererateNewKey(ParamSet params) {
-  QString key, prefix = QStringLiteral("key");
+  QString key, prefix = u"key"_s;
   for (int i = 1; i < 100; ++i) {
     key = prefix+QString::number(i);
     if (!params.contains(key, false))
@@ -141,7 +141,7 @@ static QString genererateNewKey(ParamSet params) {
 }
 
 QString ParamSetModel::createNewParam() {
-  QString key = genererateNewKey(_params), value = QStringLiteral("value");
+  QString key = genererateNewKey(_params), value = u"value"_s;
   ParamSet newParams = _params, oldParams = _params;
   newParams.setValue(key, value);
   changeParams(newParams, oldParams, _paramsetId);
@@ -206,7 +206,7 @@ void ParamSetModel::fillRows(
 }
 
 void ParamSetModel::changeParams(ParamSet newParams, ParamSet oldParams,
-                                 QString paramsetId) {
+                                 QByteArray paramsetId) {
   Q_UNUSED(oldParams)
   if (!_changeParamsIdFilter.isEmpty() && _changeParamsIdFilter != paramsetId)
     return; // ignore filtered out paramsets

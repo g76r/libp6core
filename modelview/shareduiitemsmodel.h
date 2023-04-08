@@ -36,7 +36,7 @@ class LIBP6CORESHARED_EXPORT SharedUiItemsModel : public QAbstractItemModel {
   int _columnsCount;
   QHash<int,QHash<int,QVariant>> _mapRoleSectionHeader;
   QHash<int,QByteArray> _roleNames;
-  QStringList _itemQualifierFilter;
+  QByteArrayList _itemQualifierFilter;
 
 public:
   /** Mime type for space-separated list of qualified ids, for drag'n drop */
@@ -69,7 +69,7 @@ public:
   }
   /** Convenience template performing downcast. */
   template<class T>
-  inline T itemAt(QString qualifier, const QModelIndex &index) const {
+  inline T itemAt(QByteArray qualifier, const QModelIndex &index) const {
     SharedUiItem item = itemAt(index);
     return item.idQualifier() == qualifier ? static_cast<T&>(item) : T();
   }
@@ -81,7 +81,7 @@ public:
   }
   /** Convenience template performing downcast. */
   template<class T>
-  inline T itemAt(QString qualifier, int row, int column,
+  inline T itemAt(QByteArray qualifier, int row, int column,
            const QModelIndex &parent = QModelIndex()) const {
     SharedUiItem item = itemAt(row, column, parent);
     return item.idQualifier() == qualifier ? static_cast<T&>(item) : T();
@@ -95,9 +95,9 @@ public:
   }
   QModelIndex indexOf(SharedUiItem item) const {
     return indexOf(item.qualifiedId()); }
-  QModelIndex indexOf(QString idQualifier, QString id) const {
+  QModelIndex indexOf(QByteArray idQualifier, QByteArray id) const {
     return indexOf(SharedUiItem::qualifiedId(idQualifier, id)); }
-  virtual QModelIndex indexOf(QString qualifiedId) const = 0;
+  virtual QModelIndex indexOf(QByteArray qualifiedId) const = 0;
   Qt::ItemFlags	flags(const QModelIndex &index) const override;
   bool setData(const QModelIndex &index, const QVariant &value,
                int role = Qt::EditRole) override;
@@ -122,15 +122,15 @@ public:
    * populate model, respecting the list order (which matters e.g. for a tree
    * model with cascading an item types).
    */
-  void setItemQualifierFilter(QStringList acceptedQualifiers) {
+  void setItemQualifierFilter(QByteArrayList acceptedQualifiers) {
     _itemQualifierFilter = acceptedQualifiers; }
   void setItemQualifierFilter(
-      std::initializer_list<QString> acceptedQualifiers) {
-    _itemQualifierFilter = QStringList(acceptedQualifiers); }
-  void setItemQualifierFilter(QString acceptedQualifier) {
-    _itemQualifierFilter = QStringList(acceptedQualifier); }
+      std::initializer_list<QByteArray> acceptedQualifiers) {
+    _itemQualifierFilter = QByteArrayList{acceptedQualifiers}; }
+  void setItemQualifierFilter(QByteArray acceptedQualifier) {
+    _itemQualifierFilter = QByteArrayList{acceptedQualifier}; }
   void clearItemQualifierFilter() { _itemQualifierFilter.clear(); }
-  QStringList itemQualifierFilter() const { return _itemQualifierFilter; }
+  QByteArrayList itemQualifierFilter() const { return _itemQualifierFilter; }
 
 public slots:
   /** Operate a change on an item within this model.
@@ -156,7 +156,7 @@ public slots:
    */
   // TODO switch signatures to const SharedUiItem & whenever possible
   virtual void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                          QString idQualifier) = 0;
+                          QByteArray idQualifier) = 0;
   /** Short for changeItem(newItem, SharedUiItem(), newItem.idQualifier()). */
   void createOrUpdateItem(SharedUiItem newItem) {
     changeItem(newItem, SharedUiItem(), newItem.idQualifier()); }
@@ -231,10 +231,10 @@ public:
   QModelIndex indexOf(SharedUiItem item) const {
     return _realModel ? mapFromReal(_realModel->indexOf(item))
                       : QModelIndex(); }
-  QModelIndex indexOf(QString idQualifier, QString id) const {
+  QModelIndex indexOf(QByteArray idQualifier, QByteArray id) const {
     return _realModel ? mapFromReal(_realModel->indexOf(idQualifier, id))
                       : QModelIndex(); }
-  QModelIndex indexOf(QString qualifiedId) const {
+  QModelIndex indexOf(QByteArray qualifiedId) const {
     return _realModel ? mapFromReal(_realModel->indexOf(qualifiedId))
                       : QModelIndex(); }
   SharedUiItem itemAt(const QModelIndex &index) const {
@@ -250,7 +250,7 @@ public:
   }
   /** Convenience template performing downcast. */
   template<class T>
-  inline T itemAt(QString qualifier, const QModelIndex &index) const {
+  inline T itemAt(QByteArray qualifier, const QModelIndex &index) const {
     SharedUiItem item = itemAt(index);
     return item.idQualifier() == qualifier ? static_cast<T&>(item) : T();
   }
@@ -262,7 +262,7 @@ public:
   }
   /** Convenience template performing downcast. */
   template<class T>
-  inline T itemAt(QString qualifier, int row, int column,
+  inline T itemAt(QByteArray qualifier, int row, int column,
            const QModelIndex &parent = QModelIndex()) const {
     SharedUiItem item = itemAt(row, column, parent);
     return item.idQualifier() == qualifier ? static_cast<T&>(item) : T();

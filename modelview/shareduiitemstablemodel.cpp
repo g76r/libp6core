@@ -1,4 +1,4 @@
-/* Copyright 2014-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -101,7 +101,7 @@ SharedUiItem SharedUiItemsTableModel::itemAt(const QModelIndex &index) const {
 }
 
 void SharedUiItemsTableModel::changeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
+    SharedUiItem newItem, SharedUiItem oldItem, QByteArray idQualifier) {
   if (!itemQualifierFilter().isEmpty()
       && !itemQualifierFilter().contains(idQualifier))
     return;
@@ -138,7 +138,7 @@ void SharedUiItemsTableModel::changeItem(
   emit itemChanged(newItem, oldItem);
 }
 
-QModelIndex SharedUiItemsTableModel::indexOf(QString qualifiedId) const {
+QModelIndex SharedUiItemsTableModel::indexOf(QByteArray qualifiedId) const {
   // TODO add index to improve lookup performance
   // see SharedUiItemsTreeModel for index example
   // don't forget to update index changeItem when id changes (= item renamed)
@@ -213,7 +213,7 @@ bool SharedUiItemsTableModel::dropMimeData(
   if (!data)
     return false;
   //qDebug() << "SharedUiItemsTableModel::dropMimeData" << action;
-  QList<QByteArray> idsArrays =
+  QByteArrayList idsArrays =
       data->data(_suiQualifiedIdsListMimeType).split(' ');
   QList<QByteArray> rowsArrays = data->data(_suiPlacesMimeType).split(' ');
   SharedUiItemList<> items;
@@ -233,7 +233,7 @@ bool SharedUiItemsTableModel::dropMimeData(
     return false;
   }
   for (int i = 0; i < idsArrays.size(); ++ i) {
-    QString qualifiedId = QString::fromUtf8(idsArrays[i]);
+    QByteArray qualifiedId = idsArrays[i];
     int row = QString::fromLatin1(rowsArrays[i]).toInt();
     if (!qualifiedId.isEmpty() && row >= 0 && row < _items.size()
         && _items[row].qualifiedId() == qualifiedId) {

@@ -25,8 +25,8 @@ const QVariant SharedUiItemListParamsProvider::paramValue(
   const QString &key, const ParamsProvider *, const QVariant &defaultValue,
   QSet<QString> *) const {
   int colon = key.indexOf(':');
-  QString idQualifier = colon >= 0 ? key.left(colon) : QString();
-  QString sectionName = key.mid(colon+1); // works even with colon=-1
+  QByteArray idQualifier = colon >= 0 ? key.left(colon).toUtf8() : QByteArray();
+  QByteArray sectionName = key.mid(colon+1).toUtf8();// works even with colon=-1
   for (auto item : _list) {
     if (!idQualifier.isEmpty() && item.idQualifier() != idQualifier)
       continue;

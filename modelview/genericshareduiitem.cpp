@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,28 +17,40 @@
 
 class GenericSharedUiItemData : public SharedUiItemData {
 public:
-  QString _idQualifier, _id;
+  QByteArray _idQualifier, _id;
   QVariantList _headers, _values;
 
   GenericSharedUiItemData() { }
   GenericSharedUiItemData(
-      QString idQualifier, QString id, QVariantList headers,
+      QByteArray idQualifier, QByteArray id, QVariantList headers,
       QVariantList values)
     : _idQualifier(idQualifier), _id(id), _headers(headers), _values(values) { }
-  GenericSharedUiItemData(QString idQualifier, QString id)
+  GenericSharedUiItemData(QByteArray idQualifier, QByteArray id)
     : _idQualifier(idQualifier), _id(id) { }
-  explicit GenericSharedUiItemData(QString qualifiedId) {
+  explicit GenericSharedUiItemData(QByteArray qualifiedId) {
     int i = qualifiedId.indexOf(':');
     if (i < 0) {
-      _idQualifier = QStringLiteral("generic");
+      _idQualifier = "generic"_ba;
       _id = qualifiedId;
     } else {
       _idQualifier = qualifiedId.left(i);
       _id = qualifiedId.mid(i+1);
     }
   }
-  QString id() const { return _id; }
-  QString idQualifier() const { return _idQualifier; }
+  [[deprecated("Use QByteArray API instead of QString")]]
+  GenericSharedUiItemData(
+      QString idQualifier, QString id, QVariantList headers,
+      QVariantList values)
+    : GenericSharedUiItemData(idQualifier.toUtf8(), id.toUtf8(), headers,
+                              values) { }
+  [[deprecated("Use QByteArray API instead of QString")]]
+  GenericSharedUiItemData(QString idQualifier, QString id)
+    : GenericSharedUiItemData(idQualifier.toUtf8(), id.toUtf8()) { }
+  [[deprecated("Use QByteArray API instead of QString")]]
+  explicit GenericSharedUiItemData(QString qualifiedId)
+    : GenericSharedUiItemData(qualifiedId.toUtf8()) { }
+  QByteArray id() const { return _id; }
+  QByteArray idQualifier() const { return _idQualifier; }
   int uiSectionCount() const { return qMax(_headers.size(), _values.size()); }
   QVariant uiData(int section, int role) const {
     if (role == Qt::DisplayRole || role == Qt::EditRole
@@ -63,28 +75,28 @@ GenericSharedUiItem::GenericSharedUiItem(const GenericSharedUiItem &other)
 }
 
 GenericSharedUiItem::GenericSharedUiItem(
-    QString idQualifier, QString id, QVariantList headers,
+    QByteArray idQualifier, QByteArray id, QVariantList headers,
     QVariantList values)
   : SharedUiItem(new GenericSharedUiItemData(idQualifier, id, headers,
                                              values)) {
 }
 
-GenericSharedUiItem::GenericSharedUiItem(QString idQualifier, QString id)
+GenericSharedUiItem::GenericSharedUiItem(QByteArray idQualifier, QByteArray id)
   : SharedUiItem(new GenericSharedUiItemData(idQualifier, id)) {
 }
 
-GenericSharedUiItem::GenericSharedUiItem(QString qualifiedId)
+GenericSharedUiItem::GenericSharedUiItem(QByteArray qualifiedId)
   : SharedUiItem(new GenericSharedUiItemData(qualifiedId)) {
 }
 
 
 QList<GenericSharedUiItem> GenericSharedUiItem::fromCsv(
-    CsvFile *csvFile, int idColumn, QString idQualifier) {
+    CsvFile *csvFile, int idColumn, QByteArray idQualifier) {
   QList<GenericSharedUiItem> list;
   if (!csvFile)
     return list;
   QVariantList vHeaders;
-  foreach (QString header, csvFile->headers())
+  for (auto header: csvFile->headers())
     vHeaders.append(header);
   for (int i = 0; i < csvFile->rowCount(); ++i) {
     QStringList values = csvFile->row(i);
@@ -92,9 +104,10 @@ QList<GenericSharedUiItem> GenericSharedUiItem::fromCsv(
     if (values.size() > idColumn)
       id = values[idColumn];
     QVariantList vValues;
-    foreach (QString value, values)
+    for (auto value: values)
       vValues.append(value);
-    list.append(GenericSharedUiItem(idQualifier, id, vHeaders, vValues));
+    list.append(GenericSharedUiItem(
+                  idQualifier, id.toUtf8(), vHeaders, vValues));
   }
   return list;
 }
@@ -107,7 +120,7 @@ bool GenericSharedUiItem::setUiDataWithIdSection(
     setData(d = new GenericSharedUiItemData());
   bool success = d->setUiData(section, value, errorString, transaction, role);
   if (success && section == idSection)
-    d->_id = d->_values.value(section).toString();
+    d->_id = d->_values.value(section).toString().toUtf8();
   return success;
 }
 

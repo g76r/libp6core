@@ -32,9 +32,8 @@ protected:
     SharedUiItem _item;
     QString _display, _tooltip;
     int _editableSection;
-    ItemBinding(SharedUiItem item = SharedUiItem(),
-         QString display = QString(), QString tooltip = QString(),
-                int editableSection = -1)
+    ItemBinding(SharedUiItem item = {}, QString display = {},
+                QString tooltip = {}, int editableSection = -1)
       : _item(item), _display(display),
         _tooltip(tooltip.isNull() ? display : tooltip),
         _editableSection(editableSection) { }
@@ -56,11 +55,11 @@ public:
   int columnCount(const QModelIndex &parent = QModelIndex()) const;
   SharedUiItem itemAt(const QModelIndex &index) const;
   using SharedUiItemsModel::indexOf;
-  QModelIndex indexOf(QString qualifiedId) const;
+  QModelIndex indexOf(QByteArray qualifiedId) const;
   void insertItemAt(SharedUiItem newItem, int row,
                     QModelIndex parent = QModelIndex());
   void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                  QString idQualifier);
+                  QByteArray idQualifier);
   QVariant data(const QModelIndex &index, int role) const;
   bool setData(const QModelIndex &index, const QVariant &value,
                int role = Qt::EditRole);
@@ -70,10 +69,10 @@ public:
   virtual void bindHeader(int section, Qt::Orientation orientation,
                           SharedUiItem item,
                           QString display = u"%id"_s,
-                          QString tooltip = QString());
+                          QString tooltip = {});
   virtual void bindCell(int row, int column, SharedUiItem item,
                         QString display = u"%id"_s,
-                        QString tooltip = QString(),
+                        QString tooltip = {},
                         int editableSection = -1);
   virtual void clearBindings();
 

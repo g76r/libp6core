@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -59,7 +59,7 @@ protected:
 
 private:
   TreeItem *_root;
-  QHash<QString,TreeItem*> _itemsIndex; // key: qualified id
+  QHash<QByteArray,TreeItem*> _itemsIndex; // key: qualified id
 
 public:
   explicit SharedUiItemsTreeModel(QObject *parent = 0);
@@ -71,9 +71,9 @@ public:
   using SharedUiItemsModel::itemAt;
   SharedUiItem itemAt(const QModelIndex &index) const override;
   using SharedUiItemsModel::indexOf;
-  QModelIndex indexOf(QString qualifiedId) const override;
+  QModelIndex indexOf(QByteArray qualifiedId) const override;
   void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                  QString idQualifier) override;
+                  QByteArray idQualifier) override;
   bool removeRows(int row, int count, const QModelIndex &parent) override;
   void insertItemAt(SharedUiItem newItem, int row,
                     QModelIndex parent = QModelIndex()) override;
@@ -111,7 +111,7 @@ protected:
 private:
   /** *item = _root if null, row = (*item)->size() if < 0 or > count() */
   inline void adjustTreeItemAndRow(TreeItem **item, int *row);
-  inline void updateIndexIfIdChanged(QString newId, QString oldId,
+  inline void updateIndexIfIdChanged(QByteArray newId, QByteArray oldId,
                                      TreeItem *newTreeItem);
   /** Never return null, return _root when index is invalid. */
   inline TreeItem *treeItemByIndex(const QModelIndex &index) const;

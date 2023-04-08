@@ -53,23 +53,26 @@ QVariant SharedUiItemData::uiHeaderData(int section, int role) const {
   return QVariant();
 }
 
-QString SharedUiItemData::id() const {
-  return uiData(0, Qt::DisplayRole).toString();
+QByteArray SharedUiItemData::id() const {
+  return uiData(0, Qt::DisplayRole).toByteArray();
 }
 
 int SharedUiItemData::uiSectionCount() const {
   return 0;
 }
 
-static QRegularExpression nonAlphanum("[^a-z0-9]+");
-
-QString SharedUiItemData::uiSectionName(int section) const {
-  return uiHeaderData(section, Qt::DisplayRole).toString().trimmed()
-      .toLower().replace(nonAlphanum, QStringLiteral("_"));
+QByteArray SharedUiItemData::uiSectionName(int section) const {
+  QVariant v = uiHeaderData(section, Qt::DisplayRole);
+  QByteArray ba = v.canConvert<QByteArray>()
+      ? v.toByteArray().toLower() : v.toString().toUtf8().toLower();
+  for (char *s = ba.data(); *s; ++s)
+    if (!::isalnum(*s))
+      *s = '_';
+  return ba;
 }
 
-QString SharedUiItemData::idQualifier() const {
-  return QString();
+QByteArray SharedUiItemData::idQualifier() const {
+  return QByteArray();
 }
 
 QDebug operator<<(QDebug dbg, const SharedUiItem &i) {
@@ -89,7 +92,7 @@ const QVariant SharedUiItemParamsProvider::paramValue(
       return _item.idQualifier();
     if (key == "qualifiedId")
       return _item.qualifiedId();
-    section = _item.uiSectionByName(key);
+    section = _item.uiSectionByName(key.toUtf8());
     ok = section >= 0;
   }
   if (ok) {
@@ -129,7 +132,7 @@ QVariantHash SharedUiItemData::toVariantHash(int role) const {
 bool SharedUiItemData::setFromVariantHash(
     const QVariantHash &hash, QString *errorString,
     SharedUiItemDocumentTransaction *transaction,
-    const QSet<QString> &ignoredSections, int role) {
+    const QSet<QByteArray> &ignoredSections, int role) {
   int n = uiSectionCount();
   for (int i = 0; i < n; ++i) {
     auto name = uiSectionName(i);

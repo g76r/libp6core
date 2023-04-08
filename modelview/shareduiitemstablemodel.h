@@ -1,4 +1,4 @@
-/* Copyright 2014-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -74,9 +74,9 @@ public:
   SharedUiItem itemAt(const QModelIndex &index) const override;
   SharedUiItem itemAt(int row) const { return itemAt(index(row, 0)); }
   using SharedUiItemsModel::indexOf;
-  QModelIndex indexOf(QString qualifiedId) const override;
+  QModelIndex indexOf(QByteArray qualifiedId) const override;
   void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                  QString idQualifier) override;
+                  QByteArray idQualifier) override;
   bool removeRows(int row, int count,
                   const QModelIndex &parent = QModelIndex()) override;
   Qt::ItemFlags flags(const QModelIndex &index) const override;

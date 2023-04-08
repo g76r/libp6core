@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -27,7 +27,8 @@ class SharedUiItemDocumentManager;
 class LIBP6CORESHARED_EXPORT SharedUiItemDocumentTransaction
     : public CoreUndoCommand {
   SharedUiItemDocumentManager *_dm;
-  QHash<QString,QHash<QString,SharedUiItem>> _changingItems, _originalItems;
+  QHash<QByteArray,QHash<QByteArray,SharedUiItem>> _changingItems,
+  _originalItems;
 
 public:
   using PostCreationModifier = std::function<void(
@@ -36,11 +37,11 @@ public:
   class LIBP6CORESHARED_EXPORT ChangeItemCommand : public CoreUndoCommand {
     QPointer<SharedUiItemDocumentManager> _dm;
     SharedUiItem _newItem, _oldItem;
-    QString _idQualifier;
+    QByteArray _idQualifier;
 
   public:
     ChangeItemCommand(SharedUiItemDocumentManager *dm, SharedUiItem newItem,
-                      SharedUiItem oldItem, QString idQualifier,
+                      SharedUiItem oldItem, QByteArray idQualifier,
                       CoreUndoCommand *parent);
     void redo();
     void undo();
@@ -49,26 +50,26 @@ public:
   };
 
   SharedUiItemDocumentTransaction(SharedUiItemDocumentManager *dm) : _dm(dm) { }
-  SharedUiItem itemById(QString idQualifier, QString id) const;
+  SharedUiItem itemById(QByteArray idQualifier, QByteArray id) const;
   template <class T>
-  inline T itemById(QString idQualifier, QString id) const {
+  inline T itemById(QByteArray idQualifier, QByteArray id) const {
     SharedUiItem item = itemById(idQualifier, id);
     return static_cast<T&>(item);
   }
-  SharedUiItem itemById(QString qualifiedId) const {
+  SharedUiItem itemById(QByteArray qualifiedId) const {
     int colon = qualifiedId.indexOf(':');
     if (colon >= 0)
         return itemById(qualifiedId.left(colon), qualifiedId.mid(colon+1));
     return SharedUiItem();
   }
   template <class T>
-  inline T itemById(QString qualifiedId) const {
+  inline T itemById(QByteArray qualifiedId) const {
     SharedUiItem item = itemById(qualifiedId);
     return static_cast<T&>(item);
   }
-  SharedUiItemList<> itemsByIdQualifier(QString idQualifier) const;
+  SharedUiItemList<> itemsByIdQualifier(QByteArray idQualifier) const;
   template <class T>
-  inline SharedUiItemList<T> itemsByIdQualifier(QString idQualifier) const {
+  inline SharedUiItemList<T> itemsByIdQualifier(QByteArray idQualifier) const {
     T *dummy;
     Q_UNUSED(static_cast<SharedUiItem*>(dummy)); // ensure T is a SharedUiItem
     SharedUiItemList<> list = itemsByIdQualifier(idQualifier);
@@ -85,21 +86,24 @@ public:
     return *pointer_alias_friendly_union.specialized;
   }
   SharedUiItemList<> foreignKeySources(
-      QString sourceQualifier, int sourceSection, QString referenceId) const;
+      QByteArray sourceQualifier, int sourceSection,
+      QByteArray referenceId) const;
 
   bool changeItemByUiData(
       SharedUiItem oldItem, int section, const QVariant &value,
       QString *errorString);
   bool changeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                  QString idQualifier, QString *errorString);
+                  QByteArray idQualifier, QString *errorString);
   SharedUiItem createNewItem(
-      QString idQualifier, PostCreationModifier modifier, QString *errorString);
+      QByteArray idQualifier, PostCreationModifier modifier,
+      QString *errorString);
   /** @see SharedUiItemDocumentManager::generateNewId() */
-  QString generateNewId(QString idQualifier, QString prefix = QString()) const;
+  QByteArray generateNewId(
+      QByteArray idQualifier, QByteArray prefix = {}) const;
 
 private:
   void storeItemChange(SharedUiItem newItem, SharedUiItem oldItem,
-                       QString idQualifier);
+                       QByteArray idQualifier);
   SharedUiItemList<> changingItems() const;
   SharedUiItemList<> originalItems() const;
   //SharedUiItem oldItemIdByChangingItem(SharedUiItem changingItem) const;
