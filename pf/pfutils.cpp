@@ -1,4 +1,4 @@
-/* Copyright 2012-2022 Hallowyn and others.
+/* Copyright 2012-2023 Hallowyn and others.
 See the NOTICE file distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file to you under
 the Apache License, Version 2.0 (the "License"); you may not use this
@@ -14,6 +14,8 @@ under the License.
 #include "pfutils.h"
 #include "pfinternals_p.h"
 #include <QRegularExpression>
+
+using namespace Qt::Literals::StringLiterals;
 
 static QRegularExpression _whitespace { "\\s+" };
 
@@ -126,9 +128,9 @@ int PfUtils::stringAsInt(QString s, int defaultValue, bool *ok) {
 bool PfUtils::stringAsBool(QStringView s, bool defaultValue, bool *ok) {
   bool b = defaultValue, _ok = true;
   s = s.trimmed();
-  if (s.compare(QLatin1String("true"), Qt::CaseInsensitive) == 0)
+  if (s.compare("true"_ba, Qt::CaseInsensitive) == 0)
     b = true;
-  if (s.compare(QLatin1String("false"), Qt::CaseInsensitive) == 0)
+  if (s.compare("false"_ba, Qt::CaseInsensitive) == 0)
     b = false;
   int i = s.toLongLong(&_ok, 0);
   if (_ok)
