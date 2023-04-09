@@ -60,6 +60,8 @@ public:
   ParamSet(const ParamSet &other);
   explicit ParamSet(const QHash<QString,QString> &params);
   explicit ParamSet(const QMap<QString,QString> &params);
+  explicit ParamSet(const QHash<QByteArray,QByteArray> &params);
+  explicit ParamSet(const QMap<QByteArray,QByteArray> &params);
   /** For multi-valued keys, only most recently inserted value is kept. */
   explicit ParamSet(const QMultiMap<QString,QString> &params);
   /** For multi-valued keys, only most recently inserted value is kept. */

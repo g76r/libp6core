@@ -156,7 +156,19 @@ ParamSet::ParamSet(const QHash<QString, QString> &params)
   : d(new ParamSetData(params)) {
 }
 
+ParamSet::ParamSet(const QHash<QByteArray,QByteArray> &params)
+  : d(new ParamSetData) {
+  for (auto key: params.keys())
+    d->_params.insert(key, params.value(key));
+}
+
 ParamSet::ParamSet(const QMap<QString, QString> &params)
+  : d(new ParamSetData) {
+  for (auto key: params.keys())
+    d->_params.insert(key, params.value(key));
+}
+
+ParamSet::ParamSet(const QMap<QByteArray,QByteArray> &params)
   : d(new ParamSetData) {
   for (auto key: params.keys())
     d->_params.insert(key, params.value(key));

@@ -70,6 +70,26 @@ public:
   inline const QString paramString(
     const QString &key, const QVariant &defaultValue) const {
     return paramValue(key, defaultValue).toString(); }
+  /** Convenience method */
+  inline const QByteArray paramUtf8(
+    const QString key, const ParamsProvider *context,
+    const QVariant defaultValue, QSet<QString> *alreadyEvaluated) const {
+    return paramValue(key, context, defaultValue, alreadyEvaluated).toString()
+        .toUtf8(); }
+  /** Convenience method */
+  inline const QByteArray paramUtf8(
+    const QString key, const ParamsProvider *context = 0,
+    const QVariant defaultValue = QVariant()) const {
+    return paramValue(key, context, defaultValue).toString().toUtf8(); }
+  /** Convenience method */
+  inline const QByteArray paramUtf8(
+    const QString &key, const QVariant &defaultValue,
+    QSet<QString> *alreadyEvaluated) const {
+    return paramValue(key, defaultValue, alreadyEvaluated).toString().toUtf8(); }
+  /** Convenience method */
+  inline const QByteArray paramUtf8(
+    const QString &key, const QVariant &defaultValue) const {
+    return paramValue(key, defaultValue).toString().toUtf8(); }
   virtual const QSet<QString> keys() const = 0;
   /** Singleton wrapper to environment variables */
   static ParamsProvider *environment() { return _environment; }
