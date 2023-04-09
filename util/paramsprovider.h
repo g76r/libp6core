@@ -33,63 +33,69 @@ public:
   virtual ~ParamsProvider();
   /** Return a parameter value.
     * @param context is an evaluation context */
-  virtual const QVariant paramValue(
+  virtual const QVariant paramValue( // FIXME reorder args like paramUtf8
     const QString &key, const ParamsProvider *context,
     const QVariant &defaultValue, QSet<QString> *alreadyEvaluated) const = 0;
   /** Convenience method */
-  inline const QVariant paramValue(
+  inline const QVariant paramValue( // FIXME reorder args like paramUtf8
     const QString &key, const ParamsProvider *context = 0,
-    const QVariant &defaultValue = QVariant()) const {
+    const QVariant &defaultValue = {}) const {
     QSet<QString> ae; return paramValue(key, context, defaultValue, &ae); }
   /** Convenience method */
-  inline const QVariant paramValue(
+  inline const QVariant paramValue( // FIXME reorder args like paramUtf8
     const QString &key, const QVariant &defaultValue,
     QSet<QString> *alreadyEvaluated) const {
     return paramValue(key, 0, defaultValue, alreadyEvaluated); }
   /** Convenience method */
-  inline const QVariant paramValue(
+  inline const QVariant paramValue( // FIXME reorder args like paramUtf8
     const QString &key, const QVariant &defaultValue) const {
     return paramValue(key, 0, defaultValue); }
   /** Convenience method */
-  inline const QString paramString(
-    const QString key, const ParamsProvider *context,
-    const QVariant defaultValue, QSet<QString> *alreadyEvaluated) const {
+  inline const QString paramString( // FIXME reorder args like paramUtf8
+    const QString &key, const ParamsProvider *context,
+    const QString &defaultValue, QSet<QString> *alreadyEvaluated) const {
     return paramValue(key, context, defaultValue, alreadyEvaluated).toString();
   }
   /** Convenience method */
-  inline const QString paramString(
-    const QString key, const ParamsProvider *context = 0,
-    const QVariant defaultValue = QVariant()) const {
+  inline const QString paramString( // FIXME reorder args like paramUtf8
+    const QString &key, const ParamsProvider *context = 0,
+    const QString &defaultValue = {}) const {
     return paramValue(key, context, defaultValue).toString(); }
   /** Convenience method */
-  inline const QString paramString(
-    const QString &key, const QVariant &defaultValue,
+  inline const QString paramString( // FIXME reorder args like paramUtf8
+    const QString &key, const QString &defaultValue,
     QSet<QString> *alreadyEvaluated) const {
     return paramValue(key, defaultValue, alreadyEvaluated).toString(); }
   /** Convenience method */
-  inline const QString paramString(
-    const QString &key, const QVariant &defaultValue) const {
+  inline const QString paramString( // FIXME reorder args like paramUtf8
+    const QString &key, const QString &defaultValue) const {
     return paramValue(key, defaultValue).toString(); }
   /** Convenience method */
   inline const QByteArray paramUtf8(
-    const QString key, const ParamsProvider *context,
-    const QVariant defaultValue, QSet<QString> *alreadyEvaluated) const {
+    const QString &key, const QByteArray &defaultValue,
+    const ParamsProvider *context, QSet<QString> *alreadyEvaluated) const {
     return paramValue(key, context, defaultValue, alreadyEvaluated).toString()
         .toUtf8(); }
   /** Convenience method */
   inline const QByteArray paramUtf8(
-    const QString key, const ParamsProvider *context = 0,
-    const QVariant defaultValue = QVariant()) const {
+    const QString &key, const QByteArray &defaultValue = {},
+    const ParamsProvider *context = 0) const {
     return paramValue(key, context, defaultValue).toString().toUtf8(); }
   /** Convenience method */
   inline const QByteArray paramUtf8(
-    const QString &key, const QVariant &defaultValue,
-    QSet<QString> *alreadyEvaluated) const {
-    return paramValue(key, defaultValue, alreadyEvaluated).toString().toUtf8(); }
+    const QString &key, const ParamsProvider *context) const {
+    return paramValue(key, context, QString{}).toString().toUtf8(); }
   /** Convenience method */
   inline const QByteArray paramUtf8(
-    const QString &key, const QVariant &defaultValue) const {
-    return paramValue(key, defaultValue).toString().toUtf8(); }
+    const QString &key, const QByteArray &defaultValue,
+    QSet<QString> *alreadyEvaluated) const {
+    return paramValue(key, 0, defaultValue, alreadyEvaluated).toString()
+        .toUtf8(); }
+  /** Convenience method */
+  inline const QByteArray paramUtf8(
+    const QString &key,  QSet<QString> *alreadyEvaluated) const {
+    return paramValue(key, 0, QString{}, alreadyEvaluated).toString()
+        .toUtf8(); }
   virtual const QSet<QString> keys() const = 0;
   /** Singleton wrapper to environment variables */
   static ParamsProvider *environment() { return _environment; }

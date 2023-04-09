@@ -171,25 +171,29 @@ public:
   void removeValue(QString key);
   /** Return a value without performing parameters substitution.
    * @param inherit should search values in parents if not found */
-  QString rawValue(QString key, QString defaultValue = QString(),
+  QString rawValue(QString key, QString defaultValue = {},
                    bool inherit = true) const;
-  inline QString rawValue(QString key, const char *defaultValue,
-                   bool inherit = true) const {
+  inline QString rawValue(QString key, const QByteArray &defaultValue,
+                          bool inherit = true) const {
     return rawValue(key, QString(defaultValue), inherit); }
   inline QString rawValue(QString key, bool inherit) const {
     return rawValue(key, QString(), inherit); }
+  inline QByteArray rawParamUtf8(
+      const QByteArray &key, const QByteArray &defaultValue = {},
+      bool inherit = true) const {
+    return rawValue(QString{key}, defaultValue, inherit).toUtf8(); }
   /** Return a value after parameters substitution.
    * @param searchInParents should search values in parents if not found */
   inline QString value(QString key, QString defaultValue = QString(),
                        bool inherit = true,
                        const ParamsProvider *context = 0) const {
     return evaluate(rawValue(key, defaultValue, inherit), inherit, context); }
-  inline QString value(QString key, const char *defaultValue,
+  inline QString value(QString key, const QByteArray &defaultValue,
                        bool inherit = true,
                        const ParamsProvider *context = 0) const {
     return evaluate(rawValue(key, QString(defaultValue), inherit), inherit,
                     context); }
-  inline QString value(QString key, const char *defaultValue,
+  inline QString value(QString key, const QByteArray &defaultValue,
                        const ParamsProvider *context) const {
     return evaluate(rawValue(key, QString(defaultValue), true), true,
                     context); }

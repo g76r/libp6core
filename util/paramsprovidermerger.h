@@ -121,7 +121,7 @@ public:
   }
   /** Convenience method. */
   inline ParamsProviderMerger &overrideParamValue(
-      QString key, const char *value){
+      QString key, const QByteArray &value){
     return overrideParamValue(key, QString(value)); }
   /** Disambiguation method.
    * Avoids implicit conversion of 0 to char* */
