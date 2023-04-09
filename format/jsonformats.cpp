@@ -1,4 +1,4 @@
-/* Copyright 2017-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,6 +17,8 @@
 #include <QJsonDocument>
 #include <QRegularExpression>
 
+using namespace Qt::Literals::StringLiterals;
+
 static QRegularExpression _linebreaksRE { "\\s*[\\n\\r]+\\s*" };
 
 namespace {
@@ -28,8 +30,7 @@ QString dict2string(const T &dict) {
     json.insert(key, dict.value(key));
   QJsonDocument doc;
   doc.setObject(json);
-  return QString::fromUtf8(doc.toJson())
-      .replace(_linebreaksRE, QStringLiteral(" "));
+  return QString::fromUtf8(doc.toJson()).replace(_linebreaksRE, u" "_s);
 }
 
 template<class T>
@@ -45,8 +46,7 @@ T string2dict(const QString &string) {
       dict.insert(key, v.toString());
       break;
     case QJsonValue::Bool:
-      dict.insert(key, v.toBool() ? QStringLiteral("true")
-                                  : QStringLiteral("false"));
+      dict.insert(key, v.toBool() ? u"true"_s : u"false"_s);
       break;
     case QJsonValue::Double:
       dict.insert(key, QString::number(v.toDouble()));
@@ -86,8 +86,7 @@ QString JsonFormats::list2string(const QList<QString> &list) {
     json.append(string);
   QJsonDocument doc;
   doc.setArray(json);
-  return QString::fromUtf8(doc.toJson())
-      .replace(_linebreaksRE, QStringLiteral(" "));
+  return QString::fromUtf8(doc.toJson()).replace(_linebreaksRE, u" "_s);
 }
 
 QStringList JsonFormats::string2list(const QString &string) {
@@ -101,8 +100,7 @@ QStringList JsonFormats::string2list(const QString &string) {
       list.append(v.toString());
       break;
     case QJsonValue::Bool:
-      list.append(v.toBool() ? QStringLiteral("true")
-                             : QStringLiteral("false"));
+      list.append(v.toBool() ? u"true"_s : u"false"_s);
       break;
     case QJsonValue::Double:
       list.append(QString::number(v.toDouble()));

@@ -1,4 +1,4 @@
-/* Copyright 2013-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -184,7 +184,7 @@ QDateTime TimeFormats::fromRfc2822DateTime(QString rfc2822DateTime,
 
 QString TimeFormats::toCoarseHumanReadableTimeInterval(
     qint64 msecs, bool absolute) {
-  QString s(msecs < 0 && !absolute ? "-" : "");
+  QString s{msecs < 0 && !absolute ? u"-"_s : u""_s};
   // LATER i18n
   // LATER hide second part of expression when %2 == 0
   msecs = qAbs(msecs);
@@ -318,13 +318,11 @@ QString TimeFormats::toCustomTimestamp(
   if (!tz.isValid())
     tz = QTimeZone::systemTimeZone();
   dt = relativeDateTime.apply(dt).toTimeZone(tz);
-  if (format.isEmpty())
-    return dt.toString("yyyy-MM-dd hh:mm:ss,zzz");
-  if (format == "iso")
-    return dt.toString("yyyy-MM-ddThh:mm:ss,zzz");
-  if (format == "ms1970")
+  if (format.isEmpty() || format == "iso"_ba)
+    return dt.toString(u"yyyy-MM-dd hh:mm:ss,zzz"_s);
+  if (format == "ms1970"_ba)
     return QString::number(dt.toMSecsSinceEpoch());
-  if (format == "s1970")
+  if (format == "s1970"_ba)
     return QString::number(dt.toMSecsSinceEpoch()/1000);
   return dt.toString(format);
 }
@@ -348,7 +346,7 @@ const QString TimeFormats::toMultifieldSpecifiedCustomTimestamp(
 const QTimeZone TimeFormats::tzFromIso8601(
     const QStringView &offset, const QTimeZone &defaultValue) {
   auto o = offset.trimmed();
-  if (o == QLatin1String("Z"))
+  if (o == u"Z"_s)
     return QTimeZone::utc();
   auto m = _iso8601timezoneOffsetRe.match(o);
   if (m.hasMatch())
