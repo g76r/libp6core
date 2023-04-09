@@ -1,4 +1,4 @@
-/* Copyright 2013-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -31,7 +31,8 @@ public:
 
 private:
   GraphvizRenderer _renderer;
-  QString _source, _stderr, _contentType;
+  QByteArray _source, _contentType;
+  QString _stderr;
   bool _renderingRequested, _renderingRunning;
   int _renderingNeeded;
   mutable QRecursiveMutex _mutex;
@@ -46,11 +47,11 @@ public:
   QByteArray imageData(
       HttpRequest req, ParamsProviderMerger *params = 0, int timeoutMillis
       = IMAGEHTTPHANDLER_DEFAULT_ONDEMAND_RENDERING_TIMEOUT) override;
-  QString contentType(
+  QByteArray contentType(
     HttpRequest req, ParamsProviderMerger *processingContext) const override;
-  QString contentEncoding(
+  QByteArray contentEncoding(
     HttpRequest req, ParamsProviderMerger *processingContext) const override;
-  QString source(
+  QByteArray source(
     HttpRequest req, ParamsProviderMerger *processingContext) const override;
   GraphvizRenderer renderer() const { return _renderer; }
   void setRenderer(GraphvizRenderer renderer) { _renderer = renderer; }
@@ -61,7 +62,7 @@ public:
 public slots:
   /** Set new graphviz-format source and, if refresh strategy is OnChange,
    * trigger image layout processing */
-  void setSource(QString source);
+  void setSource(const QByteArray &source);
 
 protected:
   void customEvent(QEvent *event) override;

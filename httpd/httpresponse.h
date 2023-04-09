@@ -21,6 +21,8 @@
 #include <QByteArray>
 #include <QAbstractSocket>
 
+using namespace Qt::Literals::StringLiterals;
+
 class HttpResponseData;
 
 /** Class holding all information and actions about the response to an incoming
@@ -108,11 +110,11 @@ public:
   void disableBodyOutput();
   /** Syntaxic sugar for setHeader("Content-Type", type).
    * Default content type is "text/plain;charset=UTF-8". */
-  inline void setContentType(QString type) {
-    setHeader(QStringLiteral("Content-Type"), type); }
+  inline void setContentType(QByteArray type) {
+    setHeader("Content-Type"_ba, type); }
   /** Syntaxic sugar for setHeader("Content-Length", length). */
   inline void setContentLength(qint64 length) {
-    setHeader(QStringLiteral("Content-Length"), QString::number(length)); }
+    setHeader("Content-Length"_ba, QByteArray::number(length)); }
   /** Set HTTP status code. Default is 200.
    * Must be called before output().
    * @see StatusCode */
@@ -121,152 +123,161 @@ public:
   int status() const;
   /** Replace any header of this name by one header with this value.
    * Must be called before output(). */
-  void setHeader(QString name, QString value);
+  void setHeader(const QByteArray &name, const QByteArray &value);
   /** Append a header regardless one already exists with the same name.
    * Must be called before output(). */
-  void addHeader(QString name, QString value);
+  void addHeader(const QByteArray &name, const QByteArray &value);
   /** Append a value at the end of a header containing a separated list (e.g.
    * a comma separated list).
    * Also merge several headers if the header is already multi-valued
    * e.g. Vary: Origin followed by Vary: X-MyHeader followed by a call to
    * appendValueToHeader("Vary", "X-Login") will produce a mono-valued
    * Vary: Origin, X-MyHeader, X-Login */
-  void appendValueToHeader(QString name, QString value,
-                           const QString &separator = { ", "});
+  void appendValueToHeader(
+      const QByteArray &name, const QByteArray &value,
+      const QByteArray &separator = { ", " });
   /** Value associated to a response header.
    * If the header is found several time, last value is returned. */
-  QString header(QString name, QString defaultValue = QString()) const;
+  QByteArray header(
+      const QByteArray &name, const QByteArray &defaultValue = {}) const;
   /** Values associated to a response header, last occurrence first. */
-  QStringList headers(QString name) const;
+  QByteArrayList headers(const QByteArray &name) const;
   /** Full header hash */
-  QMultiHash<QString,QString> headers() const;
+  QMultiMap<QByteArray, QByteArray> headers() const;
   /** Redirect to another URL, by default using a temporary redirect (302).
    * Must be called before output(). */
-  void redirect(QString location, int status = HTTP_Found);
+  void redirect(QByteArray location, int status = HTTP_Found);
+  void redirect(QString location, int status = HTTP_Found) {
+    redirect(location.toUtf8(), status); }
   /** Set a session cookie
   * Some characters are not allowed in value, see RFC6265 or use
   * setBase64SessionCookie() */
   inline void setSessionCookie(
-      QString name, QString value, QString path = QString(),
-      QString domain = QString(), bool secure = false, bool httponly = false) {
-    setCookie(name, value, QDateTime(), path, domain, secure, httponly);
-  }
+      const QByteArray &name, const QByteArray &value,
+      const QByteArray &path = {}, const QByteArray &domain = {},
+      bool secure = false, bool httponly = false) {
+    setCookie(name, value, QDateTime(), path, domain, secure, httponly); }
+  /** Set a session cookie
+  * Some characters are not allowed in value, see RFC6265 or use
+  * setBase64SessionCookie() */
+  inline void setSessionCookie(
+      const QString &name, const QString &value, const QString &path = {},
+      const QString &domain = {}, bool secure = false, bool httponly = false) {
+    setCookie(name.toUtf8(), value.toUtf8(), QDateTime{}, path.toUtf8(),
+              domain.toUtf8(), secure, httponly); }
+  /** Set a session cookie, encoding its value using base64. */
+  inline void setBase64SessionCookie(
+      const QByteArray &name, const QByteArray &value,
+      const QByteArray &path = {}, const QByteArray &domain = {},
+      bool secure = false, bool httponly = false) {
+    setCookie(name, value.toBase64(), QDateTime(), path,
+              domain, secure, httponly); }
   /** Set a session cookie, encoding its value using base64 and utf-8. */
   inline void setBase64SessionCookie(
-      QString name, QString value, QString path = QString(),
-      QString domain = QString(), bool secure = false, bool httponly = false) {
-    setCookie(name, value.toUtf8().toBase64().constData(), QDateTime(), path,
-              domain, secure, httponly);
-  }
-  /** Set a session cookie, encoding its value using base64 and assuming char*
-   * array is already encoded using utf-8 (or of course 7 bits ascii). */
-  inline void setBase64SessionCookie(
-      QString name, const char *value, QString path = QString(),
-      QString domain = QString(), bool secure = false, bool httponly = false) {
-    setCookie(name, QByteArray(value).toBase64().constData(), QDateTime(), path,
-              domain, secure, httponly);
-  }
-  /** Set a session cookie, encoding its value using base64 */
-  inline void setBase64SessionCookie(
-      QString name, QByteArray value, QString path = QString(),
-      QString domain = QString(), bool secure = false, bool httponly = false) {
-    setCookie(name, value.toBase64().constData(), QDateTime(), path, domain,
-              secure, httponly);
-  }
+      const QString &name, const QString &value, const QString &path = {},
+      const QString &domain = {}, bool secure = false, bool httponly = false) {
+    setCookie(name.toUtf8(), value.toUtf8().toBase64(), QDateTime{},
+              path.toUtf8(), domain.toUtf8(), secure, httponly); }
   /** Set a persistent cookie.
    * Some characters are not allowed in value, see RFC6265 or use
    * setBase64PersistentCookie()
    * @param expires defaults to now + 1 day */
   inline void setPersistentCookie(
-      QString name, QString value, QDateTime expires = QDateTime(),
-      QString path = QString(), QString domain = QString(), bool secure = false,
-      bool httponly = false) {
+      const QByteArray &name, const QByteArray &value, QDateTime expires = {},
+      const QByteArray &path = {}, const QByteArray &domain = {},
+      bool secure = false, bool httponly = false) {
     setCookie(name, value,
               expires.isNull() ? QDateTime::currentDateTime().addSecs(86400)
                                : expires,
-              path, domain, secure, httponly);
-  }
+              path, domain, secure, httponly); }
+  /** Set a persistent cookie.
+   * Some characters are not allowed in value, see RFC6265 or use
+   * setBase64PersistentCookie()
+   * @param expires defaults to now + 1 day */
+  inline void setPersistentCookie(
+      const QString &name, const QString &value, QDateTime expires = {},
+      const QString &path = {}, const QString &domain = {}, bool secure = false,
+      bool httponly = false) {
+    setCookie(name.toUtf8(), value.toUtf8(),
+              expires.isNull() ? QDateTime::currentDateTime().addSecs(86400)
+                               : expires,
+              path.toUtf8(), domain.toUtf8(), secure, httponly); }
   /** Set a persistent cookie.
    * Some characters are not allowed in value, see RFC6265 or use
    * setBase64PersistentCookie() */
   inline void setPersistentCookie(
-      QString name, QString value, int seconds, QString path = QString(),
-      QString domain = QString(), bool secure = false, bool httponly = false) {
+      const QByteArray &name, const QByteArray &value, int seconds,
+      const QByteArray &path = {}, const QByteArray &domain = {},
+      bool secure = false, bool httponly = false) {
     setCookie(name, value, QDateTime::currentDateTime().addSecs(seconds),
-              path, domain, secure, httponly);
-  }
-  /** Set a persistent cookie, encoding its value using base64 and utf-8.
-   * @param expires defaults to now + 1 day */
-  inline void setBase64PersistentCookie(
-      QString name, QString value, QDateTime expires = QDateTime(),
-      QString path = QString(), QString domain = QString(), bool secure = false,
-      bool httponly = false) {
-    setCookie(name, value.toUtf8().toBase64().constData(),
-              expires.isNull() ? QDateTime::currentDateTime().addSecs(86400)
-                               : expires,
-              path, domain, secure, httponly);
-  }
-  /** Set a persistent cookie, encoding its value using base64 and assuming char*
-   * array is already encoded using utf-8 (or of course 7 bits ascii).
-   * @param expires defaults to now + 1 day */
-  inline void setBase64PersistentCookie(
-      QString name, const char *value, QDateTime expires = QDateTime(),
-      QString path = QString(), QString domain = QString(), bool secure = false,
-      bool httponly = false) {
-    setCookie(name, QByteArray(value).toBase64().constData(),
-              expires.isNull() ? QDateTime::currentDateTime().addSecs(86400)
-                               : expires,
-              path, domain, secure, httponly);
-  }
+              path, domain, secure, httponly); }
+  /** Set a persistent cookie.
+   * Some characters are not allowed in value, see RFC6265 or use
+   * setBase64PersistentCookie() */
+  inline void setPersistentCookie(
+      const QString &name, const QString &value, int seconds,
+      const QString &path = {}, const QString &domain = {},
+      bool secure = false, bool httponly = false) {
+    setCookie(name.toUtf8(), value.toUtf8(),
+              QDateTime::currentDateTime().addSecs(seconds),
+              path.toUtf8(), domain.toUtf8(), secure, httponly); }
   /** Set a persistent cookie, encoding its value using base64.
    * @param expires defaults to now + 1 day */
   inline void setBase64PersistentCookie(
-      QString name, QByteArray value, QDateTime expires = QDateTime(),
-      QString path = QString(), QString domain = QString(), bool secure = false,
-      bool httponly = false) {
-    setCookie(name, value.toBase64().constData(),
+      const QByteArray &name, const QByteArray &value, QDateTime expires = {},
+      const QByteArray &path = {}, const QByteArray &domain = {},
+      bool secure = false, bool httponly = false) {
+    setCookie(name, value.toBase64(),
               expires.isNull() ? QDateTime::currentDateTime().addSecs(86400)
                                : expires,
-              path, domain, secure, httponly);
-  }
-  /** Set a persistent cookie, encoding its value using base64 and utf-8. */
+              path, domain, secure, httponly); }
+  /** Set a persistent cookie, encoding its value using base64 and utf-8.
+   * @param expires defaults to now + 1 day */
   inline void setBase64PersistentCookie(
-      QString name, QString value, int seconds, QString path = QString(),
-      QString domain = QString(), bool secure = false, bool httponly = false) {
-    setCookie(name, value.toUtf8().toBase64().constData(),
-              QDateTime::currentDateTime().addSecs(seconds),
-              path, domain, secure, httponly);
-  }
-  /** Set a persistent cookie, encoding its value using base64 and assuming
-   * char* array is already encoded using utf-8 (or of course 7 bits ascii). */
-  inline void setBase64PersistentCookie(
-      QString name, const char *value, int seconds, QString path = QString(),
-      QString domain = QString(), bool secure = false, bool httponly = false) {
-    setCookie(name, QByteArray(value).toBase64().constData(),
-              QDateTime::currentDateTime().addSecs(seconds),
-              path, domain, secure, httponly);
-  }
+      const QString &name, const QString &value, QDateTime expires = {},
+      const QString &path = {}, const QString &domain = {}, bool secure = false,
+      bool httponly = false) {
+    setCookie(name.toUtf8(), value.toUtf8().toBase64(),
+              expires.isNull() ? QDateTime::currentDateTime().addSecs(86400)
+                               : expires,
+              path.toUtf8(), domain.toUtf8(), secure, httponly); }
   /** Set a persistent cookie, encoding its value using base64. */
   inline void setBase64PersistentCookie(
-      QString name, QByteArray value, int seconds, QString path = QString(),
-      QString domain = QString(), bool secure = false, bool httponly = false) {
-    setCookie(name, value.toBase64().constData(),
+      const QByteArray &name, const QByteArray &value, int seconds,
+      const QByteArray &path = {}, const QByteArray &domain = {},
+      bool secure = false, bool httponly = false) {
+    setCookie(name, value.toBase64(),
               QDateTime::currentDateTime().addSecs(seconds),
-              path, domain, secure, httponly);
-  }
+              path, domain, secure, httponly); }
+  /** Set a persistent cookie, encoding its value using base64 and utf-8. */
+  inline void setBase64PersistentCookie(
+      const QString &name, const QString &value, int seconds,
+      const QString &path = {}, const QString &domain = {}, bool secure = false,
+      bool httponly = false) {
+    setCookie(name.toUtf8(), value.toUtf8().toBase64(),
+              QDateTime::currentDateTime().addSecs(seconds),
+              path.toUtf8(), domain.toUtf8(), secure, httponly); }
   /** Remove a cookie. */
-  inline void clearCookie(QString name, QString path = QString(),
-                          QString domain = QString()) {
-    setCookie(name, QString(), QDateTime::fromMSecsSinceEpoch(0),
-              path, domain, false, false);
-  }
+  inline void clearCookie(
+      const QByteArray &name, const QByteArray &path = {},
+      const QByteArray &domain = {}) {
+    setCookie(name, {}, QDateTime::fromMSecsSinceEpoch(0),
+              path, domain, false, false); }
+  /** Remove a cookie. */
+  inline void clearCookie(
+      const QString &name, const QString &path = {},
+      const QString &domain = {}) {
+    setCookie(name.toUtf8(), {}, QDateTime::fromMSecsSinceEpoch(0),
+              path.toUtf8(), domain.toUtf8(), false, false); }
   // LATER session
   QByteArray statusAsString() { return statusAsString(status()); }
   static QByteArray statusAsString(int status);
 
 private:
-  void setCookie(QString name, QString value, QDateTime expires, QString path,
-                 QString domain, bool secure, bool httponly);
+  void setCookie(
+      const QByteArray &name, const QByteArray &value, QDateTime expires,
+      const QByteArray &path, const QByteArray &domain, bool secure,
+      bool httponly);
 };
 
 #endif // HTTPRESPONSE_H

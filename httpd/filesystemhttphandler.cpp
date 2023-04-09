@@ -1,4 +1,4 @@
-/* Copyright 2012-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,7 +19,8 @@
 #include "format/timeformats.h"
 
 FilesystemHttpHandler::FilesystemHttpHandler(
-    QObject *parent, const QString urlPathPrefix, const QString documentRoot) :
+    QObject *parent, const QByteArray &urlPathPrefix,
+    const QByteArray &documentRoot) :
   HttpHandler(parent), _urlPathPrefix(urlPathPrefix),
   _documentRoot(documentRoot.endsWith('/') ? documentRoot : documentRoot+"/") {
   appendDirectoryIndex("index.html");
@@ -57,7 +58,7 @@ bool FilesystemHttpHandler::handleRequest(
   }
   if (handleCORS(req, res))
     return true;
-  QString path = req.url().path().mid(_urlPathPrefix.length());
+  QByteArray path = req.url().path().toUtf8().mid(_urlPathPrefix.length());
   if (path.endsWith('/'))
     path.chop(1);
   if (path.startsWith('/'))
@@ -68,12 +69,11 @@ bool FilesystemHttpHandler::handleRequest(
   // returns true for resources directories.
   QDir dir(_documentRoot+path);
   if (dir.exists()) {
-    foreach (QString index, _directoryIndex) {
+    for (auto index: _directoryIndex) {
       file.setFileName(_documentRoot+path+"/"+index);
       //qDebug() << "try file" << file.fileName();
       if (file.exists() && file.open(QIODevice::ReadOnly)) {
-        QString location;
-        QString reqPath = req.url().path();
+        QByteArray location, reqPath = req.url().path().toUtf8();
         if (!reqPath.endsWith('/')) {
           int i = reqPath.lastIndexOf('/');
           location.append(reqPath.mid(i == -1 ? 0 : i+1));
@@ -87,12 +87,12 @@ bool FilesystemHttpHandler::handleRequest(
     res.setStatus(403);
     res.output()->write("Directory list denied.");
   }
-  sendFile(req, res, file.fileName(), processingContext);
+  sendFile(req, res, file.fileName().toUtf8(), processingContext);
   return true;
 }
 
 bool FilesystemHttpHandler::sendFile(
-    HttpRequest req, HttpResponse res, const QString &filename,
+    HttpRequest req, HttpResponse res, const QByteArray &filename,
     ParamsProviderMerger *processingContext) {
   QFile file(filename);
   if (file.open(QIODevice::ReadOnly)) {
@@ -115,7 +115,7 @@ void FilesystemHttpHandler::sendLocalResource(
   Q_UNUSED(req)
   Q_UNUSED(processingContext)
   //qDebug() << "success";
-  QString filename(file->fileName());
+  QByteArray filename = file->fileName().toUtf8();
   if (!handleCacheHeadersAndSend304(file, req, res)) {
     setMimeTypeByName(filename, res);
     res.setContentLength(file->size());
@@ -124,7 +124,8 @@ void FilesystemHttpHandler::sendLocalResource(
   }
 }
 
-void FilesystemHttpHandler::setMimeTypeByName(QString name, HttpResponse res) {
+void FilesystemHttpHandler::setMimeTypeByName(
+    const QByteArray &name, HttpResponse res) {
   // LATER check if performance can be enhanced (regexp)
   for (auto pair : _mimeTypes) {
     if (pair.first.match(name).hasMatch()) {
@@ -140,7 +141,7 @@ static QDateTime startTimeUTC(QDateTime::currentDateTimeUtc());
 bool FilesystemHttpHandler::handleCacheHeadersAndSend304(
     QFile *file, HttpRequest req, HttpResponse res) {
   if (file) {
-    QString filename(file->fileName());
+    QByteArray filename = file->fileName().toUtf8();
     QFileInfo info(*file);
     QDateTime lastModified;
     if (filename.startsWith("qrc:") || filename.startsWith(":"))
@@ -149,8 +150,8 @@ bool FilesystemHttpHandler::handleCacheHeadersAndSend304(
       lastModified = info.lastModified().toUTC();
     if (lastModified.isValid())
       res.setHeader("Last-Modified", TimeFormats::toRfc2822DateTime(
-                      lastModified));
-    QString ifModifiedSinceString = req.header("If-Modified-Since");
+                      lastModified).toUtf8());
+    auto ifModifiedSinceString = req.header("If-Modified-Since");
     if (!ifModifiedSinceString.isEmpty() && lastModified.isValid()) {
       QString errorString;
       QDateTime ifModifiedSince(

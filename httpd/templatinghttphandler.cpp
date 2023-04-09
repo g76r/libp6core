@@ -1,4 +1,4 @@
-/* Copyright 2012-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,7 +22,6 @@
 #include <QRegularExpression>
 #include "format/stringutils.h"
 
-static const QRegularExpression _templateMarkupIdentifierEndRE("[^a-z]");
 static const QRegularExpression _directorySeparatorRE("[/:]");
 
 int TemplatingHttpHandler::_defaultMaxValueLength(500);
@@ -30,7 +29,8 @@ TemplatingHttpHandler::TextConversion
 TemplatingHttpHandler::_defaultTextConversion(HtmlEscapingWithUrlAsLinks);
 
 TemplatingHttpHandler::TemplatingHttpHandler(
-    QObject *parent, QString urlPathPrefix, QString documentRoot)
+    QObject *parent, const QByteArray &urlPathPrefix,
+    const QByteArray &documentRoot)
   : FilesystemHttpHandler(parent, urlPathPrefix, documentRoot),
     _textConversion(_defaultTextConversion),
     _maxValueLength(_defaultMaxValueLength) {
@@ -39,16 +39,15 @@ TemplatingHttpHandler::TemplatingHttpHandler(
 void TemplatingHttpHandler::sendLocalResource(
     HttpRequest req, HttpResponse res, QFile *file,
     ParamsProviderMerger *processingContext) {
-  setMimeTypeByName(file->fileName(), res);
-  foreach (QString filter, _filters) {
+  setMimeTypeByName(file->fileName().toUtf8(), res);
+  for (auto filter: _filters) {
     if (QRegularExpression(filter).match(file->fileName()).hasMatch()) {
-      QString output;
+      QByteArray output;
       computePathToRoot(req, processingContext);
       applyTemplateFile(req, res, file, processingContext, &output);
-      QByteArray ba = output.toUtf8();
-      res.setContentLength(ba.size());
+      res.setContentLength(output.size());
       if (req.method() != HttpRequest::HEAD) {
-        QBuffer buf(&ba);
+        QBuffer buf(&output);
         buf.open(QIODevice::ReadOnly);
         IOUtils::copy(res.output(), &buf);
       }
@@ -69,85 +68,90 @@ void TemplatingHttpHandler::computePathToRoot(
   // - the path never points on a directory (would've been redirected to index)
   if (processingContext->overridingParams().contains("!pathtoroot"))
     return;
-  const QString prefix = urlPathPrefix();
-  const QString path = req.url().path().mid(urlPathPrefix().length());
+  auto prefix = urlPathPrefix();
+  auto path = req.url().path().mid(urlPathPrefix().length());
   bool ignoreOneSlash = prefix.isEmpty() ? path.startsWith('/')
                                          : !prefix.endsWith('/');
   int depth = path.count('/') - (ignoreOneSlash ? 1 : 0);
-  QString pathToRoot = depth ? QStringLiteral("../").repeated(depth)
-                             : QStringLiteral("./");
+  auto pathToRoot = depth ? "../"_ba.repeated(depth) : "./"_ba;
   if (processingContext)
-    processingContext->overrideParamValue(QStringLiteral("!pathtoroot"),
-                                          pathToRoot);
+    processingContext->overrideParamValue("!pathtoroot"_ba, pathToRoot);
 }
 
 void TemplatingHttpHandler::applyTemplateFile(
     HttpRequest req, HttpResponse res, QFile *file,
     ParamsProviderMerger *processingContext,
-    QString *output) {
+    QByteArray *output) {
+  if (!output) {
+    Log::error() << "TemplatingHttpHandler::applyTemplateFile called with null "
+                    "output";
+    return;
+  }
   HttpRequestPseudoParamsProvider hrpp = req.pseudoParams();
   ParamsProviderMergerRestorer restorer(processingContext);
   processingContext->append(&hrpp);
-  if (!processingContext->paramValue(QStringLiteral("!pathtoroot")).isValid())
+  if (!processingContext->paramValue("!pathtoroot"_ba).isValid())
     computePathToRoot(req, processingContext);
   QBuffer buf;
   buf.open(QIODevice::WriteOnly);
   IOUtils::copy(&buf, file);
   buf.close();
-  QString input = QString::fromUtf8(buf.data());
+  auto input = buf.data();
   int pos = 0, markupPos;
   while ((markupPos = input.indexOf("<?", pos)) >= 0) {
     output->append(input.mid(pos, markupPos-pos));
     pos = markupPos+2;
     markupPos = input.indexOf("?>", pos);
-    QString markupContent = input.mid(pos, markupPos-pos).trimmed();
-    int separatorPos = markupContent.indexOf(_templateMarkupIdentifierEndRE);
-    if (separatorPos < 0) {
+    auto markupContent = input.mid(pos, markupPos-pos).trimmed();
+    int separatorPos = 0;
+    while (markupContent.size() > separatorPos
+           && ::isalpha(markupContent.at(separatorPos)))
+      ++separatorPos;
+    if (separatorPos >= markupContent.size()) {
       Log::warning() << "TemplatingHttpHandler found incorrect markup '"
                      << markupContent << "'";
-      output->append("?");
+      output->append("?"_ba);
     } else {
-      QString markupId = markupContent.left(separatorPos);
+      auto markupId = markupContent.left(separatorPos);
       if (markupContent.at(0) == '=') {
         // syntax: <?=paramset_evaluable_expression?>
         output->append(
               processingContext->overridingParams()
-              .evaluate(markupContent.mid(1), processingContext));
-      } else if (markupId == QStringLiteral("view")) {
+              .evaluate(markupContent.mid(1), processingContext).toUtf8());
+      } else if (markupId == "view"_ba) {
         // syntax: <?view:viewname?>
-        QString markupData = markupContent.mid(separatorPos+1);
+        auto markupData = markupContent.mid(separatorPos+1);
         TextView *view = _views.value(markupData);
         if (view)
-          output->append(view->text(processingContext, req.url().toString()));
+          output->append(view->text(processingContext,
+                                    req.url().toString()).toUtf8());
         else {
           Log::warning() << "TemplatingHttpHandler did not find view '"
                          << markupData << "' among " << _views.keys();
           output->append("?");
         }
-      } else if (markupId == QStringLiteral("value")
-                 || markupId == QStringLiteral("rawvalue")) {
+      } else if (markupId == "value"_ba || markupId == "rawvalue"_ba) {
         // syntax: <?[raw]value:variablename[:valueifnotdef[:valueifdef]]?>
         CharacterSeparatedExpression markupParams(markupContent, separatorPos);
-        QString value = processingContext
-            ->paramValue(markupParams.value(0)).toString();
+        auto value = processingContext->paramUtf8(markupParams.value(0));
         if (!value.isNull()) {
-          value = markupParams.value(2, value);
+          value = markupParams.value(2, value).toUtf8();
         } else {
           if (markupParams.size() < 2) {
             Log::debug() << "TemplatingHttpHandler did not find value: '"
                          << markupParams.value(0) << "' in context 0x"
-                         << QString::number((long long)processingContext, 16);
+                         << QByteArray::number((long long)processingContext, 16);
             value = "?";
           } else {
-            value = markupParams.value(1);
+            value = markupParams.value(1).toUtf8();
           }
         }
-        convertData(&value, markupId == QStringLiteral("rawvalue"));
+        convertData(&value, markupId == "rawvalue"_ba);
         output->append(value);
-      } else if (markupId == QStringLiteral("include")) {
+      } else if (markupId == "include"_ba) {
         // syntax: <?include:path_relative_to_current_file_dir?>
-        QString markupData = markupContent.mid(separatorPos+1);
-        QString includePath = file->fileName();
+        auto markupData = markupContent.mid(separatorPos+1);
+        auto includePath = file->fileName();
         includePath =
             includePath.left(includePath.lastIndexOf(_directorySeparatorRE));
         QFile included(includePath+"/"+markupData);
@@ -158,19 +162,19 @@ void TemplatingHttpHandler::applyTemplateFile(
           Log::warning() << "TemplatingHttpHandler couldn't include file: '"
                          << markupData << "' as '" << included.fileName()
                          << "' in context 0x"
-                         << QString::number((long long)processingContext, 16)
+                         << QByteArray::number((long long)processingContext, 16)
                          << " : " << included.errorString();
           output->append("?");
         }
-      } else if (markupId == QStringLiteral("override")) {
+      } else if (markupId == "override"_ba) {
         // syntax: <?override:key:value?>
         CharacterSeparatedExpression markupParams(markupContent, separatorPos);
-        QString key = markupParams.value(0);
+        auto key = markupParams.value(0);
         if (key.isEmpty()) {
           Log::debug() << "TemplatingHttpHandler cannot set parameter with "
                           "null key in file " << file->fileName();
         } else {
-          QString value = processingContext->overridingParams().evaluate(
+          auto value = processingContext->overridingParams().evaluate(
                 markupParams.value(1), processingContext);
           processingContext->overrideParamValue(key, value);
         }
@@ -186,7 +190,7 @@ void TemplatingHttpHandler::applyTemplateFile(
 }
 
 TemplatingHttpHandler *TemplatingHttpHandler::addView(TextView *view) {
-  QString label = view ? view->objectName() : QString();
+  QByteArray label = view ? view->objectName().toUtf8() : QByteArray{};
   if (label.isEmpty())
     qWarning() << "TemplatingHttpHandler::addView(TextView*) called with empty "
                   "TextView::objectName():" << view;
@@ -196,7 +200,7 @@ TemplatingHttpHandler *TemplatingHttpHandler::addView(TextView *view) {
 }
 
 void TemplatingHttpHandler::convertData(
-    QString *data, bool disableTextConversion) const {
+    QByteArray *data, bool disableTextConversion) const {
   if (!data)
     return;
   *data = StringUtils::elideMiddle(*data, _maxValueLength);
@@ -204,10 +208,10 @@ void TemplatingHttpHandler::convertData(
     return;
   switch (_textConversion) {
   case HtmlEscaping:
-    *data = StringUtils::htmlEncode(*data, false, false);
+    *data = StringUtils::htmlEncode(*data, false, false).toUtf8();
     break;
   case HtmlEscapingWithUrlAsLinks:
-    *data = StringUtils::htmlEncode(*data, true, true);
+    *data = StringUtils::htmlEncode(*data, true, true).toUtf8();
     break;
   case AsIs:
     ;

@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -40,40 +40,41 @@ class QFile;
 class LIBP6CORESHARED_EXPORT FilesystemHttpHandler : public HttpHandler {
   Q_OBJECT
   Q_DISABLE_COPY(FilesystemHttpHandler)
-  QString _urlPathPrefix, _documentRoot;
-  QStringList _directoryIndex;
-  QList<QPair<QRegularExpression,QString>> _mimeTypes;
+  QByteArray _urlPathPrefix, _documentRoot;
+  QByteArrayList _directoryIndex;
+  QList<QPair<QRegularExpression,QByteArray>> _mimeTypes;
 
 public:
   /** @param documentRoot will be appended a / if not present */
   explicit FilesystemHttpHandler(QObject *parent = 0,
-                                 const QString urlPathPrefix = QString(),
-                                 const QString documentRoot = ":docroot/");
-  QString urlPathPrefix() const { return _urlPathPrefix; }
-  void setUrlPrefix(const QString urlPathPrefix){
+                                 const QByteArray &urlPathPrefix = {},
+                                 const QByteArray &documentRoot = ":docroot/");
+  QByteArray urlPathPrefix() const { return _urlPathPrefix; }
+  void setUrlPrefix(const QByteArray &urlPathPrefix){
     _urlPathPrefix = urlPathPrefix; }
   /** always ends with a / */
-  QString documentRoot() const { return _documentRoot; }
+  QByteArray documentRoot() const { return _documentRoot; }
   /** @param documentRoot will be appended a / if not present */
-  void setDocumentRoot(const QString documentRoot) {
+  void setDocumentRoot(const QByteArray &documentRoot) {
     _documentRoot = documentRoot; }
-  QStringList directoryIndex() const { return _directoryIndex; }
-  void appendDirectoryIndex(const QString index) {
+  QByteArrayList directoryIndex() const { return _directoryIndex; }
+  void appendDirectoryIndex(const QByteArray &index) {
     _directoryIndex.append(index); }
-  void prependDirectoryIndex(const QString index) {
+  void prependDirectoryIndex(const QByteArray &index) {
     _directoryIndex.prepend(index); }
   void clearDirectoryIndex() { _directoryIndex.clear(); }
-  void appendMimeType(const QString pattern, const QString contentType) {
+  void appendMimeType(
+      const QByteArray &pattern, const QByteArray &contentType) {
     _mimeTypes.append(qMakePair(QRegularExpression(pattern, QRegularExpression::CaseInsensitiveOption),
                                 contentType)); }
-  void prependMimeType(const QString pattern, const QString contentType) {
+  void prependMimeType(const QByteArray &pattern, const QByteArray &contentType) {
     _mimeTypes.prepend(qMakePair(QRegularExpression(pattern, QRegularExpression::CaseInsensitiveOption),
                                  contentType)); }
   void clearMimeTypes() { _mimeTypes.clear(); }
   bool acceptRequest(HttpRequest req);
   bool handleRequest(HttpRequest req, HttpResponse res,
                      ParamsProviderMerger *processingContext);
-  bool sendFile(HttpRequest req, HttpResponse res, const QString &filename,
+  bool sendFile(HttpRequest req, HttpResponse res, const QByteArray &filename,
                 ParamsProviderMerger *processingContext);
 
 protected:
@@ -82,7 +83,7 @@ protected:
                                  ParamsProviderMerger *processingContext);
 
 protected:
-  void setMimeTypeByName(QString name, HttpResponse res);
+  void setMimeTypeByName(const QByteArray &name, HttpResponse res);
   /** @return true iff 304 was sent */
   bool handleCacheHeadersAndSend304(QFile *file, HttpRequest req,
                                     HttpResponse res);

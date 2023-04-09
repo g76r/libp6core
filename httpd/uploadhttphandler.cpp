@@ -1,4 +1,4 @@
-/* Copyright 2014-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -51,7 +51,7 @@ bool UploadHttpHandler::handleRequest(
   QSemaphoreReleaser releaser(&_maxSimultaneousUploads, 1);
   if (handleCORS(req, res))
     return true;
-  if (req.header("Content-Length").toULongLong() > _maxBytesPerUpload) {
+  if (req.header("Content-Length"_ba).toULongLong() > _maxBytesPerUpload) {
     Log::warning() << "data too large when uploading data at "
                    << req.url().toString(QUrl::RemovePassword)
                    << " maximum is " << _maxBytesPerUpload;

@@ -1,4 +1,4 @@
-/* Copyright 2012-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,15 +22,28 @@
 #include "util/containerutils.h"
 #include "format/stringutils.h"
 
+static QByteArray _xffHeader;
+
+namespace {
+struct XffHeaderInitializer {
+  XffHeaderInitializer() {
+    QByteArray header = qgetenv("LIBPUMPKIN_X_FORWARDED_FOR_HEADER");
+    if (header.isNull())
+      header = "X-Forwarded-For";
+    _xffHeader = header;
+  }
+} xffHeaderInitializer;
+}
+
 class HttpRequestData : public QSharedData {
 public:
   QAbstractSocket *_input;
   HttpRequest::HttpMethod _method;
-  QMultiHash<QString,QString> _headers;
-  QHash<QString,QString> _cookies, _paramsCache;
+  QMultiMap<QByteArray,QByteArray> _headers;
+  QMap<QByteArray,QByteArray> _cookies, _paramsCache;
   QUrl _url;
   QUrlQuery _query;
-  QStringList _clientAdresses;
+  QByteArrayList _clientAdresses;
   explicit HttpRequestData(QAbstractSocket *input) : _input(input),
     _method(HttpRequest::NONE) { }
 };
@@ -54,7 +67,7 @@ HttpRequest &HttpRequest::operator=(const HttpRequest &other) {
   return *this;
 }
 
-static QHash<HttpRequest::HttpMethod,QString> _methodToText {
+static QHash<HttpRequest::HttpMethod,QByteArray> _methodToText {
   { HttpRequest::NONE, "NONE" },
   { HttpRequest::HEAD, "HEAD" },
   { HttpRequest::GET, "GET" },
@@ -65,7 +78,7 @@ static QHash<HttpRequest::HttpMethod,QString> _methodToText {
   { HttpRequest::ANY, "ANY" },
 };
 
-static QHash<QString,HttpRequest::HttpMethod> _methodFromText {
+static QHash<QByteArray,HttpRequest::HttpMethod> _methodFromText {
   ContainerUtils::reversed(_methodToText)
 };
 
@@ -74,22 +87,22 @@ QSet<HttpRequest::HttpMethod> HttpRequest::_wellKnownMethods {
       HttpRequest::DELETE, HttpRequest::OPTIONS,
 };
 
-QSet<QString> HttpRequest::_wellKnownMethodNames = []() {
-  QSet<QString> set;
+QSet<QByteArray> HttpRequest::_wellKnownMethodNames = []() {
+  QSet<QByteArray> set;
   for (HttpRequest::HttpMethod m : HttpRequest::_wellKnownMethods)
     set.insert(HttpRequest::methodName(m));
   return set;
 }();
 
-QString HttpRequest::methodName(HttpMethod method) {
-  return _methodToText.value(method, QStringLiteral("UNKNOWN"));
+QByteArray HttpRequest::methodName(HttpMethod method) {
+  return _methodToText.value(method, "UNKNOWN"_ba);
 }
 
-HttpRequest::HttpMethod HttpRequest::methodFromText(QString name) {
+HttpRequest::HttpMethod HttpRequest::methodFromText(const QByteArray &name) {
   return _methodFromText.value(name, NONE);
 }
 
-bool HttpRequest::parseAndAddHeader(QString rawHeader) {
+bool HttpRequest::parseAndAddHeader(QByteArray rawHeader) {
   if (!d)
     return false;
   int i = rawHeader.indexOf(':');
@@ -97,12 +110,12 @@ bool HttpRequest::parseAndAddHeader(QString rawHeader) {
     return false;
   // MAYDO remove special chars from keys and values?
   // TODO support multi-line headers
-  QString key = StringUtils::normalizeRfc841HeaderCase(
-              rawHeader.left(i).trimmed());
-  QString value = rawHeader.right(rawHeader.size()-i-1).trimmed();
+  QByteArray key = StringUtils::toAsciiSnakeUpperCamelCase(
+        rawHeader.left(i).trimmed());
+  QByteArray value = rawHeader.right(rawHeader.size()-i-1).trimmed();
   //qDebug() << "header:" << rawHeader << key << value;
   d->_headers.insert(key, value);
-  if (key.compare("Cookie", Qt::CaseInsensitive) == 0)
+  if (key == "Cookie"_ba)
     parseAndAddCookie(value);
   return true;
 }
@@ -113,7 +126,7 @@ static const QRegularExpression _cookieHeaderValue(
       RFC6265_COOKIE_OCTET_RE "*|\"" RFC6265_COOKIE_OCTET_RE
       "+\"))\\s*;?\\s*");
 
-void HttpRequest::parseAndAddCookie(QString rawHeaderValue) {
+void HttpRequest::parseAndAddCookie(QByteArray rawHeaderValue) {
   // LATER use QNetworkCookie::parseCookies
   // LATER ensure that utf8 is supported as specified in RFC6265
   if (!d)
@@ -121,49 +134,48 @@ void HttpRequest::parseAndAddCookie(QString rawHeaderValue) {
   auto i = _cookieHeaderValue.globalMatch(rawHeaderValue);
   while (i.hasNext()) {
     auto m = i.next();
-    const QString name = m.captured(1), value = m.captured(2);
+    auto name = m.captured(1).toUtf8(), value = m.captured(2).toUtf8();
     d->_cookies.insert(name, value);
   }
 }
 
-QString HttpRequest::param(QString key) const {
+QByteArray HttpRequest::param(QByteArray key) const {
   // TODO better handle parameters, including POST and multi-valued params
-  QString value;
+  QByteArray value;
   if (d) {
     if (d->_paramsCache.contains(key))
       return d->_paramsCache.value(key);
     // note: + in values is replaced with space in HttpWorker::handleConnection()
     // so even if QUrl::FullyDecoded does not decode + it will be decoded anyway
-    value = d->_query.queryItemValue(key, QUrl::FullyDecoded);
+    value = d->_query.queryItemValue(key, QUrl::FullyDecoded).toUtf8();
     d->_paramsCache.insert(key, value);
   }
   return value;
 }
 
-void HttpRequest::overrideParam(QString key, QString value) {
+void HttpRequest::overrideParam(QByteArray key, QByteArray value) {
   if (d)
     d->_paramsCache.insert(key, value);
 }
 
-void HttpRequest::overrideUnsetParam(QString key) {
+void HttpRequest::overrideUnsetParam(QByteArray key) {
   if (d)
-    d->_paramsCache.insert(key, QString());
+    d->_paramsCache.insert(key, {});
 }
 
 ParamSet HttpRequest::paramsAsParamSet() const {
-  if (d) {
-    cacheAllParams();
-    return ParamSet(d->_paramsCache);
-  } else
-    return ParamSet();
+  if (!d)
+    return {};
+  cacheAllParams();
+  return ParamSet(d->_paramsCache);
 }
 
-QHash<QString,QString> HttpRequest::paramsAsHash() const {
+QMap<QByteArray,QByteArray> HttpRequest::paramsAsMap() const {
   if (d) {
     cacheAllParams();
     return d->_paramsCache;
   }
-  return QHash<QString,QString>();
+  return {};
 }
 
 void HttpRequest::cacheAllParams() const {
@@ -171,25 +183,27 @@ void HttpRequest::cacheAllParams() const {
     return;
   // note: + in values is replaced with space in HttpWorker::handleConnection()
   // so even if QUrl::FullyDecoded does not decode + it will be decoded anyway
-  foreach (const auto &p, d->_query.queryItems(QUrl::FullyDecoded))
-    if (!d->_paramsCache.contains(p.first))
-      d->_paramsCache.insert(p.first, p.second);
+  foreach (const auto &p, d->_query.queryItems(QUrl::FullyDecoded)) {
+    auto key = p.first.toUtf8();
+    if (!d->_paramsCache.contains(key))
+      d->_paramsCache.insert(key, p.second.toUtf8());
+  }
 }
 
-HttpRequest::operator QString() const {
+QByteArray HttpRequest::toUtf8() const {
   if (!d)
-    return QStringLiteral("HttpRequest{}");
-  QString s;
-  QTextStream ts(&s, QIODevice::WriteOnly);
-  ts << "HttpRequest{ " << methodName() << ", " << url().toString() << ", { ";
-  foreach (QString key, d->_headers.keys()) {
-    ts << key << ":{ ";
-    foreach (QString value, d->_headers.values(key)) {
-      ts << value << " ";
+    return "HttpRequest{}"_ba;
+  QByteArray s;
+  s += "HttpRequest{ " + methodName() + ", " + url().toString().toUtf8()
+      + ", { ";
+  for (auto key: d->_headers.keys()) {
+    s += key + ":{ ";
+    for (auto value: d->_headers.values(key)) {
+      s += value + " ";
     }
-    ts << "} ";
+    s += "} ";
   }
-  ts << "} }";
+  s += "} }";
   return s;
 }
 
@@ -221,75 +235,53 @@ HttpRequest::HttpMethod HttpRequest::method() const {
   return d ? d->_method : NONE;
 }
 
-QString HttpRequest::header(QString name, QString defaultValue) const {
+QByteArray HttpRequest::header(
+    const QByteArray &name, const QByteArray &defaultValue) const {
   // LATER handle case insensitivity in header names
   if (!d)
     return defaultValue;
-  const QString v = d->_headers.value(name);
+  auto v = d->_headers.value(name);
   return v.isNull() ? defaultValue : v;
 }
 
-QStringList HttpRequest::headers(QString name) const {
+QByteArrayList HttpRequest::headers(const QByteArray &name) const {
   // LATER handle case insensitivity in header names
-  return d ? d->_headers.values(name) : QStringList();
+  return d ? d->_headers.values(name) : QByteArrayList{};
 }
 
-QMultiHash<QString, QString> HttpRequest::headers() const {
-  return d ? d->_headers : QMultiHash<QString,QString>();
+QMultiMap<QByteArray, QByteArray> HttpRequest::headers() const {
+  return d ? d->_headers : QMultiMap<QByteArray,QByteArray>{};
 }
 
-QString HttpRequest::cookie(QString name, QString defaultValue) const {
+QByteArray HttpRequest::cookie(
+    const QByteArray &name, const QByteArray &defaultValue) const {
   if (!d)
     return defaultValue;
-  const QString v = d->_cookies.value(name);
+  const auto v = d->_cookies.value(name);
   return v.isNull() ? defaultValue : v;
 }
 
-QString HttpRequest::base64Cookie(QString name, QString defaultValue) const {
+QByteArray HttpRequest::base64Cookie(
+    const QByteArray &name, const QByteArray &defaultValue) const {
   if (!d)
     return defaultValue;
-  const QString v = d->_cookies.value(name);
-  return v.isNull() ? defaultValue
-                    : QString::fromUtf8(QByteArray::fromBase64(v.toLatin1()));
+  const auto v = d->_cookies.value(name);
+  return v.isNull() ? defaultValue : QByteArray::fromBase64(v);
 }
 
-QByteArray HttpRequest::base64BinCookie(QString name,
-                                           QByteArray defaultValue) const {
+QMap<QByteArray,QByteArray> HttpRequest::cookies() const {
+  return d ? d->_cookies : QMap<QByteArray,QByteArray>{};
+}
+
+QByteArrayList HttpRequest::clientAdresses() const {
   if (!d)
-    return defaultValue;
-  const QString v = d->_cookies.value(name);
-  return v.isNull() ? defaultValue
-                    : QByteArray::fromBase64(cookie(name).toLatin1());
-}
-
-QHash<QString,QString> HttpRequest::cookies() const {
-  if (!d)
-    return QHash<QString,QString>();
-  return d->_cookies;
-}
-
-static QRegularExpression xffSeparator("\\s*,\\s*");
-static QString xffHeader;
-
-namespace {
-struct XffHeaderInitializer {
-  XffHeaderInitializer() {
-    QByteArray header = qgetenv("LIBPUMPKIN_X_FORWARDED_FOR_HEADER");
-    if (header.isNull())
-      header = "X-Forwarded-For";
-    xffHeader = QString::fromUtf8(header);
-  }
-} xffHeaderInitializer;
-}
-
-QStringList HttpRequest::clientAdresses() const {
-  if (!d)
-    return QStringList();
+    return {};
   if (d->_clientAdresses.isEmpty()) {
-    QStringList xff = headers(xffHeader);
+    auto xff = headers(_xffHeader);
     for (int i = xff.size()-1; i >= 0; --i) {
-      const QString &oneHeader = xff[i];
-      d->_clientAdresses.append(oneHeader.split(xffSeparator));
+      auto addresses = xff[i].split(',');
+      for (auto a: addresses)
+        d->_clientAdresses += a.trimmed();
     }
     QHostAddress peerAddress = d->_input->peerAddress();
     if (peerAddress.isNull()) {
@@ -297,7 +289,7 @@ QStringList HttpRequest::clientAdresses() const {
                       "address";
       d->_clientAdresses.append("0.0.0.0");
     } else
-      d->_clientAdresses.append(peerAddress.toString());
+      d->_clientAdresses.append(peerAddress.toString().toUtf8());
   }
   return d->_clientAdresses;
 }
@@ -313,15 +305,13 @@ const QVariant HttpRequestPseudoParamsProvider::paramValue(
     } else if (key == "!clientaddresses") {
       return _request.clientAdresses().join(' ');
     } else if (key.startsWith("!cookie")) {
-      return _request.cookie(key.mid(8));
+      return _request.cookie(key.mid(8).toUtf8());
     } else if (key.startsWith("!base64cookie")) {
-      return _request.base64Cookie(key.mid(14));
-    } else if (key.startsWith("!base64bincookie")) {
-      return _request.base64BinCookie(key.mid(17));
+      return _request.base64Cookie(key.mid(14).toUtf8());
     } else if (key.startsWith("!param")) {
-      return _request.param(key.mid(7));
+      return _request.param(key.mid(7).toUtf8());
     } else if (key.startsWith("!header")) {
-      return _request.header(key.mid(8));
+      return _request.header(key.mid(8).toUtf8());
     }
   }
   return defaultValue;
@@ -331,7 +321,7 @@ const QSet<QString> HttpRequestPseudoParamsProvider::keys() const {
   QSet<QString> keys { "!url", "!method", "!clientaddresses" };
   for (auto s: _request.cookies().keys())
     keys << "!cookie:"+s;
-  for (auto s: _request.paramsAsHash().keys())
+  for (auto s: _request.paramsAsMap().keys())
     keys << "!param:"+s;
   for (auto s: _request.headers().keys())
     keys << "!header:"+s;

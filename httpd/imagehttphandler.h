@@ -1,4 +1,4 @@
-/* Copyright 2013-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,11 +21,12 @@
 class LIBP6CORESHARED_EXPORT ImageHttpHandler : public HttpHandler {
   Q_OBJECT
   Q_DISABLE_COPY(ImageHttpHandler)
-  QString _urlPathPrefix;
+  QByteArray _urlPathPrefix;
 
 protected:
   explicit ImageHttpHandler(QObject *parent = 0);
-  explicit ImageHttpHandler(QString urlPathPrefix, QObject *parent = 0);
+  explicit ImageHttpHandler(
+      const QByteArray &urlPathPrefix, QObject *parent = 0);
 
 public:
   bool acceptRequest(HttpRequest req) override;
@@ -40,18 +41,18 @@ public:
     = IMAGEHTTPHANDLER_DEFAULT_ONDEMAND_RENDERING_TIMEOUT) = 0;
   /** This method must be thread-safe for the same reasons than
    * handleRequest() */
-  virtual QString contentType(
+  virtual QByteArray contentType(
     HttpRequest req, ParamsProviderMerger *processingContext = 0) const = 0;
   /** This method must be thread-safe for the same reasons than
    * handleRequest()
-   * @return QString() by default */
-  virtual QString contentEncoding(
+   * @return {} by default */
+  virtual QByteArray contentEncoding(
     HttpRequest req, ParamsProviderMerger *processingContext = 0) const;
   /** Return a source code or text for image, if any.
-   * Default: QString()
+   * Default: {}
    * This method must be thread-safe for the same reasons than
    * handleRequest() */
-  virtual QString source(
+  virtual QByteArray source(
     HttpRequest req, ParamsProviderMerger *processingContext = 0) const;
   // LATER sourceMimeType and imageMimeType
 

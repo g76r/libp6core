@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -31,16 +31,17 @@ static QRegularExpression _tokenRe("\\A([^:]+):([^:]+)\\z"); // LATER : in pwd ?
 
 bool BasicAuthHttpHandler::handleRequest(
     HttpRequest req, HttpResponse res, ParamsProviderMerger *processingContext) {
-  QString header = req.header("Authorization"), token;
+  auto header = req.header("Authorization");
+  QByteArray token;
   auto m = _headerRe.match(header);
   if (m.hasMatch()) {
-    token = QString::fromUtf8(QByteArray::fromBase64(m.captured(1).toLatin1()));
+    token = QByteArray::fromBase64(m.captured(1).toUtf8());
     m = _tokenRe.match(token);
     if (m.hasMatch()) {
-      QString login = m.captured(1), password = m.captured(2);
+      auto login = m.captured(1), password = m.captured(2);
       if (_authenticator) {
-        QString userId = _authenticator->authenticate(login, password,
-                                                      _authContext);
+        auto userId = _authenticator->authenticate(login, password,
+                                                   _authContext);
         if (!userId.isEmpty()) {
           if (!_userIdContextParamName.isEmpty())
             processingContext
@@ -52,11 +53,11 @@ bool BasicAuthHttpHandler::handleRequest(
   }
   if (_authIsMandatory
       || (_authorizer && !_authorizer->authorize(
-            QString(), req.methodName(), req.url().path(),
+            {}, req.methodName(), req.url().path(),
             QDateTime::currentDateTime()))) {
     res.setStatus(401);
     res.setHeader("WWW-Authenticate", // LATER sanitize realm
-                  QString("Basic realm=\"%1\"").arg(_realm));
+                  "Basic realm=\""+_realm+"\"");
     return false;
   }
   return true;

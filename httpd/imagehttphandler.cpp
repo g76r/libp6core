@@ -1,4 +1,4 @@
-/* Copyright 2013-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,7 +16,8 @@
 ImageHttpHandler::ImageHttpHandler(QObject *parent) : HttpHandler(parent) {
 }
 
-ImageHttpHandler::ImageHttpHandler(QString urlPathPrefix, QObject *parent)
+ImageHttpHandler::ImageHttpHandler(
+    const QByteArray &urlPathPrefix, QObject *parent)
   : HttpHandler(parent), _urlPathPrefix(urlPathPrefix) {
 }
 
@@ -33,9 +34,9 @@ bool ImageHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
   if (handleCORS(req, res))
     return true;
   res.setContentType(contentType(0));
-  QString contentEncoding = this->contentEncoding(0);
+  auto contentEncoding = this->contentEncoding(0);
   if (!contentEncoding.isEmpty())
-    res.setHeader("Content-Encoding", contentEncoding);
+    res.setHeader("Content-Encoding"_ba, contentEncoding);
   QByteArray data = imageData(req, processingContext, 0);
   res.setContentLength(data.size());
   if (req.method() != HttpRequest::HEAD)
@@ -43,22 +44,22 @@ bool ImageHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
   return true;
 }
 
-QString ImageHttpHandler::source(
+QByteArray ImageHttpHandler::source(
   HttpRequest, ParamsProviderMerger *) const {
-  return QString();
+  return {};
 }
 
-QString ImageHttpHandler::contentEncoding(
+QByteArray ImageHttpHandler::contentEncoding(
   HttpRequest, ParamsProviderMerger *) const {
-  return QString();
+  return {};
 }
 
 QByteArray ImageHttpHandler::imageData(
   HttpRequest, ParamsProviderMerger *, int) {
-  return QByteArray();
+  return {};
 }
 
-QString ImageHttpHandler::contentType(
+QByteArray ImageHttpHandler::contentType(
   HttpRequest, ParamsProviderMerger *) const {
-  return QString();
+  return {};
 }

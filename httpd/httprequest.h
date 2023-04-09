@@ -39,7 +39,7 @@ public:
 private:
   QExplicitlySharedDataPointer<HttpRequestData> d;
   static QSet<HttpMethod> _wellKnownMethods;
-  static QSet<QString> _wellKnownMethodNames;
+  static QSet<QByteArray> _wellKnownMethodNames;
 
 public:
   HttpRequest(QAbstractSocket *input);
@@ -51,32 +51,32 @@ public:
   void setMethod(HttpMethod method);
   HttpRequest::HttpMethod method() const;
   /** @return protocol and human readable string, e.g. "GET" */
-  QString methodName() const { return methodName(method()); }
+  QByteArray methodName() const { return methodName(method()); }
   /** @return protocol and human readable string, e.g. "GET" */
-  static QString methodName(HttpMethod method);
+  static QByteArray methodName(HttpMethod method);
   /** @return enum from protocol and human readable string, e.g. "GET"
    * @param name case sensitive, must be upper case */
-  static HttpMethod methodFromText(QString name);
+  static HttpMethod methodFromText(const QByteArray &name);
   static QSet<HttpMethod> wellKnownMethods() { return _wellKnownMethods; }
-  static QSet<QString> wellKnownMethodNames() { return _wellKnownMethodNames; }
-  bool parseAndAddHeader(QString rawHeader);
+  static QSet<QByteArray> wellKnownMethodNames() {
+    return _wellKnownMethodNames; }
+  bool parseAndAddHeader(QByteArray rawHeader);
   /** Value associated to a request header.
    * If the header is found several time, last value is returned. */
-  QString header(QString name, QString defaultValue = QString()) const;
+  QByteArray header(
+      const QByteArray &name, const QByteArray &defaultValue = {}) const;
   /** Values associated to a request header, last occurrence first. */
-  QStringList headers(QString name) const;
+  QByteArrayList headers(const QByteArray &name) const;
   /** Full header hash */
-  QMultiHash<QString,QString> headers() const;
+  QMultiMap<QByteArray,QByteArray> headers() const;
   /* Value of a given cookie, as is. */
-  QString cookie(QString name, QString defaultValue = QString()) const;
-  /* Value of a given cookie, decoded from base64 (implies that the cookie
-   * content was encoded using base64 and utf-8). */
-  QString base64Cookie(QString name, QString defaultValue = QString()) const;
+  QByteArray cookie(
+      const QByteArray &name, const QByteArray &defaultValue = {}) const;
   /* Value of a given cookie, decoded from base64 (implies that the cookie
    * content was encoded using base64). */
-  QByteArray base64BinCookie(QString name,
-                                QByteArray defaultValue = QByteArray()) const;
-  QHash<QString,QString> cookies() const;
+  QByteArray base64Cookie(
+      const QByteArray &name, const QByteArray &defaultValue = {}) const;
+  QMap<QByteArray,QByteArray> cookies() const;
   /** Replace url. If params have already been queried and new url has
    * different query items than former one, one should also call
    * discardParamsCache(). */ // LATER this behaviour is optimisable since Qt5
@@ -86,21 +86,21 @@ public:
   /** Return an url param (query item) value.
    * Only first value of multi-valued items is kept. */
   // LATER manage to keep last value instead
-  QString param(QString key) const;
-  void overrideParam(QString key, QString value);
-  void overrideUnsetParam(QString key);
+  QByteArray param(QByteArray key) const;
+  void overrideParam(QByteArray key, QByteArray value);
+  void overrideUnsetParam(QByteArray key);
   /** Retrieve url params (query items) as a ParamSet.
    * Only first value of multi-valued items is kept. */
   // LATER manage to keep last value instead
   ParamSet paramsAsParamSet() const;
-  QHash<QString,QString> paramsAsHash() const;
-  operator QString() const;
+  QMap<QByteArray,QByteArray> paramsAsMap() const;
+  QByteArray toUtf8() const;
   /** Client addresses.
    * Contains only one address for direct connection, or several when acceeded
    * through (reverse) proxies.
    * Same as X-Forwarded-For content, plus socket peer address at the end of
    * the list. */
-  QStringList clientAdresses() const;
+  QByteArrayList clientAdresses() const;
   /** Create a ParamsProvider wrapper object to give access to ! pseudo params,
    * url params (query items) and base64 cookies, in this order (url params hide
    * cookies). */
@@ -108,7 +108,7 @@ public:
   // LATER handle sessions
 
 private:
-  inline void parseAndAddCookie(QString rawHeaderValue);
+  inline void parseAndAddCookie(QByteArray rawHeaderValue);
   inline void cacheAllParams() const;
 };
 

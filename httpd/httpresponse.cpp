@@ -27,7 +27,7 @@ public:
   QAbstractSocket *_output;
   int _status;
   bool _headersSent, _disableBodyOutput;
-  QMultiHash<QString,QString> _headers;
+  QMultiMap<QByteArray,QByteArray> _headers;
   explicit HttpResponseData(QAbstractSocket *output)
     : _output(output), _status(200), _headersSent(false),
       _disableBodyOutput(false) { }
@@ -68,13 +68,13 @@ QAbstractSocket *HttpResponse::output() {
     // LATER handle multi-line headers and special chars
     auto keys = d->_headers.keys();
 #if QT_VERSION >= 0x050f00
-    for (auto name: QSet<QString>(keys.begin(), keys.end()))
+    for (auto name: QSet<QByteArray>(keys.begin(), keys.end()))
 #else
     for (auto name: keys.toSet())
 #endif
       for (auto value: d->_headers.values(name))
-        ba += name.toUtf8() + ": "_ba + value.toUtf8() + "\r\n"_ba;
-    if (header(u"Content-Type"_s).isEmpty())
+        ba += name + ": "_ba + value + "\r\n"_ba;
+    if (header("Content-Type"_ba).isEmpty())
       ba += "Content-Type: text/plain;charset=UTF-8\r\n"_ba;
     ba += "Connection: close\r\n\r\n"_ba;
     d->_output->write(ba);
@@ -94,7 +94,7 @@ int HttpResponse::status() const {
   return d ? d->_status : 0;
 }
 
-void HttpResponse::setHeader(QString name, QString value) {
+void HttpResponse::setHeader(const QByteArray &name, const QByteArray &value) {
   // LATER handle case insensitivity in header names
   if (d && !d->_headersSent) {
     d->_headers.replace(name, value);
@@ -102,7 +102,8 @@ void HttpResponse::setHeader(QString name, QString value) {
     Log::warning() << "HttpResponse: cannot set header after writing data";
 }
 
-void HttpResponse::addHeader(QString name, QString value) {
+void HttpResponse::addHeader(
+    const QByteArray &name, const QByteArray &value) {
   // LATER handle case insensitivity in header names
   if (d && !d->_headersSent) {
     d->_headers.insert(name, value);
@@ -111,26 +112,26 @@ void HttpResponse::addHeader(QString name, QString value) {
 }
 
 void HttpResponse::appendValueToHeader(
-    QString name, QString value, const QString &separator) {
+    const QByteArray &name, const QByteArray &value,
+    const QByteArray &separator) {
   // LATER handle case insensitivity in header names
   if (d && !d->_headersSent) {
-    QStringList values = d->_headers.values(name);
+    auto values = d->_headers.values(name);
     values.append(value);
     d->_headers.insert(name, values.join(separator));
   } else
     Log::warning() << "HttpResponse: cannot set header after writing data";
 }
 
-void HttpResponse::redirect(QString location, int status) {
+void HttpResponse::redirect(QByteArray location, int status) {
   if (!d)
     return;
   setStatus(status);
-  setHeader(QStringLiteral("Location"), location);
-  setContentType(QStringLiteral("text/html;charset=UTF-8"));
+  setHeader("Location"_ba, location);
+  setContentType("text/html;charset=UTF-8"_ba);
   // LATER url encode
-  output()->write(QStringLiteral(
-                    "<html><body>Moved. Please click on <a href=\"%1"
-                    "\">this link</a>").arg(location).toUtf8().constData());
+  output()->write("<html><body>Moved. Please click on <a href=\""_ba
+                  +location+"\">this link</a>"_ba);
 }
 
 static const QRegularExpression _nameRegexp {
@@ -142,9 +143,10 @@ static const QRegularExpression _pathRegexp {
 static const QRegularExpression _domainRegexp {
   "\\A" INTERNET_DOMAIN_RE "\\z" };
 
-void HttpResponse::setCookie(QString name, QString value,
-                             QDateTime expires, QString path,
-                             QString domain, bool secure, bool httponly) {
+void HttpResponse::setCookie(
+    const QByteArray &name, const QByteArray &value,
+    QDateTime expires, const QByteArray &path,
+    const QByteArray &domain, bool secure, bool httponly) {
   if (!_nameRegexp.match(name).hasMatch()) {
     Log::warning() << "HttpResponse: incorrect name when setting cookie: "
                    << name;
@@ -155,11 +157,9 @@ void HttpResponse::setCookie(QString name, QString value,
                    << value;
     return;
   }
-  QString s(name);
-  s.append('=');
-  s.append(value);
+  QByteArray s = name+'='+value;
   if (!expires.isNull())
-    s.append("; Expires=").append(TimeFormats::toRfc2822DateTime(expires));
+    s += "; Expires="_ba + TimeFormats::toRfc2822DateTime(expires).toUtf8();
   if (!path.isEmpty()) {
     if (_pathRegexp.match(path).hasMatch())
       s.append("; Path=").append(path);
@@ -188,21 +188,22 @@ void HttpResponse::setCookie(QString name, QString value,
   addHeader("Set-Cookie", s);
 }
 
-QString HttpResponse::header(QString name, QString defaultValue) const {
+QByteArray HttpResponse::header(
+    const QByteArray &name, const QByteArray &defaultValue) const {
   // LATER handle case insensitivity in header names
   if (!d)
     return defaultValue;
-  const QString v = d->_headers.value(name);
+  auto v = d->_headers.value(name);
   return v.isNull() ? defaultValue : v;
 }
 
-QStringList HttpResponse::headers(QString name) const {
+QByteArrayList HttpResponse::headers(const QByteArray &name) const {
   // LATER handle case insensitivity in header names
-  return d ? d->_headers.values(name) : QStringList();
+  return d ? d->_headers.values(name) : QByteArrayList{};
 }
 
-QMultiHash<QString,QString> HttpResponse::headers() const {
-  return d ? d->_headers : QMultiHash<QString,QString>();
+QMultiMap<QByteArray,QByteArray> HttpResponse::headers() const {
+  return d ? d->_headers : QMultiMap<QByteArray,QByteArray>();
 }
 
 QByteArray HttpResponse::statusAsString(int status) {

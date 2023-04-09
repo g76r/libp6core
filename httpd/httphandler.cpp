@@ -1,4 +1,4 @@
-/* Copyright 2012-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -45,13 +45,13 @@ bool HttpHandler::redirectForUrlCleanup(
   QString reqPath = req.url().path();
   if (reqPath.contains(_multipleSlashRE)) {
     int depth = reqPath.count('/');
-    reqPath.replace(_multipleSlashRE, QStringLiteral("/"));
+    reqPath.replace(_multipleSlashRE, u"/"_s);
     if (reqPath.startsWith('/')) {
       --depth;
       reqPath.remove(0, 1);
     }
     QUrl url;
-    url.setPath(QStringLiteral("../").repeated(depth)+reqPath);
+    url.setPath(u"../"_s.repeated(depth)+reqPath);
     QUrlQuery query(req.url());
     if (query.isEmpty())
       res.redirect(url.path(QUrl::FullyEncoded));
@@ -64,12 +64,12 @@ bool HttpHandler::redirectForUrlCleanup(
 }
 
 bool HttpHandler::handleCORS(
-    HttpRequest req, HttpResponse res, QSet<QString> methods) {
-  if (!methods.contains("OPTIONS"))
+    HttpRequest req, HttpResponse res, QSet<QByteArray> methods) {
+  if (!methods.contains("OPTIONS"_ba))
     qWarning() << "HttpHandler::handleCORS(): OPTIONS method should be included"
                   " in methods set whereas it was not: " << methods;
   res.appendValueToHeader("Vary", "Origin");
-  QString origin = req.header("Origin");
+  auto origin = req.header("Origin");
   if (origin.isEmpty())
     goto ignored;
   if (_corsOrigins.isEmpty())

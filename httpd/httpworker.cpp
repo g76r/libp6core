@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -32,12 +32,11 @@
 #define MAXIMUM_WRITE_WAIT 10000
 
 static QAtomicInt _workersCounter(1);
-static QRegularExpression _requestLineSeparators { "[ \t]+" };
 
 HttpWorker::HttpWorker(HttpServer *server)
   : _server(server), _thread(new QThread()) {
   _defaultCacheControlHeader = ParamsProvider::environment()
-      ->paramValue("HTTP_DEFAULT_CACHE_CONTROL_HEADER", "no-cache").toString();
+      ->paramUtf8("HTTP_DEFAULT_CACHE_CONTROL_HEADER"_ba, "no-cache"_ba);
   _thread->setObjectName(QString("HttpWorker-%1")
                          .arg(_workersCounter.fetchAndAddOrdered(1)));
   connect(this, &HttpWorker::destroyed, _thread, &QThread::quit);
@@ -65,7 +64,7 @@ void HttpWorker::handleConnection(
     // emit error(_socket->error());
   }
   socket->setReadBufferSize(MAXIMUM_LINE_SIZE+2);
-  QStringList args;
+  QByteArrayList args;
   HttpRequest req(socket);
   HttpResponse res(socket);
   ParamsProviderMerger processingContext;
@@ -74,7 +73,7 @@ void HttpWorker::handleConnection(
   QUrl url;
   //qDebug() << "new client socket" << socket->peerAddress();
   QTextStream out(socket);
-  QString line;
+  QByteArray line;
   qint64 contentLength = 0;
   HttpRequest::HttpMethod method = HttpRequest::NONE;
   if (!socket->canReadLine() && !socket->waitForReadyRead(MAXIMUM_READ_WAIT)) {
@@ -88,7 +87,7 @@ void HttpWorker::handleConnection(
     goto finally;
   }
   line = line.trimmed();
-  args = line.split(_requestLineSeparators);
+  args = line.split(' ');
   if (args.size() != 3) {
     sendError(out, "400 Bad request line",
               "starting with: "+line.left(200));
@@ -146,15 +145,14 @@ void HttpWorker::handleConnection(
   if (uri.isEmpty() || uri[0] != '/')
     uri.insert(0, '/');
   // LATER is utf8 the right choice ? should encoding depend on headers ?
-  url = QUrl::fromEncoded((QStringLiteral("http://host")+uri).toUtf8());
+  url = QUrl::fromEncoded("http://host"_ba+uri.toUtf8());
   req.overrideUrl(url);
   // load post params
   // LATER should probably also remove query items
   if (method == HttpRequest::POST
-      && req.header(QStringLiteral("Content-Type"))
-      == QStringLiteral("application/x-www-form-urlencoded")) {
-    contentLength = req.header(QStringLiteral("Content-Length"),
-                               QStringLiteral("-1")).toLongLong();
+      && req.header("Content-Type"_ba)
+      == "application/x-www-form-urlencoded"_ba) {
+    contentLength = req.header("Content-Length"_ba, "-1"_ba).toLongLong();
     if (contentLength < 0) {
       sendError(out, "411 Length Required");
       goto finally;
@@ -165,9 +163,9 @@ void HttpWorker::handleConnection(
       goto finally;
     }
     if (contentLength > 0) { // avoid enter infinite loop with Content-Length: 0
-      line = QString();
+      line = {};
       forever {
-        line += QString::fromLatin1(socket->read(contentLength-line.size()));
+        line += socket->read(contentLength-line.size());
         if (contentLength && line.size() >= contentLength)
           break;
         // LATER avoid DoS by setting a maximum *total* read time out
@@ -178,16 +176,16 @@ void HttpWorker::handleConnection(
       }
       // replacing + with space in URI since this cannot be done in HttpRequest
       // see above
-      line.replace(QChar('+'), QChar(' '));
+      line.replace('+', ' ');
       foreach (const auto &p, QUrlQuery(line).queryItems(QUrl::FullyDecoded))
-        req.overrideParam(p.first, p.second);
+        req.overrideParam(p.first.toUtf8(), p.second.toUtf8());
     }
     // override body parameters with query string parameters
     foreach (const auto &p, QUrlQuery(url).queryItems(QUrl::FullyDecoded))
-      req.overrideParam(p.first, p.second);
+      req.overrideParam(p.first.toUtf8(), p.second.toUtf8());
   }
   handler = _server->chooseHandler(req);
-  if (req.header(QStringLiteral("Expect")) == QStringLiteral("100-continue")) {
+  if (req.header("Expect"_ba) == "100-continue"_ba) {
     // LATER only send 100 Continue if the URI is actually accepted by the handler
     out << "HTTP/1.1 100 Continue\r\n\r\n";
     out.flush();

@@ -1,4 +1,4 @@
-/* Copyright 2013-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -63,25 +63,25 @@ QByteArray GraphvizImageHttpHandler::imageData(
   return _imageData;
 }
 
-QString GraphvizImageHttpHandler::contentType(
+QByteArray GraphvizImageHttpHandler::contentType(
   HttpRequest, ParamsProviderMerger *) const {
   QMutexLocker ml(&_mutex);
   return _contentType;
 }
 
-QString GraphvizImageHttpHandler::contentEncoding(
+QByteArray GraphvizImageHttpHandler::contentEncoding(
     HttpRequest, ParamsProviderMerger *) const {
   QMutexLocker ml(&_mutex);
-  return (_imageFormat == Svgz) ? "gzip" : QString();
+  return (_imageFormat == Svgz) ? "gzip"_ba : QByteArray{};
 }
 
-QString GraphvizImageHttpHandler::source(
+QByteArray GraphvizImageHttpHandler::source(
   HttpRequest, ParamsProviderMerger *) const {
   QMutexLocker ml(&_mutex);
   return _source;
 }
 
-void GraphvizImageHttpHandler::setSource(QString source) {
+void GraphvizImageHttpHandler::setSource(const QByteArray &source) {
   QMutexLocker ml(&_mutex);
   _source = source;
   ++_renderingNeeded;
@@ -108,7 +108,7 @@ void GraphvizImageHttpHandler::startRendering() {
   _renderingRunning = true;
   _tmp.clear();
   _stderr.clear();
-  QString cmd = "dot"; // default to dot
+  QByteArray cmd = "dot"; // default to dot
   switch (_renderer) {
   case Neato:
     cmd = "neato";
@@ -147,15 +147,14 @@ void GraphvizImageHttpHandler::startRendering() {
     args << "-Tdot";
     break;
   }
-  QByteArray ba = _source.toUtf8();
   Log::debug() << "starting graphviz rendering with this data: "
                << _source;
   _process->start(cmd, args);
   _process->waitForStarted();
-  qint64 written = _process->write(ba);
-  if (written != ba.size())
+  qint64 written = _process->write(_source);
+  if (written != _source.size())
     Log::debug() << "cannot write to graphviz processor "
-                 << written << " " << ba.size() << " "
+                 << written << " " << _source.size() << " "
                  << (int)_process->error() << " " << _process->errorString();
   _process->closeWriteChannel();
 }
@@ -231,14 +230,14 @@ void GraphvizImageHttpHandler::setImageFormat(ImageFormat imageFormat) {
   _imageFormat = imageFormat;
   switch (_imageFormat) {
   case Png:
-    _contentType = "image/png";
+    _contentType = "image/png"_ba;
     break;
   case Svg:
   case Svgz:
-    _contentType = "image/svg+xml";
+    _contentType = "image/svg+xml"_ba;
     break;
   case Plain:
-    _contentType = "text/plain;charset=UTF-8";
+    _contentType = "text/plain;charset=UTF-8"_ba;
     break;
   }
 }

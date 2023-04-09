@@ -1,4 +1,4 @@
-/* Copyright 2013-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -43,7 +43,7 @@ class LIBP6CORESHARED_EXPORT BasicAuthHttpHandler : public HttpHandler {
   Authenticator *_authenticator;
   Authorizer *_authorizer;
   bool _authIsMandatory;
-  QString _realm, _userIdContextParamName;
+  QByteArray _realm, _userIdContextParamName;
   ParamSet _authContext;
 
 public:
@@ -56,14 +56,14 @@ public:
   void setAuthenticator(Authenticator *authenticator);
   /** Does not take ownership */
   void setAuthorizer(Authorizer *authorizer);
-  void setRealm(QString realm) {
+  void setRealm(const QByteArray &realm) {
     _realm = realm;
-    _authContext.setValue(QStringLiteral("realm"), realm);
+    _authContext.setValue("realm"_ba, realm);
   }
   /** Define which param name will be used to set the (principal) user id in
    * HttpRequestContext. Default is "userid". Null or empty string disable
    * setting any parameter in HttpRequestContext. */
-  void setUserIdContextParamName(QString name) {
+  void setUserIdContextParamName(const QByteArray &name) {
     _userIdContextParamName = name;
   }
 

@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -79,21 +79,21 @@ public:
   enum TextConversion { AsIs, HtmlEscaping, HtmlEscapingWithUrlAsLinks };
 
 private:
-  QHash<QString,QPointer<TextView> > _views;
-  QSet<QString> _filters;
+  QMap<QByteArray,QPointer<TextView>> _views;
+  QSet<QByteArray> _filters;
   TextConversion _textConversion;
   static TextConversion _defaultTextConversion;
   int _maxValueLength;
   static int _defaultMaxValueLength;
 
 public:
-  explicit TemplatingHttpHandler(QObject *parent = 0,
-                                 QString urlPathPrefix = "",
-                                 QString documentRoot = ":docroot/");
-  TemplatingHttpHandler *addView(QString label, TextView *view) {
+  explicit TemplatingHttpHandler(
+      QObject *parent = 0, const QByteArray &urlPathPrefix = {},
+      const QByteArray &documentRoot = ":docroot/"_ba);
+  TemplatingHttpHandler *addView(const QByteArray &label, TextView *view) {
     _views.insert(label, view); return this; }
   TemplatingHttpHandler *addView(TextView *view);
-  TemplatingHttpHandler *addFilter(QString regexp) {
+  TemplatingHttpHandler *addFilter(const QByteArray &regexp) {
     _filters.insert(regexp);
     return this; }
   void setTextConversion(TemplatingHttpHandler::TextConversion textConversion) {
@@ -128,8 +128,8 @@ protected:
 private:
   void applyTemplateFile(HttpRequest req, HttpResponse res, QFile *file,
                          ParamsProviderMerger *processingContext,
-                         QString *output);
-  void convertData(QString *data, bool disableTextConversion) const;
+                         QByteArray *output);
+  void convertData(QByteArray *data, bool disableTextConversion) const;
 };
 
 #endif // TEMPLATINGHTTPHANDLER_H

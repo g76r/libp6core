@@ -1,4 +1,4 @@
-/* Copyright 2012-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -74,7 +74,7 @@ public:
    * @return true iff the method is OPTIONS
    */
   bool handleCORS(HttpRequest req, HttpResponse res,
-      QSet<QString> methods = HttpRequest::wellKnownMethodNames());
+      QSet<QByteArray> methods = HttpRequest::wellKnownMethodNames());
 };
 
 #endif // HTTPHANDLER_H
