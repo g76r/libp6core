@@ -1,4 +1,4 @@
-/* Copyright 2016-2018 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,52 +17,60 @@
 #include "libp6core_global.h"
 #include <QStringList>
 
+using namespace Qt::Literals::StringLiterals;
+
 class LIBP6CORESHARED_EXPORT StringUtils {
   StringUtils() = delete;
 
+  template <typename T>
+  static T elide(const T &string, int maxsize, const T &placeholder, int dir) {
+    // dir: -1 left 0 middle +1 right
+    if (maxsize < 0 || string.size() < maxsize)
+      return string;
+    if (placeholder.size() > maxsize)
+      return dir >= 0 ? placeholder.left(maxsize) : placeholder.right(maxsize);
+    if (dir > 0)
+      return string.left(maxsize-placeholder.size())+placeholder;
+    if (dir < 0)
+      return placeholder+string.right(maxsize-placeholder.size());
+    return string.left(maxsize/2-placeholder.size())+placeholder
+        +string.right(maxsize-maxsize/2);
+  }
+
 public:
-  /** Equals to "..." */
-  static const QString _ellipsis;
   /** Ellide a string if needed, keeping its left part.
    * ("foobar",5,"...") -> "fo..."
    * Return string as is if maxsize < 0.
    * Return a subset of placeholder if maxsize < placeholder.size().
-   */
+   */ 
   static QString elideRight(const QString &string, int maxsize,
-                            const QString &placeholder = _ellipsis) {
-    if (maxsize < 0 || string.size() < maxsize)
-      return string;
-    if (placeholder.size() > maxsize)
-      return placeholder.left(maxsize);
-    return string.left(maxsize-placeholder.size())+placeholder;
-  }
+                            const QString &placeholder = u"..."_s) {
+    return elide<>(string, maxsize, placeholder, +1); }
+  static QByteArray elideRight(const QByteArray &string, int maxsize,
+                               const QByteArray &placeholder = "..."_ba) {
+    return elide<>(string, maxsize, placeholder, +1); }
   /** Ellide a string if needed, keeping its right part.
    * ("foobar",5,"...") -> "...ar"
    * Return string as is if maxsize < 0.
    * Return a subset of placeholder if maxsize < placeholder.size().
    */
   static QString elideLeft(const QString &string, int maxsize,
-                            const QString &placeholder = _ellipsis) {
-    if (maxsize < 0 || string.size() < maxsize)
-      return string;
-    if (placeholder.size() > maxsize)
-      return placeholder.right(maxsize);
-    return placeholder+string.right(maxsize-placeholder.size());
-  }
+                            const QString &placeholder = u"..."_s) {
+    return elide<>(string, maxsize, placeholder, -1); }
+  static QByteArray elideLeft(const QByteArray &string, int maxsize,
+                              const QByteArray &placeholder = "..."_ba) {
+    return elide<>(string, maxsize, placeholder, -1); }
   /** Ellide a string if needed, removing the middle part.
    * ("foobar",5,"...") -> "f...r"
    * Return string as is if maxsize < 0.
    * Return a subset of placeholder if maxsize < placeholder.size().
    */
   static QString elideMiddle(const QString &string, int maxsize,
-                            const QString &placeholder = _ellipsis) {
-    if (maxsize < 0 || string.size() <= maxsize)
-      return string;
-    if (placeholder.size() > maxsize)
-      return placeholder.left(maxsize);
-    return string.left(maxsize/2-placeholder.size())+placeholder
-        +string.right(maxsize-maxsize/2);
-  }
+                            const QString &placeholder = u"..."_s) {
+    return elide<>(string, maxsize, placeholder, 0); }
+  static QByteArray elideMiddle(const QByteArray &string, int maxsize,
+                                const QByteArray &placeholder = "..."_ba) {
+    return elide<>(string, maxsize, placeholder, 0); }
   /** Return a column as a QStringList from QList<QStringList> list of rows.
    * Kind of extracting a vector from a transposed text matrix.
    */
@@ -97,24 +105,29 @@ public:
    * E.g. "hello world" -> "hello_world", "HelloWorld" -> "hello_world",
    * "hello_world" -> "hello_world", "hello-World" -> "hello_world".
    */
-  // LATER toCamelCase() etc.
   static QString toSnakeCase(const QString &anycase);
   /** Convert an identifier to kebab + upper camel case.
    * E.g. "hello-world" -> "Hello-World", "HelloWorld" -> "Helloworld",
    * "hello_world" -> "Hello_world", "Hello-world" -> "Hello-World".
    */
-  static QByteArray normalizeRfc841HeaderCase(const QByteArray &anycase);
+  static QByteArray toSnakeUpperCamelCase(const QByteArray &anycase);
   /** Convert an identifier to kebab + upper camel case.
    * E.g. "hello-world" -> "Hello-World", "HelloWorld" -> "Helloworld",
    * "hello_world" -> "Hello_world", "Hello-world" -> "Hello-World".
    */
-  static QByteArray normalizeRfc841HeaderCase(const char *anycase) {
-      return normalizeRfc841HeaderCase(QByteArray(anycase)); }
+  static QByteArray toSnakeUpperCamelCase(const char *anycase) {
+      return toSnakeUpperCamelCase(QByteArray(anycase)); }
   /** Convert an identifier to kebab + upper camel case.
    * E.g. "hello-world" -> "Hello-World", "HelloWorld" -> "Helloworld",
    * "hello_world" -> "Hello_world", "Hello-world" -> "Hello-World".
    */
-  static QString normalizeRfc841HeaderCase(const QString &anycase);
+  static QString toSnakeUpperCamelCase(const QString &anycase);
+  /** Convert an identifier to kebab + upper camel case, converting only ASCII-7
+   * chars, like internet header names.
+   * E.g. "hello-world" -> "Hello-World", "HelloWorld" -> "Helloworld",
+   * "hello_world" -> "Hello_world", "Hello-world" -> "Hello-World".
+   */
+  static QByteArray toAsciiSnakeUpperCamelCase(const QByteArray &anycase);
 };
 
 #endif // STRINGUTILS_H

@@ -1,4 +1,4 @@
-/* Copyright 2016-2018 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,7 +15,6 @@
 #include <QRegularExpression>
 #include <QHash>
 
-const QString StringUtils::_ellipsis { "..." };
 static QRegularExpression linkRe{"http(s?)://\\S+"};
 
 QString StringUtils::htmlEncode(
@@ -100,7 +99,7 @@ QString StringUtils::toSnakeCase(const QString &anycase) {
     return ::toSnakeCase(anycase);
 }
 
-static QString normalizeRfc841HeaderCase(const QString &anycase) {
+static QString toSnakeUpperCamelCase(const QString &anycase) {
   QString s;
   bool leading = true;
   for (const QChar &c : anycase) {
@@ -115,10 +114,35 @@ static QString normalizeRfc841HeaderCase(const QString &anycase) {
   return s;
 }
 
-QByteArray StringUtils::normalizeRfc841HeaderCase(const QByteArray &anycase) {
-  return ::normalizeRfc841HeaderCase(QString::fromUtf8(anycase)).toUtf8();
+QByteArray StringUtils::toSnakeUpperCamelCase(const QByteArray &anycase) {
+  // note: cannot process bytes directly because of UTF-8 multichars
+  return ::toSnakeUpperCamelCase(QString::fromUtf8(anycase)).toUtf8();
 }
 
-QString StringUtils::normalizeRfc841HeaderCase(const QString &anycase) {
-  return ::normalizeRfc841HeaderCase(anycase);
+QString StringUtils::toSnakeUpperCamelCase(const QString &anycase) {
+  return ::toSnakeUpperCamelCase(anycase);
+}
+
+static void toAsciiSnakeUpperCamelCase(char *s) {
+  bool leading = true;
+  for (; *s; ++s) {
+    if (*s == '-') {
+      leading = true;
+    } else {
+      if (leading) {
+        if (*s >= 'a' && *s <= 'z')
+          *s &= ~32;
+      } else {
+        if (*s >= 'A' && *s <= 'Z')
+          *s |= 32;
+      }
+      leading = false;
+    }
+  }
+}
+
+QByteArray StringUtils::toAsciiSnakeUpperCamelCase(const QByteArray &anycase) {
+  QByteArray s = anycase.isNull() ? ""_ba : anycase;
+  ::toAsciiSnakeUpperCamelCase(s.data());
+  return s;
 }
