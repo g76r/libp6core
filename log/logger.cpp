@@ -98,7 +98,7 @@ QVariant Logger::LogEntryData::uiData(int section, int role) const {
   case Qt::EditRole:
     switch(section) {
     case 0:
-      return _timestamp.toString("yyyy-MM-dd hh:mm:ss,zzz");
+      return _timestamp.toString(u"yyyy-MM-dd hh:mm:ss,zzz"_s);
     case 1:
       return _task;
     case 2:
@@ -114,7 +114,7 @@ QVariant Logger::LogEntryData::uiData(int section, int role) const {
   default:
     ;
   }
-  return QVariant();
+  return {};
 }
 
 QVariant Logger::LogEntryData::uiHeaderData(int section, int role) const {
@@ -174,7 +174,7 @@ void Logger::log(const LogEntry &entry) {
   // write logs over NFS), etc.
   if (entry.severity() >= _minSeverity) {
     if (_thread) {
-      if (!_buffer->tryPut(entry)) {
+      if (!_buffer->tryPut(entry)) [[unlikely]] {
         // warn only if not warned recently
         QMutexLocker ml(&_bufferOverflownMutex);
         qint64 now = QDateTime::currentMSecsSinceEpoch();

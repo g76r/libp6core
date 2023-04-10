@@ -42,10 +42,10 @@ static int staticInit() {
 Q_CONSTRUCTOR_FUNCTION(staticInit)
 
 static inline void sanitizeField(QByteArray *ba) {
-  if (ba->isNull())
+  if (ba->isNull()) [[unlikely]]
     return;
   for (char *s = ba->data(); *s; ++s)
-    if (::isspace(*s))
+    if (::isspace(*s)) [[unlikely]]
       *s = '_';
 }
 

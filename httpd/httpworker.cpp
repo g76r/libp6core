@@ -59,7 +59,7 @@ void HttpWorker::handleConnection(
   // LATER replace by QDateTime when Qt >= 4.7
   //QTime before= QTime::currentTime();
   QTcpSocket *socket = new QTcpSocket(this);
-  if (!socket->setSocketDescriptor(socketDescriptor)) {
+  if (!socket->setSocketDescriptor(socketDescriptor)) [[unlikely]] {
     // LATER
     // emit error(_socket->error());
   }
@@ -69,19 +69,20 @@ void HttpWorker::handleConnection(
   HttpResponse res(socket);
   ParamsProviderMerger processingContext;
   HttpHandler *handler = 0;
-  QString uri;
+  QByteArray uri;
   QUrl url;
   //qDebug() << "new client socket" << socket->peerAddress();
   QTextStream out(socket);
   QByteArray line;
   qint64 contentLength = 0;
   HttpRequest::HttpMethod method = HttpRequest::NONE;
-  if (!socket->canReadLine() && !socket->waitForReadyRead(MAXIMUM_READ_WAIT)) {
+  if (!socket->canReadLine()
+      && !socket->waitForReadyRead(MAXIMUM_READ_WAIT)) [[unlikely]] {
     sendError(out, "408 Request timeout");
     goto finally;
   }
   line = socket->readLine(MAXIMUM_LINE_SIZE+2);
-  if (line.size() > MAXIMUM_LINE_SIZE) {
+  if (line.size() > MAXIMUM_LINE_SIZE) [[unlikely]] {
     sendError(out, "414 Request URI too long",
               "starting with: "+line.left(200));
     goto finally;
@@ -97,28 +98,29 @@ void HttpWorker::handleConnection(
   req.setMethod(method);
   if (method == HttpRequest::HEAD) {
     res.disableBodyOutput();
-  } else if (method == HttpRequest::NONE || method == HttpRequest::ANY) {
+  } else if (method == HttpRequest::NONE
+             || method == HttpRequest::ANY) [[unlikely]] {
     sendError(out, "405 Method not allowed",
               "starting with: "+args[0].left(200));
     goto finally;
   }
-  if (!args[2].startsWith("HTTP/")) {
+  if (!args[2].startsWith("HTTP/")) [[unlikely]] {
     sendError(out, "400 Bad request protocol",
               "starting with: "+args[2].left(200));
     goto finally;
   }
   for (;;) {
-    if (!socket->isOpen()) {
+    if (!socket->isOpen()) [[unlikely]] {
       //qDebug() << "socket is not open";
       break;
     }
     if (!socket->canReadLine()
-        && !socket->waitForReadyRead(MAXIMUM_READ_WAIT)) {
+        && !socket->waitForReadyRead(MAXIMUM_READ_WAIT)) [[unlikely]] {
       sendError(out, "408 Request timeout");
       goto finally;
     }
     line = socket->readLine(MAXIMUM_LINE_SIZE+2).trimmed();
-    if (line.size() > MAXIMUM_LINE_SIZE) {
+    if (line.size() > MAXIMUM_LINE_SIZE) [[unlikely]] {
       sendError(out, "413 Header line too long",
                 "starting with: "+line.left(200));
       goto finally;
@@ -128,7 +130,7 @@ void HttpWorker::handleConnection(
       break;
     }
     // LATER: handle multi line headers
-    if (!req.parseAndAddHeader(line)) {
+    if (!req.parseAndAddHeader(line)) [[unlikely]] {
       sendError(out, "400 Bad request header line",
                 "starting with: "+line.left(200));
       goto finally;
@@ -140,12 +142,12 @@ void HttpWorker::handleConnection(
   // unless QUrl implements a full HTML form encoding (including + for space)
   // in addition to current QUrl::FullyDecoded
   // see (among other references) QTBUG-10146
-  uri.replace(QChar('+'), QChar(' '));
+  uri.replace('+', ' ');
   // ensure uri starts with /
   if (uri.isEmpty() || uri[0] != '/')
     uri.insert(0, '/');
   // LATER is utf8 the right choice ? should encoding depend on headers ?
-  url = QUrl::fromEncoded("http://host"_ba+uri.toUtf8());
+  url = QUrl::fromEncoded("http://host"_ba+uri);
   req.overrideUrl(url);
   // load post params
   // LATER should probably also remove query items
@@ -153,23 +155,23 @@ void HttpWorker::handleConnection(
       && req.header("Content-Type"_ba)
       == "application/x-www-form-urlencoded"_ba) {
     contentLength = req.header("Content-Length"_ba, "-1"_ba).toLongLong();
-    if (contentLength < 0) {
+    if (contentLength < 0) [[unlikely]] {
       sendError(out, "411 Length Required");
       goto finally;
     }
-    if (contentLength > MAXIMUM_ENCODED_FORM_POST_SIZE) {
+    if (contentLength > MAXIMUM_ENCODED_FORM_POST_SIZE) [[unlikely]] {
       sendError(out, "413 Encoded form parameters string too long",
                 "starting with: "+line.left(200));
       goto finally;
     }
-    if (contentLength > 0) { // avoid enter infinite loop with Content-Length: 0
+    if (contentLength > 0) [[likely]] { // avoid enter infinite loop
       line = {};
       forever {
         line += socket->read(contentLength-line.size());
         if (contentLength && line.size() >= contentLength)
           break;
         // LATER avoid DoS by setting a maximum *total* read time out
-        if (!socket->waitForReadyRead(MAXIMUM_READ_WAIT)) {
+        if (!socket->waitForReadyRead(MAXIMUM_READ_WAIT)) [[unlikely]] {
           sendError(out, "408 Request timeout");
           goto finally;
         }
@@ -190,7 +192,7 @@ void HttpWorker::handleConnection(
     out << "HTTP/1.1 100 Continue\r\n\r\n";
     out.flush();
   }
-  if (!_defaultCacheControlHeader.isEmpty())
+  if (!_defaultCacheControlHeader.isEmpty()) [[likely]]
     res.setHeader("Cache-Control", _defaultCacheControlHeader);
   handler->handleRequest(req, res, &processingContext);
   res.output()->flush(); // calling output() ensures that header was sent

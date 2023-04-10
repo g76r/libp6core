@@ -226,7 +226,7 @@ class LIBP6CORESHARED_EXPORT RadixTree {
     /** Visit tree in depth-first order, abort if visitor returns false */
     void inline visit(AbortableVisitor visitor, QByteArray *key_prefix) const {
       key_prefix->append(_fragment);
-      if (!visitor(key_prefix->constData(), _nodetype, _value))
+      if (!visitor(key_prefix->constData(), _nodetype, _value)) [[unlikely]]
         return;
       for (int i = 0; i < _childrenCount; ++i)
         if (!_children[i]->visit(visitor, key_prefix))

@@ -299,7 +299,7 @@ void ParamSet::clear() {
 QString ParamSet::rawValue(QString key, QString defaultValue,
                            bool inherit) const {
   QString value;
-  if (d) {
+  if (d) [[likely]] {
     value = d->_params.value(key);
     if (value.isNull() && inherit)
       value = parent().rawValue(key);
@@ -314,7 +314,7 @@ QString ParamSet::evaluate(
   QStringList values = splitAndEvaluate(rawValue, QString(), inherit, context,
                                         alreadyEvaluated);
   if (values.isEmpty())
-    return rawValue.isNull() ? QString() : QStringLiteral("");
+    return rawValue.isNull() ? QString{} : u""_s;
   return values.first();
 }
 
@@ -393,7 +393,7 @@ _functions {
               const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
-  if (params.size() >= 3) {
+  if (params.size() >= 3) [[likely]] {
     QString input = paramset.evaluate(params.value(0), inherit, context,
                                       alreadyEvaluated);
     QString ref = paramset.evaluate(params.value(1), inherit, context,
@@ -413,7 +413,7 @@ _functions {
               const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
-  if (params.size() >= 1) {
+  if (params.size() >= 1) [[likely]] {
     QString input = paramset.evaluate(params.value(0), inherit, context,
                                       alreadyEvaluated);
     // evaluating :case:value params, if any
@@ -439,7 +439,7 @@ _functions {
               const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
-  if (params.size() >= 1) {
+  if (params.size() >= 1) [[likely]] {
     QString input = paramset.evaluate(params.value(0), inherit, context,
                                       alreadyEvaluated);
     // evaluating :case:value params, if any
@@ -484,7 +484,7 @@ _functions {
     // options must be part of the cache key
     // not sure if QRegularExpression::optimize() should be called
     QRegularExpression re(sFields.value(0), patternOptions);
-    if (!re.isValid()) {
+    if (!re.isValid()) [[unlikely]] {
       qDebug() << "%=sub with invalid regular expression: "
                << sFields.value(0);
       continue;
@@ -764,16 +764,16 @@ bool ParamSet::appendVariableValue(
   QString *value, const QString &variable, bool inherit,
   const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
   bool logIfVariableNotFound) const {
-  if (variable.isEmpty()) {
+  if (variable.isEmpty()) [[unlikely]] {
     Log::warning() << "unsupported variable substitution: empty variable name";
     return false;
   }
-  if (!alreadyEvaluated) {
+  if (!alreadyEvaluated) [[unlikely]] {
     Log::warning() << "unsupported variable substitution: loop detection is "
                       "broken";
     return false;
   }
-  if (alreadyEvaluated->contains(variable)) {
+  if (alreadyEvaluated->contains(variable)) [[unlikely]] {
     Log::warning() << "unsupported variable substitution: loop detected with "
                       "variable \"" << variable << "\"";
     return false;
@@ -799,7 +799,7 @@ bool ParamSet::appendVariableValue(
     value->append(s);
     return true;
   }
-  if (_variableNotFoundLoggingEnabled && logIfVariableNotFound) {
+  if (_variableNotFoundLoggingEnabled && logIfVariableNotFound) [[unlikely]] {
     Log::debug()
         << "unsupported variable substitution: variable not found: "
            "%{" << variable << "} in paramset " << toString(false)
@@ -869,7 +869,7 @@ QStringList ParamSet::splitAndEvaluate(
       if (!value.isEmpty())
         values.append(value);
       value.clear();
-    } else {
+    } else [[likely]] {
       value.append(c);
     }
   }
@@ -914,7 +914,7 @@ const QString ParamSet::matchingRegexp(QString rawValue) {
 
 const QSet<QString> ParamSet::keys(bool inherit) const {
   QSet<QString> set;
-  if (d) {
+  if (d) [[likely]] {
     auto keys = d->_params.keys();
 #if QT_VERSION >= 0x050f00
     set = { keys.begin(), keys.end() };

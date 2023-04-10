@@ -35,7 +35,7 @@ FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity,
   if (!_device->isOpen()) {
     if (!_device->open(_buffered ? QIODevice::WriteOnly|QIODevice::Append
                        : QIODevice::WriteOnly|QIODevice::Append
-                       |QIODevice::Unbuffered)) {
+                       |QIODevice::Unbuffered)) [[unlikely]] {
       qWarning() << "cannot open log device" << _device << ":"
                  << _device->errorString();
       delete _device;
@@ -70,7 +70,7 @@ void FileLogger::doLog(const LogEntry &entry) {
   if (!_pathPattern.isEmpty()
       && (_device == 0
           || (_secondsReopenInterval >= 0
-              && _lastOpen.secsTo(now) > _secondsReopenInterval))) {
+              && _lastOpen.secsTo(now) > _secondsReopenInterval))) [[unlikely]]{
     //qDebug() << "*******************************************************"
     //         << _pathPattern << _lastOpen << now << _secondsReopenInterval;
     if (_device)
@@ -79,7 +79,7 @@ void FileLogger::doLog(const LogEntry &entry) {
     _device = new QFile(_currentPath);
     if (!_device->open(_buffered ? QIODevice::WriteOnly|QIODevice::Append
                                  : QIODevice::WriteOnly|QIODevice::Append
-                                     |QIODevice::Unbuffered)) {
+                                     |QIODevice::Unbuffered)) [[unlikely]] {
       // TODO warn, but only once
       //qWarning() << "cannot open log file" << _currentPath << ":"
       //           << _device->errorString();
@@ -90,7 +90,7 @@ void FileLogger::doLog(const LogEntry &entry) {
       //qDebug() << "opened log file" << _currentPath;
     }
   }
-  if (_device) {
+  if (_device) [[likely]] {
     // TODO move this to LogEntry::asLogLine()
     QByteArray line =
         entry.timestamp().toString(ISO8601).toUtf8()+SPACE
