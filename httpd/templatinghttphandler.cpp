@@ -116,38 +116,37 @@ void TemplatingHttpHandler::applyTemplateFile(
       if (markupContent.at(0) == '=') {
         // syntax: <?=paramset_evaluable_expression?>
         output->append(
-              processingContext->overridingParams()
-              .evaluate(markupContent.mid(1), processingContext).toUtf8());
+              processingContext->evaluate(markupContent.mid(1)).toUtf8());
       } else if (markupId == "view"_ba) {
         // syntax: <?view:viewname?>
         auto markupData = markupContent.mid(separatorPos+1);
         TextView *view = _views.value(markupData);
-        if (view)
+        if (view) {
           output->append(view->text(processingContext,
                                     req.url().toString()).toUtf8());
-        else {
+        } else [[unlikely]] {
           Log::warning() << "TemplatingHttpHandler did not find view '"
                          << markupData << "' among " << _views.keys();
-          output->append("?");
+          output->append("?"_ba);
         }
       } else if (markupId == "value"_ba || markupId == "rawvalue"_ba) {
         // syntax: <?[raw]value:variablename[:valueifnotdef[:valueifdef]]?>
         CharacterSeparatedExpression markupParams(markupContent, separatorPos);
-        auto value = processingContext->paramUtf8(markupParams.value(0));
+        auto value = processingContext->paramString(markupParams.value(0));
         if (!value.isNull()) {
-          value = markupParams.value(2, value).toUtf8();
+          value = markupParams.value(2, value);
         } else {
-          if (markupParams.size() < 2) {
+          if (markupParams.size() < 2) [[unlikely]] {
             Log::debug() << "TemplatingHttpHandler did not find value: '"
                          << markupParams.value(0) << "' in context 0x"
                          << QByteArray::number((long long)processingContext, 16);
-            value = "?";
+            value = u"?"_s;
           } else {
-            value = markupParams.value(1).toUtf8();
+            value = markupParams.value(1);
           }
         }
         convertData(&value, markupId == "rawvalue"_ba);
-        output->append(value);
+        output->append(value.toUtf8());
       } else if (markupId == "include"_ba) {
         // syntax: <?include:path_relative_to_current_file_dir?>
         auto markupData = markupContent.mid(separatorPos+1);
@@ -158,30 +157,29 @@ void TemplatingHttpHandler::applyTemplateFile(
         // LATER detect include loops
         if (included.open(QIODevice::ReadOnly)) {
           applyTemplateFile(req, res, &included, processingContext, output);
-        } else {
+        } else [[unlikely]] {
           Log::warning() << "TemplatingHttpHandler couldn't include file: '"
                          << markupData << "' as '" << included.fileName()
                          << "' in context 0x"
                          << QByteArray::number((long long)processingContext, 16)
                          << " : " << included.errorString();
-          output->append("?");
+          output->append("?"_ba);
         }
       } else if (markupId == "override"_ba) {
         // syntax: <?override:key:value?>
         CharacterSeparatedExpression markupParams(markupContent, separatorPos);
         auto key = markupParams.value(0);
-        if (key.isEmpty()) {
+        if (key.isEmpty()) [[unlikely]] {
           Log::debug() << "TemplatingHttpHandler cannot set parameter with "
                           "null key in file " << file->fileName();
         } else {
-          auto value = processingContext->overridingParams().evaluate(
-                markupParams.value(1), processingContext);
+          auto value = processingContext->evaluate(markupParams.value(1));
           processingContext->overrideParamValue(key, value);
         }
-      } else {
+      } else [[unlikely]] {
         Log::warning() << "TemplatingHttpHandler found unsupported markup: <?"
                        << markupContent << "?>";
-        output->append("?");
+        output->append("?"_ba);
       }
     }
     pos = markupPos+2;
@@ -200,7 +198,7 @@ TemplatingHttpHandler *TemplatingHttpHandler::addView(TextView *view) {
 }
 
 void TemplatingHttpHandler::convertData(
-    QByteArray *data, bool disableTextConversion) const {
+    QString *data, bool disableTextConversion) const {
   if (!data)
     return;
   *data = StringUtils::elideMiddle(*data, _maxValueLength);
@@ -208,10 +206,10 @@ void TemplatingHttpHandler::convertData(
     return;
   switch (_textConversion) {
   case HtmlEscaping:
-    *data = StringUtils::htmlEncode(*data, false, false).toUtf8();
+    *data = StringUtils::htmlEncode(*data, false, false);
     break;
   case HtmlEscapingWithUrlAsLinks:
-    *data = StringUtils::htmlEncode(*data, true, true).toUtf8();
+    *data = StringUtils::htmlEncode(*data, true, true);
     break;
   case AsIs:
     ;

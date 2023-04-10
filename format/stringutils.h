@@ -22,21 +22,6 @@ using namespace Qt::Literals::StringLiterals;
 class LIBP6CORESHARED_EXPORT StringUtils {
   StringUtils() = delete;
 
-  template <typename T>
-  static T elide(const T &string, int maxsize, const T &placeholder, int dir) {
-    // dir: -1 left 0 middle +1 right
-    if (maxsize < 0 || string.size() < maxsize)
-      return string;
-    if (placeholder.size() > maxsize)
-      return dir >= 0 ? placeholder.left(maxsize) : placeholder.right(maxsize);
-    if (dir > 0)
-      return string.left(maxsize-placeholder.size())+placeholder;
-    if (dir < 0)
-      return placeholder+string.right(maxsize-placeholder.size());
-    return string.left(maxsize/2-placeholder.size())+placeholder
-        +string.right(maxsize-maxsize/2);
-  }
-
 public:
   /** Ellide a string if needed, keeping its left part.
    * ("foobar",5,"...") -> "fo..."
@@ -45,10 +30,7 @@ public:
    */ 
   static QString elideRight(const QString &string, int maxsize,
                             const QString &placeholder = u"..."_s) {
-    return elide<>(string, maxsize, placeholder, +1); }
-  static QByteArray elideRight(const QByteArray &string, int maxsize,
-                               const QByteArray &placeholder = "..."_ba) {
-    return elide<>(string, maxsize, placeholder, +1); }
+    return elide<+1>(string, maxsize, placeholder); }
   /** Ellide a string if needed, keeping its right part.
    * ("foobar",5,"...") -> "...ar"
    * Return string as is if maxsize < 0.
@@ -56,10 +38,7 @@ public:
    */
   static QString elideLeft(const QString &string, int maxsize,
                             const QString &placeholder = u"..."_s) {
-    return elide<>(string, maxsize, placeholder, -1); }
-  static QByteArray elideLeft(const QByteArray &string, int maxsize,
-                              const QByteArray &placeholder = "..."_ba) {
-    return elide<>(string, maxsize, placeholder, -1); }
+    return elide<-1>(string, maxsize, placeholder); }
   /** Ellide a string if needed, removing the middle part.
    * ("foobar",5,"...") -> "f...r"
    * Return string as is if maxsize < 0.
@@ -67,10 +46,7 @@ public:
    */
   static QString elideMiddle(const QString &string, int maxsize,
                             const QString &placeholder = u"..."_s) {
-    return elide<>(string, maxsize, placeholder, 0); }
-  static QByteArray elideMiddle(const QByteArray &string, int maxsize,
-                                const QByteArray &placeholder = "..."_ba) {
-    return elide<>(string, maxsize, placeholder, 0); }
+    return elide<0>(string, maxsize, placeholder); }
   /** Return a column as a QStringList from QList<QStringList> list of rows.
    * Kind of extracting a vector from a transposed text matrix.
    */
@@ -128,6 +104,22 @@ public:
    * "hello_world" -> "Hello_world", "Hello-world" -> "Hello-World".
    */
   static QByteArray toAsciiSnakeUpperCamelCase(const QByteArray &anycase);
+
+private:
+  template <int DIR> // DIR: -1 left 0 middle +1 right
+  static inline QString elide(
+      const QString &string, int maxsize, const QString &placeholder) {
+    if (maxsize < 0 || string.size() < maxsize)
+      return string;
+    if (placeholder.size() > maxsize)
+      return DIR >= 0 ? placeholder.left(maxsize) : placeholder.right(maxsize);
+    if (DIR > 0)
+      return string.left(maxsize-placeholder.size())+placeholder;
+    if (DIR < 0)
+      return placeholder+string.right(maxsize-placeholder.size());
+    return string.left(maxsize/2-placeholder.size())+placeholder
+        +string.right(maxsize-maxsize/2);
+  }
 };
 
 #endif // STRINGUTILS_H

@@ -129,7 +129,7 @@ private:
   void applyTemplateFile(HttpRequest req, HttpResponse res, QFile *file,
                          ParamsProviderMerger *processingContext,
                          QByteArray *output);
-  void convertData(QByteArray *data, bool disableTextConversion) const;
+  void convertData(QString *data, bool disableTextConversion) const;
 };
 
 #endif // TEMPLATINGHTTPHANDLER_H
