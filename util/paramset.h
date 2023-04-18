@@ -184,28 +184,38 @@ public:
     return rawValue(QString{key}, defaultValue, inherit).toUtf8(); }
   /** Return a value after parameters substitution.
    * @param searchInParents should search values in parents if not found */
-  inline QString value(QString key, QString defaultValue = QString(),
+  inline QString value(QString key, QString defaultValue = {},
                        bool inherit = true,
                        const ParamsProvider *context = 0) const {
     return evaluate(rawValue(key, defaultValue, inherit), inherit, context); }
-  inline QString value(QString key, const QByteArray &defaultValue,
-                       bool inherit = true,
-                       const ParamsProvider *context = 0) const {
-    return evaluate(rawValue(key, QString(defaultValue), inherit), inherit,
-                    context); }
-  inline QString value(QString key, const QByteArray &defaultValue,
-                       const ParamsProvider *context) const {
-    return evaluate(rawValue(key, QString(defaultValue), true), true,
-                    context); }
   inline QString value(QString key, bool inherit,
                        const ParamsProvider *context = 0) const {
-    return evaluate(rawValue(key, QString(), inherit), inherit, context); }
+    return evaluate(rawValue(key, QString{}, inherit), inherit, context); }
   inline QString value(QString key, const ParamsProvider *context) const {
-    return evaluate(rawValue(key, QString(), true), true, context); }
+    return evaluate(rawValue(key, QString{}, true), true, context); }
   inline QString value(QString key, bool inherit, const ParamsProvider *context,
                        QSet<QString> *alreadyEvaluated) const {
     return evaluate(rawValue(key, inherit), inherit, context, alreadyEvaluated);
   }
+  inline QString value(
+      QString key, const QByteArray &defaultValue, bool inherit = true,
+      const ParamsProvider *context = 0) const {
+    return evaluate(rawValue(key, QString{defaultValue}, inherit), inherit,
+                    context); }
+  inline QString value(
+      QString key, const QByteArray &defaultValue,
+      const ParamsProvider *context) const {
+    return evaluate(rawValue(key, QString{defaultValue}, true), true,
+                    context); }
+  inline QString value(
+      QString key, const char *defaultValue, bool inherit = true,
+      const ParamsProvider *context = 0) const {
+    return evaluate(rawValue(key, QString{defaultValue}, inherit), inherit,
+                    context); }
+  inline QString value(QString key, const char *defaultValue,
+                       const ParamsProvider *context) const {
+    return evaluate(rawValue(key, QString{defaultValue}, true), true,
+                    context); }
   /** Return a value splitted into strings, %-substitution is done after the
    * split (i.e. "%foo bar" has two elements, regardless the number of spaces
    * in %foo value). */
