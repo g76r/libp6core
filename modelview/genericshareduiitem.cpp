@@ -14,6 +14,7 @@
 #include "genericshareduiitem.h"
 #include "shareduiitemdocumentmanager.h"
 #include "shareduiitemdocumenttransaction.h"
+#include "csv/csvfile.h"
 
 class GenericSharedUiItemData : public SharedUiItemData {
 public:

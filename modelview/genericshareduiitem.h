@@ -15,9 +15,9 @@
 #define GENERICSHAREDUIITEM_H
 
 #include "shareduiitem.h"
-#include "csv/csvfile.h"
 
 class GenericSharedUiItemData;
+class CsvFile;
 
 /** Util class to build a SharedUiItem from arbitrary ids and QVariant values.
  */
