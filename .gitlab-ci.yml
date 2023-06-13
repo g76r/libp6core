@@ -3,7 +3,7 @@ stages:
 
 build:
   stage: build
-  image: g76r/qt6-builder:20230403
+  image: g76r/qt6-builder:20230529
   script:
     - qmake
     - make
