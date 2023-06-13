@@ -89,7 +89,7 @@ public:
    *  (node (path /foo/bar)(truncate)) -> { "path" = "/foo/bar", "tmp" = "" }
    */
   ParamSet(const PfNode &parentnode, const QSet<QString> &attrnames,
-           const ParamSet &parent = ParamSet());
+           const ParamSet &parent = {});
   /** Takes params from columns values of an SQL query.
    *  SQL query is %-evaluated within parent context.
    *  QSqlDatabase must already be open.
@@ -100,7 +100,25 @@ public:
    */
   ParamSet(const QSqlDatabase &db, const QString &sql,
            const QMap<int, QString> &bindings,
-           const ParamSet &parent = ParamSet());
+           const ParamSet &parent = {});
+  /** Takes params from file (or socket or command output...).
+   * e.g.: QFile file("/tmp/foo.csv"); ParamSet(&file);
+   * If input is not opened, open it. */
+  ParamSet(QIODevice *input, const QByteArray &format = "csv",
+           const QMap<QByteArray,QByteArray> options = { { "separator", "," } },
+           const bool escape_percent = false, const ParamSet &parent = {} );
+  /** Takes params from file.
+   * e.g.: ParamSet("/tmp/foo.csv") */
+  static ParamSet fromFile(
+      const QByteArray &file_name, const QByteArray &format = "csv",
+      const QMap<QByteArray,QByteArray> options = { { "separator", "," } },
+      const bool escape_percent = false, const ParamSet &parent = {} );
+  /** Takes params from command output.
+   * e.g.: ParamSet({ "/opt/myscript.sh", "-n", "secrets" } ) */
+  static ParamSet fromCommandOutput(
+      const QStringList &cmdline, const QByteArray &format = "csv",
+      const QMap<QByteArray,QByteArray> options = { { "separator", "," } },
+      const bool escape_percent = false, const ParamSet &parent = {} );
   ~ParamSet();
   ParamSet &operator=(const ParamSet &other);
   ParamSet parent() const;
@@ -292,7 +310,13 @@ public:
   /** Escape all characters in string so that they no longer have special
    * meaning for evaluate() and splitAndEvaluate() methods.
    * That is: replace % with %% within the string. */
-  static QString escape(QString string);
+  static QString escape(QString string) {
+    return string.isNull() ? string : string.replace('%', u"%%"_s); }
+  /** Escape all characters in string so that they no longer have special
+   * meaning for evaluate() and splitAndEvaluate() methods.
+   * That is: replace % with %% within the string. */
+  static QByteArray escape(QByteArray utf8) {
+    return utf8.isNull() ? utf8 : utf8.replace('%', "%%"_ba); }
   /** Return a regular expression that matches any string that can result
    * in evaluation of the rawValue.
    * For instance "foo%{=date:yyyy}-%{bar}.log" is converted into some pattern
@@ -327,12 +351,26 @@ public:
     const ParamsProvider *context, QSet<QString> *alreayEvaluated, bool *found);
   const QHash<QString,QString> toHash(bool inherit = true) const;
   const QMap<QString, QString> toMap(bool inherit = true) const;
+  /** Get an external paramset. */
+  static ParamSet externalParams(QByteArray set_name);
+  /** Register an external paramset. */
+  static void registerExternalParams(
+      const QByteArray &set_name, ParamSet params);
+  /** Unregister every external paramset. */
+  static void clearExternalParams();
+  /** List names of external paramsets. */
+  static QByteArrayList externalParamsNames();
 
 private:
+  ParamSet(ParamSetData *data);
   inline bool appendVariableValue(
       QString *value, const QString &variable, bool inherit,
       const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
       bool logIfVariableNotFound) const;
+  static ParamSetData *fromQIODevice(
+      QIODevice *input, const QByteArray &format,
+      const QMap<QByteArray,QByteArray> options,
+      const bool escape_percent, const ParamSet &parent);
 };
 
 Q_DECLARE_METATYPE(ParamSet)

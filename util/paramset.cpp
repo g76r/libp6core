@@ -35,8 +35,17 @@
 #include <QSqlField>
 #include <QSqlError>
 #include "pf/pfutils.h"
+#include "csv/csvfile.h"
+#include <QMap>
+#include <QMutex>
+#include <QProcess>
+#include <QTimer>
 
 bool ParamSet::_variableNotFoundLoggingEnabled { false };
+
+static QMap<QByteArray,ParamSet> _externals;
+
+QMutex _externals_mutex;
 
 static int staticInit() {
   qMetaTypeId<ParamSet>();
@@ -129,6 +138,9 @@ public:
 };
 
 ParamSet::ParamSet() {
+}
+
+ParamSet::ParamSet(ParamSetData *data) : d(data){
 }
 
 ParamSet::ParamSet(std::initializer_list<QString> list) {
@@ -252,6 +264,13 @@ ParamSet::ParamSet(
   for (auto i: bindings.keys()) {
     setValue(bindings.value(i), values[i].join(" "));
   }
+}
+
+ParamSet::ParamSet(
+    QIODevice *input, const QByteArray &format,
+    const QMap<QByteArray,QByteArray> options, const bool escape_percent,
+    const ParamSet &parent)
+  : d(fromQIODevice(input, format, options, escape_percent, parent)) {
 }
 
 ParamSet::~ParamSet() {
@@ -649,6 +668,24 @@ _functions {
   // otherwise last one if there are at less 2, otherwise a non-existent one
   return paramset.evaluate(params.value(i), inherit, context, alreadyEvaluated);
 }, true},
+{ "=ext", [](const ParamSet &paramset, const QString &key, bool inherit,
+              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+              int matchedLength) {
+  CharacterSeparatedExpression params(key, matchedLength);
+  auto ext = ParamSet::externalParams(params.value(0).toUtf8());
+  int i = 1;
+  auto ppm = ParamsProviderMerger(paramset)(context);
+  do {
+    QString name = paramset.evaluate(params.value(i), inherit, context,
+                                     alreadyEvaluated);
+    auto v = ext.paramValue(name, &ppm, {}, alreadyEvaluated);
+    if (v.isValid())
+      return v.toString();
+    ++i;
+  } while (i < params.size()-1); // first param and then all but last one
+  // otherwise last one if there are at less 2, otherwise a non-existent one
+  return paramset.evaluate(params.value(i), inherit, context, alreadyEvaluated);
+}, true},
 { "=sha1", [](const ParamSet &paramset, const QString &key, bool inherit,
      const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
      int matchedLength) {
@@ -952,7 +989,7 @@ const QVariant ParamSet::paramValue(
   const QVariant &defaultValue, QSet<QString> *alreadyEvaluated) const {
   QString v = evaluate(rawValue(key, defaultValue.toString(), true),
                        true, context, alreadyEvaluated);
-  return v.isNull() ? QVariant() : v;
+  return v.isNull() ? QVariant{} : v;
 }
 
 const QString ParamSet::toString(bool inherit, bool decorate) const {
@@ -1003,11 +1040,6 @@ LogHelper operator<<(LogHelper lh, const ParamSet &params) {
   for (auto key: keys)
     lh << key << "=" << params.rawValue(key) << " ";
   return lh << "}";
-}
-
-QString ParamSet::escape(QString string) {
-  return string.isNull() ? string : string.replace(QStringLiteral("%"),
-                                                   QStringLiteral("%%"));
 }
 
 void ParamSet::detach() {
@@ -1065,4 +1097,115 @@ bool ParamSet::valueAsBool(
   const ParamsProvider *context) const {
   QString v = evaluate(rawValue(key, QString(), inherit), inherit, context);
   return PfUtils::stringAsBool(v, defaultValue);
+}
+
+ParamSetData *ParamSet::fromQIODevice(
+    QIODevice *input, const QByteArray &format,
+    const QMap<QByteArray,QByteArray> options,
+    const bool escape_percent, const ParamSet &parent) {
+  auto d = new ParamSetData(parent);
+  if (!input || format != "csv")
+    return d;
+  if (!input->isOpen()) {
+    if (!input->open(QIODevice::ReadOnly)) {
+      QFile *file = qobject_cast<QFile*>(input);
+      Log::error() << "cannot open file to read parameters: "
+                   << (file ? file->fileName() : input->metaObject()->className())
+                   << input->errorString();
+      return d;
+    }
+  }
+  auto separator = options.value("separator"_ba).append(',').at(0);
+  auto quote = options.value("quote"_ba).append('"').at(0);
+  auto escape = options.value("escape"_ba).append('\\').at(0);
+  CsvFile csvfile(input);
+  csvfile.enableHeaders(false);
+  csvfile.setFieldSeparator(separator);
+  csvfile.setQuoteChar(quote);
+  csvfile.setEscapeChar(escape);
+  auto rows = csvfile.rows();
+  for (auto row: rows) {
+    auto key = row.value(0);
+    auto value = row.value(1);
+    if (key.isEmpty())
+      continue;
+    if (escape_percent)
+      d->_params.insert(key, ParamSet::escape(value));
+    else
+      d->_params.insert(key, value);
+  }
+  return d;
+}
+
+ParamSet ParamSet::fromFile(
+    const QByteArray &file_name, const QByteArray &format,
+    const QMap<QByteArray,QByteArray> options,
+    const bool escape_percent, const ParamSet &parent) {
+  QFile file(file_name);
+  return ParamSet(fromQIODevice(&file, format, options, escape_percent, parent));
+}
+
+ParamSet ParamSet::fromCommandOutput(
+    const QStringList &cmdline, const QByteArray &format,
+    const QMap<QByteArray,QByteArray> options,
+    const bool escape_percent, const ParamSet &parent){
+  ParamSet params(parent);
+  if (cmdline.size() < 1) {
+    Log::error() << "cannot start external params command with empty cmdline";
+    return params;
+  }
+  auto program = cmdline.value(0);
+  auto args = cmdline.sliced(1);
+  auto process = new QProcess;
+  QObject::connect(process, &QProcess::finished,
+                   [cmdline](int exitCode, QProcess::ExitStatus exitStatus) {
+    bool success = (exitStatus == QProcess::NormalExit
+                    && exitCode == 0);
+    if (success)
+      return;
+    Log::error() << "cannot execute external params command " << cmdline
+                 << ": process failed with exit code " << exitCode;
+  });
+  process->setStandardErrorFile(QProcess::nullDevice());
+  QTimer::singleShot(10'000, process, &QProcess::terminate);
+  process->start(program, args);
+  if (!process->waitForStarted(10'000)) {
+    Log::error() << "cannot start external params command " << cmdline;
+    process->deleteLater();
+    return params;
+  }
+  if (!process->waitForFinished(10'000)) {
+    Log::error() << "cannot wait for external params command finishing "
+                 << cmdline;
+    process->deleteLater();
+    return params;
+  }
+  auto output = process->readAllStandardOutput();
+  QBuffer buffer(&output);
+  params = fromQIODevice(&buffer, format, options, escape_percent, parent);
+  process->deleteLater();
+  return params;
+}
+
+ParamSet ParamSet::externalParams(QByteArray set_name) {
+  QMutexLocker ml(&_externals_mutex);
+  return _externals.value(set_name);
+}
+
+void ParamSet::registerExternalParams(
+    const QByteArray &set_name, ParamSet params) {
+  QMutexLocker ml(&_externals_mutex);
+  _externals.insert(set_name, params);
+}
+
+void ParamSet::clearExternalParams() {
+  QMutexLocker ml(&_externals_mutex);
+  _externals.clear();
+}
+
+QByteArrayList ParamSet::externalParamsNames() {
+  QMutexLocker ml(&_externals_mutex);
+  auto list = _externals.keys();
+  list.detach();
+  return list;
 }

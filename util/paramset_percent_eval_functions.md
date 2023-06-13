@@ -283,12 +283,10 @@ examples:
 
 lookup system environment variable.
 
-varnames and defaultValue are evaluated.
+varnames, defaultValue and values of environment variables are
+%-evaluated.
 
-values of env vars themselves are not evaluated (USER=%foo will remain %foo),
-but you can still use %=eval if needed (see examples below).
-
-you must provide a default value if there are more than 1 varname
+you must always provide a default value if there are more than 1 varname
 
 exemples:
 * `%{=env:SHELL}` -> `$SHELL` or empty if empty or not set
@@ -296,7 +294,34 @@ exemples:
 * `%{=env:USERNAME:USER:}` -> `$USERNAME` or `$USER` or empty (note the trailing `:`)
 * `%{=env:USERNAME:USER}` -> /!\ `$USERNAME` or "USER" (default value, not env var)
 * `%{=env,EDITOR_FOR_%foo,EDITOR,vim}` -> `$EDITOR_FOR_%foo` or `$EDITOR` or "vim"
-* `%{=eval!%{=env:FOO}}` -> %-evaluated $FOO value
+
+%=ext
+-----
+`%{=ext:namespace[[:varname2[:...]]:defaultvalue]}`
+
+lookup external paramset.
+
+namespace, varnames, defaultValue and values of external paramset are
+%-evaluated.
+
+you must always provide a default value if there are more than 1 varname
+
+the external paramset must have been loaded before, using
+registerExternalParams() function, being them loaded from csv files, external
+command outputs or anything else.
+
+loading from external command outputs is convenient to load secrets from an
+external vault, using the vault command line interface, such as:
+* `aws secretsmanager get-secret-value --secret-id foobar |
+   jq -r '.SecretString|fromjson|. as $o|($o|keys) as $keys|$keys[]
+          |[.,$o[.]]|"\""+.[0]+"\",\""+(.[1]
+          |gsub("(?<sc>[,\"\\\\])";"\\"+.sc))+"\""'`
+
+exemples:
+* `%{=ext:secrets:db_password}` -> db_password value from secrets
+* `%{=ext:secrets:%{=env:USER}_password:generic_password:}`
+  -> $USER_password otherwise generic_password value from secrets
+* `%{=ext♫secrets2♫db_password}` -> db_password value from secrets2
 
 %=eval
 ------
@@ -307,7 +332,6 @@ variable (or expression) value
 
 examples:
 * `%{=eval!%foo}` -> `baz` if foo is `%bar` and bar is `baz`
-* `%{=eval!%{=env:FOO}}` -> %-evaluated value of $FOO environment variable
 * `%{=eval!%{=rawvalue:foo}}` -> very complicated equivalent of `%foo`
 
 %=escape
@@ -424,33 +448,36 @@ compute a reverse polish notation mathematical expression
 terms are considered as constants if the begins (and optionnaly ends) with
 a simple quote and are considered variables (and will be %-evaluated) otherwise
 
-following operators are supported with there usual (C, C++, Java, JS, bash...)
-meanings:
+following operators are supported with their usual (C, C++, Java, JS, bash...)
+meaning:
 binary operators: `+ - * / % */* .. <=> <= >= < > == != =~ !=~ && ^^ || ?? <? >?`
 unary operators: `! !! ~ ~~ ?- !-`
 ternary operator: `?:`
 please note that:
 - there are no unary - and + operators
-- .. is a string concatenation operator whereas + is always a numerical operator
-- =~ is a regexp matching operator (right operand is a regexp)
-- !! is a boolean conversion operator (%{=rpn,1,!!} -> true)
-- ~~ is an integer conversion operator (%{=rpn,3.14,~~} -> 3)
-- ?? is a coalescence operator (%{=rpn,',foo,'null,??,??} -> foo value if not
-  empty otherwise "null")
-- <? and >? are min and max operators (%{=rpn,'abc,'ABC,<?} -> ABC
-  and %{=,'100,~~,'200,~~,>?} -> 200)
-- ?- returns "false" for empty, null or invalid param and "true" otherwise
-- !- returns the opposite
-- */* is processed as if it were %
+- `..` is a string concatenation operator whereas `+` is always a numerical
+  operator
+- `=~` is a regexp matching operator (right operand is a regexp)
+- `!!` is a boolean conversion operator (`%{=rpn,1,!!}` -> true)
+- `~~` is an integer conversion operator (`%{=rpn,3.14,~~}` -> 3)
+- `??` is a coalescence operator (`%{=rpn,',foo,'null,??,??}` -> foo value if
+  not empty otherwise "null")
+- `<?` and `>?` are min and max operators (`%{=rpn,'abc,'ABC,<?}` -> ABC
+  and `%{=,'100,~~,'200,~~,>?}` -> 200)
+- `?-` returns "false" for empty, null or invalid param and "true" otherwise
+- `!-` returns the opposite
+- `*/*` is processed as if it were `%`
 
 for cases where some terms are non-string variables (because they are provided
 by a ParamsProvider other than ParamSet) the following operators are relevant
 too: binary: `==* !=* ??*` unary: `?* !*`
-- == considers any invalid QVariant as if it were an empty string whereas
-  ==* considers invalid QVariant and QVariant that cannot be converted to a
+- `==` considers any invalid QVariant as if it were an empty string whereas
+  `==*` considers invalid QVariant and QVariant that cannot be converted to a
   string cannot be equal to anything
-- ??* coalesces null or invalid QVariants but not empty QString whereas ?? does
-- ?* and !* don't process empty string as null/invalid whereas ?- and !- do
+- `??*` coalesces null or invalid QVariants but not empty QString whereas `??`
+  does
+- `?*` and !* don't process empty string as null/invalid whereas `?-` and `!-`
+  do
 
 see also MathExpr which operates with QVariant args and not only strings and is
 used as %=rpn engine. of course there are plenty of implicit type conversions,
@@ -479,7 +506,7 @@ returns "anything" without evaluating it
 
 this is usefull when an application process an input as always %-evaluated
 (being in config files or elsewhere) because it make it possible to provide
-a constant anyway
+a constant anyway, see %=rpn for instance
 
 examples:
 * `%{'foo}` returns "foo" whereas `%{foo}` would have returned the value of foo
