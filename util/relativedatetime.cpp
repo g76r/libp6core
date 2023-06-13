@@ -1,4 +1,4 @@
-/* Copyright 2014-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,7 +14,7 @@
 #include "relativedatetime.h"
 #include <QSharedData>
 #include <QMutex>
-#include <QHash>
+#include <QCache>
 #include <QRegularExpression>
 #include <QtDebug>
 #include <QTimeZone>
@@ -32,7 +32,7 @@ static QRegularExpression _isoLikeTimeRE {
   "(?:\\A|[T ])([0-9]{2}):([0-9]{2})(?::([0-9]{2})(?:[,.]([0-9]{3}))?)?(" TZ_RE ")?\\z" };
 
 static QMutex _cacheMutex;
-static QHash<QString, RelativeDateTime> _cache;
+static QCache<QString, RelativeDateTime> _cache(1'000);
 
 class RelativeDateTimeData : public QSharedData {
   enum ReferenceMethod { Today = 0, DayOfWeek = 1, DayOfMonth, MonthAndDay,
@@ -191,20 +191,21 @@ public:
 RelativeDateTime::RelativeDateTime() {
 }
 
-RelativeDateTime::RelativeDateTime(QString expression) {
-  if (!expression.isEmpty()) {
-    expression = expression.trimmed();
-    QMutexLocker locker(&_cacheMutex);
-    RelativeDateTime cached = _cache.value(expression);
-    locker.unlock();
-    if (!cached.isNull())
-      d = cached.d;
-    else {
-      d = new RelativeDateTimeData(expression);
-      locker.relock();
-      _cache.insert(expression, *this);
-    }
+RelativeDateTime::RelativeDateTime(RelativeDateTimeData *other) : d(other) {
+}
+
+RelativeDateTime::RelativeDateTime(const QString &expression) {
+  if (expression.isEmpty())
+    return;
+  auto trimmed = expression.trimmed();
+  QMutexLocker locker(&_cacheMutex);
+  RelativeDateTime *cached = _cache.object(trimmed);
+  if (cached) {
+    d = cached->d;
+    return;
   }
+  d = new RelativeDateTimeData(trimmed);
+  _cache.insert(trimmed, new RelativeDateTime(d));
 }
 
 RelativeDateTime::RelativeDateTime(const RelativeDateTime &rhs)

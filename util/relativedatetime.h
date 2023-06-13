@@ -1,4 +1,4 @@
-/* Copyright 2014-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -82,10 +82,11 @@ class RelativeDateTimeData;
  */
 class LIBP6CORESHARED_EXPORT RelativeDateTime {
   QSharedDataPointer<RelativeDateTimeData> d;
+  RelativeDateTime(RelativeDateTimeData *data);
 
 public:
   RelativeDateTime();
-  RelativeDateTime(QString expression);
+  explicit RelativeDateTime(const QString &expression);
   RelativeDateTime(const RelativeDateTime &);
   RelativeDateTime &operator=(const RelativeDateTime &);
   ~RelativeDateTime();
