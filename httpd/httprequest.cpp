@@ -17,7 +17,7 @@
 #include "httpcommon.h"
 #include <QSharedData>
 #include <QHostAddress>
-#include <QHash>
+#include <QMap>
 #include "util/radixtree.h"
 #include "util/containerutils.h"
 #include "format/stringutils.h"
@@ -67,7 +67,7 @@ HttpRequest &HttpRequest::operator=(const HttpRequest &other) {
   return *this;
 }
 
-static QHash<HttpRequest::HttpMethod,QByteArray> _methodToText {
+static QMap<HttpRequest::HttpMethod,QByteArray> _methodToText {
   { HttpRequest::NONE, "NONE" },
   { HttpRequest::HEAD, "HEAD" },
   { HttpRequest::GET, "GET" },
@@ -78,7 +78,7 @@ static QHash<HttpRequest::HttpMethod,QByteArray> _methodToText {
   { HttpRequest::ANY, "ANY" },
 };
 
-static QHash<QByteArray,HttpRequest::HttpMethod> _methodFromText {
+static QMap<QByteArray,HttpRequest::HttpMethod> _methodFromText {
   ContainerUtils::reversed(_methodToText)
 };
 

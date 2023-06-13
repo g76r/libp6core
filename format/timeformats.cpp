@@ -12,7 +12,7 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "timeformats.h"
-#include <QHash>
+#include <QMap>
 #include <QString>
 #include <QRegularExpression>
 #include "log/log.h"
@@ -29,7 +29,7 @@ static const QRegularExpression _rfc2822DateTimeRE(
     "\\s+(\\d{2}):(\\d{2}):(\\d{2})" // time
     "\\s*(([+-]\\d{4})|([A-Z]{1,4}))" // timezone
     "\\s*\\z");
-static const QHash<QString,int> _fromDaysOfWeek3 {
+static const QMap<QString,int> _fromDaysOfWeek3 {
   { "mon", 1 },
   { "tue", 2 },
   { "wed", 3 },
@@ -38,7 +38,7 @@ static const QHash<QString,int> _fromDaysOfWeek3 {
   { "sat", 6 },
   { "sun", 7 },
 };
-static const QHash<int,QString> _toDaysOfWeek3 {
+static const QMap<int,QString> _toDaysOfWeek3 {
   { 1, "Mon" },
   { 2, "Tue" },
   { 3, "Wed" },
@@ -48,7 +48,7 @@ static const QHash<int,QString> _toDaysOfWeek3 {
   { 7, "Sun" },
   { 0, "Sun" },
 };
-static const QHash<QString,int> _fromMonth3 {
+static const QMap<QString,int> _fromMonth3 {
   { "jan", 1 },
   { "fev", 2 },
   { "mar", 3 },
@@ -62,7 +62,7 @@ static const QHash<QString,int> _fromMonth3 {
   { "nov", 11 },
   { "dec", 12 },
 };
-static const QHash<int,QString> _toMonth3 {
+static const QMap<int,QString> _toMonth3 {
   { 1, "Jan" },
   { 2, "Fev" },
   { 3, "Mar" },

@@ -13,14 +13,14 @@
  */
 #include "stringutils.h"
 #include <QRegularExpression>
-#include <QHash>
+#include <QMap>
 
 static QRegularExpression linkRe{"http(s?)://\\S+"};
 
 QString StringUtils::htmlEncode(
     QString text, bool urlAsLinks, bool newlineAsBr) {
   QString s;
-  QHash<int,int> linksIndexes; // start of link index -> length of link
+  QMap<int,int> linksIndexes; // start of link index -> length of link
   if (urlAsLinks) {
     QRegularExpressionMatchIterator it = linkRe.globalMatch(text);
     while (it.hasNext()) {

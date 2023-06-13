@@ -12,7 +12,6 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "mathutils.h"
-#include <QHash>
 #include <QDateTime>
 #include <cmath>
 
