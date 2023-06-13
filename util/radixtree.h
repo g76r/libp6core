@@ -313,21 +313,21 @@ public:
       for (const char *key: helper._keys)
         insert(key, helper._value, helper._isPrefix);
   }
-  RadixTree(QHash<QString,T> hash) : RadixTree() {
+  explicit RadixTree(QHash<QString,T> hash) : RadixTree() {
     for (const QString &key: hash.keys())
       insert(key.toUtf8().constData(), hash.value(key));
   }
   /** assumes that key is UTF-8 (or of course ASCII) */
-  RadixTree(QHash<const char *,T> hash) : RadixTree() {
+  explicit RadixTree(QHash<const char *,T> hash) : RadixTree() {
     for (const char *key: hash.keys())
       insert(key, hash.value(key));
   }
-  RadixTree(QMap<QString,T> map) : RadixTree() {
+  explicit RadixTree(QMap<QString,T> map) : RadixTree() {
     foreach (const QString &key, map.keys())
       insert(key.toUtf8().constData(), map.value(key));
   }
   /** assumes that key is UTF-8 (or of course ASCII) */
-  RadixTree(QMap<const char *,T> map) : RadixTree() {
+  explicit RadixTree(QMap<const char *,T> map) : RadixTree() {
     for (const char *key: map.keys())
       insert(key, map.value(key));
   }
