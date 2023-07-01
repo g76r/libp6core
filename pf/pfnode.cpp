@@ -25,12 +25,6 @@ under the License.
 
 const QList<PfNode> PfNode::_emptyList;
 
-static int staticInit() {
-  qMetaTypeId<PfNode>();
-  return 0;
-}
-Q_CONSTRUCTOR_FUNCTION(staticInit)
-
 static QRegularExpression _whitespace("\\s");
 static QRegularExpression _leadingwhitespace("\\A\\s+");
 
