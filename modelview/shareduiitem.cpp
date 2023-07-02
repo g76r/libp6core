@@ -1,4 +1,4 @@
-/* Copyright 2014-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,12 +14,6 @@
 #include "shareduiitem.h"
 #include <QtDebug>
 #include <QRegularExpression>
-
-static int staticInit() {
-  qMetaTypeId<SharedUiItem>();
-  return 0;
-}
-Q_CONSTRUCTOR_FUNCTION(staticInit)
 
 SharedUiItemData::~SharedUiItemData() {
 }

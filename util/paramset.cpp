@@ -48,7 +48,6 @@ static QMap<QByteArray,ParamSet> _externals;
 QMutex _externals_mutex;
 
 static int staticInit() {
-  qMetaTypeId<ParamSet>();
   if (qgetenv("ENABLE_PARAMSET_VARIABLE_NOT_FOUND_LOGGING") == "true")
     ParamSet::enableVariableNotFoundLogging();
   return 0;

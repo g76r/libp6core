@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -31,8 +31,6 @@ TcpClient::TcpClient(IncomingMessageDispatcher *dispatcher)
   connect(_handler, &TcpConnectionHandler::handlerReleased,
           this, &TcpClient::tryConnect);
   // TODO may need to connect to some socket events too
-  qRegisterMetaType<QHostAddress>("QHostAddress");
-  qMetaTypeId<TcpConnectionHandler*>();
 }
 
 void TcpClient::connectToHost(const QHostAddress &address, quint16 port) {
