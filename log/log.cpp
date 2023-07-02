@@ -23,7 +23,6 @@
 #define ISO8601 u"yyyy-MM-ddThh:mm:ss,zzz"_s
 
 static MultiplexerLogger *_rootLogger = nullptr;
-static QRegularExpression *_whitespaceRE = nullptr;
 static QMutex *_qtHandlerMutex = nullptr;
 static QtMessageHandler _qtOriginalHandler = nullptr;
 
@@ -32,14 +31,6 @@ static QtMessageHandler _qtOriginalHandler = nullptr;
   /!\ because Log::log() must not crash when called during the /!\
   /!\ program shutdown                                         /!\
  ******************************************************************/
-
-static int staticInit() {
-  _rootLogger = new MultiplexerLogger(Log::Debug, true);
-  _whitespaceRE = new QRegularExpression{ "\\s+" };
-  _qtHandlerMutex = new QMutex;
-  return 0;
-}
-Q_CONSTRUCTOR_FUNCTION(staticInit)
 
 static inline void sanitizeField(QByteArray *ba) {
   if (ba->isNull()) [[unlikely]]
@@ -54,29 +45,41 @@ static inline void sanitizeMessage(QByteArray *ba) {
 }
 
 void Log::addLogger(Logger *logger, bool autoRemovable) {
+  if (!_rootLogger)
+    return;
   if (logger->threadModel() == Logger::DirectCall)
     logger->moveToThread(_rootLogger->thread());
   _rootLogger->addLogger(logger, autoRemovable);
 }
 
 void Log::removeLogger(Logger *logger) {
+  if (!_rootLogger)
+    return;
   _rootLogger->removeLogger(logger);
 }
 
 void Log::addConsoleLogger(Severity severity, bool autoRemovable) {
+  if (!_rootLogger)
+    return;
   _rootLogger->addConsoleLogger(severity, autoRemovable);
 }
 
 void Log::replaceLoggers(Logger *newLogger) {
+  if (!_rootLogger)
+    return;
   _rootLogger->replaceLoggers(newLogger);
 }
 
 void Log::replaceLoggers(QList<Logger*> newLoggers) {
+  if (!_rootLogger)
+    return;
   _rootLogger->replaceLoggers(newLoggers);
 }
 
 void Log::replaceLoggersPlusConsole(Log::Severity consoleLoggerSeverity,
                                     QList<Logger*> newLoggers) {
+  if (!_rootLogger)
+    return;
   _rootLogger->replaceLoggersPlusConsole(
         consoleLoggerSeverity, newLoggers);
 }
@@ -84,6 +87,8 @@ void Log::replaceLoggersPlusConsole(Log::Severity consoleLoggerSeverity,
 void Log::log(
     QByteArray message, Severity severity, QByteArray task, QByteArray execId,
     QByteArray sourceCode) {
+  if (!_rootLogger)
+    return;
   QByteArray realTask = task;
   if (realTask.isNull()) {
     QThread *t = QThread::currentThread();
@@ -105,8 +110,18 @@ void Log::log(
                                     execId, sourceCode));
 }
 
+void Log::init() {
+  if (_rootLogger)
+    return;
+  _rootLogger = new MultiplexerLogger(Log::Debug, true);
+  _qtHandlerMutex = new QMutex;
+}
+
 void Log::shutdown() {
+  if (!_rootLogger)
+    return;
   _rootLogger->shutdown();
+  _rootLogger = nullptr;
 }
 
 QByteArray Log::severityToString(Severity severity) {
@@ -146,14 +161,20 @@ Log::Severity Log::severityFromString(QByteArray string) {
 }
 
 QString Log::pathToLastFullestLog() {
+  if (!_rootLogger)
+    return {};
   return _rootLogger->pathToLastFullestLog();
 }
 
 QStringList Log::pathsToFullestLogs() {
+  if (!_rootLogger)
+    return {};
   return _rootLogger->pathsToFullestLogs();
 }
 
 QStringList Log::pathsToAllLogs() {
+  if (!_rootLogger)
+    return {};
   return _rootLogger->pathsToAllLogs();
 }
 
@@ -197,6 +218,8 @@ static void qtLogSamePatternWrapper(
 }
 
 void Log::wrapQtLogToSamePattern(bool enable) {
+  if (!_rootLogger)
+    return;
   QMutexLocker ml(_qtHandlerMutex);
   if (enable) {
     QtMessageHandler previous = qInstallMessageHandler(qtLogSamePatternWrapper);

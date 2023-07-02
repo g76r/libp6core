@@ -59,6 +59,8 @@ public:
    * plus a console logger.*/
   static void replaceLoggersPlusConsole(
       Log::Severity consoleLoggerSeverity, QList<Logger*> newLoggers);
+  /** init log engine */
+  static void init();
   /** flush remove any logger */
   static void shutdown();
   static void log(QByteArray message, Severity severity = Info,
