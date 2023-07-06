@@ -1,4 +1,4 @@
-/* Copyright 2013-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -60,8 +60,8 @@ public:
   ParamsProviderMerger(const ParamsProvider *provider) {
     append(provider);
   }
-  ParamsProviderMerger(ParamSet provider) {
-    append(provider);
+  ParamsProviderMerger(ParamSet provider, bool inherit = true) {
+    append(provider, inherit);
   }
   /** Add a ParamsProvider that will be evaluated after those already added. */
   ParamsProviderMerger &append(const ParamsProvider *provider) {
@@ -70,9 +70,12 @@ public:
     return *this;
   }
   /** Add a ParamsProvider that will be evaluated after those already added. */
-  ParamsProviderMerger &append(ParamSet provider) {
-    if (!provider.isNull())
+  ParamsProviderMerger &append(ParamSet provider, bool inherit = true) {
+    if (!provider.isNull()) {
+      if (!inherit)
+        provider.setParent({});
       _providers.append(provider);
+    }
     return *this;
   }
   /** Add a ParamsProvider that will be evaluated before those already added but
@@ -84,9 +87,12 @@ public:
   }
   /** Add a ParamsProvider that will be evaluated before those already added but
    * after parameters set with overrideParamValue(). */
-  ParamsProviderMerger &prepend(ParamSet provider) {
-    if (!provider.isNull())
+  ParamsProviderMerger &prepend(ParamSet provider, bool inherit = true) {
+    if (!provider.isNull()) {
+      if (!inherit)
+        provider.setParent({});
       _providers.prepend(provider);
+    }
     return *this;
   }
   ParamsProviderMerger &pop_front() {
@@ -99,15 +105,11 @@ public:
   }
   /** Convenience operator for append() */
   ParamsProviderMerger &operator()(const ParamsProvider *provider) {
-    if (provider)
-      _providers.append(provider);
-    return *this;
+    return append(provider);
   }
   /** Convenience operator for append() */
-  ParamsProviderMerger &operator()(ParamSet provider) {
-    if (!provider.isNull())
-      _providers.append(provider);
-    return *this;
+  ParamsProviderMerger &operator()(ParamSet provider, bool inherit = true) {
+    return append(provider, inherit);
   }
   /** Parameters set through overrideParamValue() will override any
    * ParamsProvider, even those prepended. */
