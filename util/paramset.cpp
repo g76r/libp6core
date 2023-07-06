@@ -40,6 +40,7 @@
 #include <QMutex>
 #include <QProcess>
 #include <QTimer>
+#include "util/utf8string.h"
 
 bool ParamSet::_variableNotFoundLoggingEnabled { false };
 
@@ -673,17 +674,18 @@ _functions {
   CharacterSeparatedExpression params(key, matchedLength);
   auto ext = ParamSet::externalParams(params.value(0).toUtf8());
   int i = 1;
-  auto ppm = ParamsProviderMerger(paramset)(context);
+  auto ppm = ParamsProviderMerger(paramset, inherit)(context);
+  //qDebug() << "***password =ext" << ext << params.size() << params.value(i)
+  //         << ext.toString();
   do {
-    QString name = paramset.evaluate(params.value(i), inherit, context,
-                                     alreadyEvaluated);
+    QString name = ppm.evaluate(params.value(i), alreadyEvaluated);
     auto v = ext.paramValue(name, &ppm, {}, alreadyEvaluated);
     if (v.isValid())
       return v.toString();
     ++i;
   } while (i < params.size()-1); // first param and then all but last one
   // otherwise last one if there are at less 2, otherwise a non-existent one
-  return paramset.evaluate(params.value(i), inherit, context, alreadyEvaluated);
+  return ppm.evaluate(params.value(i), alreadyEvaluated);
 }, true},
 { "=sha1", [](const ParamSet &paramset, const QString &key, bool inherit,
      const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
@@ -1114,15 +1116,17 @@ ParamSetData *ParamSet::fromQIODevice(
       return d;
     }
   }
-  auto separator = options.value("separator"_ba).append(',').at(0);
-  auto quote = options.value("quote"_ba).append('"').at(0);
-  auto escape = options.value("escape"_ba).append('\\').at(0);
-  CsvFile csvfile(input);
+  auto separator = Utf8String(options.value("separator"_ba)).value(0,',');
+  auto quote = Utf8String(options.value("quote"_ba)).value(0,'"');
+  auto escape = Utf8String(options.value("escape"_ba)).value(0,'\\');
+  CsvFile csvfile;
   csvfile.enableHeaders(false);
   csvfile.setFieldSeparator(separator);
   csvfile.setQuoteChar(quote);
   csvfile.setEscapeChar(escape);
+  csvfile.openReadonly(input);
   auto rows = csvfile.rows();
+  //qDebug() << "***password from csv" << rows << separator << quote << escape;
   for (auto row: rows) {
     auto key = row.value(0);
     auto value = row.value(1);
@@ -1140,6 +1144,7 @@ ParamSet ParamSet::fromFile(
     const QByteArray &file_name, const QByteArray &format,
     const QMap<QByteArray,QByteArray> options,
     const bool escape_percent, const ParamSet &parent) {
+  //qDebug() << "***password fromFile" << file_name;
   QFile file(file_name);
   return ParamSet(fromQIODevice(&file, format, options, escape_percent, parent));
 }
@@ -1148,6 +1153,7 @@ ParamSet ParamSet::fromCommandOutput(
     const QStringList &cmdline, const QByteArray &format,
     const QMap<QByteArray,QByteArray> options,
     const bool escape_percent, const ParamSet &parent){
+  //qDebug() << "***password fromCommandOutput" << cmdline;
   ParamSet params(parent);
   if (cmdline.size() < 1) {
     Log::error() << "cannot start external params command with empty cmdline";
@@ -1194,6 +1200,7 @@ ParamSet ParamSet::externalParams(QByteArray set_name) {
 void ParamSet::registerExternalParams(
     const QByteArray &set_name, ParamSet params) {
   QMutexLocker ml(&_externals_mutex);
+  //qDebug() << "***password registerExternalParams" << set_name << params.toString();
   _externals.insert(set_name, params);
 }
 
