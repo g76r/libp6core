@@ -143,7 +143,8 @@ SOURCES += \
     io/directorywatcher.cpp \
     modelview/stringhashmodel.cpp \
     format/jsonformats.cpp \
-    modelview/stringlistdiffmodel.cpp
+    modelview/stringlistdiffmodel.cpp \
+    util/utf8string.cpp
 
 HEADERS +=\
     io/unixsignalmanager.h \
@@ -242,7 +243,8 @@ HEADERS +=\
     ostore/objectslistmodel.h \
     ostore/sqlobjectsstore.h \
     io/directorywatcher.h \
-    modelview/stringhashmodel.h \ 
+    modelview/stringhashmodel.h \  \
+    util/utf8string.h \
     format/jsonformats.h \
     modelview/stringlistdiffmodel.h
 
