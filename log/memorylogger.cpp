@@ -16,7 +16,7 @@
 #include <QMetaObject>
 
 MemoryLogger::MemoryLogger(
-    Log::Severity minSeverity, QByteArray prefixFilter, LogModel *logmodel)
+    Log::Severity minSeverity, Utf8String prefixFilter, LogModel *logmodel)
   : Logger(minSeverity, Logger::DirectCall), _prefixFilter(prefixFilter),
     _model(logmodel) {
 }

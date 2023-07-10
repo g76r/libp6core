@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,12 +24,12 @@ class LIBP6CORESHARED_EXPORT MemoryLogger : public Logger {
   friend class LogModel;
   Q_OBJECT
   Q_DISABLE_COPY(MemoryLogger)
-  QByteArray _prefixFilter;
+  Utf8String _prefixFilter;
   LogModel *_model;
 
   // only LogModel can create a MemoryLogger object, ensuring they share the
   // same thread, therefore the constructor must not be public
-  MemoryLogger(Log::Severity minSeverity, QByteArray prefixFilter,
+  MemoryLogger(Log::Severity minSeverity, Utf8String prefixFilter,
                LogModel *logmodel);
 
 protected:

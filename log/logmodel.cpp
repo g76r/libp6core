@@ -15,14 +15,14 @@
 #include "memorylogger.h"
 
 LogModel::LogModel(QObject *parent, Log::Severity minSeverity, int maxrows,
-                   QByteArray prefixFilter)
+                   Utf8String prefixFilter)
   : SharedUiItemsTableModel(parent),
     _logger(new MemoryLogger(minSeverity, prefixFilter, this)) {
   setMaxrows(maxrows);
   setDefaultInsertionPoint(SharedUiItemsTableModel::FirstItem);
   setHeaderDataFromTemplate(
-        Logger::LogEntry(QDateTime(), QByteArray(), Log::Debug, QByteArray(),
-                         QByteArray(), QByteArray()));
+        Logger::LogEntry(QDateTime(), Utf8String(), Log::Debug, Utf8String(),
+                         Utf8String(), Utf8String()));
   Log::addLogger(_logger, false);
 }
 
@@ -31,8 +31,8 @@ LogModel::LogModel(QObject *parent, int maxrows)
   setMaxrows(maxrows);
   setDefaultInsertionPoint(SharedUiItemsTableModel::FirstItem);
   setHeaderDataFromTemplate(
-        Logger::LogEntry(QDateTime(), QByteArray(), Log::Debug, QByteArray(),
-                         QByteArray(), QByteArray()));
+        Logger::LogEntry(QDateTime(), Utf8String(), Log::Debug, Utf8String(),
+                         Utf8String(), Utf8String()));
 }
 
 LogModel::~LogModel() {

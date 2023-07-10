@@ -57,11 +57,11 @@ FileLogger::~FileLogger() {
     delete _device;
 }
 
-QString FileLogger::currentPath() const {
+Utf8String FileLogger::currentPath() const {
   return _currentPath;
 }
 
-QString FileLogger::pathPattern() const {
+Utf8String FileLogger::pathPattern() const {
   return _pathPattern;
 }
 
@@ -92,7 +92,7 @@ void FileLogger::doLog(const LogEntry &entry) {
   }
   if (_device) [[likely]] {
     // TODO move this to LogEntry::asLogLine()
-    QByteArray line =
+    Utf8String line =
         entry.timestamp().toString(ISO8601).toUtf8()+SPACE
         +entry.task()+SLASH+entry.execId()+SPACE+entry.sourceCode()+SPACE
         +entry.severityToString()+SPACE+entry.message()+NEWLINE;

@@ -84,12 +84,11 @@ void Log::replaceLoggersPlusConsole(Log::Severity consoleLoggerSeverity,
         consoleLoggerSeverity, newLoggers);
 }
 
-void Log::log(
-    QByteArray message, Severity severity, QByteArray task, QByteArray execId,
-    QByteArray sourceCode) {
+void Log::log(Utf8String message, Severity severity, Utf8String taskid,
+              Utf8String execid, Utf8String sourcecode) {
   if (!_rootLogger)
     return;
-  QByteArray realTask = task;
+  QByteArray realTask = taskid;
   if (realTask.isNull()) {
     QThread *t = QThread::currentThread();
     if (t)
@@ -98,16 +97,16 @@ void Log::log(
   sanitizeField(&realTask);
   if (realTask.isEmpty())
     realTask = "?"_ba;
-  sanitizeField(&execId);
-  if (execId.isEmpty())
-    execId = "0"_ba;
-  sanitizeField(&sourceCode);
-  if (sourceCode.isEmpty())
-    sourceCode = ":"_ba;
+  sanitizeField(&execid);
+  if (execid.isEmpty())
+    execid = "0"_ba;
+  sanitizeField(&sourcecode);
+  if (sourcecode.isEmpty())
+    sourcecode = ":"_ba;
   QDateTime now = QDateTime::currentDateTime();
   sanitizeMessage(&message);
   _rootLogger->log(Logger::LogEntry(now, message, severity, realTask,
-                                    execId, sourceCode));
+                                    execid, sourcecode));
 }
 
 void Log::init() {
@@ -124,7 +123,7 @@ void Log::shutdown() {
   _rootLogger = nullptr;
 }
 
-QByteArray Log::severityToString(Severity severity) {
+Utf8String Log::severityToString(Severity severity) {
   switch (severity) {
   case Debug:
     return "DEBUG"_ba;
@@ -140,10 +139,8 @@ QByteArray Log::severityToString(Severity severity) {
   return "UNKNOWN"_ba;
 }
 
-Log::Severity Log::severityFromString(QByteArray string) {
-  if (string.isEmpty())
-    return Debug;
-  switch (string.at(0)) {
+Log::Severity Log::severityFromString(Utf8String string) {
+  switch (string.value(0)) {
     case 'I':
     case 'i':
       return Info;
@@ -180,7 +177,7 @@ QStringList Log::pathsToAllLogs() {
 
 static void qtLogSamePatternWrapper(
     QtMsgType type, const QMessageLogContext &context, const QString &msg) {
-  QByteArray severity = "UNKNOWN"_ba;
+  Utf8String severity = "UNKNOWN"_ba;
   switch (type) {
     case QtDebugMsg:
       severity = Log::severityToString(Log::Debug);
@@ -198,17 +195,17 @@ static void qtLogSamePatternWrapper(
       severity = Log::severityToString(Log::Fatal);
       break;
   }
-  QByteArray taskName = QThread::currentThread()->objectName().toUtf8();
+  Utf8String taskName = QThread::currentThread()->objectName();
   sanitizeField(&taskName);
   if (taskName.isEmpty())
     taskName = "?"_ba;
-  QByteArray realMsg = msg.toUtf8();
+  Utf8String realMsg = msg;
   sanitizeMessage(&realMsg);
-  QByteArray source =
-      context.file ? QByteArray(context.file).append(":"_ba)
+  Utf8String source =
+      context.file ? Utf8String(context.file).append(":"_ba)
                      .append(QByteArray::number(context.line))
                    : ":"_ba;
-  QByteArray localMsg =
+  Utf8String localMsg =
     QDateTime::currentDateTime().toString(ISO8601).toUtf8()
       +" "_ba+taskName+"/0 "_ba+source+" "_ba+severity+" qtdebug: "_ba+realMsg
       +"\n"_ba;

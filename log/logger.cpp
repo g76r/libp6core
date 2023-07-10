@@ -19,7 +19,7 @@
 
 #define ISO8601 u"yyyy-MM-ddThh:mm:ss,zzz"_s
 
-static QByteArray _uiHeaderNames[] = {
+static Utf8String _uiHeaderNames[] = {
   "Timestamp", // 0
   "Task",
   "Execution id",
@@ -32,13 +32,13 @@ static QAtomicInt _sequence;
 
 class Logger::LogEntryData : public SharedUiItemData {
 public:
-  QByteArray _id;
+  Utf8String _id;
   QDateTime _timestamp;
-  QByteArray _message;
+  Utf8String _message;
   Log::Severity _severity;
-  QByteArray _task, _execId, _sourceCode;
-  LogEntryData(QDateTime timestamp, QByteArray message, Log::Severity severity,
-               QByteArray task, QByteArray execId, QByteArray sourceCode)
+  Utf8String _task, _execId, _sourceCode;
+  LogEntryData(QDateTime timestamp, Utf8String message, Log::Severity severity,
+               Utf8String task, Utf8String execId, Utf8String sourceCode)
     : _id(QByteArray::number(_sequence.fetchAndAddOrdered(1))),
       _timestamp(timestamp), _message(message), _severity(severity),
       _task(task), _execId(execId), _sourceCode(sourceCode) { }
@@ -49,9 +49,9 @@ public:
   QByteArray idQualifier() const override { return "logentry"_ba; }
 };
 
-Logger::LogEntry::LogEntry(QDateTime timestamp, QByteArray message,
-                           Log::Severity severity, QByteArray task,
-                           QByteArray execId, QByteArray sourceCode)
+Logger::LogEntry::LogEntry(QDateTime timestamp, Utf8String message,
+                           Log::Severity severity, Utf8String task,
+                           Utf8String execId, Utf8String sourceCode)
   : SharedUiItem(new LogEntryData(timestamp, message, severity, task, execId,
                                   sourceCode)) {
 
@@ -68,28 +68,28 @@ QDateTime Logger::LogEntry::timestamp() const {
   return isNull() ? QDateTime() : data()->_timestamp;
 }
 
-QByteArray Logger::LogEntry::message() const {
-  return isNull() ? QByteArray() : data()->_message;
+Utf8String Logger::LogEntry::message() const {
+  return isNull() ? Utf8String() : data()->_message;
 }
 
 Log::Severity Logger::LogEntry::severity() const {
   return isNull() ? Log::Debug : data()->_severity;
 }
 
-QByteArray Logger::LogEntry::severityToString() const {
+Utf8String Logger::LogEntry::severityToString() const {
   return Log::severityToString(isNull() ? Log::Debug : data()->_severity);
 }
 
-QByteArray Logger::LogEntry::task() const {
-  return isNull() ? QByteArray() : data()->_task;
+Utf8String Logger::LogEntry::task() const {
+  return isNull() ? Utf8String() : data()->_task;
 }
 
-QByteArray Logger::LogEntry::execId() const {
-  return isNull() ? QByteArray() : data()->_execId;
+Utf8String Logger::LogEntry::execId() const {
+  return isNull() ? Utf8String() : data()->_execId;
 }
 
-QByteArray Logger::LogEntry::sourceCode() const {
-  return isNull() ? QByteArray() : data()->_sourceCode;
+Utf8String Logger::LogEntry::sourceCode() const {
+  return isNull() ? Utf8String() : data()->_sourceCode;
 }
 
 QVariant Logger::LogEntryData::uiData(int section, int role) const {
@@ -206,15 +206,15 @@ void Logger::shutdown() {
   }
 }
 
-QString Logger::currentPath() const {
+Utf8String Logger::currentPath() const {
   return QString();
 }
 
-QString Logger::pathPattern() const {
+Utf8String Logger::pathPattern() const {
   return currentPath();
 }
 
-QString Logger::pathMatchingRegexp() const {
+Utf8String Logger::pathMatchingRegexp() const {
   return ParamSet::matchingRegexp(pathPattern());
 }
 

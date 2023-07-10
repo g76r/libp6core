@@ -43,18 +43,18 @@ public:
   class LogEntry : public SharedUiItem {
   public:
     LogEntry();
-    LogEntry(QDateTime timestamp, QByteArray message, Log::Severity severity,
-             QByteArray task, QByteArray execId, QByteArray sourceCode);
+    LogEntry(QDateTime timestamp, Utf8String message, Log::Severity severity,
+             Utf8String task, Utf8String execId, Utf8String sourceCode);
     LogEntry(const LogEntry &other);
     LogEntry &operator=(const LogEntry &other) {
       SharedUiItem::operator=(other); return *this; }
     QDateTime timestamp() const;
-    QByteArray message() const;
+    Utf8String message() const;
     Log::Severity severity() const;
-    QByteArray severityToString() const;
-    QByteArray task() const;
-    QByteArray execId() const;
-    QByteArray sourceCode() const;
+    Utf8String severityToString() const;
+    Utf8String task() const;
+    Utf8String execId() const;
+    Utf8String sourceCode() const;
 
   private:
     const LogEntryData *data() const {
@@ -93,13 +93,13 @@ public:
   /** Return current logging path, e.g. "/var/log/qron-20181231.log"
    * To be used by implementation only when relevant.
    * Default: QString() */
-  virtual QString currentPath() const;
+  virtual Utf8String currentPath() const;
   /** Return the path pattern, e.g. "/var/log/qron-%!yyyy%!mm%!dd.log"
    * To be used by implementation only when relevant.
    * Default: same as currentPath() */
-  virtual QString pathPattern() const;
+  virtual Utf8String pathPattern() const;
   /** Return the path regexp pattern, e.g. "/var/log/qron-.*\\.log" */
-  QString pathMatchingRegexp() const;
+  Utf8String pathMatchingRegexp() const;
   Log::Severity minSeverity() const { return _minSeverity; }
   ThreadModel threadModel() const { return _threadModel; }
 

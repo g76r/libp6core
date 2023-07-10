@@ -33,13 +33,13 @@ class LIBP6CORESHARED_EXPORT LogModel : public SharedUiItemsTableModel {
 public:
   /** Create a model that collects log entries with severity >= minSeverity. */
   LogModel(QObject *parent, Log::Severity minSeverity, int maxrows = 100,
-           QByteArray prefixFilter = QByteArray());
+           Utf8String prefixFilter = {});
   /** Create a model that collects log entries with severity >= minSeverity. */
   explicit LogModel(Log::Severity minSeverity, int maxrows = 100,
-                    QByteArray prefixFilter = QByteArray())
+                    Utf8String prefixFilter = {})
     : LogModel(0, minSeverity, maxrows, prefixFilter) { }
   /** Create a model that collects log entries with severity >= minSeverity. */
-  LogModel(Log::Severity minSeverity, QByteArray prefixFilter)
+  LogModel(Log::Severity minSeverity, Utf8String prefixFilter)
     : LogModel(0, minSeverity, 100, prefixFilter) { }
   /** Create a model that collects log entries with severity >= minSeverity. */
   LogModel(Log::Severity minSeverity, const char *prefixFilter)
