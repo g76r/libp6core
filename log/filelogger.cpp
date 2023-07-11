@@ -94,7 +94,7 @@ void FileLogger::doLog(const LogEntry &entry) {
     // TODO move this to LogEntry::asLogLine()
     Utf8String line =
         entry.timestamp().toString(ISO8601).toUtf8()+SPACE
-        +entry.task()+SLASH+entry.execId()+SPACE+entry.sourceCode()+SPACE
+        +entry.taskid()+SLASH+entry.execid()+SPACE+entry.location()+SPACE
         +entry.severityToString()+SPACE+entry.message()+NEWLINE;
     //qDebug() << "***log" << line;
     //if (_pathPattern.endsWith(".slow") && (QTime::currentTime().second()/10)%2)

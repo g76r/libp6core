@@ -21,8 +21,7 @@ LogModel::LogModel(QObject *parent, Log::Severity minSeverity, int maxrows,
   setMaxrows(maxrows);
   setDefaultInsertionPoint(SharedUiItemsTableModel::FirstItem);
   setHeaderDataFromTemplate(
-        Logger::LogEntry(QDateTime(), Utf8String(), Log::Debug, Utf8String(),
-                         Utf8String(), Utf8String()));
+        Logger::LogEntry(QDateTime(), Utf8String(), Log::Debug, {}));
   Log::addLogger(_logger, false);
 }
 
@@ -31,8 +30,7 @@ LogModel::LogModel(QObject *parent, int maxrows)
   setMaxrows(maxrows);
   setDefaultInsertionPoint(SharedUiItemsTableModel::FirstItem);
   setHeaderDataFromTemplate(
-        Logger::LogEntry(QDateTime(), Utf8String(), Log::Debug, Utf8String(),
-                         Utf8String(), Utf8String()));
+        Logger::LogEntry(QDateTime(), Utf8String(), Log::Debug, {}));
 }
 
 LogModel::~LogModel() {

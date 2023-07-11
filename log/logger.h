@@ -44,7 +44,7 @@ public:
   public:
     LogEntry();
     LogEntry(QDateTime timestamp, Utf8String message, Log::Severity severity,
-             Utf8String task, Utf8String execId, Utf8String sourceCode);
+             LogContext context);
     LogEntry(const LogEntry &other);
     LogEntry &operator=(const LogEntry &other) {
       SharedUiItem::operator=(other); return *this; }
@@ -52,9 +52,9 @@ public:
     Utf8String message() const;
     Log::Severity severity() const;
     Utf8String severityToString() const;
-    Utf8String task() const;
-    Utf8String execId() const;
-    Utf8String sourceCode() const;
+    Utf8String taskid() const;
+    Utf8String execid() const;
+    Utf8String location() const;
 
   private:
     const LogEntryData *data() const {

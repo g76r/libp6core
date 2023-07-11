@@ -22,28 +22,75 @@
 #include "libp6core_global.h"
 #include "util/utf8string.h"
 
-class Log;
+#ifndef LOG_LOCATION_ENABLED
+#  if __has_include(<source_location>)
+#    include <source_location>
+using std::source_location;
+#    define LOG_LOCATION_ENABLED 1
+#  elif __has_include(<experimental/source_location>)
+#    include <experimental/source_location>
+using std::experimental::source_location;
+#    define LOG_LOCATION_ENABLED 2
+#  else
+#    define LOG_LOCATION_ENABLED 0
+#  endif
+#endif // LOG_LOCATION_ENABLED
+
 class Logger;
 class LogHelper;
 
 class LIBP6CORESHARED_EXPORT LogContext {
-  friend class Log;
-  friend class Logger;
-  friend class LogHelper;
-  Utf8String _taskid, _execid, _sourcecode;
+  Utf8String _taskid, _execid, _location;
+  Utf8String field(Utf8String input, Utf8String def) {
+    auto output = input;
+    if (output.isEmpty())
+      return def;
+    for (char *s = output.data(); *s; ++s)
+      if (::isspace(*s)) [[unlikely]]
+        *s = '_';
+    return output;
+  }
+  static Utf8String current_thread_name();
+
 public:
+#if LOG_LOCATION_ENABLED
   LogContext(Utf8String taskid = {}, Utf8String execid = {},
-             Utf8String sourcecode = {})
-    : _taskid(taskid), _execid(execid), _sourcecode(sourcecode) {}
+             source_location location = {})
+    : _taskid(field(taskid.isEmpty() ? current_thread_name() : taskid, "?"_ba)),
+      _execid(field(execid, "0"_ba)),
+      _location(location.file_name()+":"_ba+QByteArray::number(location.line())
+                  +":"_ba+location.function_name()) { }
   LogContext(Utf8String taskid, quint64 execid,
-             Utf8String sourcecode = {})
-    : _taskid(taskid), _execid(QByteArray::number(execid)),
-      _sourcecode(sourcecode) {}
-  LogContext(quint64 execid, Utf8String sourcecode = {})
-    : _execid(QByteArray::number(execid)), _sourcecode(sourcecode) {}
+             source_location location = {})
+    : LogContext(taskid, QByteArray::number(execid), location) {}
+  LogContext(quint64 execid, source_location location = {})
+    : LogContext({}, QByteArray::number(execid), location) {}
+  LogContext(Utf8String taskid, qint64 execid,
+             source_location location = {})
+    : LogContext(taskid, QByteArray::number(execid), location) {}
+  LogContext(qint64 execid, source_location location = {})
+    : LogContext({}, QByteArray::number(execid), location) {}
+#else
+  LogContext(Utf8String taskid = {}, Utf8String execid = {})
+    : _taskid(field(taskid.isEmpty() ? current_thread_name() : taskid, "?"_ba)),
+      _execid(field(execid, "0"_ba)),
+      _location(":"_ba) { }
+  LogContext(Utf8String taskid, quint64 execid)
+    : LogContext(taskid, QByteArray::number(execid)) {}
+  LogContext(quint64 execid)
+    : LogContext({}, QByteArray::number(execid)) {}
+  LogContext(Utf8String taskid, qint64 execid)
+    : LogContext(taskid, QByteArray::number(execid)) {}
+  LogContext(qint64 execid)
+    : LogContext({}, QByteArray::number(execid)) {}
+#endif
+  Utf8String taskid() const { return _taskid; }
+  Utf8String execid() const { return _execid; }
+  Utf8String location() const { return _location; }
 };
 
 Q_DECLARE_METATYPE(LogContext)
+Q_DECLARE_TYPEINFO(LogContext, Q_MOVABLE_TYPE);
 
 /** This class provides a server-side log facility with common server-side
   * severities (whereas QtDebug does not) and write timestamped log files.
@@ -82,9 +129,21 @@ public:
   static void init();
   /** flush remove any logger */
   static void shutdown();
-  static void log(Utf8String message, Severity severity = Info,
-                  Utf8String taskid = {}, Utf8String execid = {},
-                  Utf8String sourcecode = {});
+  static void log(Utf8String message, Severity severity, LogContext context);
+#if LOG_LOCATION_ENABLED
+  static inline void log(
+      Utf8String message, Severity severity, Utf8String taskid = {},
+      Utf8String execid = {},
+      source_location location = source_location::current()) {
+    log(message, severity, {taskid, execid, location});
+  }
+#else
+  static inline void log(
+      Utf8String message, Severity severity, Utf8String taskid = {},
+      Utf8String execid = {}) {
+    log(message, severity, {taskid, execid});
+  }
+#endif // LOG_LOCATION_ENABLED
   static Utf8String severityToString(Severity severity);
   /** Very tolerant severity mnemonic reader.
    * Read first character of string in a case insensitive manner, e.g.
@@ -93,52 +152,130 @@ public:
    * Unmatched letters ar interpreted as Log::Debug, therefore "D", "Debug",
    * or even "Global Warming" and "" are all interpreted as Log::Debug. */
   static Log::Severity severityFromString(Utf8String string);
+  static inline LogHelper log(Log::Severity severity, LogContext context);
+  static inline LogHelper debug(LogContext context);
+  static inline LogHelper info(LogContext context);
+  static inline LogHelper warning(LogContext context);
+  static inline LogHelper error(LogContext context);
+  static inline LogHelper fatal(LogContext context);
+#if LOG_LOCATION_ENABLED
   static inline LogHelper log(
-      Log::Severity severity, Utf8String task = {}, Utf8String execId = {},
-      Utf8String sourceCode = {});
+      Log::Severity severity, Utf8String taskid = {}, Utf8String execid = {},
+      source_location location = source_location::current());
   static inline LogHelper debug(
-      Utf8String task = {}, Utf8String execId = {}, Utf8String sourceCode = {});
+      Utf8String taskid = {}, Utf8String execid = {},
+      source_location location = source_location::current());
   static inline LogHelper info(
-      Utf8String task = {}, Utf8String execId = {}, Utf8String sourceCode = {});
+      Utf8String taskid = {}, Utf8String execid = {},
+      source_location location = source_location::current());
   static inline LogHelper warning(
-      Utf8String task = {}, Utf8String execId = {}, Utf8String sourceCode = {});
+      Utf8String taskid = {}, Utf8String execid = {},
+      source_location location = source_location::current());
   static inline LogHelper error(
-      Utf8String task = {}, Utf8String execId = {}, Utf8String sourceCode = {});
+      Utf8String taskid = {}, Utf8String execid = {},
+      source_location location = source_location::current());
   static inline LogHelper fatal(
-      Utf8String task = {}, Utf8String execId = {}, Utf8String sourceCode = {});
+      Utf8String taskid = {}, Utf8String execid = {},
+      source_location location = source_location::current());
   static inline LogHelper log(
-      Log::Severity severity, Utf8String task, quint64 execId,
-      Utf8String sourceCode = {});
+      Log::Severity severity, Utf8String taskid, quint64 execid,
+      source_location location = source_location::current());
   static inline LogHelper debug(
-      Utf8String task, quint64 execId, Utf8String sourceCode = {});
+      Utf8String taskid, quint64 execid,
+      source_location location = source_location::current());
   static inline LogHelper info(
-      Utf8String task, quint64 execId, Utf8String sourceCode = {});
+      Utf8String taskid, quint64 execid,
+      source_location location = source_location::current());
   static inline LogHelper warning(
-      Utf8String task, quint64 execId, Utf8String sourceCode = {});
+      Utf8String taskid, quint64 execid,
+      source_location location = source_location::current());
   static inline LogHelper error(
-      Utf8String task, quint64 execId, Utf8String sourceCode = {});
+      Utf8String taskid, quint64 execid,
+      source_location location = source_location::current());
   static inline LogHelper fatal(
-      Utf8String task, quint64 execId, Utf8String sourceCode = {});
+      Utf8String taskid, quint64 execid,
+      source_location location = source_location::current());
   static inline LogHelper debug(
-      Utf8String task, qint64 execId, Utf8String sourceCode = {});
+      Utf8String taskid, qint64 execid,
+      source_location location = source_location::current());
   static inline LogHelper info(
-      Utf8String task, qint64 execId, Utf8String sourceCode = {});
+      Utf8String taskid, qint64 execid,
+      source_location location = source_location::current());
   static inline LogHelper warning(
-      Utf8String task, qint64 execId, Utf8String sourceCode = {});
+      Utf8String taskid, qint64 execid,
+      source_location location = source_location::current());
   static inline LogHelper error(
-      Utf8String task, qint64 execId, Utf8String sourceCode = {});
+      Utf8String taskid, qint64 execid,
+      source_location location = source_location::current());
   static inline LogHelper fatal(
-      Utf8String task, qint64 execId, Utf8String sourceCode = {});
-  static inline LogHelper debug(quint64 execId, Utf8String sourceCode = {});
-  static inline LogHelper info(quint64 execId, Utf8String sourceCode = {});
-  static inline LogHelper warning(quint64 execId, Utf8String sourceCode = {});
-  static inline LogHelper error(quint64 execId, Utf8String sourceCode = {});
-  static inline LogHelper fatal(quint64 execId, Utf8String sourceCode = {});
-  static inline LogHelper debug(qint64 execId, Utf8String sourceCode = {});
-  static inline LogHelper info(qint64 execId, Utf8String sourceCode = {});
-  static inline LogHelper warning(qint64 execId, Utf8String sourceCode = {});
-  static inline LogHelper error(qint64 execId, Utf8String sourceCode = {});
-  static inline LogHelper fatal(qint64 execId, Utf8String sourceCode = {});
+      Utf8String taskid, qint64 execid,
+      source_location location = source_location::current());
+  static inline LogHelper debug(
+      quint64 execid,
+      source_location location = source_location::current());
+  static inline LogHelper info(
+      quint64 execid,
+      source_location location = source_location::current());
+  static inline LogHelper warning(
+      quint64 execid,
+      source_location location = source_location::current());
+  static inline LogHelper error(
+      quint64 execid,
+      source_location location = source_location::current());
+  static inline LogHelper fatal(
+      quint64 execid,
+      source_location location = source_location::current());
+  static inline LogHelper debug(
+      qint64 execid,
+      source_location location = source_location::current());
+  static inline LogHelper info(
+      qint64 execid,
+      source_location location = source_location::current());
+  static inline LogHelper warning(
+      qint64 execid,
+      source_location location = source_location::current());
+  static inline LogHelper error(
+      qint64 execid,
+      source_location location = source_location::current());
+  static inline LogHelper fatal(
+      qint64 execid,
+      source_location location = source_location::current());
+#else
+  static inline LogHelper log(
+      Log::Severity severity, Utf8String taskid = {}, Utf8String execid = {});
+  static inline LogHelper debug(
+      Utf8String taskid = {}, Utf8String execid = {});
+  static inline LogHelper info(
+      Utf8String taskid = {}, Utf8String execid = {});
+  static inline LogHelper warning(
+      Utf8String taskid = {}, Utf8String execid = {});
+  static inline LogHelper error(
+      Utf8String taskid = {}, Utf8String execid = {});
+  static inline LogHelper fatal(
+      Utf8String taskid = {}, Utf8String execid = {});
+  static inline LogHelper log(
+      Log::Severity severity, Utf8String taskid, quint64 execid);
+  static inline LogHelper debug(Utf8String taskid, quint64 execid);
+  static inline LogHelper info(Utf8String taskid, quint64 execid);
+  static inline LogHelper warning(Utf8String taskid, quint64 execid);
+  static inline LogHelper error(Utf8String taskid, quint64 execid);
+  static inline LogHelper fatal(Utf8String taskid, quint64 execid);
+  static inline LogHelper debug(Utf8String taskid, qint64 execid);
+  static inline LogHelper info(Utf8String taskid, qint64 execid);
+  static inline LogHelper warning(Utf8String taskid, qint64 execid);
+  static inline LogHelper error(Utf8String taskid, qint64 execid);
+  static inline LogHelper fatal(Utf8String taskid, qint64 execid);
+  static inline LogHelper debug(quint64 execid);
+  static inline LogHelper info(quint64 execid);
+  static inline LogHelper warning(quint64 execid);
+  static inline LogHelper error(quint64 execid);
+  static inline LogHelper fatal(quint64 execid);
+  static inline LogHelper debug(qint64 execid);
+  static inline LogHelper info(qint64 execid);
+  static inline LogHelper warning(qint64 execid);
+  static inline LogHelper error(qint64 execid);
+  static inline LogHelper fatal(qint64 execid);
+#endif // LOG_LOCATION_ENABLED
   static QString pathToLastFullestLog();
   static QStringList pathsToFullestLogs();
   static QStringList pathsToAllLogs();
@@ -152,13 +289,12 @@ Q_DECLARE_METATYPE(Log::Severity)
 class LIBP6CORESHARED_EXPORT LogHelper {
   mutable bool _logOnDestroy;
   Log::Severity _severity;
-  Utf8String _message, _taskid, _execid, _sourceCode;
+  Utf8String _message;
+  LogContext _context;
 
 public:
-  inline LogHelper(Log::Severity severity, Utf8String taskid, Utf8String execid,
-                   Utf8String sourceCode)
-    : _logOnDestroy(true), _severity(severity), _taskid(taskid),
-      _execid(execid), _sourceCode(sourceCode) { }
+  inline LogHelper(Log::Severity severity, LogContext context)
+    : _logOnDestroy(true), _severity(severity), _context(context) { }
   // The following copy constructor is needed because static Log::*() methods
   // return LogHelper by value. It must never be called in another context,
   // especially because it is not thread-safe.
@@ -166,15 +302,14 @@ public:
   // GCC won't use it but if it is called with -fno-elide-constructors option.
   inline LogHelper(const LogHelper &other)
     : _logOnDestroy(true), _severity(other._severity), _message(other._message),
-      _taskid(other._taskid), _execid(other._execid),
-      _sourceCode(other._sourceCode) {
+      _context(other._context) {
     other._logOnDestroy = false;
     //qDebug() << "### copying LogHelper" << _message;
   }
   inline ~LogHelper() {
     if (_logOnDestroy) {
       //qDebug() << "***log" << _message;
-      Log::log(_message, _severity, _taskid, _execid, _sourceCode);
+      Log::log(_message, _severity, _context);
     }
   }
   inline LogHelper &operator<<(const Utf8String &o) {
@@ -264,116 +399,267 @@ public:
     return *this; }
 };
 
-LogHelper Log::log(Log::Severity severity, Utf8String task,
-                   Utf8String execId, Utf8String sourceCode) {
-  return LogHelper(severity, task, execId, sourceCode);
+LogHelper Log::log(Log::Severity severity, LogContext context) {
+  return LogHelper(severity, context);
 }
 
-LogHelper Log::debug(Utf8String task, Utf8String execId, Utf8String sourceCode) {
-  return LogHelper(Log::Debug, task, execId, sourceCode);
+LogHelper Log::debug(LogContext context) {
+  return LogHelper(Log::Debug, context);
 }
 
-LogHelper Log::info(Utf8String task, Utf8String execId, Utf8String sourceCode) {
-  return LogHelper(Log::Info, task, execId, sourceCode);
+LogHelper Log::info(LogContext context) {
+  return LogHelper(Log::Info, context);
+}
+
+LogHelper Log::warning(LogContext context) {
+  return LogHelper(Log::Warning, context);
+}
+
+LogHelper Log::error(LogContext context) {
+  return LogHelper(Log::Error, context);
+}
+
+LogHelper Log::fatal(LogContext context) {
+  return LogHelper(Log::Fatal, context);
+}
+
+#if LOG_LOCATION_ENABLED
+LogHelper Log::log(Log::Severity severity, Utf8String taskid,
+                   Utf8String execid, source_location location) {
+  return LogHelper(severity, { taskid, execid, location });
+}
+
+LogHelper Log::debug(Utf8String taskid, Utf8String execid,
+                     source_location location) {
+  return LogHelper(Log::Debug, { taskid, execid, location });
+}
+
+LogHelper Log::info(Utf8String taskid, Utf8String execid,
+                    source_location location) {
+  return LogHelper(Log::Info, { taskid, execid, location });
 }
 
 LogHelper Log::warning(
-    Utf8String task, Utf8String execId, Utf8String sourceCode) {
-  return LogHelper(Log::Warning, task, execId, sourceCode);
+    Utf8String taskid, Utf8String execid,
+    source_location location) {
+  return LogHelper(Log::Warning, { taskid, execid, location });
 }
 
-LogHelper Log::error(Utf8String task, Utf8String execId, Utf8String sourceCode) {
-  return LogHelper(Log::Error, task, execId, sourceCode);
+LogHelper Log::error(Utf8String taskid, Utf8String execid,
+                     source_location location) {
+  return LogHelper(Log::Error, { taskid, execid, location });
 }
 
 LogHelper Log::fatal(
-    Utf8String task, Utf8String execId, Utf8String sourceCode) {
-  return LogHelper(Log::Fatal, task, execId, sourceCode);
+    Utf8String taskid, Utf8String execid, source_location location) {
+  return LogHelper(Log::Fatal, { taskid, execid, location });
 }
 
-LogHelper Log::log(Log::Severity severity, Utf8String task, quint64 execId,
-                   Utf8String sourceCode) {
-  return log(severity, task, QByteArray::number(execId), sourceCode);
+LogHelper Log::log(Log::Severity severity, Utf8String taskid, quint64 execid,
+                   source_location location) {
+  return LogHelper(severity, { taskid, execid, location });
 }
 
-LogHelper Log::debug(Utf8String task, quint64 execId, Utf8String sourceCode) {
-  return debug(task, QByteArray::number(execId), sourceCode);
+LogHelper Log::debug(Utf8String taskid, quint64 execid,
+                     source_location location) {
+  return LogHelper(Log::Debug, { taskid, execid, location });
 }
 
-LogHelper Log::info(Utf8String task, quint64 execId, Utf8String sourceCode) {
-  return info(task, QByteArray::number(execId), sourceCode);
+LogHelper Log::info(Utf8String taskid, quint64 execid,
+                    source_location location) {
+  return LogHelper(Log::Info, { taskid, execid, location });
 }
 
-LogHelper Log::warning(Utf8String task, quint64 execId, Utf8String sourceCode) {
-  return warning(task, QByteArray::number(execId), sourceCode);
+LogHelper Log::warning(Utf8String taskid, quint64 execid,
+                       source_location location) {
+  return LogHelper(Log::Warning, { taskid, execid, location });
 }
 
-LogHelper Log::error(Utf8String task, quint64 execId, Utf8String sourceCode) {
-  return error(task, QByteArray::number(execId), sourceCode);
+LogHelper Log::error(Utf8String taskid, quint64 execid,
+                     source_location location) {
+  return LogHelper(Log::Error, { taskid, execid, location });
 }
 
-LogHelper Log::fatal(Utf8String task, quint64 execId, Utf8String sourceCode) {
-  return fatal(task, QByteArray::number(execId), sourceCode);
+LogHelper Log::fatal(Utf8String taskid, quint64 execid,
+                     source_location location) {
+  return LogHelper(Log::Fatal, { taskid, execid, location });
 }
 
-LogHelper Log::debug(Utf8String task, qint64 execId, Utf8String sourceCode) {
-  return debug(task, QByteArray::number(execId), sourceCode);
+LogHelper Log::debug(Utf8String taskid, qint64 execid,
+                     source_location location) {
+  return LogHelper(Log::Debug, { taskid, execid, location });
 }
 
-LogHelper Log::info(Utf8String task, qint64 execId, Utf8String sourceCode) {
-  return info(task, QByteArray::number(execId), sourceCode);
+LogHelper Log::info(Utf8String taskid, qint64 execid,
+                    source_location location) {
+  return LogHelper(Log::Info, { taskid, execid, location });
 }
 
-LogHelper Log::warning(Utf8String task, qint64 execId, Utf8String sourceCode) {
-  return warning(task, QByteArray::number(execId), sourceCode);
+LogHelper Log::warning(Utf8String taskid, qint64 execid,
+                       source_location location) {
+  return LogHelper(Log::Warning, { taskid, execid, location });
 }
 
-LogHelper Log::error(Utf8String task, qint64 execId, Utf8String sourceCode) {
-  return error(task, QByteArray::number(execId), sourceCode);
+LogHelper Log::error(Utf8String taskid, qint64 execid,
+                     source_location location) {
+  return LogHelper(Log::Error, { taskid, execid, location });
 }
 
-LogHelper Log::fatal(Utf8String task, qint64 execId, Utf8String sourceCode) {
-  return fatal(task, QByteArray::number(execId), sourceCode);
+LogHelper Log::fatal(Utf8String taskid, qint64 execid,
+                     source_location location) {
+  return LogHelper(Log::Fatal, { taskid, execid, location });
 }
 
-LogHelper Log::debug(quint64 execId, Utf8String sourceCode) {
-  return debug(Utf8String(), QByteArray::number(execId), sourceCode);
+LogHelper Log::debug(quint64 execid, source_location location) {
+  return LogHelper(Log::Debug, { execid, location });
 }
 
-LogHelper Log::info(quint64 execId, Utf8String sourceCode) {
-  return info(Utf8String(), QByteArray::number(execId), sourceCode);
+LogHelper Log::info(quint64 execid, source_location location) {
+  return LogHelper(Log::Info, { execid, location });
 }
 
-LogHelper Log::warning(quint64 execId, Utf8String sourceCode) {
-  return warning(Utf8String(), QByteArray::number(execId), sourceCode);
+LogHelper Log::warning(quint64 execid, source_location location) {
+  return LogHelper(Log::Warning, { execid, location });
 }
 
-LogHelper Log::error(quint64 execId, Utf8String sourceCode) {
-  return error(Utf8String(), QByteArray::number(execId), sourceCode);
+LogHelper Log::error(quint64 execid, source_location location) {
+  return LogHelper(Log::Error, { execid, location });
 }
 
-LogHelper Log::fatal(quint64 execId,Utf8String sourceCode) {
-  return fatal(Utf8String(), QByteArray::number(execId), sourceCode);
+LogHelper Log::fatal(quint64 execid, source_location location) {
+  return LogHelper(Log::Fatal, { execid, location });
 }
 
-LogHelper Log::debug(qint64 execId, Utf8String sourceCode) {
-  return debug(Utf8String(), QByteArray::number(execId), sourceCode);
+LogHelper Log::debug(qint64 execid, source_location location) {
+  return LogHelper(Log::Debug, { execid, location });
 }
 
-LogHelper Log::info(qint64 execId, Utf8String sourceCode) {
-  return info(Utf8String(), QByteArray::number(execId), sourceCode);
+LogHelper Log::info(qint64 execid, source_location location) {
+  return LogHelper(Log::Info, { execid, location });
 }
 
-LogHelper Log::warning(qint64 execId, Utf8String sourceCode) {
-  return warning(Utf8String(), QByteArray::number(execId), sourceCode);
+LogHelper Log::warning(qint64 execid, source_location location) {
+  return LogHelper(Log::Warning, { execid, location });
 }
 
-LogHelper Log::error(qint64 execId, Utf8String sourceCode) {
-  return error(Utf8String(), QByteArray::number(execId), sourceCode);
+LogHelper Log::error(qint64 execid, source_location location) {
+  return LogHelper(Log::Error, { execid, location });
 }
 
-LogHelper Log::fatal(qint64 execId,Utf8String sourceCode) {
-  return fatal(Utf8String(), QByteArray::number(execId), sourceCode);
+LogHelper Log::fatal(qint64 execid, source_location location) {
+  return LogHelper(Log::Fatal, { execid, location });
 }
+
+#else
+
+LogHelper Log::log(Log::Severity severity, Utf8String taskid, Utf8String execid) {
+  return LogHelper(severity, { taskid, execid });
+}
+
+LogHelper Log::debug(Utf8String taskid, Utf8String execid) {
+  return LogHelper(Log::Debug, { taskid, execid });
+}
+
+LogHelper Log::info(Utf8String taskid, Utf8String execid) {
+  return LogHelper(Log::Info, { taskid, execid });
+}
+
+LogHelper Log::warning(Utf8String taskid, Utf8String execid) {
+  return LogHelper(Log::Warning, { taskid, execid });
+}
+
+LogHelper Log::error(Utf8String taskid, Utf8String execid) {
+  return LogHelper(Log::Error, { taskid, execid });
+}
+
+LogHelper Log::fatal(Utf8String taskid, Utf8String execid) {
+  return LogHelper(Log::Fatal, { taskid, execid });
+}
+
+LogHelper Log::log(Log::Severity severity, Utf8String taskid, quint64 execid) {
+  return LogHelper(severity, { taskid, execid });
+}
+
+LogHelper Log::debug(Utf8String taskid, quint64 execid) {
+  return LogHelper(Log::Debug, { taskid, execid });
+}
+
+LogHelper Log::info(Utf8String taskid, quint64 execid) {
+  return LogHelper(Log::Info, { taskid, execid });
+}
+
+LogHelper Log::warning(Utf8String taskid, quint64 execid) {
+  return LogHelper(Log::Warning, { taskid, execid });
+}
+
+LogHelper Log::error(Utf8String taskid, quint64 execid) {
+  return LogHelper(Log::Error, { taskid, execid });
+}
+
+LogHelper Log::fatal(Utf8String taskid, quint64 execid) {
+  return LogHelper(Log::Fatal, { taskid, execid });
+}
+
+LogHelper Log::debug(Utf8String taskid, qint64 execid) {
+  return LogHelper(Log::Debug, { taskid, execid });
+}
+
+LogHelper Log::info(Utf8String taskid, qint64 execid) {
+  return LogHelper(Log::Info, { taskid, execid });
+}
+
+LogHelper Log::warning(Utf8String taskid, qint64 execid) {
+  return LogHelper(Log::Warning, { taskid, execid });
+}
+
+LogHelper Log::error(Utf8String taskid, qint64 execid) {
+  return LogHelper(Log::Error, { taskid, execid });
+}
+
+LogHelper Log::fatal(Utf8String taskid, qint64 execid) {
+  return LogHelper(Log::Fatal, { taskid, execid });
+}
+
+LogHelper Log::debug(quint64 execid) {
+  return LogHelper(Log::Debug, { execid });
+}
+
+LogHelper Log::info(quint64 execid) {
+  return LogHelper(Log::Info, { execid });
+}
+
+LogHelper Log::warning(quint64 execid) {
+  return LogHelper(Log::Warning, { execid });
+}
+
+LogHelper Log::error(quint64 execid) {
+  return LogHelper(Log::Error, { execid });
+}
+
+LogHelper Log::fatal(quint64 execid) {
+  return LogHelper(Log::Fatal, { execid });
+}
+
+LogHelper Log::debug(qint64 execid) {
+  return LogHelper(Log::Debug, { execid });
+}
+
+LogHelper Log::info(qint64 execid) {
+  return LogHelper(Log::Info, { execid });
+}
+
+LogHelper Log::warning(qint64 execid) {
+  return LogHelper(Log::Warning, { execid });
+}
+
+LogHelper Log::error(qint64 execid) {
+  return LogHelper(Log::Error, { execid });
+}
+
+LogHelper Log::fatal(qint64 execid) {
+  return LogHelper(Log::Fatal, { execid });
+}
+
+#endif // LOG_LOCATION_ENABLED
 
 #endif // LOG_H

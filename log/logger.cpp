@@ -21,9 +21,9 @@
 
 static Utf8String _uiHeaderNames[] = {
   "Timestamp", // 0
-  "Task",
+  "Task id",
   "Execution id",
-  "Source",
+  "Location",
   "Severity",
   "Message" // 5
 };
@@ -36,12 +36,13 @@ public:
   QDateTime _timestamp;
   Utf8String _message;
   Log::Severity _severity;
-  Utf8String _task, _execId, _sourceCode;
+  Utf8String _taskid, _execid, _location;
   LogEntryData(QDateTime timestamp, Utf8String message, Log::Severity severity,
-               Utf8String task, Utf8String execId, Utf8String sourceCode)
+               LogContext context)
     : _id(QByteArray::number(_sequence.fetchAndAddOrdered(1))),
       _timestamp(timestamp), _message(message), _severity(severity),
-      _task(task), _execId(execId), _sourceCode(sourceCode) { }
+      _taskid(context.taskid()), _execid(context.execid()),
+      _location(context.location()) { }
   QVariant uiData(int section, int role) const override;
   QVariant uiHeaderData(int section, int role) const override;
   int uiSectionCount() const override;
@@ -50,11 +51,8 @@ public:
 };
 
 Logger::LogEntry::LogEntry(QDateTime timestamp, Utf8String message,
-                           Log::Severity severity, Utf8String task,
-                           Utf8String execId, Utf8String sourceCode)
-  : SharedUiItem(new LogEntryData(timestamp, message, severity, task, execId,
-                                  sourceCode)) {
-
+                           Log::Severity severity, LogContext context)
+  : SharedUiItem(new LogEntryData(timestamp, message, severity, context)) {
 }
 
 Logger::LogEntry::LogEntry() {
@@ -80,16 +78,16 @@ Utf8String Logger::LogEntry::severityToString() const {
   return Log::severityToString(isNull() ? Log::Debug : data()->_severity);
 }
 
-Utf8String Logger::LogEntry::task() const {
-  return isNull() ? Utf8String() : data()->_task;
+Utf8String Logger::LogEntry::taskid() const {
+  return isNull() ? Utf8String() : data()->_taskid;
 }
 
-Utf8String Logger::LogEntry::execId() const {
-  return isNull() ? Utf8String() : data()->_execId;
+Utf8String Logger::LogEntry::execid() const {
+  return isNull() ? Utf8String() : data()->_execid;
 }
 
-Utf8String Logger::LogEntry::sourceCode() const {
-  return isNull() ? Utf8String() : data()->_sourceCode;
+Utf8String Logger::LogEntry::location() const {
+  return isNull() ? Utf8String() : data()->_location;
 }
 
 QVariant Logger::LogEntryData::uiData(int section, int role) const {
@@ -100,11 +98,11 @@ QVariant Logger::LogEntryData::uiData(int section, int role) const {
     case 0:
       return _timestamp.toString(u"yyyy-MM-dd hh:mm:ss,zzz"_s);
     case 1:
-      return _task;
+      return _taskid;
     case 2:
-      return _execId;
+      return _execid;
     case 3:
-      return _sourceCode;
+      return _location;
     case 4:
       return Log::severityToString(_severity);
     case 5:

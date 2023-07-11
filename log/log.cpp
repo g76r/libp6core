@@ -84,29 +84,17 @@ void Log::replaceLoggersPlusConsole(Log::Severity consoleLoggerSeverity,
         consoleLoggerSeverity, newLoggers);
 }
 
-void Log::log(Utf8String message, Severity severity, Utf8String taskid,
-              Utf8String execid, Utf8String sourcecode) {
+Utf8String LogContext::current_thread_name() {
+  QThread *t = QThread::currentThread();
+  return t ? Utf8String{t->objectName()} : Utf8String{};
+}
+
+void Log::log(Utf8String message, Severity severity, LogContext context) {
   if (!_rootLogger)
     return;
-  QByteArray realTask = taskid;
-  if (realTask.isNull()) {
-    QThread *t = QThread::currentThread();
-    if (t)
-      realTask = t->objectName().toUtf8();
-  }
-  sanitizeField(&realTask);
-  if (realTask.isEmpty())
-    realTask = "?"_ba;
-  sanitizeField(&execid);
-  if (execid.isEmpty())
-    execid = "0"_ba;
-  sanitizeField(&sourcecode);
-  if (sourcecode.isEmpty())
-    sourcecode = ":"_ba;
   QDateTime now = QDateTime::currentDateTime();
   sanitizeMessage(&message);
-  _rootLogger->log(Logger::LogEntry(now, message, severity, realTask,
-                                    execid, sourcecode));
+  _rootLogger->log(Logger::LogEntry(now, message, severity, context));
 }
 
 void Log::init() {
@@ -195,19 +183,19 @@ static void qtLogSamePatternWrapper(
       severity = Log::severityToString(Log::Fatal);
       break;
   }
-  Utf8String taskName = QThread::currentThread()->objectName();
-  sanitizeField(&taskName);
-  if (taskName.isEmpty())
-    taskName = "?"_ba;
+  Utf8String taskid = QThread::currentThread()->objectName();
+  sanitizeField(&taskid);
+  if (taskid.isEmpty())
+    taskid = "?"_ba;
   Utf8String realMsg = msg;
   sanitizeMessage(&realMsg);
-  Utf8String source =
+  Utf8String location =
       context.file ? Utf8String(context.file).append(":"_ba)
                      .append(QByteArray::number(context.line))
                    : ":"_ba;
   Utf8String localMsg =
     QDateTime::currentDateTime().toString(ISO8601).toUtf8()
-      +" "_ba+taskName+"/0 "_ba+source+" "_ba+severity+" qtdebug: "_ba+realMsg
+      +" "_ba+taskid+"/0 "_ba+location+" "_ba+severity+" qtdebug: "_ba+realMsg
       +"\n"_ba;
   fputs(localMsg, stderr);
   if (type == QtFatalMsg)
