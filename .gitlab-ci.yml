@@ -5,10 +5,6 @@ build_and_test:
   stage: build
   image: g76r/qt6-builder:20230708
   script:
-    - cd ..
-    - git clone https://gitlab.com/g76r/libqtpf.git
-    - (cd libqtpf && qmake && make)
-    - cd -
     - qmake
     - make
     - (cd tests && qmake && make && for D in $(grep SUBDIRS ./tests.pro|cut -d= -f2); do (cd $D; echo ==== $D ====; [ -e ./run_test ] && ./run_test || ./test); done)

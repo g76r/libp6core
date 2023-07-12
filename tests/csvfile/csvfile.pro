@@ -1,4 +1,4 @@
-# Copyright 2016-2017 Hallowyn, Gregoire Barbier and others.
+# Copyright 2016-2023 Hallowyn, Gregoire Barbier and others.
 # This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
 # Libpumpkin is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -31,9 +31,8 @@ CONFIG(release,debug|release): BUILD_TYPE=release
 # dependency libs
 INCLUDEPATH += ../..
 LIBS += \
-    -L../../../build-qtpf-$$TARGET_OS/$$BUILD_TYPE \
     -L../../../build-p6core-$$TARGET_OS/$$BUILD_TYPE
-LIBS += -lp6core -lqtpf
+LIBS += -lp6core
 
 exists(/usr/bin/ccache):QMAKE_CXX = ccache g++
 exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always

@@ -7,8 +7,7 @@ enable_testing(true)
 
 include_directories(../../)
 link_directories( ../../../build-p6core-linux/release)
-link_directories( ../../../build-qtpf-linux/release)
 
 add_executable(mathexpr tst_mathexpr.cpp)
 add_test(NAME mathexpr COMMAND mathexpr)
-target_link_libraries(mathexpr PRIVATE p6core qtpf Qt::Test)
+target_link_libraries(mathexpr PRIVATE p6core Qt::Test)

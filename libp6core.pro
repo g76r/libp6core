@@ -46,12 +46,15 @@ DESTDIR = ../build-$$TARGET-$$TARGET_OS/$$BUILD_TYPE
 #QMAKE_CXXFLAGS += -O0 -pg -fprofile-arcs -ftest-coverage
 #QMAKE_LFLAGS += -pg -fprofile-arcs
 
-# dependency libs
-INCLUDEPATH += ../libqtpf
-LIBS += -L../build-qtpf-$$TARGET_OS/$$BUILD_TYPE
-LIBS += -lqtpf
-
 SOURCES += \
+    pf/pfutils.cpp \
+    pf/pfparser.cpp \
+    pf/pfoptions.cpp \
+    pf/pfnode.cpp \
+    pf/pfhandler.cpp \
+    pf/pfdomhandler.cpp \
+    pf/pfarray.cpp \
+    pf/pffragment.cpp \
     io/unixsignalmanager.cpp \
     mail/mailaddress.cpp \
     httpd/httpworker.cpp \
@@ -147,6 +150,15 @@ SOURCES += \
     util/utf8string.cpp
 
 HEADERS +=\
+    pf/pfutils.h \
+    pf/pfparser.h \
+    pf/pfoptions.h \
+    pf/pfnode.h \
+    pf/pfhandler.h \
+    pf/pfdomhandler.h \
+    pf/pfarray.h \
+    pf/pffragment_p.h \
+    pf/pfinternals_p.h \
     io/unixsignalmanager.h \
     mail/mailaddress.h \
     httpd/httpworker.h \
