@@ -92,6 +92,25 @@ inline Utf8String operator"" _u8(const char8_t *str, size_t size) noexcept {
 }
 #endif
 
+class LIBP6CORESHARED_EXPORT Utf8StringList : public QList<Utf8String> {
+public:
+  Utf8StringList() { }
+  Utf8StringList(std::initializer_list<Utf8String> args)
+    : QList<Utf8String>(args) { }
+  // explicit Utf8StringList(const Utf8String &item) : QList<Utf8String>({item}) { }
+  Utf8StringList(const QList<Utf8String> &list) : QList<Utf8String>(list) { }
+  Utf8StringList(const QList<QByteArray> &list)
+    : QList<Utf8String>(list.constBegin(), list.constEnd()) { }
+  Utf8StringList(const QList<QString> &list)
+    : QList<Utf8String>(list.constBegin(), list.constEnd()) { }
+  QStringList toStringList() const {
+    return QStringList(constBegin(), constEnd()); }
+  QByteArrayList toByteArrayList() const {
+    return QByteArrayList(constBegin(), constEnd()); }
+};
+
+Q_DECLARE_METATYPE(Utf8StringList)
+
 class LIBP6CORESHARED_EXPORT AsciiString : public Utf8String {
 public:
   //struct AsciiLiteral {
