@@ -67,7 +67,7 @@ void SharedUiItemsModel::setHeaderDataFromTemplate(
   _roleNames = QAbstractItemModel::roleNames();
   for (int section = 0; section < _columnsCount; ++section) {
     mapSectionHeader.insert(section, templateItem.uiHeaderData(section, role));
-    _roleNames.insert(section, templateItem.uiSectionName(section).toLatin1());
+    _roleNames.insert(section, templateItem.uiSectionName(section));
   }
   _mapRoleSectionHeader.insert(role, mapSectionHeader);
 }

@@ -43,10 +43,10 @@ public:
     ChangeItemCommand(SharedUiItemDocumentManager *dm, SharedUiItem newItem,
                       SharedUiItem oldItem, QByteArray idQualifier,
                       CoreUndoCommand *parent);
-    void redo();
-    void undo();
-    int	id() const;
-    bool mergeWith(const CoreUndoCommand *command);
+    void redo() override;
+    void undo() override;
+    int	id() const override;
+    bool mergeWith(const CoreUndoCommand *command) override;
   };
 
   SharedUiItemDocumentTransaction(SharedUiItemDocumentManager *dm) : _dm(dm) { }

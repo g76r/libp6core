@@ -25,38 +25,38 @@ class LIBP6CORESHARED_EXPORT GenericSharedUiItem : public SharedUiItem {
 public:
   GenericSharedUiItem();
   GenericSharedUiItem(const GenericSharedUiItem &other);
-  GenericSharedUiItem(
-      QByteArray idQualifier, QByteArray id, QVariantList headers,
-      QVariantList values);
+  GenericSharedUiItem(Utf8String idQualifier, Utf8String id,
+                      QVariantList headers, QVariantList values);
   /** Convenience constructor, with idQualifier="generic" */
-  GenericSharedUiItem(QByteArray id, QVariantList headers, QVariantList values)
-    : GenericSharedUiItem("generic"_ba, id, headers, values) { }
+  GenericSharedUiItem(Utf8String id, QVariantList headers, QVariantList values)
+    : GenericSharedUiItem("generic"_u8, id, headers, values) { }
   /** Convenience constructor, with idQualifier="generic" and id=values[0] */
   GenericSharedUiItem(QVariantList headers, QVariantList values)
     : GenericSharedUiItem(
-        "generic"_ba, values.size() > 0 ? values[0].toByteArray() :QByteArray(),
+        "generic"_u8, values.size() > 0 ? Utf8String(values[0]) : Utf8String(),
         headers, values) { }
   /** Create empty item, without data or headers. */
-  GenericSharedUiItem(QByteArray idQualifier, QByteArray id);
+  GenericSharedUiItem(Utf8String idQualifier, Utf8String id);
   /** Create empty item, without data or headers, by parsing qualifiedId. */
-  explicit GenericSharedUiItem(QByteArray qualifiedId);
-  [[deprecated("Use QByteArray API instead of QString")]]
-  GenericSharedUiItem(QString idQualifier, QString id, QVariantList headers,
-                      QVariantList values)
-    : GenericSharedUiItem(idQualifier.toUtf8(), id.toUtf8(), headers, values) {}
-  [[deprecated("Use QByteArray API instead of QString")]]
-  GenericSharedUiItem(QString id, QVariantList headers, QVariantList values)
-    : GenericSharedUiItem("generic"_ba, id.toUtf8(), headers, values) { }
-  [[deprecated("Use QByteArray API instead of QString")]]
-  GenericSharedUiItem(QString idQualifier, QString id)
-  : GenericSharedUiItem(idQualifier.toUtf8(), id.toUtf8()) { }
-  [[deprecated("Use QByteArray API instead of QString")]]
-  explicit GenericSharedUiItem(QString qualifiedId)
-    : GenericSharedUiItem(qualifiedId.toUtf8()) { }
+  explicit GenericSharedUiItem(Utf8String qualifiedId);
+//  [[deprecated("Use Utf8String API instead of QString")]]
+//  GenericSharedUiItem(QString idQualifier, QString id, QVariantList headers,
+//                      QVariantList values)
+//    : GenericSharedUiItem(Utf8String(idQualifier), Utf8String(id), headers,
+//                          values) {}
+//  [[deprecated("Use Utf8String API instead of QString")]]
+//  GenericSharedUiItem(QString id, QVariantList headers, QVariantList values)
+//    : GenericSharedUiItem("generic"_u8, Utf8String(id), headers, values) { }
+//  [[deprecated("Use Utf8String API instead of QString")]]
+//  GenericSharedUiItem(QString idQualifier, QString id)
+//  : GenericSharedUiItem(Utf8String(idQualifier), Utf8String(id)) { }
+//  [[deprecated("Use Utf8String API instead of QString")]]
+//  explicit GenericSharedUiItem(QString qualifiedId)
+//    : GenericSharedUiItem(Utf8String(qualifiedId)) { }
   GenericSharedUiItem &operator=(const GenericSharedUiItem &other) {
     SharedUiItem::operator=(other); return *this; }
   static QList<GenericSharedUiItem> fromCsv(CsvFile *csvFile, int idColumn = 0,
-      QByteArray idQualifier = "generic"_ba);
+      Utf8String idQualifier = "generic"_u8);
   // LATER another fromCsv(), with idQualifierColumn
   /** Not only set ui data but also update id if updated section is id section.
    */

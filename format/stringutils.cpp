@@ -91,7 +91,7 @@ static QString toSnakeCase(const QString &anycase) {
   return sc;
 }
 
-QByteArray StringUtils::toSnakeCase(const QByteArray &anycase) {
+Utf8String StringUtils::toSnakeCase(const Utf8String &anycase) {
     return ::toSnakeCase(QString::fromUtf8(anycase)).toUtf8();
 }
 
@@ -114,7 +114,7 @@ static QString toSnakeUpperCamelCase(const QString &anycase) {
   return s;
 }
 
-QByteArray StringUtils::toSnakeUpperCamelCase(const QByteArray &anycase) {
+Utf8String StringUtils::toSnakeUpperCamelCase(const Utf8String &anycase) {
   // note: cannot process bytes directly because of UTF-8 multichars
   return ::toSnakeUpperCamelCase(QString::fromUtf8(anycase)).toUtf8();
 }
@@ -141,8 +141,8 @@ static void toAsciiSnakeUpperCamelCase(char *s) {
   }
 }
 
-QByteArray StringUtils::toAsciiSnakeUpperCamelCase(const QByteArray &anycase) {
-  QByteArray s = anycase.isNull() ? ""_ba : anycase;
+Utf8String StringUtils::toAsciiSnakeUpperCamelCase(const Utf8String &anycase) {
+  auto s = anycase.isNull() ? ""_u8 : anycase;
   ::toAsciiSnakeUpperCamelCase(s.data());
   return s;
 }

@@ -18,53 +18,61 @@
 
 class GenericSharedUiItemData : public SharedUiItemData {
 public:
-  QByteArray _idQualifier, _id;
+  Utf8String _idQualifier, _id;
   QVariantList _headers, _values;
 
   GenericSharedUiItemData() { }
   GenericSharedUiItemData(
-      QByteArray idQualifier, QByteArray id, QVariantList headers,
+      Utf8String idQualifier, Utf8String id, QVariantList headers,
       QVariantList values)
     : _idQualifier(idQualifier), _id(id), _headers(headers), _values(values) { }
-  GenericSharedUiItemData(QByteArray idQualifier, QByteArray id)
+  GenericSharedUiItemData(Utf8String idQualifier, Utf8String id)
     : _idQualifier(idQualifier), _id(id) { }
-  explicit GenericSharedUiItemData(QByteArray qualifiedId) {
+  explicit GenericSharedUiItemData(Utf8String qualifiedId) {
     int i = qualifiedId.indexOf(':');
     if (i < 0) {
-      _idQualifier = "generic"_ba;
+      _idQualifier = "generic"_u8;
       _id = qualifiedId;
     } else {
       _idQualifier = qualifiedId.left(i);
       _id = qualifiedId.mid(i+1);
     }
   }
-  [[deprecated("Use QByteArray API instead of QString")]]
-  GenericSharedUiItemData(
-      QString idQualifier, QString id, QVariantList headers,
-      QVariantList values)
-    : GenericSharedUiItemData(idQualifier.toUtf8(), id.toUtf8(), headers,
-                              values) { }
-  [[deprecated("Use QByteArray API instead of QString")]]
-  GenericSharedUiItemData(QString idQualifier, QString id)
-    : GenericSharedUiItemData(idQualifier.toUtf8(), id.toUtf8()) { }
-  [[deprecated("Use QByteArray API instead of QString")]]
-  explicit GenericSharedUiItemData(QString qualifiedId)
-    : GenericSharedUiItemData(qualifiedId.toUtf8()) { }
-  QByteArray id() const { return _id; }
-  QByteArray idQualifier() const { return _idQualifier; }
-  int uiSectionCount() const { return qMax(_headers.size(), _values.size()); }
-  QVariant uiData(int section, int role) const {
+//  [[deprecated("Use Utf8String API instead of QString")]]
+//  GenericSharedUiItemData(
+//      QString idQualifier, QString id, QVariantList headers,
+//      QVariantList values)
+//    : GenericSharedUiItemData(idQualifier.toUtf8(), id.toUtf8(), headers,
+//                              values) { }
+//  [[deprecated("Use Utf8String API instead of QString")]]
+//  GenericSharedUiItemData(QString idQualifier, QString id)
+//    : GenericSharedUiItemData(idQualifier.toUtf8(), id.toUtf8()) { }
+//  [[deprecated("Use Utf8String API instead of QString")]]
+//  explicit GenericSharedUiItemData(QString qualifiedId)
+//    : GenericSharedUiItemData(qualifiedId.toUtf8()) { }
+  Utf8String id() const override { return _id; }
+  Utf8String idQualifier() const override { return _idQualifier; }
+  int uiSectionCount() const override {
+    return qMax(_headers.size(), _values.size()); }
+  Utf8String uiSectionName(int section) const override {
+    return Utf8String(_headers.value(section)); // FIXME
+  }
+  int uiSectionByName(Utf8String sectionName) const override {
+    return _headers.indexOf(sectionName); // FIXME
+  }
+  QVariant uiData(int section, int role) const override {
     if (role == Qt::DisplayRole || role == Qt::EditRole
         || role == SharedUiItem::ExternalDataRole)
       return _values.value(section);
     return QVariant();
   }
-  QVariant uiHeaderData(int section, int role) const {
+  QVariant uiHeaderData(int section, int role) const override {
     return role == Qt::DisplayRole ? _headers.value(section) : QVariant();
   }
-  Qt::ItemFlags uiFlags(int section) const;
-  bool setUiData(int section, const QVariant &value, QString *errorString,
-                 SharedUiItemDocumentTransaction *transaction, int role);
+  Qt::ItemFlags uiFlags(int section) const override;
+  bool setUiData(
+      int section, const QVariant &value, QString *errorString,
+      SharedUiItemDocumentTransaction *transaction, int role) override;
 };
 
 
@@ -76,23 +84,24 @@ GenericSharedUiItem::GenericSharedUiItem(const GenericSharedUiItem &other)
 }
 
 GenericSharedUiItem::GenericSharedUiItem(
-    QByteArray idQualifier, QByteArray id, QVariantList headers,
+    Utf8String idQualifier, Utf8String id, QVariantList headers,
     QVariantList values)
   : SharedUiItem(new GenericSharedUiItemData(idQualifier, id, headers,
                                              values)) {
 }
 
-GenericSharedUiItem::GenericSharedUiItem(QByteArray idQualifier, QByteArray id)
+GenericSharedUiItem::GenericSharedUiItem(
+    Utf8String idQualifier, Utf8String id)
   : SharedUiItem(new GenericSharedUiItemData(idQualifier, id)) {
 }
 
-GenericSharedUiItem::GenericSharedUiItem(QByteArray qualifiedId)
+GenericSharedUiItem::GenericSharedUiItem(Utf8String qualifiedId)
   : SharedUiItem(new GenericSharedUiItemData(qualifiedId)) {
 }
 
 
 QList<GenericSharedUiItem> GenericSharedUiItem::fromCsv(
-    CsvFile *csvFile, int idColumn, QByteArray idQualifier) {
+    CsvFile *csvFile, int idColumn, Utf8String idQualifier) {
   QList<GenericSharedUiItem> list;
   if (!csvFile)
     return list;

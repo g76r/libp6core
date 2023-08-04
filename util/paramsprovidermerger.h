@@ -113,22 +113,10 @@ public:
   }
   /** Parameters set through overrideParamValue() will override any
    * ParamsProvider, even those prepended. */
-  ParamsProviderMerger &overrideParamValue(QString key, QString value) {
+  ParamsProviderMerger &overrideParamValue(Utf8String key, Utf8String value) {
     _overridingParams.setValue(key, value);
     return *this;
   }
-  /** Convenience method. */
-  inline ParamsProviderMerger &overrideParamValue(QString key, QVariant value) {
-    return overrideParamValue(key, value.toString());
-  }
-  /** Convenience method. */
-  inline ParamsProviderMerger &overrideParamValue(
-      QString key, const QByteArray &value){
-    return overrideParamValue(key, QString(value)); }
-  /** Disambiguation method.
-   * Avoids implicit conversion of 0 to char* */
-  inline ParamsProviderMerger &overrideParamValue(QString key, int value){
-    return overrideParamValue(key, QVariant::fromValue(value)); }
   /** Remove all ParamsProvider and overriding params. */
   ParamsProviderMerger &clear() {
     _providers.clear();
@@ -141,12 +129,12 @@ public:
   void restore();
   using ParamsProvider::paramValue;
   const QVariant paramValue(
-    const QString &key, const ParamsProvider *context,
+    const Utf8String &key, const ParamsProvider *context,
     const QVariant &defaultValue,
-    QSet<QString> *alreadyEvaluated) const override;
+    Utf8StringSet *alreadyEvaluated) const override;
   /** Give access to currently overriding params. */
   const ParamSet overridingParams() const { return _overridingParams; }
-  const QSet<QString> keys() const override;
+  const Utf8StringSet keys() const override;
 };
 
 /** RAII helper for ParamsProviderMerger save/restore.

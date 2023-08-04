@@ -1,4 +1,4 @@
-/* Copyright 2013-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,10 +14,7 @@
 #ifndef PARAMSPROVIDER_H
 #define PARAMSPROVIDER_H
 
-#include "libp6core_global.h"
-#include <QVariant>
-#include <QList>
-#include <QSet>
+#include "util/utf8string.h"
 
 class ParamSet;
 
@@ -34,69 +31,67 @@ public:
   /** Return a parameter value.
     * @param context is an evaluation context */
   virtual const QVariant paramValue( // FIXME reorder args like paramUtf8
-    const QString &key, const ParamsProvider *context,
-    const QVariant &defaultValue, QSet<QString> *alreadyEvaluated) const = 0;
+    const Utf8String &key, const ParamsProvider *context,
+    const QVariant &defaultValue, Utf8StringSet *alreadyEvaluated) const = 0;
   /** Convenience method */
   inline const QVariant paramValue( // FIXME reorder args like paramUtf8
-    const QString &key, const ParamsProvider *context = 0,
+    const Utf8String &key, const ParamsProvider *context = 0,
     const QVariant &defaultValue = {}) const {
-    QSet<QString> ae; return paramValue(key, context, defaultValue, &ae); }
+    Utf8StringSet ae; return paramValue(key, context, defaultValue, &ae); }
   /** Convenience method */
   inline const QVariant paramValue( // FIXME reorder args like paramUtf8
-    const QString &key, const QVariant &defaultValue,
-    QSet<QString> *alreadyEvaluated) const {
+    const Utf8String &key, const QVariant &defaultValue,
+    Utf8StringSet *alreadyEvaluated) const {
     return paramValue(key, 0, defaultValue, alreadyEvaluated); }
   /** Convenience method */
   inline const QVariant paramValue( // FIXME reorder args like paramUtf8
-    const QString &key, const QVariant &defaultValue) const {
+    const Utf8String &key, const QVariant &defaultValue) const {
     return paramValue(key, 0, defaultValue); }
   /** Convenience method */
   inline const QString paramString( // FIXME reorder args like paramUtf8
-    const QString &key, const ParamsProvider *context,
-    const QString &defaultValue, QSet<QString> *alreadyEvaluated) const {
+    const Utf8String &key, const ParamsProvider *context,
+    const QString &defaultValue, Utf8StringSet *alreadyEvaluated) const {
     return paramValue(key, context, defaultValue, alreadyEvaluated).toString();
   }
   /** Convenience method */
   inline const QString paramString( // FIXME reorder args like paramUtf8
-    const QString &key, const ParamsProvider *context = 0,
+    const Utf8String &key, const ParamsProvider *context = 0,
     const QString &defaultValue = {}) const {
     return paramValue(key, context, defaultValue).toString(); }
   /** Convenience method */
   inline const QString paramString( // FIXME reorder args like paramUtf8
-    const QString &key, const QString &defaultValue,
-    QSet<QString> *alreadyEvaluated) const {
+    const Utf8String &key, const QString &defaultValue,
+    Utf8StringSet *alreadyEvaluated) const {
     return paramValue(key, defaultValue, alreadyEvaluated).toString(); }
   /** Convenience method */
   inline const QString paramString( // FIXME reorder args like paramUtf8
-    const QString &key, const QString &defaultValue) const {
+    const Utf8String &key, const QString &defaultValue) const {
     return paramValue(key, defaultValue).toString(); }
   /** Convenience method */
-  inline const QByteArray paramUtf8(
-    const QString &key, const QByteArray &defaultValue,
-    const ParamsProvider *context, QSet<QString> *alreadyEvaluated) const {
-    return paramValue(key, context, defaultValue, alreadyEvaluated).toString()
-        .toUtf8(); }
+  inline const Utf8String paramUtf8(
+    const Utf8String &key, const Utf8String &defaultValue,
+    const ParamsProvider *context, Utf8StringSet *alreadyEvaluated) const {
+    return Utf8String(paramValue(key, context, defaultValue,
+                                 alreadyEvaluated)); }
   /** Convenience method */
-  inline const QByteArray paramUtf8(
-    const QString &key, const QByteArray &defaultValue = {},
+  inline const Utf8String paramUtf8(
+    const Utf8String &key, const Utf8String &defaultValue = {},
     const ParamsProvider *context = 0) const {
-    return paramValue(key, context, defaultValue).toString().toUtf8(); }
+    return Utf8String(paramValue(key, context, defaultValue)); }
   /** Convenience method */
-  inline const QByteArray paramUtf8(
-    const QString &key, const ParamsProvider *context) const {
-    return paramValue(key, context, QString{}).toString().toUtf8(); }
+  inline const Utf8String paramUtf8(
+    const Utf8String &key, const ParamsProvider *context) const {
+    return Utf8String(paramValue(key, context, Utf8String{})); }
   /** Convenience method */
-  inline const QByteArray paramUtf8(
-    const QString &key, const QByteArray &defaultValue,
-    QSet<QString> *alreadyEvaluated) const {
-    return paramValue(key, 0, defaultValue, alreadyEvaluated).toString()
-        .toUtf8(); }
+  inline const Utf8String paramUtf8(
+    const Utf8String &key, const Utf8String &defaultValue,
+    Utf8StringSet *alreadyEvaluated) const {
+    return Utf8String(paramValue(key, 0, defaultValue, alreadyEvaluated)); }
   /** Convenience method */
-  inline const QByteArray paramUtf8(
-    const QString &key,  QSet<QString> *alreadyEvaluated) const {
-    return paramValue(key, 0, QString{}, alreadyEvaluated).toString()
-        .toUtf8(); }
-  virtual const QSet<QString> keys() const = 0;
+  inline const Utf8String paramUtf8(
+    const Utf8String &key, Utf8StringSet *alreadyEvaluated) const {
+    return Utf8String(paramValue(key, 0, Utf8String{}, alreadyEvaluated)); }
+  virtual const Utf8StringSet keys() const = 0;
   /** Singleton wrapper to environment variables */
   static ParamsProvider *environment() { return _environment; }
   /** Singleton empty ParamsProvider */
@@ -106,32 +101,35 @@ public:
   virtual const ParamSet snapshot() const;
   /** evaluate a %-expression within this context.
    * short for ParamSet().evaluate(rawValue, false, this, alreadyEvaluated); */
-  const QString evaluate(
-    const QString &rawValue, QSet<QString> *alreadyEvaluated) const;
-  inline const QString evaluate(const QString &rawValue) const {
-    QSet<QString> ae; return evaluate(rawValue, &ae); }
+  const Utf8String evaluate(
+      const Utf8String &rawValue, Utf8StringSet *alreadyEvaluated) const;
+  inline const Utf8String evaluate(const Utf8String &rawValue) const {
+    Utf8StringSet ae; return evaluate(rawValue, &ae); }
 };
 
 /** Map of params without inheritance, evaluation or any other advanced
- *  features as compared to ParamSet: just a simple QString->QVariant map. */
+ *  features as compared to ParamSet: just a simple Utf8String->QVariant map. */
 class LIBP6CORESHARED_EXPORT RawParamsProvider : public ParamsProvider {
 private:
-  QMap<QString,QVariant> _params;
+  QMap<Utf8String,QVariant> _params;
 
 public:
-  RawParamsProvider(QMap<QString,QVariant> params = QMap<QString,QVariant>())
+  RawParamsProvider(
+      QMap<Utf8String,QVariant> params = QMap<Utf8String,QVariant>())
     : _params(params) { }
-  RawParamsProvider(std::initializer_list<std::pair<QString,QVariant>> list) {
+  RawParamsProvider(
+      std::initializer_list<std::pair<Utf8String,QVariant>> list) {
     for (auto &p : list)
       _params.insert(p.first, p.second);
   }
 
 public:
   const QVariant paramValue(
-    const QString &key, const ParamsProvider *context,
-    const QVariant &defaultValue, QSet<QString> *alreadyEvaluated) const override;
-  const QSet<QString> keys() const override;
-  const QMap<QString,QVariant> toMap() const { return _params; }
+      const Utf8String &key, const ParamsProvider *context,
+    const QVariant &defaultValue,
+      Utf8StringSet *alreadyEvaluated) const override;
+  const Utf8StringSet keys() const override;
+  const QMap<Utf8String,QVariant> toMap() const { return _params; }
 };
 
 #endif // PARAMSPROVIDER_H

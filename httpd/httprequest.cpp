@@ -22,12 +22,12 @@
 #include "util/containerutils.h"
 #include "format/stringutils.h"
 
-static QByteArray _xffHeader;
+static Utf8String _xffHeader;
 
 namespace {
 struct XffHeaderInitializer {
   XffHeaderInitializer() {
-    QByteArray header = qgetenv("LIBPUMPKIN_X_FORWARDED_FOR_HEADER");
+    auto header = qgetenv("LIBPUMPKIN_X_FORWARDED_FOR_HEADER");
     if (header.isNull())
       header = "X-Forwarded-For";
     _xffHeader = header;
@@ -39,11 +39,11 @@ class HttpRequestData : public QSharedData {
 public:
   QAbstractSocket *_input;
   HttpRequest::HttpMethod _method;
-  QMultiMap<QByteArray,QByteArray> _headers;
-  QMap<QByteArray,QByteArray> _cookies, _paramsCache;
+  QMultiMap<Utf8String,Utf8String> _headers;
+  QMap<Utf8String,Utf8String> _cookies, _paramsCache;
   QUrl _url;
   QUrlQuery _query;
-  QByteArrayList _clientAdresses;
+  Utf8StringList _clientAdresses;
   explicit HttpRequestData(QAbstractSocket *input) : _input(input),
     _method(HttpRequest::NONE) { }
 };
@@ -67,7 +67,7 @@ HttpRequest &HttpRequest::operator=(const HttpRequest &other) {
   return *this;
 }
 
-static QMap<HttpRequest::HttpMethod,QByteArray> _methodToText {
+static QMap<HttpRequest::HttpMethod,Utf8String> _methodToText {
   { HttpRequest::NONE, "NONE" },
   { HttpRequest::HEAD, "HEAD" },
   { HttpRequest::GET, "GET" },
@@ -78,7 +78,7 @@ static QMap<HttpRequest::HttpMethod,QByteArray> _methodToText {
   { HttpRequest::ANY, "ANY" },
 };
 
-static QMap<QByteArray,HttpRequest::HttpMethod> _methodFromText {
+static QMap<Utf8String,HttpRequest::HttpMethod> _methodFromText {
   ContainerUtils::reversed(_methodToText)
 };
 
@@ -87,22 +87,22 @@ QSet<HttpRequest::HttpMethod> HttpRequest::_wellKnownMethods {
       HttpRequest::DELETE, HttpRequest::OPTIONS,
 };
 
-QSet<QByteArray> HttpRequest::_wellKnownMethodNames = []() {
-  QSet<QByteArray> set;
+Utf8StringSet HttpRequest::_wellKnownMethodNames = []() {
+  Utf8StringSet set;
   for (HttpRequest::HttpMethod m : HttpRequest::_wellKnownMethods)
     set.insert(HttpRequest::methodName(m));
   return set;
 }();
 
-QByteArray HttpRequest::methodName(HttpMethod method) {
-  return _methodToText.value(method, "UNKNOWN"_ba);
+Utf8String HttpRequest::methodName(HttpMethod method) {
+  return _methodToText.value(method, "UNKNOWN"_u8);
 }
 
-HttpRequest::HttpMethod HttpRequest::methodFromText(const QByteArray &name) {
+HttpRequest::HttpMethod HttpRequest::methodFromText(const Utf8String &name) {
   return _methodFromText.value(name, NONE);
 }
 
-bool HttpRequest::parseAndAddHeader(QByteArray rawHeader) {
+bool HttpRequest::parseAndAddHeader(Utf8String rawHeader) {
   if (!d)
     return false;
   int i = rawHeader.indexOf(':');
@@ -110,9 +110,9 @@ bool HttpRequest::parseAndAddHeader(QByteArray rawHeader) {
     return false;
   // MAYDO remove special chars from keys and values?
   // TODO support multi-line headers
-  QByteArray key = StringUtils::toAsciiSnakeUpperCamelCase(
+  auto key = StringUtils::toAsciiSnakeUpperCamelCase(
         rawHeader.left(i).trimmed());
-  QByteArray value = rawHeader.right(rawHeader.size()-i-1).trimmed();
+  auto value = rawHeader.right(rawHeader.size()-i-1).trimmed();
   //qDebug() << "header:" << rawHeader << key << value;
   d->_headers.insert(key, value);
   if (key == "Cookie"_ba)
@@ -126,7 +126,7 @@ static const QRegularExpression _cookieHeaderValue(
       RFC6265_COOKIE_OCTET_RE "*|\"" RFC6265_COOKIE_OCTET_RE
       "+\"))\\s*;?\\s*");
 
-void HttpRequest::parseAndAddCookie(QByteArray rawHeaderValue) {
+void HttpRequest::parseAndAddCookie(Utf8String rawHeaderValue) {
   // LATER use QNetworkCookie::parseCookies
   // LATER ensure that utf8 is supported as specified in RFC6265
   if (!d)
@@ -139,9 +139,9 @@ void HttpRequest::parseAndAddCookie(QByteArray rawHeaderValue) {
   }
 }
 
-QByteArray HttpRequest::param(QByteArray key) const {
+Utf8String HttpRequest::param(Utf8String key) const {
   // TODO better handle parameters, including POST and multi-valued params
-  QByteArray value;
+  Utf8String value;
   if (d) {
     if (d->_paramsCache.contains(key))
       return d->_paramsCache.value(key);
@@ -153,12 +153,12 @@ QByteArray HttpRequest::param(QByteArray key) const {
   return value;
 }
 
-void HttpRequest::overrideParam(QByteArray key, QByteArray value) {
+void HttpRequest::overrideParam(Utf8String key, Utf8String value) {
   if (d)
     d->_paramsCache.insert(key, value);
 }
 
-void HttpRequest::overrideUnsetParam(QByteArray key) {
+void HttpRequest::overrideUnsetParam(Utf8String key) {
   if (d)
     d->_paramsCache.insert(key, {});
 }
@@ -170,7 +170,7 @@ ParamSet HttpRequest::paramsAsParamSet() const {
   return ParamSet(d->_paramsCache);
 }
 
-QMap<QByteArray,QByteArray> HttpRequest::paramsAsMap() const {
+QMap<Utf8String,Utf8String> HttpRequest::paramsAsMap() const {
   if (d) {
     cacheAllParams();
     return d->_paramsCache;
@@ -190,10 +190,10 @@ void HttpRequest::cacheAllParams() const {
   }
 }
 
-QByteArray HttpRequest::toUtf8() const {
+Utf8String HttpRequest::toUtf8() const {
   if (!d)
-    return "HttpRequest{}"_ba;
-  QByteArray s;
+    return "HttpRequest{}"_u8;
+  Utf8String s;
   s += "HttpRequest{ " + methodName() + ", " + url().toString().toUtf8()
       + ", { ";
   for (auto key: d->_headers.keys()) {
@@ -235,8 +235,8 @@ HttpRequest::HttpMethod HttpRequest::method() const {
   return d ? d->_method : NONE;
 }
 
-QByteArray HttpRequest::header(
-    const QByteArray &name, const QByteArray &defaultValue) const {
+Utf8String HttpRequest::header(
+    const Utf8String &name, const Utf8String &defaultValue) const {
   // LATER handle case insensitivity in header names
   if (!d)
     return defaultValue;
@@ -244,17 +244,17 @@ QByteArray HttpRequest::header(
   return v.isNull() ? defaultValue : v;
 }
 
-QByteArrayList HttpRequest::headers(const QByteArray &name) const {
+Utf8StringList HttpRequest::headers(const Utf8String &name) const {
   // LATER handle case insensitivity in header names
-  return d ? d->_headers.values(name) : QByteArrayList{};
+  return d ? d->_headers.values(name) : Utf8StringList{};
 }
 
-QMultiMap<QByteArray, QByteArray> HttpRequest::headers() const {
-  return d ? d->_headers : QMultiMap<QByteArray,QByteArray>{};
+QMultiMap<Utf8String, Utf8String> HttpRequest::headers() const {
+  return d ? d->_headers : QMultiMap<Utf8String,Utf8String>{};
 }
 
-QByteArray HttpRequest::cookie(
-    const QByteArray &name, const QByteArray &defaultValue) const {
+Utf8String HttpRequest::cookie(
+    const Utf8String &name, const Utf8String &defaultValue) const {
   if (!d)
     return defaultValue;
   const auto v = d->_cookies.value(name);
@@ -262,18 +262,18 @@ QByteArray HttpRequest::cookie(
 }
 
 QByteArray HttpRequest::base64Cookie(
-    const QByteArray &name, const QByteArray &defaultValue) const {
+    const Utf8String &name, const QByteArray &defaultValue) const {
   if (!d)
     return defaultValue;
   const auto v = d->_cookies.value(name);
-  return v.isNull() ? defaultValue : QByteArray::fromBase64(v);
+  return v.isNull() ? defaultValue : Utf8String::fromBase64(v);
 }
 
-QMap<QByteArray,QByteArray> HttpRequest::cookies() const {
-  return d ? d->_cookies : QMap<QByteArray,QByteArray>{};
+QMap<Utf8String,Utf8String> HttpRequest::cookies() const {
+  return d ? d->_cookies : QMap<Utf8String,Utf8String>{};
 }
 
-QByteArrayList HttpRequest::clientAdresses() const {
+Utf8StringList HttpRequest::clientAdresses() const {
   if (!d)
     return {};
   if (d->_clientAdresses.isEmpty()) {
@@ -295,8 +295,8 @@ QByteArrayList HttpRequest::clientAdresses() const {
 }
 
 const QVariant HttpRequestPseudoParamsProvider::paramValue(
-  const QString &key, const ParamsProvider *, const QVariant &defaultValue,
-  QSet<QString> *) const {
+    const Utf8String &key, const ParamsProvider *, const QVariant &defaultValue,
+    Utf8StringSet *) const {
   if (key.startsWith('!')) {
     if (key == "!url") {
       return _request.url().toString(QUrl::RemovePassword);
@@ -305,20 +305,20 @@ const QVariant HttpRequestPseudoParamsProvider::paramValue(
     } else if (key == "!clientaddresses") {
       return _request.clientAdresses().join(' ');
     } else if (key.startsWith("!cookie")) {
-      return _request.cookie(key.mid(8).toUtf8());
+      return _request.cookie(key.mid(8));
     } else if (key.startsWith("!base64cookie")) {
-      return _request.base64Cookie(key.mid(14).toUtf8());
+      return _request.base64Cookie(key.mid(14));
     } else if (key.startsWith("!param")) {
-      return _request.param(key.mid(7).toUtf8());
+      return _request.param(key.mid(7));
     } else if (key.startsWith("!header")) {
-      return _request.header(key.mid(8).toUtf8());
+      return _request.header(key.mid(8));
     }
   }
   return defaultValue;
 }
 
-const QSet<QString> HttpRequestPseudoParamsProvider::keys() const {
-  QSet<QString> keys { "!url", "!method", "!clientaddresses" };
+const Utf8StringSet HttpRequestPseudoParamsProvider::keys() const {
+  Utf8StringSet keys { "!url", "!method", "!clientaddresses" };
   for (auto s: _request.cookies().keys())
     keys << "!cookie:"+s;
   for (auto s: _request.paramsAsMap().keys())

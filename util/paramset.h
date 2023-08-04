@@ -55,17 +55,21 @@ public:
   ParamSet();
   /** First item processed as a key, second one as the matching value and so on.
    * If list size is odd the last key will be inserted with "" value. */
-  ParamSet(std::initializer_list<QString> list);
-  ParamSet(std::initializer_list<std::pair<QString,QVariant>> list);
+  ParamSet(std::initializer_list<Utf8String> list);
+  ParamSet(std::initializer_list<std::pair<Utf8String,QVariant>> list);
   ParamSet(const ParamSet &other);
   explicit ParamSet(const QHash<QString,QString> &params);
   explicit ParamSet(const QMap<QString,QString> &params);
-  explicit ParamSet(const QHash<QByteArray,QByteArray> &params);
-  explicit ParamSet(const QMap<QByteArray,QByteArray> &params);
+  explicit ParamSet(const QHash<Utf8String,Utf8String> &params);
+  explicit ParamSet(const QMap<Utf8String,Utf8String> &params);
   /** For multi-valued keys, only most recently inserted value is kept. */
   explicit ParamSet(const QMultiMap<QString,QString> &params);
   /** For multi-valued keys, only most recently inserted value is kept. */
   explicit ParamSet(const QMultiHash<QString,QString> &params);
+  /** For multi-valued keys, only most recently inserted value is kept. */
+  explicit ParamSet(const QMultiMap<Utf8String,Utf8String> &params);
+  /** For multi-valued keys, only most recently inserted value is kept. */
+  explicit ParamSet(const QMultiHash<Utf8String,Utf8String> &params);
   /** Takes params from PfNode children given an attribute name,
    *  parsing their text content as key-whitespace-value.
    *  Optionnaly a second attribute name is used for "const" params, that is
@@ -78,17 +82,17 @@ public:
    *  -> now's value won't change later and will stay as a timestamp of ParamSet
    *  construction
    */
-  ParamSet(const PfNode &parentnode, const QString &attrname,
-           const QString &constattrname = QString(),
+  ParamSet(const PfNode &parentnode, const Utf8String &attrname,
+           const Utf8String &constattrname = {},
            const ParamSet &parent = ParamSet());
-  ParamSet(const PfNode &parentnode, const QString &attrname,
+  ParamSet(const PfNode &parentnode, const Utf8String &attrname,
            const ParamSet &parent);
   /** Takes params from PfNode children given their attribute names,
    *  using their content as value.
    *  e.g.: with ParamSet(node, { "path", "tmp" } )
    *  (node (path /foo/bar)(truncate)) -> { "path" = "/foo/bar", "tmp" = "" }
    */
-  ParamSet(const PfNode &parentnode, const QSet<QString> &attrnames,
+  ParamSet(const PfNode &parentnode, const Utf8StringSet &attrnames,
            const ParamSet &parent = {});
   /** Takes params from columns values of an SQL query.
    *  SQL query is %-evaluated within parent context.
@@ -98,60 +102,62 @@ public:
    *  separated list of unique non null non empty values in column foo of table
    *  t1 and bars of non null non empty values in column bar of table t2.
    */
-  ParamSet(const QSqlDatabase &db, const QString &sql,
-           const QMap<int, QString> &bindings,
+  ParamSet(const QSqlDatabase &db, const Utf8String &sql,
+           const QMap<int, Utf8String> &bindings,
            const ParamSet &parent = {});
   /** Takes params from file (or socket or command output...).
    * e.g.: QFile file("/tmp/foo.csv"); ParamSet(&file);
    * If input is not opened, open it. */
-  ParamSet(QIODevice *input, const QByteArray &format = "csv",
-           const QMap<QByteArray,QByteArray> options = { { "separator", "," } },
+  ParamSet(QIODevice *input, const Utf8String &format = "csv",
+           const QMap<Utf8String, Utf8String> options = { { "separator", "," } },
            const bool escape_percent = false, const ParamSet &parent = {} );
   /** Takes params from file.
    * e.g.: ParamSet("/tmp/foo.csv") */
   static ParamSet fromFile(
-      const QByteArray &file_name, const QByteArray &format = "csv",
-      const QMap<QByteArray,QByteArray> options = { { "separator", "," } },
+      const QByteArray &file_name, const Utf8String &format = "csv",
+      const QMap<Utf8String, Utf8String> options = { { "separator", "," } },
       const bool escape_percent = false, const ParamSet &parent = {} );
   /** Takes params from command output.
    * e.g.: ParamSet({ "/opt/myscript.sh", "-n", "secrets" } ) */
   static ParamSet fromCommandOutput(
-      const QStringList &cmdline, const QByteArray &format = "csv",
-      const QMap<QByteArray,QByteArray> options = { { "separator", "," } },
+      const QStringList &cmdline, const Utf8String &format = "csv",
+      const QMap<Utf8String,Utf8String> options = { { "separator", "," } },
       const bool escape_percent = false, const ParamSet &parent = {} );
   ~ParamSet();
   ParamSet &operator=(const ParamSet &other);
   ParamSet parent() const;
   void setParent(ParamSet parent);
-  void setValue(QString key, QString value);
-  void setValue(QString key, QByteArray value) {
-    setValue(key, QString::fromUtf8(value)); }
-  void setValue(QString key, const char *value) {
-    setValue(key, QString::fromUtf8(value)); }
-  void setValue(QString key, QVariant value) {
-    setValue(key, value.toString()); }
-  void setValue(QString key, bool value) {
-    setValue(key, value ? u"true"_s : u"false"_s); }
-  void setValue(QString key, qint8 value, int base = 10) {
-    setValue(key, QString::number(value, base)); }
-  void setValue(QString key, qint16 value, int base = 10) {
-    setValue(key, QString::number(value, base)); }
-  void setValue(QString key, qint32 value, int base = 10) {
-    setValue(key, QString::number(value, base)); }
-  void setValue(QString key, qint64 value, int base = 10) {
-    setValue(key, QString::number(value, base)); }
-  void setValue(QString key, quint8 value, int base = 10) {
-    setValue(key, QString::number(value, base)); }
-  void setValue(QString key, quint16 value, int base = 10) {
-    setValue(key, QString::number(value, base)); }
-  void setValue(QString key, quint32 value, int base = 10) {
-    setValue(key, QString::number(value, base)); }
-  void setValue(QString key, quint64 value, int base = 10) {
-    setValue(key, QString::number(value, base)); }
-  void setValue(QString key, double value, char format='g', int precision=6) {
-    setValue(key, QString::number(value, format, precision)); }
-  void setValue(QString key, float value, char format='g', int precision=6) {
-    setValue(key, QString::number((double)value, format, precision)); }
+  void setValue(Utf8String key, Utf8String value);
+  void setValue(Utf8String key, QString value) {
+    setValue(key, Utf8String(value)); }
+  void setValue(Utf8String key, QByteArray value) {
+    setValue(key, Utf8String(value)); }
+  void setValue(Utf8String key, const char *value) {
+    setValue(key, Utf8String(value)); }
+  void setValue(Utf8String key, QVariant value) {
+    setValue(key, Utf8String(value)); }
+  void setValue(Utf8String key, bool value) {
+    setValue(key, Utf8String(value)); }
+  void setValue(Utf8String key, qint8 value, int base = 10) {
+    setValue(key, Utf8String::number(value, base)); }
+  void setValue(Utf8String key, qint16 value, int base = 10) {
+    setValue(key, Utf8String::number(value, base)); }
+  void setValue(Utf8String key, qint32 value, int base = 10) {
+    setValue(key, Utf8String::number(value, base)); }
+  void setValue(Utf8String key, qint64 value, int base = 10) {
+    setValue(key, Utf8String::number(value, base)); }
+  void setValue(Utf8String key, quint8 value, int base = 10) {
+    setValue(key, Utf8String::number(value, base)); }
+  void setValue(Utf8String key, quint16 value, int base = 10) {
+    setValue(key, Utf8String::number(value, base)); }
+  void setValue(Utf8String key, quint32 value, int base = 10) {
+    setValue(key, Utf8String::number(value, base)); }
+  void setValue(Utf8String key, quint64 value, int base = 10) {
+    setValue(key, Utf8String::number(value, base)); }
+  void setValue(Utf8String key, double value, char format='g', int precision=6) {
+    setValue(key, Utf8String::number(value, format, precision)); }
+  void setValue(Utf8String key, float value, char format='g', int precision=6) {
+    setValue(key, Utf8String::number((double)value, format, precision)); }
   /** merge (override) params using another ParamSet content */
   void setValues(ParamSet params, bool inherit = true);
   /** merge (override) params taking them from a SQL database query
@@ -166,134 +172,129 @@ public:
    *  in column foo of table t1
    *  and bars of non null non empty values in column bar of table t2.
    */
-  void setValuesFromSqlDb(
-    QSqlDatabase db, QString sql, QMap<int,QString> bindings);
+  void setValuesFromSqlDb(QSqlDatabase db, Utf8String sql,
+                          QMap<int, Utf8String> bindings);
   /** merge (override) params taking them from a SQL database query.
    *  convenience method resolving sql database name. */
   void setValuesFromSqlDb(
-      QString dbname, QString sql, QMap<int,QString> bindings);
+      Utf8String dbname, Utf8String sql, QMap<int,Utf8String> bindings);
   /** merge (override) params taking them from a SQL database query.
    *  convenience method mapping each column in order
    *  e.g. {"foo","bar"} is equivalent to {{0,"foo"},{1,"bar"}}. */
-  void setValuesFromSqlDb(QSqlDatabase db, QString sql, QStringList bindings);
+  void setValuesFromSqlDb(QSqlDatabase db, Utf8String sql,
+                          Utf8StringList bindings);
   /** merge (override) params taking them from a SQL database query.
    *  convenience method resolving sql database name and mapping each column
    *  in order
    *  e.g. {"foo","bar"} is equivalent to {{0,"foo"},{1,"bar"}}. */
-  void setValuesFromSqlDb(QString dbname, QString sql, QStringList bindings);
+  void setValuesFromSqlDb(Utf8String dbname, Utf8String sql,
+                          Utf8StringList bindings);
   /** short for setValues(other) */
   ParamSet &operator<<(const ParamSet &other){ setValues(other); return *this; }
   /** short for setValues(other) */
   ParamSet &operator+=(const ParamSet &other){ setValues(other); return *this; }
   void clear();
-  void removeValue(QString key);
+  void removeValue(Utf8String key);
   /** Return a value without performing parameters substitution.
    * @param inherit should search values in parents if not found */
-  QString rawValue(QString key, QString defaultValue = {},
+  Utf8String rawValue(Utf8String key, Utf8String defaultValue = {},
                    bool inherit = true) const;
-  inline QString rawValue(QString key, const QByteArray &defaultValue,
-                          bool inherit = true) const {
-    return rawValue(key, QString(defaultValue), inherit); }
-  inline QString rawValue(QString key, bool inherit) const {
-    return rawValue(key, QString(), inherit); }
-  inline QByteArray rawParamUtf8(
-      const QByteArray &key, const QByteArray &defaultValue = {},
-      bool inherit = true) const {
-    return rawValue(QString{key}, defaultValue, inherit).toUtf8(); }
+  inline Utf8String rawValue(Utf8String key, bool inherit) const {
+    return rawValue(key, Utf8String{}, inherit); }
   /** Return a value after parameters substitution.
    * @param searchInParents should search values in parents if not found */
-  inline QString value(QString key, QString defaultValue = {},
+  inline Utf8String value(Utf8String key, Utf8String defaultValue = {},
                        bool inherit = true,
                        const ParamsProvider *context = 0) const {
     return evaluate(rawValue(key, defaultValue, inherit), inherit, context); }
-  inline QString value(QString key, bool inherit,
+  inline Utf8String value(Utf8String key, bool inherit,
                        const ParamsProvider *context = 0) const {
-    return evaluate(rawValue(key, QString{}, inherit), inherit, context); }
-  inline QString value(QString key, const ParamsProvider *context) const {
-    return evaluate(rawValue(key, QString{}, true), true, context); }
-  inline QString value(QString key, bool inherit, const ParamsProvider *context,
-                       QSet<QString> *alreadyEvaluated) const {
+    return evaluate(rawValue(key, Utf8String{}, inherit), inherit, context); }
+  inline Utf8String value(Utf8String key, const ParamsProvider *context) const {
+    return evaluate(rawValue(key, Utf8String{}, true), true, context); }
+  inline Utf8String value(Utf8String key, bool inherit, const ParamsProvider *context,
+                       Utf8StringSet *alreadyEvaluated) const {
     return evaluate(rawValue(key, inherit), inherit, context, alreadyEvaluated);
   }
-  inline QString value(
-      QString key, const QByteArray &defaultValue, bool inherit = true,
+  inline Utf8String value(
+      Utf8String key, const QByteArray &defaultValue, bool inherit = true,
       const ParamsProvider *context = 0) const {
-    return evaluate(rawValue(key, QString{defaultValue}, inherit), inherit,
+    return evaluate(rawValue(key, Utf8String{defaultValue}, inherit), inherit,
                     context); }
-  inline QString value(
-      QString key, const QByteArray &defaultValue,
+  inline Utf8String value(
+      Utf8String key, const QByteArray &defaultValue,
       const ParamsProvider *context) const {
-    return evaluate(rawValue(key, QString{defaultValue}, true), true,
+    return evaluate(rawValue(key, Utf8String{defaultValue}, true), true,
                     context); }
-  inline QString value(
-      QString key, const char *defaultValue, bool inherit = true,
+  inline Utf8String value(
+      Utf8String key, const char *defaultValue, bool inherit = true,
       const ParamsProvider *context = 0) const {
-    return evaluate(rawValue(key, QString{defaultValue}, inherit), inherit,
+    return evaluate(rawValue(key, Utf8String{defaultValue}, inherit), inherit,
                     context); }
-  inline QString value(QString key, const char *defaultValue,
+  inline Utf8String value(Utf8String key, const char *defaultValue,
                        const ParamsProvider *context) const {
-    return evaluate(rawValue(key, QString{defaultValue}, true), true,
+    return evaluate(rawValue(key, Utf8String{defaultValue}, true), true,
                     context); }
   /** Return a value splitted into strings, %-substitution is done after the
    * split (i.e. "%foo bar" has two elements, regardless the number of spaces
    * in %foo value). */
-  QStringList valueAsStrings(QString key, QString defaultRawValue = QString(),
+  Utf8StringList valueAsStrings(Utf8String key, Utf8String defaultRawValue = {},
                              bool inherit = true,
                              const ParamsProvider *context = 0,
-                             QString separators = " ") const {
+                             Utf8String separators = " "_u8) const {
     return splitAndEvaluate(rawValue(key, defaultRawValue), separators,
                             inherit, context); }
   /** Return a value splitted at first whitespace. Both strings are trimmed.
    * E.g. a raw value of "  foo    bar baz  " is returned as a
    * QPair<>("foo", "bar baz"). */
-  const QPair<QString,QString> valueAsStringsPair(
-      QString key, bool inherit = true,
+  const QPair<Utf8String,Utf8String> valueAsStringsPair(
+      Utf8String key, bool inherit = true,
       const ParamsProvider *context = 0) const;
   /** @return integer value if the string content is a valid integer
    * C-like prefixes are supported and both kmb and kMGTP suffixes are supported
    * surrounding whitespace is trimmed
    * e.g. 0x1f means 15, 12k means 12000, 12b and 12G mean 12000000000.
    * T and P are supported with long long, not int. */
-  qlonglong valueAsLong(QString key, qlonglong defaultValue = 0,
+  qlonglong valueAsLong(Utf8String key, qlonglong defaultValue = 0,
                         bool inherit = true,
                         const ParamsProvider *context = 0) const;
-  int valueAsInt(QString key, int defaultValue = 0, bool inherit = true,
+  int valueAsInt(Utf8String key, int defaultValue = 0, bool inherit = true,
                  const ParamsProvider *context = 0) const;
   /** Syntaxic sugar. */
-  double valueAsDouble(QString key, double defaultValue = 0,
+  double valueAsDouble(Utf8String key, double defaultValue = 0,
                        bool inherit = true,
                        const ParamsProvider *context = 0) const;
   /** "faLsE" and "0" are interpreted as false, "trUe" and any non null
    * valid integer number are interpreted as true. whitespace and case are
    * ignored. */
-  bool valueAsBool(QString key, bool defaultValue = false,
-                          bool inherit = true,
-                          const ParamsProvider *context = 0) const;
+  bool valueAsBool(Utf8String key, bool defaultValue = false,
+                   bool inherit = true,
+                   const ParamsProvider *context = 0) const;
   /** Return all keys for which the ParamSet or one of its parents hold a value.
     */
-  const QSet<QString> keys(bool inherit) const;
-  const QSet<QString> keys() const override;
+  const Utf8StringSet keys(bool inherit) const;
+  const Utf8StringSet keys() const override;
   /** Return true if key is set. */
-  bool contains(QString key, bool inherit = true) const;
+  bool contains(Utf8String key, bool inherit = true) const;
   /** Perform parameters substitution within the string. */
-  QString evaluate(QString rawValue, bool inherit = true,
-                   const ParamsProvider *context = 0) const {
-    QSet<QString> ae;
+  Utf8String evaluate(Utf8String rawValue, bool inherit = true,
+                      const ParamsProvider *context = 0) const {
+    Utf8StringSet ae;
     return evaluate(rawValue, inherit, context, &ae); }
-  QString evaluate(QString rawValue, const ParamsProvider *context) const {
+  Utf8String evaluate(Utf8String rawValue, const ParamsProvider *context) const {
     return evaluate(rawValue, true, context); }
-  QString evaluate(QString rawValue, bool inherit,
+  Utf8String evaluate(Utf8String rawValue, bool inherit,
                    const ParamsProvider *context,
-                   QSet<QString> *alreadyEvaluated) const;
-  QStringList splitAndEvaluate(
-      QString rawValue, QString separators = " ", bool inherit = true,
+                   Utf8StringSet *alreadyEvaluated) const;
+  Utf8StringList splitAndEvaluate(
+      Utf8String rawValue, Utf8String separators = " "_u8, bool inherit = true,
       const ParamsProvider *context = 0) const {
-    QSet<QString> ae;
+    Utf8StringSet ae;
     return splitAndEvaluate(rawValue, separators, inherit, context, &ae);
   }
-  QStringList splitAndEvaluate(QString rawValue,
-                               const ParamsProvider *context) const {
-    return splitAndEvaluate(rawValue, " ", true, context); }
+  Utf8StringList splitAndEvaluate(
+      Utf8String rawValue, const ParamsProvider *context) const {
+    return splitAndEvaluate(rawValue, " "_u8, true, context); }
   /** Split string and perform parameters substitution.
    *
    * If (and only if) separators is not empty, raw value is splitted into parts
@@ -304,9 +305,9 @@ public:
    * therefore backslashes must be backslashed.
    * If separators is empty, neither split nor backslash escape is performed.
    */
-  QStringList splitAndEvaluate(
-      QString rawValue, QString separators, bool inherit,
-      const ParamsProvider *context, QSet<QString> *alreadyEvaluated) const;
+  Utf8StringList splitAndEvaluate(
+      Utf8String rawValue, Utf8String separators, bool inherit,
+      const ParamsProvider *context, Utf8StringSet *alreadyEvaluated) const;
   /** Escape all characters in string so that they no longer have special
    * meaning for evaluate() and splitAndEvaluate() methods.
    * That is: replace % with %% within the string. */
@@ -315,7 +316,7 @@ public:
   /** Escape all characters in string so that they no longer have special
    * meaning for evaluate() and splitAndEvaluate() methods.
    * That is: replace % with %% within the string. */
-  static QByteArray escape(QByteArray utf8) {
+  static Utf8String escape(Utf8String utf8) {
     return utf8.isNull() ? utf8 : utf8.replace('%', "%%"_ba); }
   /** Return a regular expression that matches any string that can result
    * in evaluation of the rawValue.
@@ -324,12 +325,12 @@ public:
    * the second pattern is returned, not the first one, and it's likely to stay
    * this way).
    * Can be used as an input for QRegularExpression(QString) constructor. */
-  static const QString matchingRegexp(QString rawValue);
+  static const Utf8String matchingRegexp(Utf8String rawValue);
   using ParamsProvider::paramValue;
   const QVariant paramValue(
-    const QString &key, const ParamsProvider *context,
+    const Utf8String &key, const ParamsProvider *context,
     const QVariant &defaultValue,
-    QSet<QString> *alreadyEvaluated) const override;
+    Utf8StringSet *alreadyEvaluated) const override;
   bool isNull() const;
   int size() const;
   bool isEmpty() const;
@@ -346,30 +347,33 @@ public:
   static void enableVariableNotFoundLogging(bool enabled = true) {
     _variableNotFoundLoggingEnabled = enabled; }
   /** Evaluate %= functions out of ParamSet context */
-  static QString evaluateFunction(
-    const ParamSet &paramset, const QString &key, bool inherit,
-    const ParamsProvider *context, QSet<QString> *alreayEvaluated, bool *found);
-  const QHash<QString,QString> toHash(bool inherit = true) const;
-  const QMap<QString, QString> toMap(bool inherit = true) const;
+  static Utf8String evaluateFunction(
+    const ParamSet &paramset, const Utf8String &key, bool inherit,
+    const ParamsProvider *context, Utf8StringSet *alreayEvaluated,
+      bool *found);
+  const QHash<Utf8String,Utf8String> toHash(bool inherit = true) const;
+  const QMap<Utf8String, Utf8String> toMap(bool inherit = true) const;
+  const QHash<QString,QString> toStringHash(bool inherit = true) const;
+  const QMap<QString, QString> toStringMap(bool inherit = true) const;
   /** Get an external paramset. */
-  static ParamSet externalParams(QByteArray set_name);
+  static ParamSet externalParams(Utf8String set_name);
   /** Register an external paramset. */
   static void registerExternalParams(
-      const QByteArray &set_name, ParamSet params);
+      const Utf8String &set_name, ParamSet params);
   /** Unregister every external paramset. */
   static void clearExternalParams();
   /** List names of external paramsets. */
-  static QByteArrayList externalParamsNames();
+  static Utf8StringList externalParamsNames();
 
 private:
   ParamSet(ParamSetData *data);
   inline bool appendVariableValue(
-      QString *value, const QString &variable, bool inherit,
-      const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+      Utf8String *value, const Utf8String &variable, bool inherit,
+      const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
       bool logIfVariableNotFound) const;
   static ParamSetData *fromQIODevice(
-      QIODevice *input, const QByteArray &format,
-      const QMap<QByteArray,QByteArray> options,
+      QIODevice *input, const Utf8String &format,
+      const QMap<Utf8String,Utf8String> options,
       const bool escape_percent, const ParamSet &parent);
 };
 

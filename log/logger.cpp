@@ -19,7 +19,7 @@
 
 #define ISO8601 u"yyyy-MM-ddThh:mm:ss,zzz"_s
 
-static Utf8String _uiHeaderNames[] = {
+static Utf8StringList _uiHeaderNames {
   "Timestamp", // 0
   "Task id",
   "Execution id",
@@ -27,6 +27,17 @@ static Utf8String _uiHeaderNames[] = {
   "Severity",
   "Message" // 5
 };
+
+static Utf8StringList _uiSectionNames {
+  "timestamp", // 0
+  "taskid",
+  "execid",
+  "location",
+  "severity",
+  "message" // 5
+};
+
+static auto _uiSectionIndex = ContainerUtils::index(_uiSectionNames);
 
 static QAtomicInt _sequence;
 
@@ -44,10 +55,15 @@ public:
       _taskid(context.taskid()), _execid(context.execid()),
       _location(context.location()) { }
   QVariant uiData(int section, int role) const override;
-  QVariant uiHeaderData(int section, int role) const override;
-  int uiSectionCount() const override;
-  QByteArray id() const override { return _id; }
-  QByteArray idQualifier() const override { return "logentry"_ba; }
+  QVariant uiHeaderData(int section, int) const override {
+    return _uiHeaderNames.value(section); }
+  int uiSectionCount() const override { return _uiSectionNames.size(); }
+  Utf8String uiSectionName(int section) const override {
+    return _uiSectionNames.value(section); }
+  int uiSectionByName(Utf8String sectionName) const override {
+    return _uiSectionIndex.value(sectionName, -1); }
+  Utf8String id() const override { return _id; }
+  Utf8String idQualifier() const override { return "logentry"_ba; }
 };
 
 Logger::LogEntry::LogEntry(QDateTime timestamp, Utf8String message,
@@ -113,16 +129,6 @@ QVariant Logger::LogEntryData::uiData(int section, int role) const {
     ;
   }
   return {};
-}
-
-QVariant Logger::LogEntryData::uiHeaderData(int section, int role) const {
-  return role == Qt::DisplayRole && section >= 0
-      && (unsigned)section < sizeof _uiHeaderNames
-      ? _uiHeaderNames[section] : QVariant();
-}
-
-int Logger::LogEntryData::uiSectionCount() const {
-  return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
 }
 
 Logger::Logger(Log::Severity minSeverity, ThreadModel threadModel)

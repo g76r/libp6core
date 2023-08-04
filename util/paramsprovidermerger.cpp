@@ -25,25 +25,25 @@ public:
         : _first(first), _second(second) { }
     /** Evaluate using second provider if first returns an invalid QVariant. */
     const QVariant paramValue(
-      const QString &key, const ParamsProvider *context,
+      const Utf8String &key, const ParamsProvider *context,
       const QVariant &defaultValue,
-      QSet<QString> *alreadyEvaluated) const override {
+      Utf8StringSet *alreadyEvaluated) const override {
       QVariant v = _first->paramValue(key, context, defaultValue,
                                       alreadyEvaluated);
       if (!v.isValid() && _second)
         _second->paramValue(key, context, defaultValue, alreadyEvaluated);
       return v;
     }
-    const QSet<QString> keys() const override {
-      return QSet<QString>();
+    const Utf8StringSet keys() const override {
+      return {};
     }
 };
 
 } // unnamed namespace
 
 const QVariant ParamsProviderMerger::paramValue(
-  const QString &key, const ParamsProvider *context,
-  const QVariant &defaultValue, QSet<QString> *alreadyEvaluated) const {
+    const Utf8String &key, const ParamsProvider *context,
+    const QVariant &defaultValue, Utf8StringSet *alreadyEvaluated) const {
   SimplerMerger sm(this, context);
   QVariant v = _overridingParams.paramValue(key, &sm, QVariant(),
                                             alreadyEvaluated);
@@ -56,7 +56,7 @@ const QVariant ParamsProviderMerger::paramValue(
       if (!v.isNull())
         return v;
     } else {
-      QString s = provider.d->_paramset.value(key, true, &sm, alreadyEvaluated);
+      auto s = provider.d->_paramset.value(key, true, &sm, alreadyEvaluated);
       if (!s.isNull())
         return s;
     }
@@ -86,8 +86,8 @@ void ParamsProviderMerger::restore() {
   }
 }
 
-const QSet<QString> ParamsProviderMerger::keys() const {
-  QSet<QString> keys { _overridingParams.keys() };
+const Utf8StringSet ParamsProviderMerger::keys() const {
+  Utf8StringSet keys { _overridingParams.keys() };
   for (auto provider: _providers) {
     if (provider.d->_paramsProvider) {
       keys += provider.d->_paramsProvider->keys();

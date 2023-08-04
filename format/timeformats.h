@@ -1,4 +1,4 @@
-/* Copyright 2013-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -71,15 +71,15 @@ public:
    * ParamsProvider.
    */
   static const QString toMultifieldSpecifiedCustomTimestamp(
-    const QDateTime &dt, const QString &multifieldSpecifiedFormat,
-    const ParamSet &paramset, bool inherit,
-    const ParamsProvider *context,
-    QSet<QString> *alreadyEvaluated);
+      const QDateTime &dt, const QString &multifieldSpecifiedFormat,
+      const ParamSet &paramset, bool inherit,
+      const ParamsProvider *context,
+      Utf8StringSet *alreadyEvaluated);
   static inline const QString toMultifieldSpecifiedCustomTimestamp(
     const QDateTime &dt, const QString &multifieldSpecifiedFormat,
     const ParamSet &paramset = ParamSet(), bool inherit = true,
     const ParamsProvider *context = 0) {
-    QSet<QString> ae;
+    Utf8StringSet ae;
     return toMultifieldSpecifiedCustomTimestamp(
       dt, multifieldSpecifiedFormat, paramset, inherit, context, &ae);
   }

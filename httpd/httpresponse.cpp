@@ -27,7 +27,7 @@ public:
   QAbstractSocket *_output;
   int _status;
   bool _headersSent, _disableBodyOutput;
-  QMultiMap<QByteArray,QByteArray> _headers;
+  QMultiMap<Utf8String,Utf8String> _headers;
   explicit HttpResponseData(QAbstractSocket *output)
     : _output(output), _status(200), _headersSent(false),
       _disableBodyOutput(false) { }
@@ -61,17 +61,13 @@ QAbstractSocket *HttpResponse::output() {
   if (!d)
     return DummySocket::singletonInstance();
   if (!d->_headersSent) {
-    QByteArray ba;
-    ba = "HTTP/1.1 "_ba + QByteArray::number(d->_status) + " "_ba
-        + statusAsString(d->_status) + "\r\n"_ba;
+    Utf8String ba;
+    ba = "HTTP/1.1 "_u8 + Utf8String::number(d->_status) + " "
+        + statusAsString(d->_status) + "\r\n";
     // LATER sanitize well-known headers (Content-Type...) values
     // LATER handle multi-line headers and special chars
     auto keys = d->_headers.keys();
-#if QT_VERSION >= 0x050f00
-    for (auto name: QSet<QByteArray>(keys.begin(), keys.end()))
-#else
-    for (auto name: keys.toSet())
-#endif
+    for (auto name: QSet<Utf8String>(keys.begin(), keys.end()))
       for (auto value: d->_headers.values(name))
         ba += name + ": "_ba + value + "\r\n"_ba;
     if (header("Content-Type"_ba).isEmpty())
@@ -94,7 +90,7 @@ int HttpResponse::status() const {
   return d ? d->_status : 0;
 }
 
-void HttpResponse::setHeader(const QByteArray &name, const QByteArray &value) {
+void HttpResponse::setHeader(const Utf8String &name, const Utf8String &value) {
   // LATER handle case insensitivity in header names
   if (d && !d->_headersSent) {
     d->_headers.replace(name, value);
@@ -102,8 +98,7 @@ void HttpResponse::setHeader(const QByteArray &name, const QByteArray &value) {
     Log::warning() << "HttpResponse: cannot set header after writing data";
 }
 
-void HttpResponse::addHeader(
-    const QByteArray &name, const QByteArray &value) {
+void HttpResponse::addHeader(const Utf8String &name, const Utf8String &value) {
   // LATER handle case insensitivity in header names
   if (d && !d->_headersSent) {
     d->_headers.insert(name, value);
@@ -112,18 +107,21 @@ void HttpResponse::addHeader(
 }
 
 void HttpResponse::appendValueToHeader(
-    const QByteArray &name, const QByteArray &value,
-    const QByteArray &separator) {
+    const Utf8String &name, const Utf8String &value,
+    const Utf8String &separator) {
   // LATER handle case insensitivity in header names
-  if (d && !d->_headersSent) {
-    auto values = d->_headers.values(name);
-    values.append(value);
-    d->_headers.insert(name, values.join(separator));
-  } else
+  if (!d)
+    return;
+  if (!d->_headersSent) {
     Log::warning() << "HttpResponse: cannot set header after writing data";
+    return;
+  }
+  Utf8StringList values = d->_headers.values(name);
+  values.append(value);
+  d->_headers.insert(name, values.join(separator));
 }
 
-void HttpResponse::redirect(QByteArray location, int status) {
+void HttpResponse::redirect(Utf8String location, int status) {
   if (!d)
     return;
   setStatus(status);
@@ -143,10 +141,9 @@ static const QRegularExpression _pathRegexp {
 static const QRegularExpression _domainRegexp {
   "\\A" INTERNET_DOMAIN_RE "\\z" };
 
-void HttpResponse::setCookie(
-    const QByteArray &name, const QByteArray &value,
-    QDateTime expires, const QByteArray &path,
-    const QByteArray &domain, bool secure, bool httponly) {
+void HttpResponse::setCookie(const Utf8String &name, const Utf8String &value,
+    QDateTime expires, const Utf8String &path,
+    const Utf8String &domain, bool secure, bool httponly) {
   if (!_nameRegexp.match(name).hasMatch()) {
     Log::warning() << "HttpResponse: incorrect name when setting cookie: "
                    << name;
@@ -157,7 +154,7 @@ void HttpResponse::setCookie(
                    << value;
     return;
   }
-  QByteArray s = name+'='+value;
+  auto s = name+'='+value;
   if (!expires.isNull())
     s += "; Expires="_ba + TimeFormats::toRfc2822DateTime(expires).toUtf8();
   if (!path.isEmpty()) {
@@ -188,8 +185,8 @@ void HttpResponse::setCookie(
   addHeader("Set-Cookie", s);
 }
 
-QByteArray HttpResponse::header(
-    const QByteArray &name, const QByteArray &defaultValue) const {
+Utf8String HttpResponse::header(
+    const Utf8String &name, const Utf8String &defaultValue) const {
   // LATER handle case insensitivity in header names
   if (!d)
     return defaultValue;
@@ -197,68 +194,68 @@ QByteArray HttpResponse::header(
   return v.isNull() ? defaultValue : v;
 }
 
-QByteArrayList HttpResponse::headers(const QByteArray &name) const {
+Utf8StringList HttpResponse::headers(const Utf8String &name) const {
   // LATER handle case insensitivity in header names
-  return d ? d->_headers.values(name) : QByteArrayList{};
+  return d ? d->_headers.values(name) : Utf8StringList{};
 }
 
-QMultiMap<QByteArray,QByteArray> HttpResponse::headers() const {
-  return d ? d->_headers : QMultiMap<QByteArray,QByteArray>();
+QMultiMap<Utf8String, Utf8String> HttpResponse::headers() const {
+  return d ? d->_headers : QMultiMap<Utf8String,Utf8String>();
 }
 
-QByteArray HttpResponse::statusAsString(int status) {
+Utf8String HttpResponse::statusAsString(int status) {
   switch(status) {
   case 200:
-    return "Ok"_ba;
+    return "Ok"_u8;
   case 201:
-    return "Created"_ba;
+    return "Created"_u8;
   case 202:
-    return "Accepted"_ba;
+    return "Accepted"_u8;
   case 300:
-    return "Multiple choices"_ba;
+    return "Multiple choices"_u8;
   case 301:
-    return "Moving permantently"_ba;
+    return "Moving permantently"_u8;
   case 302:
-    return "Found"_ba;
+    return "Found"_u8;
   case 303:
-    return "See other"_ba;
+    return "See other"_u8;
   case 304:
-    return "Not modified"_ba;
+    return "Not modified"_u8;
   case 305:
-    return "Use proxy"_ba;
+    return "Use proxy"_u8;
   case 306:
-    return "Switch proxy"_ba;
+    return "Switch proxy"_u8;
   case 307:
-    return "Temporary redirect"_ba;
+    return "Temporary redirect"_u8;
   case 308:
-    return "Permanent redirect"_ba;
+    return "Permanent redirect"_u8;
   case 400:
-    return "Bad request"_ba;
+    return "Bad request"_u8;
   case 401:
-    return "Authentication required"_ba;
+    return "Authentication required"_u8;
   case 402:
-    return "Insert coin"_ba;
+    return "Insert coin"_u8;
   case 403:
-    return "Forbidden"_ba;
+    return "Forbidden"_u8;
   case 404:
-    return "Not Found"_ba;
+    return "Not Found"_u8;
   case 405:
-    return "Method not allowed"_ba;
+    return "Method not allowed"_u8;
   case 408:
-    return "Request timeout"_ba;
+    return "Request timeout"_u8;
   case 413:
-    return "Request entity too large"_ba;
+    return "Request entity too large"_u8;
   case 414:
-    return "Request URI too large"_ba;
+    return "Request URI too large"_u8;
   case 415:
-    return "Unsupported media type"_ba;
+    return "Unsupported media type"_u8;
   case 418:
-    return "I'm a teapot"_ba;
+    return "I'm a teapot"_u8;
   case 500:
-    return "Internal server error"_ba;
+    return "Internal server error"_u8;
   case 501:
-    return "Not implemented"_ba;
+    return "Not implemented"_u8;
   default:
-    return "Status "_ba+QByteArray::number(status);
+    return "Status "_u8+Utf8String::number(status);
   }
 }

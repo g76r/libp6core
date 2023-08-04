@@ -32,8 +32,8 @@ public:
   const QVariant paramValue(
     const QString &key, const ParamsProvider *context,
     const QVariant &defaultValue,
-    QSet<QString> *alreadyEvaluated) const override;
-  const QSet<QString> keys() const override;
+    Utf8StringSet *alreadyEvaluated) const override;
+  const Utf8StringSet keys() const override;
 };
 
 #endif // REGEXPPARAMSPROVIDER_H

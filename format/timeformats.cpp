@@ -331,15 +331,15 @@ const QString TimeFormats::toMultifieldSpecifiedCustomTimestamp(
   const QDateTime &dt, const QString &multifieldSpecifiedFormat,
   const ParamSet &paramset,
   bool inherit, const ParamsProvider *context,
-  QSet<QString> *alreadyEvaluated) {
+  Utf8StringSet *alreadyEvaluated) {
   CharacterSeparatedExpression params(multifieldSpecifiedFormat);
-  QString format = paramset.evaluate(
+  auto format = paramset.evaluate(
         params.value(0), inherit, context, alreadyEvaluated);
-  QString relativedatetime = paramset.evaluate(
+  auto relativedatetime = paramset.evaluate(
         params.value(1), inherit, context, alreadyEvaluated);;
   QTimeZone tz = QTimeZone(
         paramset.evaluate(params.value(2), inherit, context,
-                          alreadyEvaluated).trimmed().toUtf8());
+                          alreadyEvaluated).trimmed());
   return toCustomTimestamp(dt, format, RelativeDateTime(relativedatetime), tz);
 }
 

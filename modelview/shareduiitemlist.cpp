@@ -15,11 +15,11 @@
 #include "shareduiitem.h"
 
 const QVariant SharedUiItemListParamsProvider::paramValue(
-  const QString &key, const ParamsProvider *, const QVariant &defaultValue,
-  QSet<QString> *) const {
+    const Utf8String &key, const ParamsProvider *, const QVariant &defaultValue,
+    Utf8StringSet *) const {
   int colon = key.indexOf(':');
-  QByteArray idQualifier = colon >= 0 ? key.left(colon).toUtf8() : QByteArray();
-  QByteArray sectionName = key.mid(colon+1).toUtf8();// works even with colon=-1
+  Utf8String idQualifier = colon >= 0 ? key.left(colon) : Utf8String{};
+  Utf8String sectionName = key.mid(colon+1);// works even with colon=-1
   for (auto item : _list) {
     if (!idQualifier.isEmpty() && item.idQualifier() != idQualifier)
       continue;
@@ -44,9 +44,8 @@ const QVariant SharedUiItemListParamsProvider::paramValue(
   return defaultValue;
 }
 
-const QSet<QString> SharedUiItemListParamsProvider::keys() const {
-  QSet<QString> keys;
-  QSet<QString> qualifiers;
+const Utf8StringSet SharedUiItemListParamsProvider::keys() const {
+  Utf8StringSet keys, qualifiers;
   for (auto item: _list) {
     auto q = item.idQualifier();
     if (qualifiers.contains(q))

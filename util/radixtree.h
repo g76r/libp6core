@@ -14,12 +14,10 @@
 #ifndef RADIXTREE_H
 #define RADIXTREE_H
 
-#include "libp6core_global.h"
+#include "util/utf8string.h"
 #include <QSharedData>
-#include <QString>
 #include <QHash>
 #include <QMap>
-#include <QSet>
 #include <functional>
 
 /** Helper class to make it possible to initialize a RadixTree with such syntax:
@@ -430,6 +428,12 @@ public:
   }
   QMap<QString,T> toStringMap() {
     QMap<QString,T> map;
+    for (auto key : keys())
+      map.insert(key, value(key));
+    return map;
+  }
+  QMap<Utf8String,T> toUtf8Map() {
+    QMap<Utf8String,T> map;
     for (auto key : keys())
       map.insert(key, value(key));
     return map;

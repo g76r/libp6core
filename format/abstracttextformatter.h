@@ -1,4 +1,4 @@
-/* Copyright 2017-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -140,7 +140,7 @@ private:
   /** Format a row, using item's id if rowHeader.isNull()
     * @param rowHeader: use qualifiedId if null */
   QString formatRowInternal(const SharedUiItem &item, int role,
-                            QString rowHeader = QString()) const;
+                            Utf8String rowHeader = {}) const;
 };
 
 #endif // ABSTRACTTEXTFORMATTER_H

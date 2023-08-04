@@ -181,8 +181,7 @@ void ParamSetModel::fillRows(
     if (!parent.isNull())
       fillRows(rows, parent, depth+1, allKeys);
   }
-  QStringList localKeys = params.keys(false).values();
-  std::sort(localKeys.begin(), localKeys.end());
+  auto localKeys = params.keys(false).toSortedList();
   QString scope = _scopes.value(depth);
   if (scope.isEmpty() && depth)
     scope = _defaultScopeForInheritedParams;

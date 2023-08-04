@@ -1,4 +1,4 @@
-/* Copyright 2017-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -103,7 +103,7 @@ QString AbstractTextFormatter::formatRowInternal(
 }
 
 QString AbstractTextFormatter::formatRowInternal(
-    const SharedUiItem &item, int role, QString rowHeader) const {
+    const SharedUiItem &item, int role, Utf8String rowHeader) const {
   QStringList cells;
   int n = item.uiSectionCount();
   for (int i = 0; i < n; ++i)

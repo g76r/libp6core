@@ -1,4 +1,4 @@
-/* Copyright 2012-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,7 +14,6 @@
 #ifndef HTTPREQUEST_H
 #define HTTPREQUEST_H
 
-#include <QStringList>
 #include <QMultiHash>
 #include <QUrl>
 #include <QUrlQuery>
@@ -39,7 +38,7 @@ public:
 private:
   QExplicitlySharedDataPointer<HttpRequestData> d;
   static QSet<HttpMethod> _wellKnownMethods;
-  static QSet<QByteArray> _wellKnownMethodNames;
+  static Utf8StringSet _wellKnownMethodNames;
 
 public:
   HttpRequest(QAbstractSocket *input);
@@ -51,32 +50,32 @@ public:
   void setMethod(HttpMethod method);
   HttpRequest::HttpMethod method() const;
   /** @return protocol and human readable string, e.g. "GET" */
-  QByteArray methodName() const { return methodName(method()); }
+  Utf8String methodName() const { return methodName(method()); }
   /** @return protocol and human readable string, e.g. "GET" */
-  static QByteArray methodName(HttpMethod method);
+  static Utf8String methodName(HttpMethod method);
   /** @return enum from protocol and human readable string, e.g. "GET"
    * @param name case sensitive, must be upper case */
-  static HttpMethod methodFromText(const QByteArray &name);
+  static HttpMethod methodFromText(const Utf8String &name);
   static QSet<HttpMethod> wellKnownMethods() { return _wellKnownMethods; }
-  static QSet<QByteArray> wellKnownMethodNames() {
+  static Utf8StringSet wellKnownMethodNames() {
     return _wellKnownMethodNames; }
-  bool parseAndAddHeader(QByteArray rawHeader);
+  bool parseAndAddHeader(Utf8String rawHeader);
   /** Value associated to a request header.
    * If the header is found several time, last value is returned. */
-  QByteArray header(
-      const QByteArray &name, const QByteArray &defaultValue = {}) const;
+  Utf8String header(
+      const Utf8String &name, const Utf8String &defaultValue = {}) const;
   /** Values associated to a request header, last occurrence first. */
-  QByteArrayList headers(const QByteArray &name) const;
+  Utf8StringList headers(const Utf8String &name) const;
   /** Full header hash */
-  QMultiMap<QByteArray,QByteArray> headers() const;
+  QMultiMap<Utf8String,Utf8String> headers() const;
   /* Value of a given cookie, as is. */
-  QByteArray cookie(
-      const QByteArray &name, const QByteArray &defaultValue = {}) const;
+  Utf8String cookie(const Utf8String &name,
+                    const Utf8String &defaultValue = {}) const;
   /* Value of a given cookie, decoded from base64 (implies that the cookie
    * content was encoded using base64). */
   QByteArray base64Cookie(
-      const QByteArray &name, const QByteArray &defaultValue = {}) const;
-  QMap<QByteArray,QByteArray> cookies() const;
+      const Utf8String &name, const QByteArray &defaultValue = {}) const;
+  QMap<Utf8String,Utf8String> cookies() const;
   /** Replace url. If params have already been queried and new url has
    * different query items than former one, one should also call
    * discardParamsCache(). */ // LATER this behaviour is optimisable since Qt5
@@ -86,21 +85,21 @@ public:
   /** Return an url param (query item) value.
    * Only first value of multi-valued items is kept. */
   // LATER manage to keep last value instead
-  QByteArray param(QByteArray key) const;
-  void overrideParam(QByteArray key, QByteArray value);
-  void overrideUnsetParam(QByteArray key);
+  Utf8String param(Utf8String key) const;
+  void overrideParam(Utf8String key, Utf8String value);
+  void overrideUnsetParam(Utf8String key);
   /** Retrieve url params (query items) as a ParamSet.
    * Only first value of multi-valued items is kept. */
   // LATER manage to keep last value instead
   ParamSet paramsAsParamSet() const;
-  QMap<QByteArray,QByteArray> paramsAsMap() const;
-  QByteArray toUtf8() const;
+  QMap<Utf8String,Utf8String> paramsAsMap() const;
+  Utf8String toUtf8() const;
   /** Client addresses.
    * Contains only one address for direct connection, or several when acceeded
    * through (reverse) proxies.
    * Same as X-Forwarded-For content, plus socket peer address at the end of
    * the list. */
-  QByteArrayList clientAdresses() const;
+  Utf8StringList clientAdresses() const;
   /** Create a ParamsProvider wrapper object to give access to ! pseudo params,
    * url params (query items) and base64 cookies, in this order (url params hide
    * cookies). */
@@ -108,7 +107,7 @@ public:
   // LATER handle sessions
 
 private:
-  inline void parseAndAddCookie(QByteArray rawHeaderValue);
+  inline void parseAndAddCookie(Utf8String rawHeaderValue);
   inline void cacheAllParams() const;
 };
 
@@ -122,10 +121,10 @@ public:
     : _request(request) { }
   using ParamsProvider::paramValue;
   const QVariant paramValue(
-    const QString &key, const ParamsProvider *context,
+    const Utf8String &key, const ParamsProvider *context,
     const QVariant &defaultValue,
-    QSet<QString> *alreadyEvaluated) const override;
-  const QSet<QString> keys() const override;
+    Utf8StringSet *alreadyEvaluated) const override;
+  const Utf8StringSet keys() const override;
 };
 
 inline HttpRequestPseudoParamsProvider HttpRequest::pseudoParams() const {

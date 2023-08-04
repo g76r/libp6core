@@ -116,7 +116,7 @@ void TemplatingHttpHandler::applyTemplateFile(
       if (markupContent.at(0) == '=') {
         // syntax: <?=paramset_evaluable_expression?>
         output->append(
-              processingContext->evaluate(markupContent.mid(1)).toUtf8());
+              processingContext->evaluate(markupContent.mid(1)));
       } else if (markupId == "view"_ba) {
         // syntax: <?view:viewname?>
         auto markupData = markupContent.mid(separatorPos+1);

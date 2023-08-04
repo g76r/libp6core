@@ -1,4 +1,4 @@
-/* Copyright 2012-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -47,7 +47,7 @@ public:
   bool listen(quint16 port) { return listen (QHostAddress::Any, port); }
 
 protected:
-  void incomingConnection(qintptr handle);
+  void incomingConnection(qintptr handle) override;
 
 private:
   void connectionHandled(HttpWorker *worker);

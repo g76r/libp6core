@@ -20,17 +20,16 @@ namespace {
 
 struct Environment : public ParamsProvider {
   const QVariant paramValue(
-    const QString &key, const ParamsProvider *context,
+    const Utf8String &key, const ParamsProvider *context,
     const QVariant &defaultValue,
-    QSet<QString> *alreadyEvaluated) const override {
-    auto rawValue = qgetenv(key.toLocal8Bit());
+    Utf8StringSet *alreadyEvaluated) const override {
+    auto rawValue = qgetenv(key);
     if (rawValue.isNull())
       return defaultValue;
-    return ParamSet().evaluate(QString::fromLocal8Bit(rawValue), false,
-                               context, alreadyEvaluated);
+    return ParamSet().evaluate(rawValue, false, context, alreadyEvaluated);
   }
-  const QSet<QString> keys() const override {
-    QSet<QString> keys;
+  const Utf8StringSet keys() const override {
+    Utf8StringSet keys;
     for (char **e = environ; *e != nullptr; ++e) {
       int i = 0;
       while ((*e)[i] != '\0' && (*e)[i] != '=')
@@ -43,11 +42,11 @@ struct Environment : public ParamsProvider {
 
 struct Empty : public ParamsProvider {
   const QVariant paramValue(
-    const QString &, const ParamsProvider *, const QVariant &defaultValue,
-    QSet<QString> *) const override {
+    const Utf8String &, const ParamsProvider *, const QVariant &defaultValue,
+    Utf8StringSet *) const override {
     return defaultValue;
   }
-  const QSet<QString> keys() const override {
+  const Utf8StringSet keys() const override {
     return {};
   }
 };
@@ -68,28 +67,28 @@ const ParamSet ParamsProvider::snapshot() const {
   return snapshot;
 }
 
-const QString ParamsProvider::evaluate(
-    const QString &rawValue, QSet<QString> *alreadyEvaluated) const {
+const Utf8String ParamsProvider::evaluate(
+    const Utf8String &rawValue, Utf8StringSet *alreadyEvaluated) const {
   return ParamSet().evaluate(rawValue, false, this, alreadyEvaluated);
 }
 
 const QVariant ParamsProvider::paramValue(
-  const QString &, const ParamsProvider *, const QVariant &,
-  QSet<QString> *) const {
+    const Utf8String &, const ParamsProvider *, const QVariant &,
+  Utf8StringSet *) const {
   return {};
 }
 
-const QSet<QString> ParamsProvider::keys() const {
+const Utf8StringSet ParamsProvider::keys() const {
   return {};
 }
 
 const QVariant RawParamsProvider::paramValue(
-  const QString &key, const ParamsProvider *, const QVariant &defaultValue,
-  QSet<QString> *) const {
+    const Utf8String &key, const ParamsProvider *, const QVariant &defaultValue,
+    Utf8StringSet *) const {
   return _params.value(key, defaultValue);
 }
 
-const QSet<QString> RawParamsProvider::keys() const {
+const Utf8StringSet RawParamsProvider::keys() const {
   auto keys = _params.keys();
-  return QSet<QString>(keys.begin(), keys.end());
+  return QSet<Utf8String>(keys.begin(), keys.end());
 }

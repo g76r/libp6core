@@ -74,7 +74,7 @@ public:
    * @return true iff the method is OPTIONS
    */
   bool handleCORS(HttpRequest req, HttpResponse res,
-      QSet<QByteArray> methods = HttpRequest::wellKnownMethodNames());
+      Utf8StringSet methods = HttpRequest::wellKnownMethodNames());
 };
 
 #endif // HTTPHANDLER_H

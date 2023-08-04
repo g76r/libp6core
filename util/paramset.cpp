@@ -14,7 +14,6 @@
 #include "paramset.h"
 #include <QSharedData>
 #include <QHash>
-#include <QString>
 #include <QDateTime>
 #include <QtDebug>
 #include "format/timeformats.h"
@@ -44,7 +43,7 @@
 
 bool ParamSet::_variableNotFoundLoggingEnabled { false };
 
-static QMap<QByteArray,ParamSet> _externals;
+static QMap<Utf8String,ParamSet> _externals;
 
 QMutex _externals_mutex;
 
@@ -96,7 +95,7 @@ static inline bool shouldBeEscapedWithinRegexp(char c) {
  * E.g. ("foobar%{xy%{z%1}}baz", 6) -> 11
  */
 static inline int nestedPercentVariableLength(
-    const QString &rawValue, int percentPosition) {
+    const Utf8String &rawValue, int percentPosition) {
   int i = percentPosition+1, len = rawValue.size();
   if (i > len)
     return 0;
@@ -131,9 +130,9 @@ static inline int nestedPercentVariableLength(
 class ParamSetData : public QSharedData {
 public:
   ParamSet _parent;
-  QHash<QString,QString> _params;
+  QMap<Utf8String,Utf8String> _params;
   ParamSetData() { }
-  ParamSetData(QHash<QString,QString> params) : _params(params) { }
+  ParamSetData(QMap<Utf8String,Utf8String> params) : _params(params) { }
   ParamSetData(ParamSet parent) : _parent(parent) { }
 };
 
@@ -143,32 +142,35 @@ ParamSet::ParamSet() {
 ParamSet::ParamSet(ParamSetData *data) : d(data){
 }
 
-ParamSet::ParamSet(std::initializer_list<QString> list) {
+ParamSet::ParamSet(std::initializer_list<Utf8String> list) {
   for (auto it = std::begin(list); it != std::end(list); ++it) {
     auto key = *it;
     ++it;
     if (it != std::end(list)) {
       setValue(key, *it);
     } else {
-      setValue(key, QStringLiteral(""));
+      setValue(key, ""_ba);
       break;
     }
   }
 }
 
-ParamSet::ParamSet(std::initializer_list<std::pair<QString,QVariant>> list) {
-  for (const std::pair<QString,QVariant> &p : list)
-    setValue(p.first, p.second.toString());
+ParamSet::ParamSet(
+    std::initializer_list<std::pair<Utf8String, QVariant> > list) {
+  for (const std::pair<Utf8String,QVariant> &p : list)
+    setValue(p.first, Utf8String(p.second));
 }
 
 ParamSet::ParamSet(const ParamSet &other) : d(other.d) {
 }
 
 ParamSet::ParamSet(const QHash<QString, QString> &params)
-  : d(new ParamSetData(params)) {
+  : d(new ParamSetData) {
+  for (auto key: params.keys())
+    d->_params.insert(key, params.value(key));
 }
 
-ParamSet::ParamSet(const QHash<QByteArray,QByteArray> &params)
+ParamSet::ParamSet(const QHash<Utf8String,Utf8String> &params)
   : d(new ParamSetData) {
   for (auto key: params.keys())
     d->_params.insert(key, params.value(key));
@@ -180,10 +182,8 @@ ParamSet::ParamSet(const QMap<QString, QString> &params)
     d->_params.insert(key, params.value(key));
 }
 
-ParamSet::ParamSet(const QMap<QByteArray,QByteArray> &params)
-  : d(new ParamSetData) {
-  for (auto key: params.keys())
-    d->_params.insert(key, params.value(key));
+ParamSet::ParamSet(const QMap<Utf8String,Utf8String> &params)
+  : d(new ParamSetData(params)) {
 }
 
 ParamSet::ParamSet(const QMultiMap<QString, QString> &params)
@@ -198,36 +198,47 @@ ParamSet::ParamSet(const QMultiHash<QString, QString> &params)
     d->_params.insert(key, params.value(key));
 }
 
+ParamSet::ParamSet(const QMultiMap<Utf8String, Utf8String> &params)
+  : d(new ParamSetData) {
+  for (auto key: params.keys())
+    d->_params.insert(key, params.value(key));
+}
+
+ParamSet::ParamSet(const QMultiHash<Utf8String, Utf8String> &params)
+  : d(new ParamSetData) {
+  for (auto key: params.keys())
+    d->_params.insert(key, params.value(key));
+}
+
 ParamSet::ParamSet(
-  const PfNode &parentnode, const QString &attrname,
-  const QString &constattrname, const ParamSet &parent)
+  const PfNode &parentnode, const Utf8String &attrname,
+  const Utf8String &constattrname, const ParamSet &parent)
   : d(new ParamSetData(parent)) {
   if (!attrname.isEmpty()) {
     for (auto p: parentnode.stringsPairChildrenByName(attrname)) {
       if (p.first.isEmpty())
         continue;
-      auto value = p.second;
-      d->_params.insert(p.first, value.isNull() ? QStringLiteral("") : value);
+      Utf8String value = p.second;
+      d->_params.insert(p.first, value.isNull() ? ""_u8 : value);
     }
   }
   if (!constattrname.isEmpty()) {
-    ParamSet constparams(parentnode, constattrname, QString(), ParamSet());
+    ParamSet constparams(parentnode, constattrname, Utf8String(), ParamSet());
     for (auto k: constparams.keys()) {
       auto value = escape(constparams.value(k, this));
-      d->_params.insert(k, value.isNull() ? QStringLiteral("") : value);
+      d->_params.insert(k, value.isNull() ? ""_u8 : value);
     }
   }
   if (d->_params.isEmpty() && parent.isNull())
     d.reset();
 }
 
-ParamSet::ParamSet(
-  const PfNode &parentnode, const QString &attrname, const ParamSet &parent)
-  : ParamSet(parentnode, attrname, QString(), parent) {
+ParamSet::ParamSet(const PfNode &parentnode, const Utf8String &attrname,
+                   const ParamSet &parent)
+  : ParamSet(parentnode, attrname, Utf8String(), parent) {
 }
 
-ParamSet::ParamSet(
-  const PfNode &parentnode, const QSet<QString> &attrnames,
+ParamSet::ParamSet(const PfNode &parentnode, const Utf8StringSet &attrnames,
   const ParamSet &parent) : d(new ParamSetData(parent)) {
   for (const PfNode &child : parentnode.children())
     if (attrnames.contains(child.name()))
@@ -237,8 +248,9 @@ ParamSet::ParamSet(
 }
 
 ParamSet::ParamSet(
-  const QSqlDatabase &db, const QString &sql, const QMap<int,QString> &bindings,
-  const ParamSet &parent) : d(new ParamSetData(parent)) {
+    const QSqlDatabase &db, const Utf8String &sql,
+    const QMap<int,Utf8String> &bindings, const ParamSet &parent)
+  : d(new ParamSetData(parent)) {
   QSqlQuery query(db);
   query.prepare(parent.evaluate(sql));
   if (!query.exec()) {
@@ -249,7 +261,7 @@ ParamSet::ParamSet(
                    << " " << sql;
     return;
   }
-  QMap<int,QStringList> values;
+  QMap<int,Utf8StringList> values;
   while (query.next()) {
     auto r = query.record();
     for (int i = 0; i < r.count(); ++i) {
@@ -267,8 +279,8 @@ ParamSet::ParamSet(
 }
 
 ParamSet::ParamSet(
-    QIODevice *input, const QByteArray &format,
-    const QMap<QByteArray,QByteArray> options, const bool escape_percent,
+    QIODevice *input, const Utf8String &format,
+    const QMap<Utf8String,Utf8String> options, const bool escape_percent,
     const ParamSet &parent)
   : d(fromQIODevice(input, format, options, escape_percent, parent)) {
 }
@@ -293,7 +305,7 @@ void ParamSet::setParent(ParamSet parent) {
     d->_parent = parent;
 }
 
-void ParamSet::setValue(QString key, QString value) {
+void ParamSet::setValue(Utf8String key, Utf8String value) {
   if (!d)
     d = new ParamSetData();
   d->_params.insert(key, value);
@@ -306,7 +318,7 @@ void ParamSet::setValues(ParamSet params, bool inherit) {
     d->_params.insert(k, params.rawValue(k));
 }
 
-void ParamSet::removeValue(QString key) {
+void ParamSet::removeValue(Utf8String key) {
   if (d)
     d->_params.remove(key);
 }
@@ -315,9 +327,9 @@ void ParamSet::clear() {
   d = new ParamSetData();
 }
 
-QString ParamSet::rawValue(QString key, QString defaultValue,
-                           bool inherit) const {
-  QString value;
+Utf8String ParamSet::rawValue(
+    Utf8String key, Utf8String defaultValue, bool inherit) const {
+  Utf8String value;
   if (d) [[likely]] {
     value = d->_params.value(key);
     if (value.isNull() && inherit)
@@ -326,61 +338,61 @@ QString ParamSet::rawValue(QString key, QString defaultValue,
   return value.isNull() ? defaultValue : value;
 }
 
-QString ParamSet::evaluate(
-  QString rawValue, bool inherit, const ParamsProvider *context,
-    QSet<QString> *alreadyEvaluated) const {
+Utf8String ParamSet::evaluate(
+    Utf8String rawValue, bool inherit, const ParamsProvider *context,
+    Utf8StringSet *alreadyEvaluated) const {
   //Log::debug() << "evaluate " << rawValue << " " << QString::number((qint64)context, 16);
-  QStringList values = splitAndEvaluate(rawValue, QString(), inherit, context,
-                                        alreadyEvaluated);
+  auto values = splitAndEvaluate(rawValue, Utf8String(), inherit, context,
+                                 alreadyEvaluated);
   if (values.isEmpty())
-    return rawValue.isNull() ? QString{} : u""_s;
+    return rawValue.isNull() ? Utf8String{} : ""_u8;
   return values.first();
 }
 
 static RadixTree<std::function<
-QString(const ParamSet &params, const QString &key, bool inherit,
-const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+Utf8String(const ParamSet &params, const Utf8String &key, bool inherit,
+const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
         int matchedLength)>>
 _functions {
-{ "'", [](const ParamSet &, const QString &key, bool, const ParamsProvider *,
-          QSet<QString> *, int) {
+{ "'", [](const ParamSet &, const Utf8String &key, bool, const ParamsProvider *,
+          Utf8StringSet *, int) {
   return key.mid(1);
  }, true},
-{ "=date", [](const ParamSet &paramset, const QString &key, bool inherit,
-     const ParamsProvider *context, QSet<QString> *alreayEvaluated,
+{ "=date", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
+     const ParamsProvider *context, Utf8StringSet *alreayEvaluated,
      int matchedLength) {
   return TimeFormats::toMultifieldSpecifiedCustomTimestamp(
         QDateTime::currentDateTime(), key.mid(matchedLength), paramset,
         inherit, context, alreayEvaluated);
 }, true},
-{ "=coarsetimeinterval", [](const ParamSet &paramset, const QString &key,
+{ "=coarsetimeinterval", [](const ParamSet &paramset, const Utf8String &key,
      bool inherit, const ParamsProvider *context,
-     QSet<QString> *alreadyEvaluated, int matchedLength) {
+     Utf8StringSet *alreadyEvaluated, int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   qint64 msecs = (qint64)(
         paramset.evaluate(params.value(0), inherit, context, alreadyEvaluated)
         .toDouble()*1000);
   return TimeFormats::toCoarseHumanReadableTimeInterval(msecs);
 }, true},
-{ "=eval", [](const ParamSet &paramset, const QString &key, bool inherit,
-     const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+{ "=eval", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
+     const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
      int matchedLength) {
-  QString value = paramset.evaluate(
+  auto value = paramset.evaluate(
         key.mid(matchedLength+1), inherit, context, alreadyEvaluated);
   return paramset.evaluate(value, inherit, context, alreadyEvaluated);
 }, true},
-{ "=escape", [](const ParamSet &paramset, const QString &key, bool inherit,
-     const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+{ "=escape", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
+     const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
      int matchedLength) {
-  QString value = paramset.evaluate(
+  auto value = paramset.evaluate(
         key.mid(matchedLength+1), inherit, context, alreadyEvaluated);
   return ParamSet::escape(value);
 }, true},
-{ "=default", [](const ParamSet &paramset, const QString &key, bool inherit,
-              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+{ "=default", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
+              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
-  QString value;
+  Utf8String value;
   for (int i = 0; i < params.size(); ++i) {
     value = paramset.evaluate(params.value(i), inherit, context,
                               alreadyEvaluated);
@@ -389,14 +401,14 @@ _functions {
   }
   return value;
 }, true},
-{ "=rawvalue", [](const ParamSet &paramset, const QString &key, bool,
-              const ParamsProvider *, QSet<QString> *, int matchedLength) {
+{ "=rawvalue", [](const ParamSet &paramset, const Utf8String &key, bool,
+              const ParamsProvider *, Utf8StringSet *, int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   if (params.size() < 1)
-    return QString();
-  QString value = paramset.rawValue(params.value(0));
+    return Utf8String{};
+  auto value = paramset.rawValue(params.value(0));
   if (params.size() >= 2) {
-    QString flags = params.value(1);
+    auto flags = params.value(1);
     if (flags.contains('e')) { // %-escape
       value = ParamSet::escape(value);
     }
@@ -408,14 +420,14 @@ _functions {
   }
   return value;
 }, true},
-{ "=ifneq", [](const ParamSet &paramset, const QString &key, bool inherit,
-              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+{ "=ifneq", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
+              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   if (params.size() >= 3) [[likely]] {
-    QString input = paramset.evaluate(params.value(0), inherit, context,
+    auto input = paramset.evaluate(params.value(0), inherit, context,
                                       alreadyEvaluated);
-    QString ref = paramset.evaluate(params.value(1), inherit, context,
+    auto ref = paramset.evaluate(params.value(1), inherit, context,
                                     alreadyEvaluated);
     if (input != ref)
       return paramset.evaluate(params.value(2), inherit, context,
@@ -426,20 +438,20 @@ _functions {
         : input;
   }
   //qDebug() << "%=ifneq function invalid syntax:" << key;
-  return QString();
+  return Utf8String{};
 }, true},
-{ "=switch", [](const ParamSet &paramset, const QString &key, bool inherit,
-              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+{ "=switch", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
+              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   if (params.size() >= 1) [[likely]] {
-    QString input = paramset.evaluate(params.value(0), inherit, context,
-                                      alreadyEvaluated);
+    auto input = paramset.evaluate(params.value(0), inherit, context,
+                                   alreadyEvaluated);
     // evaluating :case:value params, if any
     int n = (params.size() - 1) / 2;
     for (int i = 0; i < n; ++i) {
-      QString ref = paramset.evaluate(params.value(1+i*2), inherit, context,
-                                      alreadyEvaluated);
+      auto ref = paramset.evaluate(params.value(1+i*2), inherit, context,
+                                   alreadyEvaluated);
       if (input == ref)
         return paramset.evaluate(params.value(1+i*2+1), inherit, context,
                                  alreadyEvaluated);
@@ -452,20 +464,20 @@ _functions {
     // otherwise left input as is
     return input;
   }
-  return QString();
+  return Utf8String();
 }, true},
-{ "=match", [](const ParamSet &paramset, const QString &key, bool inherit,
-              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+{ "=match", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
+              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   if (params.size() >= 1) [[likely]] {
-    QString input = paramset.evaluate(params.value(0), inherit, context,
-                                      alreadyEvaluated);
+    auto input = paramset.evaluate(params.value(0), inherit, context,
+                                   alreadyEvaluated);
     // evaluating :case:value params, if any
     int n = (params.size() - 1) / 2;
     for (int i = 0; i < n; ++i) {
-      QString ref = paramset.evaluate(params.value(1+i*2), inherit, context,
-                                      alreadyEvaluated);
+      auto ref = paramset.evaluate(params.value(1+i*2), inherit, context,
+                                   alreadyEvaluated);
       QRegularExpression re(ref, QRegularExpression::DotMatchesEverythingOption // can be canceled with (?-s)
                             );
       if (re.match(input).hasMatch())
@@ -480,19 +492,19 @@ _functions {
     // otherwise left input as is
     return input;
   }
-  return QString();
+  return Utf8String();
 }, true},
-{ "=sub", [](const ParamSet &paramset, const QString &key, bool inherit,
-              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+{ "=sub", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
+              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   //qDebug() << "%=sub:" << key << params.size() << params;
-  QString value = paramset.evaluate(params.value(0), inherit, context,
-                                    alreadyEvaluated);
+  auto value = paramset.evaluate(params.value(0), inherit, context,
+                                 alreadyEvaluated);
   for (int i = 1; i < params.size(); ++i) {
     CharacterSeparatedExpression sFields(params[i]);
     //qDebug() << "pattern" << i << params[i] << sFields.size() << sFields;
-    QString optionsString = sFields.value(2);
+    auto optionsString = sFields.value(2);
     QRegularExpression::PatternOptions patternOptions
         = QRegularExpression::DotMatchesEverythingOption // can be canceled with (?-s)
       ;
@@ -510,7 +522,7 @@ _functions {
     }
     bool repeat = optionsString.contains('g');
     int offset = 0;
-    QString transformed;
+    Utf8String transformed;
     do {
       QRegularExpressionMatch match = re.match(value, offset);
       if (match.hasMatch()) {
@@ -542,32 +554,32 @@ _functions {
   //qDebug() << "value:" << value;
   return value;
 }, true},
-{ "=left", [](const ParamSet &paramset, const QString &key, bool inherit,
-              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+{ "=left", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
+              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
-  QString input = paramset.evaluate(params.value(0), inherit, context,
-                                    alreadyEvaluated);
+  auto input = paramset.evaluate(params.value(0), inherit, context,
+                                 alreadyEvaluated);
   bool ok;
   int i = params.value(1).toInt(&ok);
   return ok ? input.left(i) : input;
 }, true},
-{ "=right", [](const ParamSet &paramset, const QString &key, bool inherit,
-              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+{ "=right", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
+              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
               int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
-  QString input = paramset.evaluate(params.value(0), inherit, context,
-                                    alreadyEvaluated);
+  auto input = paramset.evaluate(params.value(0), inherit, context,
+                                 alreadyEvaluated);
   bool ok;
   int i = params.value(1).toInt(&ok);
   return ok ? input.right(i) : input;
 }, true},
-{ "=mid", [](const ParamSet &paramset, const QString &key, bool inherit,
-              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
-              int matchedLength) {
+{ "=mid", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
+              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
+              int matchedLength) -> Utf8String {
   CharacterSeparatedExpression params(key, matchedLength);
-  QString input = paramset.evaluate(params.value(0), inherit, context,
-                                    alreadyEvaluated);
+  auto input = paramset.evaluate(params.value(0), inherit, context,
+                                 alreadyEvaluated);
   bool ok;
   int i = params.value(1).toInt(&ok);
   if (ok) {
@@ -576,70 +588,74 @@ _functions {
   }
   return input;
 }, true},
-{ "=trim", [](const ParamSet &paramset, const QString &key, bool inherit,
-             const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+{ "=trim", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
+             const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
              int matchedLength) {
    auto input = paramset.evaluate(key.mid(matchedLength), inherit, context,
                                   alreadyEvaluated);
    return input.trimmed();
 }, true},
-{ "=elideright", [](const ParamSet &paramset, const QString &key, bool inherit,
-              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
-              int matchedLength) {
+{ "=elideright", [](
+              const ParamSet &paramset, const Utf8String &key, bool inherit,
+              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
+              int matchedLength) -> Utf8String {
   CharacterSeparatedExpression params(key, matchedLength);
-  QString input = paramset.evaluate(params.value(0), inherit, context,
-                                    alreadyEvaluated);
+  auto input = paramset.evaluate(params.value(0), inherit, context,
+                                 alreadyEvaluated);
   bool ok;
   int i = params.value(1).toInt(&ok);
-  QString placeHolder = params.value(2, QStringLiteral("..."));
+  auto placeHolder = params.value(2, "..."_u8);
   if (!ok || placeHolder.size() > i || input.size() <= i)
     return input;
   return StringUtils::elideRight(input, i, placeHolder);
 }, true},
-{ "=elideleft", [](const ParamSet &paramset, const QString &key, bool inherit,
-              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
-              int matchedLength) {
+{ "=elideleft", [](
+              const ParamSet &paramset, const Utf8String &key, bool inherit,
+              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
+              int matchedLength) -> Utf8String {
   CharacterSeparatedExpression params(key, matchedLength);
-  QString input = paramset.evaluate(params.value(0), inherit, context,
-                                    alreadyEvaluated);
+  auto input = paramset.evaluate(params.value(0), inherit, context,
+                                 alreadyEvaluated);
   bool ok;
   int i = params.value(1).toInt(&ok);
-  QString placeHolder = params.value(2, QStringLiteral("..."));
+  auto placeHolder = params.value(2, "..."_u8);
   if (!ok || placeHolder.size() > i || input.size() <= i)
     return input;
   return StringUtils::elideLeft(input, i, placeHolder);
 }, true},
-{ "=elidemiddle", [](const ParamSet &paramset, const QString &key, bool inherit,
-              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
-              int matchedLength) {
+{ "=elidemiddle", [](
+              const ParamSet &paramset, const Utf8String &key, bool inherit,
+              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
+              int matchedLength) -> Utf8String {
   CharacterSeparatedExpression params(key, matchedLength);
-  QString input = paramset.evaluate(params.value(0), inherit, context,
-                                    alreadyEvaluated);
+  auto input = paramset.evaluate(params.value(0), inherit, context,
+                                 alreadyEvaluated);
   bool ok;
   int i = params.value(1).toInt(&ok);
-  QString placeHolder = params.value(2, QStringLiteral("..."));
+  auto placeHolder = params.value(2, "..."_u8);
   if (!ok || placeHolder.size() > i || input.size() <= i)
     return input;
   return StringUtils::elideMiddle(input, i, placeHolder);
 }, true},
-{ "=htmlencode", [](const ParamSet &paramset, const QString &key, bool inherit,
-              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
-              int matchedLength) {
+{ "=htmlencode", [](
+              const ParamSet &paramset, const Utf8String &key, bool inherit,
+              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
+              int matchedLength) -> Utf8String {
   CharacterSeparatedExpression params(key, matchedLength);
   if (params.size() < 1)
-    return QString();
-  QString input = paramset.evaluate(params.value(0),
-                                    inherit, context, alreadyEvaluated);
+    return Utf8String();
+  auto input = paramset.evaluate(params.value(0),
+                                 inherit, context, alreadyEvaluated);
   if (params.size() >= 2) {
-    QString flags = params.value(1);
+    auto flags = params.value(1);
     return StringUtils::htmlEncode(
           input, flags.contains('u'), // url as links
           flags.contains('n')); // newline as <br>
   }
   return StringUtils::htmlEncode(input, false, false);
 }, true},
-{ "=random", [](const ParamSet &, const QString &key, bool,
-              const ParamsProvider *, QSet<QString> *, int matchedLength) {
+{ "=random", [](const ParamSet &, const Utf8String &key, bool,
+              const ParamsProvider *, Utf8StringSet *, int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
   // TODO evaluate modulo and shift
   int modulo = abs(params.value(0).toInt());
@@ -648,18 +664,18 @@ _functions {
   if (modulo)
     i %= modulo;
   i += shift;
-  return QString::number(i);
+  return Utf8String::number(i);
 }, true},
-{ "=env", [](const ParamSet &paramset, const QString &key, bool inherit,
-              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
-              int matchedLength) {
+{ "=env", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
+              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
+              int matchedLength) -> Utf8String {
   CharacterSeparatedExpression params(key, matchedLength);
   auto env = ParamsProvider::environment();
   int i = 0;
   auto ppm = ParamsProviderMerger(paramset)(context);
   do {
-    QString name = paramset.evaluate(params.value(i), inherit, context,
-                                     alreadyEvaluated);
+    auto name = paramset.evaluate(params.value(i), inherit, context,
+                                  alreadyEvaluated);
     auto v = env->paramValue(name, &ppm, QVariant(), alreadyEvaluated);
     if (v.isValid())
       return v.toString();
@@ -668,9 +684,9 @@ _functions {
   // otherwise last one if there are at less 2, otherwise a non-existent one
   return paramset.evaluate(params.value(i), inherit, context, alreadyEvaluated);
 }, true},
-{ "=ext", [](const ParamSet &paramset, const QString &key, bool inherit,
-              const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
-              int matchedLength) {
+{ "=ext", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
+              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
+              int matchedLength) -> Utf8String {
   CharacterSeparatedExpression params(key, matchedLength);
   auto ext = ParamSet::externalParams(params.value(0).toUtf8());
   int i = 1;
@@ -678,7 +694,7 @@ _functions {
   //qDebug() << "***password =ext" << ext << params.size() << params.value(i)
   //         << ext.toString();
   do {
-    QString name = ppm.evaluate(params.value(i), alreadyEvaluated);
+    auto name = ppm.evaluate(params.value(i), alreadyEvaluated);
     auto v = ext.paramValue(name, &ppm, {}, alreadyEvaluated);
     if (v.isValid())
       return v.toString();
@@ -687,65 +703,67 @@ _functions {
   // otherwise last one if there are at less 2, otherwise a non-existent one
   return ppm.evaluate(params.value(i), alreadyEvaluated);
 }, true},
-{ "=sha1", [](const ParamSet &paramset, const QString &key, bool inherit,
-     const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+{ "=sha1", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
+     const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
      int matchedLength) {
-  QString value = paramset.evaluate(
+  auto value = paramset.evaluate(
         key.mid(matchedLength+1), inherit, context, alreadyEvaluated);
   return QCryptographicHash::hash(
-        value.toUtf8(), QCryptographicHash::Sha1).toHex();
+        value, QCryptographicHash::Sha1).toHex();
 }, true},
-{ "=sha256", [](const ParamSet &paramset, const QString &key, bool inherit,
-     const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+{ "=sha256", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
+     const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
      int matchedLength) {
-  QString value = paramset.evaluate(
+  auto value = paramset.evaluate(
+                 key.mid(matchedLength+1), inherit, context, alreadyEvaluated);
+  return QCryptographicHash::hash(
+        value, QCryptographicHash::Sha256).toHex();
+}, true},
+{ "=md5", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
+     const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
+     int matchedLength) {
+  auto value = paramset.evaluate(
         key.mid(matchedLength+1), inherit, context, alreadyEvaluated);
   return QCryptographicHash::hash(
-        value.toUtf8(), QCryptographicHash::Sha256).toHex();
+        value, QCryptographicHash::Md5).toHex();
 }, true},
-{ "=md5", [](const ParamSet &paramset, const QString &key, bool inherit,
-     const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
-     int matchedLength) {
-  QString value = paramset.evaluate(
-        key.mid(matchedLength+1), inherit, context, alreadyEvaluated);
-  return QCryptographicHash::hash(
-        value.toUtf8(), QCryptographicHash::Md5).toHex();
-}, true},
-{ "=hex", [](const ParamSet &paramset, const QString &key, bool inherit,
-     const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+{ "=hex", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
+     const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
      int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
-  QString value = paramset.evaluate(
+  auto value = paramset.evaluate(
         params.value(0), inherit, context, alreadyEvaluated);
-  QString separator = params.value(1);
-  QString flags = params.value(2);
-  QByteArray data = flags.contains('b') ? value.toLatin1() : value.toUtf8();
+  auto separator = params.value(1);
+  auto flags = params.value(2);
+  //QByteArray data = flags.contains('b') ? value.toLatin1() : value.toUtf8();
+  QByteArray data = value; // FIXME what about b flag ?
   if (separator.isEmpty())
     data = data.toHex();
   else
     data = data.toHex(separator.at(0).toLatin1());
-  return QString::fromLatin1(data);
+  return Utf8String(data);
 }, true},
 { "=fromhex", [](const ParamSet &paramset, const QString &key, bool inherit,
-     const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+     const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
      int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
-  QString value = paramset.evaluate(
+  auto value = paramset.evaluate(
         params.value(0), inherit, context, alreadyEvaluated);
-  QString flags = params.value(1);
-  QByteArray data = QByteArray::fromHex(value.toLatin1());
-  if (flags.contains('b'))
-    return QString::fromLatin1(data);
-  return QString::fromUtf8(data);
+  auto flags = params.value(1);
+  QByteArray data = QByteArray::fromHex(value);
+  if (flags.contains('b')) // FIXME b flag no longer relevant ?
+    return Utf8String(data); // FIXME QByteArray instead ?
+  return Utf8String(data);
 }, true},
-{ "=base64", [](const ParamSet &paramset, const QString &key, bool inherit,
-     const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+{ "=base64", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
+     const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
      int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
-  QString value = paramset.evaluate(
+  auto value = paramset.evaluate(
         params.value(0), inherit, context, alreadyEvaluated);
-  QString flags = params.value(1);
-  QByteArray data = flags.contains('b') ? value.toLatin1() : value.toUtf8();
+  auto flags = params.value(1);
+  //QByteArray data = flags.contains('b') ? value.toLatin1() : value.toUtf8();
+  QByteArray data = value; // FIXME what about b flag ?
   data = data.toBase64(
         (flags.contains('u') ? QByteArray::Base64UrlEncoding
                              : QByteArray::Base64Encoding)
@@ -754,36 +772,38 @@ _functions {
         );
   return data;
 }, true},
-{ "=frombase64", [](const ParamSet &paramset, const QString &key, bool inherit,
-     const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+{ "=frombase64", [](
+     const ParamSet &paramset, const Utf8String &key, bool inherit,
+     const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
      int matchedLength) {
   CharacterSeparatedExpression params(key, matchedLength);
-  QString value = paramset.evaluate(
+  auto value = paramset.evaluate(
         params.value(0), inherit, context, alreadyEvaluated);
-  QString flags = params.value(1);
+  auto flags = params.value(1);
   QByteArray data = QByteArray::fromBase64(
-        value.toLatin1(),
+        value,
         (flags.contains('u') ? QByteArray::Base64UrlEncoding
                              : QByteArray::Base64Encoding)
         |(flags.contains('a') ? QByteArray::AbortOnBase64DecodingErrors
                               : QByteArray::IgnoreBase64DecodingErrors)
         );
-  if (flags.contains('b'))
-    return QString::fromLatin1(data);
-  return QString::fromUtf8(data);
+  if (flags.contains('b')) // FIXME b flag no longer relevant ?
+    return Utf8String(data); // FIXME QByteArray instead ?
+  return Utf8String(data);
 }, true},
-{ "=rpn", [](const ParamSet &paramset, const QString &key, bool,
-      const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+{ "=rpn", [](const ParamSet &paramset, const Utf8String &key, bool,
+      const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
       int matchedLength) {
    MathExpr expr(key.mid(matchedLength), MathExpr::CharacterSeparatedRpn);
    auto ppm = ParamsProviderMerger(paramset)(context);
-   return expr.evaluate(&ppm, QString(), alreadyEvaluated).toString();
+   return expr.evaluate(&ppm, Utf8String(), alreadyEvaluated).toString();
 }, true},
 };
 
-QString ParamSet::evaluateFunction(
-  const ParamSet &paramset, const QString &key, bool inherit,
-  const ParamsProvider *context, QSet<QString> *alreayEvaluated, bool *found) {
+Utf8String ParamSet::evaluateFunction(
+    const ParamSet &paramset, const Utf8String &key, bool inherit,
+    const ParamsProvider *context, Utf8StringSet *alreayEvaluated,
+    bool *found) {
   int matchedLength;
   auto implicitVariable = _functions.value(key, &matchedLength);
   if (implicitVariable) {
@@ -795,12 +815,12 @@ QString ParamSet::evaluateFunction(
   }
   if (found)
     *found = false;
-  return QString();
+  return Utf8String();
 }
 
 bool ParamSet::appendVariableValue(
-  QString *value, const QString &variable, bool inherit,
-  const ParamsProvider *context, QSet<QString> *alreadyEvaluated,
+    Utf8String *value, const Utf8String &variable, bool inherit,
+  const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
   bool logIfVariableNotFound) const {
   if (variable.isEmpty()) [[unlikely]] {
     Log::warning() << "unsupported variable substitution: empty variable name";
@@ -816,7 +836,7 @@ bool ParamSet::appendVariableValue(
                       "variable \"" << variable << "\"";
     return false;
   }
-  QSet<QString> newAlreadyEvaluated = *alreadyEvaluated;
+  Utf8StringSet newAlreadyEvaluated = *alreadyEvaluated;
   newAlreadyEvaluated.insert(variable);
   bool functionFound = false;
   auto s = evaluateFunction(*this, variable, inherit, context,
@@ -847,14 +867,14 @@ bool ParamSet::appendVariableValue(
   return false;
 }
 
-QStringList ParamSet::splitAndEvaluate(
-  QString rawValue, QString separators, bool inherit,
-    const ParamsProvider *context, QSet<QString> *alreadyEvaluated) const {
-  QStringList values;
-  QString value, variable;
+Utf8StringList ParamSet::splitAndEvaluate(
+    Utf8String rawValue, Utf8String separators, bool inherit,
+    const ParamsProvider *context, Utf8StringSet *alreadyEvaluated) const {
+  Utf8StringList values;
+  Utf8String value, variable;
   int i = 0;
   while (i < rawValue.size()) {
-    QChar c = rawValue.at(i++);
+    char c = rawValue.at(i++);
     if (c == '%') {
       if (i < rawValue.size()) // otherwise keep % and process as %%
         c = rawValue.at(i++);
@@ -888,7 +908,7 @@ QStringList ParamSet::splitAndEvaluate(
         variable.append(c);
         while (i < rawValue.size()) {
           c = rawValue.at(i++);
-          if (isPercentVariableIdentifierSecondCharacter(c.toLatin1())) {
+          if (isPercentVariableIdentifierSecondCharacter(c)) {
             variable.append(c);
           } else {
             --i;
@@ -916,22 +936,21 @@ QStringList ParamSet::splitAndEvaluate(
   return values;
 }
 
-static QRegularExpression _whitespace("\\s");
-
-const QPair<QString, QString> ParamSet::valueAsStringsPair(
-  QString key, bool inherit, const ParamsProvider *context) const {
-  QString v = rawValue(key, inherit).trimmed();
-  int i = v.indexOf(_whitespace);
-  if (i == -1)
-    return { v, {} };
-  return { v.left(i), evaluate(v.mid(i+1).trimmed(), context) };
+const QPair<Utf8String, Utf8String> ParamSet::valueAsStringsPair(
+    Utf8String key, bool inherit, const ParamsProvider *context) const {
+  auto v = rawValue(key, inherit).trimmed();
+  qsizetype n = v.size();
+  for (qsizetype i = 0; i < n; ++i)
+    if (::isspace((v[i])))
+      return { v.left(i), evaluate(v.mid(i+1).trimmed(), context) };
+  return { v, {} };
 }
 
-const QString ParamSet::matchingRegexp(QString rawValue) {
+const Utf8String ParamSet::matchingRegexp(Utf8String rawValue) {
   int i = 0, len = rawValue.size();
-  QString value;
+  Utf8String value;
   while (i < len) {
-    QChar c = rawValue[i];
+    char c = rawValue[i];
     if (c == '%') {
       if (i+1 < len && rawValue[i+1] == '%') {
         value.append('%');
@@ -941,7 +960,7 @@ const QString ParamSet::matchingRegexp(QString rawValue) {
         value.append(".*");
       }
     } else {
-      if (shouldBeEscapedWithinRegexp(c.toLatin1()))
+      if (shouldBeEscapedWithinRegexp(c))
         value.append('\\');
       value.append(c);
       ++i;
@@ -950,26 +969,20 @@ const QString ParamSet::matchingRegexp(QString rawValue) {
   return value;
 }
 
-const QSet<QString> ParamSet::keys(bool inherit) const {
-  QSet<QString> set;
-  if (d) [[likely]] {
-    auto keys = d->_params.keys();
-#if QT_VERSION >= 0x050f00
-    set = { keys.begin(), keys.end() };
-#else
-    set = keys.toSet();
-#endif
-    if (inherit)
-      set += parent().keys();
-  }
+const Utf8StringSet ParamSet::keys(bool inherit) const {
+  if (!d) [[unlikely]]
+      return {};
+  Utf8StringSet set(d->_params.keys());
+  if (inherit)
+    set += parent().keys();
   return set;
 }
 
-const QSet<QString> ParamSet::keys() const {
+const Utf8StringSet ParamSet::keys() const {
   return keys(true);
 }
 
-bool ParamSet::contains(QString key, bool inherit) const {
+bool ParamSet::contains(Utf8String key, bool inherit) const {
   return d && (d->_params.contains(key) || (inherit && parent().contains(key)));
 }
 
@@ -986,10 +999,10 @@ bool ParamSet::isEmpty() const {
 }
 
 const QVariant ParamSet::paramValue(
-  const QString &key, const ParamsProvider *context,
-  const QVariant &defaultValue, QSet<QString> *alreadyEvaluated) const {
-  QString v = evaluate(rawValue(key, defaultValue.toString(), true),
-                       true, context, alreadyEvaluated);
+    const Utf8String &key, const ParamsProvider *context,
+    const QVariant &defaultValue, Utf8StringSet *alreadyEvaluated) const {
+  auto v = evaluate(rawValue(key, defaultValue.toString(), true),
+                    true, context, alreadyEvaluated);
   return v.isNull() ? QVariant{} : v;
 }
 
@@ -1010,14 +1023,28 @@ const QString ParamSet::toString(bool inherit, bool decorate) const {
   return s;
 }
 
-const QHash<QString, QString> ParamSet::toHash(bool inherit) const {
+const QHash<Utf8String, Utf8String> ParamSet::toHash(bool inherit) const {
+  QHash<Utf8String,Utf8String> hash;
+  for (auto key: keys(inherit))
+    hash.insert(key, rawValue(key));
+  return hash;
+}
+
+const QMap<Utf8String, Utf8String> ParamSet::toMap(bool inherit) const {
+  QMap<Utf8String,Utf8String> map;
+  for (auto key: keys(inherit))
+    map.insert(key, rawValue(key));
+  return map;
+}
+
+const QHash<QString, QString> ParamSet::toStringHash(bool inherit) const {
   QHash<QString,QString> hash;
   for (auto key: keys(inherit))
     hash.insert(key, rawValue(key));
   return hash;
 }
 
-const QMap<QString,QString> ParamSet::toMap(bool inherit) const {
+const QMap<QString,QString> ParamSet::toStringMap(bool inherit) const {
   QMap<QString,QString> map;
   for (auto key: keys(inherit))
     map.insert(key, rawValue(key));
@@ -1048,24 +1075,24 @@ void ParamSet::detach() {
 }
 
 void ParamSet::setValuesFromSqlDb(
-  QSqlDatabase db, QString sql, QMap<int,QString> bindings) {
+  QSqlDatabase db, Utf8String sql, QMap<int,Utf8String> bindings) {
   ParamSet params(db, sql, bindings, *this);
   this->setValues(params, false);
 }
 
 void ParamSet::setValuesFromSqlDb(
-  QString dbname, QString sql, QMap<int,QString> bindings) {
+    Utf8String dbname, Utf8String sql, QMap<int, Utf8String> bindings) {
   setValuesFromSqlDb(QSqlDatabase::database(dbname), sql, bindings);
 }
 
 void ParamSet::setValuesFromSqlDb(
-  QString dbname, QString sql, QStringList bindings) {
+  Utf8String dbname, Utf8String sql, Utf8StringList bindings) {
   setValuesFromSqlDb(QSqlDatabase::database(dbname), sql, bindings);
 }
 
 void ParamSet::setValuesFromSqlDb(
-  QSqlDatabase db, QString sql, QStringList bindings) {
-  QMap<int,QString> map;
+  QSqlDatabase db, Utf8String sql, Utf8StringList bindings) {
+  QMap<int,Utf8String> map;
   int i = 0;
   for (auto key: bindings)
     map.insert(i++, key);
@@ -1073,36 +1100,35 @@ void ParamSet::setValuesFromSqlDb(
 }
 
 qlonglong ParamSet::valueAsLong(
-  QString key, qlonglong defaultValue, bool inherit,
+    Utf8String key, qlonglong defaultValue, bool inherit,
   const ParamsProvider *context) const {
-  auto s = evaluate(rawValue(key, QString(), inherit), inherit, context);
+  auto s = evaluate(rawValue(key, {}, inherit), inherit, context);
   return PfUtils::stringAsLongLong(s, defaultValue);
 }
 
 int ParamSet::valueAsInt(
-  QString key, int defaultValue, bool inherit,
+  Utf8String key, int defaultValue, bool inherit,
   const ParamsProvider *context) const {
-  auto s = evaluate(rawValue(key, QString(), inherit), inherit, context);
+  auto s = evaluate(rawValue(key, {}, inherit), inherit, context);
   return PfUtils::stringAsInt(s, defaultValue);
 }
 
 double ParamSet::valueAsDouble(
-  QString key, double defaultValue, bool inherit,
+  Utf8String key, double defaultValue, bool inherit,
   const ParamsProvider *context) const {
-  auto s = evaluate(rawValue(key, QString(), inherit), inherit, context);
-  return PfUtils::stringAsDouble(s, defaultValue);
+  auto s = evaluate(rawValue(key, {}, inherit), inherit, context);
+  return PfUtils::stringAsDouble(s.toString(), defaultValue);
 }
 
-bool ParamSet::valueAsBool(
-  QString key, bool defaultValue, bool inherit,
+bool ParamSet::valueAsBool(Utf8String key, bool defaultValue, bool inherit,
   const ParamsProvider *context) const {
-  QString v = evaluate(rawValue(key, QString(), inherit), inherit, context);
-  return PfUtils::stringAsBool(v, defaultValue);
+  auto v = evaluate(rawValue(key, {}, inherit), inherit, context);
+  return PfUtils::stringAsBool(v.toString(), defaultValue);
 }
 
 ParamSetData *ParamSet::fromQIODevice(
-    QIODevice *input, const QByteArray &format,
-    const QMap<QByteArray,QByteArray> options,
+    QIODevice *input, const Utf8String &format,
+    const QMap<Utf8String,Utf8String> options,
     const bool escape_percent, const ParamSet &parent) {
   auto d = new ParamSetData(parent);
   if (!input || format != "csv")
@@ -1141,8 +1167,8 @@ ParamSetData *ParamSet::fromQIODevice(
 }
 
 ParamSet ParamSet::fromFile(
-    const QByteArray &file_name, const QByteArray &format,
-    const QMap<QByteArray,QByteArray> options,
+    const QByteArray &file_name, const Utf8String &format,
+    const QMap<Utf8String,Utf8String> options,
     const bool escape_percent, const ParamSet &parent) {
   //qDebug() << "***password fromFile" << file_name;
   QFile file(file_name);
@@ -1150,8 +1176,8 @@ ParamSet ParamSet::fromFile(
 }
 
 ParamSet ParamSet::fromCommandOutput(
-    const QStringList &cmdline, const QByteArray &format,
-    const QMap<QByteArray,QByteArray> options,
+    const QStringList &cmdline, const Utf8String &format,
+    const QMap<Utf8String, Utf8String> options,
     const bool escape_percent, const ParamSet &parent){
   //qDebug() << "***password fromCommandOutput" << cmdline;
   ParamSet params(parent);
@@ -1192,13 +1218,13 @@ ParamSet ParamSet::fromCommandOutput(
   return params;
 }
 
-ParamSet ParamSet::externalParams(QByteArray set_name) {
+ParamSet ParamSet::externalParams(Utf8String set_name) {
   QMutexLocker ml(&_externals_mutex);
   return _externals.value(set_name);
 }
 
 void ParamSet::registerExternalParams(
-    const QByteArray &set_name, ParamSet params) {
+    const Utf8String &set_name, ParamSet params) {
   QMutexLocker ml(&_externals_mutex);
   //qDebug() << "***password registerExternalParams" << set_name << params.toString();
   _externals.insert(set_name, params);
@@ -1209,7 +1235,7 @@ void ParamSet::clearExternalParams() {
   _externals.clear();
 }
 
-QByteArrayList ParamSet::externalParamsNames() {
+Utf8StringList ParamSet::externalParamsNames() {
   QMutexLocker ml(&_externals_mutex);
   auto list = _externals.keys();
   list.detach();

@@ -18,10 +18,37 @@
 SharedUiItemData::~SharedUiItemData() {
 }
 
-QVariant SharedUiItemData::uiData(int section, int role) const {
+Utf8String SharedUiItemData::id() const {
+  return Utf8String(uiData(0, Qt::DisplayRole));
+}
+
+Utf8String SharedUiItemData::idQualifier() const {
+  return {};
+}
+
+int SharedUiItemData::uiSectionCount() const {
+  return {};
+}
+
+QVariant SharedUiItemData::uiData(int, int) const {
+  return {};
+}
+
+QVariant SharedUiItemData::uiHeaderData(int section, int) const {
+  return uiSectionName(section);
+}
+
+Utf8String SharedUiItemData::uiSectionName(int) const {
+  return {};
+}
+
+int SharedUiItemData::uiSectionByName(Utf8String) const {
+  return {};
+}
+
+Qt::ItemFlags SharedUiItemData::uiFlags(int section) const {
   Q_UNUSED(section)
-  Q_UNUSED(role)
-  return QVariant();
+  return Qt::ItemIsEnabled;
 }
 
 bool SharedUiItemData::setUiData(
@@ -36,78 +63,45 @@ bool SharedUiItemData::setUiData(
   return false;
 }
 
-Qt::ItemFlags SharedUiItemData::uiFlags(int section) const {
-  Q_UNUSED(section)
-  return Qt::ItemIsEnabled;
-}
-
-QVariant SharedUiItemData::uiHeaderData(int section, int role) const {
-  Q_UNUSED(section)
-  Q_UNUSED(role)
-  return QVariant();
-}
-
-QByteArray SharedUiItemData::id() const {
-  return uiData(0, Qt::DisplayRole).toByteArray();
-}
-
-int SharedUiItemData::uiSectionCount() const {
-  return 0;
-}
-
-QByteArray SharedUiItemData::uiSectionName(int section) const {
-  QVariant v = uiHeaderData(section, Qt::DisplayRole);
-  QByteArray ba = v.canConvert<QByteArray>()
-      ? v.toByteArray().toLower() : v.toString().toUtf8().toLower();
-  for (char *s = ba.data(); *s; ++s)
-    if (!::isalnum(*s))
-      *s = '_';
-  return ba;
-}
-
-QByteArray SharedUiItemData::idQualifier() const {
-  return QByteArray();
-}
-
 QDebug operator<<(QDebug dbg, const SharedUiItem &i) {
   dbg.nospace() << i.qualifiedId();
   return dbg.space();
 }
 
-const QVariant SharedUiItemParamsProvider::paramValue(
-  const QString &key, const ParamsProvider *, const QVariant &defaultValue,
-  QSet<QString> *) const {
+const QVariant SharedUiItem::paramValue(
+    const Utf8String &key, const ParamsProvider *, const QVariant &defaultValue,
+    Utf8StringSet *) const {
   bool ok;
   int section = key.toInt(&ok);
-  if (!ok) {
-    if (key == "id")
-      return _item.id();
-    if (key == "idQualifier")
-      return _item.idQualifier();
-    if (key == "qualifiedId")
-      return _item.qualifiedId();
-    section = _item.uiSectionByName(key.toUtf8());
-    ok = section >= 0;
-  }
-  if (ok) {
-    QVariant value = _item.uiData(section, _role);
-    if (value.isValid())
-      return value;
-  }
-  return defaultValue;
+  QVariant value = ok ? uiData(section) : uiDataBySectionName(key);
+  return value.isValid() ? value : defaultValue;
 }
 
-const QSet<QString> SharedUiItemParamsProvider::keys() const {
-  QSet<QString> keys { "id", "idQualifier", "qualifiedId" };
-  int count = _item.uiSectionCount();
+const QVariant SharedUiItemParamsProvider::paramValue(
+    const Utf8String &key, const ParamsProvider *, const QVariant &defaultValue,
+    Utf8StringSet *) const {
+  bool ok;
+  int section = key.toInt(&ok);
+  QVariant value = ok ? _item.uiData(section, _role)
+                      : _item.uiDataBySectionName(key, _role);
+  return value.isValid() ? value : defaultValue;
+}
+
+const Utf8StringSet SharedUiItem::keys() const {
+  Utf8StringSet keys { "id", "idQualifier", "qualifiedId" };
+  int count = uiSectionCount();
   for (int section = 0; section < count; ++section) {
-    keys << QString::number(section);
-    auto name = _item.uiSectionName(section);
+    keys << Utf8String::number(section);
+    auto name = uiSectionName(section);
     if (name.isEmpty())
       continue;
     keys << name;
   }
   return keys;
+}
+
+const Utf8StringSet SharedUiItemParamsProvider::keys() const {
+  return _item.keys();
 }
 
 
@@ -126,7 +120,7 @@ QVariantHash SharedUiItemData::toVariantHash(int role) const {
 bool SharedUiItemData::setFromVariantHash(
     const QVariantHash &hash, QString *errorString,
     SharedUiItemDocumentTransaction *transaction,
-    const QSet<QByteArray> &ignoredSections, int role) {
+    const QSet<Utf8String> &ignoredSections, int role) {
   int n = uiSectionCount();
   for (int i = 0; i < n; ++i) {
     auto name = uiSectionName(i);
@@ -135,4 +129,7 @@ bool SharedUiItemData::setFromVariantHash(
         return false;
   }
   return true;
+}
+
+SharedUiItem::~SharedUiItem() {
 }

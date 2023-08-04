@@ -30,24 +30,33 @@ public:
       _wrapped(wrapped), _timestamp(timestamp),
       _timestampSection(wrapped.uiSectionCount()) { }
   SharedUiItemLogWrapperData() : _timestampSection(0) { }
-  QByteArray id() const { return _id; }
-  QByteArray idQualifier() const { return QByteArrayLiteral("suilogwrapper"); }
-  int uiSectionCount() const { return _timestampSection+1; }
-  QVariant uiData(int section, int role) const {
+  Utf8String id() const override { return _id; }
+  Utf8String idQualifier() const override {
+    return QByteArrayLiteral("suilogwrapper"); }
+  int uiSectionCount() const override { return _timestampSection+1; }
+  Utf8String uiSectionName(int section) const override {
+    return section == _timestampSection
+        ? "timestamp"_u8 : _wrapped.uiSectionName(section);
+  }
+  int uiSectionByName(Utf8String sectionName) const override {
+    return sectionName == "timestamp"_u8
+        ? _timestampSection : _wrapped.uiSectionByName(sectionName);
+  }
+  QVariant uiData(int section, int role) const override {
     return (role == Qt::DisplayRole && section == _timestampSection)
         ? _timestamp : _wrapped.uiData(section, role); }
-  QVariant uiHeaderData(int section, int role) const {
+  QVariant uiHeaderData(int section, int role) const override {
     return (role == Qt::DisplayRole && section == _timestampSection)
         ? QByteArrayLiteral("Timestamp")
         : _wrapped.uiHeaderData(section, role); }
-  Qt::ItemFlags uiFlags(int section) const {
+  Qt::ItemFlags uiFlags(int section) const override {
   return (section == _timestampSection)
       ? Qt::ItemIsSelectable|Qt::ItemIsEnabled : _wrapped.uiFlags(section); }
   // LATER also wrap setUiData, or warn it is not wrapped
   //bool setUiData(int section, const QVariant &value, QString *errorString,
   //               int role, const SharedUiItemDocumentManager *dm) {
   //  return _wrapped.setUiData(section, value, errorString, role, dm); }
-};
+  };
 
 class LIBP6CORESHARED_EXPORT SharedUiItemLogWrapper : public SharedUiItem {
 public:

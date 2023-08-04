@@ -14,8 +14,7 @@
 #ifndef STRINGUTILS_H
 #define STRINGUTILS_H
 
-#include "libp6core_global.h"
-#include <QStringList>
+#include "util/utf8string.h"
 
 using namespace Qt::Literals::StringLiterals;
 
@@ -70,13 +69,13 @@ public:
    * E.g. "hello world" -> "hello_world", "HelloWorld" -> "hello_world",
    * "hello_world" -> "hello_world", "hello-World" -> "hello_world".
    */
-  static QByteArray toSnakeCase(const QByteArray &anycase);
+  static Utf8String toSnakeCase(const Utf8String &anycase);
   /** Convert an identifier to snake case.
    * E.g. "hello world" -> "hello_world", "HelloWorld" -> "hello_world",
    * "hello_world" -> "hello_world", "hello-World" -> "hello_world".
    */
-  static QByteArray toSnakeCase(const char *anycase) {
-      return toSnakeCase(QByteArray(anycase)); }
+  static Utf8String toSnakeCase(const char *anycase) {
+      return toSnakeCase(Utf8String(anycase)); }
   /** Convert an identifier to snake case.
    * E.g. "hello world" -> "hello_world", "HelloWorld" -> "hello_world",
    * "hello_world" -> "hello_world", "hello-World" -> "hello_world".
@@ -86,13 +85,13 @@ public:
    * E.g. "hello-world" -> "Hello-World", "HelloWorld" -> "Helloworld",
    * "hello_world" -> "Hello_world", "Hello-world" -> "Hello-World".
    */
-  static QByteArray toSnakeUpperCamelCase(const QByteArray &anycase);
+  static Utf8String toSnakeUpperCamelCase(const Utf8String &anycase);
   /** Convert an identifier to kebab + upper camel case.
    * E.g. "hello-world" -> "Hello-World", "HelloWorld" -> "Helloworld",
    * "hello_world" -> "Hello_world", "Hello-world" -> "Hello-World".
    */
-  static QByteArray toSnakeUpperCamelCase(const char *anycase) {
-      return toSnakeUpperCamelCase(QByteArray(anycase)); }
+  static Utf8String toSnakeUpperCamelCase(const char *anycase) {
+      return toSnakeUpperCamelCase(Utf8String(anycase)); }
   /** Convert an identifier to kebab + upper camel case.
    * E.g. "hello-world" -> "Hello-World", "HelloWorld" -> "Helloworld",
    * "hello_world" -> "Hello_world", "Hello-world" -> "Hello-World".
@@ -103,7 +102,7 @@ public:
    * E.g. "hello-world" -> "Hello-World", "HelloWorld" -> "Helloworld",
    * "hello_world" -> "Hello_world", "Hello-world" -> "Hello-World".
    */
-  static QByteArray toAsciiSnakeUpperCamelCase(const QByteArray &anycase);
+  static Utf8String toAsciiSnakeUpperCamelCase(const Utf8String &anycase);
 
 private:
   template <int DIR> // DIR: -1 left 0 middle +1 right
