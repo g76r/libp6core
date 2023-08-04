@@ -14,6 +14,7 @@
 #include "shareduiitem.h"
 #include <QtDebug>
 #include <QRegularExpression>
+#include "util/paramset.h"
 
 SharedUiItemData::~SharedUiItemData() {
 }
@@ -98,6 +99,10 @@ const Utf8StringSet SharedUiItem::keys() const {
     keys << name;
   }
   return keys;
+}
+
+const ParamSet SharedUiItem::snapshot() const {
+  return ParamsProvider::snapshot();
 }
 
 const Utf8StringSet SharedUiItemParamsProvider::keys() const {

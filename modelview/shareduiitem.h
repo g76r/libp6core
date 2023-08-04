@@ -495,6 +495,7 @@ public:
     Utf8StringSet *alreadyEvaluated) const override final;
   /** Returns every section names */
   const Utf8StringSet keys() const override final;
+  const ParamSet snapshot() const override final;
 
 protected:
   const SharedUiItemData *data() const { return _data.data(); }
