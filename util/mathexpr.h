@@ -1,4 +1,4 @@
-/* Copyright 2022 Gregoire Barbier and others.
+/* Copyright 2022-2023 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,20 +25,20 @@ class LIBP6CORESHARED_EXPORT MathExpr {
 
 public:
   enum MathDialect { Infix, CharacterSeparatedRpn };
-  MathExpr(const QString expr, MathDialect dialect);
-  MathExpr() : MathExpr(QString(), Infix) { }
+  MathExpr(const Utf8String expr, MathDialect dialect);
+  MathExpr() : MathExpr(Utf8String(), Infix) { }
   MathExpr(const MathExpr &other);
   MathExpr &operator=(const MathExpr &other);
   ~MathExpr();
   bool isValid() const { return !d; }
-  const QString expr() const;
+  const Utf8String expr() const;
   const QVariant evaluate(
     const ParamsProvider *context, const QVariant &defaultValue,
-    QSet<QString> *alreadyEvaluated) const;
+    Utf8StringSet *alreadyEvaluated) const;
   inline const QVariant evaluate(
     const ParamsProvider *context = 0,
     const QVariant &defaultValue = QVariant()) const {
-    QSet<QString> ae; return evaluate(context, defaultValue, &ae); }
+    Utf8StringSet ae; return evaluate(context, defaultValue, &ae); }
 };
 
 Q_DECLARE_METATYPE(MathExpr)
