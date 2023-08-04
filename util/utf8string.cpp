@@ -14,3 +14,32 @@
 
 #include "utf8string.h"
 
+template<typename C,typename T>
+static inline Utf8String join(const C &container, const T &separator) {
+  Utf8String joined;
+  bool first = true;
+  for (auto s: container) {
+    if (first)
+      first = false;
+    else
+      joined += separator;
+    joined += s;
+  }
+  return joined;
+}
+
+Utf8String Utf8StringList::join(const Utf8String &separator) {
+  return ::join(*this, separator);
+}
+
+Utf8String Utf8StringList::join(const char separator) {
+  return ::join(*this, separator);
+}
+
+Utf8String Utf8StringSet::join(const Utf8String &separator) {
+  return ::join(*this, separator);
+}
+
+Utf8String Utf8StringSet::join(const char separator) {
+  return ::join(*this, separator);
+}
