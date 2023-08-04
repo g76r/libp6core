@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,6 +17,7 @@
 #include "libp6core_global.h"
 #include <QHash>
 #include <QMap>
+#include <QList>
 
 /** Container utilities.
  */
@@ -48,6 +49,18 @@ public:
     foreach (const T &key, source.keys()) {
       dest.insert(source.value(key), key);
     }
+    return dest;
+  }
+
+  /** Build index of QList, i.e. maps every item to its index in the list.
+   *  If there are duplicated items, the last index will prevail.
+   */
+  template<class T>
+  static QMap<T,int> index(QList<T> source) {
+    QMap<T,int> dest;
+    qsizetype n = source.size();
+    for (qsizetype i = 0; i < n; ++i)
+      dest.insert(source[i], i);
     return dest;
   }
 };
