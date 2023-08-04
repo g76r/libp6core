@@ -71,9 +71,9 @@ public:
     _mimeTypes.prepend(qMakePair(QRegularExpression(pattern, QRegularExpression::CaseInsensitiveOption),
                                  contentType)); }
   void clearMimeTypes() { _mimeTypes.clear(); }
-  bool acceptRequest(HttpRequest req);
+  bool acceptRequest(HttpRequest req) override;
   bool handleRequest(HttpRequest req, HttpResponse res,
-                     ParamsProviderMerger *processingContext);
+                     ParamsProviderMerger *processingContext) override;
   bool sendFile(HttpRequest req, HttpResponse res, const QByteArray &filename,
                 ParamsProviderMerger *processingContext);
 

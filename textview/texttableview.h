@@ -1,4 +1,4 @@
-/* Copyright 2013-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -45,7 +45,7 @@ public:
    * If params is not set, page param is assumed to be "disabled".
    */
   QString text(ParamsProvider *params = 0,
-               QString scope = QString()) const;
+               QString scope = QString()) const override;
   inline QString text(ParamSet params, QString scope = QString()) {
     return text(&params, scope); }
   /** Max number of rows to display. Default is 100. Use -1 if you want
@@ -71,18 +71,19 @@ public:
   /** Text printed if the table is truncated.
    * Default: "..." */
   virtual void setEllipsePlaceholder(QString rawText = "...");
-  void setModel(QAbstractItemModel *model);
+  void setModel(QAbstractItemModel *model) override;
   /** Calls dataChanged() with whole table range. */
-  void invalidateCache();
+  void invalidateCache() override;
 
 protected:
   QList<int> effectiveColumnIndexes() const { return _effectiveColumnIndexes; }
   void updateText();
-  void resetAll();
-  void layoutChanged();
-  void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
-  void rowsRemoved(const QModelIndex &parent, int start, int end);
-  void rowsInserted (const QModelIndex &parent, int start, int end);
+  void resetAll() override;
+  void layoutChanged() override;
+  void dataChanged(
+      const QModelIndex &topLeft, const QModelIndex &bottomRight) override;
+  void rowsRemoved(const QModelIndex &parent, int start, int end) override;
+  void rowsInserted (const QModelIndex &parent, int start, int end) override;
   /** Update cachable (i.e. not page-related) header and footer data */
   virtual void updateHeaderAndFooterCache() = 0;
   virtual QString rowText(int row) = 0;

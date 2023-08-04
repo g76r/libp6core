@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -38,7 +38,7 @@ public:
   ~InMemoryAuthenticator();
   /** This method is thread-safe */
   QString authenticate(QString login, QString password,
-                       ParamSet ctxt = ParamSet()) const;
+                       ParamSet ctxt = ParamSet()) const override;
   /** This method is thread-safe */
   InMemoryAuthenticator &insertUser(
       QString userId, QString encodedPassword, Encoding encoding);

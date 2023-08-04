@@ -1,4 +1,4 @@
-/* Copyright 2014-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -27,7 +27,7 @@ class LIBP6CORESHARED_EXPORT LoggerThread : public QThread {
 public:
   LoggerThread(Logger *logger);
   ~LoggerThread();
-  void run();
+  void run() override;
 };
 
 #endif // LOGGERTHREAD_H

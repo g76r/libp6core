@@ -49,23 +49,24 @@ private:
 public:
   explicit SharedUiItemsMatrixModel(QObject *parent = 0);
   QModelIndex index(int row, int column,
-                    const QModelIndex &parent = QModelIndex()) const;
-  QModelIndex parent(const QModelIndex &child) const;
-  int rowCount(const QModelIndex &parent = QModelIndex()) const;
-  int columnCount(const QModelIndex &parent = QModelIndex()) const;
-  SharedUiItem itemAt(const QModelIndex &index) const;
+                    const QModelIndex &parent = QModelIndex()) const override;
+  QModelIndex parent(const QModelIndex &child) const override;
+  int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+  int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+  SharedUiItem itemAt(const QModelIndex &index) const override;
   using SharedUiItemsModel::indexOf;
-  QModelIndex indexOf(QByteArray qualifiedId) const;
+  QModelIndex indexOf(QByteArray qualifiedId) const override;
   void insertItemAt(SharedUiItem newItem, int row,
-                    QModelIndex parent = QModelIndex());
+                    QModelIndex parent = QModelIndex()) override;
   void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                  QByteArray idQualifier);
-  QVariant data(const QModelIndex &index, int role) const;
+                  QByteArray idQualifier) override;
+  QVariant data(const QModelIndex &index, int role) const override;
   bool setData(const QModelIndex &index, const QVariant &value,
-               int role = Qt::EditRole);
-  QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-  Qt::ItemFlags flags(const QModelIndex &index) const;
-  QHash<int, QByteArray> roleNames() const;
+               int role = Qt::EditRole) override;
+  QVariant headerData(int section, Qt::Orientation orientation,
+                      int role) const override;
+  Qt::ItemFlags flags(const QModelIndex &index) const override;
+  QHash<int, QByteArray> roleNames() const override;
   virtual void bindHeader(int section, Qt::Orientation orientation,
                           SharedUiItem item,
                           QString display = u"%id"_s,
@@ -91,7 +92,7 @@ private:
   inline QVariant evaluate(
       SharedUiItemsMatrixModel::ItemBinding binding, int role) const;
   /** setHeaderDataFromTemplate() is non-sense for a matrix model. */
-  void setHeaderDataFromTemplate(SharedUiItem templateItem, int role);
+  void setHeaderDataFromTemplate(SharedUiItem templateItem, int role) override;
 };
 
 #endif // SHAREDUIITEMSMATRIXMODEL_H

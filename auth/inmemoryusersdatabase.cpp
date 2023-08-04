@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -30,11 +30,11 @@ public:
       _allGroupIds(allGroupIds),
       _userName(userName.isEmpty() ? userId : userName) { }
   ~InMemoryUserDataData() { }
-  QString userId() const { return _userId; }
-  QString userName() const { return _userName; }
-  QSet<QString> roles() const { return _roles; }
-  QString mainGroupId() const { return _mainGroupId; }
-  QSet<QString> allGroupIds() const { return _allGroupIds; }
+  QString userId() const override { return _userId; }
+  QString userName() const override { return _userName; }
+  QSet<QString> roles() const override { return _roles; }
+  QString mainGroupId() const override { return _mainGroupId; }
+  QSet<QString> allGroupIds() const override { return _allGroupIds; }
 };
 
 InMemoryUsersDatabase::InMemoryUsersDatabase(QObject *parent)

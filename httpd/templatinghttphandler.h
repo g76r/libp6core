@@ -123,7 +123,7 @@ public:
 
 protected:
   void sendLocalResource(HttpRequest req, HttpResponse res, QFile *file,
-                         ParamsProviderMerger *processingContext);
+                         ParamsProviderMerger *processingContext) override;
 
 private:
   void applyTemplateFile(HttpRequest req, HttpResponse res, QFile *file,

@@ -49,9 +49,9 @@ class LIBP6CORESHARED_EXPORT BasicAuthHttpHandler : public HttpHandler {
 public:
   explicit BasicAuthHttpHandler(QObject *parent = 0);
   ~BasicAuthHttpHandler();
-  bool acceptRequest(HttpRequest req);
+  bool acceptRequest(HttpRequest req) override;
   bool handleRequest(HttpRequest req, HttpResponse res,
-                     ParamsProviderMerger *processingContext);
+                     ParamsProviderMerger *processingContext) override;
   /** Does not take ownership */
   void setAuthenticator(Authenticator *authenticator);
   /** Does not take ownership */

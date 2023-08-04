@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -48,9 +48,9 @@ private:
 
 public:
   explicit HtmlItemDelegate(QObject *parent = 0);
-  QString text(const QModelIndex &index) const;
+  QString text(const QModelIndex &index) const override;
   QString headerText(int section, Qt::Orientation orientation,
-                     const QAbstractItemModel* model) const;
+                     const QAbstractItemModel* model) const override;
   /** All data in column column will be prefixed with raw (= copied as is,
    * without text conversion) html pattern that can optionnaly contain a
    * variable part that is defined by a given model column for the same row

@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -30,11 +30,11 @@ class LIBP6CORESHARED_EXPORT ClockView: public TextView {
 public:
   ClockView(QObject *parent, QString format);
   explicit ClockView(QObject *parent = 0, Qt::DateFormat format = Qt::ISODate);
-  QString text(ParamsProvider *params, QString scope) const;
+  QString text(ParamsProvider *params, QString scope) const override;
   void setFormat(QString format) { _textFormat = format; }
   void setFormat(Qt::DateFormat format) {
     _dateFormat = format; _textFormat = QString(); }
-  void resetAll();
+  void resetAll() override;
 };
 
 #endif // CLOCKVIEW_H

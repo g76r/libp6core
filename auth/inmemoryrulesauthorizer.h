@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -55,7 +55,7 @@ public:
   /** This method is thread-safe */
   bool authorizeUserData(UserData user, QString actionScope,
                          QString dataScope = QString(),
-                         QDateTime timestamp = QDateTime()) const;
+                         QDateTime timestamp = QDateTime()) const override;
   /** This method is thread-safe */
   InMemoryRulesAuthorizer &clearRules();
   /** This method is thread-safe */

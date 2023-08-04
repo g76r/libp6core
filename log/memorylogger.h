@@ -33,7 +33,7 @@ class LIBP6CORESHARED_EXPORT MemoryLogger : public Logger {
                LogModel *logmodel);
 
 protected:
-  void doLog(const LogEntry &entry);
+  void doLog(const LogEntry &entry) override;
 };
 
 #endif // MEMORYLOGGER_H

@@ -1,4 +1,4 @@
-/* Copyright 2012-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -33,11 +33,12 @@ public:
                         int rowsPerPage = -1);
 
 protected:
-  void updateHeaderAndFooterCache();
-  QString rowText(int row);
+  void updateHeaderAndFooterCache() override;
+  QString rowText(int row) override;
 
 private:
-  QString header(int currentPage, int lastPage, QString pageVariableName) const;
+  QString header(int currentPage, int lastPage,
+                 QString pageVariableName) const override;
   Q_DISABLE_COPY(CsvTableView)
 };
 

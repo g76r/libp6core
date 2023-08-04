@@ -1,4 +1,4 @@
-/* Copyright 2012-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -56,8 +56,8 @@ public:
     _columnHeadersEnabled = set; updateHeaderAndFooterCache(); }
   void enableRowHeaders(bool set = true) {
     _rowHeadersEnabled = set; updateHeaderAndFooterCache(); }
-  void setEmptyPlaceholder(QString rawText);
-  void setEllipsePlaceholder(QString rawText);
+  void setEmptyPlaceholder(QString rawText) override;
+  void setEllipsePlaceholder(QString rawText) override;
   /** Add an "<a name=" anchor to every row, the anchor is prefix + content of
    *  column column. Also add id= to <tr> tag. */
   void enableRowAnchor(QString prefix, int column = 0) {
@@ -105,10 +105,12 @@ public:
 
 
 protected:
-  void updateHeaderAndFooterCache();
-  QString rowText(int row);
-  QString header(int currentPage, int lastPage, QString pageVariableName) const;
-  QString footer(int currentPage, int lastPage, QString pageVariableName) const;
+  void updateHeaderAndFooterCache() override;
+  QString rowText(int row) override;
+  QString header(int currentPage, int lastPage,
+                 QString pageVariableName) const override;
+  QString footer(int currentPage, int lastPage,
+                 QString pageVariableName) const override;
 
 private:
   inline QString pageLink(int page, QString pageVariableName,

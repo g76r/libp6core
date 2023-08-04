@@ -1,4 +1,4 @@
-/* Copyright 2012-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -39,10 +39,11 @@ public:
   /** Should sort columns. Default: false. */
   void enableColumnsSort(bool enabled = true) { _columnsSortEnabled = enabled; }
   bool columnsSortEnabled() const { return _columnsSortEnabled; }
-  int rowCount(const QModelIndex &parent = QModelIndex()) const;
-  int columnCount(const QModelIndex &parent = QModelIndex()) const;
-  QVariant data(const QModelIndex &index, int role) const;
-  QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+  int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+  int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+  QVariant data(const QModelIndex &index, int role) const override;
+  QVariant headerData(int section, Qt::Orientation orientation,
+                      int role) const override;
   QString value(QString row, QString column) const;
   /** Set a cell value.
    * Row and/or column will be added if they do not yet exist. */
