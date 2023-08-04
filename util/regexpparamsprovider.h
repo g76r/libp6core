@@ -1,4 +1,4 @@
-/* Copyright 2015-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -30,7 +30,7 @@ public:
   void setMatch(QRegularExpressionMatch  match) { _match = match; }
   using ParamsProvider::paramValue;
   const QVariant paramValue(
-    const QString &key, const ParamsProvider *context,
+      const Utf8String &key, const ParamsProvider *context,
     const QVariant &defaultValue,
     Utf8StringSet *alreadyEvaluated) const override;
   const Utf8StringSet keys() const override;
