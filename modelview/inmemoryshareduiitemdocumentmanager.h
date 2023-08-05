@@ -16,6 +16,7 @@
 
 #include "shareduiitemdocumentmanager.h"
 #include <QHash>
+#include <QMap>
 
 /** Simple generic implementation of SharedUiItemDocumentManager holding in
  * memory a repository of items by idQualifier and id.
@@ -34,7 +35,7 @@ class LIBP6CORESHARED_EXPORT InMemorySharedUiItemDocumentManager
   Q_DISABLE_COPY(InMemorySharedUiItemDocumentManager)
 
 protected:
-  QHash<QString,QHash<QString,SharedUiItem>> _repository;
+  QMap<Utf8String,QHash<Utf8String,SharedUiItem>> _repository;
 
 public:
   explicit InMemorySharedUiItemDocumentManager(QObject *parent = nullptr);
