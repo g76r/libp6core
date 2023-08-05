@@ -77,7 +77,7 @@ public:
   }
   /** Convenience method. */
   template <class T>
-  void registerItemType(QString idQualifier, MemberSetter<T> setter,
+  void registerItemType(QByteArray idQualifier, MemberSetter<T> setter,
                         Creator creator, int idSection,
                         QString *errorString = 0) {
     registerItemType(idQualifier, [setter](SharedUiItem *item, int section,
