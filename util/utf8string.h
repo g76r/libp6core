@@ -81,6 +81,54 @@ public:
   QByteArray toUpper() = delete;
   QByteArray isLower() = delete;
   QByteArray isUpper() = delete;
+  /** Converts to floating point, supporting e notation and SI suffixes from 'f'
+   *  to 'P', 'u' is used as 1e-6 suffix. */
+  double toDouble(bool *ok = nullptr, double def = 0.0,
+                  bool suffixes_enabled = true) const;
+  /** Converts to floating point, supporting e notation and SI suffixes from 'f'
+   *  to 'P', 'u' is used as 1e-6 suffix. */
+  float toFloat(bool *ok = nullptr, float def = 0.0,
+                bool suffixes_enabled = true) const;
+  /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
+   *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
+   *  C prefixes are supported "0x" "0" and "0b". */
+  qlonglong toLongLong(bool *ok = nullptr, int base = 0, qlonglong def = 0,
+                       bool suffixes_enabled = true) const;
+  /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
+   *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
+   *  C prefixes are supported "0x" "0" and "0b". */
+  qulonglong toULongLong(bool *ok = nullptr, int base = 0, qulonglong def = 0,
+                         bool suffixes_enabled = true) const;
+  /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
+   *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
+   *  C prefixes are supported "0x" "0" and "0b". */
+  long toLong(bool *ok = nullptr, int base = 0, long def = 0,
+              bool suffixes_enabled = true) const;
+  /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
+   *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
+   *  C prefixes are supported "0x" "0" and "0b". */
+  ulong toULong(bool *ok = nullptr, int base = 0, ulong def = 0,
+                bool suffixes_enabled = true) const;
+  /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
+   *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
+   *  C prefixes are supported "0x" "0" and "0b". */
+  int toInt(bool *ok = nullptr, int base = 0, int def = 0,
+            bool suffixes_enabled = true) const;
+  /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
+   *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
+   *  C prefixes are supported "0x" "0" and "0b". */
+  uint toUInt(bool *ok = nullptr, int base = 0, uint def = 0,
+              bool suffixes_enabled = true) const;
+  /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
+   *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
+   *  C prefixes are supported "0x" "0" and "0b". */
+  short toShort(bool *ok = nullptr, int base = 0, short def = 0,
+                bool suffixes_enabled = true) const;
+  /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
+   *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
+   *  C prefixes are supported "0x" "0" and "0b". */
+  ushort toUShort(bool *ok = nullptr, int base = 0, ushort def = 0,
+                  bool suffixes_enabled = true) const;
 };
 
 Q_DECLARE_METATYPE(Utf8String)
