@@ -101,6 +101,10 @@ const Utf8StringSet SharedUiItem::keys() const {
   return keys;
 }
 
+const Utf8String SharedUiItem::paramScope() const {
+  return qualifiedId();
+}
+
 const ParamSet SharedUiItem::snapshot() const {
   return ParamsProvider::snapshot();
 }

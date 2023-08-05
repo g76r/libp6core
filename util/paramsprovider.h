@@ -92,6 +92,19 @@ public:
     const Utf8String &key, Utf8StringSet *alreadyEvaluated) const {
     return Utf8String(paramValue(key, 0, Utf8String{}, alreadyEvaluated)); }
   virtual const Utf8StringSet keys() const = 0;
+  /** Return params scope, that is more or less a name or type for this
+   *  ParamsProvider. e.g. "env", "customer:Customer123", "root", etc.
+   */
+  virtual const Utf8String paramScope() const;
+  /** Left part of scope, before first occurrence of separator, or
+   *  whole scope if separator is not found.
+   *  Handy with ':' when dealing with SharedUiItems's qualified ids as
+   *  scopes and only wanting qualifiers. */
+  const Utf8String paramScopeRadix(const char separator) const {
+    auto s = paramScope();
+    auto i = s.indexOf(separator);
+    return i >= 0 ? s.first(i) : s;
+  }
   /** Singleton wrapper to environment variables */
   static ParamsProvider *environment() { return _environment; }
   /** Singleton empty ParamsProvider */

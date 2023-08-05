@@ -82,6 +82,10 @@ const Utf8StringSet ParamsProvider::keys() const {
   return {};
 }
 
+const Utf8String ParamsProvider::paramScope() const {
+  return {};
+}
+
 const QVariant RawParamsProvider::paramValue(
     const Utf8String &key, const ParamsProvider *, const QVariant &defaultValue,
     Utf8StringSet *) const {

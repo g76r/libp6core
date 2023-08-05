@@ -493,8 +493,10 @@ public:
     const Utf8String &key, const ParamsProvider *context,
     const QVariant &defaultValue,
     Utf8StringSet *alreadyEvaluated) const override final;
-  /** Returns every section names */
+  /** Return every section names */
   const Utf8StringSet keys() const override final;
+  /** Return qualified id */
+  const Utf8String paramScope() const override final;
   const ParamSet snapshot() const override final;
 
 protected:
