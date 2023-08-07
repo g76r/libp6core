@@ -328,11 +328,11 @@ QString TimeFormats::toCustomTimestamp(
 }
 
 const QString TimeFormats::toMultifieldSpecifiedCustomTimestamp(
-  const QDateTime &dt, const QString &multifieldSpecifiedFormat,
+  const QDateTime &dt, const Utf8String &multifieldSpecifiedFormat,
   const ParamSet &paramset,
   bool inherit, const ParamsProvider *context,
   Utf8StringSet *alreadyEvaluated) {
-  CharacterSeparatedExpression params(multifieldSpecifiedFormat);
+  auto params = multifieldSpecifiedFormat.splitByLeadingChar();
   auto format = paramset.evaluate(
         params.value(0), inherit, context, alreadyEvaluated);
   auto relativedatetime = paramset.evaluate(

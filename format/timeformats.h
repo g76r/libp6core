@@ -71,12 +71,12 @@ public:
    * ParamsProvider.
    */
   static const QString toMultifieldSpecifiedCustomTimestamp(
-      const QDateTime &dt, const QString &multifieldSpecifiedFormat,
+      const QDateTime &dt, const Utf8String &multifieldSpecifiedFormat,
       const ParamSet &paramset, bool inherit,
       const ParamsProvider *context,
       Utf8StringSet *alreadyEvaluated);
   static inline const QString toMultifieldSpecifiedCustomTimestamp(
-    const QDateTime &dt, const QString &multifieldSpecifiedFormat,
+    const QDateTime &dt, const Utf8String &multifieldSpecifiedFormat,
     const ParamSet &paramset = ParamSet(), bool inherit = true,
     const ParamsProvider *context = 0) {
     Utf8StringSet ae;
