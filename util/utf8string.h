@@ -23,11 +23,13 @@
 using namespace Qt::Literals::StringLiterals;
 
 class AsciiString;
+class Utf8StringList;
 
 /** Enhanced QByteArray with string methods, always assuming 8 bits content is a
  * UTF-8 encoded string (QByteArray, char *, etc.). */
 class LIBP6CORESHARED_EXPORT Utf8String : public QByteArray {
 public:
+  const static QList<char> Whitespace;
   inline Utf8String(const QByteArray &ba = {}) : QByteArray(ba) {}
   inline Utf8String(const QByteArray &&ba) : QByteArray(ba) {}
   inline Utf8String(const QByteArrayData ba) : QByteArray(ba) {}
@@ -81,6 +83,24 @@ public:
   QByteArray toUpper() = delete;
   QByteArray isLower() = delete;
   QByteArray isUpper() = delete;
+  Utf8String left(qsizetype len) const { return QByteArray::left(len); }
+  Utf8String right(qsizetype len) const { return QByteArray::right(len); }
+  Utf8String mid(qsizetype pos, qsizetype len = -1) const {
+    return QByteArray::mid(pos, len); }
+  const Utf8StringList split(QList<char> seps, qsizetype offset = 0,
+      Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
+  inline const Utf8StringList split(
+      QList<char> seps, Qt::SplitBehavior behavior) const;
+  inline const Utf8StringList split(
+      const char sep, const qsizetype offset = 0,
+      Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
+  inline const Utf8StringList split(
+      const char sep, Qt::SplitBehavior behavior) const;
+  /** Split the string using its first char as a delimiter
+   *  e.g. "/foo/bar/g" -> { "foo", "bar", "g" }
+   *  e.g. ",/,:,g" -> { "/", ":", "g" }
+   */
+  const Utf8StringList splitByLeadingChar(qsizetype offset = 0) const;
   /** Converts to floating point, supporting e notation and SI suffixes from 'f'
    *  to 'P', 'u' is used as 1e-6 suffix. */
   double toDouble(bool *ok = nullptr, double def = 0.0,
@@ -129,6 +149,9 @@ public:
    *  C prefixes are supported "0x" "0" and "0b". */
   ushort toUShort(bool *ok = nullptr, int base = 0, ushort def = 0,
                   bool suffixes_enabled = true) const;
+  /** Converts to bool, supporting case insensitive "true" and "false", and any
+   *  number, 0 being false and everything else true. */
+  bool toBool(bool *ok = nullptr, bool def = false) const;
 };
 
 Q_DECLARE_METATYPE(Utf8String)
@@ -162,8 +185,8 @@ public:
     : QList<Utf8String>(set.constBegin(), set.constEnd()) { }
   Utf8StringList(const QSet<QString> &set)
     : QList<Utf8String>(set.constBegin(), set.constEnd()) { }
-  Utf8String join(const Utf8String &separator);
-  Utf8String join(const char separator);
+  Utf8String join(const Utf8String &separator) const;
+  Utf8String join(const char separator) const;
   QStringList toStringList() const {
     return QStringList(constBegin(), constEnd()); }
   QByteArrayList toByteArrayList() const {
@@ -191,8 +214,8 @@ public:
     : QSet<Utf8String>(set.constBegin(), set.constEnd()) { }
   Utf8StringSet(const QList<QString> &set)
     : QSet<Utf8String>(set.constBegin(), set.constEnd()) { }
-  Utf8String join(const Utf8String &separator);
-  Utf8String join(const char separator);
+  Utf8String join(const Utf8String &separator) const;
+  Utf8String join(const char separator) const;
   Utf8String sortedJoin(const Utf8String &separator) {
     return toSortedList().join(separator); }
   Utf8String sortedJoin(const char separator) {
@@ -203,6 +226,21 @@ public:
 };
 
 Q_DECLARE_METATYPE(Utf8StringSet)
+
+const Utf8StringList Utf8String::split(
+    QList<char> seps, Qt::SplitBehavior behavior) const {
+  return split(seps, 0, behavior);
+}
+
+const Utf8StringList Utf8String::split(
+    const char sep, const qsizetype offset, Qt::SplitBehavior behavior) const {
+  return split({sep}, offset, behavior);
+}
+
+const Utf8StringList Utf8String::split(
+    const char sep, Qt::SplitBehavior behavior) const {
+  return split(sep, 0, behavior);
+}
 
 Utf8StringSet Utf8StringList::toSet() const {
   return Utf8StringSet(*this);
