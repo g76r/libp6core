@@ -1103,27 +1103,27 @@ qlonglong ParamSet::valueAsLong(
     Utf8String key, qlonglong defaultValue, bool inherit,
   const ParamsProvider *context) const {
   auto s = evaluate(rawValue(key, {}, inherit), inherit, context);
-  return PfUtils::stringAsLongLong(s, defaultValue);
+  return s.toLongLong(nullptr, defaultValue);
 }
 
 int ParamSet::valueAsInt(
   Utf8String key, int defaultValue, bool inherit,
   const ParamsProvider *context) const {
   auto s = evaluate(rawValue(key, {}, inherit), inherit, context);
-  return PfUtils::stringAsInt(s, defaultValue);
+  return s.toInt(nullptr, defaultValue);
 }
 
 double ParamSet::valueAsDouble(
   Utf8String key, double defaultValue, bool inherit,
   const ParamsProvider *context) const {
   auto s = evaluate(rawValue(key, {}, inherit), inherit, context);
-  return PfUtils::stringAsDouble(s.toString(), defaultValue);
+  return s.toDouble(nullptr, defaultValue);
 }
 
 bool ParamSet::valueAsBool(Utf8String key, bool defaultValue, bool inherit,
   const ParamsProvider *context) const {
-  auto v = evaluate(rawValue(key, {}, inherit), inherit, context);
-  return PfUtils::stringAsBool(v.toString(), defaultValue);
+  auto s = evaluate(rawValue(key, {}, inherit), inherit, context);
+  return s.toBool(nullptr, defaultValue);
 }
 
 ParamSetData *ParamSet::fromQIODevice(
