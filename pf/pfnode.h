@@ -17,6 +17,7 @@
 
 #include "pffragment_p.h"
 #include "pfarray.h"
+#include "util/utf8string.h"
 #include <QVariant>
 #include <QBuffer>
 #if QT_VERSION < 0x060000
@@ -185,7 +186,7 @@ public:
 
   /** A node has an empty string name if and only if the node is null. */
   QString name() const { return d ? d->_name : QString(); }
-  QByteArray utf8Name() const { return d ? d->_name.toUtf8() : QByteArray(); }
+  Utf8String utf8Name() const { return d ? d->_name.toUtf8() : Utf8String{}; }
   /** Replace node name. If name is empty, the node will become null. */
   PfNode &setName(const QString &name) {
     if (name.isEmpty())
@@ -238,9 +239,9 @@ public:
   QString attribute(const QString &name) const {
     PfNode child = firstTextChildByName(name);
     return child.isNull() ? QString() : child.contentAsString(); }
-  QByteArray utf8Attribute(const QString &name) const {
+  Utf8String utf8Attribute(const QString &name) const {
     PfNode child = firstTextChildByName(name);
-    return child.isNull() ? QByteArray{} : child.contentAsUtf8(); }
+    return child.isNull() ? Utf8String{} : child.contentAsUtf8(); }
   /** Return a child content knowing the child name.
     * defaultValue if no text child exists.
     * QString("") if child exists but has no content
@@ -249,9 +250,9 @@ public:
   QString attribute(const QString &name, const QString &defaultValue) const {
     PfNode child = firstTextChildByName(name);
     return child.isNull() ? defaultValue : child.contentAsString(); }
-  QByteArray utf8Attribute(
-      const QString &name, const QByteArray &defaultValue) const {
-    PfNode child = firstTextChildByName(name);
+  Utf8String utf8Attribute(
+      const Utf8String &name, const Utf8String &defaultValue) const {
+    PfNode child = firstTextChildByName(name.toString());
     return child.isNull() ? defaultValue : child.contentAsUtf8(); }
   /** Return the content (as string) of every child with a given name.
    * This is the same as attribute() with multi-valued semantics.
@@ -298,7 +299,7 @@ public:
   PfNode &setAttribute(const QString &name, const char *content) {
     return setAttribute(name, QString::fromUtf8(content)); }
   /** Convenience method (assume content is UTF-8 encoded) */
-  PfNode &setAttribute(const QString &name, const QByteArray &utf8) {
+  PfNode &setAttribute(const QString &name, const Utf8String &utf8) {
     return setAttribute(name, QString::fromUtf8(utf8)); }
   // LATER setAttribute() for QDateTime, QDate, QTime and QStringList/QSet<QString>
   /** Set a child named 'name' with 'content' content and remove any other child
@@ -337,8 +338,8 @@ public:
    * if isText() even if isEmpty() */
   QString contentAsString() const {
     return d ? d->contentAsString() : QString(); }
-  QByteArray contentAsUtf8() const {
-    return d ? d->contentAsString().toUtf8() : QByteArray(); }
+  Utf8String contentAsUtf8() const {
+    return d ? d->contentAsString().toUtf8() : Utf8String{}; }
   /** @return integer value if the string content is a valid integer
    * C-like prefixes are supported and both kmb and kMGTP suffixes are supported
    * surrounding whitespace is trimmed
@@ -362,7 +363,7 @@ public:
    * doubled since it's already an escape character in PF syntax (e.g.
    * "foo\\ 1 bar baz" first element is "foo 1"). */
   QStringList contentAsStringList() const;
-  QByteArrayList contentAsUtf8List() const;
+  Utf8StringList contentAsUtf8List() const;
   /** Split text content into two strings on first non-leading whitespace.
    * e.g. "foo bar baz" and "    foo  bar baz" are both interpreted as the same
    * 2 items list: { "foo", "bar baz" }.

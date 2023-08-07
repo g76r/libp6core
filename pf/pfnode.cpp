@@ -396,26 +396,23 @@ QList<QPair<QString, qint64>> PfNode::stringLongPairChildrenByName(
 }
 
 qint64 PfNode::contentAsLong(qint64 defaultValue, bool *ok) const {
-  return PfUtils::stringAsLongLong(contentAsString(), defaultValue, ok);
+  return contentAsUtf8().toLongLong(ok, defaultValue);
 }
 
 double PfNode::contentAsDouble(double defaultValue, bool *ok) const {
-  return PfUtils::stringAsDouble(contentAsString(), defaultValue, ok);
+  return contentAsUtf8().toDouble(ok, defaultValue);
 }
 
 bool PfNode::contentAsBool(bool defaultValue, bool *ok) const {
-  return PfUtils::stringAsBool(contentAsString(), defaultValue, ok);
+  return contentAsUtf8().toBool(ok, defaultValue);
 }
 
 QStringList PfNode::contentAsStringList() const {
-  return PfUtils::stringSplittedOnWhitespace(contentAsString());
+  return contentAsString().split(_whitespace, Qt::SkipEmptyParts);
 }
 
-QByteArrayList PfNode::contentAsUtf8List() const {
-  QByteArrayList list;
-  for (auto s: PfUtils::stringSplittedOnWhitespace(contentAsString()))
-    list << s.toUtf8();
-  return list;
+Utf8StringList PfNode::contentAsUtf8List() const {
+  return contentAsUtf8().split(Utf8String::Whitespace, Qt::SkipEmptyParts);
 }
 
 QStringList PfNode::contentAsTwoStringsList() const {

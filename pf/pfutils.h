@@ -35,28 +35,6 @@ public:
   static QString escape(
       const QString &string, const PfOptions &options = PfOptions(),
       bool escapeEvenSingleSpaces = false);
-  /** @return integer value if the string content is a valid integer
-   * C-like prefixes are supported and both kmb and kMGTP suffixes are supported
-   * surrounding whitespace is trimmed
-   * e.g. 0x1f means 15, 12k means 12000, 12b and 12G mean 12000000000.
-   * T and P are supported with long long, not int. */
-  static qlonglong stringAsLongLong(QString key, qlonglong defaultValue = 0,
-                                    bool *ok = 0);
-  static int stringAsInt(QString s, int defaultValue = 0, bool *ok = 0);
-  /** @return bool value if the string content is a valid boolean
-   * "false" "true" and valid C-like integer are supported e.g. 0 or 0xf */
-  static bool stringAsBool(
-    QStringView s, bool defaultValue = false, bool *ok = 0);
-  /** @return bool value if the string content is a valid C-like double
-   * (including e notation). */
-  static double stringAsDouble(QStringView s, double defaultValue = 0.0,
-                               bool *ok = 0);
-  /** Split a string on any ascii whitespace (space, \r, etc.), but for escaped
-   * (with backslash) whitespace.
-   * Leading and trailing spaces are ignored, multiple whitespace characters are
-   * processed as one (there are no empty parts).
-   */
-  static const QStringList stringSplittedOnWhitespace(QStringView s);
   /** Split string into two strings on first non-leading whitespace.
    * e.g. "foo bar baz" and "    foo  bar baz" are both interpreted as the same
    * 2 items list: { "foo", "bar baz" }.
