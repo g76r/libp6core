@@ -428,7 +428,7 @@ public:
     bool ok = false;
     MathExprData *d = 0;
     if (dialect == MathExpr::CharacterSeparatedRpn) {
-      CharacterSeparatedExpression terms(expr);
+      auto terms = expr.splitByLeadingChar();
       auto root = compileRpn(terms, &ok);
       if (ok)
         d = new MathExprData(root, expr);
