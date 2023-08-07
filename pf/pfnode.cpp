@@ -412,7 +412,7 @@ QStringList PfNode::contentAsStringList() const {
 }
 
 Utf8StringList PfNode::contentAsUtf8List() const {
-  return contentAsUtf8().split(Utf8String::Whitespace, Qt::SkipEmptyParts);
+  return contentAsUtf8().split(Utf8String::AsciiWhitespace, Qt::SkipEmptyParts);
 }
 
 QStringList PfNode::contentAsTwoStringsList() const {

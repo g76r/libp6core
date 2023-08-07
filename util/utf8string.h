@@ -24,12 +24,13 @@ using namespace Qt::Literals::StringLiterals;
 
 class AsciiString;
 class Utf8StringList;
+class LogHelper;
 
 /** Enhanced QByteArray with string methods, always assuming 8 bits content is a
  * UTF-8 encoded string (QByteArray, char *, etc.). */
 class LIBP6CORESHARED_EXPORT Utf8String : public QByteArray {
 public:
-  const static QList<char> Whitespace;
+  const static QList<char> AsciiWhitespace;
   inline Utf8String(const QByteArray &ba = {}) : QByteArray(ba) {}
   inline Utf8String(const QByteArray &&ba) : QByteArray(ba) {}
   inline Utf8String(const QByteArrayData ba) : QByteArray(ba) {}
@@ -44,8 +45,13 @@ public:
   inline Utf8String(const QUtf8StringView v)
     : QByteArray(v.toString().toUtf8()) {}
   inline Utf8String(const QStringView v) : QByteArray(v.toUtf8()) {}
+  inline Utf8String(const unsigned char *s, qsizetype size = -1)
+    : QByteArray((const char *)s, size) { }
+  inline Utf8String(const signed char *s, qsizetype size = -1)
+    : QByteArray((const char *)s, size) { }
   inline Utf8String(const char *s, qsizetype size = -1)
     : QByteArray(s, size) { }
+  explicit inline Utf8String(char32_t c) : QByteArray(encode(c)) { }
   inline ~Utf8String() {}
   //template <typename Char,if_compatible_char<Char>>
   //Utf8String(const Char *s, qsizetype size = -1) : QByteArray(s, size) { }
@@ -57,10 +63,13 @@ public:
   /** take QByteArray if v.canConvert<QByteArray>() (assuming UTF-8) otherwise
    * take QString and convert to UTF-8 */
   explicit inline Utf8String(QVariant v)
-    : QByteArray(v.isValid()
-                 ? (v.canConvert<QByteArray>() ? v.toByteArray()
-                                               : v.toString().toUtf8())
-                 : QByteArray{}) {}
+    : QByteArray(v.canConvert<QByteArray>()
+                 ? v.toByteArray()
+                 : v.canConvert<Utf8String>()
+                   ? v.value<Utf8String>()
+                   : v.canConvert<QString>()
+                     ? v.toString().toUtf8()
+                     : QByteArray{}) { }
   inline Utf8String &operator =(const Utf8String &other) {
     QByteArray::operator =(other); return *this;
   }
@@ -79,44 +88,56 @@ public:
   [[nodiscard]] inline AsciiString toAscii() const;
   operator char *() const = delete;
   operator void *() const = delete;
+  static Utf8String encode(char32_t c);
   QByteArray toLower() = delete;
   QByteArray toUpper() = delete;
   QByteArray isLower() = delete;
   QByteArray isUpper() = delete;
+  /** Return utf8 characters count. */
+  qsizetype utf8Size() const;
+  Utf8String trimmed() const { return QByteArray::trimmed(); }
+  /** Return leftmost len bytes. Empty if len < 0. */
   Utf8String left(qsizetype len) const { return QByteArray::left(len); }
+  /** Return rightmost len bytes. Empty if len < 0. */
   Utf8String right(qsizetype len) const { return QByteArray::right(len); }
+  /** Return len bytes starting at pos.
+   *  Everything after pos if len < 0 or pos+len > size(). */
   Utf8String mid(qsizetype pos, qsizetype len = -1) const {
     return QByteArray::mid(pos, len); }
-  Utf8String utf8Left(qsizetype len) const {
-    // LATER optimize and support all unicode (not just 16 bits)
-    return toString().left(len); }
-  Utf8String utf8Right(qsizetype len) const {
-    // LATER optimize and support all unicode (not just 16 bits)
-    return toString().right(len); }
-  Utf8String utf8Mid(qsizetype pos, qsizetype len = -1) const {
-    // LATER optimize and support all unicode (not just 16 bits)
-    return toString().mid(pos, len); }
+  /** Return leftmost len utf8 characters. */
+  Utf8String utf8Left(qsizetype len) const;
+  /** Return rightmost len utf8 characters. */
+  Utf8String utf8Right(qsizetype len) const;
+  /** Return len utf8 characters starting at pos.
+   *  Everything after pos if len < 0 or pos+len > size(). */
+  Utf8String utf8Mid(qsizetype pos, qsizetype len = -1) const;
+  /** Splitting utf8 string on ascii 7 separators, e.g. {',',';'}
+    * @see Utf8String::AsciiWhitespace */
   const Utf8StringList split(QList<char> seps, qsizetype offset = 0,
       Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
+  /** Splitting utf8 string on ascii 7 separators, e.g. {',',';'}
+    * @see Utf8String::AsciiWhitespace */
   inline const Utf8StringList split(
       QList<char> seps, Qt::SplitBehavior behavior) const;
+  /** Splitting utf8 string on ascii 7 separator, e.g. ' ' */
   inline const Utf8StringList split(
       const char sep, const qsizetype offset = 0,
       Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
+  /** Splitting utf8 string on ascii 7 separator, e.g. ' ' */
   inline const Utf8StringList split(
       const char sep, Qt::SplitBehavior behavior) const;
-  /** Split the string using its first char as a delimiter, at byte level.
-   *  e.g. "/foo/bar/g" -> { "foo", "bar", "g" }
-   *  e.g. ",/,:,g" -> { "/", ":", "g" }
-   *  e.g. "§foo§bar§g" unsupported (multibyte delimiter)
-   */
-  const Utf8StringList splitByLeadingChar(qsizetype offset = 0) const;
-  /** Split the string using its first char as a delimiter, at character level.
+  /** Splitting utf8 string on multi-byte (utf8) or multi-char separator,
+   *  e.g. "-->", "💩"_u8, U'💩', "<≠>"_u8 */
+  const Utf8StringList split(Utf8String sep, qsizetype offset = 0,
+      Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
+  /** Split the string using its first utf8 char as a delimiter.
    *  e.g. "/foo/bar/g" -> { "foo", "bar", "g" }
    *  e.g. ",/,:,g" -> { "/", ":", "g" }
    *  e.g. "§foo§bar§g" -> { "foo", "bar", "g" }
+   *  e.g. "越foo越bar越g" -> { "foo", "bar", "g" }
+   *  e.g. "💩foo💩bar💩g" -> { "foo", "bar", "g" }
    */
-  const Utf8StringList utf8SplitByLeadingChar(qsizetype offset = 0) const;
+  const Utf8StringList splitByLeadingChar(qsizetype offset = 0) const;
   /** Converts to floating point, supporting e notation and SI suffixes from 'f'
    *  to 'P', 'u' is used as 1e-6 suffix. */
   double toDouble(bool *ok = nullptr, double def = 0.0,
@@ -250,7 +271,7 @@ const Utf8StringList Utf8String::split(
 
 const Utf8StringList Utf8String::split(
     const char sep, const qsizetype offset, Qt::SplitBehavior behavior) const {
-  return split({sep}, offset, behavior);
+  return split(QList<char>{sep}, offset, behavior);
 }
 
 const Utf8StringList Utf8String::split(
@@ -266,6 +287,19 @@ Utf8StringList Utf8StringList::toSortedDeduplicated() const {
   return toSet().toSortedList();
 }
 
+QDebug LIBP6CORESHARED_EXPORT operator<<(QDebug dbg, const Utf8String &s);
+
+QDebug LIBP6CORESHARED_EXPORT operator<<(QDebug dbg, const Utf8StringList &l);
+
+QDebug LIBP6CORESHARED_EXPORT operator<<(QDebug dbg, const Utf8StringSet &s);
+
+LogHelper LIBP6CORESHARED_EXPORT operator<<(LogHelper lh,
+                                             const Utf8StringList &list);
+
+LogHelper LIBP6CORESHARED_EXPORT operator<<(LogHelper lh,
+                                             const Utf8StringSet &set);
+
+#if 0
 class LIBP6CORESHARED_EXPORT AsciiString : public Utf8String {
 public:
   //struct AsciiLiteral {
@@ -326,5 +360,6 @@ inline AsciiString operator"" _a7(const char *str, size_t size) noexcept {
 AsciiString Utf8String::toAscii() const {
   return AsciiString(*this);
 }
+#endif
 
 #endif // UTF8STRING_H

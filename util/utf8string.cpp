@@ -14,8 +14,10 @@
 
 #include "utf8string.h"
 #include <functional>
+#include <QtDebug>
+#include "log/log.h"
 
-const QList<char> Utf8String::Whitespace = { ' ', '\t', '\n', '\r', '\v' };
+const QList<char> Utf8String::AsciiWhitespace = { ' ', '\t', '\n', '\r', '\v' };
 
 template<typename C,typename T>
 static inline Utf8String join(const C &container, const T &separator) {
@@ -243,6 +245,7 @@ bool Utf8String::toBool(bool *ok, bool def) const {
   }
   i = toLongLong(&_ok);
   if (_ok)
+
     b = !!i;
 found:
   if (ok)
@@ -250,9 +253,185 @@ found:
   return b;
 }
 
+Utf8String Utf8String::encode(char32_t c) {
+  if (c <= 0x7f) {
+    unsigned char a = c & 0x7f;
+    return Utf8String(&a, 1);
+  }
+  if (c <= 0x7ff) {
+    unsigned char s[2];
+    s[0] = 0b11000000 + (c >> 6);
+    s[1] = 0b10000000 + (c & 0b111111);
+    return Utf8String(s, sizeof s);
+  }
+  if (c >= 0xd800 && c <= 0xdfff) // RFC 3629: surrogate halves are invalid
+    return "\ufffd"_u8;
+  if (c <= 0xffff) {
+    unsigned char s[3];
+    s[0] = 0b11100000 + (c >> 12);
+    s[1] = 0b10000000 + ((c >> 6) & 0b111111);
+    s[2] = 0b10000000 + (c & 0b111111);
+    return Utf8String(s, sizeof s);
+  }
+  if (c >= 0x10ffff) // RFC 3629: > 0x10ffff are invalid
+    return "\ufffd"_u8;
+  if (c <= 0x1fffff) {
+    unsigned char s[4];
+    s[0] = 0b11110000 + (c >> 18);
+    s[1] = 0b10000000 + ((c >> 12) & 0b111111);
+    s[2] = 0b10000000 + ((c >> 6) & 0b111111);
+    s[3] = 0b10000000 + (c & 0b111111);
+    return Utf8String(s, sizeof s);
+  }
+#if 0
+  if (c <= 0x3ffffff) {
+    unsigned char s[5];
+    s[0] = 0b11111000 + (c >> 24);
+    s[1] = 0b10000000 + ((c >> 18) & 0b111111);
+    s[2] = 0b10000000 + ((c >> 12) & 0b111111);
+    s[3] = 0b10000000 + ((c >> 6) & 0b111111);
+    s[4] = 0b10000000 + (c & 0b111111);
+    return Utf8String(s, sizeof s);
+  }
+  if (c <= 0x7fffffff) {
+    unsigned char s[6];
+    s[0] = 0b11111100 + (c >> 30);
+    s[1] = 0b10000000 + ((c >> 24) & 0b111111);
+    s[2] = 0b10000000 + ((c >> 18) & 0b111111);
+    s[3] = 0b10000000 + ((c >> 12) & 0b111111);
+    s[4] = 0b10000000 + ((c >> 6) & 0b111111);
+    s[5] = 0b10000000 + (c & 0b111111);
+    return Utf8String(s, sizeof s);
+  }
+#endif
+  return "\ufffd"_u8;
+}
+
+static inline const char *first_char(const char *&s, const char *end) {
+  while (s+3 < end && s[0] == (char)0xef && s[1] == (char)0xbb
+         && s[2] == (char)0xbf) // BOM
+    s += 3;
+  return (s < end) ? s : 0;
+}
+
+static inline const char *next_char(const char *&s, const char *end) {
+  while (s+3 < end && s[0] == (char)0xef && s[1] == (char)0xbb
+         && s[2] == (char)0xbf) // BOM
+    s += 3;
+  if ((s[0]&0b10000000) == 0) {  // ascii 7 : one byte
+    ++s;
+    goto found;
+  }
+  ++s; // ignore leading bytes, should be 0b11xxxxxx but anyway we skip it
+  while (s+1 < end && (s[0]&0b11000000) == 0b10000000)
+    ++s; // skip all continuation (0b10xxxxxx) bytes, no matter their number
+  // rationale: they should be 1 to 3 depending on the leading byte, but anyway
+  // we are to ignore malformed sequences if any
+  while (s+3 < end && s[0] == (char)0xef && s[1] == (char)0xbb
+         && s[2] == (char)0xbf) // BOM
+    s += 3;
+found:
+  return (s < end) ? s : 0;
+}
+
+static inline const char *prev_char(const char *&s, const char *begin) {
+  --s;
+  while (s-3 >= begin && s[-2] == (char)0xef && s[-1] == (char)0xbb
+         && s[0] == (char)0xbf) // BOM
+    s -= 3;
+  while (s-1 >= begin && (s[0]&0b11000000) == 0b10000000)
+    --s; // skip all continuation (0b10xxxxxx) bytes, no matter their number
+  while (s-3 >= begin && s[-2] == (char)0xef && s[-1] == (char)0xbb
+         && s[0] == (char)0xbf) // BOM
+    s -= 3;
+  return (s >= begin) ? s : 0;
+}
+
+qsizetype Utf8String::utf8Size() const {
+  auto s = constData();
+  auto end = s + size();
+  if (!first_char(s, end))
+    return 0;
+  qsizetype i = 0;
+  while (next_char(s, end))
+    ++i;
+  return i;
+}
+
+Utf8String Utf8String::utf8Left(qsizetype len) const {
+  auto s = constData();
+  auto end = s + size();
+  auto s0 = first_char(s, end);
+  qsizetype i = 0;
+  do
+    ++i;
+  while (i <= len && next_char(s, end));
+  return Utf8String(s0, s-s0);
+}
+
+Utf8String Utf8String::utf8Right(qsizetype len) const {
+  auto begin = constData();
+  auto s = begin + size(), end = s;
+  qsizetype i = 0;
+  do
+    ++i;
+  while (i <= len && prev_char(s, begin));
+  return Utf8String(s, end-s);
+}
+
+Utf8String Utf8String::utf8Mid(qsizetype pos, qsizetype len) const {
+  auto s = constData(), s0 = s;
+  auto end = s + size();
+  first_char(s, end);
+  qsizetype i = 0;
+  do
+    ++i;
+  while (i <= pos && next_char(s, end));
+  if (len < 0)
+    return Utf8String(s, size()-(s-s0));
+  s0 = s;
+  i = 0;
+  do
+    ++i;
+  while (i <= len && next_char(s, end));
+  return Utf8String(s0, s-s0);
+}
+
+const Utf8StringList Utf8String::split(
+    Utf8String sep, qsizetype offset, Qt::SplitBehavior behavior) const {
+  Utf8StringList list;
+  if (offset < 0)
+    return {};
+  auto data = constData(), sep_data = sep.constData();
+  qsizetype imax = size()-sep.size()+1, w = sep.size(), i = offset, j = i;
+  //  xx,y,zzzz
+  //  012345678
+  //  4-3=1
+  //  2-0=2
+  //  ,x,,zzzz
+  //  01234567
+  //  0-0=0
+  //  3-3=0
+  //  x,zzzz
+  //  012345
+  //  6-2=4
+  while (i < imax) {
+    if (::strncmp(data+i, sep_data, w) == 0) {
+      if (i-j >= (behavior == Qt::SkipEmptyParts ? 1 : 0))
+        list += mid(j, i-j);
+      i += w;
+      j = i;
+    } else {
+      ++i;
+    }
+  }
+  if (i-j >= (behavior == Qt::SkipEmptyParts ? 1 : 0))
+    list += mid(j, i-j);
+  return list;
+}
+
 const Utf8StringList Utf8String::split(
     QList<char> seps, qsizetype offset, Qt::SplitBehavior behavior) const {
-// LATER beter support UTF-8, with multi-byte sequences separators
   Utf8StringList list;
   if (offset < 0)
     return {};
@@ -281,15 +460,40 @@ const Utf8StringList Utf8String::split(
 }
 
 const Utf8StringList Utf8String::splitByLeadingChar(qsizetype offset) const {
+  QChar z;
   if (offset < 0 || size() < offset+1)
     return {};
-  return mid(offset+1).split(at(offset));
+  auto s = constData(), orig = s;
+  auto end = s + size();
+  first_char(s, end);
+  while (offset && next_char(s, end))
+    --offset;
+  auto s0 = s; // begin of separator
+  auto s1 = next_char(s, end); // end of separator
+  next_char(s, end); // begin of next char
+  return split(Utf8String(s0, s1-s0), s1-orig);
 }
 
-const Utf8StringList Utf8String::utf8SplitByLeadingChar(
-    qsizetype offset) const {
-  // LATER optimize and support all unicode (not just 16 bits)
-  if (offset < 0 || size() < offset+1)
-    return {};
-  return toString().mid(offset+1).split(QChar(at(offset)));
+QDebug operator<<(QDebug dbg, const Utf8String &s) {
+  dbg << s.toString();
+  return dbg;
 }
+
+QDebug operator<<(QDebug dbg, const Utf8StringList &list) {
+  dbg.noquote() << "{"_u8;
+  if (list.size())
+    dbg.space().noquote() << Utf8String("\""_u8+list.join("\", \""_u8)+"\" }"_u8).toString();
+  return dbg;
+}
+
+QDebug operator<<(QDebug dbg, const Utf8StringSet &set) {
+  return dbg << set.toSortedList();
+}
+
+LogHelper operator<<(LogHelper lh, const Utf8StringList &list) {
+  lh << "{"_u8;
+  if (list.size())
+    lh << "\""_u8+list.join("\", \""_u8)+"\" }"_u8;
+  return lh;
+}
+
