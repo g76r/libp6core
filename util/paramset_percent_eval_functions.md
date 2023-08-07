@@ -381,15 +381,13 @@ examples:
 
 hexadecimal representation of utf-8 form of evaluated expression
 * separator optionnal one-latin1-character separator between bytes
-* flags is a combination of letters with the following meaning:
-  * b process expression value as binary, not utf-8
+* flags is currently ignored
 
 examples:
 * `%{=hex:%%baz}` returns "2562617a"
 * `%{=hex:%%baz: }` returns "25 62 61 7a"
 * `%{=hex!%%baz!:}` returns "25:62:61:7a"
-* `%{=hex:%{=fromhex!fbff61!b}::b}` returns "fbff61"
-* `%{=hex:%{=fromhex!fbff61}::b}` returns "3f3f61" (\x3f is '?' placeholder)
+* `%{=hex:%{=fromhex!fbff61}::}` returns "fbff61"
 
 %=fromhex
 ---------
@@ -399,14 +397,12 @@ convert an hexadecimal representation to actual data
 
 ignore invalid characters in input, hence tolerate separators if any
 
-flags is a combination of letters with the following meaning:
-* b produces binary result, not utf-8
+flags is currently ignored
 
 examples:
 * `%{=fromhex!2562617a!}` returns "%%baz"
 * `%{=fromhex!25:62/61 7a!}` returns "%%baz"
-* `%{=hex:%{=fromhex!fbff61!b}::b}` returns "fbff61"
-* `%{=hex:%{=fromhex!fbff61}::b}` returns "3f3f61" (\x3f is '?' placeholder)
+* `%{=hex:%{=fromhex!fbff61}:}` returns "fbff61"
 
 
 %=base64
@@ -415,14 +411,13 @@ examples:
 
 base64 representation of utf-8 form of evaluated expression
 * flags is a combination of letters with the following meaning:
-  * b process expression value as binary, not utf-8
   * u encode using base64url instead of base64 (use - and _ instead of + and /)
   * t omit trailing =
 
 examples:
 * `%{=base64:§}` returns "wqc="
-* `%{=base64!%{=fromhex:fbff61:b}!b}` returns "+/9h"
-* `%{=base64!%{=fromhex:fbff61:b}!utb}` returns "-_9h"
+* `%{=base64!%{=fromhex:fbff61}}` returns "+/9h"
+* `%{=base64!%{=fromhex:fbff61}!ut}` returns "-_9h"
 * `Basic %{=base64!login:password}` returns "Basic QmFzaWMgbG9naW46cGFzc3dvcmQ="
 
 %=frombase64
@@ -431,13 +426,12 @@ examples:
 
 convert a base64 representation to actual data
 * flags is a combination of letters with the following meaning:
-  * b produces binary result, not utf-8
   * u decode using base64url instead of base64 (use - and _ instead of + and /)
 
 examples:
 * `%{=frombase64:wqc=}` returns "§"
-* `%{=hex!%{=frombase64:+/9h:b}!!b}` returns "fbff61"
-* `%{=hex!%{=frombase64:-_9h:ub}!!b}` returns "fbff61"
+* `%{=hex!%{=frombase64:+/9h}!}` returns "fbff61"
+* `%{=hex!%{=frombase64:-_9h:u}!}` returns "fbff61"
 * `%{=frombase64!QmFzaWMgbG9naW46cGFzc3dvcmQ=}` returns "login:password"
 
 %=rpn
@@ -499,7 +493,6 @@ examples:
 
 %'
 --
-
 `%{'anything}`
 
 returns "anything" without evaluating it
