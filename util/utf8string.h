@@ -87,6 +87,15 @@ public:
   Utf8String right(qsizetype len) const { return QByteArray::right(len); }
   Utf8String mid(qsizetype pos, qsizetype len = -1) const {
     return QByteArray::mid(pos, len); }
+  Utf8String utf8Left(qsizetype len) const {
+    // LATER optimize and support all unicode (not just 16 bits)
+    return toString().left(len); }
+  Utf8String utf8Right(qsizetype len) const {
+    // LATER optimize and support all unicode (not just 16 bits)
+    return toString().right(len); }
+  Utf8String utf8Mid(qsizetype pos, qsizetype len = -1) const {
+    // LATER optimize and support all unicode (not just 16 bits)
+    return toString().mid(pos, len); }
   const Utf8StringList split(QList<char> seps, qsizetype offset = 0,
       Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
   inline const Utf8StringList split(
@@ -96,11 +105,18 @@ public:
       Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
   inline const Utf8StringList split(
       const char sep, Qt::SplitBehavior behavior) const;
-  /** Split the string using its first char as a delimiter
+  /** Split the string using its first char as a delimiter, at byte level.
    *  e.g. "/foo/bar/g" -> { "foo", "bar", "g" }
    *  e.g. ",/,:,g" -> { "/", ":", "g" }
+   *  e.g. "§foo§bar§g" unsupported (multibyte delimiter)
    */
   const Utf8StringList splitByLeadingChar(qsizetype offset = 0) const;
+  /** Split the string using its first char as a delimiter, at character level.
+   *  e.g. "/foo/bar/g" -> { "foo", "bar", "g" }
+   *  e.g. ",/,:,g" -> { "/", ":", "g" }
+   *  e.g. "§foo§bar§g" -> { "foo", "bar", "g" }
+   */
+  const Utf8StringList utf8SplitByLeadingChar(qsizetype offset = 0) const;
   /** Converts to floating point, supporting e notation and SI suffixes from 'f'
    *  to 'P', 'u' is used as 1e-6 suffix. */
   double toDouble(bool *ok = nullptr, double def = 0.0,

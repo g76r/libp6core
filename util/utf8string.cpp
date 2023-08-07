@@ -285,3 +285,11 @@ const Utf8StringList Utf8String::splitByLeadingChar(qsizetype offset) const {
     return {};
   return mid(offset+1).split(at(offset));
 }
+
+const Utf8StringList Utf8String::utf8SplitByLeadingChar(
+    qsizetype offset) const {
+  // LATER optimize and support all unicode (not just 16 bits)
+  if (offset < 0 || size() < offset+1)
+    return {};
+  return toString().mid(offset+1).split(QChar(at(offset)));
+}
