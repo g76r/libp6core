@@ -1,0 +1,9 @@
+21 15
+"§foo§bar§baz§§§"{ "§f", "", "§bar§baz§§§" } { "", "foo", "bar", "baz", "", "", "" }
+{ "foo", "bar", "baz", "", "", "" }
+"§fo" - "§foo§b" - "§ba" - "z§§§"
+33 15
+{ "foo", "bar", "baz", "﻿", "", "" }
+{ "", "", "f", "", "", "oo", "", "bar", "baz" }
+"false" - "true" - "42" - "foo" - "" - "0"
+true false

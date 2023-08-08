@@ -1,3 +1,8 @@
+#include "util/paramset.h"
+#include "util/mathexpr.h"
+#include "util/mathutils.h"
+
+int main(void) {
   QVariant x(ULLONG_MAX/2);
   QVariant y(-132);
   qDebug() << x.metaType().name() << y.metaType().name()
@@ -13,13 +18,16 @@
            << ParamSet().evaluate(": %{=rpn,'1,',+}")
            << ParamSet().evaluate("2: %{=rpn,'1,'true,+}")
            << ParamSet().evaluate("true: %{=rpn,'1,'true,&&}")
-           << ParamSet().evaluate("false: %{=rpn,'1,'true,==}")
+           << ParamSet().evaluate("true: %{=rpn,'1,'true,==}")
+           << ParamSet().evaluate("false: %{=rpn,'42,'true,==}")
            << ParamSet().evaluate("true: %{=rpn,'42,!!,'true,==}")
            << ParamSet({"x","1"}).evaluate("33: %{=rpn,'0x20,x,+}")
            << ParamSet({"x","1.5"}).evaluate("33.5: %{=rpn,'0x20,x,+}")
            << ParamSet({"x","4"}).evaluate("4: %{=rpn,'1,'2,==,'3,x,?:}")
-           << ParamSet().evaluate("true: %{=rpn,'aabcdaa,'bc,~=}")
-           << ParamSet().evaluate("false: %{=rpn,'aabcdaa,'bC,~=}")
-           << ParamSet().evaluate("false: %{=rpn,'aabcdaa,'c$,~=}")
-           << ParamSet().evaluate("true: %{=rpn,'aabcdaa,'a$,~=}")
+           << ParamSet().evaluate("true: %{=rpn,'aabcdaa,'bc,=~}")
+           << ParamSet().evaluate("false: %{=rpn,'aabcdaa,'bC,=~}")
+           << ParamSet().evaluate("false: %{=rpn,'aabcdaa,'c$,=~}")
+           << ParamSet().evaluate("true: %{=rpn,'aabcdaa,'a$,=~}")
     ;
+  return 0;
+}
