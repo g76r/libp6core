@@ -83,16 +83,24 @@ examples:
 
 return unevaluated value of a variable
 * flags is a combination of letters with the following meaning:
-  * e %-escape value (in case it will be further %-evaluated)
-  * h html encode value
+  * e %-escape value (in case it will be further %-evaluated), see %=escape
+  * h html encode value, see %=htmlencode
   * u html encode will transform urls them into a links
   * n html encode will add br whenever it founds a newline
 
-examples:
-* `%{=rawvalue!foo}`
-* `%{=rawvalue!foo!hun}`
-* `%{=rawvalue!foo!e}` is an equivalent to %{=escape!%foo}
+see also %=escape %' and %=htmlencode
 
+examples:
+* `%{=rawvalue!foo}` -> `%bar` if foo is `%bar`
+* `%{=rawvalue!foo!e}` -> `%%bar` if foo is `%bar`
+* `%{=rawvalue:h1:hun}` is equivalent to `%{=htmlencode|%{=rawvalue:h1}|un}`
+* `%{'foo}` returns `foo` whereas `%{foo}` would have returned the value of foo
+* `%foo` -> `%bar` if foo is `%%bar`
+* `%{=escape!%{=frombase64:JWJhcg==}}` -> `%%bar` (decoded binary is `%bar`)
+* `%{=escape!%foo}` -> `%%bar` if foo is `%%bar`
+* `%{=rpn,'%foo}` -> `%foo`
+* `%{=rpn,'foo}` -> `foo`
+* `%{=rpn,foo}` -> `bar` if foo is `bar`
 
 %=ifneq
 -------
@@ -176,31 +184,35 @@ examples:
 
 %=left
 ------
-`%{=left:input:length}`
+`%{=left:input:length:flags}`
 
 * input is the data to transform, it is evaluated (%foo become the content of
 foo param)
 * length is the number of character to keep from the input, if negative or
 invalid, the whole input is kept
+* if flags contains 'b' this is done at byte level instead of utf8 characters
 
 examples:
 * `%{=left:%foo:4}`
+* `%{=left:%{=frombase64,%foo}:4:b}`
 
 %=right
 -------
-`%{=right:input:length}`
+`%{=right:input:length:flags}`
 
 * input is the data to transform, it is evaluated (%foo become the content of
 foo param)
 * length is the number of character to keep from the input, if negative or
 invalid, the whole input is kept
+* if flags contains 'b' this is done at byte level instead of utf8 characters
 
 examples:
 * `%{=right:%foo:4}`
+* `%{=right:%{=frombase64,%foo}:4:b}`
 
 %=mid
 -----
-`%{=mid:input:position[:length]}`
+`%{=mid:input:position[:length[:flags]]}`
 
 * input is the data to transform, it is evaluated (%foo become the content of
 foo param)
@@ -208,10 +220,12 @@ foo param)
 0, values larger than the input size will produce an empty output
 * length is the number of character to keep from the input, if negative or
 invalid, or omitted, the whole input is kept
+* if flags contains 'b' this is done at byte level instead of utf8 characters
 
 examples:
 * `%{=mid:%foo:4:5}`
 * `%{=mid:%foo:4}`
+* `%{=mid:%{=frombase64,%foo}:4:5:b}`
 
 %=trim
 -----
@@ -240,6 +254,8 @@ examples:
 * `%{=htmlencode,http://wwww.google.com/,u}` -> `<a href="http://wwww.google.com/">http://wwww.google.com/</a>`
 * `%{=htmlencode http://wwww.google.com/ u}` -> same
 * `%{=htmlencode|http://wwww.google.com/}` -> `http://wwww.google.com/`
+* `%{=htmlencode:a multiline\ntext:n}` -> `a multiline<br/>text}`
+* `%{=rawvalue:h1:hun}` is equivalent to `%{=htmlencode|%{=rawvalue:h1}|un}`
 
 %=elidexxx
 ----------
@@ -336,16 +352,23 @@ examples:
 
 %=escape
 --------
-`%{=escape!expression}`
+`%{=escape!anything}`
 
 escape %-evaluation special characters from expression result (i.e. replace
 "%" with "%%"), which is the opposite from %=eval
 
+see also %' and %=rawvalue
+
 examples:
-* `%{=escape!%foo}` -> `%%bar` if foo is `%bar`
-* `{=rawvalue!foo!e}` -> equivalent to `%{=escape!%foo}`
-* `%{=escape!%foo-%baz}` -> `%%bar-42` if foo is `%bar` and baz is `42`
-* `%{=eval:%{=escape!%foo}}` -> very complicated equivalent of `%{=rawvalue:foo}`
+* `%{=escape!%{=frombase64:JWJhcg==}}` -> `%%bar` (decoded binary is `%bar`)
+* `%{=escape!%foo}` -> `%%bar` if foo is `%%bar`
+* `%foo` -> `%bar` if foo is `%%bar`
+* `%{'foo}` returns `foo` whereas `%{foo}` would have returned the value of foo
+* `%{=rawvalue!foo}` -> `%bar` if foo is `%bar`
+* `%{=rawvalue!foo!e}` -> `%%bar` if foo is `%bar`
+* `%{=rpn,'%foo}` -> `%foo`
+* `%{=rpn,'foo}` -> `foo`
+* `%{=rpn,foo}` -> `bar` if foo is `bar`
 
 %=sha1
 ------
@@ -418,7 +441,7 @@ examples:
 * `%{=base64:§}` returns "wqc="
 * `%{=base64!%{=fromhex:fbff61}}` returns "+/9h"
 * `%{=base64!%{=fromhex:fbff61}!ut}` returns "-_9h"
-* `Basic %{=base64!login:password}` returns "Basic QmFzaWMgbG9naW46cGFzc3dvcmQ="
+* `Basic %{=base64!login:password}` returns "Basic bG9naW46cGFzc3dvcmQ="
 
 %=frombase64
 ------------
@@ -432,7 +455,7 @@ examples:
 * `%{=frombase64:wqc=}` returns "§"
 * `%{=hex!%{=frombase64:+/9h}!}` returns "fbff61"
 * `%{=hex!%{=frombase64:-_9h:u}!}` returns "fbff61"
-* `%{=frombase64!QmFzaWMgbG9naW46cGFzc3dvcmQ=}` returns "login:password"
+* `%{=frombase64!bG9naW46cGFzc3dvcmQ=}` returns "login:password"
 
 %=rpn
 -----
@@ -454,17 +477,18 @@ please note that:
 - `=~` is a regexp matching operator (right operand is a regexp)
 - `!!` is a boolean conversion operator (`%{=rpn,1,!!}` -> true)
 - `~~` is an integer conversion operator (`%{=rpn,3.14,~~}` -> 3)
-- `??` is a coalescence operator (`%{=rpn,',foo,'null,??,??}` -> foo value if
+- `??` is a coalescence operator (`%{=rpn,',foo,??,'null,??}` -> foo value if
   not empty otherwise "null")
 - `<?` and `>?` are min and max operators (`%{=rpn,'abc,'ABC,<?}` -> ABC
-  and `%{=,'100,~~,'200,~~,>?}` -> 200)
+  and `%{=rpn,'100,~~,'20,~~,>?}` -> 100)
 - `?-` returns "false" for empty, null or invalid param and "true" otherwise
 - `!-` returns the opposite
-- `*/*` is processed as if it were `%`
+- `*/*` is a modulo operator, like `%` but without the %-evaluation ambiguity
 
-for cases where some terms are non-string variables (because they are provided
-by a ParamsProvider other than ParamSet) the following operators are relevant
-too: binary: `==* !=* ??*` unary: `?* !*`
+for cases where some terms can be null/invalid, including non-string values
+(they must be provided by a ParamsProvider other than ParamSet which only
+provides strings and provides empty string rather than nulls) the
+following operators are null-aware: binary: `==* !=* ??*` unary: `?* !*`
 - `==` considers any invalid QVariant as if it were an empty string whereas
   `==*` considers invalid QVariant and QVariant that cannot be converted to a
   string cannot be equal to anything
@@ -501,8 +525,15 @@ this is usefull when an application process an input as always %-evaluated
 (being in config files or elsewhere) because it make it possible to provide
 a constant anyway, see %=rpn for instance
 
-examples:
-* `%{'foo}` returns "foo" whereas `%{foo}` would have returned the value of foo
-* `%{=rawvalue!'foo}` returns "foo" whereas  `%{=rawvalue!foo}` would have
-   returned the value of foo (without %-evaluating the value)
+see also %=escape and %=rawvalue
 
+examples:
+* `%{'foo}` returns `foo` whereas `%{foo}` would have returned the value of foo
+* `%foo` -> `%bar` if foo is `%%bar`
+* `%{=escape!%{=frombase64:JWJhcg==}}` -> `%%bar` (decoded binary is `%bar`)
+* `%{=escape!%foo}` -> `%%bar` if foo is `%%bar`
+* `%{=rawvalue!foo}` -> `%bar` if foo is `%bar`
+* `%{=rawvalue!foo!e}` -> `%%bar` if foo is `%bar`
+* `%{=rpn,'%foo}` -> `%foo`
+* `%{=rpn,'foo}` -> `foo`
+* `%{=rpn,foo}` -> `bar` if foo is `bar`

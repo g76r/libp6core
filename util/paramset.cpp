@@ -341,7 +341,7 @@ Utf8String ParamSet::rawValue(
 Utf8String ParamSet::evaluate(
     Utf8String rawValue, bool inherit, const ParamsProvider *context,
     Utf8StringSet *alreadyEvaluated) const {
-  //Log::debug() << "evaluate " << rawValue << " " << QString::number((qint64)context, 16);
+  //qDebug() << "evaluate" << rawValue << QString::number((qint64)context, 16);
   auto values = splitAndEvaluate(rawValue, Utf8String(), inherit, context,
                                  alreadyEvaluated);
   if (values.isEmpty())
@@ -558,7 +558,14 @@ _functions {
                                  alreadyEvaluated);
   bool ok;
   int i = params.value(1).toInt(&ok);
-  return ok ? input.utf8Left(i) : input;
+  if (ok) {
+    auto flags = params.value(2);
+    if (flags.contains('b'))
+      return input.left(i);
+    else
+      return input.utf8Left(i);
+  }
+  return input;
 }, true},
 { "=right", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
               const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
@@ -568,7 +575,14 @@ _functions {
                                  alreadyEvaluated);
   bool ok;
   int i = params.value(1).toInt(&ok);
-  return ok ? input.utf8Right(i) : input;
+  if (ok) {
+    auto flags = params.value(2);
+    if (flags.contains('b'))
+      return input.right(i);
+    else
+      return input.utf8Right(i);
+  }
+  return input;
 }, true},
 { "=mid", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
               const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
@@ -580,7 +594,11 @@ _functions {
   int i = params.value(1).toInt(&ok);
   if (ok) {
     int j = params.value(2).toInt(&ok);
-    return input.utf8Mid(i, ok ? j : -1);
+    auto flags = params.value(3);
+    if (flags.contains('b'))
+      return input.mid(i, ok ? j : -1);
+    else
+      return input.utf8Mid(i, ok ? j : -1);
   }
   return input;
 }, true},
