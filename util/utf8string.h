@@ -96,6 +96,7 @@ public:
   /** Return utf8 characters count. */
   qsizetype utf8Size() const;
   Utf8String trimmed() const { return QByteArray::trimmed(); }
+  Utf8String &trim() { *this = trimmed(); return *this; }
   /** Return leftmost len bytes. Empty if len < 0. */
   Utf8String left(qsizetype len) const { return QByteArray::left(len); }
   /** Return rightmost len bytes. Empty if len < 0. */
