@@ -41,6 +41,8 @@ int main(void) {
               "%{=rpn,'0xffffffffffffffff','1,+,'ø,??*}=ø %{=rpn,'1,'foo,+,'ø,??*}=ø "
               "%{=rpn,'0xfffffffffffffffe','1,+,'ø,??*}=18446744073709551615 "
               "%{=rpn,'abc,'12,'13,==,..}=abcfalse ");
-  qDebug() << p.evaluate("%{=rpn,x,'true,&&,'ø,??*}=true %{=rpn,x,empty,&&,'ø,??*}=ø %{=rpn,x,nonexistent,&&,'ø,??*}=ø");
+  qDebug() << p.evaluate("%{=rpn,x,'true,&&,'ø,??*}=true %{=rpn,x,empty,&&,'ø,??*}=ø "
+              "%{=rpn,x,nonexistent,&&,'ø,??*}=ø %{=rpn,<pi>}=3.141592653589793 "
+              "%{=rpn,<null>}= %{=rpn,',?*}=true %{=rpn,<nil>,?*}=false");
   return 0;
 }

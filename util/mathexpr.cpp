@@ -386,6 +386,14 @@ RadixTree<OperatorDef> operatordefs {
         return x ? args.value(1)(context, alreadyEvaluated)
                  : args.value(2)(context, alreadyEvaluated);
       } }, true },
+  { { "<null>", "<nil>" },
+    { 0, 0, false, [](QList<Operand>, const ParamsProvider *, Utf8StringSet *) {
+        return QVariant{};
+      } }, true },
+  { "<pi>",  { 0, 0, false, [](QList<Operand>, const ParamsProvider *,
+          Utf8StringSet *) {
+        return QVariant(3.141592653589793238462643383279502884);
+      } }, true },
 };
 
 QMap<Utf8String, OperatorDef> operatordefsMap { operatordefs.toUtf8Map() };

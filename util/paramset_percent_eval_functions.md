@@ -516,6 +516,11 @@ please note that:
 - `<?*` and `>?*` do the same but will return null as soon as one of their
   operand is null, invalid or unconvertible
 
+some constants are also supported:
+- `<null>` and `<nil>` which are synonymous and hold a null value (an invalid
+  QVariant)
+- `<pi>` holds Archimedes's constant
+
 see also MathExpr which is used as %=rpn engine.
 of course there are plenty of implicit type conversions, such as integer
 promotions and converting non null numbers to true booleans.
