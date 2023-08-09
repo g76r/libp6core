@@ -94,274 +94,298 @@ static inline QPartialOrdering compareTwoOperands(
 
 RadixTree<OperatorDef> operatordefs {
   { "??*", { 2, 2, true, [](QList<Operand> args, const ParamsProvider *context,
-                           Utf8StringSet *alreadyEvaluated) {
-             auto x = args.value(0)(context, alreadyEvaluated);
-             auto y = args.value(1)(context, alreadyEvaluated);
-             // null or invalid coalescence
-             return !x.isValid() || x.isNull() ? y : x;
-           } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto x = args.value(0)(context, alreadyEvaluated);
+        auto y = args.value(1)(context, alreadyEvaluated);
+        // null or invalid coalescence
+        return !x.isValid() || x.isNull() ? y : x;
+      } }, true },
   { "??", { 2, 2, true, [](QList<Operand> args, const ParamsProvider *context,
-                           Utf8StringSet *alreadyEvaluated) {
-             auto x = args.value(0)(context, alreadyEvaluated);
-             auto y = args.value(1)(context, alreadyEvaluated);
-             // null, invalid or empty coalescence
-             return !x.isValid() || x.isNull()
-                        || x.toString().isEmpty() ? y : x;
-           } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto x = args.value(0)(context, alreadyEvaluated);
+        auto y = args.value(1)(context, alreadyEvaluated);
+        // null, invalid or empty coalescence
+        return !x.isValid() || x.isNull()
+            || x.toString().isEmpty() ? y : x;
+      } }, true },
   { "!", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
-                          Utf8StringSet *alreadyEvaluated) {
-            auto x = args.value(0)(context, alreadyEvaluated).toBool();
-            return QVariant(!x);
-          } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto x = args.value(0)(context, alreadyEvaluated).toBool();
+        return QVariant(!x);
+      } }, true },
   { "!!", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
-                           Utf8StringSet *alreadyEvaluated) {
-             auto x = args.value(0)(context, alreadyEvaluated).toBool();
-             return QVariant(x);
-           } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto x = args.value(0)(context, alreadyEvaluated).toBool();
+        return QVariant(x);
+      } }, true },
   { "!*", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
-                           Utf8StringSet *alreadyEvaluated) {
-             auto x = args.value(0)(context, alreadyEvaluated);
-             // either invalid or null
-             return !x.isValid() || x.isNull();
-          } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto x = args.value(0)(context, alreadyEvaluated);
+        // either invalid or null
+        return !x.isValid() || x.isNull();
+      } }, true },
   { "?*", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
-                           Utf8StringSet *alreadyEvaluated) {
-             auto x = args.value(0)(context, alreadyEvaluated);
-             // neither invalid nor null
-             return x.isValid() && !x.isNull();
-           } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto x = args.value(0)(context, alreadyEvaluated);
+        // neither invalid nor null
+        return x.isValid() && !x.isNull();
+      } }, true },
   { "!-", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
-                           Utf8StringSet *alreadyEvaluated) {
-             auto x = args.value(0)(context, alreadyEvaluated);
-             // either invalid, null or empty
-             return !x.isValid() || x.isNull() || x.toString().isEmpty();
-           } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto x = args.value(0)(context, alreadyEvaluated);
+        // either invalid, null or empty
+        return !x.isValid() || x.isNull() || x.toString().isEmpty();
+      } }, true },
   { "?-", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
-                           Utf8StringSet *alreadyEvaluated) {
-             auto x = args.value(0)(context, alreadyEvaluated);
-             // neither invalid, null nor empty
-             return x.isValid() && !x.isNull() && !x.toString().isEmpty();
-           } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto x = args.value(0)(context, alreadyEvaluated);
+        // neither invalid, null nor empty
+        return x.isValid() && !x.isNull() && !x.toString().isEmpty();
+      } }, true },
   { "~", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
-                          Utf8StringSet *alreadyEvaluated) {
-            bool ok;
-            auto x = args.value(0)(context, alreadyEvaluated).toLongLong(&ok);
-            return ok ? QVariant(~x) : QVariant();
-          } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        bool ok;
+        auto x = args.value(0)(context, alreadyEvaluated).toLongLong(&ok);
+        return ok ? QVariant(~x) : QVariant();
+      } }, true },
   { "~~", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
-                          Utf8StringSet *alreadyEvaluated) {
-            bool ok;
-            auto x = args.value(0)(context, alreadyEvaluated).toLongLong(&ok);
-            return ok ? QVariant(x) : QVariant();
-          } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        bool ok;
+        auto x = args.value(0)(context, alreadyEvaluated).toLongLong(&ok);
+        return ok ? QVariant(x) : QVariant();
+      } }, true },
   { "*", { 2, 5, false, [](QList<Operand> args, const ParamsProvider *context,
-                           Utf8StringSet *alreadyEvaluated) {
-            return MathUtils::mulQVariantAsNumber(
+          Utf8StringSet *alreadyEvaluated) {
+        return MathUtils::mulQVariantAsNumber(
               args.value(0)(context, alreadyEvaluated),
               args.value(1)(context, alreadyEvaluated));
-          } }, true },
+      } }, true },
   { "/", { 2, 5, false, [](QList<Operand> args, const ParamsProvider *context,
-                           Utf8StringSet *alreadyEvaluated) {
-            return MathUtils::divQVariantAsNumber(
+          Utf8StringSet *alreadyEvaluated) {
+        return MathUtils::divQVariantAsNumber(
               args.value(0)(context, alreadyEvaluated),
               args.value(1)(context, alreadyEvaluated));
-          } }, true },
+      } }, true },
   { { "%", "*/*"},
     { 2, 5, false, [](QList<Operand> args, const ParamsProvider *context,
-                      Utf8StringSet *alreadyEvaluated) {
-       return MathUtils::modQVariantAsNumber(
-         args.value(0)(context, alreadyEvaluated),
-         args.value(1)(context, alreadyEvaluated));
-     } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        return MathUtils::modQVariantAsNumber(
+              args.value(0)(context, alreadyEvaluated),
+              args.value(1)(context, alreadyEvaluated));
+      } }, true },
   { "+", { 2, 6, false, [](QList<Operand> args, const ParamsProvider *context,
-                           Utf8StringSet *alreadyEvaluated) {
-            return MathUtils::addQVariantAsNumber(
+          Utf8StringSet *alreadyEvaluated) {
+        return MathUtils::addQVariantAsNumber(
               args.value(0)(context, alreadyEvaluated),
               args.value(1)(context, alreadyEvaluated));
-          } }, true },
+      } }, true },
   { "-", { 2, 6, false, [](QList<Operand> args, const ParamsProvider *context,
-                           Utf8StringSet *alreadyEvaluated) {
-            return MathUtils::subQVariantAsNumber(
+          Utf8StringSet *alreadyEvaluated) {
+        return MathUtils::subQVariantAsNumber(
               args.value(0)(context, alreadyEvaluated),
               args.value(1)(context, alreadyEvaluated));
-          } }, true },
+      } }, true },
   { "..", { 2, 6, false, [](QList<Operand> args, const ParamsProvider *context,
-                            Utf8StringSet *alreadyEvaluated) {
-             auto x = args.value(0)(context, alreadyEvaluated).toString();
-             auto y = args.value(1)(context, alreadyEvaluated).toString();
-             return x+y;
-           } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto x = args.value(0)(context, alreadyEvaluated).toString();
+        auto y = args.value(1)(context, alreadyEvaluated).toString();
+        return x+y;
+      } }, true },
   { "<?", { 2, 7, false, [](QList<Operand> args, const ParamsProvider *context,
-                            Utf8StringSet *alreadyEvaluated) {
-             auto x = args.value(0)(context, alreadyEvaluated);
-             auto y = args.value(1)(context, alreadyEvaluated);
-             auto po = compareTwoOperands(args, context, alreadyEvaluated, true);
-             if (po == QPartialOrdering::Less)
-               return x;
-             if (po == QPartialOrdering::Equivalent)
-               return x;
-             if (po == QPartialOrdering::Greater)
-               return y;
-             return QVariant();
-           } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto x = args.value(0)(context, alreadyEvaluated);
+        auto y = args.value(1)(context, alreadyEvaluated);
+        auto po = compareTwoOperands(args, context, alreadyEvaluated, true);
+        if (po == QPartialOrdering::Less)
+          return x;
+        if (po == QPartialOrdering::Equivalent)
+          return x;
+        if (po == QPartialOrdering::Greater)
+          return y;
+        return QVariant{}; // this should never happen
+      } }, true },
   { ">?", { 2, 7, false, [](QList<Operand> args, const ParamsProvider *context,
-                            Utf8StringSet *alreadyEvaluated) {
-             auto x = args.value(0)(context, alreadyEvaluated);
-             auto y = args.value(1)(context, alreadyEvaluated);
-             auto po = compareTwoOperands(args, context, alreadyEvaluated, true);
-             if (po == QPartialOrdering::Less)
-               return y;
-             if (po == QPartialOrdering::Equivalent)
-               return x;
-             if (po == QPartialOrdering::Greater)
-               return x;
-             return QVariant();
-           } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto x = args.value(0)(context, alreadyEvaluated);
+        auto y = args.value(1)(context, alreadyEvaluated);
+        auto po = compareTwoOperands(args, context, alreadyEvaluated, true);
+        if (po == QPartialOrdering::Less)
+          return y;
+        if (po == QPartialOrdering::Equivalent)
+          return x;
+        if (po == QPartialOrdering::Greater)
+          return x;
+        return QVariant{}; // this should never happen
+      } }, true },
+  { "<?*", { 2, 7, false, [](QList<Operand> args, const ParamsProvider *context,
+          Utf8StringSet *alreadyEvaluated) {
+        auto x = args.value(0)(context, alreadyEvaluated);
+        auto y = args.value(1)(context, alreadyEvaluated);
+        auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
+        if (po == QPartialOrdering::Less)
+          return x;
+        if (po == QPartialOrdering::Equivalent)
+          return x;
+        if (po == QPartialOrdering::Greater)
+          return y;
+        return QVariant{};
+      } }, true },
+  { ">?*", { 2, 7, false, [](QList<Operand> args, const ParamsProvider *context,
+          Utf8StringSet *alreadyEvaluated) {
+        auto x = args.value(0)(context, alreadyEvaluated);
+        auto y = args.value(1)(context, alreadyEvaluated);
+        auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
+        if (po == QPartialOrdering::Less)
+          return y;
+        if (po == QPartialOrdering::Equivalent)
+          return x;
+        if (po == QPartialOrdering::Greater)
+          return x;
+        return QVariant{};
+      } }, true },
   { "<=>", { 2, 8, false, [](QList<Operand> args, const ParamsProvider *context,
-                             Utf8StringSet *alreadyEvaluated) {
-              auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
-              if (po == QPartialOrdering::Less)
-                return QVariant(-1);
-              if (po == QPartialOrdering::Equivalent)
-                return QVariant(0);
-              if (po == QPartialOrdering::Greater)
-                return QVariant(1);
-              return QVariant();
-            } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
+        if (po == QPartialOrdering::Less)
+          return QVariant(-1);
+        if (po == QPartialOrdering::Equivalent)
+          return QVariant(0);
+        if (po == QPartialOrdering::Greater)
+          return QVariant(1);
+        return QVariant{};
+      } }, true },
   { "<=", { 2, 9, false, [](QList<Operand> args, const ParamsProvider *context,
-                            Utf8StringSet *alreadyEvaluated) {
-             auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
-             if (po == QPartialOrdering::Less)
-               return QVariant(true);
-             if (po == QPartialOrdering::Equivalent)
-               return QVariant(true);
-             if (po == QPartialOrdering::Greater)
-               return QVariant(false);
-             return QVariant();
-           } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
+        if (po == QPartialOrdering::Less)
+          return QVariant(true);
+        if (po == QPartialOrdering::Equivalent)
+          return QVariant(true);
+        if (po == QPartialOrdering::Greater)
+          return QVariant(false);
+        return QVariant{};
+      } }, true },
   { "<", { 2, 9, false, [](QList<Operand> args, const ParamsProvider *context,
-                           Utf8StringSet *alreadyEvaluated) {
-            auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
-            if (po == QPartialOrdering::Less)
-              return QVariant(true);
-            if (po == QPartialOrdering::Equivalent)
-              return QVariant(false);
-            if (po == QPartialOrdering::Greater)
-              return QVariant(false);
-            return QVariant();
-          } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
+        if (po == QPartialOrdering::Less)
+          return QVariant(true);
+        if (po == QPartialOrdering::Equivalent)
+          return QVariant(false);
+        if (po == QPartialOrdering::Greater)
+          return QVariant(false);
+        return QVariant{};
+      } }, true },
   { ">=", { 2, 9, false, [](QList<Operand> args, const ParamsProvider *context,
-                            Utf8StringSet *alreadyEvaluated) {
-             auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
-             if (po == QPartialOrdering::Less)
-               return QVariant(false);
-             if (po == QPartialOrdering::Equivalent)
-               return QVariant(true);
-             if (po == QPartialOrdering::Greater)
-               return QVariant(true);
-             return QVariant();
-           } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
+        if (po == QPartialOrdering::Less)
+          return QVariant(false);
+        if (po == QPartialOrdering::Equivalent)
+          return QVariant(true);
+        if (po == QPartialOrdering::Greater)
+          return QVariant(true);
+        return QVariant{};
+      } }, true },
   { ">", { 2, 9, false, [](QList<Operand> args, const ParamsProvider *context,
-                           Utf8StringSet *alreadyEvaluated) {
-            auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
-            if (po == QPartialOrdering::Less)
-              return QVariant(false);
-            if (po == QPartialOrdering::Equivalent)
-              return QVariant(false);
-            if (po == QPartialOrdering::Greater)
-              return QVariant(true);
-            return QVariant();
-          } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
+        if (po == QPartialOrdering::Less)
+          return QVariant(false);
+        if (po == QPartialOrdering::Equivalent)
+          return QVariant(false);
+        if (po == QPartialOrdering::Greater)
+          return QVariant(true);
+        return QVariant{};
+      } }, true },
   { "==*", { 2, 10, false, [](QList<Operand> args, const ParamsProvider *context,
-                             Utf8StringSet *alreadyEvaluated) {
-              auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
-              if (po == QPartialOrdering::Less)
-                return QVariant(false);
-              if (po == QPartialOrdering::Equivalent)
-                return QVariant(true);
-              if (po == QPartialOrdering::Greater)
-                return QVariant(false);
-              return QVariant(false);
-           } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
+        if (po == QPartialOrdering::Less)
+          return QVariant(false);
+        if (po == QPartialOrdering::Equivalent)
+          return QVariant(true);
+        if (po == QPartialOrdering::Greater)
+          return QVariant(false);
+        return QVariant{};
+      } }, true },
   { "!=*", { 2, 10, false, [](QList<Operand> args, const ParamsProvider *context,
-                            Utf8StringSet *alreadyEvaluated) {
-              auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
-              if (po == QPartialOrdering::Less)
-                return QVariant(true);
-              if (po == QPartialOrdering::Equivalent)
-                return QVariant(false);
-              if (po == QPartialOrdering::Greater)
-                return QVariant(true);
-              return QVariant(false);
-           } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
+        if (po == QPartialOrdering::Less)
+          return QVariant(true);
+        if (po == QPartialOrdering::Equivalent)
+          return QVariant(false);
+        if (po == QPartialOrdering::Greater)
+          return QVariant(true);
+        return QVariant{};
+      } }, true },
   { "==", { 2, 10, false, [](QList<Operand> args, const ParamsProvider *context,
-                              Utf8StringSet *alreadyEvaluated) {
-             auto po = compareTwoOperands(args, context, alreadyEvaluated, true);
-             if (po == QPartialOrdering::Less)
-               return QVariant(false);
-             if (po == QPartialOrdering::Equivalent)
-               return QVariant(true);
-             if (po == QPartialOrdering::Greater)
-               return QVariant(false);
-             return QVariant(false);
-            } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto po = compareTwoOperands(args, context, alreadyEvaluated, true);
+        if (po == QPartialOrdering::Less)
+          return QVariant(false);
+        if (po == QPartialOrdering::Equivalent)
+          return QVariant(true);
+        if (po == QPartialOrdering::Greater)
+          return QVariant(false);
+        return QVariant{}; // this should never happen
+      } }, true },
   { "!=", { 2, 10, false, [](QList<Operand> args, const ParamsProvider *context,
-                              Utf8StringSet *alreadyEvaluated) {
-             auto po = compareTwoOperands(args, context, alreadyEvaluated, true);
-             if (po == QPartialOrdering::Less)
-               return QVariant(true);
-             if (po == QPartialOrdering::Equivalent)
-               return QVariant(false);
-             if (po == QPartialOrdering::Greater)
-               return QVariant(true);
-             return QVariant(false);
-            } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto po = compareTwoOperands(args, context, alreadyEvaluated, true);
+        if (po == QPartialOrdering::Less)
+          return QVariant(true);
+        if (po == QPartialOrdering::Equivalent)
+          return QVariant(false);
+        if (po == QPartialOrdering::Greater)
+          return QVariant(true);
+        return QVariant{}; // this should never happen
+      } }, true },
   { "=~", { 2, 10, false, [](QList<Operand> args, const ParamsProvider *context,
-                            Utf8StringSet *alreadyEvaluated) {
-             auto x = args.value(0)(context, alreadyEvaluated).toString();
-             auto y = args.value(1)(context, alreadyEvaluated);
-             QRegularExpression re =
-               (y.metaType().id() == QMetaType::QRegularExpression)
-                 ? y.toRegularExpression()
-                 : QRegularExpression(y.toString(), _defaultReOpts);
-             return QVariant(re.match(x).hasMatch());
-           } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto x = args.value(0)(context, alreadyEvaluated).toString();
+        auto y = args.value(1)(context, alreadyEvaluated);
+        QRegularExpression re =
+            (y.metaType().id() == QMetaType::QRegularExpression)
+            ? y.toRegularExpression()
+            : QRegularExpression(y.toString(), _defaultReOpts);
+        return QVariant(re.match(x).hasMatch());
+      } }, true },
   { "!=~", { 2, 10, false, [](QList<Operand> args, const ParamsProvider *context,
-                             Utf8StringSet *alreadyEvaluated) {
-             auto x = args.value(0)(context, alreadyEvaluated).toString();
-             auto y = args.value(1)(context, alreadyEvaluated);
-             QRegularExpression re =
-               (y.metaType().id() == QMetaType::QRegularExpression)
-                 ? y.toRegularExpression()
-                 : QRegularExpression(y.toString(), _defaultReOpts);
-             return QVariant(re.isValid() && !re.match(x).hasMatch());
-           } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto x = args.value(0)(context, alreadyEvaluated).toString();
+        auto y = args.value(1)(context, alreadyEvaluated);
+        QRegularExpression re =
+            (y.metaType().id() == QMetaType::QRegularExpression)
+            ? y.toRegularExpression()
+            : QRegularExpression(y.toString(), _defaultReOpts);
+        return QVariant(re.isValid() && !re.match(x).hasMatch());
+      } }, true },
   { "&&", { 2, 14, false, [](QList<Operand> args, const ParamsProvider *context,
-                             Utf8StringSet *alreadyEvaluated) {
-             auto x = args.value(0)(context, alreadyEvaluated);
-             if (!x.toBool())
-               return QVariant(false);
-             return QVariant(args.value(1)(context, alreadyEvaluated).toBool());
-           } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        return MathUtils::andQVariantAsNumber(
+              args.value(0)(context, alreadyEvaluated),
+              args.value(1)(context, alreadyEvaluated));
+      } }, true },
   { "^^", { 2, 15, false, [](QList<Operand> args, const ParamsProvider *context,
-                             Utf8StringSet *alreadyEvaluated) {
-             auto x = args.value(0)(context, alreadyEvaluated).toBool();
-             auto y = args.value(1)(context, alreadyEvaluated).toBool();
-             return QVariant(x != y);
-           } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        return MathUtils::xorQVariantAsNumber(
+              args.value(0)(context, alreadyEvaluated),
+              args.value(1)(context, alreadyEvaluated));
+      } }, true },
   { "||", { 2, 16, false, [](QList<Operand> args, const ParamsProvider *context,
-                             Utf8StringSet *alreadyEvaluated) {
-             auto x = args.value(0)(context, alreadyEvaluated);
-             if (x.toBool())
-               return QVariant(true);
-             return QVariant(args.value(1)(context, alreadyEvaluated).toBool());
-           } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        return MathUtils::orQVariantAsNumber(
+              args.value(0)(context, alreadyEvaluated),
+              args.value(1)(context, alreadyEvaluated));
+      } }, true },
   { "?:", { 3, 17, false, [](QList<Operand> args, const ParamsProvider *context,
-                             Utf8StringSet *alreadyEvaluated) {
-             auto x = args.value(0)(context, alreadyEvaluated).toBool();
-             return x ? args.value(1)(context, alreadyEvaluated)
-                      : args.value(2)(context, alreadyEvaluated);
-           } }, true },
+          Utf8StringSet *alreadyEvaluated) {
+        auto x = args.value(0)(context, alreadyEvaluated).toBool();
+        return x ? args.value(1)(context, alreadyEvaluated)
+                 : args.value(2)(context, alreadyEvaluated);
+      } }, true },
 };
 
 QMap<Utf8String, OperatorDef> operatordefsMap { operatordefs.toUtf8Map() };

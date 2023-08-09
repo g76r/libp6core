@@ -6,7 +6,7 @@ int main(void) {
   Log::init();
   ParamSet p { "foo", "bar", "x", "1.5", "s1", "\xef\xbb\xbf\xef\xbb\xbf\xef\xbb\xbf§foo§bar§baz§\xef\xbb\xbf§§"_u8,
                "s2", "%{=left:%foo:1}", "baz", "42", "fooz", "%bar", "foozz", "%%bar",
-               "h1", "at http://1.2.3.4/\nthere's something" };
+               "h1", "at http://1.2.3.4/\nthere's something", "empty", "" };
   qDebug() << p.value("s2");
   qDebug() << p.evaluate("%{=mid:%foo:1:1} %{=mid:%s1:3:3} %{=mid:%s1:11:5:b}");
   qDebug() << p.evaluate("%{=base64|login:password} %{=date💩yyyy💩2009-04-01Z"

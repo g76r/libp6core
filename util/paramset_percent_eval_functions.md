@@ -18,6 +18,11 @@ can implement such functions, with any prefix instead of = (or with no
 prefix, or even with the same = sign although this is discouraged because it
 would hide future ParamSet functions with the same name).
 
+Variables can be the strings key-values holded by the ParamSet itself or by one
+of its parents or provided through a more general ParamsProvider evaluation
+context which can hold any QVariant value which will be converted to strings
+when needed (and can stay typed during functions evaluation, see %=rpn below).
+
 ParamSet %-evaluation functions
 ===============================
 
@@ -462,13 +467,15 @@ examples:
 `%{=rpn,term1[,term2[,...]]}`
 
 compute a reverse polish notation mathematical expression
-terms are considered as constants if the begins (and optionnaly ends) with
+
+terms are considered as constants if they begins (and optionnaly ends) with
 a simple quote and are considered variables (and will be %-evaluated) otherwise
 
 following operators are supported with their usual (C, C++, Java, JS, bash...)
 meaning:
-binary operators: `+ - * / % */* .. <=> <= >= < > == != =~ !=~ && ^^ || ?? <? >?`
-unary operators: `! !! ~ ~~ ?- !-`
+binary operators: `+ - * / % */* .. <=> <= >= < > == != ==* !=* =~ !=~ && ^^ ||`
+`?? ??* <? >? <?* >?*`
+unary operators: `! !! ~ ~~ ?- !- ?* !*`
 ternary operator: `?:`
 please note that:
 - there are no unary - and + operators
@@ -477,43 +484,56 @@ please note that:
 - `=~` is a regexp matching operator (right operand is a regexp)
 - `!!` is a boolean conversion operator (`%{=rpn,1,!!}` -> true)
 - `~~` is an integer conversion operator (`%{=rpn,3.14,~~}` -> 3)
-- `??` is a coalescence operator (`%{=rpn,',foo,??,'null,??}` -> foo value if
-  not empty otherwise "null")
-- `<?` and `>?` are min and max operators (`%{=rpn,'abc,'ABC,<?}` -> ABC
-  and `%{=rpn,'100,~~,'20,~~,>?}` -> 100)
 - `?-` returns "false" for empty, null or invalid param and "true" otherwise
 - `!-` returns the opposite
+- `?*` returns "false" for null or invalid param and "true" otherwise
+- `!*` returns the opposite
+- `??` is a coalescence operator (`%{=rpn,',foo,??,'null,??}` -> foo value if
+  not empty otherwise "null")
+- `??*` is a null coalescence operator (`%{=rpn,',foo,??,'null,??*}` -> foo
+  value, including empty if foo is set, event to an empty string, and otherwise
+  "null"; `%{=rpn,',foo,??*}` -> always return an empty string)
+- `==` and `!=\ consider non set variable or any invalid QVariant or valid
+  QVariant not convertible to a number or string as if it were an empty string,
+  and thus always return either true or false
+- `==*` and `!=*` consider invalid QVariant or QVariant not convertible to a
+  number or string as impossible to compare and return null (invalid QVariant,
+  will be evaluated to an empty string if it reaches the outside of =rpn)
+  whatever the value of the other operand is
+- `<=> <= >= < >` will return null instead of true or false if they cannot
+  their operator, that is if one is not set, invalid or impossible to convert
+  to a number or a string
+- `+ - *` will return null if one of their operand is not convertible to a
+  number or if an integer operation overflows e.g.
+  `%{=rpn,'0xffffffffffffffff','1,+}` and `%{=rpn,'1,'foo,+}` both return
+  null
+- `/ % */* && ^^ ||` will return null if one of their operand is not convertible
+  to a number
 - `*/*` is a modulo operator, like `%` but without the %-evaluation ambiguity
+- `<?` and `>?` are min and max operators (`%{=rpn,'abc,'ABC,<?}` -> ABC
+  and `%{=rpn,'100,~~,'20,~~,>?}` -> 100), they pretend an null, invalid or
+  unconvertible operand to be an empty string
+- `<?*` and `>?*` do the same but will return null as soon as one of their
+  operand is null, invalid or unconvertible
 
-for cases where some terms can be null/invalid, including non-string values
-(they must be provided by a ParamsProvider other than ParamSet which only
-provides strings and provides empty string rather than nulls) the
-following operators are null-aware: binary: `==* !=* ??*` unary: `?* !*`
-- `==` considers any invalid QVariant as if it were an empty string whereas
-  `==*` considers invalid QVariant and QVariant that cannot be converted to a
-  string cannot be equal to anything
-- `??*` coalesces null or invalid QVariants but not empty QString whereas `??`
-  does
-- `?*` and !* don't process empty string as null/invalid whereas `?-` and `!-`
-  do
-
-see also MathExpr which operates with QVariant args and not only strings and is
-used as %=rpn engine. of course there are plenty of implicit type conversions,
-such as integer promotions and converting non null numbers to true booleans.
+see also MathExpr which is used as %=rpn engine.
+of course there are plenty of implicit type conversions, such as integer
+promotions and converting non null numbers to true booleans.
 
 examples:
-* `%{=rpn,'1,'2,+}` returns "3"
-* `%{=rpn,'1,'2,..}` returns "12"
-* `%{=rpn,'1,x,+}` returns "2" if x is "1"
-* `%{=rpn,'0x20,x,+}` returns "33.5" if x is "1.5"
-* `%{=rpn,'1,',+}` returns "" (because second operand is not a number)
+* `%{=rpn,'1,'2,+}` -> "3" (addition)
+* `%{=rpn,'1,'2,..}` -> "12" (concatenation)
+* `%{=rpn,'1,x,+}` -> "2" if x is "1"
+* `%{=rpn,'0x20,x,+}` -> "33.5" if x is "1.5"
+* `%{=rpn,'2k,x,+}` -> "2001.5" if x is "1.5"
+* `%{=rpn,'1,',+}` -> "" (actually null because 2nd operand isn't a number)
 * `%{=rpn,'1,'true,+}` returns "2"
 * `%{=rpn,'1,'true,&&}` returns "true"
 * `%{=rpn,'1,'true,==}` returns "false"
 * `%{=rpn,'42,!!,'true,==}` returns "true"
 * `%{=rpn,'1,'2,==,'3,'4,?:}` returns "4"
-* `%{=rpn,'aabcdaa,'a$,~=` returns "true"
-* `%{=rpn,'aabcdaa,'c$,~=` returns "false"
+* `%{=rpn,'aabcdaa,'a$,=~` returns "true"
+* `%{=rpn,'aabcdaa,'c$,=~` returns "false"
 
 %'
 --

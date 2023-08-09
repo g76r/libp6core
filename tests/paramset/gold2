@@ -4,3 +4,4 @@
 "%%bar=%%bar %%bar=%%bar %bar=%bar foo=foo %bar=%bar %%bar=%%bar %foo=%foo foo=foo bar=bar "
 "at <a href=\"http://1.2.3.4/\">http://1.2.3.4/</a><br/>\nthere&#39;s something"
 "at <a href=\"http://1.2.3.4/\">http://1.2.3.4/</a><br/>\nthere&#39;s something"
+"false=false true=true false=false false=false bar=bar = bar=bar bar=bar"

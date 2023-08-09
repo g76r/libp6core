@@ -56,6 +56,9 @@ public:
   static QVariant mulQVariantAsNumber(QVariant a, QVariant b);
   static QVariant divQVariantAsNumber(QVariant a, QVariant b);
   static QVariant modQVariantAsNumber(QVariant a, QVariant b);
+  static QVariant andQVariantAsNumber(QVariant a, QVariant b);
+  static QVariant xorQVariantAsNumber(QVariant a, QVariant b);
+  static QVariant orQVariantAsNumber(QVariant a, QVariant b);
   static bool convertToString(QVariant *a);
 };
 

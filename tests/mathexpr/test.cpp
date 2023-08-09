@@ -23,11 +23,24 @@ int main(void) {
            << ParamSet().evaluate("true: %{=rpn,'42,!!,'true,==}")
            << ParamSet({"x","1"}).evaluate("33: %{=rpn,'0x20,x,+}")
            << ParamSet({"x","1.5"}).evaluate("33.5: %{=rpn,'0x20,x,+}")
+           << ParamSet({"x","1.5"}).evaluate("2001.5: %{=rpn,'2k,x,+}")
            << ParamSet({"x","4"}).evaluate("4: %{=rpn,'1,'2,==,'3,x,?:}")
            << ParamSet().evaluate("true: %{=rpn,'aabcdaa,'bc,=~}")
            << ParamSet().evaluate("false: %{=rpn,'aabcdaa,'bC,=~}")
            << ParamSet().evaluate("false: %{=rpn,'aabcdaa,'c$,=~}")
            << ParamSet().evaluate("true: %{=rpn,'aabcdaa,'a$,=~}")
     ;
+  ParamSet p { "foo", "bar", "empty", "", "x", "42" };
+  qDebug() << p.evaluate("%{=rpn,empty,?-}=false %{=rpn,empty,?*}=true "
+              "%{=rpn,inexistent,?-}=false %{=rpn,inexistent,?*}=false "
+              "%{=rpn,empty,foo,??}=bar %{=rpn,empty,foo,??*}= "
+              "%{=rpn,inexistent,foo,??}=bar %{=rpn,inexistent,foo,??*}=bar "
+              "%{=rpn,empty,inexistent,==,'ø,??*}=true %{=rpn,empty,inexistent,==*,'ø,??*}=ø "
+              "%{=rpn,empty,inexistent,!=,'ø,??*}=false %{=rpn,empty,inexistent,!=*,'ø,??*}=ø ");
+  qDebug() << p.evaluate("%{=rpn,foo,inexistent,>?}=bar %{=rpn,foo,inexistent,>?*,'ø,??*}=ø "
+              "%{=rpn,'0xffffffffffffffff','1,+,'ø,??*}=ø %{=rpn,'1,'foo,+,'ø,??*}=ø "
+              "%{=rpn,'0xfffffffffffffffe','1,+,'ø,??*}=18446744073709551615 "
+              "%{=rpn,'abc,'12,'13,==,..}=abcfalse ");
+  qDebug() << p.evaluate("%{=rpn,x,'true,&&,'ø,??*}=true %{=rpn,x,empty,&&,'ø,??*}=ø %{=rpn,x,nonexistent,&&,'ø,??*}=ø");
   return 0;
 }

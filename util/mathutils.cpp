@@ -55,9 +55,27 @@ static int numericsPromotion(int typeId) {
 }
 
 static bool convertOtherTypesToBestNumericTypeIfPossible(
-  QVariant *a, int *ta, int *tta) {
+    QVariant *a, int *ta, int *tta) {
   Utf8String s;
   switch(*ta) {
+    case QMetaType::Bool:
+    case QMetaType::Int:
+    case QMetaType::UInt:
+    //case QMetaType::QChar: // leave it alone because toDouble() does not works with QChar
+    case QMetaType::Long:
+    case QMetaType::LongLong:
+    case QMetaType::Short:
+    case QMetaType::Char:
+    case QMetaType::Char16:
+    case QMetaType::Char32:
+    case QMetaType::ULong:
+    case QMetaType::UShort:
+    case QMetaType::SChar:
+    case QMetaType::UChar:
+    case QMetaType::Double:
+    case QMetaType::Float:
+    case QMetaType::ULongLong:
+      return true;
     case QMetaType::QByteArray:
     case QMetaType::QString:
       s = a->toByteArray();
@@ -68,17 +86,19 @@ static bool convertOtherTypesToBestNumericTypeIfPossible(
       if (dt.isValid()) {
         a->setValue(dt.toMSecsSinceEpoch());
         *tta = QMetaType::LongLong;
+        return true;
       }
+      return false;
     }
-      break;
     case QMetaType::QTime:  {
       auto t = a->toTime();
       if (t.isValid()) {
         a->setValue(t.msecsSinceStartOfDay());
         *tta = QMetaType::LongLong;
+        return true;
       }
+      return false;
     }
-      break;
   }
   if (*ta == qMetaTypeId<Utf8String>()) {
     s = a->value<Utf8String>();
@@ -135,7 +155,8 @@ bool MathUtils::promoteToBestNumericType(QVariant *a) {
 bool MathUtils::convertToString(QVariant *a) {
   if (!a)
     return false;
-  switch(a->metaType().id()) {
+  auto id = a->metaType().id();
+  switch(id) {
     case QMetaType::Bool:
     case QMetaType::Int:
     case QMetaType::UInt:
@@ -156,6 +177,7 @@ bool MathUtils::convertToString(QVariant *a) {
     case QMetaType::QDateTime:
     case QMetaType::QDate:
     case QMetaType::QTime:
+    case QMetaType::QByteArray:
       *a = a->toString();
       return true;
     case QMetaType::QString:
@@ -163,6 +185,18 @@ bool MathUtils::convertToString(QVariant *a) {
     case QMetaType::QStringList:
       *a = a->toStringList().join(" ");
       return true;
+  }
+  if (id == qMetaTypeId<Utf8String>()) {
+    *a = a->toString();
+    return true;
+  }
+  if (id == qMetaTypeId<Utf8StringList>()) {
+    *a = a->value<Utf8StringList>().join(" ");
+    return true;
+  }
+  if (id == qMetaTypeId<Utf8StringSet>()) {
+    *a = a->value<Utf8StringSet>().sortedJoin(" ");
+    return true;
   }
   return false;
 }
@@ -368,4 +402,43 @@ QVariant MathUtils::modQVariantAsNumber(QVariant a, QVariant b) {
       return QVariant(a.toULongLong() % b.toULongLong());
   };
   return QVariant();
+}
+
+static inline QVariant bool_operation(
+    QVariant a, QVariant b, std::function<QVariant(bool,bool)> op) {
+  int ta = a.metaType().id();
+  int tb = b.metaType().id();
+  int tta = numericsPromotion(ta);
+  int ttb = numericsPromotion(tb);
+  convertOtherTypesToBestNumericTypeIfPossible(&a, &ta, &tta);
+  convertOtherTypesToBestNumericTypeIfPossible(&b, &tb, &ttb);
+  bool x = false;
+  switch (a.metaType().id()) {
+    case QMetaType::Double:
+    case QMetaType::LongLong:
+    case QMetaType::ULongLong:
+      x = a.toBool();
+      break;
+    default:
+      return QVariant{};
+  };
+  switch (b.metaType().id()) {
+    case QMetaType::Double:
+    case QMetaType::LongLong:
+    case QMetaType::ULongLong:
+      return op(x,b.toBool());
+  };
+  return QVariant{};
+}
+
+QVariant MathUtils::andQVariantAsNumber(QVariant a, QVariant b) {
+  return bool_operation(a, b, [](bool x, bool y) { return x && y; });
+}
+
+QVariant MathUtils::xorQVariantAsNumber(QVariant a, QVariant b) {
+  return bool_operation(a, b, [](bool x, bool y) { return x != y; });
+}
+
+QVariant MathUtils::orQVariantAsNumber(QVariant a, QVariant b) {
+  return bool_operation(a, b, [](bool x, bool y) { return x || y; });
 }
