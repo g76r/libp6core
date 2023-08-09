@@ -20,7 +20,7 @@
 #include <QVariant>
 #include <QStringList>
 #include "libp6core_global.h"
-#include "util/utf8string.h"
+#include "util/utf8stringlist.h"
 
 #ifndef LOG_LOCATION_ENABLED
 #  if __has_include(<source_location>)

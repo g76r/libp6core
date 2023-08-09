@@ -14,7 +14,7 @@
 #include "mathutils.h"
 #include <QDateTime>
 #include <cmath>
-#include "util/utf8string.h"
+#include "util/utf8stringlist.h"
 
 /** following constants are not compliant to C++ standard since they assume that
  * integers are implemented with 2's complement

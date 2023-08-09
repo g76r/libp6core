@@ -17,7 +17,7 @@
 
 #include "pffragment_p.h"
 #include "pfarray.h"
-#include "util/utf8string.h"
+#include "util/utf8stringlist.h"
 #include <QVariant>
 #include <QBuffer>
 #if QT_VERSION < 0x060000

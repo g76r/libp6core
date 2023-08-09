@@ -34,10 +34,9 @@ public:
     const Utf8String &key, const ParamsProvider *context,
     const QVariant &defaultValue, Utf8StringSet *alreadyEvaluated) const = 0;
   /** Convenience method */
-  inline const QVariant paramValue( // FIXME reorder args like paramUtf8
+  const QVariant paramValue( // FIXME reorder args like paramUtf8
     const Utf8String &key, const ParamsProvider *context = 0,
-    const QVariant &defaultValue = {}) const {
-    Utf8StringSet ae; return paramValue(key, context, defaultValue, &ae); }
+    const QVariant &defaultValue = {}) const;
   /** Convenience method */
   inline const QVariant paramValue( // FIXME reorder args like paramUtf8
     const Utf8String &key, const QVariant &defaultValue,
@@ -116,8 +115,7 @@ public:
    * short for ParamSet().evaluate(rawValue, false, this, alreadyEvaluated); */
   const Utf8String evaluate(
       const Utf8String &rawValue, Utf8StringSet *alreadyEvaluated) const;
-  inline const Utf8String evaluate(const Utf8String &rawValue) const {
-    Utf8StringSet ae; return evaluate(rawValue, &ae); }
+  const Utf8String evaluate(const Utf8String &rawValue) const;
 };
 
 /** Map of params without inheritance, evaluation or any other advanced

@@ -13,6 +13,7 @@
  */
 #include "regexpparamsprovider.h"
 #include <QRegularExpression>
+#include "util/utf8stringset.h"
 
 const QVariant RegexpParamsProvider::paramValue(
     const Utf8String &key, const ParamsProvider *,

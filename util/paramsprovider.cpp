@@ -13,6 +13,7 @@
  */
 #include "paramsprovider.h"
 #include "paramset.h"
+#include "util/utf8stringset.h"
 
 extern char **environ;
 
@@ -95,4 +96,16 @@ const QVariant RawParamsProvider::paramValue(
 const Utf8StringSet RawParamsProvider::keys() const {
   auto keys = _params.keys();
   return QSet<Utf8String>(keys.begin(), keys.end());
+}
+
+const QVariant ParamsProvider::paramValue(
+  const Utf8String &key, const ParamsProvider *context,
+  const QVariant &defaultValue) const {
+  Utf8StringSet ae;
+  return paramValue(key, context, defaultValue, &ae);
+}
+
+const Utf8String ParamsProvider::evaluate(const Utf8String &rawValue) const {
+  Utf8StringSet ae;
+  return evaluate(rawValue, &ae);
 }

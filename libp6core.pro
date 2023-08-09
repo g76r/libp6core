@@ -114,7 +114,6 @@ SOURCES += \
     util/characterseparatedexpression.cpp \
     util/paramsprovidermerger.cpp \
     modelview/shareduiitemslogmodel.cpp \
-    util/stringsparamsprovider.cpp \
     util/regexpparamsprovider.cpp \
     modelview/genericshareduiitem.cpp \
     modelview/inmemoryshareduiitemdocumentmanager.cpp \
@@ -148,7 +147,8 @@ SOURCES += \
     modelview/stringhashmodel.cpp \
     format/jsonformats.cpp \
     modelview/stringlistdiffmodel.cpp \
-    util/utf8string.cpp
+    util/utf8string.cpp \
+    util/utf8stringlist.cpp
 
 HEADERS +=\
     pf/pfutils.h \
@@ -222,7 +222,6 @@ HEADERS +=\
     thread/atomicvalue.h \
     thread/circularbuffer.h \
     modelview/shareduiitemslogmodel.h \
-    util/stringsparamsprovider.h \
     util/regexpparamsprovider.h \
     modelview/genericshareduiitem.h \
     sql/inmemorydatabasedocumentmanager.h \
@@ -259,7 +258,9 @@ HEADERS +=\
     modelview/stringhashmodel.h \  \
     util/utf8string.h \
     format/jsonformats.h \
-    modelview/stringlistdiffmodel.h
+    modelview/stringlistdiffmodel.h \
+    util/utf8stringlist.h \
+    util/utf8stringset.h
 
 unix {
     target.path = /usr/lib

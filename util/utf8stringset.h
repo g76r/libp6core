@@ -1,4 +1,4 @@
-/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2023 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,19 +11,5 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "stringsparamsprovider.h"
 
-const QVariant StringsParamsProvider::paramValue(
-    const Utf8String &key, const ParamsProvider *, const QVariant &defaultValue,
-    Utf8StringSet *) const {
-  bool ok;
-  int i = key.toInt(&ok);
-  return (ok && i >= 1 && _strings.size() <= i) ? _strings[i-1] : defaultValue;
-}
-
-const Utf8StringSet StringsParamsProvider::keys() const {
-  Utf8StringSet keys;
-  for (int i = 0; i < _strings.size(); ++i)
-    keys << Utf8String::number(i+1);
-  return keys;
-}
+#include "utf8stringlist.h"

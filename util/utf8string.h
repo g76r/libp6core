@@ -24,7 +24,7 @@ using namespace Qt::Literals::StringLiterals;
 
 class AsciiString;
 class Utf8StringList;
-class LogHelper;
+class Utf8StringSet;
 
 /** Enhanced QByteArray with string methods, always assuming 8 bits content is a
  * UTF-8 encoded string (QByteArray, char *, etc.). */
@@ -118,14 +118,14 @@ public:
       Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
   /** Splitting utf8 string on ascii 7 separators, e.g. {',',';'}
     * @see Utf8String::AsciiWhitespace */
-  inline const Utf8StringList split(
+  const Utf8StringList split(
       QList<char> seps, Qt::SplitBehavior behavior) const;
   /** Splitting utf8 string on ascii 7 separator, e.g. ' ' */
-  inline const Utf8StringList split(
+  const Utf8StringList split(
       const char sep, const qsizetype offset = 0,
       Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
   /** Splitting utf8 string on ascii 7 separator, e.g. ' ' */
-  inline const Utf8StringList split(
+  const Utf8StringList split(
       const char sep, Qt::SplitBehavior behavior) const;
   /** Splitting utf8 string on multi-byte (utf8) or multi-char separator,
    *  e.g. "-->", "💩"_u8, U'💩', "<≠>"_u8 */
@@ -204,101 +204,7 @@ inline Utf8String operator"" _u8(const char8_t *str, size_t size) noexcept {
 }
 #endif
 
-class Utf8StringSet;
-
-class LIBP6CORESHARED_EXPORT Utf8StringList : public QList<Utf8String> {
-public:
-  Utf8StringList() { }
-  Utf8StringList(std::initializer_list<Utf8String> args)
-    : QList<Utf8String>(args) { }
-  // explicit Utf8StringList(const Utf8String &item) : QList<Utf8String>({item}) { }
-  Utf8StringList(const QList<Utf8String> &list) : QList<Utf8String>(list) { }
-  Utf8StringList(const QList<QByteArray> &list)
-    : QList<Utf8String>(list.constBegin(), list.constEnd()) { }
-  Utf8StringList(const QList<QString> &list)
-    : QList<Utf8String>(list.constBegin(), list.constEnd()) { }
-  Utf8StringList(const QSet<Utf8String> &set)
-    : QList<Utf8String>(set.constBegin(), set.constEnd()) { }
-  Utf8StringList(const QSet<QByteArray> &set)
-    : QList<Utf8String>(set.constBegin(), set.constEnd()) { }
-  Utf8StringList(const QSet<QString> &set)
-    : QList<Utf8String>(set.constBegin(), set.constEnd()) { }
-  Utf8String join(const Utf8String &separator) const;
-  Utf8String join(const char separator) const;
-  QStringList toStringList() const {
-    return QStringList(constBegin(), constEnd()); }
-  QByteArrayList toByteArrayList() const {
-    return QByteArrayList(constBegin(), constEnd()); }
-  inline Utf8StringSet toSet() const;
-  inline Utf8StringList toSortedDeduplicated() const;
-};
-
-Q_DECLARE_METATYPE(Utf8StringList)
-
-class LIBP6CORESHARED_EXPORT Utf8StringSet : public QSet<Utf8String> {
-public:
-  Utf8StringSet() { }
-  Utf8StringSet(std::initializer_list<Utf8String> args)
-    : QSet<Utf8String>(args) { }
-  Utf8StringSet(const QSet<Utf8String> &set)
-    : QSet<Utf8String>(set) { }
-  Utf8StringSet(const QSet<QByteArray> &set)
-    : QSet<Utf8String>(set.constBegin(), set.constEnd()) { }
-  Utf8StringSet(const QSet<QString> &set)
-    : QSet<Utf8String>(set.constBegin(), set.constEnd()) { }
-  Utf8StringSet(const QList<Utf8String> &set)
-    : QSet<Utf8String>(set.constBegin(), set.constEnd()) { }
-  Utf8StringSet(const QList<QByteArray> &set)
-    : QSet<Utf8String>(set.constBegin(), set.constEnd()) { }
-  Utf8StringSet(const QList<QString> &set)
-    : QSet<Utf8String>(set.constBegin(), set.constEnd()) { }
-  Utf8String join(const Utf8String &separator) const;
-  Utf8String join(const char separator) const;
-  Utf8String sortedJoin(const Utf8String &separator) {
-    return toSortedList().join(separator); }
-  Utf8String sortedJoin(const char separator) {
-    return toSortedList().join(separator); }
-  Utf8StringList toList() const { return Utf8StringList(*this); }
-  Utf8StringList toSortedList() const {
-    auto list = toList(); std::sort(list.begin(), list.end()); return list; }
-};
-
-Q_DECLARE_METATYPE(Utf8StringSet)
-
-const Utf8StringList Utf8String::split(
-    QList<char> seps, Qt::SplitBehavior behavior) const {
-  return split(seps, 0, behavior);
-}
-
-const Utf8StringList Utf8String::split(
-    const char sep, const qsizetype offset, Qt::SplitBehavior behavior) const {
-  return split(QList<char>{sep}, offset, behavior);
-}
-
-const Utf8StringList Utf8String::split(
-    const char sep, Qt::SplitBehavior behavior) const {
-  return split(sep, 0, behavior);
-}
-
-Utf8StringSet Utf8StringList::toSet() const {
-  return Utf8StringSet(*this);
-}
-
-Utf8StringList Utf8StringList::toSortedDeduplicated() const {
-  return toSet().toSortedList();
-}
-
 QDebug LIBP6CORESHARED_EXPORT operator<<(QDebug dbg, const Utf8String &s);
-
-QDebug LIBP6CORESHARED_EXPORT operator<<(QDebug dbg, const Utf8StringList &l);
-
-QDebug LIBP6CORESHARED_EXPORT operator<<(QDebug dbg, const Utf8StringSet &s);
-
-LogHelper LIBP6CORESHARED_EXPORT operator<<(LogHelper lh,
-                                             const Utf8StringList &list);
-
-LogHelper LIBP6CORESHARED_EXPORT operator<<(LogHelper lh,
-                                             const Utf8StringSet &set);
 
 #if 0
 class LIBP6CORESHARED_EXPORT AsciiString : public Utf8String {

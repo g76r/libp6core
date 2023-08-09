@@ -13,6 +13,7 @@
  */
 #include "shareduiitemlist.h"
 #include "shareduiitem.h"
+#include "util/utf8stringset.h"
 
 const QVariant SharedUiItemListParamsProvider::paramValue(
     const Utf8String &key, const ParamsProvider *, const QVariant &defaultValue,

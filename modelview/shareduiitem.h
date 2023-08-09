@@ -18,8 +18,7 @@
 #include <QSharedData>
 #include <QJsonObject>
 #include "util/containerutils.h"
-
-using namespace Qt::Literals::StringLiterals;
+#include "util/utf8stringlist.h"
 
 class QDebug;
 class SharedUiItemDocumentTransaction;

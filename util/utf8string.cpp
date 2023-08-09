@@ -19,36 +19,6 @@
 
 const QList<char> Utf8String::AsciiWhitespace = { ' ', '\t', '\n', '\r', '\v' };
 
-template<typename C,typename T>
-static inline Utf8String join(const C &container, const T &separator) {
-  Utf8String joined;
-  bool first = true;
-  for (auto s: container) {
-    if (first)
-      first = false;
-    else
-      joined += separator;
-    joined += s;
-  }
-  return joined;
-}
-
-Utf8String Utf8StringList::join(const Utf8String &separator) const {
-  return ::join(*this, separator);
-}
-
-Utf8String Utf8StringList::join(const char separator) const {
-  return ::join(*this, separator);
-}
-
-Utf8String Utf8StringSet::join(const Utf8String &separator) const {
-  return ::join(*this, separator);
-}
-
-Utf8String Utf8StringSet::join(const char separator) const {
-  return ::join(*this, separator);
-}
-
 template<typename F>
 static inline F toFloating(
     QByteArray s, bool *ok, F def, bool suffixes_enabled,
@@ -474,26 +444,22 @@ const Utf8StringList Utf8String::splitByLeadingChar(qsizetype offset) const {
   return split(Utf8String(s0, s1-s0), s1-orig);
 }
 
+const Utf8StringList Utf8String::split(
+    QList<char> seps, Qt::SplitBehavior behavior) const {
+  return split(seps, 0, behavior);
+}
+
+const Utf8StringList Utf8String::split(
+    const char sep, const qsizetype offset, Qt::SplitBehavior behavior) const {
+  return split(QList<char>{sep}, offset, behavior);
+}
+
+const Utf8StringList Utf8String::split(
+    const char sep, Qt::SplitBehavior behavior) const {
+  return split(sep, 0, behavior);
+}
+
 QDebug operator<<(QDebug dbg, const Utf8String &s) {
-  dbg << s.toString();
-  return dbg;
-}
-
-QDebug operator<<(QDebug dbg, const Utf8StringList &list) {
-  dbg.noquote() << "{"_u8;
-  if (list.size())
-    dbg.space().noquote() << Utf8String("\""_u8+list.join("\", \""_u8)+"\" }"_u8).toString();
-  return dbg;
-}
-
-QDebug operator<<(QDebug dbg, const Utf8StringSet &set) {
-  return dbg << set.toSortedList();
-}
-
-LogHelper operator<<(LogHelper lh, const Utf8StringList &list) {
-  lh << "{"_u8;
-  if (list.size())
-    lh << "\""_u8+list.join("\", \""_u8)+"\" }"_u8;
-  return lh;
+  return dbg << s.toString();
 }
 
