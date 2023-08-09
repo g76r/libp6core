@@ -14,6 +14,7 @@
 #include "mathutils.h"
 #include <QDateTime>
 #include <cmath>
+#include "util/utf8string.h"
 
 /** following constants are not compliant to C++ standard since they assume that
  * integers are implemented with 2's complement
@@ -55,45 +56,12 @@ static int numericsPromotion(int typeId) {
 
 static bool convertOtherTypesToBestNumericTypeIfPossible(
   QVariant *a, int *ta, int *tta) {
-  if (*ta == QMetaType::QByteArray) {
-    a->setValue(QString::fromUtf8(a->toByteArray()));
-    *ta = QMetaType::QString;
-  }
+  Utf8String s;
   switch(*ta) {
-    case QMetaType::QString: {
-      auto s = a->toString().trimmed();
-      bool ok;
-      // LATER support kmb and kMGTP suffixes
-      auto ll = s.toLongLong(&ok, 0);
-      if (ok) {
-        a->setValue(ll);
-        *tta = QMetaType::LongLong;
-        return true;
-      }
-      auto ull = s.toULongLong(&ok, 0);
-      if (ok) {
-        a->setValue(ull);
-        *tta = QMetaType::ULongLong;
-        return true;
-      }
-      auto d = s.toDouble(&ok);
-      if (ok) {
-        a->setValue(d);
-        *tta = QMetaType::Double;
-        return true;
-      }
-      if (s.compare("true", Qt::CaseInsensitive) == 0) {
-        a->setValue(1LL);
-        *tta = QMetaType::LongLong;
-        return true;
-      }
-      if (s.compare("false", Qt::CaseInsensitive) == 0) {
-        a->setValue(0LL);
-        *tta = QMetaType::LongLong;
-        return true;
-      }
-    }
-    break;
+    case QMetaType::QByteArray:
+    case QMetaType::QString:
+      s = a->toByteArray();
+      break;
     case QMetaType::QDate:
     case QMetaType::QDateTime: {
       auto dt = a->toDateTime();
@@ -102,7 +70,7 @@ static bool convertOtherTypesToBestNumericTypeIfPossible(
         *tta = QMetaType::LongLong;
       }
     }
-    break;
+      break;
     case QMetaType::QTime:  {
       auto t = a->toTime();
       if (t.isValid()) {
@@ -110,7 +78,42 @@ static bool convertOtherTypesToBestNumericTypeIfPossible(
         *tta = QMetaType::LongLong;
       }
     }
-    break;
+      break;
+  }
+  if (*ta == qMetaTypeId<Utf8String>()) {
+    s = a->value<Utf8String>();
+  }
+  if (!s.isEmpty()) {
+    s.trim();
+    bool ok;
+    auto ll = s.toLongLong(&ok, 0);
+    if (ok) {
+      a->setValue(ll);
+      *tta = QMetaType::LongLong;
+      return true;
+    }
+    auto ull = s.toULongLong(&ok, 0);
+    if (ok) {
+      a->setValue(ull);
+      *tta = QMetaType::ULongLong;
+      return true;
+    }
+    auto d = s.toDouble(&ok);
+    if (ok) {
+      a->setValue(d);
+      *tta = QMetaType::Double;
+      return true;
+    }
+    if (s == "true"_u8) {
+      a->setValue(1LL);
+      *tta = QMetaType::LongLong;
+      return true;
+    }
+    if (s == "false"_u8) {
+      a->setValue(0LL);
+      *tta = QMetaType::LongLong;
+      return true;
+    }
   }
   return false;
 }
