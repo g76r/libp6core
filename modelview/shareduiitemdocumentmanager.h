@@ -45,14 +45,14 @@ public:
   QString *errorString, SharedUiItemDocumentTransaction *transaction,
   int role);
   using Creator = std::function<SharedUiItem(
-  SharedUiItemDocumentTransaction *transaction, QByteArray id,
+  SharedUiItemDocumentTransaction *transaction, Utf8String id,
   QString *errorString)>;
-  using SimplestCreator = std::function<SharedUiItem(QByteArray id)>;
+  using SimplestCreator = std::function<SharedUiItem(Utf8String id)>;
   using PostCreationModifier =
   SharedUiItemDocumentTransaction::PostCreationModifier;
   using ChangeItemTrigger = std::function<bool(
   SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
-  SharedUiItem oldItem, QByteArray idQualifier, QString *errorString)>;
+  SharedUiItem oldItem, Utf8String idQualifier, QString *errorString)>;
   enum OnChangePolicy {
     /** no automatic action on update or delete */
     NoAction,
@@ -82,14 +82,14 @@ public:
 
 private:
   struct ForeignKey {
-    QByteArray _sourceQualifier;
+    Utf8String _sourceQualifier;
     int _sourceSection;
-    QByteArray _referenceQualifier;
+    Utf8String _referenceQualifier;
     int _referenceSection;
     OnChangePolicy _onDeletePolicy;
     OnChangePolicy _onUpdatePolicy;
-    ForeignKey(QByteArray sourceQualifier, int sourceSection,
-               QByteArray referenceQualifier, int referenceSection,
+    ForeignKey(Utf8String sourceQualifier, int sourceSection,
+               Utf8String referenceQualifier, int referenceSection,
                OnChangePolicy onDeletePolicy, OnChangePolicy onUpdatePolicy)
       : _sourceQualifier(sourceQualifier), _sourceSection(sourceSection),
         _referenceQualifier(referenceQualifier),
@@ -98,15 +98,15 @@ private:
   };
 
 protected:
-  QHash<QByteArray,Setter> _setters;
-  QHash<QByteArray,Creator> _creators;
+  QHash<Utf8String,Setter> _setters;
+  QHash<Utf8String,Creator> _creators;
   QList<ForeignKey> _foreignKeys;
-  QMultiHash<QByteArray,ChangeItemTrigger> _triggersBeforeUpdate;
-  QMultiHash<QByteArray,ChangeItemTrigger> _triggersAfterUpdate;
-  QMultiHash<QByteArray,ChangeItemTrigger> _triggersBeforeCreate;
-  QMultiHash<QByteArray,ChangeItemTrigger> _triggersAfterCreate;
-  QMultiHash<QByteArray,ChangeItemTrigger> _triggersBeforeDelete;
-  QMultiHash<QByteArray,ChangeItemTrigger> _triggersAfterDelete;
+  QMultiHash<Utf8String,ChangeItemTrigger> _triggersBeforeUpdate;
+  QMultiHash<Utf8String,ChangeItemTrigger> _triggersAfterUpdate;
+  QMultiHash<Utf8String,ChangeItemTrigger> _triggersBeforeCreate;
+  QMultiHash<Utf8String,ChangeItemTrigger> _triggersAfterCreate;
+  QMultiHash<Utf8String,ChangeItemTrigger> _triggersBeforeDelete;
+  QMultiHash<Utf8String,ChangeItemTrigger> _triggersAfterDelete;
 
   explicit SharedUiItemDocumentManager(QObject *parent = nullptr);
 
@@ -120,11 +120,11 @@ public:
    * No other class than DtpDocumentManager should override createNewItem().
    */
   virtual SharedUiItem createNewItem(
-      QByteArray idQualifier, PostCreationModifier modifier = nullptr,
+      Utf8String idQualifier, PostCreationModifier modifier = nullptr,
       QString *errorString = nullptr);
   /** Convenience template performing downcast. */
   template<class T>
-  T createNewItem(QByteArray idQualifier,
+  T createNewItem(Utf8String idQualifier,
                   PostCreationModifier modifier = nullptr,
                   QString *errorString = nullptr) {
     Q_UNUSED(modifier)
@@ -133,12 +133,12 @@ public:
   }
   /** Convenience method with modifier = 0 */
   SharedUiItem createNewItem(
-      QByteArray idQualifier, QString *errorString) {
+      Utf8String idQualifier, QString *errorString) {
     return createNewItem(idQualifier, nullptr, errorString);
   }
   /** Convenience template performing downcast. */
   template<class T>
-  T createNewItem(QByteArray idQualifier, QString *errorString) {
+  T createNewItem(Utf8String idQualifier, QString *errorString) {
     SharedUiItem item = createNewItem(idQualifier, nullptr, errorString);
     return static_cast<T&>(item);
   }
@@ -180,32 +180,32 @@ public:
    * No other class than DtpDocumentManager should override changeItem().
    */
   virtual bool changeItem(
-      SharedUiItem newItem, SharedUiItem oldItem, QByteArray idQualifier,
+      SharedUiItem newItem, SharedUiItem oldItem, Utf8String idQualifier,
       QString *errorString = nullptr);
   virtual SharedUiItem itemById(
-      QByteArray idQualifier, QByteArray id) const = 0;
-  /** Default: parses qualifiedId and calls itemById(QByteArray,QByteArray). */
-  virtual SharedUiItem itemById(QByteArray qualifiedId) const;
+      Utf8String idQualifier, Utf8String id) const = 0;
+  /** Default: parses qualifiedId and calls itemById(Utf8String,Utf8String). */
+  virtual SharedUiItem itemById(Utf8String qualifiedId) const;
   /** Convenience template performing downcast. */
   template<class T>
-  T itemById(QByteArray idQualifier, QByteArray id) const {
+  T itemById(Utf8String idQualifier, Utf8String id) const {
     SharedUiItem item = itemById(idQualifier, id);
     return static_cast<T&>(item);
   }
   /** Convenience template performing downcast. */
   template<class T>
-  T itemById(QByteArray qualifiedId) const {
+  T itemById(Utf8String qualifiedId) const {
     SharedUiItem item = itemById(qualifiedId);
     return static_cast<T&>(item);
   }
   /** This method build a list of every item currently holded, given their
    * qualifiedId. */
   virtual SharedUiItemList<SharedUiItem> itemsByIdQualifier(
-      QByteArray idQualifier) const = 0;
+      Utf8String idQualifier) const = 0;
   /** This method build a list of every item currently holded, given their class
    * (T) and qualifiedId. */
   template<class T>
-  SharedUiItemList<T> itemsByIdQualifier(QByteArray idQualifier) const {
+  SharedUiItemList<T> itemsByIdQualifier(Utf8String idQualifier) const {
     T *dummy;
     Q_UNUSED(static_cast<SharedUiItem*>(dummy)); // ensure T is a SharedUiItem
     SharedUiItemList<SharedUiItem> list = itemsByIdQualifier(idQualifier);
@@ -239,19 +239,19 @@ public:
   virtual void reorderItems(QList<SharedUiItem> items);
   /** This method must be called for every item type the document manager will
    * hold, to enable it to create and modify such items. */
-  void registerItemType(QByteArray idQualifier, Setter setter, Creator creator);
+  void registerItemType(Utf8String idQualifier, Setter setter, Creator creator);
   /** Convenience method. */
-  void registerItemType(QByteArray idQualifier, Setter setter,
+  void registerItemType(Utf8String idQualifier, Setter setter,
                         SimplestCreator creator) {
     registerItemType(idQualifier, setter, [creator](
-                     SharedUiItemDocumentTransaction *, QByteArray id,
+                     SharedUiItemDocumentTransaction *, Utf8String id,
                      QString *) {
       return creator(id);
     });
   }
   /** Convenience method. */
   template <class T>
-  void registerItemType(QByteArray idQualifier, MemberSetter<T> setter,
+  void registerItemType(Utf8String idQualifier, MemberSetter<T> setter,
                         Creator creator) {
     registerItemType(idQualifier, [setter](SharedUiItem *item, int section,
                      const QVariant &value, QString *errorString,
@@ -262,32 +262,32 @@ public:
   }
   /** Convenience method. */
   template <class T>
-  void registerItemType(QByteArray idQualifier, MemberSetter<T> setter,
+  void registerItemType(Utf8String idQualifier, MemberSetter<T> setter,
                         SimplestCreator creator) {
     registerItemType(idQualifier, [setter](SharedUiItem *item, int section,
                      const QVariant &value, QString *errorString,
                      SharedUiItemDocumentTransaction *transaction, int role ){
       return (item->*static_cast<MemberSetter<SharedUiItem>>(setter))(
             section, value, errorString, transaction, role);
-    }, [creator](SharedUiItemDocumentTransaction *, QByteArray id, QString *) {
+    }, [creator](SharedUiItemDocumentTransaction *, Utf8String id, QString *) {
       return creator(id);
     });
   }
   // FIXME doc
-  void addForeignKey(QByteArray sourceQualifier, int sourceSection,
-                     QByteArray referenceQualifier, int referenceSection = 0,
+  void addForeignKey(Utf8String sourceQualifier, int sourceSection,
+                     Utf8String referenceQualifier, int referenceSection = 0,
                      OnChangePolicy onUpdatePolicy = NoAction,
                      OnChangePolicy onDeletePolicy = NoAction);
   // FIXME doc
-  void addChangeItemTrigger(QByteArray idQualifier, TriggerFlags flags,
+  void addChangeItemTrigger(Utf8String idQualifier, TriggerFlags flags,
                             ChangeItemTrigger trigger);
   /** Can be called to generate a new id not currently in use for the given
    * idQualifier item type.
    * Generate id of the form prefix+number (e.g. "foobar1"), most of the time
    * one should choose idQualifier as prefix, which is the default (= if prefix
    * is left empty). */
-  QByteArray generateNewId(QByteArray idQualifier,
-                           QByteArray prefix = QByteArray()) const {
+  Utf8String generateNewId(Utf8String idQualifier,
+                           Utf8String prefix = {}) const {
     return generateNewId(nullptr, idQualifier, prefix);
   }
 
@@ -309,7 +309,7 @@ signals:
    * not specialize signals.
    */
   void itemChanged(SharedUiItem newItem, SharedUiItem oldItem,
-                   QByteArray idQualifier);
+                   Utf8String idQualifier);
   /** Emited when all data is reset as a whole, for instance when switching
    * from a document to another one. */
   void dataReset();
@@ -320,9 +320,9 @@ protected:
    * Generate id of the form prefix+number (e.g. "foobar1"), most of the time
    * one should choose idQualifier as prefix, which is the default (= if prefix
    * is left empty). */
-  QByteArray generateNewId(
-      const SharedUiItemDocumentTransaction *transaction, QByteArray idQualifier,
-      QByteArray prefix = QByteArray()) const;
+  Utf8String generateNewId(
+      const SharedUiItemDocumentTransaction *transaction, Utf8String idQualifier,
+      Utf8String prefix = {}) const;
   /** Prepare change: ensure that the change can be performed, record them
    * through transaction->changeItem(), and return true only on success.
    *
@@ -341,7 +341,7 @@ protected:
    */
   virtual bool prepareChangeItem(
       SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
-      SharedUiItem oldItem, QByteArray idQualifier, QString *errorString) = 0;
+      SharedUiItem oldItem, Utf8String idQualifier, QString *errorString) = 0;
   /** Perform actual change and emit itemChanged().
    *
    * Default impl only emit signal. Implementations must called base class
@@ -357,23 +357,23 @@ protected:
    * and constraints (especially foreign keys) or triggers may also add
    * additional changes. */
   virtual void commitChangeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                                QByteArray idQualifier);
+                                Utf8String idQualifier);
   // FIXME doc
   void storeItemChange(
       SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
-      SharedUiItem oldItem, QByteArray idQualifier) {
+      SharedUiItem oldItem, Utf8String idQualifier) {
     transaction->storeItemChange(newItem, oldItem, idQualifier);
   }
 
   /** To be called by createNewItem().
    * Should never be overriden apart by DtpDocumentManagerWrapper. */
   virtual SharedUiItemDocumentTransaction *internalCreateNewItem(
-      SharedUiItem *newItem, QByteArray idQualifier,
+      SharedUiItem *newItem, Utf8String idQualifier,
       PostCreationModifier modifier, QString *errorString);
   /** To be called by changeItem().
    * Should never be overriden apart by DtpDocumentManagerWrapper. */
   virtual SharedUiItemDocumentTransaction *internalChangeItem(
-      SharedUiItem newItem, SharedUiItem oldItem, QByteArray idQualifier,
+      SharedUiItem newItem, SharedUiItem oldItem, Utf8String idQualifier,
       QString *errorString);
   /** To be called by changeItemByUiData().
    * Should never be overriden apart by DtpDocumentManagerWrapper. */
@@ -385,30 +385,30 @@ private:
   // FIXME doc
   bool processConstraintsAndPrepareChangeItem(
       SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
-      SharedUiItem oldItem, QByteArray idQualifier, QString *errorString);
+      SharedUiItem oldItem, Utf8String idQualifier, QString *errorString);
   // FIXME doc×6
   bool processBeforeUpdate(
       SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
-      SharedUiItem oldItem, QByteArray idQualifier, QString *errorString);
+      SharedUiItem oldItem, Utf8String idQualifier, QString *errorString);
   bool processBeforeCreate(
       SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
-      QByteArray idQualifier, QString *errorString);
+      Utf8String idQualifier, QString *errorString);
   bool processBeforeDelete(
       SharedUiItemDocumentTransaction *transaction, SharedUiItem oldItem,
-      QByteArray idQualifier, QString *errorString);
+      Utf8String idQualifier, QString *errorString);
   bool processAfterUpdate(
       SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
-      SharedUiItem oldItem, QByteArray idQualifier, QString *errorString);
+      SharedUiItem oldItem, Utf8String idQualifier, QString *errorString);
   bool processAfterCreate(
       SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
-      QByteArray idQualifier, QString *errorString);
+      Utf8String idQualifier, QString *errorString);
   bool processAfterDelete(
       SharedUiItemDocumentTransaction *transaction, SharedUiItem oldItem,
-      QByteArray idQualifier, QString *errorString);
+      Utf8String idQualifier, QString *errorString);
   // id as primary key (uniqueness, not empty, same qualifiers before and after)
   bool checkIdsConstraints(SharedUiItemDocumentTransaction *transaction,
                            SharedUiItem newItem, SharedUiItem oldItem,
-                           QByteArray idQualifier, QString *errorString);
+                           Utf8String idQualifier, QString *errorString);
   /** Perform checks that are delayed until commit, such as referential
    * integrity checks. */
   bool delayedChecks(SharedUiItemDocumentTransaction *transaction,

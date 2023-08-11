@@ -20,14 +20,14 @@ InMemorySharedUiItemDocumentManager::InMemorySharedUiItemDocumentManager(
 
 bool InMemorySharedUiItemDocumentManager::prepareChangeItem(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
-    SharedUiItem oldItem, QByteArray idQualifier, QString *errorString) {
+    SharedUiItem oldItem, Utf8String idQualifier, QString *errorString) {
   Q_UNUSED(errorString)
   storeItemChange(transaction, newItem, oldItem, idQualifier);
   return true; // cannot fail
 }
 
 void InMemorySharedUiItemDocumentManager::commitChangeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, QByteArray idQualifier) {
+    SharedUiItem newItem, SharedUiItem oldItem, Utf8String idQualifier) {
   if (!oldItem.isNull() && newItem != oldItem) { // renamed or deleted
     _repository[idQualifier].remove(oldItem.id());
   }
@@ -38,12 +38,12 @@ void InMemorySharedUiItemDocumentManager::commitChangeItem(
 }
 
 SharedUiItem InMemorySharedUiItemDocumentManager::itemById(
-    QByteArray idQualifier, QByteArray id) const {
+    Utf8String idQualifier, Utf8String id) const {
   return _repository.value(idQualifier).value(id);
 }
 
 SharedUiItemList<SharedUiItem> InMemorySharedUiItemDocumentManager
-::itemsByIdQualifier(QByteArray idQualifier) const {
+::itemsByIdQualifier(Utf8String idQualifier) const {
   SharedUiItemList<SharedUiItem> list;
 #ifdef QT_DEBUG
   if (!_repository.contains(idQualifier))

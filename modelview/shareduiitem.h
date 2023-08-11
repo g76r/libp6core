@@ -298,7 +298,7 @@ public:
    * @return idQualifier+':'+id if idQualifier is not empty, id otherwise.
    */
   static Utf8String qualifiedId(Utf8String idQualifier, Utf8String id) {
-    return idQualifier+':'+id; }
+    return idQualifier+":"+id; }
   /** Qualified item identifier.
    * By convention, qualified identifier must be unique for any type of item
    * within the same document.
@@ -370,11 +370,11 @@ public:
     int section = uiSectionByName(sectionName);
     if (role == HeaderDisplayRole)
       return _data->uiHeaderData(section, Qt::DisplayRole);
-    if (sectionName == "id"_ba)
+    if (sectionName == "id"_u8)
       return _data->id();
-    if (sectionName == "id_qualifier"_ba)
+    if (sectionName == "id_qualifier"_u8)
       return _data->idQualifier();
-    if (sectionName == "qualified_id"_ba)
+    if (sectionName == "qualified_id"_u8)
       return qualifiedId();
     if (section >= 0)
       return uiData(section, role);

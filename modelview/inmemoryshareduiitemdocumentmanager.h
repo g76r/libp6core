@@ -41,15 +41,15 @@ public:
   explicit InMemorySharedUiItemDocumentManager(QObject *parent = nullptr);
   bool prepareChangeItem(
       SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
-      SharedUiItem oldItem, QByteArray idQualifier,
+      SharedUiItem oldItem, Utf8String idQualifier,
       QString *errorString) override;
   void commitChangeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                        QByteArray idQualifier) override;
+                        Utf8String idQualifier) override;
   using SharedUiItemDocumentManager::itemById;
-  SharedUiItem itemById(QByteArray idQualifier, QByteArray id) const override;
+  SharedUiItem itemById(Utf8String idQualifier, Utf8String id) const override;
   using SharedUiItemDocumentManager::itemsByIdQualifier;
   SharedUiItemList<SharedUiItem> itemsByIdQualifier(
-      QByteArray idQualifier) const override;
+      Utf8String idQualifier) const override;
 };
 
 #endif // INMEMORYSHAREDUIITEMDOCUMENTMANAGER_H

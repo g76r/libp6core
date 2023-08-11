@@ -30,7 +30,7 @@ InMemoryDatabaseDocumentManager::InMemoryDatabaseDocumentManager(
 }
 
 bool InMemoryDatabaseDocumentManager::registerItemType(
-    QByteArray idQualifier, Setter setter, Creator creator, int idSection,
+    Utf8String idQualifier, Setter setter, Creator creator, int idSection,
     QString *errorString) {
   QString reason;
   if (!errorString)
@@ -50,7 +50,7 @@ bool InMemoryDatabaseDocumentManager::registerItemType(
 
 bool InMemoryDatabaseDocumentManager::prepareChangeItem(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
-    SharedUiItem oldItem, QByteArray idQualifier, QString *errorString) {
+    SharedUiItem oldItem, Utf8String idQualifier, QString *errorString) {
   Q_ASSERT(errorString != 0);
   if (!changeItemInDatabase(transaction, newItem, oldItem, idQualifier,
                             errorString, true)) {
@@ -63,7 +63,7 @@ bool InMemoryDatabaseDocumentManager::prepareChangeItem(
 }
 
 void InMemoryDatabaseDocumentManager::commitChangeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, QByteArray idQualifier) {
+    SharedUiItem newItem, SharedUiItem oldItem, Utf8String idQualifier) {
   QString errorString;
   SharedUiItemDocumentTransaction transaction(this);
   if (!changeItemInDatabase(&transaction, newItem, oldItem, idQualifier,
@@ -83,7 +83,7 @@ void InMemoryDatabaseDocumentManager::commitChangeItem(
 
 bool InMemoryDatabaseDocumentManager::changeItemInDatabase(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
-    SharedUiItem oldItem, QString idQualifier, QString *errorString,
+    SharedUiItem oldItem, Utf8String idQualifier, QString *errorString,
     bool dryRun) {
   Q_ASSERT(errorString != 0);
   Q_ASSERT(!newItem.isNull() || !oldItem.isNull());
@@ -100,8 +100,9 @@ bool InMemoryDatabaseDocumentManager::changeItemInDatabase(
                   +" = ?");
     query.bindValue(0, oldItem.id());
     if (!query.exec()) {
-      *errorString = "database error: cannot delete from table "+idQualifier+" "
-          +oldItem.id()+" "+query.lastError().text()+" "+query.executedQuery();
+      *errorString = tr("database error: cannot delete from table %1 %2 %3 %4")
+                     .arg(idQualifier).arg(oldItem.id())
+                     .arg(query.lastError().text()).arg(query.executedQuery());
       goto failed;
     }
   }
@@ -156,8 +157,9 @@ bool InMemoryDatabaseDocumentManager::insertItemInDatabase(
   for (int i = 0; i < newItem.uiSectionCount(); ++i)
     query.bindValue(i, newItem.uiData(i, SharedUiItem::ExternalDataRole));
   if (!query.exec()) {
-    *errorString = "database error: cannot insert into table "+idQualifier+" "
-        +newItem.id()+" "+query.lastError().text();
+    *errorString = tr("database error: cannot insert into table %1 %2: %3")
+                   .arg(idQualifier).arg(newItem.id())
+                   .arg(query.lastError().text());
     qDebug() << "InMemoryDatabaseDocumentManager" << *errorString;
     return false;
   }
@@ -190,14 +192,14 @@ bool InMemoryDatabaseDocumentManager::setDatabase(
 }
 
 bool InMemoryDatabaseDocumentManager::createTableAndSelectData(
-    QByteArray idQualifier, Setter setter, Creator creator, int idSection,
+    Utf8String idQualifier, Setter setter, Creator creator, int idSection,
     QString *errorString) {
   Q_ASSERT(errorString != 0);
   Q_UNUSED(idSection)
   Q_ASSERT_X((creator && setter),
              "InMemoryDatabaseDocumentManager::createTableAndSelectData",
              "invalid parameters");
-  QStringList columnNames;
+  Utf8StringList columnNames;
   SharedUiItemDocumentTransaction transaction(this);
   SharedUiItem item = creator(&transaction, "dummy"_ba, errorString);
   if (!_db.isOpen())
@@ -223,8 +225,8 @@ bool InMemoryDatabaseDocumentManager::createTableAndSelectData(
     q += " )";
     query.exec(q);
     if (query.lastError().type() != QSqlError::NoError) {
-      *errorString = "database error: cannot create table: "+idQualifier+": "
-          +query.lastError().text();
+      *errorString = tr("database error: cannot create table: %1: %2")
+                     .arg(idQualifier).arg(query.lastError().text());
       return false;
     }
     // TODO create unique index if not exists mytable_pk on mytable(idcolumn)
@@ -241,8 +243,8 @@ sqlite> drop table foo;
    */
   query.exec("select "+columnNames.join(',')+" from "+idQualifier);
   if (query.lastError().type() != QSqlError::NoError) {
-    *errorString = "database error: cannot select from table: "+idQualifier
-        +query.lastError().text();
+    *errorString = tr("database error: cannot select from table: %1: %2")
+                   .arg(idQualifier).arg(query.lastError().text());
     return false;
   }
   //qDebug() << "***** selected:" << query.executedQuery();
@@ -270,7 +272,7 @@ sqlite> drop table foo;
   return true;
 }
 
-QString InMemoryDatabaseDocumentManager::protectedColumnName(QString columnName) {
-  return columnName.replace(unallowedColumnCharsSequence,
-                            QStringLiteral("_"));
+Utf8String InMemoryDatabaseDocumentManager::protectedColumnName(
+    Utf8String columnName) {
+  return columnName.toString().replace(unallowedColumnCharsSequence, u"_"_s);
 }

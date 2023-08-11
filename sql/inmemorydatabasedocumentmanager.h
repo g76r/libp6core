@@ -54,7 +54,7 @@ class LIBP6CORESHARED_EXPORT InMemoryDatabaseDocumentManager
   Q_DISABLE_COPY(InMemoryDatabaseDocumentManager)
   QSqlDatabase _db;
   QHash<QString,int> _idSections;
-  QByteArrayList _orderedIdQualifiers; // in order of registration
+  Utf8StringList _orderedIdQualifiers; // in order of registration
 
 public:
   InMemoryDatabaseDocumentManager(QObject *parent = 0);
@@ -63,21 +63,21 @@ public:
   bool isDatabaseOpen() const { return _db.isOpen(); }
   /** As compared to base class, registerItemType also need section number to
    * be used to store item id (which is recommended to be 0). */
-  bool registerItemType(QByteArray idQualifier, Setter setter, Creator creator,
+  bool registerItemType(Utf8String idQualifier, Setter setter, Creator creator,
                         int idSection, QString *errorString = 0);
   /** Convenience method. */
-  bool registerItemType(QByteArray idQualifier, Setter setter,
+  bool registerItemType(Utf8String idQualifier, Setter setter,
                         SimplestCreator creator,
                         int idSection, QString *errorString = 0) {
     return registerItemType(idQualifier, setter, [creator](
                             SharedUiItemDocumentTransaction *,
-                            QByteArray id, QString *) {
+                            Utf8String id, QString *) {
       return creator(id);
     }, idSection, errorString);
   }
   /** Convenience method. */
   template <class T>
-  void registerItemType(QByteArray idQualifier, MemberSetter<T> setter,
+  void registerItemType(Utf8String idQualifier, MemberSetter<T> setter,
                         Creator creator, int idSection,
                         QString *errorString = 0) {
     registerItemType(idQualifier, [setter](SharedUiItem *item, int section,
@@ -89,7 +89,7 @@ public:
   }
   /** Convenience method. */
   template <class T>
-  void registerItemType(QByteArray idQualifier, MemberSetter<T> setter,
+  void registerItemType(Utf8String idQualifier, MemberSetter<T> setter,
                         SimplestCreator creator, int idSection,
                         QString *errorString = 0) {
     registerItemType(idQualifier, [setter](SharedUiItem *item, int section,
@@ -97,27 +97,27 @@ public:
                      SharedUiItemDocumentTransaction *transaction, int role ){
       return (item->*static_cast<MemberSetter<SharedUiItem>>(setter))(
             section, value, errorString, transaction, role);
-    }, [creator](SharedUiItemDocumentTransaction *, QByteArray id, QString *) {
+    }, [creator](SharedUiItemDocumentTransaction *, Utf8String id, QString *) {
       return creator(id);
     }, idSection, errorString);
   }
   bool prepareChangeItem(
       SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
-      SharedUiItem oldItem, QByteArray idQualifier,
+      SharedUiItem oldItem, Utf8String idQualifier,
       QString *errorString) override;
   void commitChangeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                        QByteArray idQualifier) override;
+                        Utf8String idQualifier) override;
   // TODO add a way to notify user of database errors, such as a signal
 
 private:
   bool createTableAndSelectData(
-      QByteArray idQualifier, Setter setter, Creator creator,
+      Utf8String idQualifier, Setter setter, Creator creator,
       int idSection, QString *errorString);
-  static inline QString protectedColumnName(QString columnName);
+  static inline Utf8String protectedColumnName(Utf8String columnName);
   bool insertItemInDatabase(SharedUiItemDocumentTransaction *transaction,
                             SharedUiItem newItem, QString *errorString);
   bool changeItemInDatabase(SharedUiItemDocumentTransaction *transaction,
-      SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier,
+      SharedUiItem newItem, SharedUiItem oldItem, Utf8String idQualifier,
       QString *errorString, bool dryRun);
   using InMemorySharedUiItemDocumentManager::registerItemType; // hide
 };

@@ -20,20 +20,20 @@ SharedUiItemDocumentManager::SharedUiItemDocumentManager(QObject *parent)
 }
 
 SharedUiItem SharedUiItemDocumentManager::itemById(
-    QByteArray qualifiedId) const {
+    Utf8String qualifiedId) const {
   int pos = qualifiedId.indexOf(':');
-  return (pos == -1) ? itemById(QByteArray(), qualifiedId)
+  return (pos == -1) ? itemById(Utf8String{}, qualifiedId)
                      : itemById(qualifiedId.left(pos), qualifiedId.mid(pos+1));
 }
 
-QByteArray SharedUiItemDocumentManager::generateNewId(
-    const SharedUiItemDocumentTransaction *transaction, QByteArray idQualifier,
-    QByteArray prefix) const {
-  QByteArray id;
+Utf8String SharedUiItemDocumentManager::generateNewId(
+    const SharedUiItemDocumentTransaction *transaction, Utf8String idQualifier,
+    Utf8String prefix) const {
+  Utf8String id;
   if (prefix.isEmpty())
     prefix = idQualifier;
   for (int i = 1; i < 100; ++i) {
-    id = prefix+QByteArray::number(i);
+    id = prefix+Utf8String::number(i);
     if (transaction) {
       if (transaction->itemById(idQualifier, id).isNull())
         return id;
@@ -43,7 +43,7 @@ QByteArray SharedUiItemDocumentManager::generateNewId(
     }
   }
   forever {
-    id = prefix+QByteArray::number(QRandomGenerator::global()->generate());
+    id = prefix+Utf8String::number(QRandomGenerator::global()->generate());
     if (transaction) {
       if (transaction->itemById(idQualifier, id).isNull())
         return id;
@@ -59,7 +59,7 @@ void SharedUiItemDocumentManager::reorderItems(QList<SharedUiItem> items) {
 }
 
 void SharedUiItemDocumentManager::registerItemType(
-    QByteArray idQualifier, SharedUiItemDocumentManager::Setter setter,
+    Utf8String idQualifier, SharedUiItemDocumentManager::Setter setter,
     SharedUiItemDocumentManager::Creator creator) {
   _setters.insert(idQualifier, setter);
   _creators.insert(idQualifier, creator);
@@ -67,7 +67,7 @@ void SharedUiItemDocumentManager::registerItemType(
 }
 
 bool SharedUiItemDocumentManager::changeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, QByteArray idQualifier,
+    SharedUiItem newItem, SharedUiItem oldItem, Utf8String idQualifier,
     QString *errorString) {
   Q_ASSERT(newItem.isNull() || newItem.idQualifier() == idQualifier);
   Q_ASSERT(oldItem.isNull() || oldItem.idQualifier() == idQualifier);
@@ -88,7 +88,7 @@ bool SharedUiItemDocumentManager::changeItem(
 SharedUiItemDocumentTransaction
 *SharedUiItemDocumentManager::internalChangeItem(
     SharedUiItem newItem, SharedUiItem oldItem,
-    QByteArray idQualifier, QString *errorString) {
+    Utf8String idQualifier, QString *errorString) {
   SharedUiItemDocumentTransaction *transaction =
       new SharedUiItemDocumentTransaction(this);
   if (transaction->changeItem(newItem, oldItem, idQualifier, errorString)
@@ -99,12 +99,12 @@ SharedUiItemDocumentTransaction
 }
 
 void SharedUiItemDocumentManager::commitChangeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, QByteArray idQualifier) {
+    SharedUiItem newItem, SharedUiItem oldItem, Utf8String idQualifier) {
   emit itemChanged(newItem, oldItem, idQualifier);
 }
 
 SharedUiItem SharedUiItemDocumentManager::createNewItem(
-    QByteArray idQualifier, PostCreationModifier modifier,
+    Utf8String idQualifier, PostCreationModifier modifier,
     QString *errorString) {
   QString reason;
   if (!errorString)
@@ -122,7 +122,7 @@ SharedUiItem SharedUiItemDocumentManager::createNewItem(
 
 SharedUiItemDocumentTransaction
 *SharedUiItemDocumentManager::internalCreateNewItem(
-    SharedUiItem *newItem, QByteArray idQualifier,
+    SharedUiItem *newItem, Utf8String idQualifier,
     PostCreationModifier modifier, QString *errorString) {
   Q_ASSERT(newItem != 0);
   SharedUiItemDocumentTransaction *transaction =
@@ -169,7 +169,7 @@ SharedUiItemDocumentTransaction
 
 bool SharedUiItemDocumentManager::processConstraintsAndPrepareChangeItem(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
-    SharedUiItem oldItem, QByteArray idQualifier, QString *errorString) {
+    SharedUiItem oldItem, Utf8String idQualifier, QString *errorString) {
   // to support for transforming into update an createOrUpdate call
   // and ensure that, on update or delete, oldItem is the real one, not a
   // placeholder only bearing ids such as GenericSharedUiItem, we must replace
@@ -205,8 +205,8 @@ bool SharedUiItemDocumentManager::processConstraintsAndPrepareChangeItem(
 }
 
 void SharedUiItemDocumentManager::addForeignKey(
-    QByteArray sourceQualifier, int sourceSection,
-    QByteArray referenceQualifier, int referenceSection,
+    Utf8String sourceQualifier, int sourceSection,
+    Utf8String referenceQualifier, int referenceSection,
     OnChangePolicy onUpdatePolicy, OnChangePolicy onDeletePolicy) {
   _foreignKeys.append(
         ForeignKey(sourceQualifier, sourceSection, referenceQualifier,
@@ -214,7 +214,7 @@ void SharedUiItemDocumentManager::addForeignKey(
 }
 
 void SharedUiItemDocumentManager::addChangeItemTrigger(
-    QByteArray idQualifier, TriggerFlags flags, ChangeItemTrigger trigger) {
+    Utf8String idQualifier, TriggerFlags flags, ChangeItemTrigger trigger) {
   if (flags & BeforeUpdate)
     _triggersBeforeUpdate.insert(idQualifier, trigger);
   if (flags & AfterUpdate)
@@ -231,7 +231,7 @@ void SharedUiItemDocumentManager::addChangeItemTrigger(
 
 bool SharedUiItemDocumentManager::checkIdsConstraints(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
-    SharedUiItem oldItem, QByteArray idQualifier, QString *errorString) {
+    SharedUiItem oldItem, Utf8String idQualifier, QString *errorString) {
   Q_ASSERT(errorString);
   if (!oldItem.isNull()) {
     if (oldItem.idQualifier() != idQualifier) {
@@ -262,7 +262,7 @@ bool SharedUiItemDocumentManager::checkIdsConstraints(
 
 bool SharedUiItemDocumentManager::processBeforeUpdate(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
-    SharedUiItem oldItem, QByteArray idQualifier, QString *errorString) {
+    SharedUiItem oldItem, Utf8String idQualifier, QString *errorString) {
   Q_UNUSED(transaction)
   if (!checkIdsConstraints(transaction, *newItem, oldItem, idQualifier,
                            errorString))
@@ -275,7 +275,7 @@ bool SharedUiItemDocumentManager::processBeforeUpdate(
 
 bool SharedUiItemDocumentManager::processBeforeCreate(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
-    QByteArray idQualifier, QString *errorString) {
+    Utf8String idQualifier, QString *errorString) {
   Q_UNUSED(transaction)
   if (!checkIdsConstraints(transaction, *newItem, SharedUiItem(), idQualifier,
                            errorString))
@@ -289,7 +289,7 @@ bool SharedUiItemDocumentManager::processBeforeCreate(
 
 bool SharedUiItemDocumentManager::processBeforeDelete(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem oldItem,
-    QByteArray idQualifier, QString *errorString) {
+    Utf8String idQualifier, QString *errorString) {
   Q_UNUSED(transaction)
   if (!checkIdsConstraints(transaction, SharedUiItem(), oldItem, idQualifier,
                            errorString))
@@ -305,12 +305,12 @@ bool SharedUiItemDocumentManager::processBeforeDelete(
 
 bool SharedUiItemDocumentManager::processAfterUpdate(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
-    SharedUiItem oldItem, QByteArray idQualifier, QString *errorString) {
+    SharedUiItem oldItem, Utf8String idQualifier, QString *errorString) {
   foreach (const ForeignKey &fk, _foreignKeys) {
     // foreign keys referencing this item
     if (fk._referenceQualifier == idQualifier) {
-      QByteArray newReferenceId = newItem.uiUtf8(fk._referenceSection);
-      QByteArray oldReferenceId = oldItem.uiUtf8(fk._referenceSection);
+      auto newReferenceId = newItem.uiUtf8(fk._referenceSection);
+      auto oldReferenceId = oldItem.uiUtf8(fk._referenceSection);
       if (newReferenceId != oldReferenceId
           || fk._onUpdatePolicy == CascadeAnySection) {
         // on update policy
@@ -351,7 +351,7 @@ bool SharedUiItemDocumentManager::processAfterUpdate(
 
 bool SharedUiItemDocumentManager::processAfterCreate(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
-    QByteArray idQualifier, QString *errorString) {
+    Utf8String idQualifier, QString *errorString) {
   foreach (ChangeItemTrigger trigger,
            _triggersAfterCreate.values(idQualifier)) {
     SharedUiItem tmpItem = newItem;
@@ -364,7 +364,7 @@ bool SharedUiItemDocumentManager::processAfterCreate(
 
 bool SharedUiItemDocumentManager::processAfterDelete(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem oldItem,
-    QByteArray idQualifier, QString *errorString) {
+    Utf8String idQualifier, QString *errorString) {
   foreach (const ForeignKey &fk, _foreignKeys) {
     // foreign keys referencing this item
     if (fk._referenceQualifier == idQualifier) {
@@ -454,17 +454,17 @@ reference_still_exists:;
 }
 
 SharedUiItem SharedUiItemDocumentManager::itemById(
-    QByteArray, QByteArray) const {
+    Utf8String, Utf8String) const {
   return SharedUiItem();
 }
 
 SharedUiItemList<SharedUiItem> SharedUiItemDocumentManager::itemsByIdQualifier(
-    QByteArray) const {
+    Utf8String) const {
   return SharedUiItemList<SharedUiItem>();
 }
 
 bool SharedUiItemDocumentManager::prepareChangeItem(
-    SharedUiItemDocumentTransaction *, SharedUiItem, SharedUiItem, QByteArray,
+    SharedUiItemDocumentTransaction *, SharedUiItem, SharedUiItem, Utf8String,
     QString *) {
   return false;
 }

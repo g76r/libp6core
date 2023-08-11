@@ -59,8 +59,10 @@ bool SharedUiItemData::setUiData(
   Q_UNUSED(value)
   Q_UNUSED(transaction)
   Q_ASSERT(errorString != 0);
-  *errorString = "Field \""+uiHeaderData(section, Qt::DisplayRole).toString()
-      +"\" is not ui-editable for item of type "+idQualifier()+"";
+  *errorString =
+      QObject::tr("Field \"%1\" is not ui-editable for item of type %2")
+      .arg(uiHeaderData(section, Qt::DisplayRole).toString())
+      .arg(idQualifier());
   return false;
 }
 
