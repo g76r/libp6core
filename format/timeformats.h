@@ -28,8 +28,8 @@ public:
   TimeFormats() = delete;
   // TODO switch to QDateTime::toString(Qt::RFC2822Date) now that it exists
   static QString toRfc2822DateTime(QDateTime dt);
-  static QDateTime fromRfc2822DateTime(QString rfc2822DateTime,
-                                       QString *errorString = 0);
+  static QDateTime fromRfc2822DateTime(
+      const QString &rfc2822DateTime, QString *errorString = 0);
   /** e.g. "1.250 seconds", "10 months and 3 days", "-10 months and 3 days"
    * @param absolute if false, add initial "-" if msec < 0 */
   static QString toCoarseHumanReadableTimeInterval(
@@ -46,7 +46,7 @@ public:
    * - empty string defaults to pseudo-iso8601: yyyy-MM-dd hh:mm:ss,zzz
    */
   static QString toCustomTimestamp(
-      QDateTime dt, QString format = QString(),
+      QDateTime dt, QString format = {},
       RelativeDateTime relativeDateTime = RelativeDateTime(),
       QTimeZone tz = QTimeZone());
   /** Syntactic sugar over toCustomTimestamp with an multifieldSpecifiedFormat
@@ -90,7 +90,7 @@ public:
    *  Trims before analyzing pattern.
    */
   static const QTimeZone tzFromIso8601(
-    const QStringView &offset, const QTimeZone &defaultValue = QTimeZone());
+      const QString &offset, const QTimeZone &defaultValue = {});
 };
 
 #endif // TIMEFORMATS_H

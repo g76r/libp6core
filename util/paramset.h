@@ -317,7 +317,7 @@ public:
    * meaning for evaluate() and splitAndEvaluate() methods.
    * That is: replace % with %% within the string. */
   static Utf8String escape(Utf8String utf8) {
-    return utf8.isNull() ? utf8 : utf8.replace('%', "%%"_ba); }
+    return utf8.isNull() ? utf8 : utf8.replace('%', "%%"_u8); }
   /** Return a regular expression that matches any string that can result
    * in evaluation of the rawValue.
    * For instance "foo%{=date:yyyy}-%{bar}.log" is converted into some pattern

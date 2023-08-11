@@ -18,6 +18,8 @@
 #include "log/log.h"
 
 const QList<char> Utf8String::AsciiWhitespace = { ' ', '\t', '\n', '\r', '\v' };
+const Utf8String Utf8String::ReplacementCharacterUtf8 = "\xef\xbf\xbd"_u8;
+const Utf8String Utf8String::Empty = ""_u8;
 
 template<typename F>
 static inline F toFloating(
@@ -205,11 +207,11 @@ bool Utf8String::toBool(bool *ok, bool def) const {
   auto s = static_cast<QByteArray>(trimmed()).toLower();
   bool _ok = true;
   qlonglong i;
-  if (s == "true"_ba) {
+  if (s == "true") {
     b = true;
     goto found;
   }
-  if (s == "false"_ba) {
+  if (s == "false") {
     b = false;
     goto found;
   }
@@ -221,60 +223,6 @@ found:
   if (ok)
     *ok = _ok;
   return b;
-}
-
-Utf8String Utf8String::encode(char32_t c) {
-  if (c <= 0x7f) {
-    unsigned char a = c & 0x7f;
-    return Utf8String(&a, 1);
-  }
-  if (c <= 0x7ff) {
-    unsigned char s[2];
-    s[0] = 0b11000000 + (c >> 6);
-    s[1] = 0b10000000 + (c & 0b111111);
-    return Utf8String(s, sizeof s);
-  }
-  if (c >= 0xd800 && c <= 0xdfff) // RFC 3629: surrogate halves are invalid
-    return "\ufffd"_u8;
-  if (c <= 0xffff) {
-    unsigned char s[3];
-    s[0] = 0b11100000 + (c >> 12);
-    s[1] = 0b10000000 + ((c >> 6) & 0b111111);
-    s[2] = 0b10000000 + (c & 0b111111);
-    return Utf8String(s, sizeof s);
-  }
-  if (c >= 0x10ffff) // RFC 3629: > 0x10ffff are invalid
-    return "\ufffd"_u8;
-  if (c <= 0x1fffff) {
-    unsigned char s[4];
-    s[0] = 0b11110000 + (c >> 18);
-    s[1] = 0b10000000 + ((c >> 12) & 0b111111);
-    s[2] = 0b10000000 + ((c >> 6) & 0b111111);
-    s[3] = 0b10000000 + (c & 0b111111);
-    return Utf8String(s, sizeof s);
-  }
-#if 0
-  if (c <= 0x3ffffff) {
-    unsigned char s[5];
-    s[0] = 0b11111000 + (c >> 24);
-    s[1] = 0b10000000 + ((c >> 18) & 0b111111);
-    s[2] = 0b10000000 + ((c >> 12) & 0b111111);
-    s[3] = 0b10000000 + ((c >> 6) & 0b111111);
-    s[4] = 0b10000000 + (c & 0b111111);
-    return Utf8String(s, sizeof s);
-  }
-  if (c <= 0x7fffffff) {
-    unsigned char s[6];
-    s[0] = 0b11111100 + (c >> 30);
-    s[1] = 0b10000000 + ((c >> 24) & 0b111111);
-    s[2] = 0b10000000 + ((c >> 18) & 0b111111);
-    s[3] = 0b10000000 + ((c >> 12) & 0b111111);
-    s[4] = 0b10000000 + ((c >> 6) & 0b111111);
-    s[5] = 0b10000000 + (c & 0b111111);
-    return Utf8String(s, sizeof s);
-  }
-#endif
-  return "\ufffd"_u8;
 }
 
 static inline const char *first_char(const char *&s, const char *end) {
@@ -326,6 +274,25 @@ qsizetype Utf8String::utf8Size() const {
   while (next_char(s, end))
     ++i;
   return i;
+}
+
+Utf8String Utf8String::utf8Value(
+    qsizetype i, const char *s, qsizetype len, const Utf8String &def) {
+  Q_ASSERT(s);
+  Q_ASSERT(len >= 0);
+  auto end = s + len;
+  if (!first_char(s, end))
+    return def;
+  qsizetype j = 0;
+  while (j < i && next_char(s, end))
+    ++j;
+  return Utf8String(s, end-s);
+}
+
+char32_t Utf8String::utf32Value(
+    qsizetype i, const char *s, qsizetype len, const char32_t def) {
+  Utf8String utf8 = utf8Value(i, s, len, {});
+  return utf8.isNull() ? def : decodeUtf8(utf8);
 }
 
 Utf8String Utf8String::utf8Left(qsizetype len) const {

@@ -313,22 +313,22 @@ public:
     }
   }
   inline LogHelper &operator<<(const Utf8String &o) {
-    _message.append(o); return *this; }
+    _message += o; return *this; }
   inline LogHelper &operator<<(const QByteArray &o) { // disambiguation
-    _message.append(Utf8String(o)); return *this; }
+    _message += o; return *this; }
   inline LogHelper &operator<<(const QString &o) { // disambiguation
-    _message.append(Utf8String(o)); return *this; }
+    _message += o; return *this; }
   inline LogHelper &operator<<(const QLatin1StringView &o) { // disambiguation
-    _message.append(Utf8String(o)); return *this; }
+    _message += QString(o); return *this; }
   inline LogHelper &operator<<(const char *o) { // disambiguation
-    _message.append(Utf8String(o)); return *this; }
+    _message += o; return *this; }
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
   inline LogHelper &operator<<(T o) { // making cstr explicit
-    _message.append(Utf8String(o)); return *this; }
+    _message += Utf8String(o); return *this; }
   inline LogHelper &operator<<(bool o) { // making cstr explicit
-    _message.append(Utf8String(o)); return *this; }
+    _message += Utf8String(o); return *this; }
   inline LogHelper &operator<<(const QVariant &o) { // making cstr explicit
-    _message.append(Utf8String(o)); return *this; }
+    _message += Utf8String(o); return *this; }
   inline LogHelper &operator<<(const QList<QByteArray> &o) {
     _message += "{ "_ba;
     for (auto ba: o)

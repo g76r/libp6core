@@ -19,9 +19,6 @@
 #include "util/paramset.h"
 
 #define ISO8601 u"yyyy-MM-ddThh:mm:ss,zzz"_s
-#define SPACE " "_ba
-#define SLASH "/"_ba
-#define NEWLINE "\n"_ba
 
 FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity,
                        bool buffered)
@@ -93,9 +90,9 @@ void FileLogger::doLog(const LogEntry &entry) {
   if (_device) [[likely]] {
     // TODO move this to LogEntry::asLogLine()
     Utf8String line =
-        entry.timestamp().toString(ISO8601).toUtf8()+SPACE
-        +entry.taskid()+SLASH+entry.execid()+SPACE+entry.location()+SPACE
-        +entry.severityToString()+SPACE+entry.message()+NEWLINE;
+        Utf8String(entry.timestamp().toString(ISO8601))+" "_u8
+        +entry.taskid()+" "_u8+entry.execid()+" "_u8+entry.location()+" "_u8
+        +entry.severityToString()+" "_u8+entry.message()+"\n"_u8;
     //qDebug() << "***log" << line;
     //if (_pathPattern.endsWith(".slow") && (QTime::currentTime().second()/10)%2)
     //  ::usleep(1000000);

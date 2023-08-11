@@ -62,8 +62,8 @@ QAbstractSocket *HttpResponse::output() {
     return DummySocket::singletonInstance();
   if (!d->_headersSent) {
     Utf8String ba;
-    ba = "HTTP/1.1 "_u8 + Utf8String::number(d->_status) + " "
-        + statusAsString(d->_status) + "\r\n";
+    ba = "HTTP/1.1 "_u8 + Utf8String::number(d->_status) + " "_u8
+        + statusAsString(d->_status) + "\r\n"_u8;
     // LATER sanitize well-known headers (Content-Type...) values
     // LATER handle multi-line headers and special chars
     auto keys = d->_headers.keys();
@@ -128,8 +128,8 @@ void HttpResponse::redirect(Utf8String location, int status) {
   setHeader("Location"_ba, location);
   setContentType("text/html;charset=UTF-8"_ba);
   // LATER url encode
-  output()->write("<html><body>Moved. Please click on <a href=\""_ba
-                  +location+"\">this link</a>"_ba);
+  output()->write("<html><body>Moved. Please click on <a href=\""
+                  +location+"\">this link</a>");
 }
 
 static const QRegularExpression _nameRegexp {
@@ -154,7 +154,7 @@ void HttpResponse::setCookie(const Utf8String &name, const Utf8String &value,
                    << value;
     return;
   }
-  auto s = name+'='+value;
+  auto s = name+"="+value;
   if (!expires.isNull())
     s += "; Expires="_ba + TimeFormats::toRfc2822DateTime(expires).toUtf8();
   if (!path.isEmpty()) {

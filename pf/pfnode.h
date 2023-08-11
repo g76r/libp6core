@@ -186,7 +186,7 @@ public:
 
   /** A node has an empty string name if and only if the node is null. */
   QString name() const { return d ? d->_name : QString(); }
-  Utf8String utf8Name() const { return d ? d->_name.toUtf8() : Utf8String{}; }
+  Utf8String utf8Name() const { return name(); }
   /** Replace node name. If name is empty, the node will become null. */
   PfNode &setName(const QString &name) {
     if (name.isEmpty())
@@ -252,7 +252,7 @@ public:
     return child.isNull() ? defaultValue : child.contentAsString(); }
   Utf8String utf8Attribute(
       const Utf8String &name, const Utf8String &defaultValue) const {
-    PfNode child = firstTextChildByName(name.toString());
+    PfNode child = firstTextChildByName(name);
     return child.isNull() ? defaultValue : child.contentAsUtf8(); }
   /** Return the content (as string) of every child with a given name.
    * This is the same as attribute() with multi-valued semantics.
@@ -300,7 +300,7 @@ public:
     return setAttribute(name, QString::fromUtf8(content)); }
   /** Convenience method (assume content is UTF-8 encoded) */
   PfNode &setAttribute(const QString &name, const Utf8String &utf8) {
-    return setAttribute(name, QString::fromUtf8(utf8)); }
+    return setAttribute(name, utf8); }
   // LATER setAttribute() for QDateTime, QDate, QTime and QStringList/QSet<QString>
   /** Set a child named 'name' with 'content' content and remove any other child
    * named 'name'. The QStringList is formated as a space separated value list
@@ -338,8 +338,7 @@ public:
    * if isText() even if isEmpty() */
   QString contentAsString() const {
     return d ? d->contentAsString() : QString(); }
-  Utf8String contentAsUtf8() const {
-    return d ? d->contentAsString().toUtf8() : Utf8String{}; }
+  Utf8String contentAsUtf8() const { return contentAsString(); }
   /** @return integer value if the string content is a valid integer
    * C-like prefixes are supported and both kmb and kMGTP suffixes are supported
    * surrounding whitespace is trimmed

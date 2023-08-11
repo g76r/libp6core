@@ -89,7 +89,8 @@ QString TimeFormats::toRfc2822DateTime(QDateTime dt) {
   if (dt.isValid()) {
     if (dt.timeSpec() != Qt::UTC)
       dt = dt.toUTC();
-    return QString("%1, %2 %3 %4 %5:%6:%7 GMT")
+    return
+        u"%1, %2 %3 %4 %5:%6:%7 GMT"_s
         .arg(_toDaysOfWeek3.value(dt.date().dayOfWeek()))
         .arg(dt.date().day())
         .arg(_toMonth3.value(dt.date().month()))
@@ -98,11 +99,11 @@ QString TimeFormats::toRfc2822DateTime(QDateTime dt) {
         .arg(dt.time().minute(), 2, 10, QChar('0'))
         .arg(dt.time().second(), 2, 10, QChar('0'));
   } else
-    return QString();
+    return {};
 }
 
-QDateTime TimeFormats::fromRfc2822DateTime(QString rfc2822DateTime,
-                                           QString *errorString) {
+QDateTime TimeFormats::fromRfc2822DateTime(
+    const QString &rfc2822DateTime, QString *errorString) {
   auto m = _rfc2822DateTimeRE.match(rfc2822DateTime);
   if (m.hasMatch()) {
     QString s = m.captured(2);
@@ -318,11 +319,11 @@ QString TimeFormats::toCustomTimestamp(
   if (!tz.isValid())
     tz = QTimeZone::systemTimeZone();
   dt = relativeDateTime.apply(dt).toTimeZone(tz);
-  if (format.isEmpty() || format == "iso"_ba)
+  if (format.isEmpty() || format == "iso")
     return dt.toString(u"yyyy-MM-dd hh:mm:ss,zzz"_s);
-  if (format == "ms1970"_ba)
+  if (format == "ms1970")
     return QString::number(dt.toMSecsSinceEpoch());
-  if (format == "s1970"_ba)
+  if (format == "s1970")
     return QString::number(dt.toMSecsSinceEpoch()/1000);
   return dt.toString(format);
 }
@@ -344,9 +345,9 @@ const QString TimeFormats::toMultifieldSpecifiedCustomTimestamp(
 }
 
 const QTimeZone TimeFormats::tzFromIso8601(
-    const QStringView &offset, const QTimeZone &defaultValue) {
+      const QString &offset, const QTimeZone &defaultValue) {
   auto o = offset.trimmed();
-  if (o == u"Z"_s)
+  if (o == u"Z")
     return QTimeZone::utc();
   auto m = _iso8601timezoneOffsetRe.match(o);
   if (m.hasMatch())

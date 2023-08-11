@@ -31,6 +31,10 @@ class Utf8StringSet;
 class LIBP6CORESHARED_EXPORT Utf8String : public QByteArray {
 public:
   const static QList<char> AsciiWhitespace;
+  const static char32_t ReplacementCharacter = U'\ufffd';
+  const static Utf8String ReplacementCharacterUtf8;
+  const static Utf8String Empty;
+
   inline Utf8String(const QByteArray &ba = {}) : QByteArray(ba) {}
   inline Utf8String(const QByteArray &&ba) : QByteArray(ba) {}
   inline Utf8String(const QByteArrayData ba) : QByteArray(ba) {}
@@ -51,7 +55,8 @@ public:
     : QByteArray((const char *)s, size) { }
   inline Utf8String(const char *s, qsizetype size = -1)
     : QByteArray(s, size) { }
-  explicit inline Utf8String(char32_t c) : QByteArray(encode(c)) { }
+  explicit inline Utf8String(const char c) : QByteArray(&c, 1) { }
+  explicit inline Utf8String(char32_t c) : QByteArray(encodeUtf8(c)) { }
   inline ~Utf8String() {}
   //template <typename Char,if_compatible_char<Char>>
   //Utf8String(const Char *s, qsizetype size = -1) : QByteArray(s, size) { }
@@ -70,66 +75,91 @@ public:
                    : v.canConvert<QString>()
                      ? v.toString().toUtf8()
                      : QByteArray{}) { }
-  inline Utf8String &operator =(const Utf8String &other) {
-    QByteArray::operator =(other); return *this;
-  }
-  inline Utf8String &operator =(const Utf8String &&other) {
-    QByteArray::operator =(other); return *this;
-  }
-  [[nodiscard]] inline char value(qsizetype i, char defaultValue = '\0') const {
-    return size() < i+1 ? defaultValue : at(0);
-  }
-  [[nodiscard]] inline char operator[](qsizetype i) const {
-    return value(i, '\0');
-  }
+
+  [[nodiscard]] inline char value(qsizetype i, char def = 0) const {
+    return size() < i+1 || i < 0 ? def : at(i); }
+  [[nodiscard]] static Utf8String utf8Value(
+      qsizetype i, const char *s, qsizetype len,
+      const Utf8String &def = Empty);
+  [[nodiscard]] inline Utf8String utf8Value(
+      qsizetype i, const Utf8String &def = Empty) const {
+    return utf8Value(i, constData(), size(), def); }
+  [[nodiscard]] static char32_t utf32Value(
+      qsizetype i, const char *s, qsizetype len, const char32_t def = 0);
+  [[nodiscard]] inline char32_t utf32Value(
+      qsizetype i, char32_t def = 0) const {
+    return utf32Value(i, constData(), size(), def); }
+
   [[nodiscard]] inline QString toString() const {
-    return QString::fromUtf8(*this);
-  }
-  [[nodiscard]] inline AsciiString toAscii() const;
-  operator char *() const = delete;
-  operator void *() const = delete;
-  static Utf8String encode(char32_t c);
-  QByteArray toLower() = delete;
-  QByteArray toUpper() = delete;
-  QByteArray isLower() = delete;
-  QByteArray isUpper() = delete;
-  /** Return utf8 characters count. */
-  qsizetype utf8Size() const;
-  Utf8String trimmed() const { return QByteArray::trimmed(); }
+    return QString::fromUtf8(*this); }
+
+  [[nodiscard]] static inline Utf8String encodeUtf8(char32_t c);
+  [[nodiscard]] static inline char32_t decodeUtf8(
+      const char *s, qsizetype len);
+  [[nodiscard]] static inline char32_t decodeUtf8(const QByteArray &s) {
+    return decodeUtf8(s.constData(), s.size()); }
+  [[nodiscard]] static inline char32_t decodeUtf8(const char *s) {
+    return s ? decodeUtf8(s, ::strlen(s)) : 0; }
+
+  QByteArray toLower() = delete; // FIXME
+  QByteArray toUpper() = delete; // FIXME
+  QByteArray isLower() = delete; // FIXME
+  QByteArray isUpper() = delete; // FIXME
+  /** Set the characters to title case.
+   * For most letters, title case is the same than upper case, but for some
+   * rare characters representing several letters at once, there is a title case
+   * for which the first letter is in upper case and others in lower cases.
+   * For instance ǆ minuscule (unicode: 0x1C6) is mapped to Ǆ majuscule
+   * (unicode: 0x1C4) and to ǅ title case letter (unicode: 0x1C5)
+   */
+  Utf8String toTitle();
+  // FIXME inline int compare(QByteArrayView a, Qt::CaseSensitivity cs) const noexcept;
+
+  /** Return utf8 characters count. Count utf8 sequences without ensuring
+    * their validity, so with invalid utf8 data this may overestimates. */
+  [[nodiscard]] qsizetype utf8Size() const;
+  [[nodiscard]] Utf8String trimmed() const { return QByteArray::trimmed(); }
   Utf8String &trim() { *this = trimmed(); return *this; }
+  inline Utf8String &fill(char c, qsizetype size = -1) {
+    QByteArray::fill(c, size); return *this; }
+
   /** Return leftmost len bytes. Empty if len < 0. */
-  Utf8String left(qsizetype len) const { return QByteArray::left(len); }
+  [[nodiscard]] Utf8String left(qsizetype len) const {
+    return QByteArray::left(len); }
   /** Return rightmost len bytes. Empty if len < 0. */
-  Utf8String right(qsizetype len) const { return QByteArray::right(len); }
+  [[nodiscard]] Utf8String right(qsizetype len) const {
+    return QByteArray::right(len); }
   /** Return len bytes starting at pos.
    *  Everything after pos if len < 0 or pos+len > size(). */
-  Utf8String mid(qsizetype pos, qsizetype len = -1) const {
+  [[nodiscard]] Utf8String mid(qsizetype pos, qsizetype len = -1) const {
     return QByteArray::mid(pos, len); }
   /** Return leftmost len utf8 characters. */
-  Utf8String utf8Left(qsizetype len) const;
+  [[nodiscard]] Utf8String utf8Left(qsizetype len) const;
   /** Return rightmost len utf8 characters. */
-  Utf8String utf8Right(qsizetype len) const;
+  [[nodiscard]] Utf8String utf8Right(qsizetype len) const;
   /** Return len utf8 characters starting at pos.
    *  Everything after pos if len < 0 or pos+len > size(). */
-  Utf8String utf8Mid(qsizetype pos, qsizetype len = -1) const;
+  [[nodiscard]] Utf8String utf8Mid(qsizetype pos, qsizetype len = -1) const;
+
   /** Splitting utf8 string on ascii 7 separators, e.g. {',',';'}
     * @see Utf8String::AsciiWhitespace */
-  const Utf8StringList split(QList<char> seps, qsizetype offset = 0,
+  [[nodiscard]] const Utf8StringList split(
+      QList<char> seps, qsizetype offset = 0,
       Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
   /** Splitting utf8 string on ascii 7 separators, e.g. {',',';'}
     * @see Utf8String::AsciiWhitespace */
-  const Utf8StringList split(
+  [[nodiscard]] const Utf8StringList split(
       QList<char> seps, Qt::SplitBehavior behavior) const;
   /** Splitting utf8 string on ascii 7 separator, e.g. ' ' */
-  const Utf8StringList split(
+  [[nodiscard]] const Utf8StringList split(
       const char sep, const qsizetype offset = 0,
       Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
   /** Splitting utf8 string on ascii 7 separator, e.g. ' ' */
-  const Utf8StringList split(
+  [[nodiscard]] const Utf8StringList split(
       const char sep, Qt::SplitBehavior behavior) const;
   /** Splitting utf8 string on multi-byte (utf8) or multi-char separator,
    *  e.g. "-->", "💩"_u8, U'💩', "<≠>"_u8 */
-  const Utf8StringList split(Utf8String sep, qsizetype offset = 0,
+  [[nodiscard]] const Utf8StringList split(Utf8String sep, qsizetype offset = 0,
       Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
   /** Split the string using its first utf8 char as a delimiter.
    *  e.g. "/foo/bar/g" -> { "foo", "bar", "g" }
@@ -138,64 +168,259 @@ public:
    *  e.g. "越foo越bar越g" -> { "foo", "bar", "g" }
    *  e.g. "💩foo💩bar💩g" -> { "foo", "bar", "g" }
    */
-  const Utf8StringList splitByLeadingChar(qsizetype offset = 0) const;
+  [[nodiscard]] const Utf8StringList splitByLeadingChar(
+      qsizetype offset = 0) const;
+
   /** Converts to floating point, supporting e notation and SI suffixes from 'f'
    *  to 'P', 'u' is used as 1e-6 suffix. */
-  double toDouble(bool *ok = nullptr, double def = 0.0,
-                  bool suffixes_enabled = true) const;
+  [[nodiscard]] double toDouble(bool *ok = nullptr, double def = 0.0,
+                                bool suffixes_enabled = true) const;
   /** Converts to floating point, supporting e notation and SI suffixes from 'f'
    *  to 'P', 'u' is used as 1e-6 suffix. */
-  float toFloat(bool *ok = nullptr, float def = 0.0,
-                bool suffixes_enabled = true) const;
+  [[nodiscard]] float toFloat(bool *ok = nullptr, float def = 0.0,
+                              bool suffixes_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
    *  C prefixes are supported "0x" "0" and "0b". */
-  qlonglong toLongLong(bool *ok = nullptr, int base = 0, qlonglong def = 0,
-                       bool suffixes_enabled = true) const;
+  [[nodiscard]] qlonglong toLongLong(
+      bool *ok = nullptr, int base = 0, qlonglong def = 0,
+      bool suffixes_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
    *  C prefixes are supported "0x" "0" and "0b". */
-  qulonglong toULongLong(bool *ok = nullptr, int base = 0, qulonglong def = 0,
-                         bool suffixes_enabled = true) const;
+  [[nodiscard]] qulonglong toULongLong(
+      bool *ok = nullptr, int base = 0, qulonglong def = 0,
+      bool suffixes_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
    *  C prefixes are supported "0x" "0" and "0b". */
-  long toLong(bool *ok = nullptr, int base = 0, long def = 0,
-              bool suffixes_enabled = true) const;
+  [[nodiscard]] long toLong(bool *ok = nullptr, int base = 0, long def = 0,
+                            bool suffixes_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
    *  C prefixes are supported "0x" "0" and "0b". */
-  ulong toULong(bool *ok = nullptr, int base = 0, ulong def = 0,
-                bool suffixes_enabled = true) const;
+  [[nodiscard]] ulong toULong(bool *ok = nullptr, int base = 0, ulong def = 0,
+                              bool suffixes_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
    *  C prefixes are supported "0x" "0" and "0b". */
-  int toInt(bool *ok = nullptr, int base = 0, int def = 0,
-            bool suffixes_enabled = true) const;
+  [[nodiscard]] int toInt(bool *ok = nullptr, int base = 0, int def = 0,
+                          bool suffixes_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
    *  C prefixes are supported "0x" "0" and "0b". */
-  uint toUInt(bool *ok = nullptr, int base = 0, uint def = 0,
-              bool suffixes_enabled = true) const;
+  [[nodiscard]] uint toUInt(bool *ok = nullptr, int base = 0, uint def = 0,
+                            bool suffixes_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
    *  C prefixes are supported "0x" "0" and "0b". */
-  short toShort(bool *ok = nullptr, int base = 0, short def = 0,
-                bool suffixes_enabled = true) const;
+  [[nodiscard]] short toShort(bool *ok = nullptr, int base = 0, short def = 0,
+                              bool suffixes_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
    *  C prefixes are supported "0x" "0" and "0b". */
-  ushort toUShort(bool *ok = nullptr, int base = 0, ushort def = 0,
-                  bool suffixes_enabled = true) const;
+  [[nodiscard]] ushort toUShort(
+      bool *ok = nullptr, int base = 0, ushort def = 0,
+      bool suffixes_enabled = true) const;
   /** Converts to bool, supporting case insensitive "true" and "false", and any
    *  number, 0 being false and everything else true. */
-  bool toBool(bool *ok = nullptr, bool def = false) const;
+  [[nodiscard]] bool toBool(bool *ok = nullptr, bool def = false) const;
+  [[nodiscard]] inline Utf8String toBase64(
+      Base64Options options = Base64Encoding) const {
+    return QByteArray::toBase64(options); }
+  [[nodiscard]] inline Utf8String toHex(char separator = '\0') const {
+    return QByteArray::toHex(separator); }
+  [[nodiscard]] inline Utf8String toPercentEncoding(
+      const QByteArray &exclude = {}, const QByteArray &include = {},
+      char percent = '%') const {
+    return QByteArray::toPercentEncoding(exclude, include, percent); }
+  [[nodiscard]] inline Utf8String percentDecoded(char percent = '%') const {
+    return QByteArray::percentDecoded(percent); }
+
+  [[nodiscard]] static inline Utf8String number(int i, int base = 10) {
+    return QByteArray::number(i, base); }
+  [[nodiscard]] static inline Utf8String number(uint i, int base = 10) {
+    return QByteArray::number(i, base); }
+  [[nodiscard]] static inline Utf8String number(long i, int base = 10) {
+    return QByteArray::number(i, base); }
+  [[nodiscard]] static inline Utf8String number(ulong i, int base = 10) {
+    return QByteArray::number(i, base); }
+  [[nodiscard]] static inline Utf8String number(qlonglong i, int base = 10) {
+    return QByteArray::number(i, base); }
+  [[nodiscard]] static inline Utf8String number(qulonglong i, int base = 10) {
+    return QByteArray::number(i, base); }
+  [[nodiscard]] static inline Utf8String number(
+      double d, char format = 'g', int precision = 6) {
+    return QByteArray::number(d, format, precision); }
+
+  [[nodiscard]] inline Utf8String first(qsizetype n) const {
+    return QByteArray::first(n); }
+  [[nodiscard]] inline Utf8String last(qsizetype n) const {
+    return QByteArray::last(n); }
+  [[nodiscard]] inline Utf8String sliced(qsizetype pos) const {
+    return QByteArray::sliced(pos); }
+  [[nodiscard]] inline Utf8String sliced(qsizetype pos, qsizetype n) const {
+    return QByteArray::sliced(pos, n); }
+  [[nodiscard]] inline Utf8String chopped(qsizetype len) const {
+    return QByteArray::chopped(len); }
+
+  inline Utf8String &replace(
+      qsizetype index, qsizetype len, const char *s, qsizetype alen)
+  { return replace(index, len, QByteArrayView(s, alen)); }
+  inline Utf8String &replace(
+      qsizetype index, qsizetype len, const Utf8String &s) {
+    QByteArray::replace(index, len, s); return *this; }
+  inline Utf8String &replace(char before, const Utf8String &after) {
+    QByteArray::replace(before, after); return *this; }
+  inline Utf8String &replace(
+      const char *before, qsizetype bsize, const char *after, qsizetype asize) {
+    QByteArray::replace(QByteArrayView(before, bsize),
+                        QByteArrayView(after, asize)); return *this; }
+  inline Utf8String &replace(
+      const Utf8String &before, const Utf8String &after) {
+    QByteArray::replace(before, after); return *this; }
+  inline Utf8String &replace(char before, char after) {
+    QByteArray::replace(before, after); return *this; }
+
+  inline Utf8String &append(char c) {
+    QByteArray::append(c); return *this; }
+  inline Utf8String &append(qsizetype count, char c) {
+    QByteArray::append(count, c); return *this; }
+  inline Utf8String &append(const char *s) {
+    QByteArray::append(s); return *this; }
+  inline Utf8String &append(const char *s, qsizetype len) {
+    QByteArray::append(s, len); return *this; }
+  inline Utf8String &append(const QByteArray &a) {
+    QByteArray::append(a); return *this; }
+  inline Utf8String &append(QByteArrayView a) {
+    QByteArray::append(a); return *this; }
+
+  inline Utf8String &prepend(char c) {
+    QByteArray::prepend(c); return *this; }
+  inline Utf8String &prepend(qsizetype count, char c) {
+    QByteArray::prepend(count, c); return *this; }
+  inline Utf8String &prepend(const char *s) {
+    QByteArray::prepend(s); return *this; }
+  inline Utf8String &prepend(const char *s, qsizetype len) {
+    QByteArray::prepend(s, len); return *this; }
+  inline Utf8String &prepend(const QByteArray &a) {
+    QByteArray::prepend(a); return *this; }
+  inline Utf8String &prepend(QByteArrayView a) {
+    QByteArray::prepend(a); return *this; }
+
+  inline Utf8String &insert(qsizetype i, QByteArrayView data) {
+    QByteArray::insert(i, data); return *this; }
+  inline Utf8String &insert(qsizetype i, const char *s) {
+    QByteArray::insert(i, s); return *this; }
+  inline Utf8String &insert(qsizetype i, const QByteArray &data) {
+    QByteArray::insert(i, data); return *this; }
+  inline Utf8String &insert(qsizetype i, qsizetype count, char c) {
+    QByteArray::insert(i, count, c); return *this; }
+  inline Utf8String &insert(qsizetype i, char c) {
+    QByteArray::insert(i, c); return *this; }
+  inline Utf8String &insert(qsizetype i, const char *s, qsizetype len) {
+    QByteArray::insert(i, s, len); return *this; }
+
+  inline Utf8String &remove(qsizetype index, qsizetype len) {
+    QByteArray::remove(index, len); return *this;}
+  inline Utf8String &removeAt(qsizetype pos) {
+    QByteArray::removeAt(pos); return *this;}
+  inline Utf8String &removeFirst() { QByteArray::removeFirst(); return *this;}
+  inline Utf8String &removeLast() { QByteArray::removeLast(); return *this;}
+
+  inline Utf8String &operator+=(const Utf8String &s) {
+    QByteArray::operator+=(s); return *this; }
+  inline Utf8String &operator+=(const QByteArray &ba) {
+    QByteArray::operator+=(ba); return *this; }
+  inline Utf8String &operator+=(char ch) {
+    QByteArray::operator+=(ch); return *this; }
+  inline Utf8String &operator+=(const char *s) {
+    QByteArray::operator+=(s); return *this; }
+
+  inline Utf8String &operator=(const Utf8String &other) {
+    QByteArray::operator =(other); return *this; }
+  inline Utf8String &operator=(const Utf8String &&other) {
+    QByteArray::operator =(other); return *this; }
+  inline Utf8String &operator=(const QByteArray &ba) {
+    QByteArray::operator=(ba); return *this; }
+  inline Utf8String &operator=(const QString &s) {
+    return operator=(s.toUtf8()); }
+//  inline Utf8String &operator=(char ch) {
+//    QByteArray::operator=(ch); return *this; }
+  inline Utf8String &operator=(const char *s) {
+    QByteArray::operator=(s); return *this; }
+
+  using QByteArray::operator<;
+  friend inline bool operator<(const Utf8String &x, const Utf8String &y)
+  noexcept { return static_cast<const QByteArray&>(x) <
+        static_cast<const QByteArray&>(y); }
+  friend inline bool operator<(const Utf8String &x, const QByteArray &y)
+  noexcept { return static_cast<const QByteArray&>(x) < y; }
+  friend inline bool operator<(const QByteArray &x, const Utf8String &y)
+  noexcept { return x < static_cast<const QByteArray&>(y); }
+  friend inline bool operator<(const Utf8String &x, const char *y)
+  noexcept { return static_cast<const QByteArray&>(x) < y; }
+  friend inline bool operator<(const char *x, const Utf8String &y)
+  noexcept { return x < static_cast<const QByteArray&>(y); }
+
+  using QByteArray::operator<=;
+  friend inline bool operator<=(const Utf8String &x, const Utf8String &y)
+  noexcept { return static_cast<const QByteArray&>(x) <=
+        static_cast<const QByteArray&>(y); }
+  friend inline bool operator<=(const Utf8String &x, const QByteArray &y)
+  noexcept { return static_cast<const QByteArray&>(x) <= y; }
+  friend inline bool operator<=(const QByteArray &x, const Utf8String &y)
+  noexcept { return x <= static_cast<const QByteArray&>(y); }
+  friend inline bool operator<=(const Utf8String &x, const char *y)
+  noexcept { return static_cast<const QByteArray&>(x) <= y; }
+  friend inline bool operator<=(const char *x, const Utf8String &y)
+  noexcept { return x <= static_cast<const QByteArray&>(y); }
+
+  using QByteArray::operator==;
+  friend inline bool operator==(const Utf8String &x, const Utf8String &y)
+  noexcept { return static_cast<const QByteArray&>(x) ==
+        static_cast<const QByteArray&>(y); }
+  friend inline bool operator==(const Utf8String &x, const QByteArray &y)
+  noexcept { return static_cast<const QByteArray&>(x) == y; }
+  friend inline bool operator==(const QByteArray &x, const Utf8String &y)
+  noexcept { return x == static_cast<const QByteArray&>(y); }
+  friend inline bool operator==(const Utf8String &x, const char *y)
+  noexcept { return static_cast<const QByteArray&>(x) == y; }
+  friend inline bool operator==(const char *x, const Utf8String &y)
+  noexcept { return x == static_cast<const QByteArray&>(y); }
+
+  using QByteArray::operator>=;
+  friend inline bool operator>=(const Utf8String &x, const Utf8String &y)
+  noexcept { return static_cast<const QByteArray&>(x) >=
+        static_cast<const QByteArray&>(y); }
+  friend inline bool operator>=(const Utf8String &x, const QByteArray &y)
+  noexcept { return static_cast<const QByteArray&>(x) >= y; }
+  friend inline bool operator>=(const QByteArray &x, const Utf8String &y)
+  noexcept { return x >= static_cast<const QByteArray&>(y); }
+  friend inline bool operator>=(const Utf8String &x, const char *y)
+  noexcept { return static_cast<const QByteArray&>(x) >= y; }
+  friend inline bool operator>=(const char *x, const Utf8String &y)
+  noexcept { return x >= static_cast<const QByteArray&>(y); }
+
+  using QByteArray::operator>;
+  friend inline bool operator>(const Utf8String &x, const Utf8String &y)
+  noexcept { return static_cast<const QByteArray&>(x) >
+        static_cast<const QByteArray&>(y); }
+  friend inline bool operator>(const Utf8String &x, const QByteArray &y)
+  noexcept { return static_cast<const QByteArray&>(x) > y; }
+  friend inline bool operator>(const QByteArray &x, const Utf8String &y)
+  noexcept { return x > static_cast<const QByteArray&>(y); }
+  friend inline bool operator>(const Utf8String &x, const char *y)
+  noexcept { return static_cast<const QByteArray&>(x) > y; }
+  friend inline bool operator>(const char *x, const Utf8String &y)
+  noexcept { return x > static_cast<const QByteArray&>(y); }
 };
 
 Q_DECLARE_METATYPE(Utf8String)
 
 inline Utf8String operator"" _u8(const char *str, size_t size) noexcept {
-  return Utf8String(QByteArrayData(nullptr, const_cast<char *>(str), qsizetype(size)));
+  return Utf8String(QByteArrayData(nullptr, const_cast<char *>(str),
+                                   qsizetype(size)));
 }
 
 #if __cplusplus >= 202002L
@@ -204,69 +429,136 @@ inline Utf8String operator"" _u8(const char8_t *str, size_t size) noexcept {
 }
 #endif
 
+inline Utf8String operator+(const Utf8String &a1, const Utf8String &a2) {
+  return Utf8String(a1) += a2; }
+inline Utf8String operator+(Utf8String &&lhs, const Utf8String &rhs) {
+  return std::move(lhs += rhs); }
+
+inline Utf8String operator+(const Utf8String &a1, const QByteArray &a2) {
+  return Utf8String(a1) += a2; }
+inline Utf8String operator+(Utf8String &&lhs, const QByteArray &rhs) {
+  return std::move(lhs += rhs); }
+inline Utf8String operator+(const QByteArray &a1, const Utf8String &a2) {
+  return Utf8String(a1) += a2; }
+
+inline Utf8String operator+(const Utf8String &a1, const QString &a2) {
+  return Utf8String(a1) += Utf8String(a2); }
+inline Utf8String operator+(Utf8String &&lhs, const QString &rhs) {
+  return std::move(lhs += Utf8String(rhs)); }
+inline Utf8String operator+(const QString &a1, const Utf8String &a2) {
+  return Utf8String(a1) += a2; }
+
+inline Utf8String operator+(const Utf8String &a1, const char *a2) {
+  return Utf8String(a1) += a2; }
+inline Utf8String operator+(Utf8String &&lhs, const char *rhs) {
+  return std::move(lhs += rhs); }
+inline Utf8String operator+(const char *a1, const Utf8String &a2) {
+  return Utf8String(a1) += a2; }
+
+//inline Utf8String operator+(const Utf8String &a1, char a2) {
+//  return Utf8String(a1) += a2; }
+//inline Utf8String operator+(Utf8String &&lhs, char rhs) {
+//  return std::move(lhs += rhs); }
+//inline Utf8String operator+(char a1, const Utf8String &a2) {
+//  return Utf8String(&a1, 1) += a2; }
+
 QDebug LIBP6CORESHARED_EXPORT operator<<(QDebug dbg, const Utf8String &s);
 
-#if 0
-class LIBP6CORESHARED_EXPORT AsciiString : public Utf8String {
-public:
-  //struct AsciiLiteral {
-  //  const char *str;
-  //  size_t size;
-  //};
-  friend AsciiString operator"" _a7(const char *str, size_t size) noexcept;
-  //inline AsciiString(QByteArrayData ba) : Utf8String(ba) {}
-public:
-  AsciiString(Utf8String s) : Utf8String(stripNonAsciiChars(s)) { }
-  //AsciiString(AsciiLiteral l)
-  //  : Utf8String(QByteArrayData(nullptr, const_cast<char *>(l.str),
-  //                              qsizetype(l.size))) { }
-  [[nodiscard]] static QByteArray stripNonAsciiChars(const QByteArray &source) {
-    auto size = source.size();
-    char ascii[size];
-    int j = 0;
-    for (int i = 0; i < size; ++i)
-      if (isascii(source[i]))
-        ascii[j++] = source[i];
-    return QByteArray(ascii, j);
-  }
-  using QByteArray::toLower;
-  using QByteArray::toUpper;
-  using QByteArray::isLower;
-  using QByteArray::isUpper;
-};
-
-Q_DECLARE_METATYPE(AsciiString)
-
-/*inline constexpr AsciiString::AsciiLiteral operator"" _a7(
-    const char * const str, size_t size) noexcept {
-  for (size_t i = 0; i < size; ++i)
-    static_assert(!(str[i] & 0x80), "operator \"\"_a7 disallows 8 bit chars");
-  return {str, size};
-}*/
-
-/*inline constexpr size_t ensure_ascii7(const char *str, size_t size) {
-  for (size_t i = 0; i < size; ++i)
-    if (!!(str[i] & 0x80))
-      throw;
-  return size;
-}*/
-
-inline AsciiString operator"" _a7(const char *str, size_t size) noexcept {
-  // TODO ensure that no 8 bit data is including, in a compile-time way
-  //for (size_t i = 0; i < size; ++i)
-  //  if (!!(str[i] & 0x80))
-  //    throw;
-  //auto dummy = ensure_ascii7(str, size);
-  return AsciiString(QByteArrayData(nullptr, const_cast<char *>(str), qsizetype(size)));
-}
-
-//static auto a = "foo"_a7;
-//static auto b = "é"_a7;
-//static auto c = "ésdflkj"_u8;
-
-AsciiString Utf8String::toAscii() const {
-  return AsciiString(*this);
-}
+char32_t Utf8String::decodeUtf8(const char *s, qsizetype len) {
+  auto c = reinterpret_cast<const unsigned char *>(s);
+  Q_ASSERT(s);
+  Q_ASSERT(len > 0);
+  if (c[0] <= 0x7f)
+    return *s;
+  if ((c[0] & 0b01000000) == 0 && len > 1)
+    return (c[0] & 0b00111111) << 6 | (c[1] & 0b00111111);
+  if ((c[0] & 0b00100000) == 0 && len > 2) {
+    char32_t u = ((c[0] & 0b00011111) << 12) | ((c[1] & 0b00111111) << 6)
+        | (c[2] & 0b00111111);
+#if !UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629
+    if (u >= 0xd800 && u <= 0xdfff) // RFC 3629: surrogate halves are invalid
+      return ReplacementCharacter;
 #endif
+    return u;
+  }
+  if ((c[0] & 0b00010000) == 0 && len > 3) {
+    char32_t u = ((c[0] & 0b00001111) << 18) | ((c[1] & 0b00111111) << 12)
+        | ((c[2] & 0b00111111) << 6) | (c[3] & 0b00111111);
+#if !UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629
+    if (u >= 0x10ffff) // RFC 3629: > 0x10ffff are invalid
+      return ReplacementCharacter;
+#endif
+    return u;
+  }
+#if UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629 // RFC 3629: > 0x10ffff are invalid
+  if ((c[0] & 0b00001000) == 0 && len > 4)
+    return ((c[0] & 0b00000111) << 24) | ((c[1] & 0b00111111) << 18)
+        | ((c[2] & 0b00111111) << 12) | ((c[3] & 0b00111111) << 6)
+        | (c[4] & 0b00111111);
+  if ((c[0] & 0b00000100) == 0 && len > 5)
+    return ((c[0] & 0b00000011) << 30) | ((c[1] & 0b00111111) << 24)
+        | ((c[2] & 0b00111111) << 18) | ((c[3] & 0b00111111) << 12)
+        | ((c[4] & 0b00111111) << 6) | (c[5] & 0b00111111);
+#endif
+  return ReplacementCharacter;
+}
+
+Utf8String Utf8String::encodeUtf8(char32_t c) {
+  if (c <= 0x7f) {
+    unsigned char a = c & 0x7f;
+    return Utf8String(&a, 1);
+  }
+  if (c <= 0x7ff) {
+    unsigned char s[2];
+    s[0] = 0b11000000 + (c >> 6);
+    s[1] = 0b10000000 + (c & 0b111111);
+    return Utf8String(s, sizeof s);
+  }
+#if !UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629
+  if (c >= 0xd800 && c <= 0xdfff) // RFC 3629: surrogate halves are invalid
+    return ReplacementCharacterUtf8;
+#endif
+  if (c <= 0xffff) {
+    unsigned char s[3];
+    s[0] = 0b11100000 + (c >> 12);
+    s[1] = 0b10000000 + ((c >> 6) & 0b111111);
+    s[2] = 0b10000000 + (c & 0b111111);
+    return Utf8String(s, sizeof s);
+  }
+#if !UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629
+  if (c >= 0x10ffff) // RFC 3629: > 0x10ffff are invalid
+    return ReplacementCharacterUtf8;
+#endif
+  if (c <= 0x1fffff) {
+    unsigned char s[4];
+    s[0] = 0b11110000 + (c >> 18);
+    s[1] = 0b10000000 + ((c >> 12) & 0b111111);
+    s[2] = 0b10000000 + ((c >> 6) & 0b111111);
+    s[3] = 0b10000000 + (c & 0b111111);
+    return Utf8String(s, sizeof s);
+  }
+#if UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629 // RFC 3629: > 0x10ffff are invalid
+  if (c <= 0x3ffffff) {
+    unsigned char s[5];
+    s[0] = 0b11111000 + (c >> 24);
+    s[1] = 0b10000000 + ((c >> 18) & 0b111111);
+    s[2] = 0b10000000 + ((c >> 12) & 0b111111);
+    s[3] = 0b10000000 + ((c >> 6) & 0b111111);
+    s[4] = 0b10000000 + (c & 0b111111);
+    return Utf8String(s, sizeof s);
+  }
+  if (c <= 0x7fffffff) {
+    unsigned char s[6];
+    s[0] = 0b11111100 + (c >> 30);
+    s[1] = 0b10000000 + ((c >> 24) & 0b111111);
+    s[2] = 0b10000000 + ((c >> 18) & 0b111111);
+    s[3] = 0b10000000 + ((c >> 12) & 0b111111);
+    s[4] = 0b10000000 + ((c >> 6) & 0b111111);
+    s[5] = 0b10000000 + (c & 0b111111);
+    return Utf8String(s, sizeof s);
+  }
+#endif
+  return ReplacementCharacterUtf8;
+}
 
 #endif // UTF8STRING_H

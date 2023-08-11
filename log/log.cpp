@@ -165,7 +165,7 @@ QStringList Log::pathsToAllLogs() {
 
 static void qtLogSamePatternWrapper(
     QtMsgType type, const QMessageLogContext &context, const QString &msg) {
-  Utf8String severity = "UNKNOWN"_ba;
+  Utf8String severity = "UNKNOWN"_u8;
   switch (type) {
     case QtDebugMsg:
       severity = Log::severityToString(Log::Debug);
@@ -190,13 +190,12 @@ static void qtLogSamePatternWrapper(
   Utf8String realMsg = msg;
   sanitizeMessage(&realMsg);
   Utf8String location =
-      context.file ? Utf8String(context.file).append(":"_ba)
-                     .append(QByteArray::number(context.line))
-                   : ":"_ba;
+      context.file
+      ? context.file+":"_u8+Utf8String::number(context.line) : ":"_u8;
   Utf8String localMsg =
-    QDateTime::currentDateTime().toString(ISO8601).toUtf8()
-      +" "_ba+taskid+"/0 "_ba+location+" "_ba+severity+" qtdebug: "_ba+realMsg
-      +"\n"_ba;
+    Utf8String(QDateTime::currentDateTime().toString(ISO8601))
+      +" "_u8+taskid+"/0 "_u8+location+" "_u8+severity+" qtdebug: "_u8+realMsg
+      +"\n"_u8;
   fputs(localMsg, stderr);
   if (type == QtFatalMsg)
     abort();

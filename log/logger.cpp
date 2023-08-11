@@ -143,8 +143,8 @@ Logger::Logger(Log::Severity minSeverity, ThreadModel threadModel)
     logBufferSizeLog2 = 12;
   if (logBufferSizeLog2 > 27)
     logBufferSizeLog2 = 27;
-  auto name = "Logger-"+Log::severityToString(minSeverity)
-              +"-"+QString::number((long long)this, 16);
+  QString name = "Logger-"+Log::severityToString(minSeverity)
+                 +"-"+QString::number((long long)this, 16);
   switch(threadModel) {
   case DirectCall:
     break;

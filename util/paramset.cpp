@@ -149,7 +149,7 @@ ParamSet::ParamSet(std::initializer_list<Utf8String> list) {
     if (it != std::end(list)) {
       setValue(key, *it);
     } else {
-      setValue(key, ""_ba);
+      setValue(key, ""_u8);
       break;
     }
   }
@@ -1147,9 +1147,9 @@ ParamSetData *ParamSet::fromQIODevice(
       return d;
     }
   }
-  auto separator = Utf8String(options.value("separator"_ba)).value(0,',');
-  auto quote = Utf8String(options.value("quote"_ba)).value(0,'"');
-  auto escape = Utf8String(options.value("escape"_ba)).value(0,'\\');
+  auto separator = Utf8String(options.value("separator"_u8)).value(0,',');
+  auto quote = Utf8String(options.value("quote"_u8)).value(0,'"');
+  auto escape = Utf8String(options.value("escape"_u8)).value(0,'\\');
   CsvFile csvfile;
   csvfile.enableHeaders(false);
   csvfile.setFieldSeparator(separator);
