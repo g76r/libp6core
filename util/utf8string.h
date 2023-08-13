@@ -19,6 +19,9 @@
 #include <QList>
 #include <QSet>
 #include "libp6core_global.h"
+#if __cplusplus >= 202002L
+#include <bit>
+#endif
 
 using namespace Qt::Literals::StringLiterals;
 
@@ -468,6 +471,52 @@ char32_t Utf8String::decodeUtf8(const char *s, qsizetype len) {
   auto c = reinterpret_cast<const unsigned char *>(s);
   Q_ASSERT(s);
   Q_ASSERT(len > 0);
+#if __cplusplus >= 202002L // C++ >= 20
+  switch(std::countl_one(c[0])) {
+    [[likely]] case 0:
+      return *s;
+    case 1:
+      if (len <= 1) [[unlikely]]
+        return ReplacementCharacter;
+      return (c[0] & 0b00111111) << 6 | (c[1] & 0b00111111);
+    case 2: {
+      if (len <= 2) [[unlikely]]
+        return ReplacementCharacter;
+      char32_t u = ((c[0] & 0b00011111) << 12) | ((c[1] & 0b00111111) << 6)
+          | (c[2] & 0b00111111);
+#if !UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629
+      if (u >= 0xd800 && u <= 0xdfff) [[unlikely]]
+        return ReplacementCharacter; // RFC 3629: surrogate halves are invalid
+#endif
+      return u;
+    }
+    case 3: {
+      if (len <= 3) [[unlikely]]
+        return ReplacementCharacter;
+      char32_t u = ((c[0] & 0b00001111) << 18) | ((c[1] & 0b00111111) << 12)
+          | ((c[2] & 0b00111111) << 6) | (c[3] & 0b00111111);
+  #if !UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629
+      if (u >= 0x10ffff) [[unlikely]]
+        return ReplacementCharacter;  // RFC 3629: > 0x10ffff are invalid
+  #endif
+      return u;
+    }
+#if UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629 // RFC 3629: > 0x10ffff are invalid
+    case 4:
+      if (len <= 4) [[unlikely]]
+        return ReplacementCharacter;
+      return ((c[0] & 0b00000111) << 24) | ((c[1] & 0b00111111) << 18)
+          | ((c[2] & 0b00111111) << 12) | ((c[3] & 0b00111111) << 6)
+          | (c[4] & 0b00111111);
+    case 5:
+      if (len <= 5) [[unlikely]]
+        return ReplacementCharacter;
+      return ((c[0] & 0b00000011) << 30) | ((c[1] & 0b00111111) << 24)
+          | ((c[2] & 0b00111111) << 18) | ((c[3] & 0b00111111) << 12)
+          | ((c[4] & 0b00111111) << 6) | (c[5] & 0b00111111);
+#endif
+  }
+#else // C++ < 20
   if (c[0] <= 0x7f)
     return *s;
   if ((c[0] & 0b01000000) == 0 && len > 1)
@@ -500,6 +549,7 @@ char32_t Utf8String::decodeUtf8(const char *s, qsizetype len) {
         | ((c[2] & 0b00111111) << 18) | ((c[3] & 0b00111111) << 12)
         | ((c[4] & 0b00111111) << 6) | (c[5] & 0b00111111);
 #endif
+#endif // C++ < 20
   return ReplacementCharacter;
 }
 
