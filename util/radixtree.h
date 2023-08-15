@@ -50,7 +50,11 @@ struct RadixTreeInitializerHelper {
 };
 
 /** Lookup-optimized dictionary for a large number of strings or string prefixes
- * as keys, based on a radix tree.
+ * as keys, based on a radix tree (which is a size optimized trie a.k.a. prefix
+ * tree).
+ *
+ * @see https://en.wikipedia.org/wiki/Radix_tree
+ * @see https://en.wikipedia.org/wiki/Trie
  *
  * When isPrefix=false for every key, it behaves like a QMap<K,T> with K =
  * characters string.
@@ -63,9 +67,6 @@ struct RadixTreeInitializerHelper {
  * which is not costless.
  *
  * Keys are expected to be encoded in utf-8.
- *
- * See e.g. https://en.wikipedia.org/wiki/Radix_tree for a more detailed
- * explanation of radix tree internals.
  *
  * This class implements Qt's implicit sharing pattern.
  */
