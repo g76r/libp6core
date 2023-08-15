@@ -24,10 +24,10 @@ class LIBP6CORESHARED_EXPORT ParamsProvider {
   static ParamsProvider *_environment, *_empty;
 
 protected:
-  ParamsProvider() { }
+  ParamsProvider() = default;
 
 public:
-  virtual ~ParamsProvider();
+  virtual ~ParamsProvider() = default;
   /** Return a parameter value.
     * @param context is an evaluation context */
   virtual const QVariant paramValue( // FIXME reorder args like paramUtf8
@@ -46,6 +46,8 @@ public:
   inline const QVariant paramValue( // FIXME reorder args like paramUtf8
     const Utf8String &key, const QVariant &defaultValue) const {
     return paramValue(key, 0, defaultValue); }
+
+#if 0
   /** Convenience method */
   inline const QString paramString( // FIXME reorder args like paramUtf8
     const Utf8String &key, const ParamsProvider *context,
@@ -66,6 +68,7 @@ public:
   inline const QString paramString( // FIXME reorder args like paramUtf8
     const Utf8String &key, const QString &defaultValue) const {
     return paramValue(key, defaultValue).toString(); }
+#endif
   /** Convenience method */
   inline const Utf8String paramUtf8(
     const Utf8String &key, const Utf8String &defaultValue,
@@ -90,7 +93,9 @@ public:
   inline const Utf8String paramUtf8(
     const Utf8String &key, Utf8StringSet *alreadyEvaluated) const {
     return Utf8String(paramValue(key, 0, Utf8String{}, alreadyEvaluated)); }
+
   virtual const Utf8StringSet keys() const = 0;
+
   /** Return params scope, that is more or less a name or type for this
    *  ParamsProvider. e.g. "env", "customer:Customer123", "root", etc.
    */
@@ -104,13 +109,16 @@ public:
     auto i = s.indexOf(separator);
     return i >= 0 ? s.first(i) : s;
   }
+
   /** Singleton wrapper to environment variables */
   static ParamsProvider *environment() { return _environment; }
   /** Singleton empty ParamsProvider */
   static ParamsProvider *empty() { return _empty; }
+
   /** take an key-values snapshot that no longer depend on ParamsProvider* not
    * being deleted nor on %-evaluation */
   virtual const ParamSet snapshot() const;
+
   /** evaluate a %-expression within this context.
    * short for ParamSet().evaluate(rawValue, false, this, alreadyEvaluated); */
   const Utf8String evaluate(

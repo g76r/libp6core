@@ -13,7 +13,6 @@
  */
 #include "memorylogger.h"
 #include "logmodel.h"
-#include <QMetaObject>
 
 MemoryLogger::MemoryLogger(
     Log::Severity minSeverity, Utf8String prefixFilter, LogModel *logmodel)

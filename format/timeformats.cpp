@@ -12,12 +12,9 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "timeformats.h"
-#include <QMap>
-#include <QString>
-#include <QRegularExpression>
 #include "log/log.h"
-#include <QRegularExpression>
 #include "util/characterseparatedexpression.h"
+#include <QRegularExpression>
 
 // [english-day-of-week3,] day-of-month english-month-name3 year4 hour24:min:sec { {+|-}0000 | zone-name3 }
 // Wed   ,   1  Jan   2013   23:59:62+0400
@@ -274,8 +271,6 @@ int main(int argc, char *argv[]) {
 /*
 #include "util/timeformats.h"
 #include "log/log.h"
-#include <QThread>
-#include <QCoreApplication>
 int main(int argc, char *argv[]) {
   QCoreApplication a(argc, argv);
   QThread::currentThread()->setObjectName("MainThread");

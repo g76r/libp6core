@@ -14,12 +14,9 @@
 #ifndef TIMEFORMATS_H
 #define TIMEFORMATS_H
 
-#include "libp6core_global.h"
-#include <QString>
-#include <QDateTime>
-#include <QTimeZone>
 #include "util/relativedatetime.h"
 #include "util/paramset.h"
+#include <QTimeZone>
 
 /** Utilites to handle date/time formats. */
 class LIBP6CORESHARED_EXPORT TimeFormats {

@@ -14,10 +14,8 @@
 
 #include "pfarray.h"
 #include "pfinternals_p.h"
-#include <QIODevice>
-#include <QBuffer>
 #include "pfnode.h"
-#include <QtDebug>
+#include <QBuffer>
 
 qint64 PfArray::writePf(QIODevice *target, const PfOptions &options) const {
   Q_UNUSED(options)

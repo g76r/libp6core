@@ -12,11 +12,8 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "shareduiitemsmodel.h"
-#include <QtDebug>
-#include <QAbstractProxyModel>
 #include "shareduiitemdocumentmanager.h"
 #include "shareduiitemlist.h"
-#include <QtDebug>
 
 const QString SharedUiItemsModel::_suiQualifiedIdsListMimeType {
   "application/shareduiitem-qualifiedid-list"

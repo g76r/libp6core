@@ -15,14 +15,8 @@
 #ifndef UTF8STRING_H
 #define UTF8STRING_H
 
-#include <QVariant>
-#include <QList>
-#include <QSet>
-#include <algorithm>
-#if __cplusplus >= 202002L
-#include <bit>
-#endif
 #include "libp6core_global.h"
+#include <QVariant>
 
 using namespace Qt::Literals::StringLiterals;
 

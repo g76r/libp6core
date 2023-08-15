@@ -1,4 +1,4 @@
-/* Copyright 2015-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,7 +14,6 @@
 #ifndef ATOMICVALUE_H
 #define ATOMICVALUE_H
 
-#include <QMutexLocker>
 #include "libp6core_global.h"
 
 /** Class protecting access to a value object with a mutex providing the same

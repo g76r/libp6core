@@ -13,12 +13,7 @@
  */
 #include "log.h"
 #include "multiplexerlogger.h"
-#include <QList>
-#include <QString>
-#include <QDateTime>
-#include <QRegularExpression>
 #include <QThread>
-#include <time.h>
 
 #define ISO8601 u"yyyy-MM-ddThh:mm:ss,zzz"_s
 

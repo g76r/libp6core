@@ -1,4 +1,4 @@
-/* Copyright 2016-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,10 +14,12 @@
 #ifndef TCPLISTENER_H
 #define TCPLISTENER_H
 
-#include <QTcpServer>
 #include "incomingmessagedispatcher.h"
+#include <QObject>
+#include <QHostAddress>
 
 class TcpConnectionHandler;
+class QTcpServer;
 
 /** Object responsible for listening and accepting new TCP connections.
  * Manage a pool of TcpConnectionHandlers that process established connections

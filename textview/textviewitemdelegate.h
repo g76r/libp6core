@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,8 +15,7 @@
 #define TEXTVIEWITEMDELEGATE_H
 
 #include "libp6core_global.h"
-#include <QObject>
-#include <QModelIndex>
+#include <QAbstractItemModel>
 
 /** Delegate text rendering of TextView data or headers, the same way
  * QAbstractItemDelegate does for QAbstractItemView.

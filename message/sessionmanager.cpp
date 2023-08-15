@@ -12,6 +12,7 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "sessionmanager.h"
+#include <QMutexLocker>
 
 static QMutex _mutex;
 static SessionManager *_singleton = 0;

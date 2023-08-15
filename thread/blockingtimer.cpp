@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -12,9 +12,9 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "blockingtimer.h"
+#include <QCoreApplication>
 #include <QDateTime>
 #include <unistd.h>
-#include <QCoreApplication>
 
 BlockingTimer::BlockingTimer(quint32 intervalMsec, quint32 subintervalMsec,
     ShouldStopFunction shouldStopFunction, bool shouldCallProcessEvents)
@@ -43,7 +43,7 @@ void BlockingTimer::wait() {
     if (_subintervalMsec > 0)
       timeToWait = qMin(timeToWait, _subintervalMsec);
     if (timeToWait)
-      usleep(1000*timeToWait);
+      ::usleep(1000*timeToWait);
     if (_shouldCallProcessEvents)
       QCoreApplication::processEvents();
   }

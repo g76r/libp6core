@@ -17,7 +17,6 @@
 #include "httprequest.h"
 #include "httpresponse.h"
 #include "util/paramsprovidermerger.h"
-#include <QObject>
 #include <QRegularExpression>
 
 /** HttpHandler is responsible for handling every HTTP request the server

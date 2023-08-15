@@ -15,7 +15,6 @@
 #define SHAREDUIITEMLIST_H
 
 #include "shareduiitem.h"
-#include <QList>
 
 class SharedUiItemListParamsProvider;
 

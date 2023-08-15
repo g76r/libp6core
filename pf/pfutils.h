@@ -16,8 +16,8 @@
 #define PFUTILS_H
 
 #include "libp6core_global.h"
-#include <QString>
 #include "pfoptions.h"
+#include <QStringView>
 
 class LIBP6CORESHARED_EXPORT PfUtils {
   Q_DISABLE_COPY(PfUtils)

@@ -13,12 +13,15 @@
  */
 
 #include "pfparser.h"
+#include "pfinternals_p.h"
+#include "pfarray.h"
+#include "pfhandler.h"
+#include <QBuffer>
+#include <QFile>
 #include <QObject>
 #include <QtDebug>
-#include "pfinternals_p.h"
-#include <QBuffer>
-#include "pfarray.h"
-#include <QFile>
+
+#define tr(x) QObject::tr(x)
 
 namespace {
 

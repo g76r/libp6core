@@ -14,10 +14,8 @@
 #ifndef ABSTRACTTEXTFORMATTER_H
 #define ABSTRACTTEXTFORMATTER_H
 
-#include "libp6core_global.h"
-#include <QAbstractItemModel>
-#include <QModelIndex>
 #include "modelview/shareduiitemlist.h"
+#include <QAbstractItemModel>
 
 /** Convenience shared feature for text formatters. */
 class LIBP6CORESHARED_EXPORT AbstractTextFormatter {

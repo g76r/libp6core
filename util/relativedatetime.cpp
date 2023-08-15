@@ -12,13 +12,10 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "relativedatetime.h"
-#include <QSharedData>
-#include <QMutex>
-#include <QCache>
-#include <QRegularExpression>
-#include <QtDebug>
-#include <QTimeZone>
 #include "format/timeformats.h"
+#include <QRegularExpression>
+#include <QMutexLocker>
+#include <QCache>
 
 #define TERM_RE "([+-][0-9]+)(ms|mil|s|min|h|d|w|mon|y)[a-z]*"
 #define TZ_RE "(?:Z|(?:[+-][0-9]{2}:[0-9]{2}))"

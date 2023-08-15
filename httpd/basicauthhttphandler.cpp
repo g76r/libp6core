@@ -12,6 +12,7 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "basicauthhttphandler.h"
+#include <QRegularExpression>
 
 BasicAuthHttpHandler::BasicAuthHttpHandler(QObject *parent)
   : HttpHandler(parent), _authenticator(0), _authorizer(0),

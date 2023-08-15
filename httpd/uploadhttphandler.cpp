@@ -13,6 +13,7 @@
  */
 #include "uploadhttphandler.h"
 #include "io/ioutils.h"
+#include <QTemporaryFile>
 
 QString UploadHttpHandler::urlPathPrefix() const {
   return _urlPathPrefix;

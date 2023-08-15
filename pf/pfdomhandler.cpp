@@ -14,6 +14,10 @@
 
 #include "pfdomhandler.h"
 #include "pfinternals_p.h"
+#include <QObject>
+#include <QtDebug>
+
+#define tr(x) QObject::tr(x)
 
 PfDomHandler::PfDomHandler() {
 }

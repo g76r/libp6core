@@ -12,14 +12,14 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "tcpconnectionhandler.h"
-#include <QAtomicInt>
 #include "log/log.h"
-#include <QHostAddress>
-#include "pf/pfparser.h"
 #include "pf/pfdomhandler.h"
-#include <QCoreApplication>
 #include "outgoingmessagedispatcher.h"
 #include "sessionmanager.h"
+#include <QTcpSocket>
+#include <QThread>
+#include <QMutexLocker>
+#include <QCoreApplication>
 
 static QAtomicInt _handlersCounter;
 

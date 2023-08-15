@@ -12,34 +12,30 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "paramset.h"
-#include <QSharedData>
-#include <QHash>
-#include <QDateTime>
-#include <QtDebug>
 #include "format/timeformats.h"
 #include "characterseparatedexpression.h"
 #include "regexpparamsprovider.h"
 #include "paramsprovidermerger.h"
 #include "format/stringutils.h"
-#include <stdlib.h>
 #include "radixtree.h"
-#include <functional>
-#include <QCryptographicHash>
-#include <QRandomGenerator>
 #include "pf/pfnode.h"
 #include "util/mathexpr.h"
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QSqlRecord>
-#include <QSqlField>
-#include <QSqlError>
 #include "pf/pfutils.h"
 #include "csv/csvfile.h"
-#include <QMap>
-#include <QMutex>
+#include "util/utf8string.h"
+#include <QRegularExpression>
+#include <QFile>
+#include <QBuffer>
+#include <QMutexLocker>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QSqlRecord>
+#include <QSqlField>
+#include <QCryptographicHash>
+#include <QRandomGenerator>
 #include <QProcess>
 #include <QTimer>
-#include "util/utf8string.h"
 
 bool ParamSet::_variableNotFoundLoggingEnabled { false };
 

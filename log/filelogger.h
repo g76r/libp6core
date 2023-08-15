@@ -14,8 +14,6 @@
 #ifndef FILELOGGER_H
 #define FILELOGGER_H
 
-#include <QObject>
-#include <QDateTime>
 #include "logger.h"
 
 class QIODevice;

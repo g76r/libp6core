@@ -12,8 +12,8 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "graphvizimagehttphandler.h"
-#include <QCoreApplication>
 #include "log/log.h"
+#include <QCoreApplication>
 #include <QThread>
 #include <unistd.h>
 
@@ -56,7 +56,7 @@ QByteArray GraphvizImageHttpHandler::imageData(
           // has been done meanwhile we don't want to wait again for a rendering
         }
       } else
-        usleep(qMin(50000LL, deadline - QDateTime::currentMSecsSinceEpoch()));
+        ::usleep(qMin(50000LL, deadline - QDateTime::currentMSecsSinceEpoch()));
     }
     ml.relock();
   }

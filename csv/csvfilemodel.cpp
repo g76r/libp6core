@@ -12,6 +12,7 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "csvfilemodel.h"
+#include <QModelIndex>
 
 CsvFileModel::CsvFileModel(QObject *parent)
   : QAbstractTableModel(parent), _csvFile(0) {

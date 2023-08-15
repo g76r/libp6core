@@ -14,7 +14,7 @@
 #ifndef LIBP6CORE_GLOBAL_H
 #define LIBP6CORE_GLOBAL_H
 
-#include <QtCore/qglobal.h>
+#include <QtGlobal>
 
 #if defined(LIBP6CORE_LIBRARY)
 #  define LIBP6CORESHARED_EXPORT Q_DECL_EXPORT

@@ -15,7 +15,6 @@
 #define CLOCKVIEW_H
 
 #include "textview.h"
-#include <QDateTime>
 
 /** Whereas TextView is intended to be used with Qt's Model/View framework,
  * this view is a (trivial) example of a view fully independent of any model.

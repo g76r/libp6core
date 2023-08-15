@@ -14,8 +14,8 @@
 #ifndef CSVFILEMODEL_H
 #define CSVFILEMODEL_H
 
-#include <QAbstractTableModel>
 #include "csvfile.h"
+#include <QAbstractTableModel>
 
 // TODO add signals and slots communication with CsvFile to make this class work for real
 

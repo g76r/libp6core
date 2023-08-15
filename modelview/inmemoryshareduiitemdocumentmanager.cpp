@@ -12,7 +12,6 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "inmemoryshareduiitemdocumentmanager.h"
-#include <QtDebug>
 
 InMemorySharedUiItemDocumentManager::InMemorySharedUiItemDocumentManager(
     QObject *parent) : SharedUiItemDocumentManager(parent) {

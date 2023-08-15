@@ -14,8 +14,8 @@
 #ifndef CHARACTERSEPARATEDEXPRESSION_H
 #define CHARACTERSEPARATEDEXPRESSION_H
 
-#include <QStringList>
 #include "libp6core_global.h"
+#include "util/utf8stringlist.h"
 
 /** Provide multi-field parsing using an arbitrary separator character.
  *

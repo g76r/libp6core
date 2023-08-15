@@ -15,9 +15,8 @@
 #define HTTPRESPONSE_H
 
 #include "util/utf8string.h"
-#include <QDateTime>
-#include <QExplicitlySharedDataPointer>
 #include <QAbstractSocket>
+#include <QDateTime>
 
 class HttpResponseData;
 

@@ -14,11 +14,9 @@
 #ifndef HTTPSERVER_H
 #define HTTPSERVER_H
 
-#include <QTcpServer>
-#include <QList>
 #include "httphandler.h"
+#include <QTcpServer>
 #include <QMutex>
-#include <QThread>
 
 class HttpWorker;
 

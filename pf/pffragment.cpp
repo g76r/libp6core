@@ -12,10 +12,10 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "pffragment_p.h"
-#include <QtDebug>
 #include "pfutils.h"
 #include "pfinternals_p.h"
-#include <QRegularExpression>
+#include <QRegularExpressionMatch>
+#include <QtDebug>
 
 static QRegularExpression _surfaceHeadRE { "\\A([^:]*)(:|$)" };
 

@@ -15,7 +15,6 @@
 #ifndef PFDOMHANDLER_H
 #define PFDOMHANDLER_H
 
-#include "libp6core_global.h"
 #include "pfhandler.h"
 #include "pfnode.h"
 

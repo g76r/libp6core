@@ -14,15 +14,13 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-#include <QObject>
-#include "log.h"
-#include <QDateTime>
+#include "log/log.h"
 #include "thread/circularbuffer.h"
-#include <QThread>
 #include "modelview/shareduiitem.h"
 
 class MultiplexerLogger;
 class LoggerThread;
+class QMutex;
 
 /** Base class to be extended by logger implementations.
  * Handle common behavior to all loggers, including optionnaly a

@@ -14,10 +14,9 @@
 #ifndef RELATIVEDATETIME_H
 #define RELATIVEDATETIME_H
 
-#include <QSharedDataPointer>
-#include <QString>
-#include <QDateTime>
 #include "libp6core_global.h"
+#include <QSharedDataPointer>
+#include <QDateTime>
 
 class RelativeDateTimeData;
 

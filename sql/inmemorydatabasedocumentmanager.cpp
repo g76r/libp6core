@@ -14,10 +14,8 @@
 #include "inmemorydatabasedocumentmanager.h"
 #include <QSqlQuery>
 #include <QSqlError>
-#include <QRegularExpression>
-#include <QtDebug>
 
-static QRegularExpression unallowedColumnCharsSequence {
+static QRegularExpression _unallowedColumnCharsSequence {
   "(^[^a-zA-Z_]+)|([^a-zA-Z0-9_]+)" };
 
 InMemoryDatabaseDocumentManager::InMemoryDatabaseDocumentManager(QObject *parent)
@@ -274,5 +272,5 @@ sqlite> drop table foo;
 
 Utf8String InMemoryDatabaseDocumentManager::protectedColumnName(
     Utf8String columnName) {
-  return columnName.toString().replace(unallowedColumnCharsSequence, u"_"_s);
+  return columnName.toString().replace(_unallowedColumnCharsSequence, u"_"_s);
 }

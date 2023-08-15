@@ -13,7 +13,7 @@
 
 QT -= gui
 QT += network sql
-CONFIG += largefile c++17 c++20 force_debug_info
+CONFIG += largefile c++17 c++20 precompile_header force_debug_info
 
 TARGET = p6core
 TEMPLATE = lib
@@ -55,7 +55,14 @@ unix {
     QMAKE_EXTRA_TARGETS += unicodedata
 }
 
-SOURCES += \
+PRECOMPILED_HEADER *= \
+    libp6core_stable.h
+
+SOURCES *= \
+    util/utf8string.cpp \
+    util/utf8stringlist.cpp \
+    util/paramsprovider.cpp \
+    util/paramset.cpp \
     pf/pfutils.cpp \
     pf/pfparser.cpp \
     pf/pfoptions.cpp \
@@ -64,6 +71,11 @@ SOURCES += \
     pf/pfdomhandler.cpp \
     pf/pfarray.cpp \
     pf/pffragment.cpp \
+    log/memorylogger.cpp \
+    log/logmodel.cpp \
+    log/logger.cpp \
+    log/log.cpp \
+    log/filelogger.cpp \
     io/unixsignalmanager.cpp \
     mail/mailaddress.cpp \
     httpd/httpworker.cpp \
@@ -82,13 +94,6 @@ SOURCES += \
     textview/clockview.cpp \
     util/mathexpr.cpp \
     util/mathutils.cpp \
-    util/paramset.cpp \
-    log/memorylogger.cpp \
-    log/logmodel.cpp \
-    log/logger.cpp \
-    log/log.cpp \
-    log/filelogger.cpp \
-    util/paramsprovider.cpp \
     util/paramsetmodel.cpp \
     textview/csvtableview.cpp \
     textview/texttableview.cpp \
@@ -154,11 +159,16 @@ SOURCES += \
     io/directorywatcher.cpp \
     modelview/stringhashmodel.cpp \
     format/jsonformats.cpp \
-    modelview/stringlistdiffmodel.cpp \
-    util/utf8string.cpp \
-    util/utf8stringlist.cpp
+    modelview/stringlistdiffmodel.cpp
 
-HEADERS +=\
+HEADERS *=\
+    util/utf8string.h \
+    util/utf8stringlist.h \
+    util/utf8stringset.h \
+    util/paramsprovider.h \
+    util/paramset.h \
+    util/paramsprovidermerger.h \
+    util/regexpparamsprovider.h \
     pf/pfutils.h \
     pf/pfparser.h \
     pf/pfoptions.h \
@@ -168,6 +178,14 @@ HEADERS +=\
     pf/pfarray.h \
     pf/pffragment_p.h \
     pf/pfinternals_p.h \
+    log/memorylogger.h \
+    log/logmodel.h \
+    log/logger.h \
+    log/log.h \
+    log/filelogger.h \
+    log/loggerthread.h \
+    log/multiplexerlogger.h \
+    modelview/shareduiitem.h \
     io/unixsignalmanager.h \
     mail/mailaddress.h \
     httpd/httpworker.h \
@@ -186,14 +204,6 @@ HEADERS +=\
     textview/clockview.h \
     util/mathexpr.h \
     util/mathutils.h \
-    util/paramset.h \
-    log/memorylogger.h \
-    log/logmodel.h \
-    log/logger.h \
-    log/log.h \
-    log/filelogger.h \
-    util/paramsprovider.h \
-    util/paramsetmodel.h \
     textview/csvtableview.h \
     textview/texttableview.h \
     httpd/httpcommon.h \
@@ -213,24 +223,19 @@ HEADERS +=\
     httpd/graphvizimagehttphandler.h \
     textview/htmlitemdelegate.h \
     textview/textviewitemdelegate.h \
-    modelview/shareduiitem.h \
     modelview/shareduiitemstablemodel.h \
     modelview/shareduiitemsmodel.h \
     modelview/shareduiitemstreemodel.h \
     util/relativedatetime.h \
-    log/loggerthread.h \
-    log/multiplexerlogger.h \
     httpd/uploadhttphandler.h \
     csv/csvfile.h \
     csv/csvfilemodel.h \
     modelview/shareduiitemdocumentmanager.h \
     modelview/shareduiitemlist.h \
     util/characterseparatedexpression.h \
-    util/paramsprovidermerger.h \
     thread/atomicvalue.h \
     thread/circularbuffer.h \
     modelview/shareduiitemslogmodel.h \
-    util/regexpparamsprovider.h \
     modelview/genericshareduiitem.h \
     sql/inmemorydatabasedocumentmanager.h \
     sql/hidedeletedsqlrowsproxymodel.h \
@@ -264,16 +269,14 @@ HEADERS +=\
     ostore/sqlobjectsstore.h \
     io/directorywatcher.h \
     modelview/stringhashmodel.h \  \
-    util/utf8string.h \
     format/jsonformats.h \
-    modelview/stringlistdiffmodel.h \
-    util/utf8stringlist.h \
-    util/utf8stringset.h
+    util/paramsetmodel.h \
+    modelview/stringlistdiffmodel.h
 
 unix {
     target.path = /usr/lib
     INSTALLS += target
 }
 
-DISTFILES += \
+DISTFILES *= \
     util/paramset_percent_eval_functions.md

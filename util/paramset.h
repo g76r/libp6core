@@ -14,8 +14,6 @@
 #ifndef PARAMSET_H
 #define PARAMSET_H
 
-#include <QSharedData>
-#include <QStringList>
 #include "log/log.h"
 #include "paramsprovider.h"
 

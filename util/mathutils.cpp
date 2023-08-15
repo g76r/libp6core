@@ -12,9 +12,8 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "mathutils.h"
-#include <QDateTime>
-#include <cmath>
 #include "util/utf8stringlist.h"
+#include <QDateTime>
 
 /** following constants are not compliant to C++ standard since they assume that
  * integers are implemented with 2's complement
@@ -120,7 +119,7 @@ static bool convertOtherTypesToBestNumericTypeIfPossible(
     }
     auto d = s.toDouble(&ok);
     if (ok) {
-      a->setValue(d);
+      a->setValue(QVariant(d));
       *tta = QMetaType::Double;
       return true;
     }

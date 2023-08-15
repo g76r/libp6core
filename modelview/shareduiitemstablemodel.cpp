@@ -12,10 +12,9 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "shareduiitemstablemodel.h"
-#include <QtDebug>
-#include <QMimeData>
 #include "modelview/shareduiitemlist.h"
 #include "modelview/shareduiitemdocumentmanager.h"
+#include <QMimeData>
 
 SharedUiItemsTableModel::SharedUiItemsTableModel(QObject *parent)
   : SharedUiItemsModel(parent),

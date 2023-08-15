@@ -16,8 +16,6 @@
 
 #include "shareduiitemsmodel.h"
 #include "shareduiitem.h"
-#include <QList>
-#include <QSet>
 
 /** Model holding SharedUiItems, one item per row within a tree, one item
  * section per column. */

@@ -12,7 +12,6 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "shareduiitemdocumentmanager.h"
-#include <QtDebug>
 #include <QRandomGenerator>
 
 SharedUiItemDocumentManager::SharedUiItemDocumentManager(QObject *parent)

@@ -1,4 +1,4 @@
-/* Copyright 2016-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,11 +16,11 @@
 
 #include "libp6core_global.h"
 #include <QObject>
-#include <QByteArray>
-#include <QUrl>
-#include <QHash>
 #include <QMutex>
-#include <QNetworkAccessManager>
+#include "util/utf8stringset.h"
+
+class QNetworkAccessManager;
+class QNetworkReply;
 
 // LATER provide a mean to set maximum cache size
 // LATER implement max-age and max-stale for real

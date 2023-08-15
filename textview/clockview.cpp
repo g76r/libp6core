@@ -12,6 +12,7 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "clockview.h"
+#include <QDateTime>
 
 ClockView::ClockView(QObject *parent, QString format)
   : TextView(parent), _textFormat(format), _dateFormat(Qt::ISODate) {

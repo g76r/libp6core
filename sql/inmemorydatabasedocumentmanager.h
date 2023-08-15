@@ -15,8 +15,6 @@
 #define INMEMORYDATABASEDOCUMENTMANAGER_H
 
 #include "modelview/inmemoryshareduiitemdocumentmanager.h"
-#include <QHash>
-#include <QList>
 #include <QSqlDatabase>
 
 /** Simple generic implementation of SharedUiItemDocumentManager holding in

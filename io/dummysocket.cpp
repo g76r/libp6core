@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,17 +14,16 @@
 #include "dummysocket.h"
 #include <QVariant>
 
-Q_GLOBAL_STATIC(DummySocket, _singletonInstance)
+Q_GLOBAL_STATIC(DummySocket, _singletonInstance) // FIXME don't singleton
 
 DummySocket::DummySocket(QObject *parent)
   : QAbstractSocket(QAbstractSocket::UnknownSocketType, parent) {
   setOpenMode(QIODevice::ReadWrite);
 }
 
-DummySocket *DummySocket::singletonInstance() {
+DummySocket *DummySocket::singletonInstance() { // FIXME don't singleton
   return _singletonInstance;
 }
-
 
 bool DummySocket::isSequential() const {
   return true;
@@ -149,7 +148,7 @@ void DummySocket::setSocketOption(QAbstractSocket::SocketOption option,
 
 QVariant DummySocket::socketOption(QAbstractSocket::SocketOption option) {
   Q_UNUSED(option)
-  return QVariant();
+  return {};
 }
 
 bool DummySocket::waitForConnected(int msecs) {

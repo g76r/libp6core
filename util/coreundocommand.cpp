@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -12,14 +12,12 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "coreundocommand.h"
-//#include <QtDebug>
 
 CoreUndoCommand::~CoreUndoCommand() {
   qDeleteAll(_children);
 }
 
 void CoreUndoCommand::redo() {
-  //qDebug() << "CoreUndoCommand::redo" << _children.size();
   foreach (CoreUndoCommand *child, _children)
     child->redo();
 }

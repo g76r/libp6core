@@ -13,6 +13,7 @@
  */
 #include "inmemoryusersdatabase.h"
 #include "usersdatabase_spi.h"
+#include <QMutexLocker>
 
 class InMemoryUserDataData : public UserDataData {
   QString _userId;

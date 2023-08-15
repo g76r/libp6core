@@ -14,7 +14,6 @@
 #include "shareduiitemsmatrixmodel.h"
 #include "util/paramset.h"
 #include "shareduiitemdocumentmanager.h"
-#include <QtDebug>
 #include "modelview/genericshareduiitem.h"
 
 SharedUiItemsMatrixModel::ItemBinding SharedUiItemsMatrixModel::nullBinding;

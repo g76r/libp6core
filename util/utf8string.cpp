@@ -13,9 +13,7 @@
  */
 
 #include "utf8string.h"
-#include <functional>
-#include <QtDebug>
-#include "log/log.h"
+#include "utf8stringlist.h"
 
 const QList<char> Utf8String::AsciiWhitespace = { ' ', '\t', '\n', '\r', '\v' };
 const Utf8String Utf8String::ReplacementCharacterUtf8 = "\xef\xbf\xbd"_u8;

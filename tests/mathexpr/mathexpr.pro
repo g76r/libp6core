@@ -12,10 +12,10 @@
 # along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
 
 QT -= gui
-QT += core sql
+QT += core sql network sql
 
 TARGET = test
-CONFIG += console largefile c++20 c++17
+CONFIG += console largefile c++20
 CONFIG -= app_bundle
 
 TARGET_OS=default

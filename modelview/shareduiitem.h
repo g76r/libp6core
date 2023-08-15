@@ -14,9 +14,9 @@
 #ifndef SHAREDUIITEM_H
 #define SHAREDUIITEM_H
 
-#include "util/paramsprovider.h"
-#include <QSharedData>
+#include <QSharedDataPointer>
 #include <QJsonObject>
+#include "util/paramsprovider.h"
 #include "util/containerutils.h"
 #include "util/utf8stringlist.h"
 
@@ -27,7 +27,12 @@ class SharedUiItemParamsProvider;
 /** Parent class for SharedUiItem implementation data classes.
  *
  * Subclassing guidelines:
- * - A subclass MUST implement id() and idQualifier().
+ * - A subclass MUST implement idQualifier().
+ * - The idQualifier MUST only contains ascii letters, digits and underscore (_)
+ *   and MUST start with a letter. It SHOULD be directly related to the class
+ *   name, e.g. "foobar" for FoobarData. Within a given application, all
+ *   possible idQualifier SHOULD NOT need case-sensitivity to be distinguished
+ *   one from another.
  * - The id MUST be unique in the scope of the document/document manager for a
  *   given id qualifier.
  * - One of the section SHOULD represent the id for both Qt::DisplayRole and
@@ -36,11 +41,6 @@ class SharedUiItemParamsProvider;
  *   It is convenient to use section 0 as id because in many case section 0 will
  *   be displayed by default (e.g. that's what QListView does) or as first value
  *   (e.g. QTreeView, QTableView, QColumnView).
- * - The idQualifier MUST only contains ascii letters, digits and underscore (_)
- *   and MUST start with a letter. It SHOULD be directly related to the class
- *   name, e.g. "foobar" for FoobarData. Within a given application, all
- *   possible idQualifier SHOULD NOT need case-sensitivity to be distinguished
- *   one from another.
  * - As soon as it contains data and wants it displayed, which is very likely,
  *   a subclass MUST implement uiData() and uiSectionCount() and SHOULD
  *   implement uiHeaderData() and uiSectionName(), although uiSectionName() MAY
@@ -75,10 +75,6 @@ public:
   virtual ~SharedUiItemData();
   /** Return a string identifying the object among all other SharedUiItems
    * sharing the same idQualifier().
-   *
-   * The id SHOULD be unique, if it is not, keep in mind that many algorithms
-   * will assume that it is, such as searching, sorting, etc. Especially within
-   * Model/View classes.
    *
    * Id must not contains whitespace (regular space, newline, etc.).
    *

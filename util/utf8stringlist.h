@@ -14,7 +14,6 @@
 #ifndef UTF8STRINGLIST_H
 #define UTF8STRINGLIST_H
 
-#include "util/utf8string.h"
 #include "util/paramsprovider.h"
 
 class Utf8StringSet;

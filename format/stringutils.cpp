@@ -12,8 +12,7 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stringutils.h"
-#include <QRegularExpression>
-#include <QMap>
+#include <QRegularExpressionMatchIterator>
 
 static QRegularExpression linkRe{"http(s?)://\\S+"};
 

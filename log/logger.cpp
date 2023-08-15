@@ -11,11 +11,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "logger.h"
-#include "loggerthread.h"
-#include <QTimer>
+#include "log/logger.h"
+#include "log/loggerthread.h"
 #include "util/paramset.h"
 #include "format/timeformats.h"
+#include <QMutexLocker>
 
 #define ISO8601 u"yyyy-MM-ddThh:mm:ss,zzz"_s
 

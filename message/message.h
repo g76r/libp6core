@@ -14,8 +14,6 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
-#include "libp6core_global.h"
-#include <QSharedDataPointer>
 #include "session.h"
 #include "pf/pfnode.h"
 

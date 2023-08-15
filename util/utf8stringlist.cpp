@@ -14,7 +14,6 @@
 
 #include "utf8stringlist.h"
 #include "log/log.h"
-#include <QtDebug>
 
 template<typename C,typename T>
 static inline Utf8String join(const C &container, const T &separator) {

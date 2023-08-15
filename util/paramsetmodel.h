@@ -14,9 +14,9 @@
 #ifndef PARAMSETMODEL_H
 #define PARAMSETMODEL_H
 
-#include <QAbstractListModel>
 #include "util/paramset.h"
 #include "modelview/shareduiitemdocumentmanager.h"
+#include <QAbstractItemModel>
 
 /** Model to display a ParamSet into a 4-columns (key, value, scope, overriden)
  * View.

@@ -17,7 +17,6 @@
 #include "imagehttphandler.h"
 #include <QRecursiveMutex>
 #include <QProcess>
-#include <QBuffer>
 
 class LIBP6CORESHARED_EXPORT GraphvizImageHttpHandler
     : public ImageHttpHandler {

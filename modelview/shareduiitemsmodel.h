@@ -14,8 +14,9 @@
 #ifndef SHAREDUIITEMSMODEL_H
 #define SHAREDUIITEMSMODEL_H
 
-#include <QAbstractProxyModel>
 #include "shareduiitem.h"
+#include <QAbstractItemModel>
+#include <QAbstractProxyModel>
 
 class SharedUiItemDocumentManager;
 
@@ -55,9 +56,11 @@ protected:
   explicit SharedUiItemsModel(QObject *parent = nullptr);
 
 public:
-  QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+  QVariant data(const QModelIndex &index,
+                int role = Qt::DisplayRole) const override;
   int columnCount(const QModelIndex &parent = QModelIndex()) const override;
-  QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
+  QVariant headerData(int section, Qt::Orientation orientation,
+                      int role) const override;
   /** Set header according to what template item returns.
    * Also set columns count. */
   virtual void setHeaderDataFromTemplate(SharedUiItem templateItem,

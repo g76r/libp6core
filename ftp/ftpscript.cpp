@@ -13,19 +13,16 @@
  */
 #include "ftpscript.h"
 #include "ftpclient.h"
-#include <QVector>
-#include <functional>
-#include <QAtomicInt>
 #include <QRegularExpression>
-#include <QElapsedTimer>
-#include <QCoreApplication>
-#include <unistd.h>
-#include <QBuffer>
+#include "util/utf8string.h"
 #include <QFile>
 #include <QStack>
+#include <QBuffer>
+#include <QCoreApplication>
+#include <QElapsedTimer>
+#include <unistd.h>
 
 using namespace std::placeholders;
-using namespace Qt::Literals::StringLiterals;
 
 #define FTP_WAIT_DURATION_MILLIS 1
 
@@ -324,7 +321,7 @@ bool FtpScript::execAndWait(int msecs) {
         break;
       if (timer.hasExpired(msecs))
         goto timeout;
-      usleep(FTP_WAIT_DURATION_MILLIS*1000);
+      ::usleep(FTP_WAIT_DURATION_MILLIS*1000);
       QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
     }
     result = result.trimmed();
@@ -353,7 +350,7 @@ bool FtpScript::execAndWait(int msecs) {
           break;
         if (timer.hasExpired(msecs))
           goto timeout;
-        usleep(FTP_WAIT_DURATION_MILLIS*1000);
+        ::usleep(FTP_WAIT_DURATION_MILLIS*1000);
         QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
       }
       if (success) {

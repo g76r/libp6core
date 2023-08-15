@@ -15,7 +15,7 @@
 #include "paramset.h"
 #include "util/utf8stringset.h"
 
-extern char **environ;
+extern char **environ; // LATER use QProcessEnvironment::systemEnvironment()
 
 namespace {
 
@@ -57,9 +57,6 @@ struct Empty : public ParamsProvider {
 ParamsProvider *ParamsProvider::_environment = new Environment();
 
 ParamsProvider *ParamsProvider::_empty = new Empty();
-
-ParamsProvider::~ParamsProvider() {
-}
 
 const ParamSet ParamsProvider::snapshot() const {
   ParamSet snapshot;

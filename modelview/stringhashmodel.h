@@ -1,4 +1,4 @@
-/* Copyright 2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,8 +16,6 @@
 
 #include "libp6core_global.h"
 #include <QAbstractTableModel>
-#include <QHash>
-#include <QMap>
 
 /** Model displaying a QHash<QString,QString> as a QAbstractTableModel.
  * One key-value pair per row, key on column 0, value on column 1.

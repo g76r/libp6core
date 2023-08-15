@@ -1,4 +1,4 @@
-/* Copyright 2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2022-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,11 +13,12 @@
  */
 #include "sqlutils.h"
 #include "pf/pfnode.h"
-#include <QSqlDatabase>
-#include <QSqlError>
-#include <QRegularExpression>
 #include "log/log.h"
 #include "util/paramset.h"
+#include <QRegularExpression>
+#include <QSqlDatabase>
+#include <QtDebug>
+#include <QSqlError>
 
 static QRegularExpression _sqldbspec
   { "\\s*(?<name>\\w+)\\s+(?<driver>\\w+):"

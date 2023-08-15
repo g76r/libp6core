@@ -12,11 +12,10 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "filesystemhttphandler.h"
-#include <QFile>
-#include <QDir>
 #include "io/ioutils.h"
-#include <QtDebug>
 #include "format/timeformats.h"
+#include <QFileInfo>
+#include <QDir>
 
 FilesystemHttpHandler::FilesystemHttpHandler(
     QObject *parent, const QByteArray &urlPathPrefix,

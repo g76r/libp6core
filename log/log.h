@@ -14,12 +14,6 @@
 #ifndef LOG_H
 #define LOG_H
 
-#include <type_traits>
-#include <QString>
-#include <QtDebug>
-#include <QVariant>
-#include <QStringList>
-#include "libp6core_global.h"
 #include "util/utf8stringlist.h"
 
 #ifndef LOG_LOCATION_ENABLED

@@ -1,4 +1,4 @@
-/* Copyright 2014-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,9 +15,9 @@
 #define CSVFILE_H
 
 #include "libp6core_global.h"
-#include <QStringList>
-#include <QFile>
+#include <QIODevice>
 #include <QSaveFile>
+#include "util/utf8stringlist.h"
 
 // LATER implement auto-truncating / rows-count-caped mechanism
 // LATER propose a non-all-in-memory mechanism

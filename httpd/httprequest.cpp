@@ -12,15 +12,12 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "httprequest.h"
-#include <QtDebug>
-#include <QRegularExpression>
 #include "httpcommon.h"
-#include <QSharedData>
-#include <QHostAddress>
-#include <QMap>
 #include "util/radixtree.h"
 #include "util/containerutils.h"
 #include "format/stringutils.h"
+#include <QHostAddress>
+#include <QRegularExpression>
 
 static Utf8String _xffHeader;
 

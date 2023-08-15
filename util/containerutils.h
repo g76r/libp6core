@@ -17,7 +17,6 @@
 #include "libp6core_global.h"
 #include <QHash>
 #include <QMap>
-#include <QList>
 
 /** Container utilities.
  */

@@ -12,7 +12,6 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "shareduiitemstreemodel.h"
-#include <QtDebug>
 #include <QMimeData>
 
 // LATER add optimization methods such as sibling() and hasChildren()

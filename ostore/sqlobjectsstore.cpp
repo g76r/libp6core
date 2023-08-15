@@ -1,4 +1,4 @@
-/* Copyright 2017-2020 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -12,12 +12,12 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "sqlobjectsstore.h"
+#include "format/stringutils.h"
+#include <QMetaProperty>
 #include <QSqlQuery>
 #include <QSqlError>
-#include <QMetaProperty>
 #include <QSqlRecord>
 #include <QtDebug>
-#include "format/stringutils.h"
 
 SqlObjectsStore::SqlObjectsStore(const QMetaObject *metaobject,
     QSqlDatabase db, QByteArray tableName,

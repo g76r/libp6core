@@ -14,7 +14,6 @@
 #ifndef MATHEXPR_H
 #define MATHEXPR_H
 
-#include <QSharedDataPointer>
 #include "paramsprovider.h"
 #include "log/log.h"
 

@@ -15,8 +15,6 @@
 #ifndef PFPARSER_H
 #define PFPARSER_H
 
-#include "libp6core_global.h"
-#include "pfhandler.h"
 #include "pfoptions.h"
 
 class QIODevice;

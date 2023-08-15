@@ -15,10 +15,6 @@
 #define RADIXTREE_H
 
 #include "util/utf8string.h"
-#include <QSharedData>
-#include <QHash>
-#include <QMap>
-#include <functional>
 
 /** Helper class to make it possible to initialize a RadixTree with such syntax:
  * RadixTree<int> foo { {"abc", 42, true}, { "xyz", -1 } };

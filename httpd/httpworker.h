@@ -14,7 +14,6 @@
 #ifndef HTTPWORKER_H
 #define HTTPWORKER_H
 
-#include <QThread>
 #include "httpserver.h"
 #include "libp6core_global.h"
 

@@ -1,4 +1,4 @@
-/* Copyright 2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -12,9 +12,8 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "objectslistmodel.h"
-#include <QMetaObject>
-#include <QtDebug>
 #include "format/stringutils.h"
+#include <QMetaProperty>
 
 ObjectsListModel::ObjectsListModel(
     QObject *parent, const QMetaObject *metaobject, QByteArray objectRoleName,

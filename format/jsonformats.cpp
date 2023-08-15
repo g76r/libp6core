@@ -12,12 +12,11 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "jsonformats.h"
-#include <QJsonObject>
-#include <QJsonArray>
-#include <QJsonDocument>
+#include "util/utf8string.h"
 #include <QRegularExpression>
-
-using namespace Qt::Literals::StringLiterals;
+#include <QJsonParseError>
+#include <QJsonDocument>
+#include <QJsonArray>
 
 static QRegularExpression _linebreaksRE { "\\s*[\\n\\r]+\\s*" };
 

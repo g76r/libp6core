@@ -16,7 +16,6 @@
 #define PFOPTIONS_H
 
 #include "libp6core_global.h"
-#include <QString>
 #include <QSharedData>
 
 enum PfPreferedCharactersProtection {

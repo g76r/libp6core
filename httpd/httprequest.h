@@ -14,13 +14,10 @@
 #ifndef HTTPREQUEST_H
 #define HTTPREQUEST_H
 
-#include <QMultiHash>
-#include <QUrl>
-#include <QUrlQuery>
-#include <QAbstractSocket>
 #include "libp6core_global.h"
-#include <QExplicitlySharedDataPointer>
 #include "util/paramset.h"
+#include <QAbstractSocket>
+#include <QUrlQuery>
 
 class HttpRequestData;
 class HttpRequestPseudoParamsProvider;

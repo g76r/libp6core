@@ -15,7 +15,6 @@
 #ifndef PFARRAY_H
 #define PFARRAY_H
 
-#include "libp6core_global.h"
 #include <QStringList>
 #include "pfoptions.h"
 

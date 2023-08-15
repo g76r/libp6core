@@ -12,19 +12,11 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "httpworker.h"
-#include <QtDebug>
-#include <QHostAddress>
-#include <QTcpSocket>
-#include <QTextStream>
-#include <QStringList>
-#include <QList>
 #include "httprequest.h"
 #include "httpresponse.h"
-#include <QTime>
-//#include "stats/statistics.h"
 #include "log/log.h"
-#include <QString>
-#include <QRegularExpression>
+#include <QTcpSocket>
+#include <QThread>
 
 #define MAXIMUM_LINE_SIZE 65536
 #define MAXIMUM_ENCODED_FORM_POST_SIZE MAXIMUM_LINE_SIZE

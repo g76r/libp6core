@@ -1,4 +1,4 @@
-/* Copyright 2014-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,8 +13,9 @@
  */
 #include "multiplexerlogger.h"
 #include "filelogger.h"
-#include <QFile>
 #include "io/ioutils.h"
+#include <QFile>
+#include <QThread>
 
 MultiplexerLogger::MultiplexerLogger(
     Log::Severity minSeverity, bool isRootLogger)

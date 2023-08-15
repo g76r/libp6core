@@ -12,12 +12,10 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "mathexpr.h"
-#include <functional>
 #include "util/radixtree.h"
 #include "util/characterseparatedexpression.h"
-#include <QRegularExpression>
 #include "mathutils.h"
-#include <QtDebug>
+#include <QRegularExpression>
 
 namespace {
 

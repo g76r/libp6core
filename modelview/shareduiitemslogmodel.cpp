@@ -12,7 +12,6 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "shareduiitemslogmodel.h"
-#include <QDateTime>
 #include "modelview/shareduiitem.h"
 
 static QAtomicInt _sequence;

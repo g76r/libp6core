@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -54,13 +54,16 @@ protected:
   // QAbstractSocket interface
 public:
   void resume() override;
-  void connectToHost(const QString &hostName, quint16 port, OpenMode mode, NetworkLayerProtocol protocol) override;
+  void connectToHost(const QString &hostName, quint16 port, OpenMode mode,
+                     NetworkLayerProtocol protocol) override;
   void connectToHost(const QHostAddress &address, quint16 port, OpenMode mode);
   void disconnectFromHost() override;
   void setReadBufferSize(qint64 size) override;
   qintptr socketDescriptor() const override;
-  bool setSocketDescriptor(qintptr socketDescriptor, SocketState state, OpenMode openMode) override;
-  void setSocketOption(QAbstractSocket::SocketOption option, const QVariant &value) override;
+  bool setSocketDescriptor(qintptr socketDescriptor, SocketState state,
+                           OpenMode openMode) override;
+  void setSocketOption(QAbstractSocket::SocketOption option,
+                       const QVariant &value) override;
   QVariant socketOption(QAbstractSocket::SocketOption option) override;
   bool waitForConnected(int msecs) override;
   bool waitForDisconnected(int msecs) override;

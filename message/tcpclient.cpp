@@ -12,12 +12,12 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "tcpclient.h"
-#include <QTcpSocket>
 #include "tcpconnectionhandler.h"
 #include "log/log.h"
 #include "session.h"
 #include "sessionmanager.h"
-#include <QtDebug>
+#include <QThread>
+#include <QTcpSocket>
 
 TcpClient::TcpClient(IncomingMessageDispatcher *dispatcher)
   : QObject(), _thread(new QThread), _dispatcher(dispatcher), _handler(0),

@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,7 +17,6 @@
 #include "libp6core_global.h"
 #include "usersdatabase.h"
 #include <QDateTime>
-#include <QObject>
 
 /** Authorization service interface */
 class LIBP6CORESHARED_EXPORT Authorizer : public QObject {
@@ -34,15 +33,15 @@ public:
    * Of course there can be authorization definitions that ignore some of the
    * criteria (e.g. that only check the actionScope).
    * This method is thread-safe */
-  virtual bool authorizeUserData(UserData user, QString actionScope,
-                                 QString dataScope = QString(),
-                                 QDateTime timestamp = QDateTime()) const = 0;
+  virtual bool authorizeUserData(
+      UserData user, QString actionScope, QString dataScope = {},
+      QDateTime timestamp = {}) const = 0;
   /** Same as previous, using the users database to resolve UserData from
    * userId. Always return false if the users database is not set.
    * This method is thread-safe */
-  virtual bool authorize(QString userId, QString actionScope,
-                         QString dataScope = QString(),
-                         QDateTime timestamp = QDateTime()) const;
+  virtual bool authorize(
+      QString userId, QString actionScope, QString dataScope = {},
+      QDateTime timestamp = {}) const;
   /** Does not take ownership. */
   Authorizer &setUsersDatabase(UsersDatabase *db);
 };

@@ -14,12 +14,10 @@
 
 #include "pfnode.h"
 #include "pfinternals_p.h"
-#include <QtDebug>
-#include <QAtomicInt>
-#include <QStringList>
 #include "pfparser.h"
 #include "pfdomhandler.h"
 #include <QRegularExpression>
+#include <QBuffer>
 
 #define INDENTATION_EOL_STRING "\n"
 #define INDENTATION_STRING "  "

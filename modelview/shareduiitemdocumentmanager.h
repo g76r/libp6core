@@ -14,9 +14,7 @@
 #ifndef SHAREDUIITEMDOCUMENTMANAGER_H
 #define SHAREDUIITEMDOCUMENTMANAGER_H
 
-#include <QObject>
 #include "shareduiitemdocumenttransaction.h"
-#include <functional>
 
 /** Base class for SharedUiItem-based document managers.
  *

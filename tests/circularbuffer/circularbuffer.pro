@@ -1,4 +1,4 @@
-# Copyright 2015-2017 Hallowyn, Gregoire Barbier and others.
+# Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
 # This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
 # Libpumpkin is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -12,10 +12,10 @@
 # along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
 
 QT -= gui
-QT += core
+QT += core network sql
 
 TARGET = test
-CONFIG += console largefile
+CONFIG += console largefile c++20
 CONFIG -= app_bundle
 INCLUDEPATH += ../..
 

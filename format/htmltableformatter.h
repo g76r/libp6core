@@ -1,4 +1,4 @@
-/* Copyright 2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,7 +15,6 @@
 #define HTMLTABLEFORMATTER_H
 
 #include "abstracttextformatter.h"
-#include <QAbstractItemModel>
 
 /** Formats various data types to HTML table row, whole table or table header.
  */

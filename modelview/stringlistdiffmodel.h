@@ -1,4 +1,4 @@
-/* Copyright 2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,7 +16,6 @@
 
 #include "libp6core_global.h"
 #include <QAbstractTableModel>
-#include <QStringList>
 
 // LATER make this model writeable, at less make it possible to the user to
 // delete rows and so choose which diff lines he would like to apply

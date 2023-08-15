@@ -15,9 +15,8 @@
 #define FILESYSTEMHTTPHANDLER_H
 
 #include "httphandler.h"
-#include <QStringList>
-#include <QPair>
 #include "util/paramsprovider.h"
+#include <QRegularExpression>
 
 class QFile;
 

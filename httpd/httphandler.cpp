@@ -12,7 +12,6 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "httphandler.h"
-#include <QRegularExpression>
 
 static const QRegularExpression _multipleSlashRE("//+");
 

@@ -16,8 +16,6 @@
 
 #include "libp6core_global.h"
 #include <QAbstractTableModel>
-#include <QStringList>
-#include <QHash>
 
 /** Kind of 2-dimensions QStringListModel.
  *

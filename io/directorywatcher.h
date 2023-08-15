@@ -1,4 +1,4 @@
-/* Copyright 2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,12 +16,10 @@
 
 #include "libp6core_global.h"
 #include <QObject>
-#include <QString>
+#include "util/utf8stringset.h"
 #include <QRegularExpression>
-#include <QHash>
 #include <QMutex>
 #include <QDateTime>
-#include <QVector>
 
 class QFileSystemWatcher;
 

@@ -15,9 +15,8 @@
 #define PFFRAGMENT_P_H
 
 #include "libp6core_global.h"
-#include <QSharedData>
-#include <QIODevice>
 #include "pfoptions.h"
+#include <QIODevice>
 
 /** Internal class for Qt's implicit sharing idiom.
   * @see PfFragment */

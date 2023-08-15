@@ -15,7 +15,6 @@
 #define SHAREDUIITEMSTABLEMODEL_H
 
 #include "shareduiitemsmodel.h"
-#include <QSet>
 #include "modelview/shareduiitemlist.h"
 
 // LATER provides a circular buffer implementation, in addition to QList

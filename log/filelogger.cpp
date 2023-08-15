@@ -12,11 +12,8 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "filelogger.h"
-#include <QMetaObject>
-#include <QFile>
-#include <QtDebug>
-#include <QThread>
 #include "util/paramset.h"
+#include <QFile>
 
 #define ISO8601 u"yyyy-MM-ddThh:mm:ss,zzz"_s
 

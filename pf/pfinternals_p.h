@@ -21,9 +21,6 @@
  */
 
 #include "pfutils.h"
-#include <QObject>
-#include <QString>
-#include <QChar>
 
 #define PF_SPACES " \t\n\r"
 #define PF_RESERVED "$~[]{}"
@@ -50,8 +47,6 @@ inline bool pfisspecial(char c) {
 inline bool pfisendofname(char c) {
   return pfin(c, PF_SPACES PF_SEPARATORS);
 }
-
-inline QString tr(const char *s) { return QObject::tr(s); }
 
 /** Return a C-style quoted char if char is a special char, e.g.
   * 97 (a)                          ->      a

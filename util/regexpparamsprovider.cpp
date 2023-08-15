@@ -12,7 +12,6 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "regexpparamsprovider.h"
-#include <QRegularExpression>
 #include "util/utf8stringset.h"
 
 const QVariant RegexpParamsProvider::paramValue(

@@ -14,8 +14,8 @@
 #ifndef LOGGERTHREAD_H
 #define LOGGERTHREAD_H
 
-#include <QThread>
 #include "logger.h"
+#include <QThread>
 
 /** Thread class used internally by Logger when working with a dedicated thread.
  * @see Logger */

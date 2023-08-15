@@ -14,10 +14,9 @@
 #ifndef SHAREDUIITEMDOCUMENTTRANSACTION_H
 #define SHAREDUIITEMDOCUMENTTRANSACTION_H
 
-#include <QPointer>
 #include "shareduiitemlist.h"
 #include "util/coreundocommand.h"
-#include <functional>
+#include <QPointer>
 
 class SharedUiItemDocumentManager;
 

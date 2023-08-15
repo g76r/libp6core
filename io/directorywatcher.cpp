@@ -1,4 +1,4 @@
-/* Copyright 2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -12,13 +12,11 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "directorywatcher.h"
-#include <QFileSystemWatcher>
 #include <QMutexLocker>
-#include <QSet>
-//#include <QtDebug>
 #include <QDir>
-#include <QFile>
 #include <QFileInfo>
+#include <QMutexLocker>
+#include <QFileSystemWatcher>
 
 DirectoryWatcher::DirectoryWatcher(QObject *parent)
   : QObject(parent), _qfsw(new QFileSystemWatcher(this)) {

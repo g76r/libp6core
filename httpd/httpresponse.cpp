@@ -13,12 +13,10 @@
  */
 #include "httpresponse.h"
 #include "httpcommon.h"
-#include <QRegularExpression>
 #include "log/log.h"
-#include <QSharedData>
-#include <QMultiHash>
 #include "format/timeformats.h"
 #include "io/dummysocket.h"
+#include <QRegularExpression>
 
 using namespace Qt::Literals::StringLiterals;
 

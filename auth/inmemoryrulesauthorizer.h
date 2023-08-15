@@ -15,9 +15,9 @@
 #define INMEMORYRULESAUTHORIZER_H
 
 #include "authorizer.h"
-#include <QSet>
 #include <QRegularExpression>
 #include <QMutex>
+#include "util/utf8stringset.h"
 
 /** In-memory rules-list based authorizer.
  * The rules are evaluated in the list order.

@@ -15,8 +15,6 @@
 #define INMEMORYSHAREDUIITEMDOCUMENTMANAGER_H
 
 #include "shareduiitemdocumentmanager.h"
-#include <QHash>
-#include <QMap>
 
 /** Simple generic implementation of SharedUiItemDocumentManager holding in
  * memory a repository of items by idQualifier and id.

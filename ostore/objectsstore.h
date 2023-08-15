@@ -1,4 +1,4 @@
-/* Copyright 2017-2022 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,11 +14,10 @@
 #ifndef OBJECTSSTORE_H
 #define OBJECTSSTORE_H
 
-#include <QObject>
-#include <QSharedData>
+#include "libp6core_global.h"
+#include <QSharedDataPointer>
 #include <QMetaObject>
 #include <functional>
-#include "libp6core_global.h"
 #include <QVariant>
 
 /** Abstract container for persisting QObjects to either local database or

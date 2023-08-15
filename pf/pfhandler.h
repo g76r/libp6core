@@ -15,12 +15,10 @@
 #ifndef PFHANDLER_H
 #define PFHANDLER_H
 
-#include "libp6core_global.h"
 #include "pfparser.h"
 #include "pfarray.h"
 
 class QIODevice;
-class QByteArray;
 
 /** Handler for event-oriented (SAX-like) PF parser.
   * @see PfParser

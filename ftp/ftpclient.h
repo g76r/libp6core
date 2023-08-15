@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2013 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,9 +14,8 @@
 #ifndef FTPCLIENT_H
 #define FTPCLIENT_H
 
-#include <QObject>
-#include <QTcpSocket>
 #include "ftpscript.h"
+#include <QTcpSocket>
 
 /** One thread, event-driven FTP client executing one or several operation in
  * a fail-at-first-error script-style fashion.

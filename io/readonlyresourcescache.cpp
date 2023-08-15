@@ -1,4 +1,4 @@
-/* Copyright 2016-2021 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -12,20 +12,14 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "readonlyresourcescache.h"
-#include <QDateTime>
-#include <QThread>
-#include <unistd.h>
 #include "thread/blockingtimer.h"
-#include <QNetworkRequest>
-#include <QNetworkReply>
 #include <QRegularExpression>
-#include <QFile>
-#include <QtDebug>
+#include <QNetworkReply>
+#include <QThread>
 #include <QTimer>
-#include "log/log.h"
-#include <QMetaObject>
 
-QRegularExpression _startsWithValidUrlSchemeRE("^[a-zA-Z][a-zA-Z0-9+.-]+:");
+static QRegularExpression _startsWithValidUrlSchemeRE {
+  "^[a-zA-Z][a-zA-Z0-9+.-]+:" };
 
 ReadOnlyResourcesCache::ReadOnlyResourcesCache(QObject *parent) :
   QObject(parent), _nam(new QNetworkAccessManager(this)),

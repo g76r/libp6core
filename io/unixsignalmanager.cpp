@@ -12,15 +12,11 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "unixsignalmanager.h"
-#include <QMutexLocker>
 #include "log/log.h"
 #include <QSocketNotifier>
-#include <unistd.h>
-
-#ifdef Q_OS_UNIX
+#include <QMutexLocker>
 #include <unistd.h>
 #include <fcntl.h>
-#endif
 
 /******************************************************************
   /!\ there must be no global variables with a destructor here /!\

@@ -15,8 +15,8 @@
 #define UPLOADHTTPHANDLER_H
 
 #include "httphandler.h"
-#include <QTemporaryFile>
 #include <QSemaphore>
+#include <QFile>
 
 /** HttpHandler to deal with uploading files or data. */
 class LIBP6CORESHARED_EXPORT UploadHttpHandler : public HttpHandler {

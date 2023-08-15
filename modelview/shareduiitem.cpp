@@ -12,8 +12,6 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "shareduiitem.h"
-#include <QtDebug>
-#include <QRegularExpression>
 #include "util/paramset.h"
 
 SharedUiItemData::~SharedUiItemData() {

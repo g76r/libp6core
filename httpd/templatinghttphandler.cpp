@@ -12,15 +12,12 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "templatinghttphandler.h"
-#include <QRegularExpression>
-#include <QFile>
-#include <QBuffer>
 #include "io/ioutils.h"
 #include "log/log.h"
-#include <QtDebug>
 #include "util/characterseparatedexpression.h"
-#include <QRegularExpression>
 #include "format/stringutils.h"
+#include <QFile>
+#include <QBuffer>
 
 static const QRegularExpression _directorySeparatorRE("[/:]");
 
@@ -132,7 +129,8 @@ void TemplatingHttpHandler::applyTemplateFile(
       } else if (markupId == "value"_ba || markupId == "rawvalue"_ba) {
         // syntax: <?[raw]value:variablename[:valueifnotdef[:valueifdef]]?>
         CharacterSeparatedExpression markupParams(markupContent, separatorPos);
-        auto value = processingContext->paramString(markupParams.value(0));
+        auto value = processingContext->paramUtf8(markupParams.value(0))
+                     .toString();
         if (!value.isNull()) {
           value = markupParams.value(2, value);
         } else {

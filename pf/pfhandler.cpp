@@ -13,8 +13,6 @@
  */
 
 #include "pfhandler.h"
-#include <QtDebug>
-#include <QByteArray>
 #include <QIODevice>
 
 PfHandler::PfHandler() : _errorLine(0), _errorColumn(0), _errorOccured(false) {
