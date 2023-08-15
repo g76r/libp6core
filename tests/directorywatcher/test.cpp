@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
   system("touch /tmp/4 /tmp/secondary/3");
   dw.addWatch("/tmp", "^4", true);
   dw.addWatch("/tmp/secondary", "^3");
-  QTimer::singleShot(30000, &app, &QCoreApplication::quit);
+  QTimer::singleShot(5000, &app, &QCoreApplication::quit);
   QTimer::singleShot(1000, []() {
       qDebug() << "---";
       system("touch /tmp/4 /tmp/secondary/3 /tmp/44 /tmp/secondary/33");
