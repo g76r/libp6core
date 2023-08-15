@@ -40,8 +40,8 @@ protected:
   };
 
 private:
-  QVector<ItemBinding> _verticalHeaders, _horizontalHeaders;
-  QVector<QVector<ItemBinding>> _cells;
+  QList<ItemBinding> _verticalHeaders, _horizontalHeaders;
+  QList<QList<ItemBinding>> _cells;
   int _rowsCount = 0, _columnsCount = 0;
   bool _forceDisplayRoleWhenEvaluatingTooltips = true; // LATER provide setter
   static ItemBinding nullBinding;

@@ -61,8 +61,8 @@ private:
   };
   ParamSet _params;
   QByteArray _paramsetId, _idQualifier;
-  QVector<ParamSetRow> _rows;
-  QVector<QString> _scopes;
+  QList<ParamSetRow> _rows;
+  QList<QString> _scopes;
   bool _inherit, _evaluate, _displayOverriden, _trimOnEdit;
   QByteArray _changeParamsIdFilter;
   QString _defaultScopeForInheritedParams = "inherited";
@@ -89,8 +89,8 @@ public:
    */
   QModelIndex indexOf(QString key, bool allowInherited) const;
   Qt::ItemFlags flags(const QModelIndex &index) const override;
-  QVector<QString> scopes() const { return _scopes; }
-  void setScopes(QVector<QString> scopes) { _scopes = scopes; }
+  QList<QString> scopes() const { return _scopes; }
+  void setScopes(QList<QString> scopes) { _scopes = scopes; }
   void setchangeParamsIdFilter(QString changeParamsIdFilter) {
     _changeParamsIdFilter = changeParamsIdFilter.toUtf8(); }
   void setchangeParamsIdFilter(const char *changeParamsIdFilter) {
@@ -126,7 +126,7 @@ public:
       QByteArray changeParamsIdFilter, QByteArray idQualifier,
       ParamSetModel::ChangedSignal<T> changedSignal,
       ParamSetModel::ChangeSetter<T> changeSetter,
-      QVector<QString> scopes = {}) {
+      QList<QString> scopes = {}) {
     _scopes = scopes;
     _idQualifier = idQualifier;
     if (!changeParamsIdFilter.isEmpty())
@@ -144,7 +144,7 @@ public:
       QByteArray changeParamsIdFilter, QByteArray idQualifier,
       ParamSetModel::ChangedSignal<T> changedSignal,
       ParamSetModel::ChangeSetter<T> changeSetter, QString localScope) {
-    QVector<QString> scopes;
+    QList<QString> scopes;
     scopes.append(localScope);
     connectToDocumentManager(
           documentManager, initialParams, changeParamsIdFilter, idQualifier,
@@ -166,7 +166,7 @@ signals:
                      QByteArray paramsetId);
 
 private:
-  inline void fillRows(QVector<ParamSetRow> *rows, ParamSet params, int depth,
+  inline void fillRows(QList<ParamSetRow> *rows, ParamSet params, int depth,
                        QSet<QString> *allKeys);
   // hide functions that cannot work with SharedUiItem paradigm to avoid
   // misunderstanding

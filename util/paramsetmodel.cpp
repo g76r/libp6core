@@ -172,7 +172,7 @@ bool ParamSetModel::removeRows(
 }
 
 void ParamSetModel::fillRows(
-    QVector<ParamSetRow> *rows, ParamSet params, int depth,
+    QList<ParamSetRow> *rows, ParamSet params, int depth,
     QSet<QString> *allKeys) {
   if (_inherit) {
     ParamSet parent = params.parent();
@@ -213,7 +213,7 @@ void ParamSetModel::changeParams(ParamSet newParams, ParamSet oldParams,
     _params = ParamSet();
     endRemoveRows();
   }
-  QVector<ParamSetRow> rows;
+  QList<ParamSetRow> rows;
   QSet<QString> allKeys;
   fillRows(&rows, newParams, 0, &allKeys);
   if (!newParams.isEmpty()) {

@@ -60,7 +60,7 @@ SharedUiItemsMatrixModel::cellBindingAt(const QModelIndex &index) const {
 QModelIndex SharedUiItemsMatrixModel::indexOf(QByteArray qualifiedId) const {
   GenericSharedUiItem oldItem(qualifiedId);
   for (int i = 0; i < _cells.size(); ++i) {
-    const QVector<ItemBinding> &row = _cells[i];
+    const QList<ItemBinding> &row = _cells[i];
     for (int j = 0; j < row.size(); ++j) {
       const ItemBinding &binding = row[j];
       if (binding._item == oldItem) {
@@ -104,7 +104,7 @@ void SharedUiItemsMatrixModel::changeItem(
     }
   }
   for (int i = 0; i < _cells.size(); ++i) {
-    QVector<ItemBinding> &row = _cells[i];
+    QList<ItemBinding> &row = _cells[i];
     for (int j = 0; j < row.size(); ++j) {
       ItemBinding &binding = row[j];
       if (binding._item == oldItem) {
@@ -120,7 +120,7 @@ void SharedUiItemsMatrixModel::changeItem(
 void SharedUiItemsMatrixModel::bindHeader(
     int section, Qt::Orientation orientation, SharedUiItem item,
     QString display, QString tooltip) {
-  QVector<ItemBinding> *headers;
+  QList<ItemBinding> *headers;
   switch (orientation) {
   case Qt::Horizontal:
     headers = &_horizontalHeaders;
@@ -239,7 +239,7 @@ bool SharedUiItemsMatrixModel::setData(
 
 QVariant SharedUiItemsMatrixModel::headerData(
     int section, Qt::Orientation orientation, int role) const {
-  const QVector<ItemBinding> &headers =
+  const QList<ItemBinding> &headers =
       (orientation == Qt::Horizontal) ? _horizontalHeaders : _verticalHeaders;
   if (section >= 0 && section < headers.size())
     return evaluate(headers[section], role);

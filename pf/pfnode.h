@@ -212,12 +212,6 @@ public:
     for (const PfNode &child : children)
       appendChild(child);
     return *this; }
-#if QT_VERSION < 0x060000
-  PfNode &appendChildren(QVector<PfNode> children) {
-    for (const PfNode &child : children)
-      appendChild(child);
-    return *this; }
-#endif
   PfNode &prependCommentChild(const QString &comment) {
     return prependChild(createCommentNode(comment)); }
   PfNode &appendCommentChild(const QString &comment) {

@@ -45,7 +45,7 @@ public:
   };
 
 private:
-  QVector<DiffLine> _lines;
+  QList<DiffLine> _lines;
 
 public:
   StringListDiffModel(QObject *parent = 0);
@@ -58,7 +58,7 @@ public:
   void setValues(const QList<QString> &beforeValues,
                  const QList<QString> &afterValues);
   void clear();
-  QVector<DiffLine> lines() const { return _lines; }
+  QList<DiffLine> lines() const { return _lines; }
   DiffLine line(int row) const { return _lines.value(row); }
 
 protected:

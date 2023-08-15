@@ -121,7 +121,7 @@ public:
 struct FtpScriptData : public QSharedData {
   //int _id;
   FtpClient *_client;
-  QVector<FtpCommand> _commands;
+  QList<FtpCommand> _commands;
   QString _host, _login, _password, _cwd;
   quint16 _port, _pasvPort;
   QStack<QString> _dirstack;

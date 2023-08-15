@@ -32,7 +32,7 @@ class LIBP6CORESHARED_EXPORT DirectoryWatcher : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(DirectoryWatcher)
   QFileSystemWatcher *_qfsw;
-  QHash<QString,QVector<QRegularExpression>> _watches; // dirname -> filepatterns (last inserted last in vector order)
+  QHash<QString,QList<QRegularExpression>> _watches; // dirname -> filepatterns (last inserted last in vector order)
   QHash<QString,QHash<QString,QDateTime>> _files; // dirname -> (basename,lastmodified)
   mutable QMutex _mutex;
   QString _errorString;
