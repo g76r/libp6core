@@ -21,6 +21,8 @@ const QList<char> Utf8String::AsciiWhitespace = { ' ', '\t', '\n', '\r', '\v' };
 const Utf8String Utf8String::ReplacementCharacterUtf8 = "\xef\xbf\xbd"_u8;
 const Utf8String Utf8String::Empty = ""_u8;
 
+#include "util/unicodedata.cpp"
+
 template<typename F>
 static inline F toFloating(
     QByteArray s, bool *ok, F def, bool suffixes_enabled,
@@ -225,55 +227,114 @@ found:
   return b;
 }
 
-static inline const char *first_char(const char *&s, const char *end) {
-  while (s+3 < end && s[0] == (char)0xef && s[1] == (char)0xbb
-         && s[2] == (char)0xbf) // BOM
-    s += 3;
-  return (s < end) ? s : 0;
-}
-
-static inline const char *next_char(const char *&s, const char *end) {
-  while (s+3 < end && s[0] == (char)0xef && s[1] == (char)0xbb
-         && s[2] == (char)0xbf) // BOM
-    s += 3;
-  if ((s[0]&0b10000000) == 0) {  // ascii 7 : one byte
+/** Increment s until a start of char sequence is reached.
+ *  If s is already at a char start, do nothing.
+ *  Actually: skips BOMs and (erroneous) out of sequence bytes.
+ *  Returns 0 if end is reached.
+ */
+static inline const char *align_on_char(const char *&s, const char *end) {
+  // skip every BOM and every unexpected continuation (0b10xxxxxx) byte
+  // being it at the end of previous sequence or unexpected
+  while ((s+3 <= end && (s[0]&0xff) == 0xef && (s[1]&0xff) == 0xbb &&
+          (s[2]&0xff) == 0xbf) || // BOM
+         (s+1 <= end && (s[0]&0b11000000) == 0b10000000)) // continuation byte
     ++s;
-    goto found;
-  }
-  ++s; // ignore leading bytes, should be 0b11xxxxxx but anyway we skip it
-  while (s+1 < end && (s[0]&0b11000000) == 0b10000000)
-    ++s; // skip all continuation (0b10xxxxxx) bytes, no matter their number
-  // rationale: they should be 1 to 3 depending on the leading byte, but anyway
-  // we are to ignore malformed sequences if any
-  while (s+3 < end && s[0] == (char)0xef && s[1] == (char)0xbb
-         && s[2] == (char)0xbf) // BOM
-    s += 3;
-found:
-  return (s < end) ? s : 0;
+  return s < end ? s : 0;
 }
 
-static inline const char *prev_char(const char *&s, const char *begin) {
-  --s;
-  while (s-3 >= begin && s[-2] == (char)0xef && s[-1] == (char)0xbb
-         && s[0] == (char)0xbf) // BOM
-    s -= 3;
-  while (s-1 >= begin && (s[0]&0b11000000) == 0b10000000)
-    --s; // skip all continuation (0b10xxxxxx) bytes, no matter their number
-  while (s-3 >= begin && s[-2] == (char)0xef && s[-1] == (char)0xbb
-         && s[0] == (char)0xbf) // BOM
-    s -= 3;
-  return (s >= begin) ? s : 0;
+/** Decrement s until a start of char sequence is reached.
+ *  If s is already at a char start, do nothing.
+ *  Actually: skips BOMs and (erroneous) out of sequence bytes.
+ *  Returns 0 if begin is exceeded.
+ */
+static inline const char *backward_align_on_char(
+    const char *&s, const char *begin) {
+  // skip every BOM and every unexpected continuation (0b10xxxxxx) byte
+  // being it at the end of previous sequence or unexpected
+  while ((s-3 >= begin && (s[-2]&0xff) == 0xef && (s[-1]&0xff) == 0xbb
+          && (s[0]&0xff) == 0xbf) || // BOM
+         (s-1 >= begin && (s[0]&0b11000000) == 0b10000000)) // continuation byte
+    --s;
+  return s >= begin ? s : 0;
 }
 
 qsizetype Utf8String::utf8Size() const {
   auto s = constData();
   auto end = s + size();
-  if (!first_char(s, end))
-    return 0;
   qsizetype i = 0;
-  while (next_char(s, end))
+  for (; align_on_char(s, end); ++s)
     ++i;
   return i;
+}
+
+Utf8String Utf8String::cleaned(const char *s, const char *end) {
+  Q_ASSERT(s);
+  Q_ASSERT(end);
+  Utf8String cleaned;
+  for (; align_on_char(s, end); ++s) {
+    auto c = decodeUtf8(s, end);
+    auto u = encodeUtf8(c);
+    cleaned += u;
+  }
+  return cleaned;
+}
+
+static inline Utf8String foldCase(
+    const char *s, const char *end, std::function<char32_t(char32_t)> fold) {
+  Q_ASSERT(s);
+  Q_ASSERT(end);
+  Utf8String folded;
+  for (; align_on_char(s, end); ++s)
+    folded += fold(Utf8String::decodeUtf8(s, end));
+  return folded;
+}
+
+static inline bool testCase(
+    const char *s, const char *end, std::function<char32_t(char32_t)> fold) {
+  Q_ASSERT(s);
+  Q_ASSERT(end);
+  for (; align_on_char(s, end); ++s) {
+    char32_t orig = Utf8String::decodeUtf8(s, end);
+    if (orig != fold(orig))
+      return false;
+  }
+  return true;
+}
+
+Utf8String Utf8String::toUpper() const {
+  auto s = constData();
+  auto end = s + size();
+  return foldCase(s, end, [](char32_t c) { return Utf8String::toUpper(c); });
+}
+
+Utf8String Utf8String::toLower() const {
+  auto s = constData();
+  auto end = s + size();
+  return foldCase(s, end, [](char32_t c) { return Utf8String::toLower(c); });
+}
+
+Utf8String Utf8String::toTitle() {
+  auto s = constData();
+  auto end = s + size();
+  return foldCase(s, end, [](char32_t c) { return Utf8String::toTitle(c); });
+}
+
+bool Utf8String::isUpper() const {
+  auto s = constData();
+  auto end = s + size();
+  return testCase(s, end, [](char32_t c) { return Utf8String::toUpper(c); });
+}
+
+bool Utf8String::isLower() const {
+  auto s = constData();
+  auto end = s + size();
+  return testCase(s, end, [](char32_t c) { return Utf8String::toLower(c); });
+}
+
+bool Utf8String::isTitle() const {
+  auto s = constData();
+  auto end = s + size();
+  return testCase(s, end, [](char32_t c) { return Utf8String::toTitle(c); });
 }
 
 Utf8String Utf8String::utf8Value(
@@ -281,12 +342,9 @@ Utf8String Utf8String::utf8Value(
   Q_ASSERT(s);
   Q_ASSERT(len >= 0);
   auto end = s + len;
-  if (!first_char(s, end))
-    return def;
-  qsizetype j = 0;
-  while (j < i && next_char(s, end))
-    ++j;
-  return Utf8String(s, end-s);
+  for (qsizetype j = 0; j < i && align_on_char(s, end); ++j, ++s)
+    ;
+  return s < end ? Utf8String(s, end-s) : def;
 }
 
 char32_t Utf8String::utf32Value(
@@ -298,40 +356,33 @@ char32_t Utf8String::utf32Value(
 Utf8String Utf8String::utf8Left(qsizetype len) const {
   auto s = constData();
   auto end = s + size();
-  auto s0 = first_char(s, end);
-  qsizetype i = 0;
-  do
-    ++i;
-  while (i <= len && next_char(s, end));
-  return Utf8String(s0, s-s0);
+  auto begin = align_on_char(s, end);
+  for (qsizetype i = 0; i < len && align_on_char(s, end); ++s, ++i)
+    ;
+  return Utf8String(begin, s-begin);
 }
 
 Utf8String Utf8String::utf8Right(qsizetype len) const {
   auto begin = constData();
   auto s = begin + size(), end = s;
-  qsizetype i = 0;
-  do
-    ++i;
-  while (i <= len && prev_char(s, begin));
+  for (qsizetype i = 0; i < len && backward_align_on_char(s, begin); --s, ++i)
+    ;
+  if (s < begin)
+    s  = begin;
   return Utf8String(s, end-s);
 }
 
 Utf8String Utf8String::utf8Mid(qsizetype pos, qsizetype len) const {
-  auto s = constData(), s0 = s;
+  auto s = constData(), begin = s;
   auto end = s + size();
-  first_char(s, end);
-  qsizetype i = 0;
-  do
-    ++i;
-  while (i <= pos && next_char(s, end));
+  for (qsizetype i = 0; i < pos && align_on_char(s, end); ++s, ++i)
+    ;
   if (len < 0)
-    return Utf8String(s, size()-(s-s0));
-  s0 = s;
-  i = 0;
-  do
-    ++i;
-  while (i <= len && next_char(s, end));
-  return Utf8String(s0, s-s0);
+    return Utf8String(s, size()-(s-begin));
+  begin = s;
+  for (qsizetype i = 0; i < len && align_on_char(s, end); ++s, ++i)
+    ;
+  return Utf8String(begin, s-begin);
 }
 
 const Utf8StringList Utf8String::split(
@@ -397,18 +448,16 @@ const Utf8StringList Utf8String::split(
 }
 
 const Utf8StringList Utf8String::splitByLeadingChar(qsizetype offset) const {
-  QChar z;
-  if (offset < 0 || size() < offset+1)
-    return {};
-  auto s = constData(), orig = s;
-  auto end = s + size();
-  first_char(s, end);
-  while (offset && next_char(s, end))
-    --offset;
-  auto s0 = s; // begin of separator
-  auto s1 = next_char(s, end); // end of separator
-  next_char(s, end); // begin of next char
-  return split(Utf8String(s0, s1-s0), s1-orig);
+  auto begin = constData();
+  auto s = begin + offset;
+  auto end = begin + size();
+  auto sep = align_on_char(s, end); // begin of leading separator
+  auto csv = align_on_char(++s, end); // begin of char separated values
+  auto eos = sep+1; // end of separator (byte after the end of the separator)
+  for (; eos < csv && (eos[0]&0b11000000) == 0b10000000; ++eos)
+    ; // go forward over continuation bytes
+  //qDebug() << "splitByLeadingChar" << offset << Utf8String(sep, eos-sep).toHex() << csv;
+  return split(Utf8String(sep, eos-sep), csv-begin);
 }
 
 const Utf8StringList Utf8String::split(
@@ -429,4 +478,3 @@ const Utf8StringList Utf8String::split(
 QDebug operator<<(QDebug dbg, const Utf8String &s) {
   return dbg << s.toString();
 }
-

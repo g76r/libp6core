@@ -47,6 +47,14 @@ DESTDIR = ../build-$$TARGET-$$TARGET_OS/$$BUILD_TYPE
 #QMAKE_CXXFLAGS += -O0 -pg -fprofile-arcs -ftest-coverage
 #QMAKE_LFLAGS += -pg -fprofile-arcs
 
+unix {
+    unicodedata.target = util/unicodedata.cpp
+    unicodedata.depends = util/build_unicodedata.sh util/UnicodeData.txt
+    unicodedata.commands = util/build_unicodedata.sh
+    PRE_TARGETDEPS += util/unicodedata.cpp
+    QMAKE_EXTRA_TARGETS += unicodedata
+}
+
 SOURCES += \
     pf/pfutils.cpp \
     pf/pfparser.cpp \

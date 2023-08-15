@@ -11,9 +11,12 @@ int main(void) {
   qDebug() << s.size() << s.utf8Size();
   qDebug() << s << s.split('o') << s.split("§"_u8);
   qDebug() << s.splitByLeadingChar();
+  qDebug() << "/foo/bar/baz///"_u8.splitByLeadingChar();
   qDebug() << s.left(4) << "-" << s.utf8Left(6) << "-" << s.utf8Mid(4,3) << "-" << s.utf8Right(4); 
   s = "\xef\xbb\xbf\xef\xbb\xbf\xef\xbb\xbf§foo§bar§baz§\xef\xbb\xbf§§"_u8;
-  qDebug() << s.size() << s.utf8Size();
+  auto sc = s.cleaned();
+  qDebug() << s.size() << s.utf8Size() << sc.size() << sc.utf8Size() << sc;
+  qDebug() << "ab\xef\xbb\xbf"_u8.cleaned();
   qDebug() << s.splitByLeadingChar();
   qDebug() << "  f   oo\n\rbar\vbaz"_u8.split(Utf8String::AsciiWhitespace);
   const char *p = "foo";
@@ -24,5 +27,7 @@ int main(void) {
   Log::debug() << s << " - " << s.split('o') << " - " << s.split("§"_u8);
   Utf8StringList l = { "foo", "bar", "baz" };
   qDebug() << ParamSet().evaluate("%0,%{-1},%2,%8=foo bar baz,,bar,", false, &l);
+  s = "aéÉb€¢\u03c3\u03c2\u03a3øœ×o'z"_u8;
+  qDebug() << s << s.toUpper() << s.toLower() << s.toTitle() << s.isLower() << Utf8String::toTitle(0x01c6);
   return 0;
 }

@@ -5,3 +5,4 @@ moc_*.cpp
 /*libp6core.so*
 /TODO
 .rsync-filter
+/util/unicodedata.cpp

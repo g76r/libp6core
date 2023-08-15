@@ -18,14 +18,14 @@
 #include <QVariant>
 #include <QList>
 #include <QSet>
-#include "libp6core_global.h"
+#include <algorithm>
 #if __cplusplus >= 202002L
 #include <bit>
 #endif
+#include "libp6core_global.h"
 
 using namespace Qt::Literals::StringLiterals;
 
-class AsciiString;
 class Utf8StringList;
 class Utf8StringSet;
 
@@ -79,14 +79,24 @@ public:
                      ? v.toString().toUtf8()
                      : QByteArray{}) { }
 
+  /** Return ith byte of the string, like operator[] or at() but safe if i
+   *  is out of range. */
   [[nodiscard]] inline char value(qsizetype i, char def = 0) const {
     return size() < i+1 || i < 0 ? def : at(i); }
+  /** Return ith utf8 character (bytes sequence) of the string. Safe if i
+   *  is out of range. */
   [[nodiscard]] static Utf8String utf8Value(
       qsizetype i, const char *s, qsizetype len,
       const Utf8String &def = Empty);
+  [[nodiscard]] inline static Utf8String utf8Value(
+      qsizetype i, const char *s, const char *end,
+      const Utf8String &def = Empty) {
+    return utf8Value(i, s, end-s, def); }
   [[nodiscard]] inline Utf8String utf8Value(
       qsizetype i, const Utf8String &def = Empty) const {
     return utf8Value(i, constData(), size(), def); }
+  /** Return ith unicode character (code point value) of the string. Safe if i
+   *  is out of range. */
   [[nodiscard]] static char32_t utf32Value(
       qsizetype i, const char *s, qsizetype len, const char32_t def = 0);
   [[nodiscard]] inline char32_t utf32Value(
@@ -99,23 +109,37 @@ public:
   [[nodiscard]] static inline Utf8String encodeUtf8(char32_t c);
   [[nodiscard]] static inline char32_t decodeUtf8(
       const char *s, qsizetype len);
+  [[nodiscard]] static inline char32_t decodeUtf8(
+      const char *s, const char *end) {
+    return decodeUtf8(s, end-s); }
   [[nodiscard]] static inline char32_t decodeUtf8(const QByteArray &s) {
     return decodeUtf8(s.constData(), s.size()); }
   [[nodiscard]] static inline char32_t decodeUtf8(const char *s) {
     return s ? decodeUtf8(s, ::strlen(s)) : 0; }
 
-  QByteArray toLower() = delete; // FIXME
-  QByteArray toUpper() = delete; // FIXME
-  QByteArray isLower() = delete; // FIXME
-  QByteArray isUpper() = delete; // FIXME
-  /** Set the characters to title case.
-   * For most letters, title case is the same than upper case, but for some
-   * rare characters representing several letters at once, there is a title case
-   * for which the first letter is in upper case and others in lower cases.
-   * For instance ǆ minuscule (unicode: 0x1C6) is mapped to Ǆ majuscule
-   * (unicode: 0x1C4) and to ǅ title case letter (unicode: 0x1C5)
+  /** Convert a unicode charater into its uppercase character, e.g. é -> É.
+   *  Return the input character itself if no change is needed e.g. E É #
    */
-  Utf8String toTitle();
+  static inline char32_t toUpper(char32_t c);
+  /** Convert a unicode charater into its uppercase character, e.g. É -> é .
+   *  Return the input character itself if no change is needed e.g. E é #
+   */
+  static inline char32_t toLower(char32_t c);
+  /** Set the characters to title case.
+   *  For most letters, title case is the same than upper case, but for some
+   *  rare characters representing several letters at once, there is a title case
+   *  for which the first letter is in upper case and others in lower cases.
+   *  For instance ǆ minuscule (unicode: 0x1C6) is mapped to Ǆ majuscule
+   *  (unicode: 0x1C4) and to ǅ title case letter (unicode: 0x1C5)
+   *  Return the input character itself if no change is needed e.g. E É #
+   */
+  static inline char32_t toTitle(char32_t c);
+  [[nodiscard]] Utf8String toUpper() const;
+  [[nodiscard]] Utf8String toLower() const;
+  [[nodiscard]] Utf8String toTitle();
+  [[nodiscard]] bool isLower() const;
+  [[nodiscard]] bool isUpper() const;
+  [[nodiscard]] bool isTitle() const;
   // FIXME inline int compare(QByteArrayView a, Qt::CaseSensitivity cs) const noexcept;
 
   /** Return utf8 characters count. Count utf8 sequences without ensuring
@@ -125,6 +149,15 @@ public:
   Utf8String &trim() { *this = trimmed(); return *this; }
   inline Utf8String &fill(char c, qsizetype size = -1) {
     QByteArray::fill(c, size); return *this; }
+  /** Return valid utf8 without invalid sequences (or having them replaced by
+   *  so called replacement character), without BOMs and without overlong
+   *  encoding. */
+  [[nodiscard]] inline Utf8String cleaned() const {
+    return cleaned(constData(), size()); }
+  [[nodiscard]] inline static Utf8String cleaned(const char *s, qsizetype len) {
+    return cleaned(s, s+len); }
+  [[nodiscard]] static Utf8String cleaned(const char *s, const char *end);
+  Utf8String &clean() { return *this = cleaned(); }
 
   /** Return leftmost len bytes. Empty if len < 0. */
   [[nodiscard]] Utf8String left(qsizetype len) const {
@@ -297,6 +330,8 @@ public:
     QByteArray::append(a); return *this; }
   inline Utf8String &append(QByteArrayView a) {
     QByteArray::append(a); return *this; }
+  inline Utf8String &append(char32_t c) {
+    QByteArray::append(encodeUtf8(c)); return *this; }
 
   inline Utf8String &prepend(char c) {
     QByteArray::prepend(c); return *this; }
@@ -310,6 +345,8 @@ public:
     QByteArray::prepend(a); return *this; }
   inline Utf8String &prepend(QByteArrayView a) {
     QByteArray::prepend(a); return *this; }
+  inline Utf8String &prepend(char32_t c) {
+    QByteArray::prepend(encodeUtf8(c)); return *this; }
 
   inline Utf8String &insert(qsizetype i, QByteArrayView data) {
     QByteArray::insert(i, data); return *this; }
@@ -339,6 +376,8 @@ public:
     QByteArray::operator+=(ch); return *this; }
   inline Utf8String &operator+=(const char *s) {
     QByteArray::operator+=(s); return *this; }
+  inline Utf8String &operator+=(char32_t c) {
+    QByteArray::operator+=(encodeUtf8(c)); return *this; }
 
   inline Utf8String &operator=(const Utf8String &other) {
     QByteArray::operator =(other); return *this; }
@@ -417,6 +456,15 @@ public:
   noexcept { return static_cast<const QByteArray&>(x) > y; }
   friend inline bool operator>(const char *x, const Utf8String &y)
   noexcept { return x > static_cast<const QByteArray&>(y); }
+
+private:
+  struct UnicodeCaseMapping {
+    char32_t utf32;
+    char32_t upper_utf32, lower_utf32, title_utf32;
+    // LATER add already encoded utf8 here as optimization
+    operator char32_t() const { return utf32; }
+  };
+  static std::vector<UnicodeCaseMapping> _case_mapping;
 };
 
 Q_DECLARE_METATYPE(Utf8String)
@@ -476,11 +524,13 @@ char32_t Utf8String::decodeUtf8(const char *s, qsizetype len) {
     [[likely]] case 0:
       return *s;
     case 1:
-      if (len <= 1) [[unlikely]]
+      return ReplacementCharacter; // unexpected continuation character
+    case 2:
+      if (len < 2) [[unlikely]]
         return ReplacementCharacter;
       return (c[0] & 0b00111111) << 6 | (c[1] & 0b00111111);
-    case 2: {
-      if (len <= 2) [[unlikely]]
+    case 3: {
+      if (len < 3) [[unlikely]]
         return ReplacementCharacter;
       char32_t u = ((c[0] & 0b00011111) << 12) | ((c[1] & 0b00111111) << 6)
           | (c[2] & 0b00111111);
@@ -490,8 +540,8 @@ char32_t Utf8String::decodeUtf8(const char *s, qsizetype len) {
 #endif
       return u;
     }
-    case 3: {
-      if (len <= 3) [[unlikely]]
+    case 4: {
+      if (len < 4) [[unlikely]]
         return ReplacementCharacter;
       char32_t u = ((c[0] & 0b00001111) << 18) | ((c[1] & 0b00111111) << 12)
           | ((c[2] & 0b00111111) << 6) | (c[3] & 0b00111111);
@@ -502,14 +552,14 @@ char32_t Utf8String::decodeUtf8(const char *s, qsizetype len) {
       return u;
     }
 #if UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629 // RFC 3629: > 0x10ffff are invalid
-    case 4:
-      if (len <= 4) [[unlikely]]
+    case 5:
+      if (len < 5) [[unlikely]]
         return ReplacementCharacter;
       return ((c[0] & 0b00000111) << 24) | ((c[1] & 0b00111111) << 18)
           | ((c[2] & 0b00111111) << 12) | ((c[3] & 0b00111111) << 6)
           | (c[4] & 0b00111111);
-    case 5:
-      if (len <= 5) [[unlikely]]
+    case 6:
+      if (len < 6) [[unlikely]]
         return ReplacementCharacter;
       return ((c[0] & 0b00000011) << 30) | ((c[1] & 0b00111111) << 24)
           | ((c[2] & 0b00111111) << 18) | ((c[3] & 0b00111111) << 12)
@@ -519,33 +569,35 @@ char32_t Utf8String::decodeUtf8(const char *s, qsizetype len) {
 #else // C++ < 20
   if (c[0] <= 0x7f)
     return *s;
-  if ((c[0] & 0b01000000) == 0 && len > 1)
-    return (c[0] & 0b00111111) << 6 | (c[1] & 0b00111111);
-  if ((c[0] & 0b00100000) == 0 && len > 2) {
-    char32_t u = ((c[0] & 0b00011111) << 12) | ((c[1] & 0b00111111) << 6)
+  if ((c[0] & 0b01000000) == 0)
+    return ReplacementCharacter; // unexpected continuation character
+  if ((c[0] & 0b00100000) == 0 && len > 1)
+    return (c[0] & 0b00011111) << 6 | (c[1] & 0b00111111);
+  if ((c[0] & 0b00010000) == 0 && len > 2) {
+    char32_t u = ((c[0] & 0b00001111) << 12) | ((c[1] & 0b00111111) << 6)
         | (c[2] & 0b00111111);
 #if !UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629
-    if (u >= 0xd800 && u <= 0xdfff) // RFC 3629: surrogate halves are invalid
-      return ReplacementCharacter;
+    if (u >= 0xd800 && u <= 0xdfff)
+      return ReplacementCharacter;  // RFC 3629: surrogate halves are invalid
 #endif
     return u;
   }
-  if ((c[0] & 0b00010000) == 0 && len > 3) {
-    char32_t u = ((c[0] & 0b00001111) << 18) | ((c[1] & 0b00111111) << 12)
+  if ((c[0] & 0b00001000) == 0 && len > 3) {
+    char32_t u = ((c[0] & 0b00000111) << 18) | ((c[1] & 0b00111111) << 12)
         | ((c[2] & 0b00111111) << 6) | (c[3] & 0b00111111);
 #if !UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629
-    if (u >= 0x10ffff) // RFC 3629: > 0x10ffff are invalid
-      return ReplacementCharacter;
+    if (u >= 0x10ffff) // includes 0xfe 0xff bytes exclusion
+        return ReplacementCharacter; // RFC 3629: > 0x10ffff are invalid
 #endif
     return u;
   }
 #if UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629 // RFC 3629: > 0x10ffff are invalid
-  if ((c[0] & 0b00001000) == 0 && len > 4)
-    return ((c[0] & 0b00000111) << 24) | ((c[1] & 0b00111111) << 18)
+  if ((c[0] & 0b00000100) == 0 && len > 4)
+    return ((c[0] & 0b00000011) << 24) | ((c[1] & 0b00111111) << 18)
         | ((c[2] & 0b00111111) << 12) | ((c[3] & 0b00111111) << 6)
         | (c[4] & 0b00111111);
-  if ((c[0] & 0b00000100) == 0 && len > 5)
-    return ((c[0] & 0b00000011) << 30) | ((c[1] & 0b00111111) << 24)
+  if ((c[0] & 0b00000010) == 0 && len > 5)
+    return ((c[0] & 0b00000001) << 30) | ((c[1] & 0b00111111) << 24)
         | ((c[2] & 0b00111111) << 18) | ((c[3] & 0b00111111) << 12)
         | ((c[4] & 0b00111111) << 6) | (c[5] & 0b00111111);
 #endif
@@ -609,6 +661,21 @@ Utf8String Utf8String::encodeUtf8(char32_t c) {
   }
 #endif
   return ReplacementCharacterUtf8;
+}
+
+char32_t Utf8String::toUpper(char32_t c) {
+  auto cm = std::lower_bound(_case_mapping.cbegin(), _case_mapping.cend(), c);
+  return cm == _case_mapping.end() || cm->utf32 != c ? c : cm->upper_utf32;
+}
+
+char32_t Utf8String::toLower(char32_t c) {
+  auto cm = std::lower_bound(_case_mapping.cbegin(), _case_mapping.cend(), c);
+  return cm == _case_mapping.end() || cm->utf32 != c ? c : cm->lower_utf32;
+}
+
+char32_t Utf8String::toTitle(char32_t c) {
+  auto cm = std::lower_bound(_case_mapping.cbegin(), _case_mapping.cend(), c);
+  return cm == _case_mapping.end() || cm->utf32 != c ? c : cm->title_utf32;
 }
 
 #endif // UTF8STRING_H
