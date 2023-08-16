@@ -38,11 +38,7 @@ using std::source_location;
 #include <experimental/source_location>
 using std::experimental::source_location;
 #endif
-
-// C++ 20
-#if __cplusplus >= 202002L
 #include <bit>
-#endif // C++ 20
 
 // Qt
 #include <QAbstractItemModel>

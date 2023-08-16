@@ -17,6 +17,7 @@
 
 #include "libp6core_global.h"
 #include <QVariant>
+#include <bit>
 
 using namespace Qt::Literals::StringLiterals;
 
@@ -468,7 +469,7 @@ inline Utf8String operator"" _u8(const char *str, size_t size) noexcept {
                                    qsizetype(size)));
 }
 
-#if __cplusplus >= 202002L
+#if __cpp_char8_t >= 201811
 inline Utf8String operator"" _u8(const char8_t *str, size_t size) noexcept {
   return Utf8String(QByteArrayData(nullptr, (char *)(str), qsizetype(size)));
 }
@@ -513,7 +514,7 @@ char32_t Utf8String::decodeUtf8(const char *s, qsizetype len) {
   auto c = reinterpret_cast<const unsigned char *>(s);
   Q_ASSERT(s);
   Q_ASSERT(len > 0);
-#if __cplusplus >= 202002L // C++ >= 20
+#if __cpp_lib_bitops >= 201907L // C++ < 20: bitops
   switch(std::countl_one(c[0])) {
     [[likely]] case 0:
       return *s;
@@ -560,7 +561,7 @@ char32_t Utf8String::decodeUtf8(const char *s, qsizetype len) {
           | ((c[4] & 0b00111111) << 6) | (c[5] & 0b00111111);
 #endif
   }
-#else // C++ < 20
+#else // C++ < 20: bitops
   if (c[0] <= 0x7f)
     return *s;
   if ((c[0] & 0b01000000) == 0)
@@ -595,7 +596,7 @@ char32_t Utf8String::decodeUtf8(const char *s, qsizetype len) {
         | ((c[2] & 0b00111111) << 18) | ((c[3] & 0b00111111) << 12)
         | ((c[4] & 0b00111111) << 6) | (c[5] & 0b00111111);
 #endif
-#endif // C++ < 20
+#endif // C++ < 20: bitops
   return ReplacementCharacter;
 }
 
