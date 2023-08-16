@@ -51,18 +51,24 @@ class LIBP6CORESHARED_EXPORT ParamsProviderMerger : public ParamsProvider {
   ParamSet _overridingParams;
   QList<QList<Provider> > _providersStack;
   QList<ParamSet> _overridingParamsStack;
+  Utf8String _scope;
 
 public:
   ParamsProviderMerger() { }
   ParamsProviderMerger(const ParamsProviderMerger &other)
     : ParamsProvider(), _providers(other._providers),
-      _overridingParams(other._overridingParams) { }
-  ParamsProviderMerger(const ParamsProvider *provider) {
+      _overridingParams(other._overridingParams), _scope(other._scope) { }
+  ParamsProviderMerger(const ParamsProvider *provider, Utf8String scope = {})
+    : _scope(scope) {
     append(provider);
   }
-  ParamsProviderMerger(ParamSet provider, bool inherit = true) {
+  ParamsProviderMerger(ParamSet provider, bool inherit = true,
+                       Utf8String scope = {})
+    : _scope(scope) {
     append(provider, inherit);
   }
+  ParamsProviderMerger(ParamSet provider, Utf8String scope)
+    : ParamsProviderMerger(provider, true, scope) { }
   /** Add a ParamsProvider that will be evaluated after those already added. */
   ParamsProviderMerger &append(const ParamsProvider *provider) {
     if (provider)
@@ -134,7 +140,10 @@ public:
     Utf8StringSet *alreadyEvaluated) const override;
   /** Give access to currently overriding params. */
   const ParamSet overridingParams() const { return _overridingParams; }
-  const Utf8StringSet keys() const override;
+  const Utf8StringSet paramKeys() const override;
+  const Utf8String paramScope() const override;
+  ParamsProviderMerger &setScope(Utf8String scope) {
+    _scope = scope; return *this; }
 };
 
 /** RAII helper for ParamsProviderMerger save/restore.

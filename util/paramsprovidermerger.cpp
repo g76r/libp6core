@@ -34,7 +34,7 @@ public:
         _second->paramValue(key, context, defaultValue, alreadyEvaluated);
       return v;
     }
-    const Utf8StringSet keys() const override {
+    const Utf8StringSet paramKeys() const override {
       return {};
     }
 };
@@ -86,16 +86,20 @@ void ParamsProviderMerger::restore() {
   }
 }
 
-const Utf8StringSet ParamsProviderMerger::keys() const {
-  Utf8StringSet keys { _overridingParams.keys() };
+const Utf8StringSet ParamsProviderMerger::paramKeys() const {
+  Utf8StringSet keys { _overridingParams.paramKeys() };
   for (auto provider: _providers) {
     if (provider.d->_paramsProvider) {
-      keys += provider.d->_paramsProvider->keys();
+      keys += provider.d->_paramsProvider->paramKeys();
     } else {
-      keys += provider.d->_paramset.keys();
+      keys += provider.d->_paramset.paramKeys();
     }
   }
   return keys;
+}
+
+const Utf8String ParamsProviderMerger::paramScope() const {
+  return _scope;
 }
 
 QDebug operator<<(QDebug dbg, const ParamsProviderMerger *merger) {

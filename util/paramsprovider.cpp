@@ -24,12 +24,12 @@ struct Environment : public ParamsProvider {
     const Utf8String &key, const ParamsProvider *context,
     const QVariant &defaultValue,
     Utf8StringSet *alreadyEvaluated) const override {
-    auto rawValue = qgetenv(key);
+    auto rawValue = qgetenv(key); // TODO ::fromLocal8bit() for non utf8 oses
     if (rawValue.isNull())
       return defaultValue;
     return ParamSet().evaluate(rawValue, false, context, alreadyEvaluated);
   }
-  const Utf8StringSet keys() const override {
+  const Utf8StringSet paramKeys() const override {
     Utf8StringSet keys;
     for (char **e = environ; *e != nullptr; ++e) {
       int i = 0;
@@ -47,7 +47,7 @@ struct Empty : public ParamsProvider {
     Utf8StringSet *) const override {
     return defaultValue;
   }
-  const Utf8StringSet keys() const override {
+  const Utf8StringSet paramKeys() const override {
     return {};
   }
 };
@@ -60,7 +60,7 @@ ParamsProvider *ParamsProvider::_empty = new Empty();
 
 const ParamSet ParamsProvider::snapshot() const {
   ParamSet snapshot;
-  for (auto key: keys())
+  for (auto key: paramKeys())
     snapshot.setValue(key, ParamSet::escape(paramValue(key).toString()));
   return snapshot;
 }
@@ -76,7 +76,7 @@ const QVariant ParamsProvider::paramValue(
   return {};
 }
 
-const Utf8StringSet ParamsProvider::keys() const {
+const Utf8StringSet ParamsProvider::paramKeys() const {
   return {};
 }
 
@@ -90,9 +90,8 @@ const QVariant RawParamsProvider::paramValue(
   return _params.value(key, defaultValue);
 }
 
-const Utf8StringSet RawParamsProvider::keys() const {
-  auto keys = _params.keys();
-  return QSet<Utf8String>(keys.begin(), keys.end());
+const Utf8StringSet RawParamsProvider::paramKeys() const {
+  return Utf8StringSet(_params.keys());
 }
 
 const QVariant ParamsProvider::paramValue(

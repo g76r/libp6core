@@ -87,7 +87,7 @@ void TemplatingHttpHandler::applyTemplateFile(
   HttpRequestPseudoParamsProvider hrpp = req.pseudoParams();
   ParamsProviderMergerRestorer restorer(processingContext);
   processingContext->append(&hrpp);
-  if (!processingContext->paramValue("!pathtoroot"_ba).isValid())
+  if (!processingContext->paramValue("!pathtoroot"_u8).isValid())
     computePathToRoot(req, processingContext);
   QBuffer buf;
   buf.open(QIODevice::WriteOnly);

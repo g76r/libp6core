@@ -21,11 +21,12 @@
  * numerical and named ones, as params. */
 class LIBP6CORESHARED_EXPORT RegexpParamsProvider : public ParamsProvider {
   QRegularExpressionMatch _match;
+  Utf8String _scope;
 
 public:
   RegexpParamsProvider(
-      QRegularExpressionMatch match = QRegularExpressionMatch())
-    : _match(match) { }
+      QRegularExpressionMatch match = {}, Utf8String scope = {})
+    : _match(match), _scope(scope) { }
   QRegularExpressionMatch match() const { return _match; }
   void setMatch(QRegularExpressionMatch  match) { _match = match; }
   using ParamsProvider::paramValue;
@@ -33,7 +34,10 @@ public:
       const Utf8String &key, const ParamsProvider *context,
     const QVariant &defaultValue,
     Utf8StringSet *alreadyEvaluated) const override;
-  const Utf8StringSet keys() const override;
+  const Utf8StringSet paramKeys() const override;
+  const Utf8String paramScope() const override;
+  RegexpParamsProvider &setScope(Utf8String scope) {
+    _scope = scope; return *this; }
 };
 
 #endif // REGEXPPARAMSPROVIDER_H

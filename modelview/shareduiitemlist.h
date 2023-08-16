@@ -137,17 +137,20 @@ class LIBP6CORESHARED_EXPORT SharedUiItemListParamsProvider
     : public ParamsProvider {
   SharedUiItemList<> _list;
   int _role;
+  Utf8String _scope;
 
 public:
   inline SharedUiItemListParamsProvider(
-      const SharedUiItemList<> &list, int role = Qt::DisplayRole)
-    : _list(list), _role(role) { }
+      const SharedUiItemList<> &list, int role = Qt::DisplayRole,
+      Utf8String scope = {})
+    : _list(list), _role(role), _scope(scope) { }
   using ParamsProvider::paramValue;
   const QVariant paramValue(
     const Utf8String &key, const ParamsProvider *context,
     const QVariant &defaultValue,
     Utf8StringSet *alreadyEvaluated) const override;
-  const Utf8StringSet keys() const override;
+  const Utf8StringSet paramKeys() const override;
+  const Utf8String paramScope() const override;
 };
 
 template <class T>

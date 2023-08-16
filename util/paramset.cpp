@@ -220,7 +220,7 @@ ParamSet::ParamSet(
   }
   if (!constattrname.isEmpty()) {
     ParamSet constparams(parentnode, constattrname, Utf8String(), ParamSet());
-    for (auto k: constparams.keys()) {
+    for (auto k: constparams.paramKeys()) {
       auto value = escape(constparams.value(k, this));
       d->_params.insert(k, value.isNull() ? ""_u8 : value);
     }
@@ -310,7 +310,7 @@ void ParamSet::setValue(Utf8String key, Utf8String value) {
 void ParamSet::setValues(ParamSet params, bool inherit) {
   if (!d)
     d = new ParamSetData();
-  for (auto k: params.keys(inherit))
+  for (auto k: params.paramKeys(inherit))
     d->_params.insert(k, params.rawValue(k));
 }
 
@@ -970,17 +970,17 @@ const Utf8String ParamSet::matchingRegexp(Utf8String rawValue) {
   return value;
 }
 
-const Utf8StringSet ParamSet::keys(bool inherit) const {
+const Utf8StringSet ParamSet::paramKeys(bool inherit) const {
   if (!d) [[unlikely]]
       return {};
   Utf8StringSet set(d->_params.keys());
   if (inherit)
-    set += parent().keys();
+    set += parent().paramKeys(true);
   return set;
 }
 
-const Utf8StringSet ParamSet::keys() const {
-  return keys(true);
+const Utf8StringSet ParamSet::paramKeys() const {
+  return paramKeys(true);
 }
 
 bool ParamSet::contains(Utf8String key, bool inherit) const {
@@ -1012,7 +1012,7 @@ const QString ParamSet::toString(bool inherit, bool decorate) const {
   if (decorate)
     s.append("{ ");
   bool first = true;
-  foreach(QString key, keys(inherit)) {
+  foreach(QString key, paramKeys(inherit)) {
     if (first)
       first = false;
     else
@@ -1026,35 +1026,35 @@ const QString ParamSet::toString(bool inherit, bool decorate) const {
 
 const QHash<Utf8String, Utf8String> ParamSet::toHash(bool inherit) const {
   QHash<Utf8String,Utf8String> hash;
-  for (auto key: keys(inherit))
+  for (auto key: paramKeys(inherit))
     hash.insert(key, rawValue(key));
   return hash;
 }
 
 const QMap<Utf8String, Utf8String> ParamSet::toMap(bool inherit) const {
   QMap<Utf8String,Utf8String> map;
-  for (auto key: keys(inherit))
+  for (auto key: paramKeys(inherit))
     map.insert(key, rawValue(key));
   return map;
 }
 
 const QHash<QString, QString> ParamSet::toStringHash(bool inherit) const {
   QHash<QString,QString> hash;
-  for (auto key: keys(inherit))
+  for (auto key: paramKeys(inherit))
     hash.insert(key, rawValue(key));
   return hash;
 }
 
 const QMap<QString,QString> ParamSet::toStringMap(bool inherit) const {
   QMap<QString,QString> map;
-  for (auto key: keys(inherit))
+  for (auto key: paramKeys(inherit))
     map.insert(key, rawValue(key));
   return map;
 }
 
 QDebug operator<<(QDebug dbg, const ParamSet &params) {
   dbg.nospace() << "{";
-  auto keys = params.keys().values();
+  auto keys = params.paramKeys().values();
   std::sort(keys.begin(), keys.end());
   for (auto key: keys)
     dbg.space() << key << "=" << params.rawValue(key) << ",";
@@ -1064,7 +1064,7 @@ QDebug operator<<(QDebug dbg, const ParamSet &params) {
 
 LogHelper operator<<(LogHelper lh, const ParamSet &params) {
   lh << "{ ";
-  auto keys = params.keys().values();
+  auto keys = params.paramKeys().values();
   std::sort(keys.begin(), keys.end());
   for (auto key: keys)
     lh << key << "=" << params.rawValue(key) << " ";

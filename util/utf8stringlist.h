@@ -51,7 +51,7 @@ public:
       const QVariant &defaultValue,
       Utf8StringSet *alreadyEvaluated) const override;
   /** Return numbers from 0 to size(). */
-  const Utf8StringSet keys() const override;
+  const Utf8StringSet paramKeys() const override;
 };
 
 Q_DECLARE_METATYPE(Utf8StringList)

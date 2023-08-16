@@ -30,7 +30,7 @@ const QVariant RegexpParamsProvider::paramValue(
   return defaultValue;
 }
 
-const Utf8StringSet RegexpParamsProvider::keys() const {
+const Utf8StringSet RegexpParamsProvider::paramKeys() const {
   Utf8StringSet keys;
   qsizetype n = _match.capturedTexts().size();
   for (qsizetype i = 0; i < n; ++i)
@@ -39,4 +39,8 @@ const Utf8StringSet RegexpParamsProvider::keys() const {
     if (!key.isEmpty())
       keys << key;
   return keys;
+}
+
+const Utf8String RegexpParamsProvider::paramScope() const {
+  return _scope;
 }

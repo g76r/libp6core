@@ -88,8 +88,8 @@ const QVariant SharedUiItemParamsProvider::paramValue(
   return value.isValid() ? value : defaultValue;
 }
 
-const Utf8StringSet SharedUiItem::keys() const {
-  Utf8StringSet keys { "id", "idQualifier", "qualifiedId" };
+const Utf8StringSet SharedUiItem::paramKeys() const {
+  Utf8StringSet keys { "id"_u8, "id_qualifier"_u8, "qualified_id"_u8 };
   int count = uiSectionCount();
   for (int section = 0; section < count; ++section) {
     keys << Utf8String::number(section);
@@ -109,8 +109,8 @@ const ParamSet SharedUiItem::snapshot() const {
   return ParamsProvider::snapshot();
 }
 
-const Utf8StringSet SharedUiItemParamsProvider::keys() const {
-  return _item.keys();
+const Utf8StringSet SharedUiItemParamsProvider::paramKeys() const {
+  return _item.paramKeys();
 }
 
 

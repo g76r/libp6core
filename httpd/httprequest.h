@@ -112,16 +112,19 @@ private:
 class LIBP6CORESHARED_EXPORT HttpRequestPseudoParamsProvider
     : public ParamsProvider {
   HttpRequest _request;
+  Utf8String _scope;
 
 public:
-  inline HttpRequestPseudoParamsProvider(HttpRequest request)
-    : _request(request) { }
+  inline HttpRequestPseudoParamsProvider(
+      HttpRequest request, Utf8String scope = "http"_u8)
+    : _request(request), _scope(scope) { }
   using ParamsProvider::paramValue;
   const QVariant paramValue(
     const Utf8String &key, const ParamsProvider *context,
     const QVariant &defaultValue,
     Utf8StringSet *alreadyEvaluated) const override;
-  const Utf8StringSet keys() const override;
+  const Utf8StringSet paramKeys() const override;
+  const Utf8String paramScope() const override;
 };
 
 inline HttpRequestPseudoParamsProvider HttpRequest::pseudoParams() const {

@@ -47,28 +47,6 @@ public:
     const Utf8String &key, const QVariant &defaultValue) const {
     return paramValue(key, 0, defaultValue); }
 
-#if 0
-  /** Convenience method */
-  inline const QString paramString( // FIXME reorder args like paramUtf8
-    const Utf8String &key, const ParamsProvider *context,
-    const QString &defaultValue, Utf8StringSet *alreadyEvaluated) const {
-    return paramValue(key, context, defaultValue, alreadyEvaluated).toString();
-  }
-  /** Convenience method */
-  inline const QString paramString( // FIXME reorder args like paramUtf8
-    const Utf8String &key, const ParamsProvider *context = 0,
-    const QString &defaultValue = {}) const {
-    return paramValue(key, context, defaultValue).toString(); }
-  /** Convenience method */
-  inline const QString paramString( // FIXME reorder args like paramUtf8
-    const Utf8String &key, const QString &defaultValue,
-    Utf8StringSet *alreadyEvaluated) const {
-    return paramValue(key, defaultValue, alreadyEvaluated).toString(); }
-  /** Convenience method */
-  inline const QString paramString( // FIXME reorder args like paramUtf8
-    const Utf8String &key, const QString &defaultValue) const {
-    return paramValue(key, defaultValue).toString(); }
-#endif
   /** Convenience method */
   inline const Utf8String paramUtf8(
     const Utf8String &key, const Utf8String &defaultValue,
@@ -94,7 +72,7 @@ public:
     const Utf8String &key, Utf8StringSet *alreadyEvaluated) const {
     return Utf8String(paramValue(key, 0, Utf8String{}, alreadyEvaluated)); }
 
-  virtual const Utf8StringSet keys() const = 0;
+  virtual const Utf8StringSet paramKeys() const = 0;
 
   /** Return params scope, that is more or less a name or type for this
    *  ParamsProvider. e.g. "env", "customer:Customer123", "root", etc.
@@ -111,9 +89,9 @@ public:
   }
 
   /** Singleton wrapper to environment variables */
-  static ParamsProvider *environment() { return _environment; }
+  static const ParamsProvider *environment() { return _environment; }
   /** Singleton empty ParamsProvider */
-  static ParamsProvider *empty() { return _empty; }
+  static const ParamsProvider *empty() { return _empty; }
 
   /** take an key-values snapshot that no longer depend on ParamsProvider* not
    * being deleted nor on %-evaluation */
@@ -147,7 +125,7 @@ public:
       const Utf8String &key, const ParamsProvider *context,
     const QVariant &defaultValue,
       Utf8StringSet *alreadyEvaluated) const override;
-  const Utf8StringSet keys() const override;
+  const Utf8StringSet paramKeys() const override;
   const QMap<Utf8String,QVariant> toMap() const { return _params; }
 };
 

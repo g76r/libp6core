@@ -59,7 +59,7 @@ const QVariant Utf8StringList::paramValue(
   return operator[](i-1);
 }
 
-const Utf8StringSet Utf8StringList::keys() const {
+const Utf8StringSet Utf8StringList::paramKeys() const {
   Utf8StringSet keys;
   qsizetype n = size();
   for (qsizetype i = 0; i <= n; ++i)

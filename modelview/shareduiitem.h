@@ -489,7 +489,7 @@ public:
     const QVariant &defaultValue,
     Utf8StringSet *alreadyEvaluated) const override final;
   /** Return every section names */
-  const Utf8StringSet keys() const override final;
+  const Utf8StringSet paramKeys() const override final;
   /** Return qualified id */
   const Utf8String paramScope() const override final;
   const ParamSet snapshot() const override final;
@@ -582,8 +582,8 @@ Q_DECLARE_TYPEINFO(SharedUiItem, Q_MOVABLE_TYPE);
 
 /** ParamsProvider wrapper for SharedUiItem.
  * Its paramValue() implementation returns uiData(key.toInt()) or
- * id(), qualifiedId() or idQualifier() if key is "id", "qualifiedId" or
- * "idQualifier", or uiData(uiSectionByName(key)).
+ * id(), qualifiedId() or idQualifier() if key is "id", "qualified_id" or
+ * "id_qualifier", or uiData(uiSectionByName(key)).
  */
 class LIBP6CORESHARED_EXPORT SharedUiItemParamsProvider
     : public ParamsProvider {
@@ -599,7 +599,7 @@ public:
     const Utf8String &key, const ParamsProvider *context,
     const QVariant &defaultValue,
     Utf8StringSet *alreadyEvaluated) const override;
-  const Utf8StringSet keys() const override;
+  const Utf8StringSet paramKeys() const override;
 };
 
 inline SharedUiItemParamsProvider SharedUiItem::toParamsProvider(

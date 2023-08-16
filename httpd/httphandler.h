@@ -38,8 +38,8 @@ class LIBP6CORESHARED_EXPORT HttpHandler : public QObject {
   QList<QRegularExpression> _corsOrigins;
 
 protected:
-  HttpHandler(QString name, QObject *parent = 0);
-  HttpHandler(QObject *parent = 0) : HttpHandler(QString(), parent) { }
+  explicit HttpHandler(QString name, QObject *parent = 0);
+  explicit HttpHandler(QObject *parent = 0) : HttpHandler({}, parent) { }
 
 public:
   virtual QString name() const;

@@ -270,8 +270,9 @@ public:
                    const ParamsProvider *context = 0) const;
   /** Return all keys for which the ParamSet or one of its parents hold a value.
     */
-  const Utf8StringSet keys(bool inherit) const;
-  const Utf8StringSet keys() const override;
+  const Utf8StringSet paramKeys(bool inherit) const;
+  /** Same as paramKeys(true). */
+  const Utf8StringSet paramKeys() const override;
   /** Return true if key is set. */
   bool contains(Utf8String key, bool inherit = true) const;
   /** Perform parameters substitution within the string. */

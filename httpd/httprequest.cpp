@@ -314,7 +314,7 @@ const QVariant HttpRequestPseudoParamsProvider::paramValue(
   return defaultValue;
 }
 
-const Utf8StringSet HttpRequestPseudoParamsProvider::keys() const {
+const Utf8StringSet HttpRequestPseudoParamsProvider::paramKeys() const {
   Utf8StringSet keys { "!url", "!method", "!clientaddresses" };
   for (auto s: _request.cookies().keys())
     keys << "!cookie:"+s;
@@ -323,4 +323,8 @@ const Utf8StringSet HttpRequestPseudoParamsProvider::keys() const {
   for (auto s: _request.headers().keys())
     keys << "!header:"+s;
   return keys;
+}
+
+const Utf8String HttpRequestPseudoParamsProvider::paramScope() const {
+  return _scope;
 }

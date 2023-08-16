@@ -179,7 +179,7 @@ void ParamSetModel::fillRows(
     if (!parent.isNull())
       fillRows(rows, parent, depth+1, allKeys);
   }
-  auto localKeys = params.keys(false).toSortedList();
+  auto localKeys = params.paramKeys(false).toSortedList();
   QString scope = _scopes.value(depth);
   if (scope.isEmpty() && depth)
     scope = _defaultScopeForInheritedParams;

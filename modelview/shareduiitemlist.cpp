@@ -27,11 +27,11 @@ const QVariant SharedUiItemListParamsProvider::paramValue(
     bool ok;
     int section = sectionName.toInt(&ok);
     if (!ok) {
-      if (sectionName == "id")
+      if (sectionName == "id"_u8)
         return item.id();
-      if (sectionName == "idQualifier")
+      if (sectionName == "id_qualifier"_u8)
         return item.idQualifier();
-      if (sectionName == "qualifiedId")
+      if (sectionName == "qualified_id"_u8)
         return item.qualifiedId();
       section = item.uiSectionByName(sectionName);
       ok = section >= 0;
@@ -45,7 +45,7 @@ const QVariant SharedUiItemListParamsProvider::paramValue(
   return defaultValue;
 }
 
-const Utf8StringSet SharedUiItemListParamsProvider::keys() const {
+const Utf8StringSet SharedUiItemListParamsProvider::paramKeys() const {
   Utf8StringSet keys, qualifiers;
   for (auto item: _list) {
     auto q = item.idQualifier();
@@ -53,8 +53,8 @@ const Utf8StringSet SharedUiItemListParamsProvider::keys() const {
       continue;
     qualifiers << q;
     keys << q+":id";
-    keys << q+":idQualifier";
-    keys << q+":qualifiedId";
+    keys << q+":id_qualifier";
+    keys << q+":qualified_id";
     for (int i = 0; i < item.uiSectionCount(); ++i) {
       keys << q+":"+QString::number(i);
       keys << QString::number(i);
@@ -66,4 +66,8 @@ const Utf8StringSet SharedUiItemListParamsProvider::keys() const {
     }
   }
   return keys;
+}
+
+const Utf8String SharedUiItemListParamsProvider::paramScope() const {
+  return _scope;
 }
