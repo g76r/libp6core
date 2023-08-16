@@ -387,6 +387,76 @@ public:
   inline Utf8String &operator=(const char *s) {
     QByteArray::operator=(s); return *this; }
 
+#if __cpp_impl_three_way_comparison >= 201711
+  [[nodiscard]] static inline std::strong_ordering cmp(
+      const char *x, qsizetype lenx, const char *y, qsizetype leny) {
+    auto n = std::min(lenx, leny);
+    for (int i = 0; i < n; ++i)
+      if (auto cmp = x[i] <=> y[i]; cmp != 0)
+        return cmp;
+    return lenx <=> leny;
+  }
+
+  [[nodiscard]] inline int compare(const Utf8String &that,
+              Qt::CaseSensitivity cs = Qt::CaseSensitive) const {
+    auto c = cs == Qt::CaseSensitive
+             ? cmp(this->constData(), size(), that.constData(), that.size())
+             : toUpper() <=> that.toUpper();
+    if (c == std::strong_ordering::less)
+      return -1;
+    if (c == std::strong_ordering::greater)
+      return 1;
+    return 0;
+  }
+
+  [[nodiscard]] friend inline std::strong_ordering operator<=>(
+      const Utf8String &x, const Utf8String &y) {
+    return Utf8String::cmp(x.constData(), x.size(), y.constData(), y.size()); }
+  [[nodiscard]] friend inline std::strong_ordering operator<=>(
+      const Utf8String &x, const QByteArray &y) {
+    return Utf8String::cmp(x.constData(), x.size(), y.constData(), y.size()); }
+  [[nodiscard]] friend inline std::strong_ordering operator<=>(
+      const QByteArray &x, const Utf8String &y) {
+    return Utf8String::cmp(x.constData(), x.size(), y.constData(), y.size()); }
+  [[nodiscard]] friend inline std::strong_ordering operator<=>(
+      const Utf8String &x, const char *y) {
+    return Utf8String::cmp(x.constData(), x.size(), y, ::strlen(y)); }
+  [[nodiscard]] friend inline std::strong_ordering operator<=>(
+      const char *x, const Utf8String &y) {
+    return Utf8String::cmp(x, ::strlen(x), y.constData(), y.size()); }
+
+  [[nodiscard]] friend inline bool operator==(
+      const Utf8String &x, const Utf8String &y) {
+    return Utf8String::cmp(x.constData(), x.size(), y.constData(), y.size()) == 0; }
+  [[nodiscard]] friend inline bool operator==(
+      const Utf8String &x, const QByteArray &y) {
+    return Utf8String::cmp(x.constData(), x.size(), y.constData(), y.size()) == 0; }
+  [[nodiscard]] friend inline bool operator==(
+      const QByteArray &x, const Utf8String &y) {
+    return Utf8String::cmp(x.constData(), x.size(), y.constData(), y.size()) == 0; }
+  [[nodiscard]] friend inline bool operator==(
+      const Utf8String &x, const char *y) {
+    return Utf8String::cmp(x.constData(), x.size(), y, ::strlen(y)) == 0; }
+  [[nodiscard]] friend inline bool operator==(
+      const char *x, const Utf8String &y) {
+    return Utf8String::cmp(x, ::strlen(x), y.constData(), y.size()) == 0; }
+#else
+  [[nodiscard]] static inline int cmp(
+      const char *x, qsizetype lenx, const char *y, qsizetype leny) {
+    auto n = std::min(lenx, leny);
+    for (int i = 0; i < n; ++i)
+      if (auto cmp = x[i]-y[i]; cmp != 0)
+        return cmp < 0 ? -1 : 0;
+    return lenx-leny < 0 ? -1 : 0;
+  }
+
+  [[nodiscard]] inline int compare(const Utf8String &that,
+              Qt::CaseSensitivity cs = Qt::CaseSensitive) const {
+    return cs == Qt::CaseSensitive
+        ? cmp(this->constData(), size(), that.constData(), that.size())
+        : toUpper().compare(that.toUpper());
+  }
+
   using QByteArray::operator<;
   friend inline bool operator<(const Utf8String &x, const Utf8String &y)
   noexcept { return static_cast<const QByteArray&>(x) <
@@ -451,6 +521,11 @@ public:
   noexcept { return static_cast<const QByteArray&>(x) > y; }
   friend inline bool operator>(const char *x, const Utf8String &y)
   noexcept { return x > static_cast<const QByteArray&>(y); }
+#endif // C++ 20: spaceship op
+
+  [[nodiscard]] inline int compare(QByteArrayView bv,
+              Qt::CaseSensitivity cs = Qt::CaseSensitive) const {
+    return compare(Utf8String(bv), cs); }
 
 private:
   struct UnicodeCaseMapping {

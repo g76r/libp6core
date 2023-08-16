@@ -14,9 +14,6 @@
 #include "shareduiitem.h"
 #include "util/paramset.h"
 
-SharedUiItemData::~SharedUiItemData() {
-}
-
 Utf8String SharedUiItemData::id() const {
   return Utf8String(uiData(0, Qt::DisplayRole));
 }
@@ -113,10 +110,18 @@ const Utf8StringSet SharedUiItemParamsProvider::paramKeys() const {
   return _item.paramKeys();
 }
 
-
-bool SharedUiItemData::operator<(const SharedUiItemData &other) const {
-  return idQualifier() < other.idQualifier() || id() < other.id();
+#if __cpp_impl_three_way_comparison >= 201711
+std::strong_ordering SharedUiItemData::operator<=>(
+    const SharedUiItemData &that) const {
+  if (auto cmp = idQualifier() <=> that.idQualifier(); cmp != 0)
+    return cmp;
+  return id() <=> that.id();
 }
+#else
+bool SharedUiItemData::operator<(const SharedUiItemData &that) const {
+  return idQualifier() < that.idQualifier() || id() < that.id();
+}
+#endif // C++ 20: spaceship op
 
 QVariantHash SharedUiItemData::toVariantHash(int role) const {
   QVariantHash hash;
@@ -138,7 +143,4 @@ bool SharedUiItemData::setFromVariantHash(
         return false;
   }
   return true;
-}
-
-SharedUiItem::~SharedUiItem() {
 }

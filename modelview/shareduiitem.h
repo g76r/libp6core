@@ -60,8 +60,9 @@ class SharedUiItemParamsProvider;
  *   and setUiData() and setUiData() MUST handle Qt::EditRole and
  *   SharedUiItem::ExternalDataRole and MAY process any role as if it were
  *   Qt::EditRole (in other words: ignore role value).
- * - Subclasses MAY override operator< to provide a more natural order than
- *   qualifiedId utf8 order.
+ * - Subclasses MAY override operator< (iff C++ < 20) or operator<=> (iff C++
+ *   >= 20) to provide a more natural order than qualified_id utf8 order.
+ *   Whatever the C++ version no other comparation operator must be overriden.
  * - There MAY be several level of subclasses, i.e. you can subclass
  *   SharedUiItemData subclasses, however in this case they must have their
  *   common sections before specific sections, because sections are what really
@@ -72,7 +73,7 @@ class SharedUiItemParamsProvider;
 // of subclasses
 class LIBP6CORESHARED_EXPORT SharedUiItemData : public QSharedData {
 public:
-  virtual ~SharedUiItemData();
+  virtual ~SharedUiItemData() = default;
   /** Return a string identifying the object among all other SharedUiItems
    * sharing the same idQualifier().
    *
@@ -114,18 +115,34 @@ public:
   virtual bool setUiData(
       int section, const QVariant &value, QString *errorString,
       SharedUiItemDocumentTransaction *transaction, int role);
-  /** By default: compares identifers (idQualifier() then id()), not full
-   * content, therefore two versions of an object with same identifiers will
-   * have same order.
-   * Implementation can rely on SharedUiItem::operator< not calling
-   * SharedUiItemData::operator< with this == 0 or &other == 0. */
-  virtual bool operator<(const SharedUiItemData &other) const;
+#if __cpp_impl_three_way_comparison >= 201711
+  /** By default: compares identifers (idQualifier() then id(), which may
+   *  lead to inconsistency if comaring two versions of an object with same
+   *  identifiers).
+   *  Implementation can rely on SharedUiItem::operator<=> not calling
+   *  SharedUiItemData::operator<=> with this == 0 or &that == 0 (and so
+   *  can assume they are not null). */
+  virtual std::strong_ordering operator <=>(const SharedUiItemData &that) const;
+  inline bool operator ==(const SharedUiItemData &that) const {
+    return *this <=> that == std::strong_ordering::equal; }
+#else
+  /** By default: compares identifers (idQualifier() then id(), which may
+   *  lead to inconsistency if comaring two versions of an object with same
+   *  identifiers).
+   *  Implementation can rely on SharedUiItem::operator< not calling
+   *  SharedUiItemData::operator< with this == 0 or &that == 0 (and so
+   *  can assume they are not null). */
+  virtual bool operator<(const SharedUiItemData &that) const;
   /** Calls operator<. Do not override. Override operator< instead. */
-  bool operator>(const SharedUiItemData &other) const { return other<*this; }
+  inline bool operator>(const SharedUiItemData &that) const {
+    return that<*this; }
   /** Calls operator<. Do not override. Override operator< instead. */
-  bool operator<=(const SharedUiItemData &other) const { return !(other<*this); }
+  inline bool operator<=(const SharedUiItemData &that) const {
+    return !(that<*this); }
   /** Calls operator<. Do not override. Override operator< instead. */
-  bool operator>=(const SharedUiItemData &other) const { return !(*this<other); }
+  inline bool operator>=(const SharedUiItemData &that) const {
+    return !(*this<that); }
+#endif // C++ 20: spaceship op
   virtual QVariantHash toVariantHash(int role) const;
   virtual bool setFromVariantHash(
       const QVariantHash &hash, QString *errorString,
@@ -262,23 +279,37 @@ public:
     ExternalDataRole // for file/database storage or network transfer
   };
 
-  SharedUiItem() { }
-  ~SharedUiItem();
+  SharedUiItem() = default;
+  ~SharedUiItem() = default;
   SharedUiItem(const SharedUiItem &other) : _data(other._data) { }
   SharedUiItem &operator=(const SharedUiItem &other) {
     if (this != &other)
       _data = other._data;
     return *this; }
-  /** Compares identifers (idQualifier() then id()), not full content, therefore
-   * two versions of an object with same identifiers will be equal. */
-  bool operator==(const SharedUiItem &other) const {
+#if __cpp_impl_three_way_comparison >= 201711
+  inline std::strong_ordering operator<=>(const SharedUiItem &that) const {
+    auto *x = _data.constData(), *y = that._data.constData();
+    if (!x)
+      return y ? std::strong_ordering::less : std::strong_ordering::equal;
+    if (!y)
+      return std::strong_ordering::greater;
+    return *x <=> *y;
+  }
+  inline bool operator==(const SharedUiItem &that) const {
+    return *this <=> that == std::strong_ordering::equal; }
+#else
+  inline bool operator==(const SharedUiItem &other) const {
     return idQualifier() == other.idQualifier() && id() == other.id(); }
-  bool operator!=(const SharedUiItem &other) const { return !(*this == other); }
-  bool operator<(const SharedUiItem &other) const {
+  inline bool operator!=(const SharedUiItem &other) const {
+    return !(*this == other); }
+  inline bool operator<(const SharedUiItem &other) const {
     return other._data && (_data ? _data->operator<(*(other._data)) : true); }
-  bool operator>(const SharedUiItem &other) const { return other<*this; }
-  bool operator<=(const SharedUiItem &other) const { return !(other<*this); }
-  bool operator>=(const SharedUiItem &other) const { return !(*this<other); }
+  inline bool operator>(const SharedUiItem &other) const { return other<*this; }
+  inline bool operator<=(const SharedUiItem &other) const {
+    return !(other<*this); }
+  inline bool operator>=(const SharedUiItem &other) const {
+    return !(*this<other); }
+#endif // C++ 20: spaceship op
   bool isNull() const { return !_data; }
   /** Item identifier.
    * By convention, identifier must be unique for the same type of item within
