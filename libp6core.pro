@@ -94,7 +94,7 @@ SOURCES *= \
     textview/clockview.cpp \
     util/mathexpr.cpp \
     util/mathutils.cpp \
-    util/paramsetmodel.cpp \
+    modelview/paramsetmodel.cpp \
     textview/csvtableview.cpp \
     textview/texttableview.cpp \
     log/qterrorcodes.cpp \
@@ -270,7 +270,7 @@ HEADERS *=\
     io/directorywatcher.h \
     modelview/stringhashmodel.h \  \
     format/jsonformats.h \
-    util/paramsetmodel.h \
+    modelview/paramsetmodel.h \
     modelview/stringlistdiffmodel.h
 
 unix {
