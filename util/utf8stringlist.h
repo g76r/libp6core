@@ -37,6 +37,11 @@ public:
     : QList<Utf8String>(set.constBegin(), set.constEnd()) { }
   Utf8StringList(const QSet<QString> &set)
     : QList<Utf8String>(set.constBegin(), set.constEnd()) { }
+#if __cpp_concepts >= 201907
+  template <std::input_iterator InputIterator>
+  Utf8StringList(InputIterator i1, InputIterator i2)
+    : QList<Utf8String>(i1, i2) { }
+#endif
   Utf8String join(const Utf8String &separator) const;
   Utf8String join(const char separator) const;
   QStringList toStringList() const {
@@ -73,6 +78,11 @@ public:
     : QSet<Utf8String>(set.constBegin(), set.constEnd()) { }
   Utf8StringSet(const QList<QString> &set)
     : QSet<Utf8String>(set.constBegin(), set.constEnd()) { }
+#if __cpp_concepts >= 201907
+  template <std::input_iterator InputIterator>
+  Utf8StringSet(InputIterator i1, InputIterator i2)
+    : QSet<Utf8String>(i1, i2) { }
+#endif
   Utf8String join(const Utf8String &separator) const;
   Utf8String join(const char separator) const;
   Utf8String sortedJoin(const Utf8String &separator) {
