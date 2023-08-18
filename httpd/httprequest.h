@@ -119,10 +119,8 @@ public:
       HttpRequest request, Utf8String scope = "http"_u8)
     : _request(request), _scope(scope) { }
   using ParamsProvider::paramValue;
-  const QVariant paramValue(
-    const Utf8String &key, const ParamsProvider *context,
-    const QVariant &defaultValue,
-    Utf8StringSet *alreadyEvaluated) const override;
+  const QVariant paramRawValue(const Utf8String &key,
+    const QVariant &def) const override;
   const Utf8StringSet paramKeys() const override;
   const Utf8String paramScope() const override;
 };

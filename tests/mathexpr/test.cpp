@@ -44,5 +44,7 @@ int main(void) {
   qDebug() << p.evaluate("%{=rpn,x,'true,&&,'ø,??*}=true %{=rpn,x,empty,&&,'ø,??*}=ø "
               "%{=rpn,x,nonexistent,&&,'ø,??*}=ø %{=rpn,<pi>}=3.141592653589793 "
               "%{=rpn,<null>}= %{=rpn,',?*}=true %{=rpn,<nil>,?*}=false");
+  qDebug() << p.evaluate("%{=rpn,foo}=bar %{=rpn,'foo}=foo %{=rpn,'%foo}=bar");
+  qDebug() << p.evaluate("%{=rpn,=rpn;'42;!!,'z,..}=truez %{=rpn,'dt: ,=date,..}");
   return 0;
 }

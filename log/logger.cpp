@@ -219,7 +219,7 @@ Utf8String Logger::pathPattern() const {
 }
 
 Utf8String Logger::pathMatchingRegexp() const {
-  return ParamSet::matchingRegexp(pathPattern());
+  return PercentEvaluator::matching_regexp(pathPattern());
 }
 
 void Logger::doLog(const LogEntry &) {

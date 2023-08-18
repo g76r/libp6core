@@ -13,7 +13,7 @@ void tst_MathExpr::rpnBasics() {
   auto tsutc = QDateTime::fromString(tsutcs, Qt::ISODateWithMs);
   auto ts2 = QDateTime::fromString(ts2s, Qt::ISODateWithMs);
   qulonglong small_ullong = ULLONG_MAX/2, huge_ullong = ULLONG_MAX/2+1;
-  RawParamsProvider params{ { "a", 1 }, { "b", 2 }, { "nil", QVariant() },
+  SimpleParamsProvider params{ { "a", 1 }, { "b", 2 }, { "nil", QVariant() },
                             { "as", "1"}, { "bs", "2" }, { "empty", "" },
                             { "ts", ts }, { "tsutc", tsutc }, { "ts2", ts2 },
                             { "tss", tss }, { "tsutcs", tsutcs },

@@ -14,59 +14,38 @@
 #include "paramsprovidermerger.h"
 #include "log/log.h"
 
-namespace {
+static inline ParamsProvider::ScopedValue cookScopedValue(
+    const ParamsProvider::ScopedValue &sv, const Utf8String &forced_scope,
+    const Utf8String &def_scope) {
+  if (!forced_scope.isEmpty())
+    return { forced_scope, sv.value };
+  if (sv.scope.isEmpty())
+    return { def_scope, sv.value };
+  return sv;
+}
 
-/** Two providers merger used internaly as an helper during evaluation. */
-class SimplerMerger : public ParamsProvider {
-    const ParamsProvider *_first;
-    const ParamsProvider *_second;
-public:
-    SimplerMerger(const ParamsProvider *first, const ParamsProvider *second)
-        : _first(first), _second(second) { }
-    /** Evaluate using second provider if first returns an invalid QVariant. */
-    const QVariant paramValue(
-      const Utf8String &key, const ParamsProvider *context,
-      const QVariant &defaultValue,
-      Utf8StringSet *alreadyEvaluated) const override {
-      QVariant v = _first->paramValue(key, context, defaultValue,
-                                      alreadyEvaluated);
-      if (!v.isValid() && _second)
-        _second->paramValue(key, context, defaultValue, alreadyEvaluated);
-      return v;
-    }
-    const Utf8StringSet paramKeys() const override {
-      return {};
-    }
-};
+const QVariant ParamsProviderMerger::paramRawValue(
+    const Utf8String &key, const QVariant &def) const {
+  return paramScopedRawValue(key, def);
+}
 
-} // unnamed namespace
-
-const QVariant ParamsProviderMerger::paramValue(
-    const Utf8String &key, const ParamsProvider *context,
-    const QVariant &defaultValue, Utf8StringSet *alreadyEvaluated) const {
-  SimplerMerger sm(this, context);
-  QVariant v = _overridingParams.paramValue(key, &sm, QVariant(),
-                                            alreadyEvaluated);
-  if (!v.isNull())
-    return v;
-  foreach (const Provider &provider, _providers) {
-    if (provider.d->_paramsProvider) {
-      QVariant v = provider.d->_paramsProvider
-          ->paramValue(key, &sm, QVariant(), alreadyEvaluated);
-      if (!v.isNull())
-        return v;
-    } else {
-      auto s = provider.d->_paramset.value(key, true, &sm, alreadyEvaluated);
-      if (!s.isNull())
-        return s;
-    }
+const ParamsProvider::ScopedValue ParamsProviderMerger::paramScopedRawValue(
+    const Utf8String &key, const QVariant &def) const {
+  int depth = 0;
+  auto sv = _overridingParams.paramScopedRawValue(key);
+  if (sv.isValid())
+    return cookScopedValue(sv, _scope, "0"_u8);
+  for (auto provider: _providers) {
+    ++depth;
+    if (provider.d->_wild)
+      sv = provider.d->_wild->paramScopedRawValue(key);
+    else
+      sv = provider.d->_owned.paramScopedRawValue(key);
+    if (sv.isValid())
+      return cookScopedValue(sv, _scope, Utf8String::number(depth));
   }
-  bool functionFound = false;
-  auto s = ParamSet::evaluateFunction(ParamSet(), key, false, &sm,
-                                      alreadyEvaluated, &functionFound);
-  if (functionFound)
-    return s;
-  return defaultValue;
+  sv = { {}, def };
+  return cookScopedValue(sv, _scope, "0"_u8);
 }
 
 void ParamsProviderMerger::save() {
@@ -89,11 +68,10 @@ void ParamsProviderMerger::restore() {
 const Utf8StringSet ParamsProviderMerger::paramKeys() const {
   Utf8StringSet keys { _overridingParams.paramKeys() };
   for (auto provider: _providers) {
-    if (provider.d->_paramsProvider) {
-      keys += provider.d->_paramsProvider->paramKeys();
-    } else {
-      keys += provider.d->_paramset.paramKeys();
-    }
+    if (provider.d->_wild)
+      keys += provider.d->_wild->paramKeys();
+    else
+      keys += provider.d->_owned.paramKeys();
   }
   return keys;
 }
@@ -109,7 +87,7 @@ QDebug operator<<(QDebug dbg, const ParamsProviderMerger *merger) {
   }
   dbg.nospace() << "{";
   for (auto provider: merger->_providers) {
-    dbg.space() << "provider: " << provider.d->_paramsProvider << " " << provider.d->_paramset << ",";
+    dbg.space() << "provider: " << provider.d->_wild << " " << provider.d->_owned << ",";
   }
   dbg.space() << "overridingParams: " << merger->overridingParams() << ",";
   dbg.space() << "stack size: " << merger->_providersStack.size() << " }";
@@ -121,7 +99,7 @@ LogHelper operator<<(LogHelper lh, const ParamsProviderMerger *merger) {
     return lh << "nullptr";
   lh << "{ ";
   for (auto provider: merger->_providers) {
-    lh << " provider: " << provider.d->_paramsProvider << " " << provider.d->_paramset << ",";
+    lh << " provider: " << provider.d->_wild << " " << provider.d->_owned << ",";
   }
   lh << " overridingParams: " << merger->overridingParams() << ",";
   return lh << " stack size: " << merger->_providersStack.size() << " }";

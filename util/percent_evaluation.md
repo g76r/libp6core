@@ -1,11 +1,17 @@
 ParamSet %-evaluation substitution macro-language
 =================================================
 
+In a nutshell
+-------------
+
 Substitution macro-language supports these kinds of variable evaluation:
 * `%variable`
 * `%{variable}`
-* `%{variable with spaces or special chars ,!?%}`
+* `%{variable with spaces or special chars ,!?%[}`
 * `%!variable_with_only_one_leading_special_char`
+* `%[scope]variable`
+* `%{[scope]variable}`
+* `%[scope]!variable_with_only_one_leading_special_char`
 
 It also supports functions in the form or special variable names starting
 with an equal sign and optional parameters separated by arbitrary chars the
@@ -23,8 +29,46 @@ of its parents or provided through a more general ParamsProvider evaluation
 context which can hold any QVariant value which will be converted to strings
 when needed (and can stay typed during functions evaluation, see %=rpn below).
 
-ParamSet %-evaluation functions
-===============================
+Detailed % syntax examples
+--------------------------
+
+*  "foo" -> "foo"
+*  "%foo" -> value of param "foo" as provided by context->paramRawValue("foo")
+*  "%{foo!}" -> same with param "foo!": allows special chars (excepted "}")
+                special chars are any ascii char other than a-zA-Z0-9_
+*  "%!foo" -> value of param "!foo": one leading special char is allowed
+*  "%[bar]foo -> value of param "foo" if and only if it's in "bar" scope
+*  "%{[bar]foo!}" -> same with special chars
+*  "%=date" -> calling function =date: there are contextless functions (i.e.
+               defined inedependently of context-provided params) and by
+               convention their name always begin with =
+*  "%{=date:YYYY}" -> current year in local timezone, using 4 digits
+*  "%éœ§越🥨" -> value of param "éœ§越🥨": chars outside ascii are not special
+*  "%{'foo}" -> "foo": a leading quote escapes param evaluation
+*  "%'foo" -> "foo": remember, one leading special char is allowed
+*  "%%" -> "%" : % escapes itself
+*  "%{=date:%format}" -> current date using format given by "format" param
+*  "%{=left:%{input}:3}" -> 3 left most utf8 characters of param "input"
+*  "%{=left:abcdef:3}" -> "abc"
+*  "%{=left:abcde{:3}" -> invalid: unpaired {} are not supported within {}
+
+Scopes
+------
+
+If a scope is set then it behaves as a filter on ParamsProviders that allow it.
+For instance if you have a ParamSet with scope "employee" which parent is a
+ParamSet with scope "dept", and both ParamSets have a "foo" param, then if
+you ask, in the context of the employee ParamSet, for `%foo` you'll get the
+value for the employee whereas for `%[dept]foo` you'll get the value for the
+dept.
+
+ParamSet %-evaluation contextless functions
+===========================================
+
+The following are function that are available even whith no ParamsProvider
+context, and that will prevail over any parameter set in the context (don't
+call one of your params `=date` it will be hidden and replaced by current
+datetime).
 
 %=date
 ------
@@ -103,23 +147,29 @@ examples:
 * `%foo` -> `%bar` if foo is `%%bar`
 * `%{=escape!%{=frombase64:JWJhcg==}}` -> `%%bar` (decoded binary is `%bar`)
 * `%{=escape!%foo}` -> `%%bar` if foo is `%%bar`
-* `%{=rpn,'%foo}` -> `%foo`
-* `%{=rpn,'foo}` -> `foo`
 * `%{=rpn,foo}` -> `bar` if foo is `bar`
+* `%{=rpn,'foo}` -> `foo`
+* `%{=rpn,'%foo}` -> `bar` if foo is `bar` because `%foo` is evaluated as `bar`
+                     by =rpn function before it's passed to MathExpr which will
+                     ask for evalutation of `'bar` which won't be evaluated
+                     thanks to its quote
 
 %=ifneq
 -------
 `%{=ifneq!input!reference!value_if_not_equal[!value_else]}`
 
-test inequality of an input and replace it with another
-depending on the result of the test
-
-all parameters are evaluated, hence %foo is replaced by foo's value
+using %=ifneq is deprecated, it's kept for backward compatibility but one
+shoud use %=switch instead.
+it can be reworded as %=switch!input!reference!value_else!value_if_not_equal
+or (without value_else) %=switch!input!reference!!value_if_not_equal
 
 examples:
-* `%{=ifneq:%foo:0:true:false}` -> "true" if not null, else "false"
+* `%{=ifneq:%foo:0:true:false}` -> "true" if not 0, else "false"
+* `%{=switch:%foo:0:false:true}` -> same
 * `%{=ifneq:%foo::notempty}` -> "notempty" if not empty, else ""
+* `%{=switch:%foo:::notempty}` -> same
 * `%{=ifneq:%foo::<a href="page?param=%foo">%foo</a>}` -> html link if %foo is set
+* `%{=switch:%foo:::<a href="page?param=%foo">%foo</a>}` -> same
 
 %=switch
 --------
@@ -134,16 +184,12 @@ if default_value is not specified, left input as is if no case matches
 
 see also %=match, with regexps
 
-%=switch can be used as would be an %=ifeq function since those two lines
-are strictly equivalent:
-* `%{=switch:value:case1:value1[:default_value]}`
-* `%{=switch:value:reference:value_if_equal[:value_if_not_equal]}`
-
 examples:
 * `%{=switch:%loglevel:E:error:W:warning:I:info:debug}`
 * `%{=switch:%foo:0:false:true}` -> if 0: false else: true
 * `%{=switch:%foo:0:false}` -> if 0: false else: %foo
-* `%{=switch:%foo}` -> always return %foo, but won't warn if foo is not defined
+* `%{=switch:%foo:::notempty}` -> "notempty" if not empty, else ""
+* `%{=switch:%foo:::<a href="page?param=%foo">%foo</a>}` -> html link if %foo is set
 
 %=match
 -------
@@ -187,9 +233,11 @@ examples:
 * `%{=sub;%foo;/a/b/g;/([a-z]+)[0-9]/%1%bar/g}`
 * `%{=sub;2015-04-17;|.*-(?<month>[0-9]+)-.*|%month}` returns "04"
 
-%=left
-------
+%=left %=right
+--------------
 `%{=left:input:length:flags}`
+
+`%{=right:input:length:flags}`
 
 * input is the data to transform, it is evaluated (%foo become the content of
 foo param)
@@ -200,18 +248,6 @@ invalid, the whole input is kept
 examples:
 * `%{=left:%foo:4}`
 * `%{=left:%{=frombase64,%foo}:4:b}`
-
-%=right
--------
-`%{=right:input:length:flags}`
-
-* input is the data to transform, it is evaluated (%foo become the content of
-foo param)
-* length is the number of character to keep from the input, if negative or
-invalid, the whole input is kept
-* if flags contains 'b' this is done at byte level instead of utf8 characters
-
-examples:
 * `%{=right:%foo:4}`
 * `%{=right:%{=frombase64,%foo}:4:b}`
 
@@ -242,7 +278,7 @@ foo param)
 
 examples:
 * `%{=trim:%foo}`
-* `%{=trim:  bar}`
+* `%{=trim:  bar}` -> "bar"
 
 %=htmlencode
 ------------
@@ -262,8 +298,8 @@ examples:
 * `%{=htmlencode:a multiline\ntext:n}` -> `a multiline<br/>text}`
 * `%{=rawvalue:h1:hun}` is equivalent to `%{=htmlencode|%{=rawvalue:h1}|un}`
 
-%=elidexxx
-----------
+%=elideright %=elideleft %=elidemiddle
+--------------------------------------
 `%{=elideright:input:length[:placeholder]}`
 
 `%{=elideleft:input:length[:placeholder]}`
@@ -293,7 +329,7 @@ modulo-1+shift.
 negative modulos are silently converted to their absolute values.
 
 examples:
-* `%{=random}` -> any integer number (at less 32 bits, maybe more)
+* `%{=random}` -> any integer number (at less 32 bits, maybe more, often 64)
 * `%{=random:100}` -> an integer between 0 and 99
 * `%{=random:6:1}` -> an integer between 1 and 6, like a regular dice
 * `%{=random:-8:-4}` -> an integer between -4 and 3
@@ -320,7 +356,7 @@ exemples:
 -----
 `%{=ext:namespace[[:varname2[:...]]:defaultvalue]}`
 
-lookup external paramset.
+lookup external params.
 
 namespace, varnames, defaultValue and values of external paramset are
 %-evaluated.
@@ -371,9 +407,12 @@ examples:
 * `%{'foo}` returns `foo` whereas `%{foo}` would have returned the value of foo
 * `%{=rawvalue!foo}` -> `%bar` if foo is `%bar`
 * `%{=rawvalue!foo!e}` -> `%%bar` if foo is `%bar`
-* `%{=rpn,'%foo}` -> `%foo`
-* `%{=rpn,'foo}` -> `foo`
 * `%{=rpn,foo}` -> `bar` if foo is `bar`
+* `%{=rpn,'foo}` -> `foo`
+* `%{=rpn,'%foo}` -> `bar` if foo is `bar` because `%foo` is evaluated as `bar`
+                     by =rpn function before it's passed to MathExpr which will
+                     ask for evalutation of `'bar` which won't be evaluated
+                     thanks to its quote
 
 %=sha1
 ------
@@ -392,7 +431,6 @@ compute sha256 of evaluated expression
 
 examples:
 * `%{=sha256:%%baz}` -> "48b56c9eb1d1d80188aeda808c72a047cd15803c57117bec272c75145f84f525"
-
 
 %=md5
 -----
@@ -526,19 +564,28 @@ of course there are plenty of implicit type conversions, such as integer
 promotions and converting non null numbers to true booleans.
 
 examples:
-* `%{=rpn,'1,'2,+}` -> "3" (addition)
+* `%{=rpn,'1,'2,+}` -> 3 (addition)
 * `%{=rpn,'1,'2,..}` -> "12" (concatenation)
-* `%{=rpn,'1,x,+}` -> "2" if x is "1"
-* `%{=rpn,'0x20,x,+}` -> "33.5" if x is "1.5"
-* `%{=rpn,'2k,x,+}` -> "2001.5" if x is "1.5"
-* `%{=rpn,'1,',+}` -> "" (actually null because 2nd operand isn't a number)
-* `%{=rpn,'1,'true,+}` returns "2"
-* `%{=rpn,'1,'true,&&}` returns "true"
-* `%{=rpn,'1,'true,==}` returns "false"
-* `%{=rpn,'42,!!,'true,==}` returns "true"
-* `%{=rpn,'1,'2,==,'3,'4,?:}` returns "4"
-* `%{=rpn,'aabcdaa,'a$,=~` returns "true"
-* `%{=rpn,'aabcdaa,'c$,=~` returns "false"
+* `%{=rpn,'1,x,+}` -> 2 if x is "1"
+* `%{=rpn,'0x20,x,+}` -> 33.5 if x is "1.5"
+* `%{=rpn,'2k,x,+}` -> 2001.5 if x is "1.5"
+* `%{=rpn,'1,',+}` -> invalid (because 2nd operand isn't a number)
+* `%{=rpn,'1,',..}` -> "1"
+* `%{=rpn,'1,'true,+}` -> 2
+* `%{=rpn,'1,'true,&&}` -> true (1 is casted to true by && operator)
+* `%{=rpn,'1,'true,==}` -> false (1 is not a boolean)
+* `%{=rpn,'42,!!,'true,==}` -> true (42 is casted to true by !! operator)
+* `%{=rpn,'1,'2,==,'3,'4,?:}` -> "4"
+* `%{=rpn,'aabcdaa,'a$,=~` -> true
+* `%{=rpn,'aabcdaa,'c$,=~` -> false
+* `%{=rpn,foo}` -> "bar" if foo is "bar"
+* `%{=rpn,'foo}` -> "foo"
+* `%{=rpn,'%foo}` -> "bar" if foo is "bar" because `%foo` is evaluated as `bar`
+                     by =rpn function before it's passed to MathExpr which will
+                     ask for evalutation of `'bar` which won't be evaluated
+                     thanks to its quote
+* `%{=rpn,'dt: ,=date,..}` -> "dt: " followed by current datetime
+* `%{=rpn,=rpn;'42;!!,'z,..}` -> "truez" but don't do that
 
 %'
 --
@@ -559,6 +606,9 @@ examples:
 * `%{=escape!%foo}` -> `%%bar` if foo is `%%bar`
 * `%{=rawvalue!foo}` -> `%bar` if foo is `%bar`
 * `%{=rawvalue!foo!e}` -> `%%bar` if foo is `%bar`
-* `%{=rpn,'%foo}` -> `%foo`
-* `%{=rpn,'foo}` -> `foo`
 * `%{=rpn,foo}` -> `bar` if foo is `bar`
+* `%{=rpn,'foo}` -> `foo`
+* `%{=rpn,'%foo}` -> `bar` if foo is `bar` because `%foo` is evaluated as `bar`
+                     by =rpn function before it's passed to MathExpr which will
+                     ask for evalutation of `'bar` which won't be evaluated
+                     thanks to its quote

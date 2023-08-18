@@ -37,91 +37,9 @@
 #include <QProcess>
 #include <QTimer>
 
-bool ParamSet::_variableNotFoundLoggingEnabled { false };
-
 static QMap<Utf8String,ParamSet> _externals;
 
 QMutex _externals_mutex;
-
-static int staticInit() {
-  if (qgetenv("ENABLE_PARAMSET_VARIABLE_NOT_FOUND_LOGGING") == "true")
-    ParamSet::enableVariableNotFoundLogging();
-  return 0;
-}
-Q_CONSTRUCTOR_FUNCTION(staticInit)
-
-/** Tests if a character is allowed in % expression variable identifiers as
- * a second character and beyond (first character can be anything apart of
- * syntaxicaly meaningful characters such as % and {, including e.g. !).
- */
-static inline bool isPercentVariableIdentifierSecondCharacter(char c) {
-  return (c >= '0' && c <= '9')
-      || (c >= 'A' && c <= 'Z')
-      || c == '_'
-      || (c >= 'a' && c <= 'z');
-}
-
-static inline bool shouldBeEscapedWithinRegexp(char c) {
-  switch (c) {
-  case '$':
-  case '(':
-  case ')':
-  case '*':
-  case '+':
-  case '.':
-  case '?':
-  case '[':
-  case '\\':
-  case ']':
-  case '^':
-  case '{':
-  case '|':
-  case '}':
-    return true;
-  default:
-    return false;
-  }
-}
-
-/** Read rawValue begining at index percentPosition, which should be set just
- * on a % character, and return the length of the whole % expression, including
- * the leading % and nested % expressions if any.
- * Returns 1 if % is the last character, 2 if % is followed by another % and 0
- * if percentPosition is beyond rawValue end.
- * E.g. ("foobar%{xy%{z%1}}baz", 6) -> 11
- */
-static inline int nestedPercentVariableLength(
-    const Utf8String &rawValue, int percentPosition) {
-  int i = percentPosition+1, len = rawValue.size();
-  if (i > len)
-    return 0;
-  if (i >= len)
-    return 1;
-  QChar c = rawValue[i];
-  if (c == '%')
-    return 2;
-  if (c == '{') {
-    while (i < len) {
-      c = rawValue[++i];
-      if (c == '}')
-        break;
-      if (c == '%')
-        i += nestedPercentVariableLength(rawValue, i)-1;
-    }
-    return i-percentPosition+1;
-  }
-  // any other character, e.g. 'a' or '=', is interpreted as the first
-  // character of a variable name that will continue with letters
-  // digits and underscores
-  // e.g. "abc",  "23", "=date", "!foobar"
-  ++i;
-  while (i < len) {
-    c = rawValue[++i];
-    if (!isPercentVariableIdentifierSecondCharacter(c.toLatin1()))
-      break;
-  }
-  return i-percentPosition;
-}
 
 class ParamSetData : public QSharedData {
 public:
@@ -221,7 +139,7 @@ ParamSet::ParamSet(
   if (!constattrname.isEmpty()) {
     ParamSet constparams(parentnode, constattrname, Utf8String(), ParamSet());
     for (auto k: constparams.paramKeys()) {
-      auto value = escape(constparams.value(k, this));
+      auto value = PercentEvaluator::escape(constparams.value(k, this));
       d->_params.insert(k, value.isNull() ? ""_u8 : value);
     }
   }
@@ -266,7 +184,7 @@ ParamSet::ParamSet(
       auto s = r.field(i).value().toString();
       if (s.isEmpty()) // ignoring both nulls and empty strings
         continue;
-      values[i].append(escape(s));
+      values[i].append(PercentEvaluator::escape(s));
     }
   }
   for (auto i: bindings.keys()) {
@@ -311,7 +229,7 @@ void ParamSet::setValues(ParamSet params, bool inherit) {
   if (!d)
     d = new ParamSetData();
   for (auto k: params.paramKeys(inherit))
-    d->_params.insert(k, params.rawValue(k));
+    d->_params.insert(k, params.paramRawUtf8(k));
 }
 
 void ParamSet::removeValue(Utf8String key) {
@@ -323,623 +241,52 @@ void ParamSet::clear() {
   d = new ParamSetData();
 }
 
-Utf8String ParamSet::rawValue(
-    Utf8String key, Utf8String defaultValue, bool inherit) const {
-  Utf8String value;
-  if (d) [[likely]] {
-    value = d->_params.value(key);
-    if (value.isNull() && inherit)
-      value = parent().rawValue(key);
-  }
-  return value.isNull() ? defaultValue : value;
+const QVariant ParamSet::paramRawValue(
+    const Utf8String &key, const QVariant &def) const {
+  return paramRawValue(key, def, true);
 }
 
-Utf8String ParamSet::evaluate(
-    Utf8String rawValue, bool inherit, const ParamsProvider *context,
-    Utf8StringSet *alreadyEvaluated) const {
-  //qDebug() << "evaluate" << rawValue << QString::number((qint64)context, 16);
-  auto values = splitAndEvaluate(rawValue, Utf8String(), inherit, context,
-                                 alreadyEvaluated);
-  if (values.isEmpty())
-    return rawValue.isNull() ? Utf8String{} : ""_u8;
-  return values.first();
+const ParamSet::ScopedValue ParamSet::paramScopedRawValue(
+    const Utf8String &key, const QVariant &def) const {
+  if (!d) [[unlikely]]
+    return { {}, def };
+  auto value = d->_params.value(key);
+  if (!value.isNull())
+    return { paramScope(), value };
+  auto sv = parent().paramScopedRawValue(key);
+  if (sv.isValid())
+    return sv;
+  return { {}, def };
 }
 
-static RadixTree<std::function<
-Utf8String(const ParamSet &params, const Utf8String &key, bool inherit,
-const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-        int matchedLength)>>
-_functions {
-{ "'", [](const ParamSet &, const Utf8String &key, bool, const ParamsProvider *,
-          Utf8StringSet *, int) {
-  return key.mid(1);
- }, true},
-{ "=date", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
-     const ParamsProvider *context, Utf8StringSet *alreayEvaluated,
-     int matchedLength) {
-  return TimeFormats::toMultifieldSpecifiedCustomTimestamp(
-        QDateTime::currentDateTime(), key.mid(matchedLength), paramset,
-        inherit, context, alreayEvaluated);
-}, true},
-{ "=coarsetimeinterval", [](const ParamSet &paramset, const Utf8String &key,
-     bool inherit, const ParamsProvider *context,
-     Utf8StringSet *alreadyEvaluated, int matchedLength) {
-  auto params = key.splitByLeadingChar(matchedLength);
-  qint64 msecs = (qint64)(
-        paramset.evaluate(params.value(0), inherit, context, alreadyEvaluated)
-        .toDouble()*1000);
-  return TimeFormats::toCoarseHumanReadableTimeInterval(msecs);
-}, true},
-{ "=eval", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
-     const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-     int matchedLength) {
-  auto value = paramset.evaluate(
-        key.mid(matchedLength+1), inherit, context, alreadyEvaluated);
-  return paramset.evaluate(value, inherit, context, alreadyEvaluated);
-}, true},
-{ "=escape", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
-     const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-     int matchedLength) {
-  auto value = paramset.evaluate(
-        key.mid(matchedLength+1), inherit, context, alreadyEvaluated);
-  return ParamSet::escape(value);
-}, true},
-{ "=default", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
-              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-              int matchedLength) {
-  auto params = key.splitByLeadingChar(matchedLength);
-  Utf8String value;
-  for (int i = 0; i < params.size(); ++i) {
-    value = paramset.evaluate(params.value(i), inherit, context,
-                              alreadyEvaluated);
-    if (!value.isEmpty())
-      break;
-  }
-  return value;
-}, true},
-{ "=rawvalue", [](const ParamSet &paramset, const Utf8String &key, bool,
-              const ParamsProvider *, Utf8StringSet *, int matchedLength) {
-  auto params = key.splitByLeadingChar(matchedLength);
-  if (params.size() < 1)
-    return Utf8String{};
-  auto value = paramset.rawValue(params.value(0));
-  if (params.size() >= 2) {
-    auto flags = params.value(1);
-    if (flags.contains('e')) { // %-escape
-      value = ParamSet::escape(value);
-    }
-    if (flags.contains('h')) { // htmlencode
-      value = StringUtils::htmlEncode(
-            value, flags.contains('u'), // url as links
-            flags.contains('n')); // newline as <br>
-    }
-  }
-  return value;
-}, true},
-{ "=ifneq", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
-              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-              int matchedLength) -> Utf8String {
-  auto params = key.splitByLeadingChar(matchedLength);
-  if (params.size() < 3) [[unlikely]]
-    return {};
-  auto input = paramset.evaluate(params.value(0), inherit, context,
-                                    alreadyEvaluated);
-  auto ref = paramset.evaluate(params.value(1), inherit, context,
-                                  alreadyEvaluated);
-  if (input != ref)
-    return paramset.evaluate(params.value(2), inherit, context,
-                             alreadyEvaluated);
-  return params.size() >= 4
-      ? paramset.evaluate(params.value(3), inherit, context,
-                          alreadyEvaluated)
-      : input;
-}, true},
-{ "=switch", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
-              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-              int matchedLength) -> Utf8String {
-  auto params = key.splitByLeadingChar(matchedLength);
-  if (params.size() < 1) [[unlikely]]
-    return {};
-  auto input = paramset.evaluate(params.value(0), inherit, context,
-                                 alreadyEvaluated);
-  // evaluating :case:value params, if any
-  int n = (params.size() - 1) / 2;
-  for (int i = 0; i < n; ++i) {
-    auto ref = paramset.evaluate(params.value(1+i*2), inherit, context,
-                                 alreadyEvaluated);
-    if (input == ref)
-      return paramset.evaluate(params.value(1+i*2+1), inherit, context,
-                               alreadyEvaluated);
-  }
-  // evaluating :default param, if any
-  if (params.size() % 2 == 0) {
-    return paramset.evaluate(params.value(params.size()-1), inherit, context,
-                             alreadyEvaluated);
-  }
-  // otherwise left input as is
-  return input;
-}, true},
-{ "=match", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
-              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-              int matchedLength) -> Utf8String {
-  auto params = key.splitByLeadingChar(matchedLength);
-  if (params.size() < 1) [[unlikely]]
-    return {};
-  auto input = paramset.evaluate(params.value(0), inherit, context,
-                                 alreadyEvaluated);
-  // evaluating :case:value params, if any
-  int n = (params.size() - 1) / 2;
-  for (int i = 0; i < n; ++i) {
-    auto ref = paramset.evaluate(params.value(1+i*2), inherit, context,
-                                 alreadyEvaluated);
-    QRegularExpression re(ref, QRegularExpression::DotMatchesEverythingOption // can be canceled with (?-s)
-                          );
-    if (re.match(input).hasMatch())
-      return paramset.evaluate(params.value(1+i*2+1), inherit, context,
-                               alreadyEvaluated);
-  }
-  // evaluating :default param, if any
-  if (params.size() % 2 == 0) {
-    return paramset.evaluate(params.value(params.size()-1), inherit, context,
-                             alreadyEvaluated);
-  }
-  // otherwise left input as is
-  return input;
-}, true},
-{ "=sub", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
-              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-              int matchedLength) {
-  auto params = key.splitByLeadingChar(matchedLength);
-  //qDebug() << "%=sub:" << key << params.size() << params;
-  auto value = paramset.evaluate(params.value(0), inherit, context,
-                                 alreadyEvaluated);
-  for (int i = 1; i < params.size(); ++i) {
-    auto sFields = params[i].splitByLeadingChar();
-    //qDebug() << "pattern" << i << params[i] << sFields.size() << sFields;
-    auto optionsString = sFields.value(2);
-    QRegularExpression::PatternOptions patternOptions
-        = QRegularExpression::DotMatchesEverythingOption // can be canceled with (?-s)
-      ;
-    if (optionsString.contains('i'))
-      patternOptions |= QRegularExpression::CaseInsensitiveOption;
-    // LATER add support for other available options: s,x...
-    // LATER add a regexp cache because same =sub is likely to be evaluated several times
-    // options must be part of the cache key
-    // not sure if QRegularExpression::optimize() should be called
-    QRegularExpression re(sFields.value(0), patternOptions);
-    if (!re.isValid()) [[unlikely]] {
-      qDebug() << "%=sub with invalid regular expression: "
-               << sFields.value(0);
-      continue;
-    }
-    bool repeat = optionsString.contains('g');
-    int offset = 0;
-    Utf8String transformed;
-    do {
-      QRegularExpressionMatch match = re.match(value, offset);
-      if (match.hasMatch()) {
-        //qDebug() << "match:" << match.captured()
-        //         << value.mid(offset, match.capturedStart()-offset);
-        // append text between previous match and start of this match
-        transformed += value.mid(offset, match.capturedStart()-offset);
-        // replace current match with (evaluated) replacement string
-        RegexpParamsProvider repp(match);
-        ParamsProviderMerger reContext =
-            ParamsProviderMerger(&repp)(context);
-        transformed += paramset.evaluate(sFields.value(1), inherit, &reContext,
-                                         alreadyEvaluated);
-        // skip current match for next iteration
-        offset = match.capturedEnd();
-      } else {
-        // stop matching
-        repeat = false;
-      }
-      if (!repeat) {
-        //qDebug() << "no more match:" << value.mid(offset);
-        // append text between previous match and end of value
-        transformed += value.mid(offset);
-      }
-      //qDebug() << "transformed:" << transformed;
-    } while(repeat);
-    value = transformed;
-  }
-  //qDebug() << "value:" << value;
-  return value;
-}, true},
-{ "=left", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
-              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-              int matchedLength) {
-  auto params = key.splitByLeadingChar(matchedLength);
-  auto input = paramset.evaluate(params.value(0), inherit, context,
-                                 alreadyEvaluated);
-  bool ok;
-  int i = params.value(1).toInt(&ok);
-  if (ok) {
-    auto flags = params.value(2);
-    if (flags.contains('b'))
-      return input.left(i);
-    else
-      return input.utf8Left(i);
-  }
-  return input;
-}, true},
-{ "=right", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
-              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-              int matchedLength) {
-  auto params = key.splitByLeadingChar(matchedLength);
-  auto input = paramset.evaluate(params.value(0), inherit, context,
-                                 alreadyEvaluated);
-  bool ok;
-  int i = params.value(1).toInt(&ok);
-  if (ok) {
-    auto flags = params.value(2);
-    if (flags.contains('b'))
-      return input.right(i);
-    else
-      return input.utf8Right(i);
-  }
-  return input;
-}, true},
-{ "=mid", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
-              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-              int matchedLength) -> Utf8String {
-  auto params = key.splitByLeadingChar(matchedLength);
-  auto input = paramset.evaluate(params.value(0), inherit, context,
-                                 alreadyEvaluated);
-  bool ok;
-  int i = params.value(1).toInt(&ok);
-  if (ok) {
-    int j = params.value(2).toInt(&ok);
-    auto flags = params.value(3);
-    if (flags.contains('b'))
-      return input.mid(i, ok ? j : -1);
-    else
-      return input.utf8Mid(i, ok ? j : -1);
-  }
-  return input;
-}, true},
-{ "=trim", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
-             const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-             int matchedLength) {
-   auto input = paramset.evaluate(key.mid(matchedLength+1), inherit, context,
-                                  alreadyEvaluated);
-   return input.trimmed();
-}, true},
-{ "=elideright", [](
-              const ParamSet &paramset, const Utf8String &key, bool inherit,
-              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-              int matchedLength) -> Utf8String {
-  auto params = key.splitByLeadingChar(matchedLength);
-  auto input = paramset.evaluate(params.value(0), inherit, context,
-                                 alreadyEvaluated);
-  bool ok;
-  int i = params.value(1).toInt(&ok);
-  auto placeHolder = params.value(2, "..."_u8);
-  if (!ok || placeHolder.size() > i || input.size() <= i)
-    return input;
-  return StringUtils::elideRight(input, i, placeHolder);
-}, true},
-{ "=elideleft", [](
-              const ParamSet &paramset, const Utf8String &key, bool inherit,
-              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-              int matchedLength) -> Utf8String {
-  auto params = key.splitByLeadingChar(matchedLength);
-  auto input = paramset.evaluate(params.value(0), inherit, context,
-                                 alreadyEvaluated);
-  bool ok;
-  int i = params.value(1).toInt(&ok);
-  auto placeHolder = params.value(2, "..."_u8);
-  if (!ok || placeHolder.size() > i || input.size() <= i)
-    return input;
-  return StringUtils::elideLeft(input, i, placeHolder);
-}, true},
-{ "=elidemiddle", [](
-              const ParamSet &paramset, const Utf8String &key, bool inherit,
-              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-              int matchedLength) -> Utf8String {
-  auto params = key.splitByLeadingChar(matchedLength);
-  auto input = paramset.evaluate(params.value(0), inherit, context,
-                                 alreadyEvaluated);
-  bool ok;
-  int i = params.value(1).toInt(&ok);
-  auto placeHolder = params.value(2, "..."_u8);
-  if (!ok || placeHolder.size() > i || input.size() <= i)
-    return input;
-  return StringUtils::elideMiddle(input, i, placeHolder);
-}, true},
-{ "=htmlencode", [](
-              const ParamSet &paramset, const Utf8String &key, bool inherit,
-              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-              int matchedLength) -> Utf8String {
-  auto params = key.splitByLeadingChar(matchedLength);
-  if (params.size() < 1)
-    return Utf8String();
-  auto input = paramset.evaluate(params.value(0),
-                                 inherit, context, alreadyEvaluated);
-  if (params.size() >= 2) {
-    auto flags = params.value(1);
-    return StringUtils::htmlEncode(
-          input, flags.contains('u'), // url as links
-          flags.contains('n')); // newline as <br>
-  }
-  return StringUtils::htmlEncode(input, false, false);
-}, true},
-{ "=random", [](const ParamSet &, const Utf8String &key, bool,
-              const ParamsProvider *, Utf8StringSet *, int matchedLength) {
-  auto params = key.splitByLeadingChar(matchedLength);
-  // TODO evaluate modulo and shift
-  int modulo = abs(params.value(0).toInt());
-  int shift = params.value(1).toInt();
-  quint32 i = QRandomGenerator::global()->generate();
-  if (modulo)
-    i %= modulo;
-  i += shift;
-  return Utf8String::number(i);
-}, true},
-{ "=env", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
-              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-              int matchedLength) -> Utf8String {
-  auto params = key.splitByLeadingChar(matchedLength);
-  auto env = ParamsProvider::environment();
-  int i = 0;
-  auto ppm = ParamsProviderMerger(paramset)(context);
-  do {
-    auto name = paramset.evaluate(params.value(i), inherit, context,
-                                  alreadyEvaluated);
-    auto v = env->paramValue(name, &ppm, QVariant(), alreadyEvaluated);
-    if (v.isValid())
-      return v.toString();
-    ++i;
-  } while (i < params.size()-1); // first param and then all but last one
-  // otherwise last one if there are at less 2, otherwise a non-existent one
-  return paramset.evaluate(params.value(i), inherit, context, alreadyEvaluated);
-}, true},
-{ "=ext", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
-              const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-              int matchedLength) -> Utf8String {
-  auto params = key.splitByLeadingChar(matchedLength);
-  auto ext = ParamSet::externalParams(params.value(0));
-  int i = 1;
-  auto ppm = ParamsProviderMerger(paramset, inherit)(context);
-  //qDebug() << "***password =ext" << ext << params.size() << params.value(i)
-  //         << ext.toString();
-  do {
-    auto name = ppm.evaluate(params.value(i), alreadyEvaluated);
-    auto v = ext.paramValue(name, &ppm, {}, alreadyEvaluated);
-    if (v.isValid())
-      return v.toString();
-    ++i;
-  } while (i < params.size()-1); // first param and then all but last one
-  // otherwise last one if there are at less 2, otherwise a non-existent one
-  return ppm.evaluate(params.value(i), alreadyEvaluated);
-}, true},
-{ "=sha1", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
-     const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-     int matchedLength) {
-  auto value = paramset.evaluate(
-        key.mid(matchedLength+1), inherit, context, alreadyEvaluated);
-  return QCryptographicHash::hash(
-        value, QCryptographicHash::Sha1).toHex();
-}, true},
-{ "=sha256", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
-     const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-     int matchedLength) {
-  auto value = paramset.evaluate(
-                 key.mid(matchedLength+1), inherit, context, alreadyEvaluated);
-  return QCryptographicHash::hash(
-        value, QCryptographicHash::Sha256).toHex();
-}, true},
-{ "=md5", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
-     const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-     int matchedLength) {
-  auto value = paramset.evaluate(
-        key.mid(matchedLength+1), inherit, context, alreadyEvaluated);
-  return QCryptographicHash::hash(
-        value, QCryptographicHash::Md5).toHex();
-}, true},
-{ "=hex", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
-     const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-     int matchedLength) {
-  auto params = key.splitByLeadingChar(matchedLength);
-  auto value = paramset.evaluate(
-        params.value(0), inherit, context, alreadyEvaluated);
-  auto separator = params.value(1);
-  //auto flags = params.value(2);
-  if (separator.isEmpty())
-    value = value.toHex();
-  else
-    value = value.toHex(separator.at(0));
-  return value;
-}, true},
-{ "=fromhex", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
-     const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-     int matchedLength) {
-  auto params = key.splitByLeadingChar(matchedLength);
-  auto value = paramset.evaluate(
-        params.value(0), inherit, context, alreadyEvaluated);
-  //auto flags = params.value(1);
-  return QByteArray::fromHex(value);
-}, true},
-{ "=base64", [](const ParamSet &paramset, const Utf8String &key, bool inherit,
-     const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-     int matchedLength) {
-  auto params = key.splitByLeadingChar(matchedLength);
-  auto value = paramset.evaluate(
-        params.value(0), inherit, context, alreadyEvaluated);
-  auto flags = params.value(1);
-  value = value.toBase64(
-        (flags.contains('u') ? QByteArray::Base64UrlEncoding
-                             : QByteArray::Base64Encoding)
-        |(flags.contains('t') ? QByteArray::OmitTrailingEquals
-                              : QByteArray::KeepTrailingEquals)
-        );
-  return value;
-}, true},
-{ "=frombase64", [](
-     const ParamSet &paramset, const Utf8String &key, bool inherit,
-     const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-     int matchedLength) -> Utf8String {
-  auto params = key.splitByLeadingChar(matchedLength);
-  auto value = paramset.evaluate(
-        params.value(0), inherit, context, alreadyEvaluated);
-  auto flags = params.value(1);
-  auto data = QByteArray::fromBase64(
-        value,
-        (flags.contains('u') ? QByteArray::Base64UrlEncoding
-                             : QByteArray::Base64Encoding)
-        |(flags.contains('a') ? QByteArray::AbortOnBase64DecodingErrors
-                              : QByteArray::IgnoreBase64DecodingErrors)
-        );
-  return data;
-}, true},
-{ "=rpn", [](const ParamSet &paramset, const Utf8String &key, bool,
-      const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-      int matchedLength) {
-   MathExpr expr(key.mid(matchedLength), MathExpr::CharacterSeparatedRpn);
-   auto ppm = ParamsProviderMerger(paramset)(context);
-   return expr.evaluate(&ppm, Utf8String(), alreadyEvaluated).toString();
-}, true},
-};
-
-Utf8String ParamSet::evaluateFunction(
-    const ParamSet &paramset, const Utf8String &key, bool inherit,
-    const ParamsProvider *context, Utf8StringSet *alreayEvaluated,
-    bool *found) {
-  int matchedLength;
-  auto implicitVariable = _functions.value(key, &matchedLength);
-  if (implicitVariable) {
-    auto s = implicitVariable(paramset, key, inherit, context,
-                              alreayEvaluated, matchedLength);
-    if (found)
-      *found = true;
-    return s;
-  }
-  if (found)
-    *found = false;
-  return Utf8String();
+const QVariant ParamSet::paramRawValue(
+    const Utf8String &key, const QVariant &def, bool inherit) const {
+  if (!d) [[unlikely]]
+    return def;
+  auto value = d->_params.value(key);
+  if (value.isNull() && inherit)
+    value = parent().paramRawValue(key);
+  return value.isNull() ? def : value;
 }
 
-bool ParamSet::appendVariableValue(
-    Utf8String *value, const Utf8String &variable, bool inherit,
-  const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-  bool logIfVariableNotFound) const {
-  if (variable.isEmpty()) [[unlikely]] {
-    Log::warning() << "unsupported variable substitution: empty variable name";
-    return false;
-  }
-  if (!alreadyEvaluated) [[unlikely]] {
-    Log::warning() << "unsupported variable substitution: loop detection is "
-                      "broken";
-    return false;
-  }
-  if (alreadyEvaluated->contains(variable)) [[unlikely]] {
-    Log::warning() << "unsupported variable substitution: loop detected with "
-                      "variable \"" << variable << "\"";
-    return false;
-  }
-  Utf8StringSet newAlreadyEvaluated = *alreadyEvaluated;
-  newAlreadyEvaluated.insert(variable);
-  bool functionFound = false;
-  auto s = evaluateFunction(*this, variable, inherit, context,
-                            &newAlreadyEvaluated, &functionFound);
-  if (functionFound) {
-    value->append(s);
-    return true;
-  }
-  if (context) {
-    s = context->paramValue(variable, QVariant(), &newAlreadyEvaluated).toString();
-    if (!s.isNull()) {
-      value->append(s);
-      return true;
-    }
-  }
-  s = this->value(variable, inherit, context, &newAlreadyEvaluated);
-  if (!s.isNull()) {
-    value->append(s);
-    return true;
-  }
-  if (_variableNotFoundLoggingEnabled && logIfVariableNotFound) [[unlikely]] {
-    Log::debug()
-        << "unsupported variable substitution: variable not found: "
-           "%{" << variable << "} in paramset " << toString(false)
-        << " " << d.constData() << " parent "
-        << parent().toString(false);
-  }
-  return false;
+const Utf8String ParamSet::paramRawUtf8(
+    const Utf8String &key, const Utf8String &def, bool inherit) const {
+  if (!d) [[unlikely]]
+    return def;
+  auto value = d->_params.value(key);
+  if (value.isNull() && inherit)
+    value = parent().paramRawUtf8(key);
+  return value.isNull() ? def : value;
 }
 
-Utf8StringList ParamSet::splitAndEvaluate(
-    Utf8String rawValue, Utf8String separators, bool inherit,
-    const ParamsProvider *context, Utf8StringSet *alreadyEvaluated) const {
-  Utf8StringList values;
-  Utf8String value, variable;
-  int i = 0;
-  while (i < rawValue.size()) {
-    char c = rawValue.at(i++);
-    if (c == '%') {
-      if (i < rawValue.size()) // otherwise keep % and process as %%
-        c = rawValue.at(i++);
-      if (c == '{') {
-        // '{' and '}' are used as variable name delimiters, the way a Unix
-        // shell use them along with $
-        // e.g. "%{name.with#strange|characters}"
-        int depth = 1;
-        while (i < rawValue.size()) {
-          c = rawValue.at(i++);
-          // LATER provide a way to escape { and }
-          if (c == '{')
-            ++depth;
-          else if (c == '}')
-            --depth;
-          if (depth == 0)
-            break;
-          variable.append(c);
-        }
-        appendVariableValue(&value, variable, inherit, context,
-                            alreadyEvaluated, true);
-        variable.clear();
-      } else if (c == '%') {
-        // %% is used as an escape sequence for %
-        value.append(c);
-      } else {
-        // any other character, e.g. 'a' or '=', is interpreted as the first
-        // character of a variable name that will continue with letters
-        // digits and underscores
-        // e.g. "abc",  "23", "=date", "!foobar"
-        variable.append(c);
-        while (i < rawValue.size()) {
-          c = rawValue.at(i++);
-          if (isPercentVariableIdentifierSecondCharacter(c)) {
-            variable.append(c);
-          } else {
-            --i;
-            break;
-          }
-        }
-        appendVariableValue(&value, variable, inherit, context,
-                            alreadyEvaluated, true);
-        variable.clear();
-      }
-    } else if (!separators.isEmpty() && c =='\\') {
-      if (i < rawValue.size()) // otherwise process as double backslash
-        c = rawValue.at(i++);
-      value.append(c);
-    } else if (separators.contains(c)) {
-      if (!value.isEmpty())
-        values.append(value);
-      value.clear();
-    } else [[likely]] {
-      value.append(c);
-    }
-  }
-  if (!value.isEmpty())
-    values.append(value);
-  return values;
+const Utf8String ParamSet::paramRawUtf8(
+    const Utf8String &key, const Utf8String &def) const {
+  return paramRawUtf8(key, def, true);
 }
 
 const QPair<Utf8String, Utf8String> ParamSet::valueAsStringsPair(
     Utf8String key, bool inherit, const ParamsProvider *context) const {
-  auto v = rawValue(key, inherit).trimmed();
+  auto v = paramRawUtf8(key, inherit).trimmed();
   qsizetype n = v.size();
   for (qsizetype i = 0; i < n; ++i)
     if (::isspace((v[i])))
@@ -947,32 +294,9 @@ const QPair<Utf8String, Utf8String> ParamSet::valueAsStringsPair(
   return { v, {} };
 }
 
-const Utf8String ParamSet::matchingRegexp(Utf8String rawValue) {
-  int i = 0, len = rawValue.size();
-  Utf8String value;
-  while (i < len) {
-    char c = rawValue[i];
-    if (c == '%') {
-      if (i+1 < len && rawValue[i+1] == '%') {
-        value.append('%');
-        i += 2; // skip next % too
-      } else {
-        i += nestedPercentVariableLength(rawValue, i);
-        value.append(".*");
-      }
-    } else {
-      if (shouldBeEscapedWithinRegexp(c))
-        value.append('\\');
-      value.append(c);
-      ++i;
-    }
-  }
-  return value;
-}
-
 const Utf8StringSet ParamSet::paramKeys(bool inherit) const {
   if (!d) [[unlikely]]
-      return {};
+    return {};
   Utf8StringSet set(d->_params.keys());
   if (inherit)
     set += parent().paramKeys(true);
@@ -983,8 +307,16 @@ const Utf8StringSet ParamSet::paramKeys() const {
   return paramKeys(true);
 }
 
-bool ParamSet::contains(Utf8String key, bool inherit) const {
-  return d && (d->_params.contains(key) || (inherit && parent().contains(key)));
+bool ParamSet::paramContains(const Utf8String &key, bool inherit) const {
+  if (!d) [[unlikely]]
+    return false;
+  if (d->_params.contains(key))
+    return true;
+  return inherit && parent().paramContains(key, true);
+}
+
+bool ParamSet::paramContains(const Utf8String &key) const {
+  return paramContains(key, true);
 }
 
 bool ParamSet::isNull() const {
@@ -999,14 +331,6 @@ bool ParamSet::isEmpty() const {
   return d ? d->_params.isEmpty() : true;
 }
 
-const QVariant ParamSet::paramValue(
-    const Utf8String &key, const ParamsProvider *context,
-    const QVariant &defaultValue, Utf8StringSet *alreadyEvaluated) const {
-  auto v = evaluate(rawValue(key, defaultValue.toString(), true),
-                    true, context, alreadyEvaluated);
-  return v.isNull() ? QVariant{} : v;
-}
-
 const QString ParamSet::toString(bool inherit, bool decorate) const {
   QString s;
   if (decorate)
@@ -1017,7 +341,7 @@ const QString ParamSet::toString(bool inherit, bool decorate) const {
       first = false;
     else
       s.append(' ');
-    s.append(key).append('=').append(rawValue(key));
+    s.append(key).append('=').append(paramRawUtf8(key));
   }
   if (decorate)
     s.append('}');
@@ -1027,28 +351,28 @@ const QString ParamSet::toString(bool inherit, bool decorate) const {
 const QHash<Utf8String, Utf8String> ParamSet::toHash(bool inherit) const {
   QHash<Utf8String,Utf8String> hash;
   for (auto key: paramKeys(inherit))
-    hash.insert(key, rawValue(key));
+    hash.insert(key, paramRawUtf8(key));
   return hash;
 }
 
 const QMap<Utf8String, Utf8String> ParamSet::toMap(bool inherit) const {
   QMap<Utf8String,Utf8String> map;
   for (auto key: paramKeys(inherit))
-    map.insert(key, rawValue(key));
+    map.insert(key, paramRawUtf8(key));
   return map;
 }
 
 const QHash<QString, QString> ParamSet::toStringHash(bool inherit) const {
   QHash<QString,QString> hash;
   for (auto key: paramKeys(inherit))
-    hash.insert(key, rawValue(key));
+    hash.insert(key, paramRawUtf8(key));
   return hash;
 }
 
 const QMap<QString,QString> ParamSet::toStringMap(bool inherit) const {
   QMap<QString,QString> map;
   for (auto key: paramKeys(inherit))
-    map.insert(key, rawValue(key));
+    map.insert(key, paramRawUtf8(key));
   return map;
 }
 
@@ -1057,7 +381,7 @@ QDebug operator<<(QDebug dbg, const ParamSet &params) {
   auto keys = params.paramKeys().values();
   std::sort(keys.begin(), keys.end());
   for (auto key: keys)
-    dbg.space() << key << "=" << params.rawValue(key) << ",";
+    dbg.space() << key << "=" << params.paramRawUtf8(key) << ",";
   dbg.nospace() << "}";
   return dbg.space();
 }
@@ -1067,7 +391,7 @@ LogHelper operator<<(LogHelper lh, const ParamSet &params) {
   auto keys = params.paramKeys().values();
   std::sort(keys.begin(), keys.end());
   for (auto key: keys)
-    lh << key << "=" << params.rawValue(key) << " ";
+    lh << key << "=" << params.paramRawUtf8(key) << " ";
   return lh << "}";
 }
 
@@ -1103,27 +427,27 @@ void ParamSet::setValuesFromSqlDb(
 qlonglong ParamSet::valueAsLong(
     Utf8String key, qlonglong defaultValue, bool inherit,
   const ParamsProvider *context) const {
-  auto s = evaluate(rawValue(key, {}, inherit), inherit, context);
+  auto s = evaluate(paramRawUtf8(key, {}, inherit), inherit, context);
   return s.toLongLong(nullptr, defaultValue);
 }
 
 int ParamSet::valueAsInt(
   Utf8String key, int defaultValue, bool inherit,
   const ParamsProvider *context) const {
-  auto s = evaluate(rawValue(key, {}, inherit), inherit, context);
+  auto s = evaluate(paramRawUtf8(key, {}, inherit), inherit, context);
   return s.toInt(nullptr, defaultValue);
 }
 
 double ParamSet::valueAsDouble(
   Utf8String key, double defaultValue, bool inherit,
   const ParamsProvider *context) const {
-  auto s = evaluate(rawValue(key, {}, inherit), inherit, context);
+  auto s = evaluate(paramRawUtf8(key, {}, inherit), inherit, context);
   return s.toDouble(nullptr, defaultValue);
 }
 
 bool ParamSet::valueAsBool(Utf8String key, bool defaultValue, bool inherit,
   const ParamsProvider *context) const {
-  auto s = evaluate(rawValue(key, {}, inherit), inherit, context);
+  auto s = evaluate(paramRawUtf8(key, {}, inherit), inherit, context);
   return s.toBool(nullptr, defaultValue);
 }
 
@@ -1160,7 +484,7 @@ ParamSetData *ParamSet::fromQIODevice(
     if (key.isEmpty())
       continue;
     if (escape_percent)
-      d->_params.insert(key, ParamSet::escape(value));
+      d->_params.insert(key, PercentEvaluator::escape(value));
     else
       d->_params.insert(key, value);
   }

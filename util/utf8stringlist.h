@@ -51,10 +51,8 @@ public:
   inline Utf8StringSet toSet() const;
   inline Utf8StringList toSortedDeduplicated() const;
   /** Return first string as value 1 and so on. Return join(' ') as value 0. */
-  const QVariant paramValue(
-      const Utf8String &key, const ParamsProvider *context,
-      const QVariant &defaultValue,
-      Utf8StringSet *alreadyEvaluated) const override;
+  const QVariant paramRawValue(
+      const Utf8String &key, const QVariant &def) const override;
   /** Return numbers from 0 to size(). */
   const Utf8StringSet paramKeys() const override;
 };

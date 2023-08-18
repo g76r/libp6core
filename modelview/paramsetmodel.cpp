@@ -128,12 +128,12 @@ static QString genererateNewKey(ParamSet params) {
   QString key, prefix = u"key"_s;
   for (int i = 1; i < 100; ++i) {
     key = prefix+QString::number(i);
-    if (!params.contains(key, false))
+    if (!params.paramContains(key, false))
       return key;
   }
   forever {
     key = prefix+QString::number(QRandomGenerator::global()->generate());
-    if (!params.contains(key, false))
+    if (!params.paramContains(key, false))
       return key;
   }
 }
@@ -196,7 +196,7 @@ void ParamSetModel::fillRows(
         }
     }
     QString value = _evaluate ? params.value(key, false)
-                              : params.rawValue(key, false);
+                              : params.paramRawUtf8(key, false);
     rows->append(ParamSetRow(key, value, scope, false, depth));
     allKeys->insert(key);
   }

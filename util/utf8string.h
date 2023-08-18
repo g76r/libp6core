@@ -189,7 +189,7 @@ public:
   [[nodiscard]] const Utf8StringList split(
       const char sep, Qt::SplitBehavior behavior) const;
   /** Splitting utf8 string on multi-byte (utf8) or multi-char separator,
-   *  e.g. "-->", "💩"_u8, U'💩', "<≠>"_u8 */
+   *  e.g. "-->", "🥨"_u8, U'🥨', "<≠>"_u8 */
   [[nodiscard]] const Utf8StringList split(Utf8String sep, qsizetype offset = 0,
       Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
   /** Split the string using its first utf8 char as a delimiter.
@@ -197,7 +197,7 @@ public:
    *  e.g. ",/,:,g" -> { "/", ":", "g" }
    *  e.g. "§foo§bar§g" -> { "foo", "bar", "g" }
    *  e.g. "越foo越bar越g" -> { "foo", "bar", "g" }
-   *  e.g. "💩foo💩bar💩g" -> { "foo", "bar", "g" }
+   *  e.g. "🥨foo🥨bar🥨g" -> { "foo", "bar", "g" }
    */
   [[nodiscard]] const Utf8StringList splitByLeadingChar(
       qsizetype offset = 0) const;
@@ -386,6 +386,8 @@ public:
 //    QByteArray::operator=(ch); return *this; }
   inline Utf8String &operator=(const char *s) {
     QByteArray::operator=(s); return *this; }
+  inline Utf8String &operator=(const QVariant &v) {
+    return operator=(Utf8String(v)); }
 
 #if __cpp_impl_three_way_comparison >= 201711
   [[nodiscard]] static inline std::strong_ordering cmp(

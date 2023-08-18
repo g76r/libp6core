@@ -25,15 +25,13 @@ class LIBP6CORESHARED_EXPORT RegexpParamsProvider : public ParamsProvider {
 
 public:
   RegexpParamsProvider(
-      QRegularExpressionMatch match = {}, Utf8String scope = {})
+      QRegularExpressionMatch match = {}, Utf8String scope = "regexp"_u8)
     : _match(match), _scope(scope) { }
   QRegularExpressionMatch match() const { return _match; }
   void setMatch(QRegularExpressionMatch  match) { _match = match; }
   using ParamsProvider::paramValue;
-  const QVariant paramValue(
-      const Utf8String &key, const ParamsProvider *context,
-    const QVariant &defaultValue,
-    Utf8StringSet *alreadyEvaluated) const override;
+  const QVariant paramRawValue(
+      const Utf8String &key, const QVariant &def) const override;
   const Utf8StringSet paramKeys() const override;
   const Utf8String paramScope() const override;
   RegexpParamsProvider &setScope(Utf8String scope) {

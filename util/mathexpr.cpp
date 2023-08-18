@@ -16,6 +16,7 @@
 #include "util/characterseparatedexpression.h"
 #include "mathutils.h"
 #include <QRegularExpression>
+#include "util/percentevaluator.h"
 
 namespace {
 
@@ -54,9 +55,8 @@ public:
               const ParamsProvider *context,
               Utf8StringSet *alreadyEvaluated) {
     //qDebug() << "Operand variable " << key << " " << !!context;
-    if (context)
-      return context->paramValue(key, 0, defaultValue, alreadyEvaluated);
-    return defaultValue;
+    auto v = PercentEvaluator::eval_key(key, context, alreadyEvaluated);
+    return v.isValid() ? v : defaultValue;
   }) { }
   // operator
   Operand(QList<Operand> args, OperatorEvaluator evaluator)

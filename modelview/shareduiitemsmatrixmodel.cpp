@@ -189,13 +189,14 @@ QVariant SharedUiItemsMatrixModel::evaluate(
   int evaluationRole = role;
   if (_forceDisplayRoleWhenEvaluatingTooltips && role == Qt::ToolTipRole)
     evaluationRole = Qt::DisplayRole;
-  SharedUiItemParamsProvider pp(binding._item, evaluationRole);
+  // TODO make again a way to choose role when using SUI as a PP
+  //SharedUiItemParamsProvider pp(binding._item, evaluationRole);
   switch(role) {
   case Qt::DisplayRole:
   case SharedUiItem::ExternalDataRole:
-    return ParamSet().evaluate(binding._display, false, &pp);
+    return ParamSet().evaluate(binding._display, false, &binding._item);
   case Qt::ToolTipRole:
-    return ParamSet().evaluate(binding._tooltip, false, &pp);
+    return ParamSet().evaluate(binding._tooltip, false, &binding._item);
   case Qt::EditRole:
   case SharedUiItem::IdQualifierRole:
   case SharedUiItem::IdRole:

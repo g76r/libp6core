@@ -17,7 +17,7 @@
 #include "paramset.h"
 
 /** This class builds up several ParamsProvider into only one, chaining
- * calls to paramValue().
+ * calls to paramRawValue().
  * Does not take ownership on referenced ParamsProvider, these objects must
  * not be deleted before the last call to ParamsProviderList::paramValue()
  * or must be removed from the ParamsProviderMerger before their destruction.
@@ -31,20 +31,20 @@ class LIBP6CORESHARED_EXPORT ParamsProviderMerger : public ParamsProvider {
 
   class ProviderData : public QSharedData {
   public:
-    const ParamsProvider *_paramsProvider;
-    ParamSet _paramset;
-    ProviderData(const ParamsProvider *paramsProvider = 0)
-      : _paramsProvider(paramsProvider) { }
-    ProviderData(ParamSet paramset)
-      : _paramsProvider(0), _paramset(paramset) { }
+    const ParamsProvider *_wild;
+    ParamSet _owned;
+    ProviderData(const ParamsProvider *wild = 0)
+      : _wild(wild) { }
+    ProviderData(const ParamSet &owned)
+      : _wild(0), _owned(owned) { }
   };
 
   class Provider {
   public:
     QSharedDataPointer<ProviderData> d;
-    Provider(const ParamsProvider *paramsProvider = 0)
-      : d(new ProviderData(paramsProvider)) { }
-    Provider(ParamSet paramset) : d(new ProviderData(paramset)) { }
+    Provider(const ParamsProvider *wild = 0)
+      : d(new ProviderData(wild)) { }
+    Provider(const ParamSet &owned) : d(new ProviderData(owned)) { }
   };
 
   QList<Provider> _providers;
@@ -62,8 +62,8 @@ public:
     : _scope(scope) {
     append(provider);
   }
-  ParamsProviderMerger(ParamSet provider, bool inherit = true,
-                       Utf8String scope = {})
+  ParamsProviderMerger(
+      ParamSet provider, bool inherit = true, Utf8String scope = {})
     : _scope(scope) {
     append(provider, inherit);
   }
@@ -133,15 +133,16 @@ public:
   void save();
   /** Restores the current state (pops a saved state off the stack). */
   void restore();
-  using ParamsProvider::paramValue;
-  const QVariant paramValue(
-    const Utf8String &key, const ParamsProvider *context,
-    const QVariant &defaultValue,
-    Utf8StringSet *alreadyEvaluated) const override;
+  using ParamsProvider::paramRawValue;
+  [[nodiscard]] const QVariant paramRawValue(
+      const Utf8String &key, const QVariant &def) const override;
+  using ParamsProvider::paramScopedRawValue;
+  [[nodiscard]] const ScopedValue paramScopedRawValue(
+      const Utf8String &key, const QVariant &def) const override;
   /** Give access to currently overriding params. */
-  const ParamSet overridingParams() const { return _overridingParams; }
-  const Utf8StringSet paramKeys() const override;
-  const Utf8String paramScope() const override;
+  [[nodiscard]] const ParamSet overridingParams() const { return _overridingParams; }
+  [[nodiscard]] const Utf8StringSet paramKeys() const override;
+  [[nodiscard]] const Utf8String paramScope() const override;
   ParamsProviderMerger &setScope(Utf8String scope) {
     _scope = scope; return *this; }
 };

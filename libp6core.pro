@@ -59,6 +59,7 @@ PRECOMPILED_HEADER *= \
     libp6core_stable.h
 
 SOURCES *= \
+    util/percentevaluator.cpp \
     util/utf8string.cpp \
     util/utf8stringlist.cpp \
     util/paramsprovider.cpp \
@@ -162,6 +163,7 @@ SOURCES *= \
     modelview/stringlistdiffmodel.cpp
 
 HEADERS *=\
+    util/percentevaluator.h \
     util/utf8string.h \
     util/utf8stringlist.h \
     util/utf8stringset.h \
@@ -279,4 +281,4 @@ unix {
 }
 
 DISTFILES *= \
-    util/paramset_percent_eval_functions.md
+    util/percent_evaluation.md

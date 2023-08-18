@@ -74,6 +74,8 @@ class SharedUiItemParamsProvider;
 class LIBP6CORESHARED_EXPORT SharedUiItemData : public QSharedData {
 public:
   virtual ~SharedUiItemData() = default;
+
+  // identity
   /** Return a string identifying the object among all other SharedUiItems
    * sharing the same idQualifier().
    *
@@ -84,6 +86,13 @@ public:
   /** Return a string identifiying the data type represented within the
    * application, e.g. "student", "calendar", "quote". */
   virtual Utf8String idQualifier() const = 0;
+  /** Return param scope when the item is evaluated through ParamsProvider
+   *  intervace. Default impl: idQualifier().
+   *  Implementation may want to return qualifiedId() or something specific to
+   *  an item instance instead. */
+  virtual const Utf8String paramScope() const;
+
+  // ui read
   /** Return UI sections count, like QAbstractItemModel::columnCount() does for
    * columns (anyway SharedUiItem sections are likely to be presented as
    * columns by a Model and displayed as columns by a View). */
@@ -103,6 +112,8 @@ public:
   virtual Utf8String uiSectionName(int section) const = 0;
   /** Return UI section number given the section name. */
   virtual int uiSectionByName(Utf8String sectionName) const = 0;
+
+  // ui write
   /** Return UI item flags, like QAbstractItemModel::flags().
    * Default: return Qt::ItemIsEnabled | Qt::ItemIsSelectable */
   virtual Qt::ItemFlags uiFlags(int section) const;
@@ -115,6 +126,8 @@ public:
   virtual bool setUiData(
       int section, const QVariant &value, QString *errorString,
       SharedUiItemDocumentTransaction *transaction, int role);
+
+  // comparison
 #if __cpp_impl_three_way_comparison >= 201711
   /** By default: compares identifers (idQualifier() then id(), which may
    *  lead to inconsistency if comaring two versions of an object with same
@@ -346,8 +359,9 @@ public:
    * SharedUiItemData::uiHeaderData(section, Qt::DisplayRole) instead of
    * SharedUiItem::uiData(). */
   QVariant uiData(int section, int role = Qt::DisplayRole) const {
-    if (_data) {
-      switch (role) {
+    if (!_data)
+      return {};
+    switch (role) {
       case IdRole:
         return _data->id();
       case IdQualifierRole:
@@ -360,9 +374,7 @@ public:
         return _data->uiHeaderData(section, Qt::DisplayRole);
       default:
         return _data->uiData(section, role);
-      }
     }
-    return QVariant();
   }
   /** @return section number knowing its name, or -1 */
   int uiSectionByName(Utf8String sectionName) const {
@@ -514,16 +526,16 @@ public:
     return true;
   }
   using ParamsProvider::paramValue;
-  /** Calls uiData(Qt::DisplayRole) */
-  const QVariant paramValue(
-    const Utf8String &key, const ParamsProvider *context,
-    const QVariant &defaultValue,
-    Utf8StringSet *alreadyEvaluated) const override final;
-  /** Return every section names */
-  const Utf8StringSet paramKeys() const override final;
-  /** Return qualified id */
-  const Utf8String paramScope() const override final;
-  const ParamSet snapshot() const override final;
+  /** Provide values calling uiData() with role Qt::DisplayRole, supporting
+    * named keys, section numbers, and special values "id"... */
+  const QVariant paramRawValue(
+    const Utf8String &key, const QVariant &def) const override;
+  /** Return every section names (named keys, section numbers and special values
+    * "id"...) */
+  const Utf8StringSet paramKeys() const override;
+  /** The scope value is provided by SharedUiItemData implementation, default
+    * is to return the id qualifier. */
+  const Utf8String paramScope() const override;
 
 protected:
   const SharedUiItemData *data() const { return _data.data(); }
@@ -611,32 +623,32 @@ protected:
 Q_DECLARE_METATYPE(SharedUiItem)
 Q_DECLARE_TYPEINFO(SharedUiItem, Q_MOVABLE_TYPE);
 
-/** ParamsProvider wrapper for SharedUiItem.
- * Its paramValue() implementation returns uiData(key.toInt()) or
- * id(), qualifiedId() or idQualifier() if key is "id", "qualified_id" or
- * "id_qualifier", or uiData(uiSectionByName(key)).
- */
-class LIBP6CORESHARED_EXPORT SharedUiItemParamsProvider
-    : public ParamsProvider {
-  SharedUiItem _item;
-  int _role;
+///** ParamsProvider wrapper for SharedUiItem.
+// * Its paramValue() implementation returns uiData(key.toInt()) or
+// * id(), qualifiedId() or idQualifier() if key is "id", "qualified_id" or
+// * "id_qualifier", or uiData(uiSectionByName(key)).
+// */
+//class LIBP6CORESHARED_EXPORT SharedUiItemParamsProvider
+//    : public ParamsProvider {
+//  SharedUiItem _item;
+//  int _role;
 
-public:
-  explicit inline SharedUiItemParamsProvider(
-      SharedUiItem item, int role = Qt::DisplayRole)
-    : _item(item), _role(role) { }
-  using ParamsProvider::paramValue;
-  const QVariant paramValue(
-    const Utf8String &key, const ParamsProvider *context,
-    const QVariant &defaultValue,
-    Utf8StringSet *alreadyEvaluated) const override;
-  const Utf8StringSet paramKeys() const override;
-};
+//public:
+//  explicit inline SharedUiItemParamsProvider(
+//      SharedUiItem item, int role = Qt::DisplayRole)
+//    : _item(item), _role(role) { }
+//  using ParamsProvider::paramValue;
+//  const QVariant paramValue(
+//    const Utf8String &key, const ParamsProvider *context,
+//    const QVariant &defaultValue,
+//    Utf8StringSet *alreadyEvaluated) const override;
+//  const Utf8StringSet paramKeys() const override;
+//};
 
-inline SharedUiItemParamsProvider SharedUiItem::toParamsProvider(
-    int role) const {
-  return SharedUiItemParamsProvider(*this, role);
-}
+//inline SharedUiItemParamsProvider SharedUiItem::toParamsProvider(
+//    int role) const {
+//  return SharedUiItemParamsProvider(*this, role);
+//}
 
 inline uint qHash(const SharedUiItem &i) { return qHash(i.id()); }
 

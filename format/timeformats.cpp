@@ -15,6 +15,7 @@
 #include "log/log.h"
 #include "util/characterseparatedexpression.h"
 #include <QRegularExpression>
+#include "util/percentevaluator.h"
 
 // [english-day-of-week3,] day-of-month english-month-name3 year4 hour24:min:sec { {+|-}0000 | zone-name3 }
 // Wed   ,   1  Jan   2013   23:59:62+0400
@@ -325,18 +326,13 @@ QString TimeFormats::toCustomTimestamp(
 
 const QString TimeFormats::toMultifieldSpecifiedCustomTimestamp(
   const QDateTime &dt, const Utf8String &multifieldSpecifiedFormat,
-  const ParamSet &paramset,
-  bool inherit, const ParamsProvider *context,
-  Utf8StringSet *alreadyEvaluated) {
+  const ParamsProvider *context, Utf8StringSet *ae) {
   auto params = multifieldSpecifiedFormat.splitByLeadingChar();
-  auto format = paramset.evaluate(
-        params.value(0), inherit, context, alreadyEvaluated);
-  auto relativedatetime = paramset.evaluate(
-        params.value(1), inherit, context, alreadyEvaluated);;
-  QTimeZone tz = QTimeZone(
-        paramset.evaluate(params.value(2), inherit, context,
-                          alreadyEvaluated).trimmed());
-  return toCustomTimestamp(dt, format, RelativeDateTime(relativedatetime), tz);
+  auto format = PercentEvaluator::eval_string(params.value(0), context, ae);
+  auto rel_dt = PercentEvaluator::eval_string(params.value(1), context, ae);
+  QTimeZone tz(PercentEvaluator::eval(params.value(2), context, ae)
+               .value.toByteArray().trimmed());
+  return toCustomTimestamp(dt, format, RelativeDateTime(rel_dt), tz);
 }
 
 const QTimeZone TimeFormats::tzFromIso8601(

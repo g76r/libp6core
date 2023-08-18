@@ -15,9 +15,8 @@
 #include "shareduiitem.h"
 #include "util/utf8stringset.h"
 
-const QVariant SharedUiItemListParamsProvider::paramValue(
-    const Utf8String &key, const ParamsProvider *, const QVariant &defaultValue,
-    Utf8StringSet *) const {
+const QVariant SharedUiItemListParamsProvider::paramRawValue(
+    const Utf8String &key, const QVariant &defaultValue) const {
   int colon = key.indexOf(':');
   Utf8String idQualifier = colon >= 0 ? key.left(colon) : Utf8String{};
   Utf8String sectionName = key.mid(colon+1);// works even with colon=-1

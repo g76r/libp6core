@@ -63,7 +63,7 @@ void TemplatingHttpHandler::computePathToRoot(
   // note that FileSystemHttpHandler enforces that:
   // - the path never contains several adjacent / (would have been redirected)
   // - the path never points on a directory (would've been redirected to index)
-  if (processingContext->overridingParams().contains("!pathtoroot"))
+  if (processingContext->overridingParams().paramContains("!pathtoroot"))
     return;
   auto prefix = urlPathPrefix();
   auto path = req.url().path().mid(urlPathPrefix().length());

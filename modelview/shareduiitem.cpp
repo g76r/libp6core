@@ -66,24 +66,23 @@ QDebug operator<<(QDebug dbg, const SharedUiItem &i) {
   return dbg.space();
 }
 
-const QVariant SharedUiItem::paramValue(
-    const Utf8String &key, const ParamsProvider *, const QVariant &defaultValue,
-    Utf8StringSet *) const {
+const QVariant SharedUiItem::paramRawValue(
+    const Utf8String &key, const QVariant &def) const {
   bool ok;
   int section = key.toInt(&ok);
   QVariant value = ok ? uiData(section) : uiDataBySectionName(key);
-  return value.isValid() ? value : defaultValue;
+  return value.isValid() ? value : def;
 }
 
-const QVariant SharedUiItemParamsProvider::paramValue(
-    const Utf8String &key, const ParamsProvider *, const QVariant &defaultValue,
-    Utf8StringSet *) const {
-  bool ok;
-  int section = key.toInt(&ok);
-  QVariant value = ok ? _item.uiData(section, _role)
-                      : _item.uiDataBySectionName(key, _role);
-  return value.isValid() ? value : defaultValue;
-}
+//const QVariant SharedUiItemParamsProvider::paramValue(
+//    const Utf8String &key, const ParamsProvider *, const QVariant &defaultValue,
+//    Utf8StringSet *) const {
+//  bool ok;
+//  int section = key.toInt(&ok);
+//  QVariant value = ok ? _item.uiData(section, _role)
+//                      : _item.uiDataBySectionName(key, _role);
+//  return value.isValid() ? value : defaultValue;
+//}
 
 const Utf8StringSet SharedUiItem::paramKeys() const {
   Utf8StringSet keys { "id"_u8, "id_qualifier"_u8, "qualified_id"_u8 };
@@ -98,17 +97,17 @@ const Utf8StringSet SharedUiItem::paramKeys() const {
   return keys;
 }
 
+const Utf8String SharedUiItemData::paramScope() const {
+  return idQualifier();
+}
+
 const Utf8String SharedUiItem::paramScope() const {
-  return qualifiedId();
+  return _data ? _data->paramScope() : Utf8String{};
 }
 
-const ParamSet SharedUiItem::snapshot() const {
-  return ParamsProvider::snapshot();
-}
-
-const Utf8StringSet SharedUiItemParamsProvider::paramKeys() const {
-  return _item.paramKeys();
-}
+//const Utf8StringSet SharedUiItemParamsProvider::paramKeys() const {
+//  return _item.paramKeys();
+//}
 
 #if __cpp_impl_three_way_comparison >= 201711
 std::strong_ordering SharedUiItemData::operator<=>(

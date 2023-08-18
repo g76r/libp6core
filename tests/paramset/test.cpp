@@ -9,8 +9,8 @@ int main(void) {
                "h1", "at http://1.2.3.4/\nthere's something", "empty", "" };
   qDebug() << p.value("s2");
   qDebug() << p.evaluate("%{=mid:%foo:1:1} %{=mid:%s1:3:3} %{=mid:%s1:11:5:b}");
-  qDebug() << p.evaluate("%{=base64|login:password} %{=date💩yyyy💩2009-04-01Z"
-              "💩UTC} %{=hex!%{=frombase64:-_9h:u}!} %{=base64:§} "
+  qDebug() << p.evaluate("%{=base64|login:password} %{=date🥨yyyy🥨2009-04-01Z"
+              "🥨UTC} %{=hex!%{=frombase64:-_9h:u}!} %{=base64:§} "
               "%{=fromhex!25:62/61 7a!} %{=md5:%%baz} %{=rpn,'0x20,x,+} ");
   qDebug() << p.evaluate("%{=escape!%{=frombase64:JWJhcg==}}=%%%%bar "
               "%{=escape!%foozz}=%%%%bar "

@@ -41,13 +41,12 @@ class QSqlDatabase;
  * prefix, or even with the same = sign although this is discouraged because it
  * would hide future ParamSet functions with the same name).
  *
- * @see paramset_percent_eval_functions.md
- * @see https://gitlab.com/g76r/libp6core/-/blob/master/util/paramset_percent_eval_functions.md
+ * @see percent_evaluation.md for more complete information
+ * @see https://gitlab.com/g76r/libp6core/-/blob/master/util/percent_evaluation.md
  */
 class LIBP6CORESHARED_EXPORT ParamSet : public ParamsProvider {
   friend class ParamsProviderMerger;
   QSharedDataPointer<ParamSetData> d;
-  static bool _variableNotFoundLoggingEnabled;
 
 public:
   ParamSet();
@@ -193,45 +192,39 @@ public:
   ParamSet &operator+=(const ParamSet &other){ setValues(other); return *this; }
   void clear();
   void removeValue(Utf8String key);
-  /** Return a value without performing parameters substitution.
-   * @param inherit should search values in parents if not found */
-  Utf8String rawValue(Utf8String key, Utf8String defaultValue = {},
-                   bool inherit = true) const;
-  inline Utf8String rawValue(Utf8String key, bool inherit) const {
-    return rawValue(key, Utf8String{}, inherit); }
   /** Return a value after parameters substitution.
    * @param searchInParents should search values in parents if not found */
   inline Utf8String value(Utf8String key, Utf8String defaultValue = {},
                        bool inherit = true,
                        const ParamsProvider *context = 0) const {
-    return evaluate(rawValue(key, defaultValue, inherit), inherit, context); }
+    return evaluate(paramRawUtf8(key, defaultValue, inherit), inherit, context); }
   inline Utf8String value(Utf8String key, bool inherit,
                        const ParamsProvider *context = 0) const {
-    return evaluate(rawValue(key, Utf8String{}, inherit), inherit, context); }
+    return evaluate(paramRawUtf8(key, Utf8String{}, inherit), inherit, context); }
   inline Utf8String value(Utf8String key, const ParamsProvider *context) const {
-    return evaluate(rawValue(key, Utf8String{}, true), true, context); }
+    return evaluate(paramRawUtf8(key, Utf8String{}, true), true, context); }
   inline Utf8String value(Utf8String key, bool inherit, const ParamsProvider *context,
                        Utf8StringSet *alreadyEvaluated) const {
-    return evaluate(rawValue(key, inherit), inherit, context, alreadyEvaluated);
+    return evaluate(paramRawUtf8(key, inherit), inherit, context, alreadyEvaluated);
   }
   inline Utf8String value(
       Utf8String key, const QByteArray &defaultValue, bool inherit = true,
       const ParamsProvider *context = 0) const {
-    return evaluate(rawValue(key, Utf8String{defaultValue}, inherit), inherit,
+    return evaluate(paramRawUtf8(key, Utf8String{defaultValue}, inherit), inherit,
                     context); }
   inline Utf8String value(
       Utf8String key, const QByteArray &defaultValue,
       const ParamsProvider *context) const {
-    return evaluate(rawValue(key, Utf8String{defaultValue}, true), true,
+    return evaluate(paramRawUtf8(key, Utf8String{defaultValue}, true), true,
                     context); }
   inline Utf8String value(
       Utf8String key, const char *defaultValue, bool inherit = true,
       const ParamsProvider *context = 0) const {
-    return evaluate(rawValue(key, Utf8String{defaultValue}, inherit), inherit,
+    return evaluate(paramRawUtf8(key, Utf8String{defaultValue}, inherit), inherit,
                     context); }
   inline Utf8String value(Utf8String key, const char *defaultValue,
                        const ParamsProvider *context) const {
-    return evaluate(rawValue(key, Utf8String{defaultValue}, true), true,
+    return evaluate(paramRawUtf8(key, Utf8String{defaultValue}, true), true,
                     context); }
   /** Return a value splitted into strings, %-substitution is done after the
    * split (i.e. "%foo bar" has two elements, regardless the number of spaces
@@ -240,7 +233,7 @@ public:
                              bool inherit = true,
                              const ParamsProvider *context = 0,
                              Utf8String separators = " "_u8) const {
-    return splitAndEvaluate(rawValue(key, defaultRawValue), separators,
+    return splitAndEvaluate(paramRawUtf8(key, defaultRawValue), separators,
                             inherit, context); }
   /** Return a value splitted at first whitespace. Both strings are trimmed.
    * E.g. a raw value of "  foo    bar baz  " is returned as a
@@ -270,106 +263,59 @@ public:
                    const ParamsProvider *context = 0) const;
   /** Return all keys for which the ParamSet or one of its parents hold a value.
     */
-  const Utf8StringSet paramKeys(bool inherit) const;
+  [[nodiscard]] const Utf8StringSet paramKeys(bool inherit) const;
   /** Same as paramKeys(true). */
-  const Utf8StringSet paramKeys() const override;
+  [[nodiscard]] const Utf8StringSet paramKeys() const override;
   /** Return true if key is set. */
-  bool contains(Utf8String key, bool inherit = true) const;
-  /** Perform parameters substitution within the string. */
-  Utf8String evaluate(Utf8String rawValue, bool inherit = true,
-                      const ParamsProvider *context = 0) const {
-    Utf8StringSet ae;
-    return evaluate(rawValue, inherit, context, &ae); }
-  Utf8String evaluate(Utf8String rawValue, const ParamsProvider *context) const {
-    return evaluate(rawValue, true, context); }
-  Utf8String evaluate(Utf8String rawValue, bool inherit,
-                   const ParamsProvider *context,
-                   Utf8StringSet *alreadyEvaluated) const;
-  Utf8StringList splitAndEvaluate(
-      Utf8String rawValue, Utf8String separators = " "_u8, bool inherit = true,
-      const ParamsProvider *context = 0) const {
-    Utf8StringSet ae;
-    return splitAndEvaluate(rawValue, separators, inherit, context, &ae);
-  }
-  Utf8StringList splitAndEvaluate(
-      Utf8String rawValue, const ParamsProvider *context) const {
-    return splitAndEvaluate(rawValue, " "_u8, true, context); }
-  /** Split string and perform parameters substitution.
-   *
-   * If (and only if) separators is not empty, raw value is splitted into parts
-   * separated by any character in separators string, several separators are
-   * processed as only one (hence splitted parts cannot be empty) and leading
-   * or trailing separators are ignored.
-   * Separators, and any other character, can be escaped with backslash (\),
-   * therefore backslashes must be backslashed.
-   * If separators is empty, neither split nor backslash escape is performed.
-   */
-  Utf8StringList splitAndEvaluate(
-      Utf8String rawValue, Utf8String separators, bool inherit,
-      const ParamsProvider *context, Utf8StringSet *alreadyEvaluated) const;
-  /** Escape all characters in string so that they no longer have special
-   * meaning for evaluate() and splitAndEvaluate() methods.
-   * That is: replace % with %% within the string. */
-  static QString escape(QString string) {
-    return string.isNull() ? string : string.replace('%', u"%%"_s); }
-  /** Escape all characters in string so that they no longer have special
-   * meaning for evaluate() and splitAndEvaluate() methods.
-   * That is: replace % with %% within the string. */
-  static Utf8String escape(Utf8String utf8) {
-    return utf8.isNull() ? utf8 : utf8.replace('%', "%%"_u8); }
-  /** Return a regular expression that matches any string that can result
-   * in evaluation of the rawValue.
-   * For instance "foo%{=date:yyyy}-%{bar}.log" is converted into some pattern
-   * that can be "foo....-.*\\.log" or "foo.*-.*\\.log" (let be frank: currently
-   * the second pattern is returned, not the first one, and it's likely to stay
-   * this way).
-   * Can be used as an input for QRegularExpression(QString) constructor. */
-  static const Utf8String matchingRegexp(Utf8String rawValue);
-  using ParamsProvider::paramValue;
-  const QVariant paramValue(
-    const Utf8String &key, const ParamsProvider *context,
-    const QVariant &defaultValue,
-    Utf8StringSet *alreadyEvaluated) const override;
-  bool isNull() const;
-  int size() const;
-  bool isEmpty() const;
+  [[nodiscard]] bool paramContains(const Utf8String &key, bool inherit) const;
+  /** Return true if key is set. */
+  [[nodiscard]] bool paramContains(const Utf8String &key) const override;
+  /** Same as paramRawValue() but skip the QVariant overhead. */
+  [[nodiscard]] const Utf8String paramRawUtf8(
+      const Utf8String &key, const Utf8String &def, bool inherit) const;
+  /** Same as paramRawUtf8 with inherit = true. */
+  [[nodiscard]] const Utf8String paramRawUtf8(
+      const Utf8String &key, const Utf8String &def = {}) const override;
+//    return Utf8String(paramRawValue(key, def)); }
+  /** Convenience method */
+  [[nodiscard]] inline const Utf8String paramRawUtf8(
+      const Utf8String &key, bool inherit) const {
+    return paramRawUtf8(key, {}, inherit); }
+
+  using ParamsProvider::paramRawValue;
+  /** Return a value without performing parameters substitution.
+   * @param inherit should search values in parents if not found */
+  [[nodiscard]] const QVariant paramRawValue(
+      const Utf8String &key, const QVariant &def, bool inherit) const;
+  /** Same as paramRawValue(key, def, true). */
+  [[nodiscard]] const QVariant paramRawValue(
+      const Utf8String &key, const QVariant &def = {}) const override;
+  [[nodiscard]] const ScopedValue paramScopedRawValue(
+      const Utf8String &key, const QVariant &def = {}) const override;
+  [[nodiscard]] bool isNull() const;
+  [[nodiscard]] int size() const;
+  [[nodiscard]] bool isEmpty() const;
   void detach();
   /** Turn the paramset into a human readable string showing its content.
    * @param inherit include params inherited from parents
    * @param decorate surround with curly braces */
   const QString toString(bool inherit = true, bool decorate = true) const;
-  /** Record debug log messages when a variable evaluation is required and not
-   * found.
-   * Applicable to all params sets in the applicatoin (global parameter).
-   * Defaults: disabled, but if "ENABLE_PARAMSET_VARIABLE_NOT_FOUND_LOGGING"
-   * environment variable is set to "true". */
-  static void enableVariableNotFoundLogging(bool enabled = true) {
-    _variableNotFoundLoggingEnabled = enabled; }
-  /** Evaluate %= functions out of ParamSet context */
-  static Utf8String evaluateFunction(
-    const ParamSet &paramset, const Utf8String &key, bool inherit,
-    const ParamsProvider *context, Utf8StringSet *alreayEvaluated,
-      bool *found);
   const QHash<Utf8String,Utf8String> toHash(bool inherit = true) const;
   const QMap<Utf8String, Utf8String> toMap(bool inherit = true) const;
   const QHash<QString,QString> toStringHash(bool inherit = true) const;
   const QMap<QString, QString> toStringMap(bool inherit = true) const;
   /** Get an external paramset. */
-  static ParamSet externalParams(Utf8String set_name);
+  [[nodiscard]] static ParamSet externalParams(Utf8String set_name);
   /** Register an external paramset. */
   static void registerExternalParams(
       const Utf8String &set_name, ParamSet params);
   /** Unregister every external paramset. */
   static void clearExternalParams();
   /** List names of external paramsets. */
-  static Utf8StringList externalParamsNames();
+  [[nodiscard]] static Utf8StringList externalParamsNames();
 
 private:
   ParamSet(ParamSetData *data);
-  inline bool appendVariableValue(
-      Utf8String *value, const Utf8String &variable, bool inherit,
-      const ParamsProvider *context, Utf8StringSet *alreadyEvaluated,
-      bool logIfVariableNotFound) const;
   static ParamSetData *fromQIODevice(
       QIODevice *input, const Utf8String &format,
       const QMap<Utf8String,Utf8String> options,

@@ -45,9 +45,8 @@ Utf8String Utf8StringSet::join(const char separator) const {
   return ::join(*this, separator);
 }
 
-const QVariant Utf8StringList::paramValue(
-    const Utf8String &key, const ParamsProvider *, const QVariant &def,
-    Utf8StringSet *) const {
+const QVariant Utf8StringList::paramRawValue(
+    const Utf8String &key, const QVariant &def) const {
   bool ok;
   int i = key.toInt(&ok);
   if (!ok)
