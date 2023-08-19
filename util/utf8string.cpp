@@ -12,15 +12,80 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define UTF8STRING_IMPL_CPP
 #include "utf8string.h"
 #include "utf8stringlist.h"
 #include <set>
+#include <QDateTime>
 
 const QList<char> Utf8String::AsciiWhitespace = { ' ', '\t', '\n', '\r', '\v' };
 const Utf8String Utf8String::ReplacementCharacterUtf8 = "\xef\xbf\xbd"_u8;
 const Utf8String Utf8String::Empty = ""_u8;
 
 #include "util/unicodedata.cpp"
+
+static int staticInit() {
+  qMetaTypeId<Utf8String>();
+  QMetaType::registerConverter<Utf8String,QVariant>();
+  QMetaType::registerConverter<QVariant,Utf8String>([](const QVariant &v) {
+    return Utf8String(v); });
+  QMetaType::registerConverter<Utf8String,QString>(&Utf8String::toString);
+  QMetaType::registerConverter<Utf8String,QByteArray>();
+  QMetaType::registerConverter<QString,Utf8String>([](const QString &s) {
+    return Utf8String(s); });
+  QMetaType::registerConverter<QByteArray,Utf8String>([](const QByteArray &s) {
+    return Utf8String(s); });
+  QMetaType::registerConverter<Utf8String,bool>(&Utf8String::convToBool);
+  QMetaType::registerConverter<Utf8String,double>(&Utf8String::convToDouble);
+  QMetaType::registerConverter<Utf8String,float>(&Utf8String::convToFloat);
+  QMetaType::registerConverter<Utf8String,qlonglong>(&Utf8String::convToLongLong);
+  QMetaType::registerConverter<Utf8String,qulonglong>(&Utf8String::convToULongLong);
+  QMetaType::registerConverter<Utf8String,long>(&Utf8String::convToLong);
+  QMetaType::registerConverter<Utf8String,ulong>(&Utf8String::convToULong);
+  QMetaType::registerConverter<Utf8String,int>(&Utf8String::convToInt);
+  QMetaType::registerConverter<Utf8String,uint>(&Utf8String::convToUInt);
+  QMetaType::registerConverter<Utf8String,short>(&Utf8String::convToShort);
+  QMetaType::registerConverter<Utf8String,ushort>(&Utf8String::convToUShort);
+  QMetaType::registerConverter<bool,Utf8String>([](const bool &n) {
+    return Utf8String::number(n); });
+  QMetaType::registerConverter<double,Utf8String>([](const double &n) {
+    return Utf8String::number(n); });
+  QMetaType::registerConverter<float,Utf8String>([](const float &n) {
+    return Utf8String::number(n); });
+  QMetaType::registerConverter<qlonglong,Utf8String>([](const qlonglong &n) {
+    return Utf8String::number(n); });
+  QMetaType::registerConverter<qulonglong,Utf8String>([](const qulonglong &n) {
+    return Utf8String::number(n); });
+  QMetaType::registerConverter<long,Utf8String>([](const long &n) {
+    return Utf8String::number(n); });
+  QMetaType::registerConverter<ulong,Utf8String>([](const ulong &n) {
+    return Utf8String::number(n); });
+  QMetaType::registerConverter<int,Utf8String>([](const int &n) {
+    return Utf8String::number(n); });
+  QMetaType::registerConverter<uint,Utf8String>([](const uint &n) {
+    return Utf8String::number(n); });
+  QMetaType::registerConverter<short,Utf8String>([](const short &n) {
+    return Utf8String::number(n); });
+  QMetaType::registerConverter<ushort,Utf8String>([](const ushort &n) {
+    return Utf8String::number(n); });
+  QMetaType::registerConverter<QDateTime,Utf8String>([](const QDateTime &d) {
+    return Utf8String(d.toString(Qt::ISODateWithMs)); });
+  QMetaType::registerConverter<QDate,Utf8String>([](const QDate &d) {
+    return Utf8String(d.toString(Qt::ISODateWithMs)); });
+  QMetaType::registerConverter<QTime,Utf8String>([](const QTime &d) {
+    return Utf8String(d.toString(Qt::ISODateWithMs)); });
+  QMetaType::registerConverter<Utf8String,QDateTime>([](const Utf8String &s) {
+    return QDateTime::fromString(s, Qt::ISODateWithMs); });
+  QMetaType::registerConverter<Utf8String,QDate>([](const Utf8String &s) {
+    return QDate::fromString(s, Qt::ISODateWithMs); });
+  QMetaType::registerConverter<Utf8String,QTime>([](const Utf8String &s) {
+    return QTime::fromString(s, Qt::ISODateWithMs); });
+  // TODO there are more to map in QT_FOR_EACH_STATIC_CORE_CLASS
+  // QT_FOR_EACH_STATIC_ALIAS_TYPE QT_FOR_EACH_STATIC_CORE_TEMPLATE
+  // etc. (qmetatype.h)
+  return 0;
+}
+Q_CONSTRUCTOR_FUNCTION(staticInit)
 
 template<typename F>
 static inline F toFloating(

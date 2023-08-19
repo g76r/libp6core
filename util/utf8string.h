@@ -100,6 +100,8 @@ public:
 
   [[nodiscard]] inline QString toString() const {
     return QString::fromUtf8(*this); }
+  [[nodiscard]] inline operator QVariant() const {
+    return QVariant::fromValue(*this); }
 
   [[nodiscard]] static inline Utf8String encodeUtf8(char32_t c);
   [[nodiscard]] static inline char32_t decodeUtf8(
@@ -273,10 +275,12 @@ public:
    *  concerning integers, with base = 0 auto detection of base). */
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
   [[nodiscard]] inline T toNumber(
-      bool *ok = nullptr, const T &def = {}, bool suffixes_enabled = true);
+      bool *ok = nullptr, const T &def = {},
+      bool suffixes_enabled = true) const;
   /** Convenience methods witout bool *ok. */
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
-  [[nodiscard]] inline T toNumber(const T &def, bool suffixes_enabled = true) {
+  [[nodiscard]] inline T toNumber(
+      const T &def, bool suffixes_enabled = true) const {
     return toNumber<T>(nullptr, def, suffixes_enabled); }
 
   // conversions from numbers
@@ -295,6 +299,7 @@ public:
   [[nodiscard]] static inline Utf8String number(
       double d, char format = 'g', int precision = 6) {
     return QByteArray::number(d, format, precision); }
+  [[nodiscard]] static inline Utf8String number(bool b);
 
   // byte arrays conversion
   [[nodiscard]] inline Utf8String toBase64(
@@ -548,6 +553,19 @@ public:
               Qt::CaseSensitivity cs = Qt::CaseSensitive) const {
     return compare(Utf8String(bv), cs); }
 
+#ifdef UTF8STRING_IMPL_CPP
+  bool convToBool(bool *ok) const { return toBool(ok, {}); }
+  double convToDouble(bool *ok) const { return toDouble(ok, {}); }
+  float convToFloat(bool *ok) const { return toFloat(ok, 0.0); }
+  qlonglong convToLongLong(bool *ok) const { return toLongLong(ok, 0.0); }
+  qulonglong convToULongLong(bool *ok) const { return toULongLong(ok, 0.0); }
+  long convToLong(bool *ok) const { return toLong(ok, 0.0); }
+  ulong convToULong(bool *ok) const { return toULong(ok, 0.0); }
+  int convToInt(bool *ok) const { return toInt(ok, 0.0); }
+  uint convToUInt(bool *ok) const { return toUInt(ok, 0.0); }
+  short convToShort(bool *ok) const { return toShort(ok, 0.0); }
+  ushort convToUShort(bool *ok) const { return toUShort(ok, 0.0); }
+#endif
 private:
   struct UnicodeCaseMapping {
     char32_t utf32;
@@ -769,69 +787,73 @@ char32_t Utf8String::toTitle(char32_t c) {
   return cm == _case_mapping.end() || cm->utf32 != c ? c : cm->title_utf32;
 }
 
+[[nodiscard]] inline Utf8String Utf8String::number(bool b) {
+  return b ? "true"_u8: "false"_u8;
+}
+
 template<>
 [[nodiscard]] inline double Utf8String::toNumber<>(
-    bool *ok, const double &def, bool suffixes_enabled) {
+    bool *ok, const double &def, bool suffixes_enabled) const {
   return toDouble(ok, def, suffixes_enabled);
 }
 
 template<>
 [[nodiscard]] inline float Utf8String::toNumber<>(
-    bool *ok, const float &def, bool suffixes_enabled) {
+    bool *ok, const float &def, bool suffixes_enabled) const {
   return toFloat(ok, def, suffixes_enabled);
 }
 
 template<>
 [[nodiscard]] inline qlonglong Utf8String::toNumber<>(
-    bool *ok, const qlonglong &def, bool suffixes_enabled) {
+    bool *ok, const qlonglong &def, bool suffixes_enabled) const {
   return toLongLong(ok, 0, def, suffixes_enabled);
 }
 
 template<>
 [[nodiscard]] inline qulonglong Utf8String::toNumber<>(
-    bool *ok, const qulonglong &def, bool suffixes_enabled) {
+    bool *ok, const qulonglong &def, bool suffixes_enabled) const {
   return toULongLong(ok, 0, def, suffixes_enabled);
 }
 
 template<>
 [[nodiscard]] inline long Utf8String::toNumber<>(
-    bool *ok, const long &def, bool suffixes_enabled) {
+    bool *ok, const long &def, bool suffixes_enabled) const {
   return toLong(ok, 0, def, suffixes_enabled);
 }
 
 template<>
 [[nodiscard]] inline ulong Utf8String::toNumber<>(
-    bool *ok, const ulong &def, bool suffixes_enabled) {
+    bool *ok, const ulong &def, bool suffixes_enabled) const {
   return toULong(ok, 0, def, suffixes_enabled);
 }
 
 template<>
 [[nodiscard]] inline int Utf8String::toNumber<>(
-    bool *ok, const int &def, bool suffixes_enabled) {
+    bool *ok, const int &def, bool suffixes_enabled) const {
   return toInt(ok, 0, def, suffixes_enabled);
 }
 
 template<>
 [[nodiscard]] inline uint Utf8String::toNumber<>(
-    bool *ok, const uint &def, bool suffixes_enabled) {
+    bool *ok, const uint &def, bool suffixes_enabled) const {
   return toUInt(ok, 0, def, suffixes_enabled);
 }
 
 template<>
 [[nodiscard]] inline short Utf8String::toNumber<>(
-    bool *ok, const short &def, bool suffixes_enabled) {
+    bool *ok, const short &def, bool suffixes_enabled) const {
   return toShort(ok, 0, def, suffixes_enabled);
 }
 
 template<>
 [[nodiscard]] inline ushort Utf8String::toNumber<>(
-    bool *ok, const ushort &def, bool suffixes_enabled) {
+    bool *ok, const ushort &def, bool suffixes_enabled) const {
   return toUShort(ok, 0, def, suffixes_enabled);
 }
 
 template<>
 [[nodiscard]] inline bool Utf8String::toNumber<>(
-    bool *ok, const bool &def, bool) {
+    bool *ok, const bool &def, bool) const {
   return toBool(ok, def);
 }
 
