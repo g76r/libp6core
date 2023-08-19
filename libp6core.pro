@@ -33,11 +33,12 @@ DEFINES += LIBP6CORE_LIBRARY
 exists(/usr/bin/ccache):QMAKE_CXX = ccache $$QMAKE_CXX
 exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always
 QMAKE_CXXFLAGS += -Wextra -Woverloaded-virtual \
-  -Wfloat-equal -Wdouble-promotion -Wimplicit-fallthrough=5 -Wtrampolines \
+  -Wdouble-promotion -Wimplicit-fallthrough=5 -Wtrampolines \
   -Wduplicated-branches -Wduplicated-cond -Wlogical-op \
   -Wno-padded -Wno-deprecated-copy -Wsuggest-attribute=noreturn \
   -Wsuggest-override \
   -ggdb
+# LATER add -Wfloat-equal again when QVariant::value<double>() won't trigger it
 CONFIG(debug,debug|release):QMAKE_CXXFLAGS += -ggdb
 
 OBJECTS_DIR = ../build-$$TARGET-$$TARGET_OS/$$BUILD_TYPE/obj
