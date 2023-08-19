@@ -51,7 +51,8 @@ _functions {
 { "=coarsetimeinterval", [](const Utf8String &, const Utf8String &key,
     const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
   auto params = key.splitByLeadingChar(ml);
-  qint64 msecs = PercentEvaluator::eval_double(params.value(0), context, ae)*1000;
+  auto msecs = PercentEvaluator::eval_number<double>(
+                   params.value(0), context, ae)*1000;
   return TimeFormats::toCoarseHumanReadableTimeInterval(msecs);
 }, true},
 { "=eval", [](const Utf8String &, const Utf8String &key,
@@ -304,9 +305,10 @@ _functions {
 { "=random", [](const Utf8String &, const Utf8String &key,
     const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
   auto params = key.splitByLeadingChar(ml);
-  auto modulo = ::llabs(PercentEvaluator::eval_longlong(
+  auto modulo = ::llabs(PercentEvaluator::eval_number<qlonglong>(
                           params.value(0), context, ae));
-  auto shift = PercentEvaluator::eval_longlong(params.value(1), context, ae);
+  auto shift = PercentEvaluator::eval_number<qlonglong>(
+                 params.value(1), context, ae);
   auto i = (qlonglong)QRandomGenerator::global()->generate64();
   if (modulo)
     i %= modulo;
@@ -350,36 +352,36 @@ _functions {
 }, true},
 { "=sha1", [](const Utf8String &, const Utf8String &key,
     const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
-  auto value = PercentEvaluator::eval_ba(key.mid(ml+1), context, ae);
+  auto value = PercentEvaluator::eval_utf8(key.mid(ml+1), context, ae);
   return QCryptographicHash::hash(value, QCryptographicHash::Sha1).toHex();
 }, true},
 { "=sha256", [](const Utf8String &, const Utf8String &key,
     const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
-  auto value = PercentEvaluator::eval_ba(key.mid(ml+1), context, ae);
+  auto value = PercentEvaluator::eval_utf8(key.mid(ml+1), context, ae);
   return QCryptographicHash::hash(value, QCryptographicHash::Sha256).toHex();
 }, true},
 { "=md5", [](const Utf8String &, const Utf8String &key,
     const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
-  auto value = PercentEvaluator::eval_ba(key.mid(ml+1), context, ae);
+  auto value = PercentEvaluator::eval_utf8(key.mid(ml+1), context, ae);
   return QCryptographicHash::hash(value, QCryptographicHash::Md5).toHex();
 }, true},
 { "=hex", [](const Utf8String &, const Utf8String &key,
     const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
   auto params = key.splitByLeadingChar(ml);
-  auto value = PercentEvaluator::eval_ba(params.value(0), context, ae);
+  auto value = PercentEvaluator::eval_utf8(params.value(0), context, ae);
   auto separator = params.value(1);
   return value.toHex(separator.value(0));
 }, true},
 { "=fromhex", [](const Utf8String &, const Utf8String &key,
     const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
   auto params = key.splitByLeadingChar(ml);
-  auto value = PercentEvaluator::eval_ba(params.value(0), context, ae);
+  auto value = PercentEvaluator::eval_utf8(params.value(0), context, ae);
   return QByteArray::fromHex(value);
 }, true},
 { "=base64", [](const Utf8String &, const Utf8String &key,
     const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
   auto params = key.splitByLeadingChar(ml);
-  auto value = PercentEvaluator::eval_ba(params.value(0), context, ae);
+  auto value = PercentEvaluator::eval_utf8(params.value(0), context, ae);
   auto flags = params.value(1);
   QByteArray::Base64Options options =
       (flags.contains('u') ? QByteArray::Base64UrlEncoding
@@ -392,7 +394,7 @@ _functions {
 { "=frombase64", [](const Utf8String &, const Utf8String &key,
     const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
   auto params = key.splitByLeadingChar(ml);
-  auto value = PercentEvaluator::eval_ba(params.value(0), context, ae);
+  auto value = PercentEvaluator::eval_utf8(params.value(0), context, ae);
   auto flags = params.value(1);
   QByteArray::Base64Options options =
       QByteArray::IgnoreBase64DecodingErrors
@@ -524,7 +526,7 @@ const PercentEvaluator::ScopedValue PercentEvaluator::eval(
         ++s; // include byte in scope
         break;
       case NakedKey:
-        if (!::isdigit(*s) && !::isalpha(*s) && *s != '_') {
+        if (!::isalnum(*s) && *s != '_') {
           auto key = Utf8String(begin, s-begin+1); // including current byte
           auto value = ::eval_key(scope, key, context, alreadyEvaluated);
           if (s+1 == end && result.isEmpty())
@@ -613,31 +615,64 @@ static inline bool shouldBeEscapedWithinRegexp(char c) {
 }
 #endif
 
-const Utf8String PercentEvaluator::matching_regexp(const Utf8String &expr) {
-  return ".*";
-  // FIXME do it for real
-#if 0
-  int i = 0, len = rawValue.size();
-  Utf8String value;
-  while (i < len) {
-    char c = rawValue[i];
-    if (c == '%') {
-      if (i+1 < len && rawValue[i+1] == '%') {
-        value.append('%');
-        i += 2; // skip next % too
-      } else {
-        i += nestedPercentVariableLength(rawValue, i);
-        value.append(".*");
-      }
-    } else {
-      if (shouldBeEscapedWithinRegexp(c))
-        value.append('\\');
-      value.append(c);
-      ++i;
+const QString PercentEvaluator::matching_regexp(const Utf8String &expr) {
+  QString pattern;
+  QRegularExpression re;
+  auto begin = expr.constData(), s = begin;
+  auto end = begin + expr.size();
+  qsizetype i;
+  while (s < end) {
+    switch (*s) {
+      case '%':
+        if (s-begin >= 1)
+          pattern += QRegularExpression::escape(Utf8String(begin, s-begin));
+        if (s+1 == end)
+          return pattern;
+        ++s; // skip %
+        switch (*s) {
+          case '{':
+            // skip until last } to avoid dealing with nesting, could be smarter
+            i = Utf8String(s, end-s).lastIndexOf('}');
+            if (i < 0)
+              return pattern;
+            s = s+i+1;
+            break;
+          case '[':
+            // could be smarter, again
+            i = Utf8String(s, end-s).lastIndexOf(']');
+            if (i < 0)
+              return pattern;
+            s = s+i+1;
+            if (*s == '{') {
+              // could be smarter, again
+              i = Utf8String(s, end-s).lastIndexOf('}');
+              if (i < 0)
+                return pattern;
+              s = s+i+1;
+            } else {
+              ++s; // skil on byte, can be special char
+              // skip until next special char
+              while (s < end && (::isalnum(*s) || *s == '_'))
+                ++s;
+            }
+            break;
+          default:
+            ++s; // skil on byte, can be special char
+            // skip until next special char
+            while (s < end && (::isalnum(*s) || *s == '_'))
+              ++s;
+            break;
+        }
+        pattern += u".*"_s;
+        begin = s;
+        break;
+      default:
+        ++s; // include byte in pattern
     }
   }
-  return value;
-#endif
+  if (begin < s)
+    pattern += QRegularExpression::escape(Utf8String(begin, s-begin));
+  return pattern;
 }
 
 void PercentEvaluator::enable_variable_not_found_logging(bool enabled) {

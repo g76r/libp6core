@@ -97,7 +97,7 @@ public:
    * Default: same as currentPath() */
   virtual Utf8String pathPattern() const;
   /** Return the path regexp pattern, e.g. "/var/log/qron-.*\\.log" */
-  Utf8String pathMatchingRegexp() const;
+  QString pathMatchingRegexp() const;
   Log::Severity minSeverity() const { return _minSeverity; }
   ThreadModel threadModel() const { return _threadModel; }
 

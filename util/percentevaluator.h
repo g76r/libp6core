@@ -43,6 +43,7 @@ class Utf8StringSet;
  *
  *  @see percent_evaluation.md for more complete information
  *  @see https://gitlab.com/g76r/libp6core/-/blob/master/util/percent_evaluation.md
+ *  @see ParamsProvider
  */
 class PercentEvaluator {
 public:
@@ -56,10 +57,8 @@ public:
 
   PercentEvaluator() = delete;
 
+  // %-evaluation
   /** Evaluate a %-expression.
-   *
-   *  Most users want rather to call one of the convenience method without
-   *  alreadyEvaluated param.
    *
    *  About returned value type:
    *  With most possible %-expression the returned value will be a Utf8String
@@ -73,22 +72,22 @@ public:
    *  @param context is an evaluation context, can be null (only contextless
    *         function like %=date will be available for evaluation)
    *  @param alreadyEvaluated used for loop detections, must not be null */
+  [[nodiscard]] static const ScopedValue eval(
+      const Utf8String &expr, const ParamsProvider *context = 0);
+  /** Lower-level reentrant version of the method. */
   [[nodiscard]] static inline const ScopedValue eval(
       const Utf8String &expr, const ParamsProvider *context,
       Utf8StringSet *alreadyEvaluated) {
     auto begin = expr.constData();
     return eval(begin, begin+expr.size(), context, alreadyEvaluated);
   }
-  /** Low-level "convenience" method. */
+  /** Even lower-level reentrant version of the method with char* params. */
   [[nodiscard]] static const ScopedValue eval(
       const char *expr, const char *end, const ParamsProvider *context,
       Utf8StringSet *alreadyEvaluated);
-  /** Convenience method */
-  [[nodiscard]] static const ScopedValue eval(
-      const Utf8String &expr, const ParamsProvider *context = 0);
   /** Low-level %-less key evaluation.
    *
-   *  Kind of better equivalent to eval("%{"+key+"}")
+   *  Kind equivalent to eval("%{"+key+"}") without the overhead.
    *  Used for instance by MathExpr where unquoted tokens are considered
    *  variable so are to be evaluated.
    *
@@ -104,84 +103,83 @@ public:
       const Utf8String &key, const ParamsProvider *context,
       Utf8StringSet *already_evaluated);
 
-  // data conversion convenience methods
-  /** Convenience method: evaluate and then convert */
+  // data conversion
+  /** Evaluate and then convert result to utf8 text.
+   *
+   *  @param context is an evaluation context, can be null (only contextless
+   *         function like %=date will be available for evaluation)
+   *  @param alreadyEvaluated used for loop detections, must not be null */
   [[nodiscard]] inline static Utf8String eval_utf8(
       const Utf8String &expr, const Utf8String &def = {},
       const ParamsProvider *context = 0) {
     QVariant v = eval(expr, context);
     return v.isValid() ? Utf8String(v) : def;
   }
-  /** Convenience method: evaluate and then convert */
+  /** Lower-level reentrant version of the method. */
   [[nodiscard]] inline static Utf8String eval_utf8(
       const Utf8String &expr, const ParamsProvider *context,
       Utf8StringSet *alreadyEvaluated, const Utf8String &def = {}) {
     QVariant v = eval(expr, context, alreadyEvaluated);
     return v.isValid() ? Utf8String(v) : def;
   }
-  /** Convenience method: evaluate and then convert */
+  /** Evaluate and then convert result to utf16 text.
+   *
+   *  @param context is an evaluation context, can be null (only contextless
+   *         function like %=date will be available for evaluation)
+   *  @param alreadyEvaluated used for loop detections, must not be null */
   [[nodiscard]] inline static QString eval_string(
       const Utf8String &expr, const QString &def = {},
       const ParamsProvider *context = 0) {
     QVariant v = eval(expr, context);
     return v.isValid() ? v.toString() : def;
   }
-  /** Convenience method: evaluate and then convert */
+  /** Lower-level reentrant version of the method. */
   [[nodiscard]] inline static QString eval_string(
       const Utf8String &expr, const ParamsProvider *context,
       Utf8StringSet *alreadyEvaluated, const QString &def = {}) {
     QVariant v = eval(expr, context, alreadyEvaluated);
     return v.isValid() ? v.toString() : def;
   }
-  /** Convenience method: evaluate and then convert */
-  [[nodiscard]] inline static QByteArray eval_ba(
-      const Utf8String &expr, const QByteArray &def = {},
-      const ParamsProvider *context = 0) {
+  /** Evaluate and then convert result to number (i.e. floating, integer or
+   *  boolean).
+   *
+   *  If the expr is a QVariant with a number type (e.g. QMetaType::Double)
+   *  it will be passed through as is, otherwise Utf8String::toNumber<> is used
+   *  to do the conversion (so base autodection and metric (kMPpu...) and casual
+   *  (kbm...) suffixes are supported).
+   *
+   *  @see Utf8String::toNumber<>
+   *  @param context is an evaluation context, can be null (only contextless
+   *         function like %=date will be available for evaluation)
+   *  @param alreadyEvaluated used for loop detections, must not be null */
+  template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+  [[nodiscard]] inline static T eval_number(
+      const Utf8String &expr, const T &def = {},
+      const ParamsProvider *context = 0, bool *ok = nullptr)  {
     QVariant v = eval(expr, context);
-    return v.isValid() ? v.toByteArray() : def;
+    auto mtid = v.metaType().id();
+    if (!v.canConvert<T>() || mtid == QMetaType::QString
+        || mtid == QMetaType::QByteArray)
+      return Utf8String(v).toNumber<T>(ok, def);
+    if (ok)
+      *ok = true;
+    return v.value<T>();
   }
-  /** Convenience method: evaluate and then convert */
-  [[nodiscard]] inline static QByteArray eval_ba(
+  /** Lower-level reentrant version of the methods. */
+  template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+  [[nodiscard]] inline static T eval_number(
       const Utf8String &expr, const ParamsProvider *context,
-      Utf8StringSet *alreadyEvaluated, const QByteArray &def = {}) {
-    QVariant v = eval(expr, context, alreadyEvaluated);
-    return v.isValid() ? v.toByteArray() : def;
-  }
-  /** Convenience method: evaluate and then convert */
-  [[nodiscard]] inline static double eval_double(
-      const Utf8String &expr, double def = {},
-      const ParamsProvider *context = 0, bool *ok = nullptr) {
-    QVariant v = eval(expr, context);
-    return metatype_is_numeric(v.metaType())
-        ? v.toDouble(ok) : Utf8String(v).toDouble(ok, def);
-  }
-  /** Convenience method: evaluate and then convert */
-  [[nodiscard]] inline static double eval_double(
-      const Utf8String &expr, const ParamsProvider *context,
-      Utf8StringSet *alreadyEvaluated, double def = {},
+      Utf8StringSet *alreadyEvaluated, const T &def = {},
       bool *ok = nullptr) {
-    QVariant v = eval(expr, context, alreadyEvaluated);
-    return metatype_is_numeric(v.metaType())
-        ? v.toDouble(ok) : Utf8String(v).toDouble(ok, def);
-  }
-  /** Convenience method: evaluate and then convert */
-  [[nodiscard]] inline static qlonglong eval_longlong(
-      const Utf8String &expr, qlonglong def = {},
-      const ParamsProvider *context = 0, bool *ok = nullptr) {
-    QVariant v = eval(expr, context);
-    return metatype_is_numeric(v.metaType())
-        ? v.toLongLong(ok) : Utf8String(v).toLongLong(ok, def);
-  }
-  /** Convenience method: evaluate and then convert */
-  [[nodiscard]] inline static qlonglong eval_longlong(
-      const Utf8String &expr, const ParamsProvider *context,
-      Utf8StringSet *alreadyEvaluated, qlonglong def = {},
-      bool *ok = nullptr) {
-    QVariant v = eval(expr, context, alreadyEvaluated);
-    return metatype_is_numeric(v.metaType())
-        ? v.toLongLong(ok) : Utf8String(v).toLongLong(ok, def);
-  }
-  // TODO add other converters
+      QVariant v = eval(expr, context, alreadyEvaluated);
+      auto mtid = v.metaType().id();
+      if (!v.canConvert<T>() || mtid == QMetaType::QString
+          || mtid == QMetaType::QByteArray)
+        return Utf8String(v).toNumber<T>(ok, def);
+      if (ok)
+        *ok = true;
+      return v.value<T>();
+    }
 
   // escape and matching patterns
   /** Escape all characters in string so that they no longer have special
@@ -204,30 +202,16 @@ public:
    * the second pattern is returned, not the first one, and it's likely to stay
    * this way).
    * Can be used as an input for QRegularExpression(QString) constructor. */
-  [[nodiscard]] static const Utf8String matching_regexp(
+  [[nodiscard]] static const QString matching_regexp(
       const Utf8String &expr);
 
   // logging
   /** Record debug log messages when a variable evaluation is required and not
    * found.
-   * Applicable to all params sets in the applicatoin (global parameter).
+   * Applicable to all params sets in the application (global parameter).
    * Defaults: disabled, but if "ENABLE_PERCENT_VARIABLE_NOT_FOUND_LOGGING"
    * environment variable is set to "true". */
   static void enable_variable_not_found_logging(bool enabled = true);
-
-private:
-  inline static bool metatype_is_numeric(const QMetaType &t) {
-    auto id = t.id();
-    return id == QMetaType::Bool || id == QMetaType::Int
-        || id == QMetaType::UInt || id == QMetaType::Double
-        || id == QMetaType::Long || id == QMetaType::LongLong
-        || id == QMetaType::Short || id == QMetaType::Char
-        || id == QMetaType::Char16 || id == QMetaType::Char32
-        || id == QMetaType::ULong || id == QMetaType::ULongLong
-        || id == QMetaType::UShort || id == QMetaType::SChar
-        || id == QMetaType::UChar || id == QMetaType::Float
-        || id == QMetaType::Float16 ;
-  }
 };
 
 #endif // PERCENTEVALUATOR_H

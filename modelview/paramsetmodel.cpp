@@ -195,8 +195,8 @@ void ParamSetModel::fillRows(
           }
         }
     }
-    QString value = _evaluate ? params.value(key, false)
-                              : params.paramRawUtf8(key, false);
+    QString value = _evaluate ? params.paramValue(key).value.toString()
+                              : params.paramRawValue(key).toString();
     rows->append(ParamSetRow(key, value, scope, false, depth));
     allKeys->insert(key);
   }

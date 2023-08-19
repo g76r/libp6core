@@ -139,7 +139,7 @@ ParamSet::ParamSet(
   if (!constattrname.isEmpty()) {
     ParamSet constparams(parentnode, constattrname, Utf8String(), ParamSet());
     for (auto k: constparams.paramKeys()) {
-      auto value = PercentEvaluator::escape(constparams.value(k, this));
+      auto value = PercentEvaluator::escape(constparams.paramUtf8(k, this));
       d->_params.insert(k, value.isNull() ? ""_u8 : value);
     }
   }
@@ -232,7 +232,7 @@ void ParamSet::setValues(ParamSet params, bool inherit) {
     d->_params.insert(k, params.paramRawUtf8(k));
 }
 
-void ParamSet::removeValue(Utf8String key) {
+void ParamSet::removeValue(const Utf8String &key) {
   if (d)
     d->_params.remove(key);
 }
@@ -247,26 +247,28 @@ const QVariant ParamSet::paramRawValue(
 }
 
 const ParamSet::ScopedValue ParamSet::paramScopedRawValue(
-    const Utf8String &key, const QVariant &def) const {
+    const Utf8String &key, const QVariant &def, bool inherit) const {
   if (!d) [[unlikely]]
     return { {}, def };
   auto value = d->_params.value(key);
   if (!value.isNull())
     return { paramScope(), value };
-  auto sv = parent().paramScopedRawValue(key);
-  if (sv.isValid())
-    return sv;
+  if (inherit) {
+    auto sv = parent().paramScopedRawValue(key);
+    if (sv.isValid())
+      return sv;
+  }
   return { {}, def };
+}
+
+const ParamSet::ScopedValue ParamSet::paramScopedRawValue(
+    const Utf8String &key, const QVariant &def) const {
+  return paramScopedRawValue(key, def, true);
 }
 
 const QVariant ParamSet::paramRawValue(
     const Utf8String &key, const QVariant &def, bool inherit) const {
-  if (!d) [[unlikely]]
-    return def;
-  auto value = d->_params.value(key);
-  if (value.isNull() && inherit)
-    value = parent().paramRawValue(key);
-  return value.isNull() ? def : value;
+  return paramScopedRawValue(key, def, inherit);
 }
 
 const Utf8String ParamSet::paramRawUtf8(
@@ -284,14 +286,27 @@ const Utf8String ParamSet::paramRawUtf8(
   return paramRawUtf8(key, def, true);
 }
 
-const QPair<Utf8String, Utf8String> ParamSet::valueAsStringsPair(
-    Utf8String key, bool inherit, const ParamsProvider *context) const {
-  auto v = paramRawUtf8(key, inherit).trimmed();
-  qsizetype n = v.size();
-  for (qsizetype i = 0; i < n; ++i)
-    if (::isspace((v[i])))
-      return { v.left(i), evaluate(v.mid(i+1).trimmed(), context) };
-  return { v, {} };
+const Utf8String ParamSet::paramUtf8(
+    const Utf8String &key, const Utf8String &def,
+    const ParamsProvider *context, bool inherit,
+    Utf8StringSet *ae) const {
+  auto v = paramScopedRawValue(key, def, inherit);
+  if (!v.isValid())
+    return def;
+  return Utf8String(PercentEvaluator::eval(Utf8String(v), context, ae));
+}
+
+const Utf8String ParamSet::paramUtf8(
+    const Utf8String &key, const Utf8String &def,
+    const ParamsProvider *context, bool inherit) const {
+  Utf8StringSet ae;
+  return paramUtf8(key, def, context, inherit, &ae);
+}
+
+const Utf8String ParamSet::paramUtf8(
+    const Utf8String &key, const Utf8String &def,
+    const ParamsProvider *context, Utf8StringSet *ae) const {
+  return paramUtf8(key, def, context, true, ae);
 }
 
 const Utf8StringSet ParamSet::paramKeys(bool inherit) const {
@@ -400,55 +415,32 @@ void ParamSet::detach() {
 }
 
 void ParamSet::setValuesFromSqlDb(
-  QSqlDatabase db, Utf8String sql, QMap<int,Utf8String> bindings) {
+    const QSqlDatabase &db, const Utf8String &sql,
+    const QMap<int, Utf8String> &bindings) {
   ParamSet params(db, sql, bindings, *this);
   this->setValues(params, false);
 }
 
 void ParamSet::setValuesFromSqlDb(
-    Utf8String dbname, Utf8String sql, QMap<int, Utf8String> bindings) {
+    const Utf8String &dbname, const Utf8String &sql,
+    const QMap<int, Utf8String> &bindings) {
   setValuesFromSqlDb(QSqlDatabase::database(dbname), sql, bindings);
 }
 
 void ParamSet::setValuesFromSqlDb(
-  Utf8String dbname, Utf8String sql, Utf8StringList bindings) {
+    const Utf8String &dbname, const Utf8String &sql,
+    const Utf8StringList &bindings) {
   setValuesFromSqlDb(QSqlDatabase::database(dbname), sql, bindings);
 }
 
 void ParamSet::setValuesFromSqlDb(
-  QSqlDatabase db, Utf8String sql, Utf8StringList bindings) {
+    const QSqlDatabase &db, const Utf8String &sql,
+    const Utf8StringList &bindings) {
   QMap<int,Utf8String> map;
   int i = 0;
   for (auto key: bindings)
     map.insert(i++, key);
   setValuesFromSqlDb(db, sql, map);
-}
-
-qlonglong ParamSet::valueAsLong(
-    Utf8String key, qlonglong defaultValue, bool inherit,
-  const ParamsProvider *context) const {
-  auto s = evaluate(paramRawUtf8(key, {}, inherit), inherit, context);
-  return s.toLongLong(nullptr, defaultValue);
-}
-
-int ParamSet::valueAsInt(
-  Utf8String key, int defaultValue, bool inherit,
-  const ParamsProvider *context) const {
-  auto s = evaluate(paramRawUtf8(key, {}, inherit), inherit, context);
-  return s.toInt(nullptr, defaultValue);
-}
-
-double ParamSet::valueAsDouble(
-  Utf8String key, double defaultValue, bool inherit,
-  const ParamsProvider *context) const {
-  auto s = evaluate(paramRawUtf8(key, {}, inherit), inherit, context);
-  return s.toDouble(nullptr, defaultValue);
-}
-
-bool ParamSet::valueAsBool(Utf8String key, bool defaultValue, bool inherit,
-  const ParamsProvider *context) const {
-  auto s = evaluate(paramRawUtf8(key, {}, inherit), inherit, context);
-  return s.toBool(nullptr, defaultValue);
 }
 
 ParamSetData *ParamSet::fromQIODevice(

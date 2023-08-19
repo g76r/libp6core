@@ -144,6 +144,12 @@ const Utf8String ParamsProvider::evaluate(
   return Utf8String(PercentEvaluator::eval(key, &ppm, ae ? ae : &ae2));
 }
 
+const Utf8String ParamsProvider::evaluate(
+    const Utf8String &key, bool,
+    const ParamsProvider *context, Utf8StringSet *ae) const {
+  return evaluate(key, context, ae);
+}
+
 Utf8StringList ParamsProvider::splitAndEvaluate(
     const Utf8String &key, const Utf8String &separators, bool,
     const ParamsProvider *context, Utf8StringSet *ae) const {
@@ -176,7 +182,8 @@ bool SimpleParamsProvider::paramContains(const Utf8String &key) const {
   return _params.contains(key);
 }
 
-const SimpleParamsProvider::ScopedValue SimpleParamsProvider::paramScopedRawValue(
+const SimpleParamsProvider::ScopedValue
+SimpleParamsProvider::paramScopedRawValue(
     const Utf8String &key, const QVariant &def) const {
   auto v = _params.value(key);
   if (v.isValid())

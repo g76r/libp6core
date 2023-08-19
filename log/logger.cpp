@@ -218,7 +218,7 @@ Utf8String Logger::pathPattern() const {
   return currentPath();
 }
 
-Utf8String Logger::pathMatchingRegexp() const {
+QString Logger::pathMatchingRegexp() const {
   return PercentEvaluator::matching_regexp(pathPattern());
 }
 

@@ -29,6 +29,7 @@
 #include <functional>
 #include <algorithm>
 #include <cmath>
+#include <set>
 
 // C++ source_location depending on compiler version
 #if __has_include(<source_location>)

@@ -49,6 +49,13 @@ class LIBP6CORESHARED_EXPORT ParamSet : public ParamsProvider {
   QSharedDataPointer<ParamSetData> d;
 
 public:
+  struct ScopedUtf8 {
+    Utf8String scope;
+    Utf8String value;
+    operator const Utf8String &() const { return value; }
+    bool isValid() const { return !value.isNull(); }
+  };
+
   ParamSet();
   /** First item processed as a key, second one as the matching value and so on.
    * If list size is odd the last key will be inserted with "" value. */
@@ -169,98 +176,30 @@ public:
    *  in column foo of table t1
    *  and bars of non null non empty values in column bar of table t2.
    */
-  void setValuesFromSqlDb(QSqlDatabase db, Utf8String sql,
-                          QMap<int, Utf8String> bindings);
+  void setValuesFromSqlDb(const QSqlDatabase &db, const Utf8String &sql,
+                          const QMap<int,Utf8String> &bindings);
   /** merge (override) params taking them from a SQL database query.
    *  convenience method resolving sql database name. */
   void setValuesFromSqlDb(
-      Utf8String dbname, Utf8String sql, QMap<int,Utf8String> bindings);
+      const Utf8String &dbname, const Utf8String &sql,
+      const QMap<int,Utf8String> &bindings);
   /** merge (override) params taking them from a SQL database query.
    *  convenience method mapping each column in order
    *  e.g. {"foo","bar"} is equivalent to {{0,"foo"},{1,"bar"}}. */
-  void setValuesFromSqlDb(QSqlDatabase db, Utf8String sql,
-                          Utf8StringList bindings);
+  void setValuesFromSqlDb(const QSqlDatabase &db, const Utf8String &sql,
+                          const Utf8StringList &bindings);
   /** merge (override) params taking them from a SQL database query.
    *  convenience method resolving sql database name and mapping each column
    *  in order
    *  e.g. {"foo","bar"} is equivalent to {{0,"foo"},{1,"bar"}}. */
-  void setValuesFromSqlDb(Utf8String dbname, Utf8String sql,
-                          Utf8StringList bindings);
+  void setValuesFromSqlDb(const Utf8String &dbname, const Utf8String &sql,
+                          const Utf8StringList &bindings);
   /** short for setValues(other) */
   ParamSet &operator<<(const ParamSet &other){ setValues(other); return *this; }
   /** short for setValues(other) */
   ParamSet &operator+=(const ParamSet &other){ setValues(other); return *this; }
   void clear();
-  void removeValue(Utf8String key);
-  /** Return a value after parameters substitution.
-   * @param searchInParents should search values in parents if not found */
-  inline Utf8String value(Utf8String key, Utf8String defaultValue = {},
-                       bool inherit = true,
-                       const ParamsProvider *context = 0) const {
-    return evaluate(paramRawUtf8(key, defaultValue, inherit), inherit, context); }
-  inline Utf8String value(Utf8String key, bool inherit,
-                       const ParamsProvider *context = 0) const {
-    return evaluate(paramRawUtf8(key, Utf8String{}, inherit), inherit, context); }
-  inline Utf8String value(Utf8String key, const ParamsProvider *context) const {
-    return evaluate(paramRawUtf8(key, Utf8String{}, true), true, context); }
-  inline Utf8String value(Utf8String key, bool inherit, const ParamsProvider *context,
-                       Utf8StringSet *alreadyEvaluated) const {
-    return evaluate(paramRawUtf8(key, inherit), inherit, context, alreadyEvaluated);
-  }
-  inline Utf8String value(
-      Utf8String key, const QByteArray &defaultValue, bool inherit = true,
-      const ParamsProvider *context = 0) const {
-    return evaluate(paramRawUtf8(key, Utf8String{defaultValue}, inherit), inherit,
-                    context); }
-  inline Utf8String value(
-      Utf8String key, const QByteArray &defaultValue,
-      const ParamsProvider *context) const {
-    return evaluate(paramRawUtf8(key, Utf8String{defaultValue}, true), true,
-                    context); }
-  inline Utf8String value(
-      Utf8String key, const char *defaultValue, bool inherit = true,
-      const ParamsProvider *context = 0) const {
-    return evaluate(paramRawUtf8(key, Utf8String{defaultValue}, inherit), inherit,
-                    context); }
-  inline Utf8String value(Utf8String key, const char *defaultValue,
-                       const ParamsProvider *context) const {
-    return evaluate(paramRawUtf8(key, Utf8String{defaultValue}, true), true,
-                    context); }
-  /** Return a value splitted into strings, %-substitution is done after the
-   * split (i.e. "%foo bar" has two elements, regardless the number of spaces
-   * in %foo value). */
-  Utf8StringList valueAsStrings(Utf8String key, Utf8String defaultRawValue = {},
-                             bool inherit = true,
-                             const ParamsProvider *context = 0,
-                             Utf8String separators = " "_u8) const {
-    return splitAndEvaluate(paramRawUtf8(key, defaultRawValue), separators,
-                            inherit, context); }
-  /** Return a value splitted at first whitespace. Both strings are trimmed.
-   * E.g. a raw value of "  foo    bar baz  " is returned as a
-   * QPair<>("foo", "bar baz"). */
-  const QPair<Utf8String,Utf8String> valueAsStringsPair(
-      Utf8String key, bool inherit = true,
-      const ParamsProvider *context = 0) const;
-  /** @return integer value if the string content is a valid integer
-   * C-like prefixes are supported and both kmb and kMGTP suffixes are supported
-   * surrounding whitespace is trimmed
-   * e.g. 0x1f means 15, 12k means 12000, 12b and 12G mean 12000000000.
-   * T and P are supported with long long, not int. */
-  qlonglong valueAsLong(Utf8String key, qlonglong defaultValue = 0,
-                        bool inherit = true,
-                        const ParamsProvider *context = 0) const;
-  int valueAsInt(Utf8String key, int defaultValue = 0, bool inherit = true,
-                 const ParamsProvider *context = 0) const;
-  /** Syntaxic sugar. */
-  double valueAsDouble(Utf8String key, double defaultValue = 0,
-                       bool inherit = true,
-                       const ParamsProvider *context = 0) const;
-  /** "faLsE" and "0" are interpreted as false, "trUe" and any non null
-   * valid integer number are interpreted as true. whitespace and case are
-   * ignored. */
-  bool valueAsBool(Utf8String key, bool defaultValue = false,
-                   bool inherit = true,
-                   const ParamsProvider *context = 0) const;
+  void removeValue(const Utf8String &key);
   /** Return all keys for which the ParamSet or one of its parents hold a value.
     */
   [[nodiscard]] const Utf8StringSet paramKeys(bool inherit) const;
@@ -276,11 +215,21 @@ public:
   /** Same as paramRawUtf8 with inherit = true. */
   [[nodiscard]] const Utf8String paramRawUtf8(
       const Utf8String &key, const Utf8String &def = {}) const override;
-//    return Utf8String(paramRawValue(key, def)); }
   /** Convenience method */
   [[nodiscard]] inline const Utf8String paramRawUtf8(
       const Utf8String &key, bool inherit) const {
     return paramRawUtf8(key, {}, inherit); }
+  using ParamsProvider::paramUtf8;
+  [[nodiscard]] const Utf8String paramUtf8(
+      const Utf8String &key, const Utf8String &def,
+      const ParamsProvider *context, bool inherit,
+      Utf8StringSet *alreadyEvaluated) const;
+  [[nodiscard]] const Utf8String paramUtf8(
+      const Utf8String &key, const Utf8String &def,
+      const ParamsProvider *context, bool inherit) const;
+  [[nodiscard]] const Utf8String paramUtf8(
+      const Utf8String &key, const Utf8String &def,
+      const ParamsProvider *context, Utf8StringSet *ae) const override;
 
   using ParamsProvider::paramRawValue;
   /** Return a value without performing parameters substitution.
@@ -292,6 +241,25 @@ public:
       const Utf8String &key, const QVariant &def = {}) const override;
   [[nodiscard]] const ScopedValue paramScopedRawValue(
       const Utf8String &key, const QVariant &def = {}) const override;
+  [[nodiscard]] const ScopedValue paramScopedRawValue(
+      const Utf8String &key, const QVariant &def, bool inherit) const;
+
+  // additional conversions (not in ParamsProvider)
+  /** Return a value splitted into strings, %-substitution is done after the
+   * split (i.e. "%foo bar" has two elements, regardless the number of spaces
+   * in %foo value). */
+  [[nodiscard]] inline Utf8StringList paramUtf8List(
+      const Utf8String &key, const Utf8String &def = {},
+      const ParamsProvider *context = 0, bool inherit = true,
+      QList<char> seps = Utf8String::AsciiWhitespace) const {
+    Utf8StringList list;
+    auto raws = paramRawUtf8(key, def, inherit).split(seps);
+    for (auto raw: raws)
+      list += Utf8String(PercentEvaluator::eval(raw, context));
+    return list;
+  }
+
+
   [[nodiscard]] bool isNull() const;
   [[nodiscard]] int size() const;
   [[nodiscard]] bool isEmpty() const;
@@ -320,6 +288,82 @@ private:
       QIODevice *input, const Utf8String &format,
       const QMap<Utf8String,Utf8String> options,
       const bool escape_percent, const ParamSet &parent);
+
+public:
+  // temporary partial backward compatibility with old API
+  // it's partial because for some method it's broken about inherit
+  /** Return a value after parameters substitution.
+   * @param searchInParents should search values in parents if not found */
+  [[deprecated("use paramUtf8() instead")]]
+  inline Utf8String value(Utf8String key, Utf8String def,
+                       bool inherit,
+                       const ParamsProvider *context = 0) const {
+    return paramUtf8(key, def, context, inherit); }
+  [[deprecated("use paramUtf8() instead")]]
+  inline Utf8String value(Utf8String key, bool inherit,
+                       const ParamsProvider *context = 0) const {
+    return paramUtf8(key, {}, context, inherit); }
+  [[deprecated("use paramUtf8() instead")]]
+  inline Utf8String value(Utf8String key, const ParamsProvider *context) const {
+    return paramUtf8(key, {}, context); }
+  [[deprecated("use paramUtf8() instead")]]
+  inline Utf8String value(Utf8String key, Utf8String def = {}) const {
+    return paramUtf8(key, def, 0); }
+  [[deprecated("use paramUtf8() instead")]]
+  inline Utf8String value(
+      Utf8String key, bool inherit, const ParamsProvider *context,
+      Utf8StringSet *ae) const {
+    return paramUtf8(key, {}, context, inherit, ae); }
+  [[deprecated("use paramUtf8() instead")]]
+  inline Utf8String value(
+      Utf8String key, const QByteArray &def, bool inherit = true,
+      const ParamsProvider *context = 0) const {
+    return paramUtf8(key, def, context, inherit); }
+  [[deprecated("use paramUtf8() instead")]]
+  inline Utf8String value(
+      Utf8String key, const QByteArray &def,
+      const ParamsProvider *context) const {
+    return paramUtf8(key, def, context); }
+  [[deprecated("use paramUtf8() instead")]]
+  inline Utf8String value(
+      Utf8String key, const char *def, bool inherit = true,
+      const ParamsProvider *context = 0) const {
+    return paramUtf8(key, def, context, inherit); }
+  [[deprecated("use paramUtf8() instead")]]
+  inline Utf8String value(Utf8String key, const char *def,
+                       const ParamsProvider *context) const {
+    return paramUtf8(key, def, context); }
+  [[deprecated("use paramUtf8List() instead")]]
+  inline Utf8StringList valueAsStrings(Utf8String key, Utf8String def = {},
+                             bool inherit = true,
+                             const ParamsProvider *context = 0,
+                             Utf8String separators = " "_u8) const {
+    return paramUtf8List(key, def, context, inherit, separators.toBytesSortedList());
+  }
+  [[deprecated("use paramNumber() instead")]]
+  inline qlonglong valueAsLong(
+      Utf8String key, qlonglong def = 0, bool fake_inherit = true,
+      const ParamsProvider *context = 0) const {
+    Q_UNUSED(fake_inherit)
+    return paramNumber<qlonglong>(key, def, context); }
+  [[deprecated("use paramNumber() instead")]]
+  int valueAsInt(
+      Utf8String key, int def = 0, bool fake_inherit = true,
+      const ParamsProvider *context = 0) const {
+    Q_UNUSED(fake_inherit)
+    return paramNumber<int>(key, def, context); }
+  [[deprecated("use paramNumber() instead")]]
+  double valueAsDouble(
+      Utf8String key, double def = 0, bool fake_inherit = true,
+      const ParamsProvider *context = 0) const{
+    Q_UNUSED(fake_inherit)
+    return paramNumber<double>(key, def, context); }
+  [[deprecated("use paramNumber() instead")]]
+  bool valueAsBool(
+      Utf8String key, bool def = false, bool fake_inherit = true,
+      const ParamsProvider *context = 0) const{
+    Q_UNUSED(fake_inherit)
+    return paramNumber<bool>(key, def, context); }
 };
 
 Q_DECLARE_METATYPE(ParamSet)

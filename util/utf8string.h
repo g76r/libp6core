@@ -140,8 +140,6 @@ public:
   /** Return utf8 characters count. Count utf8 sequences without ensuring
     * their validity, so with invalid utf8 data this may overestimates. */
   [[nodiscard]] qsizetype utf8Size() const;
-  [[nodiscard]] Utf8String trimmed() const { return QByteArray::trimmed(); }
-  Utf8String &trim() { *this = trimmed(); return *this; }
   inline Utf8String &fill(char c, qsizetype size = -1) {
     QByteArray::fill(c, size); return *this; }
   /** Return valid utf8 without invalid sequences (or having them replaced by
@@ -154,6 +152,7 @@ public:
   [[nodiscard]] static Utf8String cleaned(const char *s, const char *end);
   Utf8String &clean() { return *this = cleaned(); }
 
+  // slicing: left right mid trimmed sliced chopped...
   /** Return leftmost len bytes. Empty if len < 0. */
   [[nodiscard]] Utf8String left(qsizetype len) const {
     return QByteArray::left(len); }
@@ -171,7 +170,20 @@ public:
   /** Return len utf8 characters starting at pos.
    *  Everything after pos if len < 0 or pos+len > size(). */
   [[nodiscard]] Utf8String utf8Mid(qsizetype pos, qsizetype len = -1) const;
+  [[nodiscard]] Utf8String trimmed() const { return QByteArray::trimmed(); }
+  Utf8String &trim() { *this = trimmed(); return *this; }
+  [[nodiscard]] inline Utf8String chopped(qsizetype len) const {
+    return QByteArray::chopped(len); }
+  [[nodiscard]] inline Utf8String first(qsizetype n) const {
+    return QByteArray::first(n); }
+  [[nodiscard]] inline Utf8String last(qsizetype n) const {
+    return QByteArray::last(n); }
+  [[nodiscard]] inline Utf8String sliced(qsizetype pos) const {
+    return QByteArray::sliced(pos); }
+  [[nodiscard]] inline Utf8String sliced(qsizetype pos, qsizetype n) const {
+    return QByteArray::sliced(pos, n); }
 
+  // splitting
   /** Splitting utf8 string on ascii 7 separators, e.g. {',',';'}
     * @see Utf8String::AsciiWhitespace */
   [[nodiscard]] const Utf8StringList split(
@@ -202,6 +214,7 @@ public:
   [[nodiscard]] const Utf8StringList splitByLeadingChar(
       qsizetype offset = 0) const;
 
+  // conversions to numbers
   /** Converts to floating point, supporting e notation and SI suffixes from 'f'
    *  to 'P', 'u' is used as 1e-6 suffix. */
   [[nodiscard]] double toDouble(bool *ok = nullptr, double def = 0.0,
@@ -212,62 +225,61 @@ public:
                               bool suffixes_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
-   *  C prefixes are supported "0x" "0" and "0b". */
+   *  If base == 0 C prefixes are supported "0x" "0" and "0b". */
   [[nodiscard]] qlonglong toLongLong(
       bool *ok = nullptr, int base = 0, qlonglong def = 0,
       bool suffixes_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
-   *  C prefixes are supported "0x" "0" and "0b". */
+   *  If base == 0 C prefixes are supported "0x" "0" and "0b". */
   [[nodiscard]] qulonglong toULongLong(
       bool *ok = nullptr, int base = 0, qulonglong def = 0,
       bool suffixes_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
-   *  C prefixes are supported "0x" "0" and "0b". */
+   *  If base == 0 C prefixes are supported "0x" "0" and "0b". */
   [[nodiscard]] long toLong(bool *ok = nullptr, int base = 0, long def = 0,
                             bool suffixes_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
-   *  C prefixes are supported "0x" "0" and "0b". */
+   *  If base == 0 C prefixes are supported "0x" "0" and "0b". */
   [[nodiscard]] ulong toULong(bool *ok = nullptr, int base = 0, ulong def = 0,
                               bool suffixes_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
-   *  C prefixes are supported "0x" "0" and "0b". */
+   *  If base == 0 C prefixes are supported "0x" "0" and "0b". */
   [[nodiscard]] int toInt(bool *ok = nullptr, int base = 0, int def = 0,
                           bool suffixes_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
-   *  C prefixes are supported "0x" "0" and "0b". */
+   *  If base == 0 C prefixes are supported "0x" "0" and "0b". */
   [[nodiscard]] uint toUInt(bool *ok = nullptr, int base = 0, uint def = 0,
                             bool suffixes_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
-   *  C prefixes are supported "0x" "0" and "0b". */
+   *  If base == 0 C prefixes are supported "0x" "0" and "0b". */
   [[nodiscard]] short toShort(bool *ok = nullptr, int base = 0, short def = 0,
                               bool suffixes_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
-   *  C prefixes are supported "0x" "0" and "0b". */
+   *  If base == 0 C prefixes are supported "0x" "0" and "0b". */
   [[nodiscard]] ushort toUShort(
       bool *ok = nullptr, int base = 0, ushort def = 0,
       bool suffixes_enabled = true) const;
   /** Converts to bool, supporting case insensitive "true" and "false", and any
-   *  number, 0 being false and everything else true. */
+   *  integer number, 0 being false and everything else true. */
   [[nodiscard]] bool toBool(bool *ok = nullptr, bool def = false) const;
-  [[nodiscard]] inline Utf8String toBase64(
-      Base64Options options = Base64Encoding) const {
-    return QByteArray::toBase64(options); }
-  [[nodiscard]] inline Utf8String toHex(char separator = '\0') const {
-    return QByteArray::toHex(separator); }
-  [[nodiscard]] inline Utf8String toPercentEncoding(
-      const QByteArray &exclude = {}, const QByteArray &include = {},
-      char percent = '%') const {
-    return QByteArray::toPercentEncoding(exclude, include, percent); }
-  [[nodiscard]] inline Utf8String percentDecoded(char percent = '%') const {
-    return QByteArray::percentDecoded(percent); }
+  /** Converts to any number format, calling toXXX() methods above (and
+   *  concerning integers, with base = 0 auto detection of base). */
+  template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+  [[nodiscard]] inline T toNumber(
+      bool *ok = nullptr, const T &def = {}, bool suffixes_enabled = true);
+  /** Convenience methods witout bool *ok. */
+  template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+  [[nodiscard]] inline T toNumber(const T &def, bool suffixes_enabled = true) {
+    return toNumber<T>(nullptr, def, suffixes_enabled); }
 
+  // conversions from numbers
   [[nodiscard]] static inline Utf8String number(int i, int base = 10) {
     return QByteArray::number(i, base); }
   [[nodiscard]] static inline Utf8String number(uint i, int base = 10) {
@@ -284,17 +296,24 @@ public:
       double d, char format = 'g', int precision = 6) {
     return QByteArray::number(d, format, precision); }
 
-  [[nodiscard]] inline Utf8String first(qsizetype n) const {
-    return QByteArray::first(n); }
-  [[nodiscard]] inline Utf8String last(qsizetype n) const {
-    return QByteArray::last(n); }
-  [[nodiscard]] inline Utf8String sliced(qsizetype pos) const {
-    return QByteArray::sliced(pos); }
-  [[nodiscard]] inline Utf8String sliced(qsizetype pos, qsizetype n) const {
-    return QByteArray::sliced(pos, n); }
-  [[nodiscard]] inline Utf8String chopped(qsizetype len) const {
-    return QByteArray::chopped(len); }
+  // byte arrays conversion
+  [[nodiscard]] inline Utf8String toBase64(
+      Base64Options options = Base64Encoding) const {
+    return QByteArray::toBase64(options); }
+  [[nodiscard]] inline Utf8String toHex(char separator = '\0') const {
+    return QByteArray::toHex(separator); }
+  [[nodiscard]] inline Utf8String toPercentEncoding(
+      const QByteArray &exclude = {}, const QByteArray &include = {},
+      char percent = '%') const {
+    return QByteArray::toPercentEncoding(exclude, include, percent); }
+  [[nodiscard]] inline Utf8String percentDecoded(char percent = '%') const {
+    return QByteArray::percentDecoded(percent); }
 
+  // misc conversions
+  /** Return list of contained bytes, sorted and deduplicated. */
+  QList<char> toBytesSortedList() const;
+
+  // replace
   inline Utf8String &replace(
       qsizetype index, qsizetype len, const char *s, qsizetype alen)
   { return replace(index, len, QByteArrayView(s, alen)); }
@@ -748,6 +767,72 @@ char32_t Utf8String::toLower(char32_t c) {
 char32_t Utf8String::toTitle(char32_t c) {
   auto cm = std::lower_bound(_case_mapping.cbegin(), _case_mapping.cend(), c);
   return cm == _case_mapping.end() || cm->utf32 != c ? c : cm->title_utf32;
+}
+
+template<>
+[[nodiscard]] inline double Utf8String::toNumber<>(
+    bool *ok, const double &def, bool suffixes_enabled) {
+  return toDouble(ok, def, suffixes_enabled);
+}
+
+template<>
+[[nodiscard]] inline float Utf8String::toNumber<>(
+    bool *ok, const float &def, bool suffixes_enabled) {
+  return toFloat(ok, def, suffixes_enabled);
+}
+
+template<>
+[[nodiscard]] inline qlonglong Utf8String::toNumber<>(
+    bool *ok, const qlonglong &def, bool suffixes_enabled) {
+  return toLongLong(ok, 0, def, suffixes_enabled);
+}
+
+template<>
+[[nodiscard]] inline qulonglong Utf8String::toNumber<>(
+    bool *ok, const qulonglong &def, bool suffixes_enabled) {
+  return toULongLong(ok, 0, def, suffixes_enabled);
+}
+
+template<>
+[[nodiscard]] inline long Utf8String::toNumber<>(
+    bool *ok, const long &def, bool suffixes_enabled) {
+  return toLong(ok, 0, def, suffixes_enabled);
+}
+
+template<>
+[[nodiscard]] inline ulong Utf8String::toNumber<>(
+    bool *ok, const ulong &def, bool suffixes_enabled) {
+  return toULong(ok, 0, def, suffixes_enabled);
+}
+
+template<>
+[[nodiscard]] inline int Utf8String::toNumber<>(
+    bool *ok, const int &def, bool suffixes_enabled) {
+  return toInt(ok, 0, def, suffixes_enabled);
+}
+
+template<>
+[[nodiscard]] inline uint Utf8String::toNumber<>(
+    bool *ok, const uint &def, bool suffixes_enabled) {
+  return toUInt(ok, 0, def, suffixes_enabled);
+}
+
+template<>
+[[nodiscard]] inline short Utf8String::toNumber<>(
+    bool *ok, const short &def, bool suffixes_enabled) {
+  return toShort(ok, 0, def, suffixes_enabled);
+}
+
+template<>
+[[nodiscard]] inline ushort Utf8String::toNumber<>(
+    bool *ok, const ushort &def, bool suffixes_enabled) {
+  return toUShort(ok, 0, def, suffixes_enabled);
+}
+
+template<>
+[[nodiscard]] inline bool Utf8String::toNumber<>(
+    bool *ok, const bool &def, bool) {
+  return toBool(ok, def);
 }
 
 #endif // UTF8STRING_H

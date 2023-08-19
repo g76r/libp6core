@@ -14,6 +14,7 @@
 
 #include "utf8string.h"
 #include "utf8stringlist.h"
+#include <set>
 
 const QList<char> Utf8String::AsciiWhitespace = { ' ', '\t', '\n', '\r', '\v' };
 const Utf8String Utf8String::ReplacementCharacterUtf8 = "\xef\xbf\xbd"_u8;
@@ -204,21 +205,23 @@ ushort Utf8String::toUShort(bool *ok, int base, ushort def,
 
 bool Utf8String::toBool(bool *ok, bool def) const {
   bool b = def;
-  auto s = static_cast<QByteArray>(trimmed()).toLower();
+  auto s = trimmed().toLower();
   bool _ok = true;
   qlonglong i;
-  if (s == "true") {
+  // text constants
+  if (s == "true"_u8) {
     b = true;
     goto found;
   }
-  if (s == "false") {
+  if (s == "false"_u8) {
     b = false;
     goto found;
   }
+  // integer numbers
   i = toLongLong(&_ok);
   if (_ok)
-
     b = !!i;
+  // *ok
 found:
   if (ok)
     *ok = _ok;
@@ -475,4 +478,12 @@ const Utf8StringList Utf8String::split(
 
 QDebug operator<<(QDebug dbg, const Utf8String &s) {
   return dbg << s.toString();
+}
+
+QList<char> Utf8String::toBytesSortedList() const {
+  std::set<char> set;
+  auto n = size();
+  for (int i = 0; i < n; ++i)
+    set.insert(at(i));
+  return QList<char>(set.cbegin(), set.cend());
 }

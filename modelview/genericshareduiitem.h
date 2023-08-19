@@ -39,20 +39,6 @@ public:
   GenericSharedUiItem(Utf8String idQualifier, Utf8String id);
   /** Create empty item, without data or headers, by parsing qualifiedId. */
   explicit GenericSharedUiItem(Utf8String qualifiedId);
-//  [[deprecated("Use Utf8String API instead of QString")]]
-//  GenericSharedUiItem(QString idQualifier, QString id, QVariantList headers,
-//                      QVariantList values)
-//    : GenericSharedUiItem(Utf8String(idQualifier), Utf8String(id), headers,
-//                          values) {}
-//  [[deprecated("Use Utf8String API instead of QString")]]
-//  GenericSharedUiItem(QString id, QVariantList headers, QVariantList values)
-//    : GenericSharedUiItem("generic"_u8, Utf8String(id), headers, values) { }
-//  [[deprecated("Use Utf8String API instead of QString")]]
-//  GenericSharedUiItem(QString idQualifier, QString id)
-//  : GenericSharedUiItem(Utf8String(idQualifier), Utf8String(id)) { }
-//  [[deprecated("Use Utf8String API instead of QString")]]
-//  explicit GenericSharedUiItem(QString qualifiedId)
-//    : GenericSharedUiItem(Utf8String(qualifiedId)) { }
   GenericSharedUiItem &operator=(const GenericSharedUiItem &other) {
     SharedUiItem::operator=(other); return *this; }
   static QList<GenericSharedUiItem> fromCsv(CsvFile *csvFile, int idColumn = 0,

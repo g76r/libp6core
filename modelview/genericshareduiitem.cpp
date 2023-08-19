@@ -38,18 +38,6 @@ public:
       _id = qualifiedId.mid(i+1);
     }
   }
-//  [[deprecated("Use Utf8String API instead of QString")]]
-//  GenericSharedUiItemData(
-//      QString idQualifier, QString id, QVariantList headers,
-//      QVariantList values)
-//    : GenericSharedUiItemData(idQualifier.toUtf8(), id.toUtf8(), headers,
-//                              values) { }
-//  [[deprecated("Use Utf8String API instead of QString")]]
-//  GenericSharedUiItemData(QString idQualifier, QString id)
-//    : GenericSharedUiItemData(idQualifier.toUtf8(), id.toUtf8()) { }
-//  [[deprecated("Use Utf8String API instead of QString")]]
-//  explicit GenericSharedUiItemData(QString qualifiedId)
-//    : GenericSharedUiItemData(qualifiedId.toUtf8()) { }
   Utf8String id() const override { return _id; }
   Utf8String idQualifier() const override { return _idQualifier; }
   int uiSectionCount() const override {
