@@ -40,13 +40,16 @@ public:
   }
   Utf8String id() const override { return _id; }
   Utf8String idQualifier() const override { return _idQualifier; }
-  int uiSectionCount() const override {
-    return qMax(_headers.size(), _values.size()); }
+  int uiSectionCount() const override { return _values.size(); }
   Utf8String uiSectionName(int section) const override {
-    return Utf8String(_headers.value(section)); // FIXME
+    if (section < 0 || section > uiSectionCount())
+      return {};
+    return "_"_u8+Utf8String::number(section);
   }
   int uiSectionByName(Utf8String sectionName) const override {
-    return _headers.indexOf(sectionName); // FIXME
+    if (sectionName.value(0) != '_')
+      return -1;
+    return sectionName.mid(1).toNumber<int>(-1);
   }
   QVariant uiData(int section, int role) const override {
     if (role == Qt::DisplayRole || role == Qt::EditRole
@@ -62,7 +65,6 @@ public:
       int section, const QVariant &value, QString *errorString,
       SharedUiItemDocumentTransaction *transaction, int role) override;
 };
-
 
 GenericSharedUiItem::GenericSharedUiItem() {
 }
@@ -86,7 +88,6 @@ GenericSharedUiItem::GenericSharedUiItem(
 GenericSharedUiItem::GenericSharedUiItem(Utf8String qualifiedId)
   : SharedUiItem(new GenericSharedUiItemData(qualifiedId)) {
 }
-
 
 QList<GenericSharedUiItem> GenericSharedUiItem::fromCsv(
     CsvFile *csvFile, int idColumn, Utf8String idQualifier) {

@@ -30,8 +30,14 @@ QVariant SharedUiItemData::uiData(int, int) const {
   return {};
 }
 
-QVariant SharedUiItemData::uiHeaderData(int section, int) const {
-  return uiSectionName(section);
+QVariant SharedUiItemData::uiHeaderData(int section, int role) const {
+  switch (role) {
+    case Qt::DisplayRole:
+    case Qt::EditRole:
+    case SharedUiItem::ExternalDataRole:
+      return uiSectionName(section);
+  }
+  return {};
 }
 
 Utf8String SharedUiItemData::uiSectionName(int) const {
@@ -39,11 +45,10 @@ Utf8String SharedUiItemData::uiSectionName(int) const {
 }
 
 int SharedUiItemData::uiSectionByName(Utf8String) const {
-  return {};
+  return -1;
 }
 
-Qt::ItemFlags SharedUiItemData::uiFlags(int section) const {
-  Q_UNUSED(section)
+Qt::ItemFlags SharedUiItemData::uiFlags(int) const {
   return Qt::ItemIsEnabled;
 }
 
@@ -66,25 +71,34 @@ QDebug operator<<(QDebug dbg, const SharedUiItem &i) {
   return dbg.space();
 }
 
-const QVariant SharedUiItem::paramRawValue(
+const QVariant SharedUiItemData::paramRawValue(
     const Utf8String &key, const QVariant &def) const {
-  bool ok;
-  int section = key.toInt(&ok);
-  QVariant value = ok ? uiData(section) : uiDataBySectionName(key);
-  return value.isValid() ? value : def;
+  auto section = uiSectionByName(key);
+  if (section < 0)
+    section = key.toNumber<int>(-1);
+  if (section < 0)
+    return def;
+  auto value = uiData(section);
+  if (!value.isValid())
+    return def;
+  return value;
 }
 
-//const QVariant SharedUiItemParamsProvider::paramValue(
-//    const Utf8String &key, const ParamsProvider *, const QVariant &defaultValue,
-//    Utf8StringSet *) const {
-//  bool ok;
-//  int section = key.toInt(&ok);
-//  QVariant value = ok ? _item.uiData(section, _role)
-//                      : _item.uiDataBySectionName(key, _role);
-//  return value.isValid() ? value : defaultValue;
-//}
+const QVariant SharedUiItem::paramRawValue(
+    const Utf8String &key, const QVariant &def) const {
+  if (!_data)
+    return {};
+  return _data->paramRawValue(key, def);
+}
 
-const Utf8StringSet SharedUiItem::paramKeys() const {
+const Utf8String SharedUiItem::paramRawUtf8(
+    const Utf8String &key, const Utf8String &def) const {
+  if (!_data)
+    return {};
+  return _data->paramRawUtf8(key, def);
+}
+
+const Utf8StringSet SharedUiItemData::paramKeys() const {
   Utf8StringSet keys { "id"_u8, "id_qualifier"_u8, "qualified_id"_u8 };
   int count = uiSectionCount();
   for (int section = 0; section < count; ++section) {
@@ -97,17 +111,43 @@ const Utf8StringSet SharedUiItem::paramKeys() const {
   return keys;
 }
 
+const Utf8StringSet SharedUiItem::paramKeys() const {
+  if (!_data)
+    return {};
+  return _data->paramKeys();
+}
+
+bool SharedUiItem::paramContains(const Utf8String &key) const {
+  if (!_data)
+    return {};
+  return _data->paramContains(key);
+}
+
+const Utf8String SharedUiItem::paramUtf8(
+    const Utf8String &key, const Utf8String &def,
+    const ParamsProvider *context,
+    Utf8StringSet *alreadyEvaluated) const {
+  if (!_data)
+    return {};
+  return _data->paramUtf8(key, def, context, alreadyEvaluated);
+}
+
 const Utf8String SharedUiItemData::paramScope() const {
   return idQualifier();
 }
 
 const Utf8String SharedUiItem::paramScope() const {
-  return _data ? _data->paramScope() : Utf8String{};
+  if (!_data)
+    return {};
+  return _data->paramScope();
 }
 
-//const Utf8StringSet SharedUiItemParamsProvider::paramKeys() const {
-//  return _item.paramKeys();
-//}
+const SharedUiItem::ScopedValue SharedUiItem::paramScopedRawValue(
+    const Utf8String &key, const QVariant &def) const {
+  if (!_data)
+    return {};
+  return _data->paramScopedRawValue(key, def);
+}
 
 #if __cpp_impl_three_way_comparison >= 201711
 std::strong_ordering SharedUiItemData::operator<=>(

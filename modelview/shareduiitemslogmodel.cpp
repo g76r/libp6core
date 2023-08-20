@@ -30,8 +30,7 @@ public:
       _timestampSection(wrapped.uiSectionCount()) { }
   SharedUiItemLogWrapperData() : _timestampSection(0) { }
   Utf8String id() const override { return _id; }
-  Utf8String idQualifier() const override {
-    return QByteArrayLiteral("suilogwrapper"); }
+  Utf8String idQualifier() const override { return "suilogwrapper"_u8; }
   int uiSectionCount() const override { return _timestampSection+1; }
   Utf8String uiSectionName(int section) const override {
     return section == _timestampSection
@@ -46,8 +45,7 @@ public:
         ? _timestamp : _wrapped.uiData(section, role); }
   QVariant uiHeaderData(int section, int role) const override {
     return (role == Qt::DisplayRole && section == _timestampSection)
-        ? QByteArrayLiteral("Timestamp")
-        : _wrapped.uiHeaderData(section, role); }
+        ? "Timestamp"_u8 : _wrapped.uiHeaderData(section, role); }
   Qt::ItemFlags uiFlags(int section) const override {
   return (section == _timestampSection)
       ? Qt::ItemIsSelectable|Qt::ItemIsEnabled : _wrapped.uiFlags(section); }
