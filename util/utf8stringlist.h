@@ -62,61 +62,11 @@ public:
 
 Q_DECLARE_METATYPE(Utf8StringList)
 
-class LIBP6CORESHARED_EXPORT Utf8StringSet : public QSet<Utf8String> {
-public:
-  Utf8StringSet() { }
-  Utf8StringSet(std::initializer_list<Utf8String> args)
-    : QSet<Utf8String>(args) { }
-  Utf8StringSet(const QSet<Utf8String> &set)
-    : QSet<Utf8String>(set) { }
-  Utf8StringSet(const QSet<QByteArray> &set)
-    : QSet<Utf8String>(set.cbegin(), set.cend()) { }
-  Utf8StringSet(const QSet<QString> &set)
-    : QSet<Utf8String>(set.cbegin(), set.cend()) { }
-  Utf8StringSet(const QList<Utf8String> &set)
-    : QSet<Utf8String>(set.cbegin(), set.cend()) { }
-  Utf8StringSet(const QList<QByteArray> &set)
-    : QSet<Utf8String>(set.cbegin(), set.cend()) { }
-  Utf8StringSet(const QList<QString> &set)
-    : QSet<Utf8String>(set.cbegin(), set.cend()) { }
-  Utf8StringSet(const std::set<Utf8String> &set)
-    : QSet<Utf8String>(set.cbegin(), set.cend()) { }
-#if __cpp_concepts >= 201907
-  template <std::input_iterator InputIterator>
-  Utf8StringSet(InputIterator i1, InputIterator i2)
-    : QSet<Utf8String>(i1, i2) { }
-#endif
-  Utf8String join(const Utf8String &separator) const;
-  Utf8String join(const char separator) const;
-  Utf8String sortedJoin(const Utf8String &separator) {
-    return toSortedList().join(separator); }
-  Utf8String sortedJoin(const char separator) {
-    return toSortedList().join(separator); }
-  Utf8StringList toList() const { return Utf8StringList(*this); }
-  Utf8StringList toSortedList() const {
-    auto list = toList(); std::sort(list.begin(), list.end()); return list; }
-  std::set<Utf8String> toStdSet() const {
-    return std::set<Utf8String>(cbegin(), cend()); }
-};
-
-Q_DECLARE_METATYPE(Utf8StringSet)
-
-Utf8StringSet Utf8StringList::toSet() const {
-  return Utf8StringSet(*this);
-}
-
-Utf8StringList Utf8StringList::toSortedDeduplicatedList() const {
-  return toSet().toSortedList();
-}
-
 QDebug LIBP6CORESHARED_EXPORT operator<<(QDebug dbg, const Utf8StringList &l);
 
-QDebug LIBP6CORESHARED_EXPORT operator<<(QDebug dbg, const Utf8StringSet &s);
 
 LogHelper LIBP6CORESHARED_EXPORT operator<<(LogHelper lh,
                                              const Utf8StringList &list);
 
-LogHelper LIBP6CORESHARED_EXPORT operator<<(LogHelper lh,
-                                             const Utf8StringSet &set);
 
 #endif // UTF8STRINGLIST_H

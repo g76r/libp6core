@@ -11,8 +11,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include "utf8stringlist.h"
+#include "utf8stringset.h"
 #include "log/log.h"
 
 template<typename C,typename T>
@@ -74,10 +74,6 @@ QDebug operator<<(QDebug dbg, const Utf8StringList &list) {
   return dbg.noquote() << s.toString();
 }
 
-QDebug operator<<(QDebug dbg, const Utf8StringSet &set) {
-  return dbg << set.toSortedList();
-}
-
 LogHelper operator<<(LogHelper lh, const Utf8StringList &list) {
   lh << "{"_u8;
   if (list.size())
@@ -85,3 +81,30 @@ LogHelper operator<<(LogHelper lh, const Utf8StringList &list) {
   return lh;
 }
 
+QDebug operator<<(QDebug dbg, const Utf8StringSet &set) {
+  return dbg << set.toSortedList();
+}
+
+Utf8StringSet Utf8StringList::toSet() const {
+  return Utf8StringSet(*this);
+}
+
+Utf8StringList Utf8StringList::toSortedDeduplicatedList() const {
+  return toSet().toSortedList();
+}
+
+Utf8String Utf8StringSet::sortedJoin(const Utf8String &separator) {
+  return toSortedList().join(separator);
+}
+
+Utf8String Utf8StringSet::sortedJoin(const char separator) {
+  return toSortedList().join(separator);
+}
+
+Utf8StringList Utf8StringSet::toList() const {
+  return Utf8StringList(*this);
+}
+
+Utf8StringList Utf8StringSet::toSortedList() const {
+  auto list = toList(); std::sort(list.begin(), list.end()); return list;
+}
