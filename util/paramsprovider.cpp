@@ -22,14 +22,6 @@ extern char **environ; // LATER use QProcessEnvironment::systemEnvironment()
 namespace {
 
 struct Environment : public ParamsProvider {
-//  const QVariant paramValue(
-//    const Utf8String &key, const QVariant &def, const ParamsProvider *context,
-//    Utf8StringSet *alreadyEvaluated) const override {
-//    auto rawValue = qgetenv(key); // TODO ::fromLocal8bit() for non utf8 oses
-//    if (rawValue.isNull())
-//      return def;
-//    return ParamSet().evaluate(rawValue, false, context, alreadyEvaluated);
-//  }
   const QVariant paramRawValue(
     const Utf8String &key, const QVariant &def) const override {
     auto v = qgetenv(key);
@@ -84,13 +76,19 @@ const ParamsProvider::ScopedValue ParamsProvider::paramValue(
 const ParamsProvider::ScopedValue ParamsProvider::paramValue(
     const Utf8String &key, const QVariant &def, const ParamsProvider *context,
     Utf8StringSet *ae) const {
-  auto v = paramRawValue(key);
+  auto v = paramScopedRawValue(key);
   if (!v.isValid())
     return { {}, def };
-  auto expr = Utf8String(v);
-  if (expr.isEmpty())
-    return { paramScope(), v }; // passing QVariant trough
-  return PercentEvaluator::eval(expr, context, ae);
+  auto id = v.value.metaType().id();
+  if (v.value.canConvert<double>() && id != qMetaTypeId<Utf8String>()
+      && id != QMetaType::QString && id != QMetaType::QByteArray)
+    return v; // passing QVariant through if number
+  auto v2 =  PercentEvaluator::eval(Utf8String(v), context, ae);
+  if (v2.flags.testFlag(PercentEvaluator::NothingToEval))
+    return v; // passing QVariant through to preserve the type and scope
+  if (!v2.scope.isEmpty())
+    return v2; // passing evaluated scope through
+  return { v.scope, v2.value }; // pass raw value scope with evaluated value
 }
 
 const QVariant ParamsProvider::paramRawValue(

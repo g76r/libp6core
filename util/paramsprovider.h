@@ -69,9 +69,9 @@ public:
    *  alreadyEvaluated param.
    *  @param context is an evaluation context, uses this if null
    *  @param alreadyEvaluated used for loop detections, must not be null */
-  [[nodiscard]] virtual const ScopedValue paramValue(
+  [[nodiscard]] const ScopedValue paramValue(
       const Utf8String &key, const QVariant &defaultValue,
-      const ParamsProvider *context, Utf8StringSet *alreadyEvaluated) const final; // FIXME remove final or rather remove virtual
+      const ParamsProvider *context, Utf8StringSet *alreadyEvaluated) const;
   /** Convenience method */
   [[nodiscard]] const ScopedValue paramValue(
       const Utf8String &key, const QVariant &def = {},

@@ -15,12 +15,9 @@
 #include "log/log.h"
 
 static inline ParamsProvider::ScopedValue cookScopedValue(
-    const ParamsProvider::ScopedValue &sv, const Utf8String &forced_scope,
-    const Utf8String &def_scope) {
+    const ParamsProvider::ScopedValue &sv, const Utf8String &forced_scope) {
   if (!forced_scope.isEmpty())
     return { forced_scope, sv.value };
-  if (sv.scope.isEmpty())
-    return { def_scope, sv.value };
   return sv;
 }
 
@@ -34,7 +31,7 @@ const ParamsProvider::ScopedValue ParamsProviderMerger::paramScopedRawValue(
   int depth = 0;
   auto sv = _overridingParams.paramScopedRawValue(key);
   if (sv.isValid())
-    return cookScopedValue(sv, _scope, "0"_u8);
+    return cookScopedValue(sv, _scope);
   for (auto provider: _providers) {
     ++depth;
     if (provider.d->_wild)
@@ -42,10 +39,10 @@ const ParamsProvider::ScopedValue ParamsProviderMerger::paramScopedRawValue(
     else
       sv = provider.d->_owned.paramScopedRawValue(key);
     if (sv.isValid())
-      return cookScopedValue(sv, _scope, Utf8String::number(depth));
+      return cookScopedValue(sv, _scope);
   }
   sv = { {}, def };
-  return cookScopedValue(sv, _scope, "0"_u8);
+  return cookScopedValue(sv, _scope);
 }
 
 void ParamsProviderMerger::save() {

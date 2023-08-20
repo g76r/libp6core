@@ -22,6 +22,7 @@
 #include "util/paramsprovidermerger.h"
 #include "format/timeformats.h"
 #include "format/stringutils.h"
+#include "log/log.h"
 #include <functional>
 #include <stdlib.h>
 #include <QCryptographicHash>
@@ -36,37 +37,46 @@ static int staticInit() {
 Q_CONSTRUCTOR_FUNCTION(staticInit)
 
 static RadixTree<std::function<
-QVariant(const Utf8String &scope, const Utf8String &key,
-         const ParamsProvider *context, Utf8StringSet *ae, int ml)>>
+PercentEvaluator::ScopedValue(
+    const Utf8String &scope, const Utf8String &key,
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)>>
 _functions {
 { "'", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *, Utf8StringSet *, int) -> QVariant {
-  return key.mid(1);
+    const ParamsProvider *, Utf8StringSet *, int)
+    -> PercentEvaluator::ScopedValue {
+  return {{},key.mid(1)};
 }, true},
 { "=date", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
-  return TimeFormats::toMultifieldSpecifiedCustomTimestamp(
-        QDateTime::currentDateTime(), key.mid(ml), context, ae);
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
+  return {{},TimeFormats::toMultifieldSpecifiedCustomTimestamp(
+        QDateTime::currentDateTime(), key.mid(ml), context, ae)};
 }, true},
 { "=coarsetimeinterval", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto params = key.splitByLeadingChar(ml);
   auto msecs = PercentEvaluator::eval_number<double>(
                    params.value(0), context, ae)*1000;
-  return TimeFormats::toCoarseHumanReadableTimeInterval(msecs);
+  return {{},TimeFormats::toCoarseHumanReadableTimeInterval(msecs)};
 }, true},
 { "=eval", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto v = PercentEvaluator::eval_utf8(key.mid(ml+1), context, ae);
   return PercentEvaluator::eval(v, context, ae);
 }, true},
 { "=escape", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
-  auto v = PercentEvaluator::eval_utf8(key.mid(ml+1), context, ae);
-  return PercentEvaluator::escape(v);
+    const ParamsProvider *context, Utf8StringSet *, int ml)
+    -> PercentEvaluator::ScopedValue {
+  if (!context)
+    return {};
+  auto v = context->paramScopedRawValue(key.mid(ml+1));
+  return {v.scope,PercentEvaluator::escape(v.value)};
 }, true},
 { "=default", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto params = key.splitByLeadingChar(ml);
   for (int i = 0; i < params.size(); ++i) {
     auto v = PercentEvaluator::eval(params.value(i), context, ae);
@@ -76,24 +86,27 @@ _functions {
   return {};
 }, true},
 { "=rawvalue", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto params = key.splitByLeadingChar(ml);
-  if (params.size() < 1)
+  if (params.size() < 1 || !context)
     return {};
-  auto v = PercentEvaluator::eval(params.value(0), context, ae).value;
-  if (params.size() >= 2) {
-    auto flags = params.value(1);
-    if (flags.contains('e')) // %-escape
-      v = PercentEvaluator::escape(v);
-    if (flags.contains('h')) // htmlencode
-      v = StringUtils::htmlEncode(
-            v.toString(), flags.contains('u'), // url as links
-            flags.contains('n')); // newline as <br>
-  }
-  return v;
+  auto sv = context->paramScopedRawValue(params.value(0));
+  auto flags = params.value(1);
+  if (flags.isEmpty())
+    return sv;
+  auto v = sv.value;
+  if (flags.contains('e')) // %-escape
+    v = PercentEvaluator::escape(v);
+  if (flags.contains('h')) // htmlencode
+    v = StringUtils::htmlEncode(
+          v.toString(), flags.contains('u'), // url as links
+          flags.contains('n')); // newline as <br>
+  return {sv.scope, v};
 }, true},
 { "=ifneq", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto params = key.splitByLeadingChar(ml);
   // TODO remove =ifneq, only keep =switch
   if (params.size() < 3) [[unlikely]]
@@ -107,7 +120,8 @@ _functions {
   return input;
 }, true},
 { "=switch", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto params = key.splitByLeadingChar(ml);
   if (params.size() < 1) [[unlikely]]
     return {};
@@ -126,7 +140,8 @@ _functions {
   return input;
 }, true},
 { "=match", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto params = key.splitByLeadingChar(ml);
   if (params.size() < 1) [[unlikely]]
     return {};
@@ -149,10 +164,11 @@ _functions {
   if (params.size() % 2 == 0)
     return PercentEvaluator::eval(params.value(params.size()-1), context, ae);
   // otherwise left input as is
-  return input;
+  return {{},input};
 }, true},
 { "=sub", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto params = key.splitByLeadingChar(ml);
   //qDebug() << "%=sub:" << key << params.size() << params;
   auto value = PercentEvaluator::eval_utf8(params.value(0), context, ae);
@@ -171,8 +187,8 @@ _functions {
     // not sure if QRegularExpression::optimize() should be called
     QRegularExpression re(sFields.value(0), patternOptions);
     if (!re.isValid()) [[unlikely]] {
-      qDebug() << "%=sub with invalid regular expression: "
-               << sFields.value(0);
+      Log::warning() << "%=sub with invalid regular expression: "
+                     << sFields.value(0);
       continue;
     }
     bool repeat = optionsString.contains('g');
@@ -205,10 +221,11 @@ _functions {
     value = transformed;
   }
   //qDebug() << "value:" << value;
-  return value;
+  return {{},value};
 }, true},
 { "=left", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto params = key.splitByLeadingChar(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context, ae);
   bool ok;
@@ -216,14 +233,15 @@ _functions {
   if (ok) {
     auto flags = params.value(2);
     if (flags.contains('b'))
-      return input.left(i);
+      input = input.left(i);
     else
-      return input.utf8Left(i);
+      input = input.utf8Left(i);
   }
-  return input;
+  return {{},input};
 }, true},
 { "=right", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto params = key.splitByLeadingChar(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context, ae);
   bool ok;
@@ -231,14 +249,15 @@ _functions {
   if (ok) {
     auto flags = params.value(2);
     if (flags.contains('b'))
-      return input.right(i);
+      input = input.right(i);
     else
-      return input.utf8Right(i);
+      input = input.utf8Right(i);
   }
-  return input;
+  return {{},input};
 }, true},
 { "=mid", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto params = key.splitByLeadingChar(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context, ae);
   bool ok;
@@ -247,63 +266,69 @@ _functions {
     int j = params.value(2).toInt(&ok);
     auto flags = params.value(3);
     if (flags.contains('b'))
-      return input.mid(i, ok ? j : -1);
+      input = input.mid(i, ok ? j : -1);
     else
-      return input.utf8Mid(i, ok ? j : -1);
+      input = input.utf8Mid(i, ok ? j : -1);
   }
-  return input;
+  return {{},input};
 }, true},
 { "=trim", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto input = PercentEvaluator::eval_utf8(key.mid(ml+1), context, ae);
-  return input.trimmed();
+  return {{},input.trimmed()};
 }, true},
 { "=elideright", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto params = key.splitByLeadingChar(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context, ae);
   bool ok;
   int i = params.value(1).toInt(&ok);
   auto placeHolder = params.value(2, "..."_u8);
   if (!ok || placeHolder.size() > i || input.size() <= i)
-    return input;
-  return StringUtils::elideRight(input.toString(), i, placeHolder);
+    return {{},input};
+  return {{},StringUtils::elideRight(input.toString(), i, placeHolder)};
 }, true},
 { "=elideleft", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto params = key.splitByLeadingChar(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context, ae);
   bool ok;
   int i = params.value(1).toInt(&ok);
   auto placeHolder = params.value(2, "..."_u8);
   if (!ok || placeHolder.size() > i || input.size() <= i)
-    return input;
-  return StringUtils::elideLeft(input.toString(), i, placeHolder);
+    return {{},input};
+  return {{},StringUtils::elideLeft(input.toString(), i, placeHolder)};
 }, true},
 { "=elidemiddle", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto params = key.splitByLeadingChar(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context, ae);
   bool ok;
   int i = params.value(1).toInt(&ok);
   auto placeHolder = params.value(2, "..."_u8);
   if (!ok || placeHolder.size() > i || input.size() <= i)
-    return input;
-  return StringUtils::elideMiddle(input.toString(), i, placeHolder);
+    return {{},input};
+  return {{},StringUtils::elideMiddle(input.toString(), i, placeHolder)};
 }, true},
 { "=htmlencode", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto params = key.splitByLeadingChar(ml);
   if (params.size() < 1)
-    return Utf8String();
+    return {};
   auto input = PercentEvaluator::eval_utf8(params.value(0), context, ae);
   auto flags = params.value(1);
-  return StringUtils::htmlEncode(
+  return {{},StringUtils::htmlEncode(
         input.toString(), flags.contains('u'), // url as links
-        flags.contains('n')); // newline as <br>
+        flags.contains('n'))}; // newline as <br>
 }, true},
 { "=random", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto params = key.splitByLeadingChar(ml);
   auto modulo = ::llabs(PercentEvaluator::eval_number<qlonglong>(
                           params.value(0), context, ae));
@@ -313,10 +338,11 @@ _functions {
   if (modulo)
     i %= modulo;
   i += shift;
-  return Utf8String::number(i);
+  return {{},Utf8String::number(i)};
 }, true},
 { "=env", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto params = key.splitByLeadingChar(ml);
   auto env = ParamsProvider::environment();
   int i = 0;
@@ -332,7 +358,8 @@ _functions {
   return PercentEvaluator::eval(params.value(i), context, ae);
 }, true},
 { "=ext", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto params = key.splitByLeadingChar(ml);
   auto ext = ParamSet::externalParams(params.value(0));
   int i = 1;
@@ -351,35 +378,44 @@ _functions {
   return PercentEvaluator::eval(params.value(i), context, ae);
 }, true},
 { "=sha1", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto value = PercentEvaluator::eval_utf8(key.mid(ml+1), context, ae);
-  return QCryptographicHash::hash(value, QCryptographicHash::Sha1).toHex();
+  return {{},Utf8String(QCryptographicHash::hash(
+                      value, QCryptographicHash::Sha1).toHex())};
 }, true},
 { "=sha256", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto value = PercentEvaluator::eval_utf8(key.mid(ml+1), context, ae);
-  return QCryptographicHash::hash(value, QCryptographicHash::Sha256).toHex();
+  return {{},Utf8String(QCryptographicHash::hash(
+                      value, QCryptographicHash::Sha256).toHex())};
 }, true},
 { "=md5", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto value = PercentEvaluator::eval_utf8(key.mid(ml+1), context, ae);
-  return QCryptographicHash::hash(value, QCryptographicHash::Md5).toHex();
+  return {{},Utf8String(QCryptographicHash::hash(
+                      value, QCryptographicHash::Md5).toHex())};
 }, true},
 { "=hex", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto params = key.splitByLeadingChar(ml);
   auto value = PercentEvaluator::eval_utf8(params.value(0), context, ae);
   auto separator = params.value(1);
-  return value.toHex(separator.value(0));
+  return {{},value.toHex(separator.value(0))};
 }, true},
 { "=fromhex", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto params = key.splitByLeadingChar(ml);
   auto value = PercentEvaluator::eval_utf8(params.value(0), context, ae);
-  return QByteArray::fromHex(value);
+  return {{},QByteArray::fromHex(value)};
 }, true},
 { "=base64", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto params = key.splitByLeadingChar(ml);
   auto value = PercentEvaluator::eval_utf8(params.value(0), context, ae);
   auto flags = params.value(1);
@@ -389,10 +425,11 @@ _functions {
       |(flags.contains('a') ? QByteArray::AbortOnBase64DecodingErrors
                             : QByteArray::IgnoreBase64DecodingErrors);
   value = value.toBase64(options);
-  return value;
+  return {{},value};
 }, true},
 { "=frombase64", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   auto params = key.splitByLeadingChar(ml);
   auto value = PercentEvaluator::eval_utf8(params.value(0), context, ae);
   auto flags = params.value(1);
@@ -403,13 +440,14 @@ _functions {
       |(flags.contains('a') ? QByteArray::AbortOnBase64DecodingErrors
                             : QByteArray::IgnoreBase64DecodingErrors);
   value = QByteArray::fromBase64(value, options);
-  return value;
+  return {{},value};
 }, true},
 { "=rpn", [](const Utf8String &, const Utf8String &key,
-    const ParamsProvider *context, Utf8StringSet *ae, int ml) -> QVariant {
+    const ParamsProvider *context, Utf8StringSet *ae, int ml)
+    -> PercentEvaluator::ScopedValue {
   // TODO set up a MathExpr cache
    MathExpr expr(key.mid(ml), MathExpr::CharacterSeparatedRpn);
-   return expr.evaluate(context, {}, ae);
+   return {{},expr.evaluate(context, {}, ae)};
 }, true},
 };
 
@@ -417,6 +455,7 @@ _functions {
 static inline PercentEvaluator::ScopedValue eval_key(
     const Utf8String &scope, const Utf8String &key,
     const ParamsProvider *context, Utf8StringSet *ae) {
+  //qDebug() << "eval_key:" << scope << key << context << ae;
   if (key.isEmpty()) [[unlikely]] {
     Log::warning() << "unsupported variable substitution: empty variable name";
     return {};
@@ -436,11 +475,12 @@ static inline PercentEvaluator::ScopedValue eval_key(
   int matchedLength;
   auto function = _functions.value(key, &matchedLength);
   if (function)
-    return { {}, function(scope, key, context, &new_ae, matchedLength) };
+    return function(scope, key, context, &new_ae, matchedLength);
   if (!context)
     return {};
-  // FIXME paramRawValue must have a scope filter param
+  // TODO paramRawValue must have a scope filter param
   auto v = context->paramValue(key, {}, context, &new_ae);
+  //qDebug() << "/eval_key by param" << v;
   if (v.isValid())
     return v;
   if (_variableNotFoundLoggingEnabled) [[unlikely]]
@@ -462,6 +502,12 @@ const PercentEvaluator::ScopedValue PercentEvaluator::eval_key(
   return ::eval_key({}, key, context, already_evaluated);
 }
 
+const PercentEvaluator::ScopedValue PercentEvaluator::eval_key(
+    const Utf8String &key, const ParamsProvider *context) {
+  Utf8StringSet ae;
+  return eval_key(key, context, &ae);
+}
+
 namespace {
 
 enum State {
@@ -478,6 +524,7 @@ const PercentEvaluator::ScopedValue PercentEvaluator::eval(
     Utf8StringSet *alreadyEvaluated) {
   Q_ASSERT(begin);
   Q_ASSERT(end);
+  //qDebug() << "eval:" << begin << end-begin << context << alreadyEvaluated;
   auto s = begin;
   State state = Toplevel;
   Utf8String result, scope;
@@ -494,10 +541,12 @@ const PercentEvaluator::ScopedValue PercentEvaluator::eval(
             case '%': // %% is an escape sequence for %
               result.append('%'); // take escaped %
               ++s; // ignore next %
+              begin = s; // set begining of new top level
               break;
             case '{':
+              scope.clear();
               state = CurlyKey;
-              curly_depth = 0;
+              //curly_depth = 0;
               ++s; // ignore next {
               begin = s+1; // set begining of curly key
               break;
@@ -507,6 +556,7 @@ const PercentEvaluator::ScopedValue PercentEvaluator::eval(
               begin = s+1; // set begining of scope
               break;
             default:
+              scope.clear();
               state = NakedKey;
               ++s; // won't eval next char, it's part of the key
               begin = s; // set begining of naked key
@@ -519,20 +569,26 @@ const PercentEvaluator::ScopedValue PercentEvaluator::eval(
         if (*s == ']') {
           scope = Utf8String(begin, s-begin);
           ++s; // ignore ]
-          state = NakedKey;
-          begin = s; // set begining of naked key
+          if (s < end && *s == '{') {
+            state = CurlyKey;
+            //curly_depth = 0;
+            ++s; // ignore {
+          } else {
+            state = NakedKey;
+          }
+          begin = s; // set begining of key
           break;
         }
         ++s; // include byte in scope
         break;
       case NakedKey:
         if (!::isalnum(*s) && *s != '_') {
-          auto key = Utf8String(begin, s-begin+1); // including current byte
+          auto key = Utf8String(begin, s-begin); // not including special char
           auto value = ::eval_key(scope, key, context, alreadyEvaluated);
-          if (s+1 == end && result.isEmpty())
-            return value; // end is reached and result empty: return QVariant
+          if (s+1 == end && result.isNull())
+            return value; // QVariant pass through
           else
-            result.append(Utf8String(value)); // otherwise: append value
+            result += Utf8String(value); // otherwise: append value
           state = Toplevel;
           begin = s; // set begining of new toplevel
           break;
@@ -542,27 +598,28 @@ const PercentEvaluator::ScopedValue PercentEvaluator::eval(
       case CurlyKey:
         switch (*s) {
           case '}':
-            --curly_depth;
+            //qDebug() << "eval}:" << curly_depth << begin << s;
             if (curly_depth) {
+              --curly_depth;
               ++s; // include } in key
               break;
             }
             if (*begin == '[') { // there is a scope within curly braces
-              auto eos = begin;
-              for (; eos <= s && *eos != ']'; ++s)
+              auto eos = begin+1;
+              for (; eos <= s && *eos != ']'; ++eos)
                 ;
               scope = Utf8String(begin+1, eos-begin-1);
-              begin = eos+1;
+              begin = eos+1; // the key begins after ]
             } else {
-              scope.clear();
+              // keep naked scope before { if any
             }
             if (s-begin > 0) { // key is not empty
               auto key = Utf8String(begin, s-begin); // not including }
               auto value = ::eval_key(scope, key, context, alreadyEvaluated);
-              if (s+1 == end && result.isEmpty())
-                return value; // end is reached and result empty: return QVariant
+              if (s+1 == end && result.isNull())
+                return value; // QVariant pass through
               else
-                result.append(Utf8String(value)); // otherwise: append value
+                result += Utf8String(value); // otherwise: append value
             }
             state = Toplevel;
             ++s; // ignore }
@@ -577,12 +634,37 @@ const PercentEvaluator::ScopedValue PercentEvaluator::eval(
         break;
     }
   }
+  //qDebug() << "/eval:" << s << state << begin << scope << result;
+  if (s > begin) {
+    switch(state) {
+      case Toplevel: {
+        if (result.isNull()) // not even one % was encountered
+          return { {}, Utf8String(begin, s-begin), NothingToEval };
+        result.append(begin, s-begin); // not including *s == '\0'
+        break;
+      }
+      case NakedKey: {
+          auto key = Utf8String(begin, s-begin); // not including *s == '\0'
+          auto value = ::eval_key(scope, key, context, alreadyEvaluated);
+          if (result.isNull())
+            return value; // QVariant pass through
+          result += Utf8String(value);
+        }
+        break;
+      case NakedScope:
+      case CurlyKey:
+        ;
+    }
+  }
 stop:
-  if (s > begin && state == Toplevel)
-    result.append(begin, s-begin+1); // take remaining bytes
   if (result.isNull())
     return {};
   return { {}, result }; // LATER join scopes when mixed, rather than null ?
+  // currently returning a null scope on concatened text produces the following
+  // behavior: if a QVariant pass through occured it was done with its scope
+  // whereas on concatened text any scope is lost, so the calling ParamSet
+  // implementation is likely to use it's own internal scope whereas it should
+  // have left the original scope (if any) when there was no concatenation
 }
 
 const PercentEvaluator::ScopedValue PercentEvaluator::eval(
@@ -590,30 +672,6 @@ const PercentEvaluator::ScopedValue PercentEvaluator::eval(
   Utf8StringSet ae;
   return eval(expr, context, &ae);
 }
-
-#if 0
-static inline bool shouldBeEscapedWithinRegexp(char c) {
-  switch (c) {
-  case '$':
-  case '(':
-  case ')':
-  case '*':
-  case '+':
-  case '.':
-  case '?':
-  case '[':
-  case '\\':
-  case ']':
-  case '^':
-  case '{':
-  case '|':
-  case '}':
-    return true;
-  default:
-    return false;
-  }
-}
-#endif
 
 const QString PercentEvaluator::matching_regexp(const Utf8String &expr) {
   QString pattern;
@@ -679,3 +737,14 @@ void PercentEvaluator::enable_variable_not_found_logging(bool enabled) {
   _variableNotFoundLoggingEnabled = enabled;
 }
 
+
+QDebug operator<<(QDebug dbg, const PercentEvaluator::ScopedValue &s) {
+  dbg.nospace() << "{";
+  dbg.space() << s.scope << s.value << "}";
+  return dbg.space();
+}
+
+LogHelper operator<<(LogHelper lh, const PercentEvaluator::ScopedValue &s) {
+  lh << "{ ";
+  return lh << s.scope << " " << s.value << " }";
+}

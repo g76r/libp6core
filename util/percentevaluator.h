@@ -18,6 +18,8 @@
 
 class ParamsProvider;
 class Utf8StringSet;
+class QDebug;
+class LogHelper;
 
 /** Evaluate a %-expression.
  *
@@ -45,12 +47,19 @@ class Utf8StringSet;
  *  @see https://gitlab.com/g76r/libp6core/-/blob/master/util/percent_evaluation.md
  *  @see ParamsProvider
  */
-class PercentEvaluator {
+class LIBP6CORESHARED_EXPORT PercentEvaluator {
 public:
+
+  enum EvalFlag {
+      AllFlagsClear = 0,
+      NothingToEval = 1,
+  };
+  Q_DECLARE_FLAGS(EvalFlags, EvalFlag)
 
   struct ScopedValue {
     Utf8String scope;
     QVariant value;
+    EvalFlags flags = AllFlagsClear;
     operator const QVariant &() const { return value; }
     bool isValid() const { return value.isValid(); }
   };
@@ -99,6 +108,9 @@ public:
    *  @param context is an evaluation context, can be null (only contextless
    *         function like %=date will be available for evaluation)
    *  @param alreadyEvaluated used for loop detections, must not be null */
+  [[nodiscard]] static const ScopedValue eval_key(
+      const Utf8String &key, const ParamsProvider *context = 0);
+  /** Lower-level reentrant version of the method. */
   [[nodiscard]] static const ScopedValue eval_key(
       const Utf8String &key, const ParamsProvider *context,
       Utf8StringSet *already_evaluated);
@@ -158,8 +170,9 @@ public:
       const ParamsProvider *context = 0, bool *ok = nullptr)  {
     QVariant v = eval(expr, context);
     auto mtid = v.metaType().id();
-    if (!v.canConvert<T>() || mtid == QMetaType::QString
-        || mtid == QMetaType::QByteArray)
+    // text types and types not convertible to a number are for Utf8String
+    if (!v.canConvert<T>() || mtid == qMetaTypeId<Utf8String>()
+        || mtid == QMetaType::QString || mtid == QMetaType::QByteArray)
       return Utf8String(v).toNumber<T>(ok, def);
     if (ok)
       *ok = true;
@@ -173,8 +186,9 @@ public:
       bool *ok = nullptr) {
       QVariant v = eval(expr, context, alreadyEvaluated);
       auto mtid = v.metaType().id();
-      if (!v.canConvert<T>() || mtid == QMetaType::QString
-          || mtid == QMetaType::QByteArray)
+      // text types and types not convertible to a number are for Utf8String
+      if (!v.canConvert<T>() || mtid == qMetaTypeId<Utf8String>()
+          || mtid == QMetaType::QString || mtid == QMetaType::QByteArray)
         return Utf8String(v).toNumber<T>(ok, def);
       if (ok)
         *ok = true;
@@ -213,5 +227,11 @@ public:
    * environment variable is set to "true". */
   static void enable_variable_not_found_logging(bool enabled = true);
 };
+
+QDebug LIBP6CORESHARED_EXPORT operator<<(
+    QDebug dbg, const PercentEvaluator::ScopedValue &s);
+
+LogHelper LIBP6CORESHARED_EXPORT operator<<(
+    LogHelper lh, const PercentEvaluator::ScopedValue &s);
 
 #endif // PERCENTEVALUATOR_H
