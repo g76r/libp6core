@@ -49,12 +49,9 @@ class LIBP6CORESHARED_EXPORT ParamSet : public ParamsProvider {
   QSharedDataPointer<ParamSetData> d;
 
 public:
-  struct ScopedUtf8 {
-    Utf8String scope;
-    Utf8String value;
-    operator const Utf8String &() const { return value; }
-    bool isValid() const { return !value.isNull(); }
-  };
+  /** Special evaluation scope to disallow inheritance from parent and up */
+  const static Utf8String DontInheritScope;
+  const static EvalContext DontInherit;
 
   ParamSet();
   /** First item processed as a key, second one as the matching value and so on.
@@ -88,7 +85,7 @@ public:
    */
   ParamSet(const PfNode &parentnode, const Utf8String &attrname,
            const Utf8String &constattrname = {},
-           const ParamSet &parent = ParamSet());
+           const ParamSet &parent = {});
   ParamSet(const PfNode &parentnode, const Utf8String &attrname,
            const ParamSet &parent);
   /** Takes params from PfNode children given their attribute names,
@@ -202,47 +199,57 @@ public:
   void removeValue(const Utf8String &key);
   /** Return all keys for which the ParamSet or one of its parents hold a value.
     */
-  [[nodiscard]] const Utf8StringSet paramKeys(bool inherit) const;
-  /** Same as paramKeys(true). */
-  [[nodiscard]] const Utf8StringSet paramKeys() const override;
-  /** Return true if key is set. */
-  [[nodiscard]] bool paramContains(const Utf8String &key, bool inherit) const;
-  /** Return true if key is set. */
-  [[nodiscard]] bool paramContains(const Utf8String &key) const override;
-  /** Same as paramRawValue() but skip the QVariant overhead. */
-  [[nodiscard]] const Utf8String paramRawUtf8(
-      const Utf8String &key, const Utf8String &def, bool inherit) const;
-  /** Same as paramRawUtf8 with inherit = true. */
-  [[nodiscard]] const Utf8String paramRawUtf8(
-      const Utf8String &key, const Utf8String &def = {}) const override;
-  /** Convenience method */
-  [[nodiscard]] inline const Utf8String paramRawUtf8(
-      const Utf8String &key, bool inherit) const {
-    return paramRawUtf8(key, {}, inherit); }
-  using ParamsProvider::paramUtf8;
-  [[nodiscard]] const Utf8String paramUtf8(
-      const Utf8String &key, const Utf8String &def,
-      const ParamsProvider *context, bool inherit,
-      Utf8StringSet *alreadyEvaluated) const;
-  [[nodiscard]] const Utf8String paramUtf8(
-      const Utf8String &key, const Utf8String &def,
-      const ParamsProvider *context, bool inherit) const;
-  [[nodiscard]] const Utf8String paramUtf8(
-      const Utf8String &key, const Utf8String &def,
-      const ParamsProvider *context, Utf8StringSet *ae) const override;
 
   using ParamsProvider::paramRawValue;
-  /** Return a value without performing parameters substitution.
-   * @param inherit should search values in parents if not found */
   [[nodiscard]] const QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def, bool inherit) const;
-  /** Same as paramRawValue(key, def, true). */
-  [[nodiscard]] const QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def = {}) const override;
-  [[nodiscard]] const ScopedValue paramScopedRawValue(
-      const Utf8String &key, const QVariant &def = {}) const override;
-  [[nodiscard]] const ScopedValue paramScopedRawValue(
-      const Utf8String &key, const QVariant &def, bool inherit) const;
+      const Utf8String &key, const QVariant &def = {},
+      const EvalContext &context = {}) const override;
+
+  using ParamsProvider::paramKeys;
+  [[nodiscard]] const Utf8StringSet paramKeys(
+      const EvalContext &context = {}) const override;
+  [[deprecated("use EvalContext{DonInherit} instead")]]
+  [[nodiscard]] inline const Utf8StringSet paramKeys(bool inherit) const {
+    return paramKeys(inherit ? EvalContext{} : DontInherit); }
+
+  using ParamsProvider::paramContains;
+  [[nodiscard]] bool paramContains(
+      const Utf8String &key, const EvalContext &context = {}) const override;
+  [[deprecated("use EvalContext{DonInherit} instead")]]
+  [[nodiscard]] inline bool paramContains(
+      const Utf8String &key, bool inherit) const {
+    return paramContains(key, inherit ? EvalContext{} : DontInherit); }
+
+#if 0
+  using ParamsProvider::paramRawUtf8;
+  [[nodiscard]] const Utf8String paramRawUtf8(
+      const Utf8String &key, const Utf8String &def = {},
+      const EvalContext &context = {}) const override;
+  [[deprecated("use EvalContext{DonInherit} instead")]]
+  [[nodiscard]] inline const Utf8String paramRawUtf8(
+      const Utf8String &key, const Utf8String &def, bool inherit) const {
+    return paramRawUtf8(key, def, inherit ? EvalContext{}
+                                          : DontInherit); }
+  [[deprecated("use EvalContext{DonInherit} instead")]]
+  [[nodiscard]] inline const Utf8String paramRawUtf8(
+      const Utf8String &key, bool inherit) const {
+    return paramRawUtf8(key, {}, inherit ? EvalContext{}
+                                         : DontInherit); }
+
+  using ParamsProvider::paramUtf8;
+  [[nodiscard]] const Utf8String paramUtf8(
+      const Utf8String &key, const Utf8String &def = {},
+      const EvalContext &context = {}) const override;
+//  [[deprecated("use EvalContext{DonInherit} instead")]]
+//  [[nodiscard]] const Utf8String paramUtf8(
+//      const Utf8String &key, const Utf8String &def,
+//      const ParamsProvider *context, bool inherit,
+//      Utf8StringSet *alreadyEvaluated) const;
+//  [[deprecated("use EvalContext{DonInherit} instead")]]
+//  [[nodiscard]] const Utf8String paramUtf8(
+//      const Utf8String &key, const Utf8String &def,
+//      const ParamsProvider *context, bool inherit) const;
+#endif
 
   // additional conversions (not in ParamsProvider)
   /** Return a value splitted into strings, %-substitution is done after the
@@ -250,15 +257,22 @@ public:
    * in %foo value). */
   [[nodiscard]] inline Utf8StringList paramUtf8List(
       const Utf8String &key, const Utf8String &def = {},
-      const ParamsProvider *context = 0, bool inherit = true,
+      const EvalContext &context = {},
       QList<char> seps = Utf8String::AsciiWhitespace) const {
     Utf8StringList list;
-    auto raws = paramRawUtf8(key, def, inherit).split(seps);
+    auto raws = paramRawUtf8(key, def, context).split(seps);
     for (auto raw: raws)
       list += Utf8String(PercentEvaluator::eval(raw, context));
     return list;
   }
-
+  [[deprecated("use EvalContext{DonInherit} instead")]]
+  [[nodiscard]] inline Utf8StringList paramUtf8List(
+      const Utf8String &key, const Utf8String &def = {},
+      const ParamsProvider *context = 0, bool inherit = true,
+      QList<char> seps = Utf8String::AsciiWhitespace) const {
+    return paramUtf8List(key, def, inherit ? EvalContext{context} : DontInherit,
+                         seps);
+  }
 
   [[nodiscard]] bool isNull() const;
   [[nodiscard]] int size() const;
@@ -298,11 +312,11 @@ public:
   inline Utf8String value(Utf8String key, Utf8String def,
                        bool inherit,
                        const ParamsProvider *context = 0) const {
-    return paramUtf8(key, def, context, inherit); }
+    return paramUtf8(key, def, inherit ? EvalContext{context} : DontInherit); }
   [[deprecated("use paramUtf8() instead")]]
   inline Utf8String value(Utf8String key, bool inherit,
                        const ParamsProvider *context = 0) const {
-    return paramUtf8(key, {}, context, inherit); }
+    return paramUtf8(key, {}, inherit ? EvalContext{context} : DontInherit); }
   [[deprecated("use paramUtf8() instead")]]
   inline Utf8String value(Utf8String key, const ParamsProvider *context) const {
     return paramUtf8(key, {}, context); }
@@ -311,14 +325,9 @@ public:
     return paramUtf8(key, def, 0); }
   [[deprecated("use paramUtf8() instead")]]
   inline Utf8String value(
-      Utf8String key, bool inherit, const ParamsProvider *context,
-      Utf8StringSet *ae) const {
-    return paramUtf8(key, {}, context, inherit, ae); }
-  [[deprecated("use paramUtf8() instead")]]
-  inline Utf8String value(
       Utf8String key, const QByteArray &def, bool inherit = true,
       const ParamsProvider *context = 0) const {
-    return paramUtf8(key, def, context, inherit); }
+    return paramUtf8(key, def, inherit ? EvalContext{context} : DontInherit); }
   [[deprecated("use paramUtf8() instead")]]
   inline Utf8String value(
       Utf8String key, const QByteArray &def,
@@ -328,7 +337,7 @@ public:
   inline Utf8String value(
       Utf8String key, const char *def, bool inherit = true,
       const ParamsProvider *context = 0) const {
-    return paramUtf8(key, def, context, inherit); }
+    return paramUtf8(key, def, inherit ? EvalContext{context} : DontInherit); }
   [[deprecated("use paramUtf8() instead")]]
   inline Utf8String value(Utf8String key, const char *def,
                        const ParamsProvider *context) const {
@@ -338,7 +347,8 @@ public:
                              bool inherit = true,
                              const ParamsProvider *context = 0,
                              Utf8String separators = " "_u8) const {
-    return paramUtf8List(key, def, context, inherit, separators.toBytesSortedList());
+    return paramUtf8List(key, def, inherit ? EvalContext{context} : DontInherit,
+                         separators.toBytesSortedList());
   }
   [[deprecated("use paramNumber() instead")]]
   inline qlonglong valueAsLong(

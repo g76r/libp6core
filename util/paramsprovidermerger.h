@@ -135,13 +135,13 @@ public:
   void restore();
   using ParamsProvider::paramRawValue;
   [[nodiscard]] const QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def) const override;
-  using ParamsProvider::paramScopedRawValue;
-  [[nodiscard]] const ScopedValue paramScopedRawValue(
-      const Utf8String &key, const QVariant &def) const override;
+      const Utf8String &key, const QVariant &def = {},
+      const EvalContext &context = {}) const override;
   /** Give access to currently overriding params. */
-  [[nodiscard]] const ParamSet overridingParams() const { return _overridingParams; }
-  [[nodiscard]] const Utf8StringSet paramKeys() const override;
+  [[nodiscard]] const ParamSet overridingParams() const {
+    return _overridingParams; }
+  [[nodiscard]] const Utf8StringSet paramKeys(
+      const EvalContext &context = {}) const override;
   [[nodiscard]] const Utf8String paramScope() const override;
   ParamsProviderMerger &setScope(Utf8String scope) {
     _scope = scope; return *this; }

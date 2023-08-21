@@ -112,8 +112,8 @@ void TemplatingHttpHandler::applyTemplateFile(
       auto markupId = markupContent.left(separatorPos);
       if (markupContent.at(0) == '=') {
         // syntax: <?=paramset_evaluable_expression?>
-        output->append(
-              processingContext->evaluate(markupContent.mid(1)));
+        output->append(PercentEvaluator::eval_utf8(
+                         markupContent.mid(1), processingContext));
       } else if (markupId == "view"_ba) {
         // syntax: <?view:viewname?>
         auto markupData = markupContent.mid(separatorPos+1);
@@ -171,7 +171,8 @@ void TemplatingHttpHandler::applyTemplateFile(
           Log::debug() << "TemplatingHttpHandler cannot set parameter with "
                           "null key in file " << file->fileName();
         } else {
-          auto value = processingContext->evaluate(markupParams.value(1));
+          auto value = PercentEvaluator::eval_utf8(
+                         markupParams.value(1), processingContext);
           processingContext->overrideParamValue(key, value);
         }
       } else [[unlikely]] {

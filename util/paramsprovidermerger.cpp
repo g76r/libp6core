@@ -14,35 +14,42 @@
 #include "paramsprovidermerger.h"
 #include "log/log.h"
 
-static inline ParamsProvider::ScopedValue cookScopedValue(
-    const ParamsProvider::ScopedValue &sv, const Utf8String &forced_scope) {
-  if (!forced_scope.isEmpty())
-    return { forced_scope, sv.value };
-  return sv;
-}
-
 const QVariant ParamsProviderMerger::paramRawValue(
-    const Utf8String &key, const QVariant &def) const {
-  return paramScopedRawValue(key, def);
-}
-
-const ParamsProvider::ScopedValue ParamsProviderMerger::paramScopedRawValue(
-    const Utf8String &key, const QVariant &def) const {
+    const Utf8String &key, const QVariant &def,
+    const EvalContext &context) const {
   int depth = 0;
-  auto sv = _overridingParams.paramScopedRawValue(key);
-  if (sv.isValid())
-    return cookScopedValue(sv, _scope);
+  // trying overrident params first, they match regardless the scope filter
+  auto v = _overridingParams.paramRawValue(key, def, context);
+  if (v.isValid())
+    return v;
   for (auto provider: _providers) {
     ++depth;
-    if (provider.d->_wild)
-      sv = provider.d->_wild->paramScopedRawValue(key);
-    else
-      sv = provider.d->_owned.paramScopedRawValue(key);
-    if (sv.isValid())
-      return cookScopedValue(sv, _scope);
+    const ParamsProvider *pp = provider.d->_wild;
+    if (!pp)
+      pp = &provider.d->_owned;
+    // skip provider which have a scope that doesn't match context filter
+    if (!context.hasScopeOrNone(pp->paramScope()))
+      continue;
+    auto v = pp->paramRawValue(key, context);
+    if (v.isValid())
+      return v;
   }
-  sv = { {}, def };
-  return cookScopedValue(sv, _scope);
+  return def;
+}
+
+const Utf8StringSet ParamsProviderMerger::paramKeys(
+    const EvalContext &context) const {
+  Utf8StringSet keys { _overridingParams.paramKeys() };
+  for (auto provider: _providers) {
+    if (provider.d->_wild) {
+      //keys += "["_u8+provider.d->_wild->paramScope()+"]";
+      keys += provider.d->_wild->paramKeys(context);
+    }else {
+      //keys += "["_u8+provider.d->_owned.paramScope()+"]";
+      keys += provider.d->_owned.paramKeys(context);
+    }
+  }
+  return keys;
 }
 
 void ParamsProviderMerger::save() {
@@ -62,17 +69,6 @@ void ParamsProviderMerger::restore() {
   }
 }
 
-const Utf8StringSet ParamsProviderMerger::paramKeys() const {
-  Utf8StringSet keys { _overridingParams.paramKeys() };
-  for (auto provider: _providers) {
-    if (provider.d->_wild)
-      keys += provider.d->_wild->paramKeys();
-    else
-      keys += provider.d->_owned.paramKeys();
-  }
-  return keys;
-}
-
 const Utf8String ParamsProviderMerger::paramScope() const {
   return _scope;
 }
@@ -84,7 +80,8 @@ QDebug operator<<(QDebug dbg, const ParamsProviderMerger *merger) {
   }
   dbg.nospace() << "{";
   for (auto provider: merger->_providers) {
-    dbg.space() << "provider: " << provider.d->_wild << " " << provider.d->_owned << ",";
+    dbg.space() << "provider: " << provider.d->_wild << " "
+                << provider.d->_owned << ",";
   }
   dbg.space() << "overridingParams: " << merger->overridingParams() << ",";
   dbg.space() << "stack size: " << merger->_providersStack.size() << " }";
@@ -96,7 +93,8 @@ LogHelper operator<<(LogHelper lh, const ParamsProviderMerger *merger) {
     return lh << "nullptr";
   lh << "{ ";
   for (auto provider: merger->_providers) {
-    lh << " provider: " << provider.d->_wild << " " << provider.d->_owned << ",";
+    lh << " provider: " << provider.d->_wild << " " << provider.d->_owned
+       << ",";
   }
   lh << " overridingParams: " << merger->overridingParams() << ",";
   return lh << " stack size: " << merger->_providersStack.size() << " }";

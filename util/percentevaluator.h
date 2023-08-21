@@ -15,6 +15,8 @@
 #define PERCENTEVALUATOR_H
 
 #include "utf8string.h"
+#include "utf8stringset.h"
+#include <set>
 
 class ParamsProvider;
 class Utf8StringSet;
@@ -50,18 +52,49 @@ class LogHelper;
 class LIBP6CORESHARED_EXPORT PercentEvaluator {
 public:
 
-  enum EvalFlag {
-      AllFlagsClear = 0,
-      NothingToEval = 1,
-  };
-  Q_DECLARE_FLAGS(EvalFlags, EvalFlag)
+  /** Evaluation context */
+  class EvalContext {
+    const ParamsProvider *_params_provider;
+    Utf8StringSet _scope_filter;
+    Utf8StringSet _already_evaluated_variables; // loop detection
+    int _role;
 
-  struct ScopedValue {
-    Utf8String scope;
-    QVariant value;
-    EvalFlags flags = AllFlagsClear;
-    operator const QVariant &() const { return value; }
-    bool isValid() const { return value.isValid(); }
+  public:
+    /** implicit constructor: can cast from const ParamsProvider * */
+    EvalContext(
+        const ParamsProvider *params_provider = nullptr,
+        const Utf8String &scope_expr = {}, int role = 0)
+      : _params_provider(params_provider), _role(role) {
+      if (!scope_expr.isEmpty())
+        setScopeFilter(scope_expr);
+    }
+    explicit EvalContext(const Utf8String &scope_expr, int role = 0)
+      : EvalContext(nullptr, scope_expr, role) { }
+    EvalContext(const EvalContext &that) = default;
+    inline operator const ParamsProvider *() const { return _params_provider; }
+    EvalContext &setParamsProvider(const ParamsProvider *params) {
+      _params_provider = params; return *this; }
+    LIBP6CORESHARED_EXPORT EvalContext &setScopeFilter(const Utf8String &scope_expr);
+    /** has no scope === any scope is acceptable */
+    inline bool hasNoScope() const { return _scope_filter.isEmpty(); }
+    /** has this scope or no scope === this scope is acceptable */
+    inline bool hasScopeOrNone(const Utf8String &scope) const {
+      return hasNoScope() || containsScope(scope); }
+    /** strictly contains this scope (sufficient but not necessary for the scope
+     *  to be accepetable) */
+    inline bool containsScope(const Utf8String &scope) const {
+      return _scope_filter.contains(scope); }
+//    /** hasn't this scope, may have no scope or other scopes */
+//    inline bool hasntScope(const Utf8String &scope) const {
+//      return !_scope_filter.contains(scope); }
+    //bool containsScope(const Utf8String &scope) const {
+    //  return _scope_filter.contains(scope); }
+    //const Utf8StringSet &scopeFilter() const { return _scope_filter; }
+    EvalContext &addVariable(const Utf8String &key) {
+      _already_evaluated_variables.insert(key); return *this; }
+    bool containsVariable(const Utf8String &key) const {
+      return _already_evaluated_variables.contains(key); }
+    LIBP6CORESHARED_EXPORT const Utf8String toUtf8() const;
   };
 
   PercentEvaluator() = delete;
@@ -78,22 +111,16 @@ public:
    *  anything before or after, the param value will be returned as is, and so
    *  can be a QVariant of another type.
    *
-   *  @param context is an evaluation context, can be null (only contextless
-   *         function like %=date will be available for evaluation)
-   *  @param alreadyEvaluated used for loop detections, must not be null */
-  [[nodiscard]] static const ScopedValue eval(
-      const Utf8String &expr, const ParamsProvider *context = 0);
-  /** Lower-level reentrant version of the method. */
-  [[nodiscard]] static inline const ScopedValue eval(
-      const Utf8String &expr, const ParamsProvider *context,
-      Utf8StringSet *alreadyEvaluated) {
+   *  @param context is an evaluation context, can be empty (only contextless
+   *         function like %=date will be available for evaluation) */
+  [[nodiscard]] static inline const QVariant eval(
+      const Utf8String &expr, const EvalContext context = {}) {
     auto begin = expr.constData();
-    return eval(begin, begin+expr.size(), context, alreadyEvaluated);
+    return eval(begin, begin+expr.size(), context);
   }
-  /** Even lower-level reentrant version of the method with char* params. */
-  [[nodiscard]] static const ScopedValue eval(
-      const char *expr, const char *end, const ParamsProvider *context,
-      Utf8StringSet *alreadyEvaluated);
+  /** Lower level version of the method with char* params. */
+  [[nodiscard]] static const QVariant eval(
+      const char *expr, const char *end, const EvalContext &context = {});
   /** Low-level %-less key evaluation.
    *
    *  Kind equivalent to eval("%{"+key+"}") without the overhead.
@@ -104,16 +131,13 @@ public:
    *  eval_key("=date", 0) -> current date time without any context
    *  eval_key("'foo") -> "foo" because ' escapes all the remaining
    *
-   *  @param key can begin with a scope specifier, e.g. "[bar]foo"
+   *  @param key can begin with a scope specifier, e.g. "[bar]foo" (in which
+   *         case it will override the one in context)
    *  @param context is an evaluation context, can be null (only contextless
    *         function like %=date will be available for evaluation)
    *  @param alreadyEvaluated used for loop detections, must not be null */
-  [[nodiscard]] static const ScopedValue eval_key(
-      const Utf8String &key, const ParamsProvider *context = 0);
-  /** Lower-level reentrant version of the method. */
-  [[nodiscard]] static const ScopedValue eval_key(
-      const Utf8String &key, const ParamsProvider *context,
-      Utf8StringSet *already_evaluated);
+  [[nodiscard]] static const QVariant eval_key(
+      const Utf8String &key, const EvalContext &context = {});
 
   // data conversion
   /** Evaluate and then convert result to utf8 text.
@@ -123,35 +147,26 @@ public:
    *  @param alreadyEvaluated used for loop detections, must not be null */
   [[nodiscard]] inline static Utf8String eval_utf8(
       const Utf8String &expr, const Utf8String &def = {},
-      const ParamsProvider *context = 0) {
+      const EvalContext context = {}) {
     QVariant v = eval(expr, context);
     return v.isValid() ? Utf8String(v) : def;
   }
-  /** Lower-level reentrant version of the method. */
   [[nodiscard]] inline static Utf8String eval_utf8(
-      const Utf8String &expr, const ParamsProvider *context,
-      Utf8StringSet *alreadyEvaluated, const Utf8String &def = {}) {
-    QVariant v = eval(expr, context, alreadyEvaluated);
-    return v.isValid() ? Utf8String(v) : def;
-  }
+      const Utf8String &expr, const EvalContext context) {
+    return eval_utf8(expr, {}, context); }
   /** Evaluate and then convert result to utf16 text.
    *
-   *  @param context is an evaluation context, can be null (only contextless
-   *         function like %=date will be available for evaluation)
-   *  @param alreadyEvaluated used for loop detections, must not be null */
+   *  @param context is an evaluation context, can be empty (only contextless
+   *         function like %=date will be available for evaluation) */
   [[nodiscard]] inline static QString eval_string(
       const Utf8String &expr, const QString &def = {},
-      const ParamsProvider *context = 0) {
+      const EvalContext context = {}) {
     QVariant v = eval(expr, context);
     return v.isValid() ? v.toString() : def;
   }
-  /** Lower-level reentrant version of the method. */
   [[nodiscard]] inline static QString eval_string(
-      const Utf8String &expr, const ParamsProvider *context,
-      Utf8StringSet *alreadyEvaluated, const QString &def = {}) {
-    QVariant v = eval(expr, context, alreadyEvaluated);
-    return v.isValid() ? v.toString() : def;
-  }
+      const Utf8String &expr, const EvalContext context) {
+    return eval_string(expr, {}, context); }
   /** Evaluate and then convert result to number (i.e. floating, integer or
    *  boolean).
    *
@@ -161,14 +176,13 @@ public:
    *  (kbm...) suffixes are supported).
    *
    *  @see Utf8String::toNumber<>
-   *  @param context is an evaluation context, can be null (only contextless
-   *         function like %=date will be available for evaluation)
-   *  @param alreadyEvaluated used for loop detections, must not be null */
+   *  @param context is an evaluation context, can be empty (only contextless
+   *         function like %=date will be available for evaluation) */
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
   [[nodiscard]] inline static T eval_number(
       const Utf8String &expr, const T &def = {},
-      const ParamsProvider *context = 0, bool *ok = nullptr)  {
-    QVariant v = eval(expr, context);
+      const EvalContext context = {}, bool *ok = nullptr)  {
+    auto v = eval(expr, context);
     auto mtid = v.metaType().id();
     // text types and types not convertible to a number are for Utf8String
     if (!v.canConvert<T>() || mtid == qMetaTypeId<Utf8String>()
@@ -178,22 +192,10 @@ public:
       *ok = true;
     return v.value<T>();
   }
-  /** Lower-level reentrant version of the methods. */
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
   [[nodiscard]] inline static T eval_number(
-      const Utf8String &expr, const ParamsProvider *context,
-      Utf8StringSet *alreadyEvaluated, const T &def = {},
-      bool *ok = nullptr) {
-      QVariant v = eval(expr, context, alreadyEvaluated);
-      auto mtid = v.metaType().id();
-      // text types and types not convertible to a number are for Utf8String
-      if (!v.canConvert<T>() || mtid == qMetaTypeId<Utf8String>()
-          || mtid == QMetaType::QString || mtid == QMetaType::QByteArray)
-        return Utf8String(v).toNumber<T>(ok, def);
-      if (ok)
-        *ok = true;
-      return v.value<T>();
-    }
+      const Utf8String &expr, const EvalContext context, bool *ok = nullptr) {
+    return eval_number<T>(expr, {}, context, ok); }
 
   // escape and matching patterns
   /** Escape all characters in string so that they no longer have special
@@ -229,9 +231,10 @@ public:
 };
 
 QDebug LIBP6CORESHARED_EXPORT operator<<(
-    QDebug dbg, const PercentEvaluator::ScopedValue &s);
+    QDebug dbg, const PercentEvaluator::EvalContext &c);
 
 LogHelper LIBP6CORESHARED_EXPORT operator<<(
-    LogHelper lh, const PercentEvaluator::ScopedValue &s);
+    LogHelper lh, const PercentEvaluator::EvalContext &c);
+
 
 #endif // PERCENTEVALUATOR_H

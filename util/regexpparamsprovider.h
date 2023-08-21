@@ -31,8 +31,9 @@ public:
   void setMatch(QRegularExpressionMatch  match) { _match = match; }
   using ParamsProvider::paramValue;
   const QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def) const override;
-  const Utf8StringSet paramKeys() const override;
+      const Utf8String &key, const QVariant &def = {},
+      const EvalContext &context = {}) const override;
+  const Utf8StringSet paramKeys(const EvalContext &context = {}) const override;
   const Utf8String paramScope() const override;
   RegexpParamsProvider &setScope(Utf8String scope) {
     _scope = scope; return *this; }

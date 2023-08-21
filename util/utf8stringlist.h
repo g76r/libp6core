@@ -49,15 +49,17 @@ public:
     return QStringList(cbegin(), cend()); }
   QByteArrayList toByteArrayList() const {
     return QByteArrayList(cbegin(), cend()); }
-  inline Utf8StringSet toSet() const;
+  Utf8StringSet toSet() const;
   inline Utf8StringList toSortedDeduplicatedList() const;
   std::set<Utf8String> toStdSet() const {
     return std::set<Utf8String>(cbegin(), cend()); }
   /** Return first string as value 1 and so on. Return join(' ') as value 0. */
   const QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def) const override;
+      const Utf8String &key, const QVariant &def = {},
+      const ParamsProvider::EvalContext &context = {}) const override;
   /** Return numbers from 0 to size(). */
-  const Utf8StringSet paramKeys() const override;
+  const Utf8StringSet paramKeys(
+      const ParamsProvider::EvalContext &context = {}) const override;
 };
 
 Q_DECLARE_METATYPE(Utf8StringList)

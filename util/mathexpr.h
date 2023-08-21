@@ -14,7 +14,7 @@
 #ifndef MATHEXPR_H
 #define MATHEXPR_H
 
-#include "paramsprovider.h"
+#include "percentevaluator.h"
 #include "log/log.h"
 
 class MathExprData;
@@ -23,6 +23,8 @@ class LIBP6CORESHARED_EXPORT MathExpr {
   QSharedDataPointer<MathExprData> d;
 
 public:
+  using EvalContext = PercentEvaluator::EvalContext;
+
   enum MathDialect { Infix, CharacterSeparatedRpn };
   MathExpr(const Utf8String expr, MathDialect dialect);
   MathExpr() : MathExpr(Utf8String(), Infix) { }
@@ -31,13 +33,8 @@ public:
   ~MathExpr();
   bool isValid() const { return !d; }
   const Utf8String expr() const;
-  const QVariant evaluate(
-    const ParamsProvider *context, const QVariant &defaultValue,
-    Utf8StringSet *alreadyEvaluated) const;
-  inline const QVariant evaluate(
-    const ParamsProvider *context = 0,
-    const QVariant &defaultValue = QVariant()) const {
-    Utf8StringSet ae; return evaluate(context, defaultValue, &ae); }
+  const QVariant eval(
+      const EvalContext &context, const QVariant &def) const;
 };
 
 Q_DECLARE_METATYPE(MathExpr)

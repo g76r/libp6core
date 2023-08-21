@@ -18,6 +18,8 @@
 #include <QRegularExpression>
 #include "util/percentevaluator.h"
 
+using EvalContext = MathExpr::EvalContext;
+
 namespace {
 
 static const auto _defaultReOpts =
@@ -28,13 +30,11 @@ static const auto _defaultReOpts =
 class Operand;
 
 using OperandEvaluator = std::function<QVariant(
-  const ParamsProvider *context,
-  Utf8StringSet *alreadyEvaluated)>;
+  const EvalContext &context)>;
 
 using OperatorEvaluator = std::function<QVariant(
   QList<Operand> args,
-  const ParamsProvider *context,
-  Utf8StringSet *alreadyEvaluated)>;
+  const EvalContext &context)>;
 
 class Operand {
   OperandEvaluator _evaluator;
@@ -45,29 +45,25 @@ class Operand {
 public:
   // constant (incl. default)
   explicit Operand(QVariant value = QVariant())
-    : Operand([value](const ParamsProvider *, Utf8StringSet *) {
+    : Operand([value](const EvalContext &) {
     //qDebug() << "Operand constant " << value;
     return value;
   }) { }
   // variable
   Operand(const Utf8String &key, const QVariant &defaultValue)
-    : Operand([key, defaultValue](
-              const ParamsProvider *context,
-              Utf8StringSet *alreadyEvaluated) {
+    : Operand([key, defaultValue](const EvalContext &context) {
     //qDebug() << "Operand variable " << key << " " << !!context;
-    auto v = PercentEvaluator::eval_key(key, context, alreadyEvaluated);
+    auto v = PercentEvaluator::eval_key(key, context);
     return v.isValid() ? v : defaultValue;
   }) { }
   // operator
   Operand(QList<Operand> args, OperatorEvaluator evaluator)
-    : Operand([args, evaluator](const ParamsProvider *context,
-              Utf8StringSet *alreadyEvaluated) {
+    : Operand([args, evaluator](const EvalContext &context) {
     //qDebug() << "Operand evaluator " << !!context << args.size();
-    return evaluator(args, context, alreadyEvaluated);
+    return evaluator(args, context);
   }) { }
-  QVariant operator()(const ParamsProvider *context,
-                      Utf8StringSet *alreadyEvaluated) const {
-    return _evaluator(context, alreadyEvaluated);
+  QVariant operator()(const EvalContext &context) const {
+    return _evaluator(context);
   }
 };
 
@@ -82,118 +78,101 @@ struct OperatorDef {
 };
 
 static inline QPartialOrdering compareTwoOperands(
-  QList<Operand> args, const ParamsProvider *context,
-  Utf8StringSet *alreadyEvaluated, bool anyStringRepresentation) {
-  auto x = args.value(0)(context, alreadyEvaluated);
-  auto y = args.value(1)(context, alreadyEvaluated);
+  QList<Operand> args, const EvalContext &context,
+    bool anyStringRepresentation) {
+  auto x = args.value(0)(context);
+  auto y = args.value(1)(context);
   auto po = MathUtils::compareQVariantAsNumber(x, y, anyStringRepresentation);
   return po;
 }
 
 RadixTree<OperatorDef> operatordefs {
-  { "??*", { 2, 2, true, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto x = args.value(0)(context, alreadyEvaluated);
-        auto y = args.value(1)(context, alreadyEvaluated);
+  { "??*", { 2, 2, true, [](QList<Operand> args, const EvalContext &context) {
+        auto x = args.value(0)(context);
+        auto y = args.value(1)(context);
         // null or invalid coalescence
         return !x.isValid() || x.isNull() ? y : x;
       } }, true },
-  { "??", { 2, 2, true, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto x = args.value(0)(context, alreadyEvaluated);
-        auto y = args.value(1)(context, alreadyEvaluated);
+  { "??", { 2, 2, true, [](QList<Operand> args, const EvalContext &context) {
+        auto x = args.value(0)(context);
+        auto y = args.value(1)(context);
         // null, invalid or empty coalescence
         return !x.isValid() || x.isNull()
             || x.toString().isEmpty() ? y : x;
       } }, true },
-  { "!", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto x = args.value(0)(context, alreadyEvaluated).toBool();
+  { "!", { 1, 3, true, [](QList<Operand> args, const EvalContext &context) {
+        auto x = args.value(0)(context).toBool();
         return QVariant(!x);
       } }, true },
-  { "!!", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto x = args.value(0)(context, alreadyEvaluated).toBool();
+  { "!!", { 1, 3, true, [](QList<Operand> args, const EvalContext &context) {
+        auto x = args.value(0)(context).toBool();
         return QVariant(x);
       } }, true },
-  { "!*", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto x = args.value(0)(context, alreadyEvaluated);
+  { "!*", { 1, 3, true, [](QList<Operand> args, const EvalContext &context) {
+        auto x = args.value(0)(context);
         // either invalid or null
         return !x.isValid() || x.isNull();
       } }, true },
-  { "?*", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto x = args.value(0)(context, alreadyEvaluated);
+  { "?*", { 1, 3, true, [](QList<Operand> args, const EvalContext &context) {
+        auto x = args.value(0)(context);
         // neither invalid nor null
         return x.isValid() && !x.isNull();
       } }, true },
-  { "!-", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto x = args.value(0)(context, alreadyEvaluated);
+  { "!-", { 1, 3, true, [](QList<Operand> args, const EvalContext &context) {
+        auto x = args.value(0)(context);
         // either invalid, null or empty
         return !x.isValid() || x.isNull() || x.toString().isEmpty();
       } }, true },
-  { "?-", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto x = args.value(0)(context, alreadyEvaluated);
+  { "?-", { 1, 3, true, [](QList<Operand> args, const EvalContext &context) {
+        auto x = args.value(0)(context);
         // neither invalid, null nor empty
         return x.isValid() && !x.isNull() && !x.toString().isEmpty();
       } }, true },
-  { "~", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
+  { "~", { 1, 3, true, [](QList<Operand> args, const EvalContext &context) {
         bool ok;
-        auto x = args.value(0)(context, alreadyEvaluated).toLongLong(&ok);
+        auto x = args.value(0)(context).toLongLong(&ok);
         return ok ? QVariant(~x) : QVariant();
       } }, true },
-  { "~~", { 1, 3, true, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
+  { "~~", { 1, 3, true, [](QList<Operand> args, const EvalContext &context) {
         bool ok;
-        auto x = args.value(0)(context, alreadyEvaluated).toLongLong(&ok);
+        auto x = args.value(0)(context).toLongLong(&ok);
         return ok ? QVariant(x) : QVariant();
       } }, true },
-  { "*", { 2, 5, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
+  { "*", { 2, 5, false, [](QList<Operand> args,const EvalContext &context) {
         return MathUtils::mulQVariantAsNumber(
-              args.value(0)(context, alreadyEvaluated),
-              args.value(1)(context, alreadyEvaluated));
+              args.value(0)(context),
+              args.value(1)(context));
       } }, true },
-  { "/", { 2, 5, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
+  { "/", { 2, 5, false, [](QList<Operand> args, const EvalContext &context) {
         return MathUtils::divQVariantAsNumber(
-              args.value(0)(context, alreadyEvaluated),
-              args.value(1)(context, alreadyEvaluated));
+              args.value(0)(context),
+              args.value(1)(context));
       } }, true },
   { { "%", "*/*"},
-    { 2, 5, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
+    { 2, 5, false, [](QList<Operand> args, const EvalContext &context) {
         return MathUtils::modQVariantAsNumber(
-              args.value(0)(context, alreadyEvaluated),
-              args.value(1)(context, alreadyEvaluated));
+              args.value(0)(context),
+              args.value(1)(context));
       } }, true },
-  { "+", { 2, 6, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
+  { "+", { 2, 6, false, [](QList<Operand> args, const EvalContext &context) {
         return MathUtils::addQVariantAsNumber(
-              args.value(0)(context, alreadyEvaluated),
-              args.value(1)(context, alreadyEvaluated));
+              args.value(0)(context),
+              args.value(1)(context));
       } }, true },
-  { "-", { 2, 6, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
+  { "-", { 2, 6, false, [](QList<Operand> args, const EvalContext &context) {
         return MathUtils::subQVariantAsNumber(
-              args.value(0)(context, alreadyEvaluated),
-              args.value(1)(context, alreadyEvaluated));
+              args.value(0)(context),
+              args.value(1)(context));
       } }, true },
-  { "..", { 2, 6, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto x = args.value(0)(context, alreadyEvaluated).toString();
-        auto y = args.value(1)(context, alreadyEvaluated).toString();
+  { "..", { 2, 6, false, [](QList<Operand> args, const EvalContext &context) {
+        auto x = args.value(0)(context).toString();
+        auto y = args.value(1)(context).toString();
         return x+y;
       } }, true },
-  { "<?", { 2, 7, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto x = args.value(0)(context, alreadyEvaluated);
-        auto y = args.value(1)(context, alreadyEvaluated);
-        auto po = compareTwoOperands(args, context, alreadyEvaluated, true);
+  { "<?", { 2, 7, false, [](QList<Operand> args, const EvalContext &context) {
+        auto x = args.value(0)(context);
+        auto y = args.value(1)(context);
+        auto po = compareTwoOperands(args, context, true);
         if (po == QPartialOrdering::Less)
           return x;
         if (po == QPartialOrdering::Equivalent)
@@ -202,11 +181,10 @@ RadixTree<OperatorDef> operatordefs {
           return y;
         return QVariant{}; // this should never happen
       } }, true },
-  { ">?", { 2, 7, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto x = args.value(0)(context, alreadyEvaluated);
-        auto y = args.value(1)(context, alreadyEvaluated);
-        auto po = compareTwoOperands(args, context, alreadyEvaluated, true);
+  { ">?", { 2, 7, false, [](QList<Operand> args, const EvalContext &context) {
+        auto x = args.value(0)(context);
+        auto y = args.value(1)(context);
+        auto po = compareTwoOperands(args, context, true);
         if (po == QPartialOrdering::Less)
           return y;
         if (po == QPartialOrdering::Equivalent)
@@ -215,11 +193,10 @@ RadixTree<OperatorDef> operatordefs {
           return x;
         return QVariant{}; // this should never happen
       } }, true },
-  { "<?*", { 2, 7, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto x = args.value(0)(context, alreadyEvaluated);
-        auto y = args.value(1)(context, alreadyEvaluated);
-        auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
+  { "<?*", { 2, 7, false, [](QList<Operand> args, const EvalContext &context) {
+        auto x = args.value(0)(context);
+        auto y = args.value(1)(context);
+        auto po = compareTwoOperands(args, context, false);
         if (po == QPartialOrdering::Less)
           return x;
         if (po == QPartialOrdering::Equivalent)
@@ -228,11 +205,10 @@ RadixTree<OperatorDef> operatordefs {
           return y;
         return QVariant{};
       } }, true },
-  { ">?*", { 2, 7, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto x = args.value(0)(context, alreadyEvaluated);
-        auto y = args.value(1)(context, alreadyEvaluated);
-        auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
+  { ">?*", { 2, 7, false, [](QList<Operand> args, const EvalContext &context) {
+        auto x = args.value(0)(context);
+        auto y = args.value(1)(context);
+        auto po = compareTwoOperands(args, context, false);
         if (po == QPartialOrdering::Less)
           return y;
         if (po == QPartialOrdering::Equivalent)
@@ -241,9 +217,8 @@ RadixTree<OperatorDef> operatordefs {
           return x;
         return QVariant{};
       } }, true },
-  { "<=>", { 2, 8, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
+  { "<=>", { 2, 8, false, [](QList<Operand> args, const EvalContext &context) {
+        auto po = compareTwoOperands(args, context, false);
         if (po == QPartialOrdering::Less)
           return QVariant(-1);
         if (po == QPartialOrdering::Equivalent)
@@ -252,9 +227,8 @@ RadixTree<OperatorDef> operatordefs {
           return QVariant(1);
         return QVariant{};
       } }, true },
-  { "<=", { 2, 9, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
+  { "<=", { 2, 9, false, [](QList<Operand> args, const EvalContext &context) {
+        auto po = compareTwoOperands(args, context, false);
         if (po == QPartialOrdering::Less)
           return QVariant(true);
         if (po == QPartialOrdering::Equivalent)
@@ -263,9 +237,8 @@ RadixTree<OperatorDef> operatordefs {
           return QVariant(false);
         return QVariant{};
       } }, true },
-  { "<", { 2, 9, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
+  { "<", { 2, 9, false, [](QList<Operand> args, const EvalContext &context) {
+        auto po = compareTwoOperands(args, context, false);
         if (po == QPartialOrdering::Less)
           return QVariant(true);
         if (po == QPartialOrdering::Equivalent)
@@ -274,9 +247,8 @@ RadixTree<OperatorDef> operatordefs {
           return QVariant(false);
         return QVariant{};
       } }, true },
-  { ">=", { 2, 9, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
+  { ">=", { 2, 9, false, [](QList<Operand> args, const EvalContext &context) {
+        auto po = compareTwoOperands(args, context, false);
         if (po == QPartialOrdering::Less)
           return QVariant(false);
         if (po == QPartialOrdering::Equivalent)
@@ -285,9 +257,8 @@ RadixTree<OperatorDef> operatordefs {
           return QVariant(true);
         return QVariant{};
       } }, true },
-  { ">", { 2, 9, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
+  { ">", { 2, 9, false, [](QList<Operand> args, const EvalContext &context) {
+        auto po = compareTwoOperands(args, context, false);
         if (po == QPartialOrdering::Less)
           return QVariant(false);
         if (po == QPartialOrdering::Equivalent)
@@ -296,9 +267,8 @@ RadixTree<OperatorDef> operatordefs {
           return QVariant(true);
         return QVariant{};
       } }, true },
-  { "==*", { 2, 10, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
+  { "==*", { 2, 10, false, [](QList<Operand> args, const EvalContext &context) {
+        auto po = compareTwoOperands(args, context, false);
         if (po == QPartialOrdering::Less)
           return QVariant(false);
         if (po == QPartialOrdering::Equivalent)
@@ -307,9 +277,8 @@ RadixTree<OperatorDef> operatordefs {
           return QVariant(false);
         return QVariant{};
       } }, true },
-  { "!=*", { 2, 10, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto po = compareTwoOperands(args, context, alreadyEvaluated, false);
+  { "!=*", { 2, 10, false, [](QList<Operand> args, const EvalContext &context) {
+        auto po = compareTwoOperands(args, context, false);
         if (po == QPartialOrdering::Less)
           return QVariant(true);
         if (po == QPartialOrdering::Equivalent)
@@ -318,9 +287,8 @@ RadixTree<OperatorDef> operatordefs {
           return QVariant(true);
         return QVariant{};
       } }, true },
-  { "==", { 2, 10, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto po = compareTwoOperands(args, context, alreadyEvaluated, true);
+  { "==", { 2, 10, false, [](QList<Operand> args, const EvalContext &context) {
+        auto po = compareTwoOperands(args, context, true);
         if (po == QPartialOrdering::Less)
           return QVariant(false);
         if (po == QPartialOrdering::Equivalent)
@@ -329,9 +297,8 @@ RadixTree<OperatorDef> operatordefs {
           return QVariant(false);
         return QVariant{}; // this should never happen
       } }, true },
-  { "!=", { 2, 10, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto po = compareTwoOperands(args, context, alreadyEvaluated, true);
+  { "!=", { 2, 10, false, [](QList<Operand> args, const EvalContext &context) {
+        auto po = compareTwoOperands(args, context, true);
         if (po == QPartialOrdering::Less)
           return QVariant(true);
         if (po == QPartialOrdering::Equivalent)
@@ -340,56 +307,49 @@ RadixTree<OperatorDef> operatordefs {
           return QVariant(true);
         return QVariant{}; // this should never happen
       } }, true },
-  { "=~", { 2, 10, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto x = args.value(0)(context, alreadyEvaluated).toString();
-        auto y = args.value(1)(context, alreadyEvaluated);
+  { "=~", { 2, 10, false, [](QList<Operand> args, const EvalContext &context) {
+        auto x = args.value(0)(context).toString();
+        auto y = args.value(1)(context);
         QRegularExpression re =
             (y.metaType().id() == QMetaType::QRegularExpression)
             ? y.toRegularExpression()
             : QRegularExpression(y.toString(), _defaultReOpts);
         return QVariant(re.match(x).hasMatch());
       } }, true },
-  { "!=~", { 2, 10, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto x = args.value(0)(context, alreadyEvaluated).toString();
-        auto y = args.value(1)(context, alreadyEvaluated);
+  { "!=~", { 2, 10, false, [](QList<Operand> args, const EvalContext &context) {
+        auto x = args.value(0)(context).toString();
+        auto y = args.value(1)(context);
         QRegularExpression re =
             (y.metaType().id() == QMetaType::QRegularExpression)
             ? y.toRegularExpression()
             : QRegularExpression(y.toString(), _defaultReOpts);
         return QVariant(re.isValid() && !re.match(x).hasMatch());
       } }, true },
-  { "&&", { 2, 14, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
+  { "&&", { 2, 14, false, [](QList<Operand> args, const EvalContext &context) {
         return MathUtils::andQVariantAsNumber(
-              args.value(0)(context, alreadyEvaluated),
-              args.value(1)(context, alreadyEvaluated));
+              args.value(0)(context),
+              args.value(1)(context));
       } }, true },
-  { "^^", { 2, 15, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
+  { "^^", { 2, 15, false, [](QList<Operand> args, const EvalContext &context) {
         return MathUtils::xorQVariantAsNumber(
-              args.value(0)(context, alreadyEvaluated),
-              args.value(1)(context, alreadyEvaluated));
+              args.value(0)(context),
+              args.value(1)(context));
       } }, true },
-  { "||", { 2, 16, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
+  { "||", { 2, 16, false, [](QList<Operand> args, const EvalContext &context) {
         return MathUtils::orQVariantAsNumber(
-              args.value(0)(context, alreadyEvaluated),
-              args.value(1)(context, alreadyEvaluated));
+              args.value(0)(context),
+              args.value(1)(context));
       } }, true },
-  { "?:", { 3, 17, false, [](QList<Operand> args, const ParamsProvider *context,
-          Utf8StringSet *alreadyEvaluated) {
-        auto x = args.value(0)(context, alreadyEvaluated).toBool();
-        return x ? args.value(1)(context, alreadyEvaluated)
-                 : args.value(2)(context, alreadyEvaluated);
+  { "?:", { 3, 17, false, [](QList<Operand> args, const EvalContext &context) {
+        auto x = args.value(0)(context).toBool();
+        return x ? args.value(1)(context)
+                 : args.value(2)(context);
       } }, true },
   { { "<null>", "<nil>" },
-    { 0, 0, false, [](QList<Operand>, const ParamsProvider *, Utf8StringSet *) {
+    { 0, 0, false, [](QList<Operand>, const EvalContext &) {
         return QVariant{};
       } }, true },
-  { "<pi>",  { 0, 0, false, [](QList<Operand>, const ParamsProvider *,
-          Utf8StringSet *) {
+  { "<pi>",  { 0, 0, false, [](QList<Operand>, const EvalContext &) {
         return QVariant(3.141592653589793238462643383279502884);
       } }, true },
 };
@@ -468,9 +428,8 @@ public:
     }
     return d;
   }
-  inline QVariant evaluate(const ParamsProvider *context,
-                           Utf8StringSet *alreadyEvaluated) const {
-    return _root(context, alreadyEvaluated);
+  inline QVariant eval(const EvalContext &context) const {
+    return _root(context);
   }
   inline Utf8String expr() const { return _expr; }
 };
@@ -491,10 +450,9 @@ MathExpr &MathExpr::operator=(const MathExpr &other) {
 MathExpr::~MathExpr() {
 }
 
-const QVariant MathExpr::evaluate(
-    const ParamsProvider *context, const QVariant &defaultValue,
-    Utf8StringSet *alreadyEvaluated) const {
-  return d ? d->evaluate(context, alreadyEvaluated) : defaultValue;
+const QVariant MathExpr::eval(
+    const EvalContext &context, const QVariant &def) const {
+  return d ? d->eval(context) : def;
 }
 
 const Utf8String MathExpr::expr() const {

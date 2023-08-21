@@ -69,15 +69,7 @@ public:
    */
   static const QString toMultifieldSpecifiedCustomTimestamp(
       const QDateTime &dt, const Utf8String &multifieldSpecifiedFormat,
-      const ParamsProvider *context,
-      Utf8StringSet *alreadyEvaluated);
-  static inline const QString toMultifieldSpecifiedCustomTimestamp(
-    const QDateTime &dt, const Utf8String &multifieldSpecifiedFormat,
-    const ParamsProvider *context = 0) {
-    Utf8StringSet ae;
-    return toMultifieldSpecifiedCustomTimestamp(
-      dt, multifieldSpecifiedFormat, context, &ae);
-  }
+      const ParamsProvider::EvalContext &context = {});
   /** Creates a QTimeZone from an ISO 8601 pattern.
    *  Returns UTC on "+00:00" "-00:00" and "Z".
    *  Returns UTC offset timezone on other "+-nn:nn" patterns.

@@ -16,6 +16,7 @@
 
 #include "filesystemhttphandler.h"
 #include "textview/textview.h"
+#include "util/utf8string.h"
 #include <QPointer>
 
 // LATER try to factorize code with HtmlItemDelegate

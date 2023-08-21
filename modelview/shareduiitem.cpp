@@ -72,7 +72,8 @@ QDebug operator<<(QDebug dbg, const SharedUiItem &i) {
 }
 
 const QVariant SharedUiItemData::paramRawValue(
-    const Utf8String &key, const QVariant &def) const {
+    const Utf8String &key, const QVariant &def,
+    const EvalContext &) const {
   auto section = uiSectionByName(key);
   if (section < 0)
     section = key.toNumber<int>(-1);
@@ -85,20 +86,23 @@ const QVariant SharedUiItemData::paramRawValue(
 }
 
 const QVariant SharedUiItem::paramRawValue(
-    const Utf8String &key, const QVariant &def) const {
+    const Utf8String &key, const QVariant &def,
+    const EvalContext &context) const {
   if (!_data)
     return {};
-  return _data->paramRawValue(key, def);
+  return _data->paramRawValue(key, def, context);
 }
 
 const Utf8String SharedUiItem::paramRawUtf8(
-    const Utf8String &key, const Utf8String &def) const {
+    const Utf8String &key, const Utf8String &def,
+    const EvalContext &context) const {
   if (!_data)
     return {};
-  return _data->paramRawUtf8(key, def);
+  return _data->paramRawUtf8(key, def, context);
 }
 
-const Utf8StringSet SharedUiItemData::paramKeys() const {
+const Utf8StringSet SharedUiItemData::paramKeys(
+    const EvalContext &) const {
   Utf8StringSet keys { "id"_u8, "id_qualifier"_u8, "qualified_id"_u8 };
   int count = uiSectionCount();
   for (int section = 0; section < count; ++section) {
@@ -111,25 +115,25 @@ const Utf8StringSet SharedUiItemData::paramKeys() const {
   return keys;
 }
 
-const Utf8StringSet SharedUiItem::paramKeys() const {
+const Utf8StringSet SharedUiItem::paramKeys(const EvalContext &context) const {
   if (!_data)
     return {};
-  return _data->paramKeys();
+  return _data->paramKeys(context);
 }
 
-bool SharedUiItem::paramContains(const Utf8String &key) const {
+bool SharedUiItem::paramContains(
+    const Utf8String &key, const EvalContext &context) const {
   if (!_data)
     return {};
-  return _data->paramContains(key);
+  return _data->paramContains(key, context);
 }
 
 const Utf8String SharedUiItem::paramUtf8(
     const Utf8String &key, const Utf8String &def,
-    const ParamsProvider *context,
-    Utf8StringSet *alreadyEvaluated) const {
+    const EvalContext &context) const {
   if (!_data)
     return {};
-  return _data->paramUtf8(key, def, context, alreadyEvaluated);
+  return _data->paramUtf8(key, def, context);
 }
 
 const Utf8String SharedUiItemData::paramScope() const {
@@ -140,13 +144,6 @@ const Utf8String SharedUiItem::paramScope() const {
   if (!_data)
     return {};
   return _data->paramScope();
-}
-
-const SharedUiItem::ScopedValue SharedUiItem::paramScopedRawValue(
-    const Utf8String &key, const QVariant &def) const {
-  if (!_data)
-    return {};
-  return _data->paramScopedRawValue(key, def);
 }
 
 #if __cpp_impl_three_way_comparison >= 201711

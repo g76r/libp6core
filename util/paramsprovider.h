@@ -22,8 +22,8 @@ class ParamSet;
  *
  *  Implementations MUST override paramRawValue and paramKeys, they MAY also
  *  override some other virtual methods for performance reasons (e.g. paramValue
- *  and paramUtf8) or to provide added value (e.g. paramScope and
- *  paramScopedXXX which give no scope information by default).
+ *  and paramUtf8) or to provide added value (e.g. paramScope which give no
+ *  scope information by default).
  *
  *  @see ParamSet
  *  @see ParamsProviderMerger
@@ -34,7 +34,7 @@ class LIBP6CORESHARED_EXPORT ParamsProvider {
   static ParamsProvider *_environment, *_empty;
 
 public:
-  using ScopedValue = PercentEvaluator::ScopedValue;
+  using EvalContext = PercentEvaluator::EvalContext;
 
 public:
   ParamsProvider() = default;
@@ -46,22 +46,34 @@ public:
    *  MUST be reimplemented.
    *  Default: always return def. */
   [[nodiscard]] virtual const QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def = {}) const = 0;
+      const Utf8String &key, const QVariant &def = {},
+      const EvalContext &context = {}) const = 0;
+  /** Convenience method. */
+  [[nodiscard]] inline const QVariant paramRawValue(
+      const Utf8String &key, const EvalContext &context) const {
+    return paramRawValue(key, {}, context); }
   /** Same as paramRawValue with utf8.
    *  CAN be overriden for performance (for implementation dealing only with
    *  text, without QVariant overhead).
    *  Default: call paramRawValue() */
   [[nodiscard]] virtual const Utf8String paramRawUtf8(
-      const Utf8String &key, const Utf8String &def = {}) const;
+      const Utf8String &key, const Utf8String &def = {},
+      const EvalContext &context = {}) const;
+  /** Convenience method. */
+  [[nodiscard]] inline const Utf8String paramRawUtf8(
+      const Utf8String &key, const EvalContext &context) const {
+    return paramRawUtf8(key, {}, context); }
   /** Return list of param keys. Maybe expensive depending on implementation,
    *  call only if/when needed. Called by paramSnapshot().
    *  MUST be reimplemented.
    *  Default: return {} which, among other things, disables snapshots */
-  [[nodiscard]] virtual const Utf8StringSet paramKeys() const = 0;
+  [[nodiscard]] virtual const Utf8StringSet paramKeys(
+      const EvalContext &context = {}) const = 0;
   /** Return true if key is set.
    *  CAN be overriden for performance.
    *  Default: call paramRawValue(key).isValid() */
-  [[nodiscard]] virtual bool paramContains(const Utf8String &key) const;
+  [[nodiscard]] virtual bool paramContains(
+      const Utf8String &key, const EvalContext &context = {}) const;
 
   // %-evaluated values
   /** Return a parameter value.
@@ -69,39 +81,26 @@ public:
    *  alreadyEvaluated param.
    *  @param context is an evaluation context, uses this if null
    *  @param alreadyEvaluated used for loop detections, must not be null */
-  [[nodiscard]] const ScopedValue paramValue(
-      const Utf8String &key, const QVariant &defaultValue,
-      const ParamsProvider *context, Utf8StringSet *alreadyEvaluated) const;
-  /** Convenience method */
-  [[nodiscard]] const ScopedValue paramValue(
+  [[nodiscard]] const QVariant paramValue(
       const Utf8String &key, const QVariant &def = {},
-      const ParamsProvider *context = 0) const;
+      const EvalContext &context = {}) const;
   /** Convenience method */
-  [[nodiscard]] inline const ScopedValue paramValue(
-      const Utf8String &key, const ParamsProvider *context) const {
+  [[nodiscard]] inline const QVariant paramValue(
+      const Utf8String &key, const EvalContext &context) const {
     return paramValue(key, {}, context); }
 
   // utf8 %-evaluated values
-  /** Convenience method.
-   *  @param context is an evaluation context, uses this if null */
-  [[nodiscard]] const Utf8String paramUtf8(
-      const Utf8String &key, const Utf8String &def = {},
-      const ParamsProvider *context = 0) const;
-  /** Convenience method */
-  [[nodiscard]] inline const Utf8String paramUtf8(
-      const Utf8String &key, const ParamsProvider *context) const {
-    return paramUtf8(key, {}, context); }
-  /** Lower-level reentrant version of the method.
-   *
-   *  Default implem: calls paramValue().
+  /** Default implem: calls paramValue().
    *  Can be overloaded by ParamsProvider implementation that would have a
    *  more efficient way to get Utf8String than converting to and back from
-   *  QVariant through paramValue().
-   *
-   *  @param alreadyEvaluated used for loop detections, must not be null */
+   *  QVariant through paramValue(). */
   [[nodiscard]] virtual const Utf8String paramUtf8(
-      const Utf8String &key, const Utf8String &def,
-      const ParamsProvider *context, Utf8StringSet *alreadyEvaluated) const;
+      const Utf8String &key, const Utf8String &def = {},
+      const EvalContext &context = {}) const;
+  /** Convenience method */
+  [[nodiscard]] inline const Utf8String paramUtf8(
+      const Utf8String &key, const EvalContext &context) const {
+    return paramUtf8(key, {}, context); }
 
   // number %-evaluated values
   /** Evaluate and then convert result to a number type (i.e. floating, integer
@@ -121,53 +120,26 @@ public:
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
   [[nodiscard]] const T paramNumber(
       const Utf8String &key, const T &def,
-      const ParamsProvider *context, Utf8StringSet *alreadyEvaluated) const {
+      const EvalContext &context = {}) const {
     auto v = paramRawValue(key);
     auto mtid = v.metaType().id();
-    if (v.canConvert<T>() && mtid != QMetaType::QString
-        || mtid != QMetaType::QByteArray)
+    if (v.canConvert<T>() && mtid != qMetaTypeId<Utf8String>()
+        && mtid != QMetaType::QString && mtid != QMetaType::QByteArray)
       return v.value<T>(); // passing QVariant trough
     auto expr = Utf8String(v);
-    if (expr.isEmpty())
-      return def;
-    return PercentEvaluator::eval_number<T>(expr, context, alreadyEvaluated);
-  }
-  /** Convenience methods */
-  template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
-  [[nodiscard]] const T paramNumber(
-      const Utf8String &key, const T &def,
-      const ParamsProvider *context) const {
-    auto v = paramRawValue(key);
-    auto mtid = v.metaType().id();
-    if (v.canConvert<T>() && mtid != QMetaType::QString
-        && mtid != QMetaType::QByteArray)
-      return v.value<T>(); // passing QVariant trough
-    auto expr = Utf8String(v);
-    if (expr.isEmpty())
-      return def;
     return PercentEvaluator::eval_number<T>(expr, def, context);
   }
   /** Convenience methods */
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
   [[nodiscard]] const T paramNumber(
-      const Utf8String &key, const ParamsProvider *context) const {
+      const Utf8String &key, const EvalContext &context) const {
     return paramNumber<T>(key, {}, context); }
 
   // scope
   /** Return default scope, that is more or less a name or type for this
    *  ParamsProvider. e.g. "env", "customer:Customer123", "root", etc.
-   *  Can be null or empty.
-   *  Returned scoped values can have another scope (and they should for
-   *  provider implementations with hierarchical or aggregation semantics).
-   */
+   *  Can be null or empty (which is the same).  */
   [[nodiscard]] virtual const Utf8String paramScope() const;
-  /** Keep information of the parameter scope.
-   *  ParamsProvider implementation which aggregate several ParamsProvider
-   *  by hierarchical (ParamSet) or aggregation (ParamsProviderMerger) SHOULD
-   *  reimplement it.
-   *  Default: return { paramScoped(), paramRawValue() } if found, else { }. */
-  [[nodiscard]] virtual const ScopedValue paramScopedRawValue(
-      const Utf8String &key, const QVariant &def = {}) const;
 
   // system-wide (singleton) params providers
   /** Singleton wrapper to environment variables */
@@ -185,15 +157,14 @@ public:
 
   // temporary partial backward compatibility with old API
   // it's partial because for some method it's broken about inherit
-  // FIXME [[deprecated("evaluating with two sources (this,ctxt) is deprecated")]]
+  [[deprecated("evaluating with two sources (this,ctxt) is deprecated")]]
   const Utf8String evaluate(
       const Utf8String &key, const ParamsProvider *context = 0,
       Utf8StringSet *ae = 0) const;
-  // FIXME [[deprecated("inherit is broken, evaluating with two sources is deprecated")]]
-  const Utf8String evaluate(
-      const Utf8String &key, bool fake_inherit,
+  [[deprecated("evaluating with two sources (this,ctxt) is deprecated")]]
+  const Utf8String evaluate(const Utf8String &key, bool inherit,
       const ParamsProvider *context = 0, Utf8StringSet *ae = 0) const;
-  // FIXME [[deprecated("inherit is broken, split is a special case, do it elsewhere")]]
+  [[deprecated("split is a special case, do it elsewhere")]]
   Utf8StringList splitAndEvaluate(
       const Utf8String &key, const Utf8String &separators, bool fake_inherit,
       const ParamsProvider *context = 0, Utf8StringSet *ae = 0) const;
@@ -217,11 +188,12 @@ public:
       _params.insert(p.first, p.second);
   }
   [[nodiscard]] const QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def) const override;
-  [[nodiscard]] const Utf8StringSet paramKeys() const override;
-  [[nodiscard]] bool paramContains(const Utf8String &key) const override;
-  [[nodiscard]] const ScopedValue paramScopedRawValue(
-      const Utf8String &key, const QVariant &def) const override;
+      const Utf8String &key, const QVariant &def = {},
+      const EvalContext &context = {}) const override;
+  [[nodiscard]] const Utf8StringSet paramKeys(
+      const EvalContext &context = {}) const override;
+  [[nodiscard]] bool paramContains(
+      const Utf8String &key, const EvalContext &context = {}) const override;
   [[nodiscard]] const Utf8String paramScope() const override;
   SimpleParamsProvider &setScope(const Utf8String &scope) {
     _scope = scope; return *this; }

@@ -32,35 +32,67 @@ when needed (and can stay typed during functions evaluation, see %=rpn below).
 Detailed % syntax examples
 --------------------------
 
-*  "foo" -> "foo"
-*  "%foo" -> value of param "foo" as provided by context->paramRawValue("foo")
-*  "%{foo!}" -> same with param "foo!": allows special chars (excepted "}")
+*  `foo` -> "foo"
+*  `%foo` -> value of param "foo" as provided by context->paramRawValue("foo")
+*  `%{foo!}` -> same with param "foo!": allows special chars (excepted "}")
                 special chars are any ascii char other than a-zA-Z0-9_
-*  "%!foo" -> value of param "!foo": one leading special char is allowed
-*  "%[bar]foo -> value of param "foo" if and only if it's in "bar" scope
-*  "%{[bar]foo!}" -> same with special chars
-*  "%=date" -> calling function =date: there are contextless functions (i.e.
+*  `%!foo` -> value of param "!foo": one leading special char is allowed
+*  `%[bar]foo` -> value of param "foo" if and only if it's in "bar" scope
+*  `%{[bar]foo!}` -> same with special chars
+*  `%=date` -> calling function =date: there are contextless functions (i.e.
                defined inedependently of context-provided params) and by
                convention their name always begin with =
-*  "%{=date:YYYY}" -> current year in local timezone, using 4 digits
-*  "%éœ§越🥨" -> value of param "éœ§越🥨": chars outside ascii are not special
-*  "%{'foo}" -> "foo": a leading quote escapes param evaluation
-*  "%'foo" -> "foo": remember, one leading special char is allowed
-*  "%%" -> "%" : % escapes itself
-*  "%{=date:%format}" -> current date using format given by "format" param
-*  "%{=left:%{input}:3}" -> 3 left most utf8 characters of param "input"
-*  "%{=left:abcdef:3}" -> "abc"
-*  "%{=left:abcde{:3}" -> invalid: unpaired {} are not supported within {}
+*  `%{=date:YYYY}` -> current year in local timezone, using 4 digits
+*  `%éœ§越🥨` -> value of param "éœ§越🥨": chars outside ascii are not special
+*  `%{'foo}` -> "foo": a leading quote escapes param evaluation
+*  `%'foo` -> "foo": remember, one leading special char is allowed
+*  `%%` -> "%" : % escapes itself
+*  `%{=date:%format}` -> current date using format given by "format" param
+*  `%{=left:%{input}:3}` -> 3 left most utf8 characters of param "input"
+*  `%{=left:abcdef:3}` -> "abc"
+*  `%{=left:abcde{:3}` -> invalid: unpaired {} are not supported within {}
 
-Scopes
-------
+Scope and scope filters
+-----------------------
 
-If a scope is set then it behaves as a filter on ParamsProviders that allow it.
-For instance if you have a ParamSet with scope "employee" which parent is a
-ParamSet with scope "dept", and both ParamSets have a "foo" param, then if
-you ask, in the context of the employee ParamSet, for `%foo` you'll get the
-value for the employee whereas for `%[dept]foo` you'll get the value for the
-dept.
+Scope and scope filters can be freely ignored, the whole percent evaluation
+system works fine without any scope filter at all.
+
+A scope name can contain any unicode character excepted comma (,), percent (%),
+exclamation mark (!), colon (:), dot (.) and square brackets ([]).
+Clearly curly brackets, equal or spaces are not a good idea if you want to
+keep your code and logs readable, but they are supported, and so are non ascii
+unicode characters (like in keys).
+
+Filtering on scope is implementation-dependant. For instance:
+* SimpleParamsProvider and RegexpParamsProvider totally ignore scopes:
+  their paramRawValue() will return a value matching the key regardless the
+  scope filter
+* ParamsProviderMerger will select it children in their order but filtered using
+  these rules:
+  - an empty filter `[]` will match any child
+  - a non-empty filter e.g. `[employee,boss]` won't match children with an empty
+    scope or a scope not in the filter
+  - a non-empty filter including an empty scope will do the same, but include
+    children with an empty scope e.g. `[employee,]` won't match "boss" scope
+    neither "foo" scope, but will match "" scope
+  - to match only empty scopes the filter must be written `[,]` because `[]` is
+    the empty filter, not a filter with the empty scope
+* ParamSet will do the same than ParamsProviderMerger when climbing up it
+  parents hierarchy. So `%[bar]foo` on a ParamSet with baz scope and a parent
+  with bar scope will ignore foo key and let its parent provide a value.
+* SharedUiItem default implementation (it can be overwritten for every type of
+  item) report a scope equal to their id qualifier, so the scope can be used
+  to select given types of SharedUiItem using a ParamsProviderMerger or a
+  SharedUiItemList (which select its items when a scope filter is set, even
+  though it has an additional selection mechanism using qualifier in the key)
+* Context-less functions will totally ignore scope filters (they will match
+  regardless the filter) however they propagate the filter to further evaluation
+  so if `%{=default:%foo}` is evaluated in a context where the scope filter is
+  `[bar]` foo value is likely to be searched only in a "bar" scoped ParamSet.
+  Moreover their content is subject to regular scope filter syntax, so in
+  `%{[bar]=default:%[baz]foo:%abc}` foo is filtered on baz and abc on bar,
+  regardless the previous filter in the evaluation context.
 
 ParamSet %-evaluation contextless functions
 ===========================================

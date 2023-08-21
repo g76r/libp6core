@@ -186,17 +186,16 @@ void SharedUiItemsMatrixModel::clearBindings() {
 
 QVariant SharedUiItemsMatrixModel::evaluate(
     SharedUiItemsMatrixModel::ItemBinding binding, int role) const {
-  int evaluationRole = role;
-  if (_forceDisplayRoleWhenEvaluatingTooltips && role == Qt::ToolTipRole)
-    evaluationRole = Qt::DisplayRole;
-  // TODO make again a way to choose role when using SUI as a PP
-  //SharedUiItemParamsProvider pp(binding._item, evaluationRole);
   switch(role) {
   case Qt::DisplayRole:
   case SharedUiItem::ExternalDataRole:
-    return ParamSet().evaluate(binding._display, false, &binding._item);
+    return PercentEvaluator::eval(binding._display,
+                                  {&binding._item, {}, role});
   case Qt::ToolTipRole:
-    return ParamSet().evaluate(binding._tooltip, false, &binding._item);
+      if (_forceDisplayRoleWhenEvaluatingTooltips)
+        role = Qt::DisplayRole;
+      return PercentEvaluator::eval(binding._tooltip,
+                                    {&binding._item, {}, role});
   case Qt::EditRole:
   case SharedUiItem::IdQualifierRole:
   case SharedUiItem::IdRole:

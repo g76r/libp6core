@@ -16,35 +16,44 @@
 #include "util/utf8stringset.h"
 
 const QVariant SharedUiItemListParamsProvider::paramRawValue(
-    const Utf8String &key, const QVariant &defaultValue) const {
+    const Utf8String &key, const QVariant &def,
+    const EvalContext &context) const {
   int colon = key.indexOf(':');
   Utf8String idQualifier = colon >= 0 ? key.left(colon) : Utf8String{};
   Utf8String sectionName = key.mid(colon+1);// works even with colon=-1
   for (auto item : _list) {
+    // ignore item if keys contains a qualifier and it does not match item
+    // e.g. "employee:name" and current item is qualified as "building"
     if (!idQualifier.isEmpty() && item.idQualifier() != idQualifier)
       continue;
-    bool ok;
-    int section = sectionName.toInt(&ok);
-    if (!ok) {
-      if (sectionName == "id"_u8)
-        return item.id();
-      if (sectionName == "id_qualifier"_u8)
-        return item.idQualifier();
-      if (sectionName == "qualified_id"_u8)
-        return item.qualifiedId();
-      section = item.uiSectionByName(sectionName);
-      ok = section >= 0;
-    }
-    if (ok) {
-      QVariant value = item.uiData(section, _role);
-      if (value.isValid())
-        return value;
-    }
+    // ignore item if context contains a scope and it does not match item
+    if (!context.hasScopeOrNone(item.paramScope()))
+      continue;
+    // special section names e.g. "id" or "employee:qualified_id"
+    if (sectionName == "id"_u8)
+      return item.id();
+    if (sectionName == "id_qualifier"_u8)
+      return item.idQualifier();
+    if (sectionName == "qualified_id"_u8)
+      return item.qualifiedId();
+    // section by name e.g. "name" or "employee:name"
+    auto section = item.uiSectionByName(sectionName);
+    // section by number e.g. "0" or "employee:12"
+    if (section < 0)
+      section = sectionName.toNumber<int>(-1);
+    // ignore item for which the section can't be found
+    if (section < 0)
+      continue;
+    QVariant value = item.uiData(section, _role);
+    // ignore item for which no valid data can be found
+    if (!value.isValid())
+      return value;
   }
-  return defaultValue;
+  return def;
 }
 
-const Utf8StringSet SharedUiItemListParamsProvider::paramKeys() const {
+const Utf8StringSet SharedUiItemListParamsProvider::paramKeys(
+    const EvalContext &) const {
   Utf8StringSet keys, qualifiers;
   for (auto item: _list) {
     auto q = item.idQualifier();
@@ -55,8 +64,8 @@ const Utf8StringSet SharedUiItemListParamsProvider::paramKeys() const {
     keys << q+":id_qualifier";
     keys << q+":qualified_id";
     for (int i = 0; i < item.uiSectionCount(); ++i) {
-      keys << q+":"+QString::number(i);
-      keys << QString::number(i);
+      keys << q+":"+Utf8String::number(i);
+      keys << Utf8String::number(i);
       auto name = item.uiSectionName(i);
       if (name.isEmpty())
         continue;

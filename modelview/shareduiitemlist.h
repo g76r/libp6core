@@ -146,9 +146,9 @@ public:
     : _list(list), _role(role), _scope(scope) { }
   using ParamsProvider::paramValue;
   const QVariant paramRawValue(
-    const Utf8String &key, const QVariant &defaultValue) const override;
-  // FIXME scoped
-  const Utf8StringSet paramKeys() const override;
+      const Utf8String &key, const QVariant &def = {},
+      const EvalContext &context = {}) const override;
+  const Utf8StringSet paramKeys(const EvalContext &context = {}) const override;
   const Utf8String paramScope() const override;
 };
 

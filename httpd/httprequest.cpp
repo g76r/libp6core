@@ -292,7 +292,8 @@ Utf8StringList HttpRequest::clientAdresses() const {
 }
 
 const QVariant HttpRequestPseudoParamsProvider::paramRawValue(
-    const Utf8String &key, const QVariant &def) const {
+    const Utf8String &key, const QVariant &def,
+    const EvalContext &) const {
   if (key.startsWith('!')) {
     if (key == "!url") {
       return _request.url().toString(QUrl::RemovePassword);
@@ -313,7 +314,8 @@ const QVariant HttpRequestPseudoParamsProvider::paramRawValue(
   return def;
 }
 
-const Utf8StringSet HttpRequestPseudoParamsProvider::paramKeys() const {
+const Utf8StringSet HttpRequestPseudoParamsProvider::paramKeys(
+    const EvalContext &) const {
   Utf8StringSet keys { "!url", "!method", "!clientaddresses" };
   for (auto s: _request.cookies().keys())
     keys << "!cookie:"+s;

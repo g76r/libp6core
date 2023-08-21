@@ -69,7 +69,7 @@ void FileLogger::doLog(const LogEntry &entry) {
     //         << _pathPattern << _lastOpen << now << _secondsReopenInterval;
     if (_device)
       delete _device;
-    _currentPath = ParamSet().evaluate(_pathPattern);
+    _currentPath = Utf8String(PercentEvaluator::eval(_pathPattern));
     _device = new QFile(_currentPath);
     if (!_device->open(_buffered ? QIODevice::WriteOnly|QIODevice::Append
                                  : QIODevice::WriteOnly|QIODevice::Append
