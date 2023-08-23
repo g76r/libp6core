@@ -63,6 +63,8 @@ public:
   explicit ParamSet(const QMap<QString,QString> &params);
   explicit ParamSet(const QHash<Utf8String,Utf8String> &params);
   explicit ParamSet(const QMap<Utf8String,Utf8String> &params);
+  explicit ParamSet(const QHash<Utf8String,QVariant> &params);
+  explicit ParamSet(const QMap<Utf8String,QVariant> &params);
   /** For multi-valued keys, only most recently inserted value is kept. */
   explicit ParamSet(const QMultiMap<QString,QString> &params);
   /** For multi-valued keys, only most recently inserted value is kept. */
@@ -71,6 +73,10 @@ public:
   explicit ParamSet(const QMultiMap<Utf8String,Utf8String> &params);
   /** For multi-valued keys, only most recently inserted value is kept. */
   explicit ParamSet(const QMultiHash<Utf8String,Utf8String> &params);
+  /** For multi-valued keys, only most recently inserted value is kept. */
+  explicit ParamSet(const QMultiMap<Utf8String,QVariant> &params);
+  /** For multi-valued keys, only most recently inserted value is kept. */
+  explicit ParamSet(const QMultiHash<Utf8String,QVariant> &params);
   /** Takes params from PfNode children given an attribute name,
    *  parsing their text content as key-whitespace-value.
    *  Optionnaly a second attribute name is used for "const" params, that is
@@ -127,40 +133,10 @@ public:
   ~ParamSet();
   ParamSet &operator=(const ParamSet &other);
   ParamSet parent() const;
-  void setParent(ParamSet parent);
-  void setValue(Utf8String key, Utf8String value);
-  void setValue(Utf8String key, QString value) {
-    setValue(key, Utf8String(value)); }
-  void setValue(Utf8String key, QByteArray value) {
-    setValue(key, Utf8String(value)); }
-  void setValue(Utf8String key, const char *value) {
-    setValue(key, Utf8String(value)); }
-  void setValue(Utf8String key, QVariant value) {
-    setValue(key, Utf8String(value)); }
-  void setValue(Utf8String key, bool value) {
-    setValue(key, Utf8String(value)); }
-  void setValue(Utf8String key, qint8 value, int base = 10) {
-    setValue(key, Utf8String::number(value, base)); }
-  void setValue(Utf8String key, qint16 value, int base = 10) {
-    setValue(key, Utf8String::number(value, base)); }
-  void setValue(Utf8String key, qint32 value, int base = 10) {
-    setValue(key, Utf8String::number(value, base)); }
-  void setValue(Utf8String key, qint64 value, int base = 10) {
-    setValue(key, Utf8String::number(value, base)); }
-  void setValue(Utf8String key, quint8 value, int base = 10) {
-    setValue(key, Utf8String::number(value, base)); }
-  void setValue(Utf8String key, quint16 value, int base = 10) {
-    setValue(key, Utf8String::number(value, base)); }
-  void setValue(Utf8String key, quint32 value, int base = 10) {
-    setValue(key, Utf8String::number(value, base)); }
-  void setValue(Utf8String key, quint64 value, int base = 10) {
-    setValue(key, Utf8String::number(value, base)); }
-  void setValue(Utf8String key, double value, char format='g', int precision=6) {
-    setValue(key, Utf8String::number(value, format, precision)); }
-  void setValue(Utf8String key, float value, char format='g', int precision=6) {
-    setValue(key, Utf8String::number((double)value, format, precision)); }
+  void setParent(const ParamSet &parent);
+  void setValue(const Utf8String &key, const QVariant &value);
   /** merge (override) params using another ParamSet content */
-  void setValues(ParamSet params, bool inherit = true);
+  void setValues(const ParamSet &params, bool inherit = true);
   /** merge (override) params taking them from a SQL database query
    *  SQL query is %-evaluated within parent context.
    *  QSqlDatabase must already be open.
@@ -220,37 +196,6 @@ public:
       const Utf8String &key, bool inherit) const {
     return paramContains(key, inherit ? EvalContext{} : DontInherit); }
 
-#if 0
-  using ParamsProvider::paramRawUtf8;
-  [[nodiscard]] const Utf8String paramRawUtf8(
-      const Utf8String &key, const Utf8String &def = {},
-      const EvalContext &context = {}) const override;
-  [[deprecated("use EvalContext{DonInherit} instead")]]
-  [[nodiscard]] inline const Utf8String paramRawUtf8(
-      const Utf8String &key, const Utf8String &def, bool inherit) const {
-    return paramRawUtf8(key, def, inherit ? EvalContext{}
-                                          : DontInherit); }
-  [[deprecated("use EvalContext{DonInherit} instead")]]
-  [[nodiscard]] inline const Utf8String paramRawUtf8(
-      const Utf8String &key, bool inherit) const {
-    return paramRawUtf8(key, {}, inherit ? EvalContext{}
-                                         : DontInherit); }
-
-  using ParamsProvider::paramUtf8;
-  [[nodiscard]] const Utf8String paramUtf8(
-      const Utf8String &key, const Utf8String &def = {},
-      const EvalContext &context = {}) const override;
-//  [[deprecated("use EvalContext{DonInherit} instead")]]
-//  [[nodiscard]] const Utf8String paramUtf8(
-//      const Utf8String &key, const Utf8String &def,
-//      const ParamsProvider *context, bool inherit,
-//      Utf8StringSet *alreadyEvaluated) const;
-//  [[deprecated("use EvalContext{DonInherit} instead")]]
-//  [[nodiscard]] const Utf8String paramUtf8(
-//      const Utf8String &key, const Utf8String &def,
-//      const ParamsProvider *context, bool inherit) const;
-#endif
-
   // additional conversions (not in ParamsProvider)
   /** Return a value splitted into strings, %-substitution is done after the
    * split (i.e. "%foo bar" has two elements, regardless the number of spaces
@@ -282,8 +227,10 @@ public:
    * @param inherit include params inherited from parents
    * @param decorate surround with curly braces */
   const QString toString(bool inherit = true, bool decorate = true) const;
-  const QHash<Utf8String,Utf8String> toHash(bool inherit = true) const;
-  const QMap<Utf8String, Utf8String> toMap(bool inherit = true) const;
+  const QHash<Utf8String,QVariant> toHash(bool inherit = true) const;
+  const QMap<Utf8String,QVariant> toMap(bool inherit = true) const;
+  const QHash<Utf8String,Utf8String> toUtf8Hash(bool inherit = true) const;
+  const QMap<Utf8String,Utf8String> toUtf8Map(bool inherit = true) const;
   const QHash<QString,QString> toStringHash(bool inherit = true) const;
   const QMap<QString, QString> toStringMap(bool inherit = true) const;
   /** Get an external paramset. */

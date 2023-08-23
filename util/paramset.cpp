@@ -48,10 +48,11 @@ static QMutex _externals_mutex;
 class ParamSetData : public QSharedData {
 public:
   ParamSet _parent;
-  QMap<Utf8String,Utf8String> _params;
+  QMap<Utf8String,QVariant> _params;
   ParamSetData() { }
-  ParamSetData(QMap<Utf8String,Utf8String> params) : _params(params) { }
+  ParamSetData(QMap<Utf8String,QVariant> params) : _params(params) { }
   ParamSetData(ParamSet parent) : _parent(parent) { }
+  void clear() { _parent = {}; _params.clear(); }
 };
 
 ParamSet::ParamSet() {
@@ -74,58 +75,83 @@ ParamSet::ParamSet(std::initializer_list<Utf8String> list) {
 }
 
 ParamSet::ParamSet(
-    std::initializer_list<std::pair<Utf8String, QVariant> > list) {
-  for (const std::pair<Utf8String,QVariant> &p : list)
-    setValue(p.first, Utf8String(p.second));
+    std::initializer_list<std::pair<Utf8String, QVariant> > list)
+  : d(new ParamSetData) {
+  for (auto p: list)
+    d->_params.insert(p.first, p.second);
 }
 
 ParamSet::ParamSet(const ParamSet &other) : d(other.d) {
 }
 
+ParamSet::ParamSet(const QMap<Utf8String,QVariant> &params)
+  : d(new ParamSetData(params)) {
+}
+
 ParamSet::ParamSet(const QHash<QString, QString> &params)
   : d(new ParamSetData) {
-  for (auto key: params.keys())
-    d->_params.insert(key, params.value(key));
+  for (auto [key,value]: params.asKeyValueRange())
+    d->_params.insert(key, value);
 }
 
 ParamSet::ParamSet(const QHash<Utf8String,Utf8String> &params)
   : d(new ParamSetData) {
-  for (auto key: params.keys())
-    d->_params.insert(key, params.value(key));
+  for (auto [key,value]: params.asKeyValueRange())
+    d->_params.insert(key, value);
+}
+
+ParamSet::ParamSet(const QHash<Utf8String,QVariant> &params)
+  : d(new ParamSetData) {
+  for (auto [key,value]: params.asKeyValueRange())
+    d->_params.insert(key, value);
 }
 
 ParamSet::ParamSet(const QMap<QString, QString> &params)
   : d(new ParamSetData) {
-  for (auto key: params.keys())
-    d->_params.insert(key, params.value(key));
+  for (auto [key,value]: params.asKeyValueRange())
+    d->_params.insert(key, value);
 }
 
 ParamSet::ParamSet(const QMap<Utf8String,Utf8String> &params)
-  : d(new ParamSetData(params)) {
+  : d(new ParamSetData) {
+  for (auto [key,value]: params.asKeyValueRange())
+    d->_params.insert(key, value);
 }
 
 ParamSet::ParamSet(const QMultiMap<QString, QString> &params)
   : d(new ParamSetData) {
-  for (auto key: params.keys())
-    d->_params.insert(key, params.value(key));
+  for (auto [key,value]: params.asKeyValueRange())
+    d->_params.insert(key, value);
 }
 
 ParamSet::ParamSet(const QMultiHash<QString, QString> &params)
   : d(new ParamSetData) {
-  for (auto key: params.keys())
-    d->_params.insert(key, params.value(key));
+  for (auto [key,value]: params.asKeyValueRange())
+    d->_params.insert(key, value);
 }
 
 ParamSet::ParamSet(const QMultiMap<Utf8String, Utf8String> &params)
   : d(new ParamSetData) {
-  for (auto key: params.keys())
-    d->_params.insert(key, params.value(key));
+  for (auto [key,value]: params.asKeyValueRange())
+    d->_params.insert(key, value);
 }
 
 ParamSet::ParamSet(const QMultiHash<Utf8String, Utf8String> &params)
   : d(new ParamSetData) {
-  for (auto key: params.keys())
-    d->_params.insert(key, params.value(key));
+  for (auto [key,value]: params.asKeyValueRange())
+    d->_params.insert(key, value);
+}
+
+ParamSet::ParamSet(const QMultiMap<Utf8String, QVariant> &params)
+  : d(new ParamSetData) {
+  for (auto [key,value]: params.asKeyValueRange())
+    d->_params.insert(key, value);
+}
+
+ParamSet::ParamSet(const QMultiHash<Utf8String, QVariant> &params)
+  : d(new ParamSetData) {
+  for (auto [key,value]: params.asKeyValueRange())
+    d->_params.insert(key, value);
 }
 
 ParamSet::ParamSet(
@@ -159,8 +185,10 @@ ParamSet::ParamSet(const PfNode &parentnode, const Utf8String &attrname,
 ParamSet::ParamSet(const PfNode &parentnode, const Utf8StringSet &attrnames,
   const ParamSet &parent) : d(new ParamSetData(parent)) {
   for (const PfNode &child : parentnode.children())
-    if (attrnames.contains(child.name()))
-      d->_params.insert(child.name(), child.contentAsString());
+    if (attrnames.contains(child.name())) {
+      Utf8String value = child.contentAsUtf8();
+      d->_params.insert(child.name(), value.isNull() ? ""_u8 : value);
+    }
   if (d->_params.isEmpty() && parent.isNull())
     d.reset();
 }
@@ -185,14 +213,14 @@ ParamSet::ParamSet(
     for (int i = 0; i < r.count(); ++i) {
       if (!bindings.contains(i))
         continue;
-      auto s = r.field(i).value().toString();
+      auto s = Utf8String(r.field(i).value());
       if (s.isEmpty()) // ignoring both nulls and empty strings
         continue;
       values[i].append(PercentEvaluator::escape(s));
     }
   }
   for (auto i: bindings.keys()) {
-    setValue(bindings.value(i), values[i].join(" "));
+    setValue(bindings.value(i), values[i].join(' '));
   }
 }
 
@@ -216,24 +244,24 @@ ParamSet ParamSet::parent() const {
   return d ? d->_parent : ParamSet();
 }
 
-void ParamSet::setParent(ParamSet parent) {
+void ParamSet::setParent(const ParamSet &parent) {
   if (!d)
     d = new ParamSetData();
   if (d.constData() != parent.d.constData())
     d->_parent = parent;
 }
 
-void ParamSet::setValue(Utf8String key, Utf8String value) {
+void ParamSet::setValue(const Utf8String &key, const QVariant &value) {
   if (!d)
     d = new ParamSetData();
   d->_params.insert(key, value);
 }
 
-void ParamSet::setValues(ParamSet params, bool inherit) {
+void ParamSet::setValues(const ParamSet &params, bool inherit) {
   if (!d)
     d = new ParamSetData();
   for (auto k: params.paramKeys(inherit ? EvalContext{} : DontInherit))
-    d->_params.insert(k, params.paramRawUtf8(k));
+    d->_params.insert(k, params.paramRawValue(k));
 }
 
 void ParamSet::removeValue(const Utf8String &key) {
@@ -242,7 +270,8 @@ void ParamSet::removeValue(const Utf8String &key) {
 }
 
 void ParamSet::clear() {
-  d = new ParamSetData();
+  if (d)
+    d->clear();
 }
 
 const QVariant ParamSet::paramRawValue(
@@ -252,7 +281,7 @@ const QVariant ParamSet::paramRawValue(
     return {};
   if (context.hasScopeOrNone(paramScope())) {
     auto value = d->_params.value(key);
-    if (!value.isNull())
+    if (value.isValid())
       return value;
   }
   if (context.containsScope(DontInheritScope))
@@ -260,18 +289,6 @@ const QVariant ParamSet::paramRawValue(
   return parent().paramRawValue(key, def, context);
   return {};
 }
-
-#if 0
-const Utf8String ParamSet::paramUtf8(
-    const Utf8String &key, const Utf8String &def,
-    const EvalContext &context) const {
-  auto v = paramScopedRawValue(key, def, inherit);
-  if (!v.isValid())
-    return def;
-  return Utf8String(PercentEvaluator::eval(Utf8String(v), context, ae));
-  return paramUtf8(key, def, context, true, ae);
-}
-#endif
 
 const Utf8StringSet ParamSet::paramKeys(const EvalContext &context) const {
   if (!d) [[unlikely]]
@@ -322,14 +339,28 @@ const QString ParamSet::toString(bool inherit, bool decorate) const {
   return s;
 }
 
-const QHash<Utf8String, Utf8String> ParamSet::toHash(bool inherit) const {
+const QHash<Utf8String, QVariant> ParamSet::toHash(bool inherit) const {
+  QHash<Utf8String,QVariant> hash;
+  for (auto key: paramKeys(inherit ? EvalContext{} : DontInherit))
+    hash.insert(key, paramRawValue(key));
+  return hash;
+}
+
+const QMap<Utf8String, QVariant> ParamSet::toMap(bool inherit) const {
+  QMap<Utf8String,QVariant> map;
+  for (auto key: paramKeys(inherit ? EvalContext{} : DontInherit))
+    map.insert(key, paramRawValue(key));
+  return map;
+}
+
+const QHash<Utf8String, Utf8String> ParamSet::toUtf8Hash(bool inherit) const {
   QHash<Utf8String,Utf8String> hash;
   for (auto key: paramKeys(inherit ? EvalContext{} : DontInherit))
     hash.insert(key, paramRawUtf8(key));
   return hash;
 }
 
-const QMap<Utf8String, Utf8String> ParamSet::toMap(bool inherit) const {
+const QMap<Utf8String, Utf8String> ParamSet::toUtf8Map(bool inherit) const {
   QMap<Utf8String,Utf8String> map;
   for (auto key: paramKeys(inherit ? EvalContext{} : DontInherit))
     map.insert(key, paramRawUtf8(key));
@@ -339,14 +370,14 @@ const QMap<Utf8String, Utf8String> ParamSet::toMap(bool inherit) const {
 const QHash<QString, QString> ParamSet::toStringHash(bool inherit) const {
   QHash<QString,QString> hash;
   for (auto key: paramKeys(inherit ? EvalContext{} : DontInherit))
-    hash.insert(key, paramRawUtf8(key));
+    hash.insert(key, paramRawValue(key).toString());
   return hash;
 }
 
 const QMap<QString,QString> ParamSet::toStringMap(bool inherit) const {
   QMap<QString,QString> map;
   for (auto key: paramKeys(inherit ? EvalContext{} : DontInherit))
-    map.insert(key, paramRawUtf8(key));
+    map.insert(key, paramRawValue(key).toString());
   return map;
 }
 
@@ -355,7 +386,7 @@ QDebug operator<<(QDebug dbg, const ParamSet &params) {
   auto keys = params.paramKeys().values();
   std::sort(keys.begin(), keys.end());
   for (auto key: keys)
-    dbg.space() << key << "=" << params.paramRawUtf8(key) << ",";
+    dbg.space() << key << "=" << params.paramRawValue(key) << ",";
   dbg.nospace() << "}";
   return dbg.space();
 }
@@ -365,7 +396,7 @@ LogHelper operator<<(LogHelper lh, const ParamSet &params) {
   auto keys = params.paramKeys().values();
   std::sort(keys.begin(), keys.end());
   for (auto key: keys)
-    lh << key << "=" << params.paramRawUtf8(key) << " ";
+    lh << key << "=" << params.paramRawValue(key) << " ";
   return lh << "}";
 }
 
@@ -418,9 +449,9 @@ ParamSetData *ParamSet::fromQIODevice(
       return d;
     }
   }
-  auto separator = Utf8String(options.value("separator"_u8)).value(0,',');
-  auto quote = Utf8String(options.value("quote"_u8)).value(0,'"');
-  auto escape = Utf8String(options.value("escape"_u8)).value(0,'\\');
+  auto separator = options.value("separator"_u8).value(0,',');
+  auto quote = options.value("quote"_u8).value(0,'"');
+  auto escape = options.value("escape"_u8).value(0,'\\');
   CsvFile csvfile;
   csvfile.enableHeaders(false);
   csvfile.setFieldSeparator(separator);

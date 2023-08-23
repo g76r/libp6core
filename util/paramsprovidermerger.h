@@ -119,7 +119,8 @@ public:
   }
   /** Parameters set through overrideParamValue() will override any
    * ParamsProvider, even those prepended. */
-  ParamsProviderMerger &overrideParamValue(Utf8String key, Utf8String value) {
+  ParamsProviderMerger &overrideParamValue(
+      const Utf8String &key, const QVariant &value) {
     _overridingParams.setValue(key, value);
     return *this;
   }
