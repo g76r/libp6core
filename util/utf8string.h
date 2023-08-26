@@ -300,6 +300,20 @@ public:
       double d, char format = 'g', int precision = 6) {
     return QByteArray::number(d, format, precision); }
   [[nodiscard]] static inline Utf8String number(bool b);
+  /** Write a number using a given arbitrary bijective base.
+   *  0 is always "", 1 is the first char of the base etc.
+   *  e.g. "ABCDEFGHIJKLMNOPQRSTUVWXYZ" is used for spreadsheets column notation
+   *  and european driving plate left and right parts. 1 -> A, 26 -> Z,
+   *  27 -> AA, 16384 -> XFD
+   *  @see https://en.wikipedia.org/wiki/Bijective_numeration */
+  [[nodiscard]] static inline Utf8String bijectiveBaseNumber(
+      qulonglong i, const QByteArray &base) {
+    Utf8String s;
+    auto n = base.size();
+    for (; i; i = (i-1)/n)
+      s.prepend(base[(i-1)%n]);
+    return s;
+  }
 
   // byte arrays conversion
   [[nodiscard]] inline Utf8String toBase64(
