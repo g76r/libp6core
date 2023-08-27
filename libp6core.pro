@@ -65,6 +65,7 @@ SOURCES *= \
     util/utf8stringlist.cpp \
     util/paramsprovider.cpp \
     util/paramset.cpp \
+    format/xlsxwriter.cpp \
     pf/pfutils.cpp \
     pf/pfparser.cpp \
     pf/pfoptions.cpp \
@@ -172,6 +173,7 @@ HEADERS *=\
     util/paramset.h \
     util/paramsprovidermerger.h \
     util/regexpparamsprovider.h \
+    format/xlsxwriter.h \
     pf/pfutils.h \
     pf/pfparser.h \
     pf/pfoptions.h \
