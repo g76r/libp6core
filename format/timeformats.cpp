@@ -23,6 +23,7 @@
 static const QRegularExpression _rfc2822DateTimeRE(
     "\\A"
     "(\\s*([a-zA-Z]{3})\\s*,)?" // day of week
+    // (?:\\s(?<dow>(?i)mon|tue|wed|thu|fri|sat|sun)\\s*,)?
     "\\s*(\\d{1,2})\\s+([a-zA-Z]{3})\\s+(\\d{4})" // date
     "\\s+(\\d{2}):(\\d{2}):(\\d{2})" // time
     "\\s*(([+-]\\d{4})|([A-Z]{1,4}))" // timezone
