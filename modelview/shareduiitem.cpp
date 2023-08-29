@@ -73,7 +73,9 @@ QDebug operator<<(QDebug dbg, const SharedUiItem &i) {
 
 const QVariant SharedUiItemData::paramRawValue(
     const Utf8String &key, const QVariant &def,
-    const EvalContext &) const {
+    const EvalContext &context) const {
+  if (!context.hasScopeOrNone(paramScope()))
+    return def;
   auto section = uiSectionByName(key);
   if (section < 0)
     section = key.toNumber<int>(-1);

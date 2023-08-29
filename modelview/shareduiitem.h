@@ -19,6 +19,8 @@
 #include "util/paramsprovider.h"
 #include "util/containerutils.h"
 #include "util/utf8stringlist.h"
+#include "util/utf8stringset.h"
+#include "util/radixtree.h"
 
 class QDebug;
 class SharedUiItemDocumentTransaction;
@@ -27,6 +29,8 @@ class SharedUiItemParamsProvider;
 /** Parent class for SharedUiItem implementation data classes.
  *
  * Subclassing guidelines:
+ * - TL;DR: inherit from TemplatedSharedUiItem this will help you to follow
+ *   most of the rules above.
  * - A subclass MUST implement idQualifier().
  * - The idQualifier MUST only contains ascii letters, digits and underscore (_)
  *   and MUST start with a letter. It SHOULD be directly related to the class
@@ -72,6 +76,7 @@ class SharedUiItemParamsProvider;
  *   SharedUiItemData subclasses, however in this case they must have their
  *   common sections before specific sections, because sections are what really
  *   matters from outside the SharedUiItemData implementation.
+ * @see TemplatedSharedUiItem
  * @see SharedUiItem */
 class LIBP6CORESHARED_EXPORT SharedUiItemData
     : public QSharedData, public ParamsProvider {

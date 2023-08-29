@@ -165,6 +165,7 @@ SOURCES *= \
     modelview/stringlistdiffmodel.cpp
 
 HEADERS *=\
+    modelview/templatedshareduiitemdata.h \
     util/percentevaluator.h \
     util/utf8string.h \
     util/utf8stringlist.h \

@@ -293,7 +293,9 @@ const QVariant ParamSet::paramRawValue(
 const Utf8StringSet ParamSet::paramKeys(const EvalContext &context) const {
   if (!d) [[unlikely]]
     return {};
-  Utf8StringSet set(d->_params.keys());
+  Utf8StringSet set;
+  if (context.hasScopeOrNone(paramScope()))
+    set += d->_params.keys();
   if (!context.containsScope(DontInheritScope))
     set += parent().paramKeys();
   return set;
