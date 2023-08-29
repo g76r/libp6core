@@ -14,7 +14,7 @@
 #ifndef RADIXTREE_H
 #define RADIXTREE_H
 
-#include "util/utf8string.h"
+#include "util/utf8stringset.h"
 
 /** Helper class to make it possible to initialize a RadixTree with such syntax:
  * RadixTree<int> foo { {"abc", 42, true}, { "xyz", -1 } };
@@ -294,7 +294,7 @@ class LIBP6CORESHARED_EXPORT RadixTree {
 
   struct RadixTreeData : QSharedData {
     Node *_root;
-    QSet<QString> _keys;
+    Utf8StringSet _keys;
     RadixTreeData() : _root(0) { }
   };
 
@@ -338,7 +338,7 @@ public:
       d->_root->insert(key, value, isPrefix);
     else
       d->_root = new Node(key, value, isPrefix ? Prefix : Exact, 0);
-    d->_keys.insert(QString::fromUtf8(key));
+    d->_keys.insert(key);
   }
   void insert(const QString &key, T value, bool isPrefix = false) {
     insert (key.toUtf8().constData(), value, isPrefix); }
@@ -396,8 +396,8 @@ public:
     return contains(key.toUtf8().constData()); }
   [[gnu::hot]] bool contains(const QByteArray &key) const {
     return contains(key.constData()); }
-  QSet<QString> keys() const {
-    return d ? d->_keys : QSet<QString>();
+  Utf8StringSet keys() const {
+    return d ? d->_keys : Utf8StringSet();
   }
   static RadixTree<T> reversed(QHash<T,QString> hash) {
     RadixTree<T> that;
