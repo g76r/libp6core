@@ -135,8 +135,8 @@ public:
    *  @param context is an evaluation context, uses this if null
    *  @param alreadyEvaluated used for loop detections, must not be null */
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
-  [[nodiscard]] const T paramNumber(
-      const Utf8String &key, const T &def,
+  [[nodiscard]] T paramNumber(
+      const Utf8String &key, const T &def = {},
       const EvalContext &context = {}) const {
     auto v = paramRawValue(key);
     auto mtid = v.metaType().id();
@@ -148,7 +148,7 @@ public:
   }
   /** Convenience methods */
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
-  [[nodiscard]] const T paramNumber(
+  [[nodiscard]] T paramNumber(
       const Utf8String &key, const EvalContext &context) const {
     return paramNumber<T>(key, {}, context); }
 
