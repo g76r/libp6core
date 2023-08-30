@@ -15,7 +15,7 @@ QT -= gui
 QT += core
 
 TARGET = test
-CONFIG += console largefile c++14
+CONFIG += console largefile c++20
 CONFIG -= app_bundle
 
 TARGET_OS=default
