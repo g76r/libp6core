@@ -70,6 +70,8 @@ const ParamSet ParamsProvider::paramSnapshot() const {
 const QVariant ParamsProvider::paramValue(
     const Utf8String &key, const QVariant &def,
     const EvalContext &context) const {
+  // don't check if context scope is applicable here, because it's up to
+  // paramRawValue to do that
   auto v = paramRawValue(key, {}, context);
   if (!v.isValid())
     return def;

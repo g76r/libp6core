@@ -41,9 +41,20 @@ public:
   virtual ~ParamsProvider() = default;
 
   // raw keys and values
-  // FIXME comment
-  /** Core method
-   *  MUST be reimplemented.
+  /** Core method giving access to param values.
+   *
+   *  MUST be reimplemented and provide param values according to keys in a
+   *  manner consistent with paramKeys() result: a key returned by paramKeys()
+   *  SHOULD always provide a value through paramRawValue() and any regular
+   *  key associated to a value SHOULD be listed by paramKeys(), with the
+   *  exception of keys behaving like a function (if for instance the
+   *  implementation supports a !calc:2+2 key function, every possible math
+   *  formula can't be returned by paramKeys())
+   *
+   *  MUST check that its scope is compatible with context scope, for
+   *  instance with an if(context.hasScopeOrNone(paramScope())) and otherwise
+   *  return {}.
+   *
    *  Default: always return def. */
   [[nodiscard]] virtual const QVariant paramRawValue(
       const Utf8String &key, const QVariant &def = {},
@@ -65,8 +76,14 @@ public:
     return paramRawUtf8(key, {}, context); }
   /** Return list of param keys. Maybe expensive depending on implementation,
    *  call only if/when needed. Called by paramSnapshot().
-   *  MUST be reimplemented.
-   *  Default: return {} which, among other things, disables snapshots */
+   *
+   *  MUST be reimplemented in a manner to be consistent with paramRawValue(),
+   *  see above. Any param which key is not returned by paramKeys() will be
+   *  hidden to any autodiscover/gui code and absent of snapshots.
+   *
+   *  Default: return {} which, among other things, makes snapshots useless.
+   *  @see paramRawValue()
+   *  @see paramSnaphsot() */
   [[nodiscard]] virtual const Utf8StringSet paramKeys(
       const EvalContext &context = {}) const = 0;
   /** Return true if key is set.
