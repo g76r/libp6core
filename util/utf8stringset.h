@@ -45,6 +45,30 @@ public:
   Utf8StringSet(InputIterator i1, InputIterator i2)
     : QSet<Utf8String>(i1, i2) { }
 #endif
+
+  Utf8StringSet &operator +=(const QSet<Utf8String> &set) {
+    QSet<Utf8String>::operator +=(set); return *this; }
+#if __cpp_concepts >= 201907
+  Utf8StringSet &operator +=(const QSet<QByteArray> &set) {
+    QSet<Utf8String>::operator +=(Utf8StringSet(set.cbegin(), set.cend()));
+    return *this; }
+  Utf8StringSet &operator +=(const QSet<QString> &set) {
+    QSet<Utf8String>::operator +=(Utf8StringSet(set.cbegin(), set.cend()));
+    return *this; }
+  Utf8StringSet &operator +=(const QList<Utf8String> &set) {
+    QSet<Utf8String>::operator +=(Utf8StringSet(set.cbegin(), set.cend()));
+    return *this; }
+  Utf8StringSet &operator +=(const QList<QByteArray> &set) {
+    QSet<Utf8String>::operator +=(Utf8StringSet(set.cbegin(), set.cend()));
+    return *this; }
+  Utf8StringSet &operator +=(const QList<QString> &set) {
+    QSet<Utf8String>::operator +=(Utf8StringSet(set.cbegin(), set.cend()));
+    return *this; }
+  Utf8StringSet &operator +=(const std::set<Utf8String> &set) {
+    QSet<Utf8String>::operator +=(Utf8StringSet(set.cbegin(), set.cend()));
+    return *this; }
+#endif
+
   Utf8String join(const Utf8String &separator) const;
   Utf8String join(const char separator) const;
   Utf8String sortedJoin(const Utf8String &separator);
