@@ -52,8 +52,13 @@ public:
              source_location location = {})
     : _taskid(field(taskid.isEmpty() ? current_thread_name() : taskid, "?"_ba)),
       _execid(field(execid, "0"_ba)),
+#if LOG_LOCATION_WITH_FUNCTION_ENABLED
       _location(location.file_name()+":"_ba+QByteArray::number(location.line())
                   +":"_ba+location.function_name()) { }
+#else
+      _location(location.file_name()+":"_ba+QByteArray::number(
+                  location.line())) { }
+#endif
   LogContext(Utf8String taskid, quint64 execid,
              source_location location = {})
     : LogContext(taskid, QByteArray::number(execid), location) {}
