@@ -44,7 +44,7 @@ Detailed % syntax examples
                convention their name always begin with =
 *  `%{=date:YYYY}` -> current year in local timezone, using 4 digits
 *  `%éœ§越🥨` -> value of param "éœ§越🥨": chars outside ascii are not special
-*  `%{'foo}` -> "foo": a leading quote escapes param evaluation
+*  `%{'%foo}` -> "%foo": a leading quote escapes param evaluation
 *  `%'foo` -> "foo": remember, one leading special char is allowed
 *  `%%` -> "%" : % escapes itself
 *  `%{=date:%format}` -> current date using format given by "format" param
@@ -164,12 +164,13 @@ examples:
 
 return unevaluated value of a variable
 * flags is a combination of letters with the following meaning:
-  * e %-escape value (in case it will be further %-evaluated), see %=escape
+  * e %-escape value (in case it will be further %-evaluated) replace evevry %
+      with %%
   * h html encode value, see %=htmlencode
   * u html encode will transform urls them into a links
   * n html encode will add br whenever it founds a newline
 
-see also %=escape %' and %=htmlencode
+see also %' and %=htmlencode
 
 examples:
 * `%{=rawvalue!foo}` -> `%bar` if foo is `%bar`
@@ -177,8 +178,6 @@ examples:
 * `%{=rawvalue:h1:hun}` is equivalent to `%{=htmlencode|%{=rawvalue:h1}|un}`
 * `%{'foo}` returns `foo` whereas `%{foo}` would have returned the value of foo
 * `%foo` -> `%bar` if foo is `%%bar`
-* `%{=escape!%{=frombase64:JWJhcg==}}` -> `%%bar` (decoded binary is `%bar`)
-* `%{=escape!%foo}` -> `%%bar` if foo is `%%bar`
 * `%{=rpn,foo}` -> `bar` if foo is `bar`
 * `%{=rpn,'foo}` -> `foo`
 * `%{=rpn,'%foo}` -> `bar` if foo is `bar` because `%foo` is evaluated as `bar`
@@ -423,29 +422,6 @@ examples:
 * `%{=eval!%foo}` -> `baz` if foo is `%bar` and bar is `baz`
 * `%{=eval!%{=rawvalue:foo}}` -> very complicated equivalent of `%foo`
 
-%=escape
---------
-`%{=escape!anything}`
-
-escape %-evaluation special characters from expression result (i.e. replace
-"%" with "%%"), which is the opposite from %=eval
-
-see also %' and %=rawvalue
-
-examples:
-* `%{=escape!%{=frombase64:JWJhcg==}}` -> `%%bar` (decoded binary is `%bar`)
-* `%{=escape!%foo}` -> `%%bar` if foo is `%%bar`
-* `%foo` -> `%bar` if foo is `%%bar`
-* `%{'foo}` returns `foo` whereas `%{foo}` would have returned the value of foo
-* `%{=rawvalue!foo}` -> `%bar` if foo is `%bar`
-* `%{=rawvalue!foo!e}` -> `%%bar` if foo is `%bar`
-* `%{=rpn,foo}` -> `bar` if foo is `bar`
-* `%{=rpn,'foo}` -> `foo`
-* `%{=rpn,'%foo}` -> `bar` if foo is `bar` because `%foo` is evaluated as `bar`
-                     by =rpn function before it's passed to MathExpr which will
-                     ask for evalutation of `'bar` which won't be evaluated
-                     thanks to its quote
-
 %=sha1
 ------
 `%{=sha1!expression}`
@@ -629,13 +605,11 @@ this is usefull when an application process an input as always %-evaluated
 (being in config files or elsewhere) because it make it possible to provide
 a constant anyway, see %=rpn for instance
 
-see also %=escape and %=rawvalue
+see also %=rawvalue with e option
 
 examples:
 * `%{'foo}` returns `foo` whereas `%{foo}` would have returned the value of foo
 * `%foo` -> `%bar` if foo is `%%bar`
-* `%{=escape!%{=frombase64:JWJhcg==}}` -> `%%bar` (decoded binary is `%bar`)
-* `%{=escape!%foo}` -> `%%bar` if foo is `%%bar`
 * `%{=rawvalue!foo}` -> `%bar` if foo is `%bar`
 * `%{=rawvalue!foo!e}` -> `%%bar` if foo is `%bar`
 * `%{=rpn,foo}` -> `bar` if foo is `bar`
@@ -644,3 +618,18 @@ examples:
                      by =rpn function before it's passed to MathExpr which will
                      ask for evalutation of `'bar` which won't be evaluated
                      thanks to its quote
+
+%=integer
+---------
+`%{=integer:input[:input2[:...]]}`
+
+cast input to a 64 bits signed integer (if possible)
+in case input is a floating point value it will be truncated toward 0
+
+examples:
+* `%{=integer:2}` -> 2
+* `%{=integer:-3.14}` -> -3
+* `%{=integer:blurp}` -> invalid
+* `%{=integer:blurp:0}` -> 0
+* `%{=integer:blurp:zero}` -> invalid
+* `%{=integer:blurp:%foo:2k}` -> 2000 if foo's value cannot be converted to int

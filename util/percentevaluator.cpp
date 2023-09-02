@@ -58,13 +58,6 @@ _functions {
   auto v = PercentEvaluator::eval_utf8(key.mid(ml+1), context);
   return PercentEvaluator::eval(v, context);
 }, true},
-{ "=escape", [](const Utf8String &key, const EvalContext context, int ml) -> QVariant {
-  const ParamsProvider *pp = context;
-  if (!pp)
-    return {};
-  auto v = pp->paramRawValue(key.mid(ml+1));
-  return PercentEvaluator::escape(v);
-}, true},
 { "=default", [](const Utf8String &key, const EvalContext context, int ml) -> QVariant {
   auto params = key.splitByLeadingChar(ml);
   for (int i = 0; i < params.size(); ++i) {
@@ -397,6 +390,16 @@ _functions {
   // TODO set up a MathExpr cache
    MathExpr expr(key.mid(ml), MathExpr::CharacterSeparatedRpn);
    return expr.eval(context, {});
+}, true},
+{ "=integer", [](const Utf8String &key, const EvalContext context, int ml) -> QVariant {
+  auto params = key.splitByLeadingChar(ml);
+  for (auto param: params) {
+    bool ok;
+    auto i = PercentEvaluator::eval_number<qlonglong>(param, context, &ok);
+    if (ok)
+      return i;
+  }
+  return {};
 }, true},
 };
 
