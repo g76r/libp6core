@@ -26,7 +26,7 @@ int main(void) {
   qDebug() << Utf8String{}.isNull() << ""_u8.isNull();
   Log::debug() << s << " - " << s.split('o') << " - " << s.split("§"_u8);
   Utf8StringList l = { "foo", "bar", "baz" };
-  qDebug() << ParamSet().evaluate("%0,%{-1},%2,%8=foo bar baz,,bar,", false, &l);
+  qDebug() << PercentEvaluator::eval_utf8("%0,%{-1},%2,%8=foo bar baz,,bar,", &l);
   s = "aéÉb€¢\u03c3\u03c2\u03a3øœ×o'z"_u8;
   qDebug() << s << s.toUpper() << s.toLower() << s.toTitle() << s.isLower() << Utf8String::toTitle(0x01c6);
   return 0;

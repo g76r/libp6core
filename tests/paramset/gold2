@@ -1,7 +1,9 @@
+{ "baz" = QVariant(Utf8String, "42") ,  "empty" = QVariant(Utf8String, "") ,  "foo" = QVariant(Utf8String, "bar") ,  "fooz" = QVariant(Utf8String, "%bar") ,  "foozz" = QVariant(Utf8String, "%%bar") ,  "h1" = QVariant(Utf8String, "at http://1.2.3.4/\nthere's something") ,  "s1" = QVariant(Utf8String, "\uFEFF\uFEFF§foo§bar§baz§\uFEFF§§") ,  "s2" = QVariant(Utf8String, "%{=left:%foo:1}") ,  "x" = QVariant(Utf8String, "1.5") , }
 "b"
-"a o§b foo§"
-"bG9naW46cGFzc3dvcmQ= 2009 fbff61 wqc= %baz 96ab86a37cef7e27d8d45af9c29dc974 33.5 "
-"%%bar=%%bar %%bar=%%bar %bar=%bar foo=foo %bar=%bar %%bar=%%bar %foo=%foo foo=foo bar=bar "
+"~~~ a=a o§b=o§b foo§=foo§ ~~~"
+"bG9naW46cGFzc3dvcmQ==bG9naW46cGFzc3dvcmQ= 2009=2009 fbff61=fbff61 wqc==wqc= %baz=%baz 96ab86a37cef7e27d8d45af9c29dc974=96ab86a37cef7e27d8d45af9c29dc974 33.5=33.5 "
+"*** %bar=%bar foo=foo %bar=%bar %%bar=%%bar %foo=%foo foo=foo bar=bar ***"
 "at <a href=\"http://1.2.3.4/\">http://1.2.3.4/</a><br/>\nthere&#39;s something"
 "at <a href=\"http://1.2.3.4/\">http://1.2.3.4/</a><br/>\nthere&#39;s something"
-"false=false true=true false=false false=false bar=bar = bar=bar bar=bar"
+"-3=-3 42=42 1000=1000 1000=1000"
+"= = = 1.6e+19=1.6e+19"
