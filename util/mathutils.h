@@ -59,7 +59,8 @@ public:
   static QVariant andQVariantAsNumber(QVariant a, QVariant b);
   static QVariant xorQVariantAsNumber(QVariant a, QVariant b);
   static QVariant orQVariantAsNumber(QVariant a, QVariant b);
-  static bool convertToString(QVariant *a);
+  /** convert QVariant to QString */
+  static bool convertToUtf16(QVariant *a);
 };
 
 #endif // MATHUTILS_H

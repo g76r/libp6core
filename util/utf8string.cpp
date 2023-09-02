@@ -155,6 +155,7 @@ float Utf8String::toFloat(bool *ok, float def, bool suffixes_enabled) const {
 template<typename I>
 static inline I toInteger(
     QByteArray s, bool *ok, int base, I def, bool suffixes_enabled,
+    bool floating_point_enabled,
     std::function<I(const QByteArray &,bool*,int)> wrapped) {
   s = s.trimmed();
   // won't go further 'P' because 'E' means exponent
@@ -189,6 +190,20 @@ static inline I toInteger(
   }
   bool _ok;
   I i = wrapped(s, &_ok, base);
+  if (!_ok && floating_point_enabled) {
+    // try to convert to double and then truncate to integer part
+    double d = toFloating<double>(s, &_ok, NAN, suffixes_enabled,
+                                  [](const QByteArray &s, bool *ok) {
+      return s.toDouble(ok);
+    });
+    if (_ok) { // use double value only if it fits in the integer type
+      if (d >= std::numeric_limits<I>::min() &&
+          d <= std::numeric_limits<I>::max())
+        i = d;
+      else
+        _ok = false;
+    }
+  }
   if (ok)
     *ok = _ok;
   if (!_ok)
@@ -196,73 +211,81 @@ static inline I toInteger(
   return i;
 }
 
-qlonglong Utf8String::toLongLong(bool *ok, int base, qlonglong def,
-                                 bool suffixes_enabled) const {
+qlonglong Utf8String::toLongLong(
+    bool *ok, int base, qlonglong def,
+    bool suffixes_enabled, bool floating_point_enabled) const {
   return toInteger<qlonglong>(
-        *this, ok, base, def, suffixes_enabled,
+        *this, ok, base, def, suffixes_enabled, floating_point_enabled,
         [](const QByteArray &s, bool *ok, int base) {
     return s.toLongLong(ok, base);
   });
 }
 
-qulonglong Utf8String::toULongLong(bool *ok, int base, qulonglong def,
-                                   bool suffixes_enabled) const {
+qulonglong Utf8String::toULongLong(
+    bool *ok, int base, qulonglong def,
+    bool suffixes_enabled, bool floating_point_enabled) const {
   return toInteger<qulonglong>(
-        *this, ok, base, def, suffixes_enabled,
+        *this, ok, base, def, suffixes_enabled, floating_point_enabled,
         [](const QByteArray &s, bool *ok, int base) {
     return s.toULongLong(ok, base);
   });
 }
 
-long Utf8String::toLong(bool *ok, int base, long def,
-                        bool suffixes_enabled) const {
+long Utf8String::toLong(
+    bool *ok, int base, long def,
+    bool suffixes_enabled, bool floating_point_enabled) const {
   return toInteger<long>(
-        *this, ok, base, def, suffixes_enabled,
+        *this, ok, base, def, suffixes_enabled, floating_point_enabled,
         [](const QByteArray &s, bool *ok, int base) {
     return s.toLong(ok, base);
   });
 }
 
-ulong Utf8String::toULong(bool *ok, int base, ulong def,
-                          bool suffixes_enabled) const {
+ulong Utf8String::toULong(
+    bool *ok, int base, ulong def,
+    bool suffixes_enabled, bool floating_point_enabled) const {
   return toInteger<ulong>(
-        *this, ok, base, def, suffixes_enabled,
+        *this, ok, base, def, suffixes_enabled, floating_point_enabled,
         [](const QByteArray &s, bool *ok, int base) {
     return s.toULong(ok, base);
   });
 }
 
-int Utf8String::toInt(bool *ok, int base, int def,
-                      bool suffixes_enabled) const {
+int Utf8String::toInt(
+    bool *ok, int base, int def,
+    bool suffixes_enabled, bool floating_point_enabled) const {
   return toInteger<int>(
-        *this, ok, base, def, suffixes_enabled,
+        *this, ok, base, def, suffixes_enabled, floating_point_enabled,
         [](const QByteArray &s, bool *ok, int base) {
     return s.toInt(ok, base);
   });
 }
 
-uint Utf8String::toUInt(bool *ok, int base, uint def,
-                        bool suffixes_enabled) const {
+uint Utf8String::toUInt(
+    bool *ok, int base, uint def,
+    bool suffixes_enabled, bool floating_point_enabled) const {
   return toInteger<uint>(
-        *this, ok, base, def, suffixes_enabled,
+        *this, ok, base, def, suffixes_enabled, floating_point_enabled,
         [](const QByteArray &s, bool *ok, int base) {
     return s.toUInt(ok, base);
   });
 }
 
-short Utf8String::toShort(bool *ok, int base, short def,
-                          bool suffixes_enabled) const {
+short Utf8String::toShort(
+    bool *ok, int base, short def,
+    bool suffixes_enabled, bool floating_point_enabled) const {
   return toInteger<short>(
-        *this, ok, base, def, suffixes_enabled,
+        *this, ok, base, def, suffixes_enabled, floating_point_enabled,
         [](const QByteArray &s, bool *ok, int base) {
     return s.toShort(ok, base);
   });
 }
 
-ushort Utf8String::toUShort(bool *ok, int base, ushort def,
-                            bool suffixes_enabled) const {
+ushort Utf8String::toUShort(
+    bool *ok, int base, ushort def,
+    bool suffixes_enabled, bool floating_point_enabled) const {
   return toInteger<ushort>(
-        *this, ok, base, def, suffixes_enabled,
+        *this, ok, base, def, suffixes_enabled, floating_point_enabled,
         [](const QByteArray &s, bool *ok, int base) {
     return s.toUShort(ok, base);
   });

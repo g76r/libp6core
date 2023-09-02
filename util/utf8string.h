@@ -218,56 +218,77 @@ public:
 
   // conversions to numbers
   /** Converts to floating point, supporting e notation and SI suffixes from 'f'
-   *  to 'P', 'u' is used as 1e-6 suffix. */
+   *  to 'P', 'u' is used as 1e-6 suffix e.g. ".1k" -> 100.0. */
   [[nodiscard]] double toDouble(bool *ok = nullptr, double def = 0.0,
                                 bool suffixes_enabled = true) const;
   /** Converts to floating point, supporting e notation and SI suffixes from 'f'
-   *  to 'P', 'u' is used as 1e-6 suffix. */
+   *  to 'P', 'u' is used as 1e-6 suffix e.g. ".1k" -> 100.0. */
   [[nodiscard]] float toFloat(bool *ok = nullptr, float def = 0.0,
                               bool suffixes_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
-   *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
-   *  If base == 0 C prefixes are supported "0x" "0" and "0b". */
+   *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
+   *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
+   *  If the string content matches a floating point value, return its
+   *  integer part (if it fits the integer type) e.g. "1e3" -> 1000. */
   [[nodiscard]] qlonglong toLongLong(
       bool *ok = nullptr, int base = 0, qlonglong def = 0,
-      bool suffixes_enabled = true) const;
+      bool suffixes_enabled = true, bool floating_point_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
-   *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
-   *  If base == 0 C prefixes are supported "0x" "0" and "0b". */
+   *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
+   *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
+   *  If the string content matches a floating point value, return its
+   *  integer part (if it fits the integer type) e.g. "1e3" -> 1000. */
   [[nodiscard]] qulonglong toULongLong(
       bool *ok = nullptr, int base = 0, qulonglong def = 0,
-      bool suffixes_enabled = true) const;
+      bool suffixes_enabled = true, bool floating_point_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
-   *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
-   *  If base == 0 C prefixes are supported "0x" "0" and "0b". */
-  [[nodiscard]] long toLong(bool *ok = nullptr, int base = 0, long def = 0,
-                            bool suffixes_enabled = true) const;
+   *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
+   *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
+   *  If the string content matches a floating point value, return its
+   *  integer part (if it fits the integer type) e.g. "1e3" -> 1000. */
+  [[nodiscard]] long toLong(
+      bool *ok = nullptr, int base = 0, long def = 0,
+      bool suffixes_enabled = true, bool floating_point_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
-   *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
-   *  If base == 0 C prefixes are supported "0x" "0" and "0b". */
-  [[nodiscard]] ulong toULong(bool *ok = nullptr, int base = 0, ulong def = 0,
-                              bool suffixes_enabled = true) const;
+   *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
+   *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
+   *  If the string content matches a floating point value, return its
+   *  integer part (if it fits the integer type) e.g. "1e3" -> 1000. */
+  [[nodiscard]] ulong toULong(
+      bool *ok = nullptr, int base = 0, ulong def = 0,
+      bool suffixes_enabled = true, bool floating_point_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
-   *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
-   *  If base == 0 C prefixes are supported "0x" "0" and "0b". */
-  [[nodiscard]] int toInt(bool *ok = nullptr, int base = 0, int def = 0,
-                          bool suffixes_enabled = true) const;
+   *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
+   *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
+   *  If the string content matches a floating point value, return its
+   *  integer part (if it fits the integer type) e.g. "1e3" -> 1000. */
+  [[nodiscard]] int toInt(
+      bool *ok = nullptr, int base = 0, int def = 0,
+      bool suffixes_enabled = true, bool floating_point_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
-   *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
-   *  If base == 0 C prefixes are supported "0x" "0" and "0b". */
-  [[nodiscard]] uint toUInt(bool *ok = nullptr, int base = 0, uint def = 0,
-                            bool suffixes_enabled = true) const;
+   *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
+   *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
+   *  If the string content matches a floating point value, return its
+   *  integer part (if it fits the integer type) e.g. "1e3" -> 1000. */
+  [[nodiscard]] uint toUInt(
+      bool *ok = nullptr, int base = 0, uint def = 0,
+      bool suffixes_enabled = true, bool floating_point_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
-   *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
-   *  If base == 0 C prefixes are supported "0x" "0" and "0b". */
-  [[nodiscard]] short toShort(bool *ok = nullptr, int base = 0, short def = 0,
-                              bool suffixes_enabled = true) const;
+   *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
+   *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
+   *  If the string content matches a floating point value, return its
+   *  integer part (if it fits the integer type) e.g. "1e3" -> 1000. */
+  [[nodiscard]] short toShort(
+      bool *ok = nullptr, int base = 0, short def = 0,
+      bool suffixes_enabled = true, bool floating_point_enabled = true) const;
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
-   *  common casula suffixes ('k', 'm', 'b'). Defaults to base 0 where
-   *  If base == 0 C prefixes are supported "0x" "0" and "0b". */
+   *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
+   *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
+   *  If the string content matches a floating point value, return its
+   *  integer part (if it fits the integer type) e.g. "1e3" -> 1000. */
   [[nodiscard]] ushort toUShort(
       bool *ok = nullptr, int base = 0, ushort def = 0,
-      bool suffixes_enabled = true) const;
+      bool suffixes_enabled = true, bool floating_point_enabled = true) const;
   /** Converts to bool, supporting case insensitive "true" and "false", and any
    *  integer number, 0 being false and everything else true. */
   [[nodiscard]] bool toBool(bool *ok = nullptr, bool def = false) const;
@@ -276,12 +297,13 @@ public:
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
   [[nodiscard]] inline T toNumber(
       bool *ok = nullptr, const T &def = {},
-      bool suffixes_enabled = true) const;
+      bool suffixes_enabled = true, bool floating_point_enabled = true) const;
   /** Convenience methods witout bool *ok. */
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
   [[nodiscard]] inline T toNumber(
-      const T &def, bool suffixes_enabled = true) const {
-    return toNumber<T>(nullptr, def, suffixes_enabled); }
+      const T &def, bool suffixes_enabled = true,
+      bool floating_point_enabled = true) const {
+    return toNumber<T>(nullptr, def, suffixes_enabled, floating_point_enabled);}
 
   // conversions from numbers
   [[nodiscard]] static inline Utf8String number(int i, int base = 10) {
@@ -807,67 +829,75 @@ char32_t Utf8String::toTitle(char32_t c) {
 
 template<>
 [[nodiscard]] inline double Utf8String::toNumber<>(
-    bool *ok, const double &def, bool suffixes_enabled) const {
+    bool *ok, const double &def, bool suffixes_enabled, bool) const {
   return toDouble(ok, def, suffixes_enabled);
 }
 
 template<>
 [[nodiscard]] inline float Utf8String::toNumber<>(
-    bool *ok, const float &def, bool suffixes_enabled) const {
+    bool *ok, const float &def, bool suffixes_enabled, bool) const {
   return toFloat(ok, def, suffixes_enabled);
 }
 
 template<>
 [[nodiscard]] inline qlonglong Utf8String::toNumber<>(
-    bool *ok, const qlonglong &def, bool suffixes_enabled) const {
-  return toLongLong(ok, 0, def, suffixes_enabled);
+    bool *ok, const qlonglong &def, bool suffixes_enabled,
+    bool floating_point_enabled) const {
+  return toLongLong(ok, 0, def, suffixes_enabled, floating_point_enabled);
 }
 
 template<>
 [[nodiscard]] inline qulonglong Utf8String::toNumber<>(
-    bool *ok, const qulonglong &def, bool suffixes_enabled) const {
-  return toULongLong(ok, 0, def, suffixes_enabled);
+    bool *ok, const qulonglong &def, bool suffixes_enabled,
+    bool floating_point_enabled) const {
+  return toULongLong(ok, 0, def, suffixes_enabled, floating_point_enabled);
 }
 
 template<>
 [[nodiscard]] inline long Utf8String::toNumber<>(
-    bool *ok, const long &def, bool suffixes_enabled) const {
-  return toLong(ok, 0, def, suffixes_enabled);
+    bool *ok, const long &def, bool suffixes_enabled,
+    bool floating_point_enabled) const {
+  return toLong(ok, 0, def, suffixes_enabled, floating_point_enabled);
 }
 
 template<>
 [[nodiscard]] inline ulong Utf8String::toNumber<>(
-    bool *ok, const ulong &def, bool suffixes_enabled) const {
-  return toULong(ok, 0, def, suffixes_enabled);
+    bool *ok, const ulong &def, bool suffixes_enabled,
+    bool floating_point_enabled) const {
+  return toULong(ok, 0, def, suffixes_enabled, floating_point_enabled);
 }
 
 template<>
 [[nodiscard]] inline int Utf8String::toNumber<>(
-    bool *ok, const int &def, bool suffixes_enabled) const {
-  return toInt(ok, 0, def, suffixes_enabled);
+    bool *ok, const int &def, bool suffixes_enabled,
+    bool floating_point_enabled) const {
+  return toInt(ok, 0, def, suffixes_enabled, floating_point_enabled);
 }
 
 template<>
 [[nodiscard]] inline uint Utf8String::toNumber<>(
-    bool *ok, const uint &def, bool suffixes_enabled) const {
-  return toUInt(ok, 0, def, suffixes_enabled);
+    bool *ok, const uint &def, bool suffixes_enabled,
+    bool floating_point_enabled) const {
+  return toUInt(ok, 0, def, suffixes_enabled, floating_point_enabled);
 }
 
 template<>
 [[nodiscard]] inline short Utf8String::toNumber<>(
-    bool *ok, const short &def, bool suffixes_enabled) const {
-  return toShort(ok, 0, def, suffixes_enabled);
+    bool *ok, const short &def, bool suffixes_enabled,
+    bool floating_point_enabled) const {
+  return toShort(ok, 0, def, suffixes_enabled, floating_point_enabled);
 }
 
 template<>
 [[nodiscard]] inline ushort Utf8String::toNumber<>(
-    bool *ok, const ushort &def, bool suffixes_enabled) const {
-  return toUShort(ok, 0, def, suffixes_enabled);
+    bool *ok, const ushort &def, bool suffixes_enabled,
+    bool floating_point_enabled) const {
+  return toUShort(ok, 0, def, suffixes_enabled, floating_point_enabled);
 }
 
 template<>
 [[nodiscard]] inline bool Utf8String::toNumber<>(
-    bool *ok, const bool &def, bool) const {
+    bool *ok, const bool &def, bool, bool) const {
   return toBool(ok, def);
 }
 

@@ -103,15 +103,14 @@ static bool convertOtherTypesToBestNumericTypeIfPossible(
     s = a->value<Utf8String>();
   }
   if (!s.isEmpty()) {
-    s.trim();
     bool ok;
-    auto ll = s.toLongLong(&ok, 0);
+    auto ll = s.toLongLong(&ok, 0, 0, true, false);
     if (ok) {
       a->setValue(ll);
       *tta = QMetaType::LongLong;
       return true;
     }
-    auto ull = s.toULongLong(&ok, 0);
+    auto ull = s.toULongLong(&ok, 0, 0, true, false);
     if (ok) {
       a->setValue(ull);
       *tta = QMetaType::ULongLong;
@@ -151,7 +150,7 @@ bool MathUtils::promoteToBestNumericType(QVariant *a) {
   return false;
 }
 
-bool MathUtils::convertToString(QVariant *a) {
+bool MathUtils::convertToUtf16(QVariant *a) {
   if (!a)
     return false;
   auto id = a->metaType().id();
@@ -265,15 +264,15 @@ QPartialOrdering MathUtils::compareQVariantAsNumber(
     return QVariant::compare(a, b);
   }
   if (anyStringRepresentation) {
-    convertToString(&a0);
-    convertToString(&b0);
+    convertToUtf16(&a0);
+    convertToUtf16(&b0);
     auto c = a0.toString().compare(b0.toString());
     //qDebug() << "  stringified(any)" << a0 << b0 << c;
     return c > 0 ? QPartialOrdering::Greater
            : c < 0 ? QPartialOrdering::Less
                    : QPartialOrdering::Equivalent;
   }
-  if (convertToString(&a0) && convertToString(&b0)) {
+  if (convertToUtf16(&a0) && convertToUtf16(&b0)) {
     //qDebug() << "  stringified" << a0 << b0;
     return QVariant::compare(a0, b0);
   }
