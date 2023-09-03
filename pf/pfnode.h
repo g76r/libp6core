@@ -225,10 +225,10 @@ public:
     * QString("") if child exists but has no content
     * If several children have the same name the first text one is choosen.
     * The goal is to emulate XML attributes, hence the name. */
-  QString attribute(const QString &name) const {
+  QString utf16attribute(const QString &name) const {
     PfNode child = firstTextChildByName(name);
-    return child.isNull() ? QString() : child.contentAsString(); }
-  Utf8String utf8Attribute(const QString &name) const {
+    return child.isNull() ? QString() : child.contentAsUtf16(); }
+  Utf8String attribute(const Utf8String &name) const {
     PfNode child = firstTextChildByName(name);
     return child.isNull() ? Utf8String{} : child.contentAsUtf8(); }
   /** Return a child content knowing the child name.
@@ -236,10 +236,10 @@ public:
     * QString("") if child exists but has no content
     * If several children have the same name the first text one is choosen.
     * The goal is to emulate XML attributes, hence the name. */
-  QString attribute(const QString &name, const QString &defaultValue) const {
+  QString utf16attribute(const QString &name, const QString &defaultValue) const {
     PfNode child = firstTextChildByName(name);
-    return child.isNull() ? defaultValue : child.contentAsString(); }
-  Utf8String utf8Attribute(
+    return child.isNull() ? defaultValue : child.contentAsUtf16(); }
+  Utf8String attribute(
       const Utf8String &name, const Utf8String &defaultValue) const {
     PfNode child = firstTextChildByName(name);
     return child.isNull() ? defaultValue : child.contentAsUtf8(); }
@@ -247,7 +247,7 @@ public:
    * This is the same as attribute() with multi-valued semantics.
    * Skip children with non-text content.
    * If no text child matches the name, the list is empty. */
-  QStringList stringChildrenByName(const QString &name) const;
+  Utf8StringList utf8ChildrenByName(const Utf8String &name) const;
   /** Return the string content of children, splited into string pairs at the
    * first whitespace, one list item per child.
    * Child whole content and both strings of the pair are trimmed.
@@ -255,13 +255,13 @@ public:
    * Chilren without whitespace will have the first pair item set to the whole
    * node content (which may be empty) and the second one to QString().
    * If no text child matches the name, the list is empty. */
-  QList<QPair<QString,QString>> stringsPairChildrenByName(
-      const QString &name) const;
+  QList<QPair<Utf8String, Utf8String> > utf8PairChildrenByName(
+      const Utf8String &name) const;
   /** Return the integer content of children, splited into pairs at the
    * first whitespace, one list item per child.
    * @see stringsPairChildrenByName() */
-  QList<QPair<QString, qint64>> stringLongPairChildrenByName(
-      const QString &name) const;
+  QList<QPair<Utf8String, qint64>> utf8LongPairChildrenByName(
+      const Utf8String &name) const;
   /** @see contentAsLong() */
   qint64 longAttribute(const QString &name, qint64 defaultValue = 0,
                        bool *ok = 0) const {
@@ -325,9 +325,9 @@ public:
   bool isBinary() const { return d && d->isBinary(); }
   /** @return QString() if isBinary() or isArray() or isNull(), and QString("")
    * if isText() even if isEmpty() */
-  QString contentAsString() const {
+  QString contentAsUtf16() const {
     return d ? d->contentAsString() : QString(); }
-  Utf8String contentAsUtf8() const { return contentAsString(); }
+  Utf8String contentAsUtf8() const { return contentAsUtf16(); }
   /** @return integer value if the string content is a valid integer
    * C-like prefixes are supported and both kmb and kMGTP suffixes are supported
    * surrounding whitespace is trimmed
@@ -442,7 +442,7 @@ public:
   }
   /** Compares contentAsString() */
   bool operator<(const PfNode &other) const {
-    return contentAsString() < other.contentAsString();
+    return contentAsUtf16() < other.contentAsUtf16();
   }
 
   // Output methods ///////////////////////////////////////////////////////////

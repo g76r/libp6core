@@ -351,44 +351,47 @@ PfNode PfNode::firstTextChildByName(const QString &name) const {
   return PfNode();
 }
 
-QStringList PfNode::stringChildrenByName(const QString &name) const {
-  QStringList sl;
+Utf8StringList PfNode::utf8ChildrenByName(const Utf8String &name) const {
+  Utf8StringList sl;
   if (!name.isEmpty())
     for (auto child: children())
-      if (!child.isNull() && child.d->_name == name && child.isText())
-        sl.append(child.contentAsString());
+      if (!child.isNull() && child.d->_name == name.toString()
+          && child.isText())
+        sl.append(child.contentAsUtf8());
   return sl;
 }
 
-QList<QPair<QString,QString> > PfNode::stringsPairChildrenByName(
-    const QString &name) const {
-  QList<QPair<QString,QString> > l;
+QList<QPair<Utf8String,Utf8String> > PfNode::utf8PairChildrenByName(
+    const Utf8String &name) const {
+  QList<QPair<Utf8String,Utf8String> > l;
   if (!name.isEmpty())
     for (auto child: children())
-      if (!child.isNull() && child.d->_name == name && child.isText()) {
-        QString s = child.contentAsString().remove(_leadingwhitespace);
+      if (!child.isNull() && child.d->_name == name.toString()
+          && child.isText()) {
+        QString s = child.contentAsUtf16().remove(_leadingwhitespace);
         qsizetype i = s.indexOf(_whitespace);
         if (i >= 0)
-          l.append(QPair<QString,QString>(s.left(i), s.mid(i+1)));
+          l.append(QPair<Utf8String,Utf8String>(s.left(i), s.mid(i+1)));
         else
-          l.append(QPair<QString,QString>(s, QString()));
+          l.append(QPair<Utf8String,Utf8String>(s, {}));
       }
   return l;
 }
 
-QList<QPair<QString, qint64>> PfNode::stringLongPairChildrenByName(
-    const QString &name) const {
-  QList<QPair<QString,qint64>> l;
+QList<QPair<Utf8String, qint64> > PfNode::utf8LongPairChildrenByName(
+    const Utf8String &name) const {
+  QList<QPair<Utf8String,qint64>> l;
   if (!name.isEmpty())
     for (auto child: children())
-      if (!child.isNull() && child.d->_name == name && child.isText()) {
-        QString s = child.contentAsString().remove(_leadingwhitespace);
+      if (!child.isNull() && child.d->_name == name.toString()
+          && child.isText()) {
+        QString s = child.contentAsUtf16().remove(_leadingwhitespace);
         qsizetype i = s.indexOf(_whitespace);
         if (i >= 0)
-          l.append(QPair<QString,qint64>(s.left(i),
-                                         s.mid(i).trimmed().toLongLong(0, 0)));
+          l.append(QPair<Utf8String,qint64>(
+                     s.left(i), s.mid(i).trimmed().toLongLong(0, 0)));
         else
-          l.append(QPair<QString,qint64>(s, 0));
+          l.append(QPair<Utf8String,qint64>(s, 0));
       }
   return l;
 }
@@ -406,7 +409,7 @@ bool PfNode::contentAsBool(bool defaultValue, bool *ok) const {
 }
 
 QStringList PfNode::contentAsStringList() const {
-  return contentAsString().split(_whitespace, Qt::SkipEmptyParts);
+  return contentAsUtf16().split(_whitespace, Qt::SkipEmptyParts);
 }
 
 Utf8StringList PfNode::contentAsUtf8List() const {
@@ -414,7 +417,7 @@ Utf8StringList PfNode::contentAsUtf8List() const {
 }
 
 QStringList PfNode::contentAsTwoStringsList() const {
-  return PfUtils::stringSplittedOnFirstWhitespace(contentAsString());
+  return PfUtils::stringSplittedOnFirstWhitespace(contentAsUtf16());
 }
 
 PfNode &PfNode::setAttribute(const QString &name, const QString &content) {

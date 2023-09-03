@@ -159,7 +159,7 @@ ParamSet::ParamSet(
   const Utf8String &constattrname, const ParamSet &parent)
   : d(new ParamSetData(parent)) {
   if (!attrname.isEmpty()) {
-    for (auto p: parentnode.stringsPairChildrenByName(attrname)) {
+    for (auto p: parentnode.utf8PairChildrenByName(attrname)) {
       if (p.first.isEmpty())
         continue;
       Utf8String value = p.second;

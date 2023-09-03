@@ -30,7 +30,7 @@ static QRegularExpression _sqldbspec
 void SqlUtils::configureSqlDatabasesFromChildren(
   PfNode config, QString childname, ParamsProvider *context) {
   for (auto sqldb: config.childrenByName(childname)) {
-    auto spec = PercentEvaluator::eval_string(sqldb.contentAsString(), context);
+    auto spec = PercentEvaluator::eval_utf16(sqldb.contentAsUtf16(), context);
     auto m = _sqldbspec.match(spec);
     if (!m.hasMatch()) {
       Log::warning() << "cannot parse SQL database specification: " << spec;
