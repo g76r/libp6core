@@ -71,7 +71,7 @@ QDebug operator<<(QDebug dbg, const SharedUiItem &i) {
   return dbg.space();
 }
 
-const QVariant SharedUiItemData::paramRawValue(
+QVariant SharedUiItemData::paramRawValue(
     const Utf8String &key, const QVariant &def,
     const EvalContext &context) const {
   if (!context.hasScopeOrNone(paramScope()))
@@ -81,13 +81,13 @@ const QVariant SharedUiItemData::paramRawValue(
     section = key.toNumber<int>(-1);
   if (section < 0)
     return def;
-  auto value = uiData(section);
+  auto value = uiData(section, context.role());
   if (!value.isValid())
     return def;
   return value;
 }
 
-const QVariant SharedUiItem::paramRawValue(
+QVariant SharedUiItem::paramRawValue(
     const Utf8String &key, const QVariant &def,
     const EvalContext &context) const {
   if (!_data)
@@ -95,7 +95,7 @@ const QVariant SharedUiItem::paramRawValue(
   return _data->paramRawValue(key, def, context);
 }
 
-const Utf8String SharedUiItem::paramRawUtf8(
+Utf8String SharedUiItem::paramRawUtf8(
     const Utf8String &key, const Utf8String &def,
     const EvalContext &context) const {
   if (!_data)
@@ -103,9 +103,9 @@ const Utf8String SharedUiItem::paramRawUtf8(
   return _data->paramRawUtf8(key, def, context);
 }
 
-const Utf8StringSet SharedUiItemData::paramKeys(
+Utf8StringSet SharedUiItemData::paramKeys(
     const EvalContext &) const {
-  Utf8StringSet keys { "id"_u8, "id_qualifier"_u8, "qualified_id"_u8 };
+  Utf8StringSet keys { "id"_u8, "qualifier"_u8, "qualified_id"_u8 };
   int count = uiSectionCount();
   for (int section = 0; section < count; ++section) {
     keys << Utf8String::number(section);
@@ -117,7 +117,7 @@ const Utf8StringSet SharedUiItemData::paramKeys(
   return keys;
 }
 
-const Utf8StringSet SharedUiItem::paramKeys(const EvalContext &context) const {
+Utf8StringSet SharedUiItem::paramKeys(const EvalContext &context) const {
   if (!_data)
     return {};
   return _data->paramKeys(context);
@@ -130,7 +130,7 @@ bool SharedUiItem::paramContains(
   return _data->paramContains(key, context);
 }
 
-const Utf8String SharedUiItem::paramUtf8(
+Utf8String SharedUiItem::paramUtf8(
     const Utf8String &key, const Utf8String &def,
     const EvalContext &context) const {
   if (!_data)
@@ -138,11 +138,11 @@ const Utf8String SharedUiItem::paramUtf8(
   return _data->paramUtf8(key, def, context);
 }
 
-const Utf8String SharedUiItemData::paramScope() const {
+Utf8String SharedUiItemData::paramScope() const {
   return idQualifier();
 }
 
-const Utf8String SharedUiItem::paramScope() const {
+Utf8String SharedUiItem::paramScope() const {
   if (!_data)
     return {};
   return _data->paramScope();

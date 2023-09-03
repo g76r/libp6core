@@ -177,12 +177,12 @@ public:
     */
 
   using ParamsProvider::paramRawValue;
-  [[nodiscard]] const QVariant paramRawValue(
+  [[nodiscard]] QVariant paramRawValue(
       const Utf8String &key, const QVariant &def = {},
       const EvalContext &context = {}) const override;
 
   using ParamsProvider::paramKeys;
-  [[nodiscard]] const Utf8StringSet paramKeys(
+  [[nodiscard]] Utf8StringSet paramKeys(
       const EvalContext &context = {}) const override;
   [[deprecated("use EvalContext{DonInherit} instead")]]
   [[nodiscard]] inline const Utf8StringSet paramKeys(bool inherit) const {
@@ -196,20 +196,8 @@ public:
       const Utf8String &key, bool inherit) const {
     return paramContains(key, inherit ? EvalContext{} : DontInherit); }
 
-  // additional conversions (not in ParamsProvider)
-  /** Return a value splitted into strings, %-substitution is done after the
-   * split (i.e. "%foo bar" has two elements, regardless the number of spaces
-   * in %foo value). */
-  [[nodiscard]] inline Utf8StringList paramUtf8List(
-      const Utf8String &key, const Utf8String &def = {},
-      const EvalContext &context = {},
-      QList<char> seps = Utf8String::AsciiWhitespace) const {
-    Utf8StringList list;
-    auto raws = paramRawUtf8(key, def, context).split(seps);
-    for (auto raw: raws)
-      list += Utf8String(PercentEvaluator::eval(raw, context));
-    return list;
-  }
+  using ParamsProvider::paramUtf16List;
+  using ParamsProvider::paramUtf8List;
   [[deprecated("use EvalContext{DonInherit} instead")]]
   [[nodiscard]] inline Utf8StringList paramUtf8List(
       const Utf8String &key, const Utf8String &def = {},
@@ -231,8 +219,8 @@ public:
   const QMap<Utf8String,QVariant> toMap(bool inherit = true) const;
   const QHash<Utf8String,Utf8String> toUtf8Hash(bool inherit = true) const;
   const QMap<Utf8String,Utf8String> toUtf8Map(bool inherit = true) const;
-  const QHash<QString,QString> toStringHash(bool inherit = true) const;
-  const QMap<QString, QString> toStringMap(bool inherit = true) const;
+  const QHash<QString,QString> toUtf16Hash(bool inherit = true) const;
+  const QMap<QString, QString> toUtf16Map(bool inherit = true) const;
   /** Get an external paramset. */
   [[nodiscard]] static ParamSet externalParams(Utf8String set_name);
   /** Register an external paramset. */

@@ -16,8 +16,6 @@
 
 #include "shareduiitem.h"
 
-class SharedUiItemListParamsProvider;
-
 /** Specializing QList for SharedUiItems, the same way QStringList does. */
 template <class T = SharedUiItem>
 class LIBP6CORESHARED_EXPORT SharedUiItemList : public QList<T> {
@@ -45,11 +43,6 @@ public:
   operator const SharedUiItemList<SharedUiItem> &() const {
     return reinterpret_cast<const SharedUiItemList<SharedUiItem>&>(*this);
   }
-  /** Make uiData() available through ParamsProvider interface, using
-   * a %{qualifierId:sectionNameOrNumber} or %{sectionNameOrNumber} syntax,
-   * the former being a filter among items depending of their qualifier/type.
-   * @see SharedUiItemParamsProvider */
-  inline SharedUiItemListParamsProvider toParamsProvider() const;
   // MAYDO add features
   //SharedUiItemList filterByQualifier(QString qualifier) const;
   //SharedUiItemList filterByQualifier(QRegularExpression qualifier) const;
@@ -62,7 +55,7 @@ public:
 /** Template specialization for SharedUiItemList<SharedUiItem> */
 template <>
 class LIBP6CORESHARED_EXPORT SharedUiItemList<SharedUiItem>
-    : public QList<SharedUiItem> {
+    : public QList<SharedUiItem>, public ParamsProvider {
 private:
   template <class S>
   inline QString generic_join(const S &separator, bool qualified) const {
@@ -113,7 +106,11 @@ public:
   QString join(const QChar separator, bool qualified = false) const {
     return generic_join(separator, qualified);
   }
-  inline SharedUiItemListParamsProvider toParamsProvider() const;
+  QVariant paramRawValue(
+      const Utf8String &key, const QVariant &def = {},
+      const ParamsProvider::EvalContext &context = {}) const override;
+  Utf8StringSet paramKeys(
+      const ParamsProvider::EvalContext &context = {}) const override;
 };
 
 Q_DECLARE_METATYPE(SharedUiItemList<>)
@@ -130,37 +127,6 @@ inline QString SharedUiItemList<T>::join(
     const QChar separator, bool qualified) const {
   const SharedUiItemList<SharedUiItem> &upcasted = *this;
   return upcasted.join(separator, qualified);
-}
-
-/** ParamsProvider wrapper for SharedUiItemList. */
-class LIBP6CORESHARED_EXPORT SharedUiItemListParamsProvider
-    : public ParamsProvider {
-  SharedUiItemList<> _list;
-  int _role;
-  Utf8String _scope;
-
-public:
-  inline SharedUiItemListParamsProvider(
-      const SharedUiItemList<> &list, int role = Qt::DisplayRole,
-      Utf8String scope = {})
-    : _list(list), _role(role), _scope(scope) { }
-  using ParamsProvider::paramValue;
-  const QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def = {},
-      const EvalContext &context = {}) const override;
-  const Utf8StringSet paramKeys(const EvalContext &context = {}) const override;
-  const Utf8String paramScope() const override;
-};
-
-template <class T>
-inline SharedUiItemListParamsProvider
-SharedUiItemList<T>::toParamsProvider() const {
-  return SharedUiItemListParamsProvider(*this);
-}
-
-inline SharedUiItemListParamsProvider
-SharedUiItemList<SharedUiItem>::toParamsProvider() const {
-  return SharedUiItemListParamsProvider(*this);
 }
 
 #endif // SHAREDUIITEMLIST_H

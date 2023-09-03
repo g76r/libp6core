@@ -16,6 +16,7 @@
 
 #include "modelview/shareduiitem.h"
 #include "thread/atomicvalue.h"
+#include "util/paramsprovidermerger.h"
 
 using SharedUiItemDataFunction = std::function<
 QVariant(const SharedUiItemData *data, const Utf8String &key,
@@ -70,7 +71,7 @@ public:
   }
 
   // ParamsProvider interface
-  const Utf8String paramScope() const override { return T::_idQualifier; }
+  Utf8String paramScope() const override { return T::_idQualifier; }
 };
 
 template<class T>
@@ -81,7 +82,7 @@ template<class T>
 class SharedUiItemDataWithFunctions : public SharedUiItemDataBase<T> {
 public:
   // ParamsProvider interface
-  const QVariant paramRawValue(
+  QVariant paramRawValue(
       const Utf8String &key, const QVariant &def,
       const PercentEvaluator::EvalContext &context) const override {
     int ml;
@@ -101,7 +102,7 @@ public:
   SharedUiItemDataWithMutableParams(const ParamSet &params = {})
     : _params(params) {}
   // ParamsProvider interface
-  const QVariant paramRawValue(
+  QVariant paramRawValue(
       const Utf8String &key, const QVariant &def,
       const PercentEvaluator::EvalContext &context) const override {
     int ml;
@@ -113,7 +114,7 @@ public:
       return v;
     return SharedUiItemDataBase<T>::paramRawValue(key, def, context);
   }
-  const Utf8StringSet paramKeys(
+  Utf8StringSet paramKeys(
       const PercentEvaluator::EvalContext &context) const override {
     Utf8StringSet keys = _params.lockedData()->paramKeys(context);
     if (_includeUiDataAsParam)
@@ -131,7 +132,7 @@ public:
   SharedUiItemDataWithImmutableParams(const ParamSet &params = {})
     : _params(params) {}
   // ParamsProvider interface
-  const QVariant paramRawValue(
+  QVariant paramRawValue(
       const Utf8String &key, const QVariant &def,
       const PercentEvaluator::EvalContext &context) const override {
     int ml;
@@ -143,7 +144,7 @@ public:
       return v;
     return SharedUiItemDataBase<T>::paramRawValue(key, def, context);
   }
-  const Utf8StringSet paramKeys(
+  Utf8StringSet paramKeys(
       const PercentEvaluator::EvalContext &context) const override {
     Utf8StringSet keys = _params.paramKeys(context);
     if (_includeUiDataAsParam)

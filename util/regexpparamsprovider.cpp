@@ -14,7 +14,7 @@
 #include "regexpparamsprovider.h"
 #include "util/utf8stringset.h"
 
-const QVariant RegexpParamsProvider::paramRawValue(
+QVariant RegexpParamsProvider::paramRawValue(
     const Utf8String &key, const QVariant &def,
     const EvalContext &) const {
   if (key.isEmpty())
@@ -32,7 +32,7 @@ const QVariant RegexpParamsProvider::paramRawValue(
   return def;
 }
 
-const Utf8StringSet RegexpParamsProvider::paramKeys(
+Utf8StringSet RegexpParamsProvider::paramKeys(
     const EvalContext &) const {
   Utf8StringSet keys;
   qsizetype n = _match.capturedTexts().size();
@@ -44,6 +44,6 @@ const Utf8StringSet RegexpParamsProvider::paramKeys(
   return keys;
 }
 
-const Utf8String RegexpParamsProvider::paramScope() const {
+Utf8String RegexpParamsProvider::paramScope() const {
   return _scope;
 }

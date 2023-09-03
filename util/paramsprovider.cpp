@@ -22,13 +22,13 @@ extern char **environ; // LATER use QProcessEnvironment::systemEnvironment()
 namespace {
 
 struct Environment : public ParamsProvider {
-  const QVariant paramRawValue(
+  QVariant paramRawValue(
     const Utf8String &key, const QVariant &def,
       const EvalContext &) const override {
     auto v = qgetenv(key);
     return v.isNull() ? def : QString::fromLocal8Bit(v);
   }
-  const Utf8StringSet paramKeys(const EvalContext &) const override {
+  Utf8StringSet paramKeys(const EvalContext &) const override {
     Utf8StringSet keys;
     for (char **e = environ; *e != nullptr; ++e) {
       int i = 0;
@@ -38,18 +38,18 @@ struct Environment : public ParamsProvider {
     }
     return keys;
   }
-  const Utf8String paramScope() const override {
+  Utf8String paramScope() const override {
     return "env"_u8;
   }
 };
 
 struct Empty : public ParamsProvider {
-  const QVariant paramRawValue(
+  QVariant paramRawValue(
     const Utf8String &, const QVariant &def,
       const EvalContext &) const override {
     return def;
   }
-  const Utf8StringSet paramKeys(const EvalContext &) const override {
+  Utf8StringSet paramKeys(const EvalContext &) const override {
     return {};
   }
 };
@@ -60,14 +60,14 @@ ParamsProvider *ParamsProvider::_environment = new Environment();
 
 ParamsProvider *ParamsProvider::_empty = new Empty();
 
-const ParamSet ParamsProvider::paramSnapshot() const {
+ParamSet ParamsProvider::paramSnapshot() const {
   ParamSet snapshot;
   for (auto key: paramKeys())
     snapshot.setValue(key, PercentEvaluator::escape(paramValue(key)));
   return snapshot;
 }
 
-const QVariant ParamsProvider::paramValue(
+QVariant ParamsProvider::paramValue(
     const Utf8String &key, const QVariant &def,
     const EvalContext &context) const {
   // don't check if context scope is applicable here, because it's up to
@@ -79,30 +79,78 @@ const QVariant ParamsProvider::paramValue(
   if (v.canConvert<double>() && id != qMetaTypeId<Utf8String>()
       && id != QMetaType::QString && id != QMetaType::QByteArray)
     return v; // passing QVariant through if number
-  v =  PercentEvaluator::eval(Utf8String(v), context);
+  if (!context.paramsProvider()) { // if context has no pp, use this as a pp
+    EvalContext new_context = context;
+    new_context.setParamsProvider(this);
+    v =  PercentEvaluator::eval(Utf8String(v), new_context);
+  } else {
+#if 0
+    // TODO is it a good idea or just too dangerous to allow changing the ppm ?
+    auto ppm = dynamic_cast<ParamsProviderMerger*>(context.paramsProvider());
+    if (ppm) { // if context's pp is a ppm, prepend this
+      ppm->prepend(this);
+      EvalContext new_context = context;
+      new_context.setParamsProvider(ppm);
+      v =  PercentEvaluator::eval(Utf8String(v), new_context);
+      ppm->pop_front();
+    } else { // else create a ppm
+#endif
+      auto ppm = ParamsProviderMerger(this)(context.paramsProvider());
+      EvalContext new_context = context;
+      new_context.setParamsProvider(&ppm);
+      v =  PercentEvaluator::eval(Utf8String(v), new_context);
+#if 0
+    }
+#endif
+  }
   if (!v.isValid())
     return def;
   return v;
 }
 
-const QVariant ParamsProvider::paramRawValue(
+QVariant ParamsProvider::paramRawValue(
     const Utf8String &, const QVariant &def, const EvalContext&) const {
   return def;
 }
 
-const Utf8String ParamsProvider::paramRawUtf8(
+Utf8String ParamsProvider::paramRawUtf8(
     const Utf8String &key, const Utf8String &def,
     const EvalContext &context) const {
   return Utf8String(paramRawValue(key, def, context));
 }
 
-const Utf8String ParamsProvider::paramUtf8(
+Utf8String ParamsProvider::paramUtf8(
     const Utf8String &key, const Utf8String &def,
     const EvalContext &context) const {
   return Utf8String(paramValue(key, def, context));
 }
 
-const Utf8StringSet ParamsProvider::paramKeys(const EvalContext &) const {
+Utf8StringList ParamsProvider::paramUtf8List(
+    const Utf8String &key, const Utf8String &def,
+    const EvalContext &context, QList<char> seps) const {
+  Utf8StringList list;
+  auto raws = paramRawUtf8(key, def, context).split(seps);
+  for (auto raw: raws)
+    list += PercentEvaluator::eval_utf8(raw, context);
+  return list;
+}
+
+Utf8StringList ParamsProvider::paramUtf8List(
+    const Utf8String &key, const EvalContext &context, QList<char> seps) const {
+  return paramUtf8List(key, {}, context, seps);
+}
+
+QStringList ParamsProvider::paramUtf16List(
+    const Utf8String &key, const Utf8String &def,
+    const EvalContext &context, QList<char> seps) const {
+  QStringList list;
+  auto raws = paramRawUtf8(key, def, context).split(seps);
+  for (auto raw: raws)
+    list += PercentEvaluator::eval_utf16(raw, context);
+  return list;
+}
+
+Utf8StringSet ParamsProvider::paramKeys(const EvalContext &) const {
   return {};
 }
 
@@ -111,11 +159,11 @@ bool ParamsProvider::paramContains(
   return paramRawValue(key).isValid();
 }
 
-const Utf8String ParamsProvider::paramScope() const {
+Utf8String ParamsProvider::paramScope() const {
   return {};
 }
 
-const Utf8String ParamsProvider::evaluate(
+Utf8String ParamsProvider::evaluate(
     const Utf8String &key, const ParamsProvider *context,
     Utf8StringSet *ae) const {
   EvalContext new_context;
@@ -124,10 +172,10 @@ const Utf8String ParamsProvider::evaluate(
   if (ae)
     for (auto variable: *ae)
       new_context.addVariable(variable);
-  return Utf8String(PercentEvaluator::eval(key, new_context));
+  return PercentEvaluator::eval_utf8(key, new_context);
 }
 
-const Utf8String ParamsProvider::evaluate(
+Utf8String ParamsProvider::evaluate(
     const Utf8String &key, bool inherit,
     const ParamsProvider *context, Utf8StringSet *ae) const {
   EvalContext new_context;
@@ -136,9 +184,9 @@ const Utf8String ParamsProvider::evaluate(
   if (ae)
     for (auto variable: *ae)
       new_context.addVariable(variable);
-  if (!inherit)
+  if (!inherit && dynamic_cast<const ParamSet*>(this))
     new_context.setScopeFilter(ParamSet::DontInheritScope);
-  return Utf8String(PercentEvaluator::eval(key, new_context));
+  return PercentEvaluator::eval_utf8(key, new_context);
 }
 
 Utf8StringList ParamsProvider::splitAndEvaluate(
@@ -151,27 +199,27 @@ Utf8StringList ParamsProvider::splitAndEvaluate(
     for (auto variable: *ae)
       new_context.addVariable(variable);
   new_context.setParamsProvider(&ppm);
-  if (!inherit)
+  if (!inherit && dynamic_cast<const ParamSet*>(this))
     new_context.setScopeFilter(ParamSet::DontInheritScope);
   QList<char> seps;
   for (int i = 0; i < separators.size(); ++i)
     seps.append(separators[i]);
   Utf8StringList input = key.split(seps, Qt::SkipEmptyParts), result;
   for (int i = 0; i < input.size(); ++i)
-    result += Utf8String(PercentEvaluator::eval(input[i], new_context));
+    result += PercentEvaluator::eval_utf8(input[i], new_context);
   return result;
 }
 
-const Utf8String SimpleParamsProvider::paramScope() const {
+Utf8String SimpleParamsProvider::paramScope() const {
   return _scope;
 }
 
-const QVariant SimpleParamsProvider::paramRawValue(
+QVariant SimpleParamsProvider::paramRawValue(
     const Utf8String &key, const QVariant &def, const EvalContext &) const {
   return _params.value(key, def);
 }
 
-const Utf8StringSet SimpleParamsProvider::paramKeys(
+Utf8StringSet SimpleParamsProvider::paramKeys(
     const EvalContext &) const {
   return _params.keys();
 }

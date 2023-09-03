@@ -102,11 +102,13 @@ public:
     return *this;
   }
   ParamsProviderMerger &pop_front() {
-    _providers.pop_front();
+    if (!_providers.isEmpty())
+      _providers.pop_front();
     return *this;
   }
   ParamsProviderMerger &pop_back() {
-    _providers.pop_back();
+    if (!_providers.isEmpty())
+      _providers.pop_back();
     return *this;
   }
   /** Convenience operator for append() */
@@ -135,15 +137,15 @@ public:
   /** Restores the current state (pops a saved state off the stack). */
   void restore();
   using ParamsProvider::paramRawValue;
-  [[nodiscard]] const QVariant paramRawValue(
+  [[nodiscard]] QVariant paramRawValue(
       const Utf8String &key, const QVariant &def = {},
       const EvalContext &context = {}) const override;
   /** Give access to currently overriding params. */
   [[nodiscard]] const ParamSet overridingParams() const {
     return _overridingParams; }
-  [[nodiscard]] const Utf8StringSet paramKeys(
+  [[nodiscard]] Utf8StringSet paramKeys(
       const EvalContext &context = {}) const override;
-  [[nodiscard]] const Utf8String paramScope() const override;
+  [[nodiscard]] Utf8String paramScope() const override;
   ParamsProviderMerger &setScope(Utf8String scope) {
     _scope = scope; return *this; }
 };

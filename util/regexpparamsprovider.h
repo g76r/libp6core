@@ -30,11 +30,11 @@ public:
   QRegularExpressionMatch match() const { return _match; }
   void setMatch(QRegularExpressionMatch  match) { _match = match; }
   using ParamsProvider::paramValue;
-  const QVariant paramRawValue(
+  QVariant paramRawValue(
       const Utf8String &key, const QVariant &def = {},
       const EvalContext &context = {}) const override;
-  const Utf8StringSet paramKeys(const EvalContext &context = {}) const override;
-  const Utf8String paramScope() const override;
+  Utf8StringSet paramKeys(const EvalContext &context = {}) const override;
+  Utf8String paramScope() const override;
   RegexpParamsProvider &setScope(Utf8String scope) {
     _scope = scope; return *this; }
 };

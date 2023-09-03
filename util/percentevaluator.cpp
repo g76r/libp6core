@@ -123,7 +123,7 @@ _functions {
   // evaluating :case:value params, if any
   int n = (params.size() - 1) / 2;
   for (int i = 0; i < n; ++i) {
-    auto ref = PercentEvaluator::eval_string(params.value(1+i*2), {}, context);
+    auto ref = PercentEvaluator::eval_utf16(params.value(1+i*2), {}, context);
     QRegularExpression re(
         ref, QRegularExpression::DotMatchesEverythingOption // can be canceled with (?-s)
         ); // LATER set up a regexp cache
@@ -487,7 +487,7 @@ const QVariant PercentEvaluator::eval(
             case '%': // %% is an escape sequence for %
               result.append('%'); // take escaped %
               ++s; // ignore next %
-              begin = s; // set begining of new top level
+              begin = s+1; // set begining of new top level
               break;
             case '{':
               scope.clear();

@@ -72,7 +72,9 @@ public:
       : EvalContext(nullptr, scope_expr, role) { }
     EvalContext(const EvalContext &that) = default;
     inline operator const ParamsProvider *() const { return _params_provider; }
-    EvalContext &setParamsProvider(const ParamsProvider *params) {
+    inline const ParamsProvider *paramsProvider() const {
+      return _params_provider; }
+    inline EvalContext &setParamsProvider(const ParamsProvider *params) {
       _params_provider = params; return *this; }
     LIBP6CORESHARED_EXPORT EvalContext &setScopeFilter(const Utf8String &scope_expr);
     /** has no scope === any scope is acceptable */
@@ -94,6 +96,7 @@ public:
       _already_evaluated_variables.insert(key); return *this; }
     bool containsVariable(const Utf8String &key) const {
       return _already_evaluated_variables.contains(key); }
+    int role() const { return _role; }
     LIBP6CORESHARED_EXPORT const Utf8String toUtf8() const;
   };
 
@@ -114,7 +117,7 @@ public:
    *  @param context is an evaluation context, can be empty (only contextless
    *         function like %=date will be available for evaluation) */
   [[nodiscard]] static inline const QVariant eval(
-      const Utf8String &expr, const EvalContext context = {}) {
+      const Utf8String &expr, const EvalContext &context = {}) {
     auto begin = expr.constData();
     return eval(begin, begin+expr.size(), context);
   }
@@ -147,26 +150,26 @@ public:
    *  @param alreadyEvaluated used for loop detections, must not be null */
   [[nodiscard]] inline static Utf8String eval_utf8(
       const Utf8String &expr, const Utf8String &def = {},
-      const EvalContext context = {}) {
+      const EvalContext &context = {}) {
     QVariant v = eval(expr, context);
     return v.isValid() ? Utf8String(v) : def;
   }
   [[nodiscard]] inline static Utf8String eval_utf8(
-      const Utf8String &expr, const EvalContext context) {
+      const Utf8String &expr, const EvalContext &context) {
     return eval_utf8(expr, {}, context); }
   /** Evaluate and then convert result to utf16 text.
    *
    *  @param context is an evaluation context, can be empty (only contextless
    *         function like %=date will be available for evaluation) */
-  [[nodiscard]] inline static QString eval_string(
+  [[nodiscard]] inline static QString eval_utf16(
       const Utf8String &expr, const QString &def = {},
-      const EvalContext context = {}) {
+      const EvalContext &context = {}) {
     QVariant v = eval(expr, context);
     return v.isValid() ? v.toString() : def;
   }
-  [[nodiscard]] inline static QString eval_string(
-      const Utf8String &expr, const EvalContext context) {
-    return eval_string(expr, {}, context); }
+  [[nodiscard]] inline static QString eval_utf16(
+      const Utf8String &expr, const EvalContext &context) {
+    return eval_utf16(expr, {}, context); }
   /** Evaluate and then convert result to number (i.e. floating, integer or
    *  boolean).
    *
@@ -181,8 +184,13 @@ public:
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
   [[nodiscard]] inline static T eval_number(
       const Utf8String &expr, const T &def = {},
-      const EvalContext context = {}, bool *ok = nullptr)  {
+      const EvalContext &context = {}, bool *ok = nullptr)  {
     auto v = eval(expr, context);
+    if (!v.isValid()) {
+      if (ok)
+        *ok = false;
+      return def;
+    }
     auto mtid = v.metaType().id();
     // text types and types not convertible to a number are for Utf8String
     if (!v.canConvert<T>() || mtid == qMetaTypeId<Utf8String>()
@@ -194,15 +202,15 @@ public:
   }
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
   [[nodiscard]] inline static T eval_number(
-      const Utf8String &expr, const EvalContext context, bool *ok = nullptr) {
+      const Utf8String &expr, const EvalContext &context, bool *ok = nullptr) {
     return eval_number<T>(expr, {}, context, ok); }
 
   // escape and matching patterns
   /** Escape all characters in string so that they no longer have special
    * meaning for evaluate() and splitAndEvaluate() methods.
    * That is: replace % with %% within the string. */
-  [[nodiscard]] static inline QString escape(QString string) {
-    return string.isNull() ? string : string.replace('%', u"%%"_s); }
+  [[nodiscard]] static inline QString escape(QString utf16) {
+    return utf16.isNull() ? utf16 : utf16.replace('%', u"%%"_s); }
   /** Escape all characters in string so that they no longer have special
    * meaning for evaluate() and splitAndEvaluate() methods.
    * That is: replace % with %% within the string. */

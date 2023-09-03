@@ -198,7 +198,7 @@ ParamSet::ParamSet(
     const QMap<int,Utf8String> &bindings, const ParamSet &parent)
   : d(new ParamSetData(parent)) {
   QSqlQuery query(db);
-  query.prepare(PercentEvaluator::eval_string(sql, &parent));
+  query.prepare(PercentEvaluator::eval_utf16(sql, &parent));
   if (!query.exec()) {
     QSqlError error = query.lastError();
     Log::warning() << "failure trying to load params from SQL query: "
@@ -274,7 +274,7 @@ void ParamSet::clear() {
     d->clear();
 }
 
-const QVariant ParamSet::paramRawValue(
+QVariant ParamSet::paramRawValue(
     const Utf8String &key, const QVariant &def,
     const EvalContext &context) const {
   if (!d) [[unlikely]]
@@ -290,7 +290,7 @@ const QVariant ParamSet::paramRawValue(
   return {};
 }
 
-const Utf8StringSet ParamSet::paramKeys(const EvalContext &context) const {
+Utf8StringSet ParamSet::paramKeys(const EvalContext &context) const {
   if (!d) [[unlikely]]
     return {};
   Utf8StringSet set;
@@ -369,14 +369,14 @@ const QMap<Utf8String, Utf8String> ParamSet::toUtf8Map(bool inherit) const {
   return map;
 }
 
-const QHash<QString, QString> ParamSet::toStringHash(bool inherit) const {
+const QHash<QString, QString> ParamSet::toUtf16Hash(bool inherit) const {
   QHash<QString,QString> hash;
   for (auto key: paramKeys(inherit ? EvalContext{} : DontInherit))
     hash.insert(key, paramRawValue(key).toString());
   return hash;
 }
 
-const QMap<QString,QString> ParamSet::toStringMap(bool inherit) const {
+const QMap<QString,QString> ParamSet::toUtf16Map(bool inherit) const {
   QMap<QString,QString> map;
   for (auto key: paramKeys(inherit ? EvalContext{} : DontInherit))
     map.insert(key, paramRawValue(key).toString());

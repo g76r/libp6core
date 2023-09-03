@@ -169,19 +169,19 @@ public:
   /** ParamsProvider interface, overridable by SharedUiData implementation.
    *  Default: provide values calling uiData() with role Qt::DisplayRole,
    *  supporting named keys, section numbers, and special values "id"... */
-  [[nodiscard]] const QVariant paramRawValue(
+  [[nodiscard]] QVariant paramRawValue(
       const Utf8String &key, const QVariant &def = {},
       const EvalContext &context = {}) const override;
   /** ParamsProvider interface, overridable by SharedUiData implementation.
    *  Default: return every section names (named keys, section numbers and
    *  special values "id"...) */
-  [[nodiscard]] const Utf8StringSet paramKeys(
+  [[nodiscard]] Utf8StringSet paramKeys(
       const EvalContext &context = {}) const override;
   /** ParamsProvider interface, overridable by SharedUiData implementation.
    *  Default: return the id qualifier.
    *  Implementation may want to return qualifiedId() or something specific to
    *  an item instance instead. */
-  [[nodiscard]] const Utf8String paramScope() const override;
+  [[nodiscard]] Utf8String paramScope() const override;
 
 protected:
   // both default and copy constructor are declared protected to avoid being
@@ -411,7 +411,7 @@ public:
    * SharedUiItemData::uiHeaderData(section, Qt::DisplayRole) instead of
    * SharedUiItem::uiData().
    *
-   * "id", "id_qualifier" and "qualified_id" section names query
+   * "id", "qualifier" and "qualified_id" section names query
    * SharedUiItemData::id() and/or SharedUiItemData::idQualifier()
    * instead of SharedUiItem::uiSectionByName() and SharedUiItem::uiData(). */
   QVariant uiDataBySectionName(
@@ -426,7 +426,7 @@ public:
       return qualifiedId();
     if (sectionName == "id"_u8)
       return _data->id();
-    if (sectionName == "id_qualifier"_u8)
+    if (sectionName == "qualifier"_u8)
       return _data->idQualifier();
     if (sectionName == "qualified_id"_u8)
       return qualifiedId();
@@ -549,32 +549,32 @@ public:
   /** ParamsProvider interface, overridable by SharedUiData implementation.
    *  Default: provide values calling uiData() with role Qt::DisplayRole,
    *  supporting named keys, section numbers, and special values "id"... */
-  [[nodiscard]] const QVariant paramRawValue(
+  [[nodiscard]] QVariant paramRawValue(
       const Utf8String &key, const QVariant &def = {},
       const EvalContext &context = {}) const override;
   using ParamsProvider::paramRawUtf8;
   /** ParamsProvider interface, overridable by SharedUiData implementation. */
-  [[nodiscard]] const Utf8String paramRawUtf8(
+  [[nodiscard]] Utf8String paramRawUtf8(
       const Utf8String &key, const Utf8String &def = {},
       const EvalContext &context = {}) const override;
   using ParamsProvider::paramKeys;
   /** ParamsProvider interface, overridable by SharedUiData implementation.
    *  Default: return every section names (named keys, section numbers and
    *  special values "id"...) */
-  [[nodiscard]] const Utf8StringSet paramKeys(
+  [[nodiscard]] Utf8StringSet paramKeys(
       const EvalContext &context) const override;
   /** ParamsProvider interface, overridable by SharedUiData implementation. */
   [[nodiscard]] bool paramContains(
       const Utf8String &key, const EvalContext &context = {}) const override;
   using ParamsProvider::paramUtf8;
   /** ParamsProvider interface, overridable by SharedUiData implementation. */
-  [[nodiscard]] const Utf8String paramUtf8(
+  [[nodiscard]] Utf8String paramUtf8(
       const Utf8String &key, const Utf8String &def = {},
       const EvalContext &context = {}) const override;
   using ParamsProvider::paramScope;
   /** ParamsProvider interface, overridable by SharedUiData implementation.
    *  Default: return the id qualifier. */
-  [[nodiscard]] const Utf8String paramScope() const override;
+  [[nodiscard]] Utf8String paramScope() const override;
 
 protected:
   const SharedUiItemData *data() const { return _data.data(); }
@@ -629,12 +629,14 @@ protected:
   bool setUiData(int section, const QVariant &value, QString *errorString,
                  SharedUiItemDocumentTransaction *transaction,
                  int role = Qt::EditRole);
+#if 0
   /** Make uiData() available through ParamsProvider interface, for any given
    *  role (whereas ParamsProvider direct implementation uses only
    *  Qt::DisplayRole).
    * @see SharedUiItemParamsProvider */
   inline SharedUiItemParamsProvider toParamsProvider(
       int role = Qt::DisplayRole) const;
+#endif
   /** Set ui data according to QVariantHash<sectionName,value> values.
    * This method must be reimplemented and made public by subclasses in order
    * to be usable.
@@ -645,7 +647,8 @@ protected:
       const QVariantHash &hash, QString *errorString,
       SharedUiItemDocumentTransaction *transaction,
       const QSet<Utf8String> &ignoredSections = { },
-      int role = Qt::DisplayRole);
+      int role = Qt::EditRole);
+#if 0
   /** Set ui data according to JSON object values.
    * This method must be reimplemented and made public by subclasses in order
    * to be usable.
@@ -656,7 +659,8 @@ protected:
       const QJsonObject &json, QString *errorString,
       SharedUiItemDocumentTransaction *transaction,
       const QSet<Utf8String> &ignoredSections = { },
-      int role = Qt::DisplayRole);
+      int role = Qt::EditRole);
+#endif
 };
 
 Q_DECLARE_METATYPE(SharedUiItem)

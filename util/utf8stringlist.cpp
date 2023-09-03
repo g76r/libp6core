@@ -45,7 +45,7 @@ Utf8String Utf8StringSet::join(const char separator) const {
   return ::join(*this, separator);
 }
 
-const QVariant Utf8StringList::paramRawValue(
+QVariant Utf8StringList::paramRawValue(
     const Utf8String &key, const QVariant &def,
     const EvalContext &) const {
   bool ok;
@@ -59,7 +59,7 @@ const QVariant Utf8StringList::paramRawValue(
   return operator[](i-1);
 }
 
-const Utf8StringSet Utf8StringList::paramKeys(const EvalContext &) const {
+Utf8StringSet Utf8StringList::paramKeys(const EvalContext &) const {
   Utf8StringSet keys;
   qsizetype n = size();
   for (qsizetype i = 0; i <= n; ++i)

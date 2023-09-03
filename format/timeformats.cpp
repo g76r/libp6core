@@ -329,8 +329,8 @@ const QString TimeFormats::toMultifieldSpecifiedCustomTimestamp(
   const QDateTime &dt, const Utf8String &multifieldSpecifiedFormat,
   const ParamsProvider::EvalContext &context) {
   auto params = multifieldSpecifiedFormat.splitByLeadingChar();
-  auto format = PercentEvaluator::eval_string(params.value(0), context);
-  auto rel_dt = PercentEvaluator::eval_string(params.value(1), context);
+  auto format = PercentEvaluator::eval_utf16(params.value(0), context);
+  auto rel_dt = PercentEvaluator::eval_utf16(params.value(1), context);
   QTimeZone tz(PercentEvaluator::eval_utf8(params.value(2), context)
                .trimmed());
   return toCustomTimestamp(dt, format, RelativeDateTime(rel_dt), tz);

@@ -291,7 +291,7 @@ Utf8StringList HttpRequest::clientAdresses() const {
   return d->_clientAdresses;
 }
 
-const QVariant HttpRequestPseudoParamsProvider::paramRawValue(
+QVariant HttpRequestPseudoParamsProvider::paramRawValue(
     const Utf8String &key, const QVariant &def,
     const EvalContext &) const {
   if (key.startsWith('!')) {
@@ -314,7 +314,7 @@ const QVariant HttpRequestPseudoParamsProvider::paramRawValue(
   return def;
 }
 
-const Utf8StringSet HttpRequestPseudoParamsProvider::paramKeys(
+Utf8StringSet HttpRequestPseudoParamsProvider::paramKeys(
     const EvalContext &) const {
   Utf8StringSet keys { "!url", "!method", "!clientaddresses" };
   for (auto s: _request.cookies().keys())
@@ -326,6 +326,6 @@ const Utf8StringSet HttpRequestPseudoParamsProvider::paramKeys(
   return keys;
 }
 
-const Utf8String HttpRequestPseudoParamsProvider::paramScope() const {
+Utf8String HttpRequestPseudoParamsProvider::paramScope() const {
   return _scope;
 }

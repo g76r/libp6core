@@ -14,7 +14,7 @@
 #include "paramsprovidermerger.h"
 #include "log/log.h"
 
-const QVariant ParamsProviderMerger::paramRawValue(
+QVariant ParamsProviderMerger::paramRawValue(
     const Utf8String &key, const QVariant &def,
     const EvalContext &context) const {
   int depth = 0;
@@ -37,7 +37,7 @@ const QVariant ParamsProviderMerger::paramRawValue(
   return def;
 }
 
-const Utf8StringSet ParamsProviderMerger::paramKeys(
+Utf8StringSet ParamsProviderMerger::paramKeys(
     const EvalContext &context) const {
   Utf8StringSet keys { _overridingParams.paramKeys() };
   for (auto provider: _providers) {
@@ -69,7 +69,7 @@ void ParamsProviderMerger::restore() {
   }
 }
 
-const Utf8String ParamsProviderMerger::paramScope() const {
+Utf8String ParamsProviderMerger::paramScope() const {
   return _scope;
 }
 

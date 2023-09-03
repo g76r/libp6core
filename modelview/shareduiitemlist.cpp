@@ -12,16 +12,14 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "shareduiitemlist.h"
-#include "shareduiitem.h"
-#include "util/utf8stringset.h"
 
-const QVariant SharedUiItemListParamsProvider::paramRawValue(
+QVariant SharedUiItemList<SharedUiItem>::paramRawValue(
     const Utf8String &key, const QVariant &def,
     const EvalContext &context) const {
   int colon = key.indexOf(':');
   Utf8String idQualifier = colon >= 0 ? key.left(colon) : Utf8String{};
   Utf8String sectionName = key.mid(colon+1);// works even with colon=-1
-  for (auto item : _list) {
+  for (auto item : *this) {
     // ignore item if keys contains a qualifier and it does not match item
     // e.g. "employee:name" and current item is qualified as "building"
     if (!idQualifier.isEmpty() && item.idQualifier() != idQualifier)
@@ -32,7 +30,7 @@ const QVariant SharedUiItemListParamsProvider::paramRawValue(
     // special section names e.g. "id" or "employee:qualified_id"
     if (sectionName == "id"_u8)
       return item.id();
-    if (sectionName == "id_qualifier"_u8)
+    if (sectionName == "qualifier"_u8)
       return item.idQualifier();
     if (sectionName == "qualified_id"_u8)
       return item.qualifiedId();
@@ -44,7 +42,7 @@ const QVariant SharedUiItemListParamsProvider::paramRawValue(
     // ignore item for which the section can't be found
     if (section < 0)
       continue;
-    QVariant value = item.uiData(section, _role);
+    QVariant value = item.uiData(section, context.role());
     // ignore item for which no valid data can be found
     if (!value.isValid())
       return value;
@@ -52,16 +50,16 @@ const QVariant SharedUiItemListParamsProvider::paramRawValue(
   return def;
 }
 
-const Utf8StringSet SharedUiItemListParamsProvider::paramKeys(
+Utf8StringSet SharedUiItemList<SharedUiItem>::paramKeys(
     const EvalContext &) const {
   Utf8StringSet keys, qualifiers;
-  for (auto item: _list) {
+  for (auto item: *this) {
     auto q = item.idQualifier();
     if (qualifiers.contains(q))
       continue;
     qualifiers << q;
     keys << q+":id";
-    keys << q+":id_qualifier";
+    keys << q+":qualifier";
     keys << q+":qualified_id";
     for (int i = 0; i < item.uiSectionCount(); ++i) {
       keys << q+":"+Utf8String::number(i);
@@ -74,8 +72,4 @@ const Utf8StringSet SharedUiItemListParamsProvider::paramKeys(
     }
   }
   return keys;
-}
-
-const Utf8String SharedUiItemListParamsProvider::paramScope() const {
-  return _scope;
 }
