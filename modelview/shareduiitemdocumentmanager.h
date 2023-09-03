@@ -43,18 +43,19 @@ public:
   QString *errorString, SharedUiItemDocumentTransaction *transaction,
   int role);
   using Creator = std::function<SharedUiItem(
-  SharedUiItemDocumentTransaction *transaction, Utf8String id,
+  SharedUiItemDocumentTransaction *transaction, const Utf8String &id,
   QString *errorString)>;
-  using SimplestCreator = std::function<SharedUiItem(Utf8String id)>;
+  using SimplestCreator = std::function<SharedUiItem(const Utf8String &id)>;
   using PostCreationModifier =
   SharedUiItemDocumentTransaction::PostCreationModifier;
   using ChangeItemTrigger = std::function<bool(
-  SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
-  SharedUiItem oldItem, Utf8String idQualifier, QString *errorString)>;
+  SharedUiItemDocumentTransaction *transaction, SharedUiItem *new_item,
+  const SharedUiItem &old_item, const Utf8String &qualifier,
+  QString *errorString)>;
   enum OnChangePolicy {
     /** no automatic action on update or delete */
     NoAction,
-    /** set referencing section to QVariant() on referencing item */
+    /** set referencing section to {} on referencing item */
     SetNull,
     /** on update: update referencing section on referencing item,
      * on delete: delete referencing item */
@@ -86,8 +87,8 @@ private:
     int _referenceSection;
     OnChangePolicy _onDeletePolicy;
     OnChangePolicy _onUpdatePolicy;
-    ForeignKey(Utf8String sourceQualifier, int sourceSection,
-               Utf8String referenceQualifier, int referenceSection,
+    ForeignKey(const Utf8String &sourceQualifier, int sourceSection,
+               const Utf8String &referenceQualifier, int referenceSection,
                OnChangePolicy onDeletePolicy, OnChangePolicy onUpdatePolicy)
       : _sourceQualifier(sourceQualifier), _sourceSection(sourceSection),
         _referenceQualifier(referenceQualifier),
@@ -118,26 +119,25 @@ public:
    * No other class than DtpDocumentManager should override createNewItem().
    */
   virtual SharedUiItem createNewItem(
-      Utf8String idQualifier, PostCreationModifier modifier = nullptr,
+      const Utf8String &qualifier, PostCreationModifier modifier = nullptr,
       QString *errorString = nullptr);
   /** Convenience template performing downcast. */
   template<class T>
-  T createNewItem(Utf8String idQualifier,
-                  PostCreationModifier modifier = nullptr,
-                  QString *errorString = nullptr) {
-    Q_UNUSED(modifier)
-    SharedUiItem item = createNewItem(idQualifier, errorString);
+  inline T createNewItem(
+      const Utf8String &qualifier, PostCreationModifier modifier = nullptr,
+      QString *errorString = nullptr) {
+    SharedUiItem item = createNewItem(qualifier, modifier, errorString);
     return static_cast<T&>(item);
   }
   /** Convenience method with modifier = 0 */
-  SharedUiItem createNewItem(
-      Utf8String idQualifier, QString *errorString) {
-    return createNewItem(idQualifier, nullptr, errorString);
+  inline SharedUiItem createNewItem(
+      const Utf8String &qualifier, QString *errorString) {
+    return createNewItem(qualifier, nullptr, errorString);
   }
   /** Convenience template performing downcast. */
   template<class T>
-  T createNewItem(Utf8String idQualifier, QString *errorString) {
-    SharedUiItem item = createNewItem(idQualifier, nullptr, errorString);
+  inline T createNewItem(const Utf8String &qualifier, QString *errorString) {
+    SharedUiItem item = createNewItem(qualifier, nullptr, errorString);
     return static_cast<T&>(item);
   }
   /** Method that user interface should call to change an item, one field at a
@@ -145,17 +145,16 @@ public:
    *
    * Suited for model/view edition.
    *
-   * Actually, this method create a Transaction and calls
+   * Actually, this method creates a Transaction and calls
    * prepareChangeItem() which is the method to override by document manager
    * implementations.
    * No other class than DtpDocumentManager should override changeItem().
    */
   virtual bool changeItemByUiData(
-      SharedUiItem oldItem, int section, const QVariant &value,
+      const SharedUiItem &old_item, int section, const QVariant &value,
       QString *errorString = nullptr);
   /** Method that user interface or non-interactive code should call to change
-   *
-   * an item at whole.
+   *  an item at whole.
    *
    * It is up to the caller to warn the user on error.
    *
@@ -178,36 +177,36 @@ public:
    * No other class than DtpDocumentManager should override changeItem().
    */
   virtual bool changeItem(
-      SharedUiItem newItem, SharedUiItem oldItem, Utf8String idQualifier,
-      QString *errorString = nullptr);
+      const SharedUiItem &newItem, const SharedUiItem &oldItem,
+      const Utf8String &qualifier, QString *errorString = nullptr);
   virtual SharedUiItem itemById(
-      Utf8String idQualifier, Utf8String id) const = 0;
+      const Utf8String &qualifier, const Utf8String &id) const = 0;
   /** Default: parses qualifiedId and calls itemById(Utf8String,Utf8String). */
-  virtual SharedUiItem itemById(Utf8String qualifiedId) const;
+  virtual SharedUiItem itemById(const Utf8String &qualified_id) const;
   /** Convenience template performing downcast. */
   template<class T>
-  T itemById(Utf8String idQualifier, Utf8String id) const {
-    SharedUiItem item = itemById(idQualifier, id);
+  T itemById(const Utf8String &qualifier, const Utf8String &id) const {
+    auto item = itemById(qualifier, id);
     return static_cast<T&>(item);
   }
   /** Convenience template performing downcast. */
   template<class T>
-  T itemById(Utf8String qualifiedId) const {
-    SharedUiItem item = itemById(qualifiedId);
+  T itemById(const Utf8String &qualified_id) const {
+    auto item = itemById(qualified_id);
     return static_cast<T&>(item);
   }
   /** This method build a list of every item currently holded, given their
-   * qualifiedId. */
+   *  qualifiedId, can bee very expensive depending of the data set size. */
   virtual SharedUiItemList<SharedUiItem> itemsByIdQualifier(
-      Utf8String idQualifier) const = 0;
-  /** This method build a list of every item currently holded, given their class
-   * (T) and qualifiedId. */
+      const Utf8String &qualifier) const = 0;
+  /** Convenience template performing downcast. */
   template<class T>
-  SharedUiItemList<T> itemsByIdQualifier(Utf8String idQualifier) const {
+  inline SharedUiItemList<T> itemsByIdQualifier(
+      const Utf8String &qualifier) const {
     T *dummy;
     Q_UNUSED(static_cast<SharedUiItem*>(dummy)); // ensure T is a SharedUiItem
-    SharedUiItemList<SharedUiItem> list = itemsByIdQualifier(idQualifier);
-    if (!list.isEmpty() && list[0].idQualifier() != idQualifier) {
+    SharedUiItemList<SharedUiItem> list = itemsByIdQualifier(qualifier);
+    if (!list.isEmpty() && list[0].idQualifier() != qualifier) {
       // LATER output warning
       //qWarning() << "SharedUiItemList<T>::itemsByIdQualifier called with "
       //              "inconsistent types and qualifier";
@@ -234,24 +233,23 @@ public:
    * may keep memory of their order (or of the orders of some item types).
    * Default implementation does nothing.
    */
-  virtual void reorderItems(QList<SharedUiItem> items);
+  virtual void reorderItems(const SharedUiItemList<SharedUiItem> &items);
   /** This method must be called for every item type the document manager will
    * hold, to enable it to create and modify such items. */
-  void registerItemType(Utf8String idQualifier, Setter setter, Creator creator);
+  void registerItemType(
+      const Utf8String &qualifier, Setter setter, Creator creator);
   /** Convenience method. */
-  void registerItemType(Utf8String idQualifier, Setter setter,
-                        SimplestCreator creator) {
-    registerItemType(idQualifier, setter, [creator](
+  inline void registerItemType(
+      const Utf8String &qualifier, Setter setter, SimplestCreator creator) {
+    registerItemType(qualifier, setter, [creator](
                      SharedUiItemDocumentTransaction *, Utf8String id,
-                     QString *) {
-      return creator(id);
-    });
+                     QString *) { return creator(id); });
   }
   /** Convenience method. */
   template <class T>
-  void registerItemType(Utf8String idQualifier, MemberSetter<T> setter,
-                        Creator creator) {
-    registerItemType(idQualifier, [setter](SharedUiItem *item, int section,
+  inline void registerItemType(
+      const Utf8String &qualifier, MemberSetter<T> setter, Creator creator) {
+    registerItemType(qualifier, [setter](SharedUiItem *item, int section,
                      const QVariant &value, QString *errorString,
                      SharedUiItemDocumentTransaction *transaction, int role ){
       return (item->*static_cast<MemberSetter<SharedUiItem>>(setter))(
@@ -260,9 +258,10 @@ public:
   }
   /** Convenience method. */
   template <class T>
-  void registerItemType(Utf8String idQualifier, MemberSetter<T> setter,
-                        SimplestCreator creator) {
-    registerItemType(idQualifier, [setter](SharedUiItem *item, int section,
+  void registerItemType(
+      const Utf8String &qualifier, MemberSetter<T> setter,
+      SimplestCreator creator) {
+    registerItemType(qualifier, [setter](SharedUiItem *item, int section,
                      const QVariant &value, QString *errorString,
                      SharedUiItemDocumentTransaction *transaction, int role ){
       return (item->*static_cast<MemberSetter<SharedUiItem>>(setter))(
@@ -272,21 +271,22 @@ public:
     });
   }
   // FIXME doc
-  void addForeignKey(Utf8String sourceQualifier, int sourceSection,
-                     Utf8String referenceQualifier, int referenceSection = 0,
-                     OnChangePolicy onUpdatePolicy = NoAction,
-                     OnChangePolicy onDeletePolicy = NoAction);
+  void addForeignKey(
+      const Utf8String &sourceQualifier, int sourceSection,
+      const Utf8String &referenceQualifier, int referenceSection = 0,
+      OnChangePolicy onUpdatePolicy = NoAction,
+      OnChangePolicy onDeletePolicy = NoAction);
   // FIXME doc
-  void addChangeItemTrigger(Utf8String idQualifier, TriggerFlags flags,
-                            ChangeItemTrigger trigger);
+  void addChangeItemTrigger(const Utf8String &qualifier, TriggerFlags flags,
+      ChangeItemTrigger trigger);
   /** Can be called to generate a new id not currently in use for the given
    * idQualifier item type.
    * Generate id of the form prefix+number (e.g. "foobar1"), most of the time
    * one should choose idQualifier as prefix, which is the default (= if prefix
    * is left empty). */
-  Utf8String generateNewId(Utf8String idQualifier,
-                           Utf8String prefix = {}) const {
-    return generateNewId(nullptr, idQualifier, prefix);
+  Utf8String generateNewId(const Utf8String &qualifier,
+                           const Utf8String &prefix = {}) const {
+    return generateNewId(nullptr, qualifier, prefix);
   }
 
 signals:
@@ -306,8 +306,8 @@ signals:
    * signal is often more powerful and therefore most of the time they should
    * not specialize signals.
    */
-  void itemChanged(SharedUiItem newItem, SharedUiItem oldItem,
-                   Utf8String idQualifier);
+  void itemChanged(const SharedUiItem &new_item, const SharedUiItem &old_item,
+                   const Utf8String &qualifier);
   /** Emited when all data is reset as a whole, for instance when switching
    * from a document to another one. */
   void dataReset();
@@ -318,9 +318,8 @@ protected:
    * Generate id of the form prefix+number (e.g. "foobar1"), most of the time
    * one should choose idQualifier as prefix, which is the default (= if prefix
    * is left empty). */
-  Utf8String generateNewId(
-      const SharedUiItemDocumentTransaction *transaction, Utf8String idQualifier,
-      Utf8String prefix = {}) const;
+  Utf8String generateNewId(const SharedUiItemDocumentTransaction *transaction,
+      const Utf8String &qualifier, const Utf8String &prefix = {}) const;
   /** Prepare change: ensure that the change can be performed, record them
    * through transaction->changeItem(), and return true only on success.
    *
@@ -338,12 +337,13 @@ protected:
    * @param errorString is guaranted not to be null
    */
   virtual bool prepareChangeItem(
-      SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
-      SharedUiItem oldItem, Utf8String idQualifier, QString *errorString) = 0;
+      SharedUiItemDocumentTransaction *transaction,
+      const SharedUiItem &new_item, const SharedUiItem &old_item,
+      const Utf8String &qualifier, QString *errorString) = 0;
   /** Perform actual change and emit itemChanged().
    *
-   * Default impl only emit signal. Implementations must called base class
-   * method after performing actual change.
+   * Implementations MUST emit itemChanged() signal method after performing
+   * actual change.
    *
    * This method is called just after prepareChangeItem() returned true, and
    * whenever the transaction (or associated QUndoCommand) is undone or redone.
@@ -354,13 +354,15 @@ protected:
    * prepareChangeItem() call since prepareChangeItem() may add several changes,
    * and constraints (especially foreign keys) or triggers may also add
    * additional changes. */
-  virtual void commitChangeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                                Utf8String idQualifier);
+  virtual void commitChangeItem(
+      const SharedUiItem &new_item, const SharedUiItem &old_item,
+      const Utf8String &qualifier) = 0;
   // FIXME doc
   void storeItemChange(
-      SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
-      SharedUiItem oldItem, Utf8String idQualifier) {
-    transaction->storeItemChange(newItem, oldItem, idQualifier);
+      SharedUiItemDocumentTransaction *transaction,
+      const SharedUiItem &new_item,
+      const SharedUiItem &old_item, const Utf8String &qualifier) {
+    transaction->storeItemChange(new_item, old_item, qualifier);
   }
 
   /** To be called by createNewItem().

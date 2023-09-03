@@ -12,45 +12,42 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "inmemoryshareduiitemdocumentmanager.h"
+#include "log/log.h"
 
 InMemorySharedUiItemDocumentManager::InMemorySharedUiItemDocumentManager(
     QObject *parent) : SharedUiItemDocumentManager(parent) {
 }
 
 bool InMemorySharedUiItemDocumentManager::prepareChangeItem(
-    SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
-    SharedUiItem oldItem, Utf8String idQualifier, QString *errorString) {
-  Q_UNUSED(errorString)
-  storeItemChange(transaction, newItem, oldItem, idQualifier);
+    SharedUiItemDocumentTransaction *transaction, const SharedUiItem &new_item,
+    const SharedUiItem &old_item, const Utf8String &qualifier,
+    QString *) {
+  storeItemChange(transaction, new_item, old_item, qualifier);
   return true; // cannot fail
 }
 
 void InMemorySharedUiItemDocumentManager::commitChangeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, Utf8String idQualifier) {
-  if (!oldItem.isNull() && newItem != oldItem) { // renamed or deleted
-    _repository[idQualifier].remove(oldItem.id());
+    const SharedUiItem &new_item, const SharedUiItem &old_item,
+    const Utf8String &qualifier) {
+  if (!old_item.isNull() && new_item != old_item) { // renamed or deleted
+    _repository[qualifier].remove(old_item.id());
   }
-  if (!newItem.isNull()) { // created or updated
-    _repository[idQualifier][newItem.id()] = newItem;
+  if (!new_item.isNull()) { // created or updated
+    _repository[qualifier][new_item.id()] = new_item;
   }
-  SharedUiItemDocumentManager::commitChangeItem(newItem, oldItem, idQualifier);
+  emit itemChanged(new_item, old_item, qualifier);
 }
 
 SharedUiItem InMemorySharedUiItemDocumentManager::itemById(
-    Utf8String idQualifier, Utf8String id) const {
-  return _repository.value(idQualifier).value(id);
+    const Utf8String &qualifier, const Utf8String &id) const {
+  return _repository.value(qualifier).value(id);
 }
 
 SharedUiItemList<SharedUiItem> InMemorySharedUiItemDocumentManager
-::itemsByIdQualifier(Utf8String idQualifier) const {
+::itemsByIdQualifier(const Utf8String &qualifier) const {
   SharedUiItemList<SharedUiItem> list;
-#ifdef QT_DEBUG
-  if (!_repository.contains(idQualifier))
-    qDebug() << "itemsByIdQualifier() called with id qualifier not found in "
-                "repository:"
-             << idQualifier;
-#endif
-  foreach (SharedUiItem item, _repository.value(idQualifier))
-    list.append(item);
-  return list;
+  if (!_repository.contains(qualifier))
+    Log::warning() << "itemsByIdQualifier() called with id qualifier not found "
+                      "in repository:" << qualifier;
+  return _repository.value(qualifier).values();
 }

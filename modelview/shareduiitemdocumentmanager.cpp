@@ -13,68 +13,70 @@
  */
 #include "shareduiitemdocumentmanager.h"
 #include <QRandomGenerator>
+#include "log/log.h"
 
 SharedUiItemDocumentManager::SharedUiItemDocumentManager(QObject *parent)
   : QObject(parent) {
 }
 
 SharedUiItem SharedUiItemDocumentManager::itemById(
-    Utf8String qualifiedId) const {
-  int pos = qualifiedId.indexOf(':');
-  return (pos == -1) ? itemById(Utf8String{}, qualifiedId)
-                     : itemById(qualifiedId.left(pos), qualifiedId.mid(pos+1));
+    const Utf8String &qualified_id) const {
+  int pos = qualified_id.indexOf(':');
+  return (pos == -1) ? itemById(Utf8String{}, qualified_id)
+                     : itemById(qualified_id.left(pos), qualified_id.mid(pos+1));
 }
 
 Utf8String SharedUiItemDocumentManager::generateNewId(
-    const SharedUiItemDocumentTransaction *transaction, Utf8String idQualifier,
-    Utf8String prefix) const {
+    const SharedUiItemDocumentTransaction *transaction,
+    const Utf8String &qualifier,
+    const Utf8String &prefix) const {
   Utf8String id;
-  if (prefix.isEmpty())
-    prefix = idQualifier;
+  auto effective_prefix = prefix.isEmpty() ? qualifier : prefix;
   for (int i = 1; i < 100; ++i) {
-    id = prefix+Utf8String::number(i);
+    id = effective_prefix+Utf8String::number(i);
     if (transaction) {
-      if (transaction->itemById(idQualifier, id).isNull())
+      if (transaction->itemById(qualifier, id).isNull())
         return id;
     } else {
-      if (itemById(idQualifier, id).isNull())
+      if (itemById(qualifier, id).isNull())
         return id;
     }
   }
   forever {
-    id = prefix+Utf8String::number(QRandomGenerator::global()->generate());
+    id = effective_prefix+Utf8String::number(
+           QRandomGenerator::global()->generate());
     if (transaction) {
-      if (transaction->itemById(idQualifier, id).isNull())
+      if (transaction->itemById(qualifier, id).isNull())
         return id;
     } else {
-      if (itemById(idQualifier, id).isNull())
+      if (itemById(qualifier, id).isNull())
         return id;
     }
   }
 }
 
-void SharedUiItemDocumentManager::reorderItems(QList<SharedUiItem> items) {
-  Q_UNUSED(items)
+void SharedUiItemDocumentManager::reorderItems(
+    const SharedUiItemList<SharedUiItem> &) {
 }
 
 void SharedUiItemDocumentManager::registerItemType(
-    Utf8String idQualifier, SharedUiItemDocumentManager::Setter setter,
+    const Utf8String &qualifier, SharedUiItemDocumentManager::Setter setter,
     SharedUiItemDocumentManager::Creator creator) {
-  _setters.insert(idQualifier, setter);
-  _creators.insert(idQualifier, creator);
+  _setters.insert(qualifier, setter);
+  _creators.insert(qualifier, creator);
   //qDebug() << "registered" << idQualifier << this;
 }
 
 bool SharedUiItemDocumentManager::changeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, Utf8String idQualifier,
-    QString *errorString) {
-  Q_ASSERT(newItem.isNull() || newItem.idQualifier() == idQualifier);
-  Q_ASSERT(oldItem.isNull() || oldItem.idQualifier() == idQualifier);
+    const SharedUiItem &newItem, const SharedUiItem &oldItem,
+    const Utf8String &qualifier, QString *errorString) {
+  Q_ASSERT(newItem.isNull() || newItem.idQualifier() == qualifier);
+  Q_ASSERT(oldItem.isNull() || oldItem.idQualifier() == qualifier);
   QString reason;
   if (!errorString)
     errorString = &reason;
   SharedUiItemDocumentTransaction *transaction =
-      internalChangeItem(newItem, oldItem, idQualifier, errorString);
+      internalChangeItem(newItem, oldItem, qualifier, errorString);
   //qDebug() << "SharedUiItemDocumentManager::changeItem" << transaction;
   if (transaction) {
     transaction->redo();
@@ -98,19 +100,24 @@ SharedUiItemDocumentTransaction
 }
 
 void SharedUiItemDocumentManager::commitChangeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, Utf8String idQualifier) {
-  emit itemChanged(newItem, oldItem, idQualifier);
+    const SharedUiItem &new_item, const SharedUiItem &old_item,
+    const Utf8String &qualifier) {
+  // should never happen since methode is = 0
+  Log::error() << "SharedUiItemDocumentManager::commitChangeItem called "
+                  "instead of subclass: "
+               << new_item.qualifiedId() << " " << old_item.qualifiedId()
+               << " " << qualifier;
 }
 
 SharedUiItem SharedUiItemDocumentManager::createNewItem(
-    Utf8String idQualifier, PostCreationModifier modifier,
+    const Utf8String &qualifier, PostCreationModifier modifier,
     QString *errorString) {
   QString reason;
   if (!errorString)
     errorString = &reason;
   SharedUiItem newItem;
   SharedUiItemDocumentTransaction *transaction =
-      internalCreateNewItem(&newItem, idQualifier, modifier, errorString);
+      internalCreateNewItem(&newItem, qualifier, modifier, errorString);
   if (transaction) {
     transaction->redo();
     delete transaction;
@@ -135,13 +142,13 @@ SharedUiItemDocumentTransaction
 }
 
 bool SharedUiItemDocumentManager::changeItemByUiData(
-    SharedUiItem oldItem, int section, const QVariant &value,
+    const SharedUiItem &old_item, int section, const QVariant &value,
     QString *errorString) {
   QString reason;
   if (!errorString)
     errorString = &reason;
   SharedUiItemDocumentTransaction *transaction = internalChangeItemByUiData(
-        oldItem, section, value, errorString);
+        old_item, section, value, errorString);
   if (transaction) {
     transaction->redo();
     delete transaction;
@@ -204,8 +211,8 @@ bool SharedUiItemDocumentManager::processConstraintsAndPrepareChangeItem(
 }
 
 void SharedUiItemDocumentManager::addForeignKey(
-    Utf8String sourceQualifier, int sourceSection,
-    Utf8String referenceQualifier, int referenceSection,
+    const Utf8String &sourceQualifier, int sourceSection,
+    const Utf8String &referenceQualifier, int referenceSection,
     OnChangePolicy onUpdatePolicy, OnChangePolicy onDeletePolicy) {
   _foreignKeys.append(
         ForeignKey(sourceQualifier, sourceSection, referenceQualifier,
@@ -213,19 +220,19 @@ void SharedUiItemDocumentManager::addForeignKey(
 }
 
 void SharedUiItemDocumentManager::addChangeItemTrigger(
-    Utf8String idQualifier, TriggerFlags flags, ChangeItemTrigger trigger) {
+    const Utf8String &qualifier, TriggerFlags flags, ChangeItemTrigger trigger){
   if (flags & BeforeUpdate)
-    _triggersBeforeUpdate.insert(idQualifier, trigger);
+    _triggersBeforeUpdate.insert(qualifier, trigger);
   if (flags & AfterUpdate)
-    _triggersAfterUpdate.insert(idQualifier, trigger);
+    _triggersAfterUpdate.insert(qualifier, trigger);
   if (flags & BeforeCreate)
-    _triggersBeforeCreate.insert(idQualifier, trigger);
+    _triggersBeforeCreate.insert(qualifier, trigger);
   if (flags & AfterCreate)
-    _triggersAfterCreate.insert(idQualifier, trigger);
+    _triggersAfterCreate.insert(qualifier, trigger);
   if (flags & BeforeDelete)
-    _triggersBeforeDelete.insert(idQualifier, trigger);
+    _triggersBeforeDelete.insert(qualifier, trigger);
   if (flags & AfterDelete)
-    _triggersAfterDelete.insert(idQualifier, trigger);
+    _triggersAfterDelete.insert(qualifier, trigger);
 }
 
 bool SharedUiItemDocumentManager::checkIdsConstraints(
@@ -453,17 +460,23 @@ reference_still_exists:;
 }
 
 SharedUiItem SharedUiItemDocumentManager::itemById(
-    Utf8String, Utf8String) const {
-  return SharedUiItem();
+    const Utf8String&, const Utf8String&) const {
+  return {};
 }
 
 SharedUiItemList<SharedUiItem> SharedUiItemDocumentManager::itemsByIdQualifier(
-    Utf8String) const {
-  return SharedUiItemList<SharedUiItem>();
+    const Utf8String &) const {
+  return {};
 }
 
 bool SharedUiItemDocumentManager::prepareChangeItem(
-    SharedUiItemDocumentTransaction *, SharedUiItem, SharedUiItem, Utf8String,
-    QString *) {
+    SharedUiItemDocumentTransaction *transaction,
+    const SharedUiItem &new_item, const SharedUiItem &old_item,
+    const Utf8String &qualifier, QString *) {
+  // should never happen since methode is = 0
+  Log::error() << "SharedUiItemDocumentManager::prepareChangeItem called "
+                  "instead of subclass: "
+               << transaction << " " << new_item.qualifiedId() << " "
+               << old_item.qualifiedId() << " " << qualifier;
   return false;
 }
