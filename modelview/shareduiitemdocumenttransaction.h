@@ -36,11 +36,11 @@ public:
   class LIBP6CORESHARED_EXPORT ChangeItemCommand : public CoreUndoCommand {
     QPointer<SharedUiItemDocumentManager> _dm;
     SharedUiItem _newItem, _oldItem;
-    QByteArray _idQualifier;
+    QByteArray _qualifier;
 
   public:
     ChangeItemCommand(SharedUiItemDocumentManager *dm, SharedUiItem newItem,
-                      SharedUiItem oldItem, QByteArray idQualifier,
+                      SharedUiItem oldItem, QByteArray qualifier,
                       CoreUndoCommand *parent);
     void redo() override;
     void undo() override;
@@ -49,10 +49,10 @@ public:
   };
 
   SharedUiItemDocumentTransaction(SharedUiItemDocumentManager *dm) : _dm(dm) { }
-  SharedUiItem itemById(QByteArray idQualifier, QByteArray id) const;
+  SharedUiItem itemById(QByteArray qualifier, QByteArray id) const;
   template <class T>
-  inline T itemById(QByteArray idQualifier, QByteArray id) const {
-    SharedUiItem item = itemById(idQualifier, id);
+  inline T itemById(QByteArray qualifier, QByteArray id) const {
+    SharedUiItem item = itemById(qualifier, id);
     return static_cast<T&>(item);
   }
   SharedUiItem itemById(QByteArray qualifiedId) const {
@@ -66,12 +66,12 @@ public:
     SharedUiItem item = itemById(qualifiedId);
     return static_cast<T&>(item);
   }
-  SharedUiItemList<> itemsByIdQualifier(QByteArray idQualifier) const;
+  SharedUiItemList<> itemsByQualifier(QByteArray qualifier) const;
   template <class T>
-  inline SharedUiItemList<T> itemsByIdQualifier(QByteArray idQualifier) const {
+  inline SharedUiItemList<T> itemsByQualifier(QByteArray qualifier) const {
     T *dummy;
     Q_UNUSED(static_cast<SharedUiItem*>(dummy)); // ensure T is a SharedUiItem
-    SharedUiItemList<> list = itemsByIdQualifier(idQualifier);
+    SharedUiItemList<> list = itemsByQualifier(qualifier);
     union {
       SharedUiItemList<SharedUiItem> *generic;
       SharedUiItemList<T> *specialized;
@@ -92,17 +92,17 @@ public:
       SharedUiItem oldItem, int section, const QVariant &value,
       QString *errorString);
   bool changeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                  QByteArray idQualifier, QString *errorString);
+                  QByteArray qualifier, QString *errorString);
   SharedUiItem createNewItem(
-      QByteArray idQualifier, PostCreationModifier modifier,
+      QByteArray qualifier, PostCreationModifier modifier,
       QString *errorString);
   /** @see SharedUiItemDocumentManager::generateNewId() */
   QByteArray generateNewId(
-      QByteArray idQualifier, QByteArray prefix = {}) const;
+      QByteArray qualifier, QByteArray prefix = {}) const;
 
 private:
   void storeItemChange(SharedUiItem newItem, SharedUiItem oldItem,
-                       QByteArray idQualifier);
+                       QByteArray qualifier);
   SharedUiItemList<> changingItems() const;
   SharedUiItemList<> originalItems() const;
   //SharedUiItem oldItemIdByChangingItem(SharedUiItem changingItem) const;

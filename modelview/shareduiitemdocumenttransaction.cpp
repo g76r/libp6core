@@ -15,9 +15,9 @@
 #include "shareduiitemdocumentmanager.h"
 
 void SharedUiItemDocumentTransaction::storeItemChange(
-    SharedUiItem newItem, SharedUiItem oldItem, QByteArray idQualifier) {
+    SharedUiItem newItem, SharedUiItem oldItem, QByteArray qualifier) {
   ChangeItemCommand *command =
-      new ChangeItemCommand(_dm, newItem, oldItem, idQualifier, this);
+      new ChangeItemCommand(_dm, newItem, oldItem, qualifier, this);
   switch (childCount()) {
   case 1:
     setText(command->text());
@@ -27,9 +27,9 @@ void SharedUiItemDocumentTransaction::storeItemChange(
     break;
   }
   QByteArray oldId = oldItem.id(), newId = newItem.id();
-  QHash<QByteArray,SharedUiItem> &changingItems = _changingItems[idQualifier];
+  QHash<QByteArray,SharedUiItem> &changingItems = _changingItems[qualifier];
   if (!oldItem.isNull() && !changingItems.contains(oldId))
-    _originalItems[idQualifier].insert(oldId, oldItem);
+    _originalItems[qualifier].insert(oldId, oldItem);
   if (!oldItem.isNull())
     changingItems.insert(oldId, SharedUiItem());
   if (!newItem.isNull())
@@ -37,21 +37,21 @@ void SharedUiItemDocumentTransaction::storeItemChange(
 }
 
 SharedUiItem SharedUiItemDocumentTransaction::itemById(
-    QByteArray idQualifier, QByteArray id) const {
-  const QHash<QByteArray,SharedUiItem> newItems = _changingItems[idQualifier];
+    QByteArray qualifier, QByteArray id) const {
+  const QHash<QByteArray,SharedUiItem> newItems = _changingItems[qualifier];
   return newItems.contains(id) ? newItems.value(id)
-                               : _dm->itemById(idQualifier, id);
+                               : _dm->itemById(qualifier, id);
 }
 
-SharedUiItemList<> SharedUiItemDocumentTransaction::itemsByIdQualifier(
-    QByteArray idQualifier) const {
+SharedUiItemList<> SharedUiItemDocumentTransaction::itemsByQualifier(
+    QByteArray qualifier) const {
   QHash<QByteArray,SharedUiItem> changingItems =
-      _changingItems.value(idQualifier);
+      _changingItems.value(qualifier);
   SharedUiItemList<> items;
   foreach (const SharedUiItem &item, changingItems.values())
     if (!item.isNull())
       items.append(item);
-  foreach (const SharedUiItem &item, _dm->itemsByIdQualifier(idQualifier))
+  foreach (const SharedUiItem &item, _dm->itemsByQualifier(qualifier))
     if (!changingItems.contains(item.id()))
       items.append(item);
   return items;
@@ -59,8 +59,8 @@ SharedUiItemList<> SharedUiItemDocumentTransaction::itemsByIdQualifier(
 
 SharedUiItemList<> SharedUiItemDocumentTransaction::changingItems() const {
   SharedUiItemList<> items;
-  for (auto idQualifier: _changingItems.keys())
-    for (auto item: _changingItems.value(idQualifier)) {
+  for (auto qualifier: _changingItems.keys())
+    for (auto item: _changingItems.value(qualifier)) {
       if (!item.isNull())
         items.append(item);
     }
@@ -69,8 +69,8 @@ SharedUiItemList<> SharedUiItemDocumentTransaction::changingItems() const {
 
 SharedUiItemList<> SharedUiItemDocumentTransaction::originalItems() const {
   SharedUiItemList<> items;
-  for (auto idQualifier: _originalItems.keys())
-    for (auto item: _originalItems.value(idQualifier)) {
+  for (auto qualifier: _originalItems.keys())
+    for (auto item: _originalItems.value(qualifier)) {
       if (!item.isNull())
         items.append(item);
     }
@@ -95,7 +95,7 @@ SharedUiItemList<> SharedUiItemDocumentTransaction::foreignKeySources(
       sources.append(item);
   }
   foreach (const SharedUiItem &item,
-           _dm->itemsByIdQualifier(sourceQualifier)) {
+           _dm->itemsByQualifier(sourceQualifier)) {
     if (item.uiData(sourceSection) == referenceId
         && !changingItems.contains(item.id()))
       sources.append(item);
@@ -106,40 +106,40 @@ SharedUiItemList<> SharedUiItemDocumentTransaction::foreignKeySources(
 bool SharedUiItemDocumentTransaction::changeItemByUiData(
     SharedUiItem oldItem, int section, const QVariant &value,
     QString *errorString) {
-  auto idQualifier = oldItem.idQualifier();
+  auto qualifier = oldItem.qualifier();
   SharedUiItemDocumentManager::Setter setter =
-      _dm->_setters.value(idQualifier);
+      _dm->_setters.value(qualifier);
   SharedUiItem newItem = oldItem;
   if (setter) {
     // LATER always EditRole ?
     // LATER simplify constraints processing since only one section is touched
     if (setter(&newItem, section, value, errorString, this, Qt::EditRole)) {
       if (_dm->processConstraintsAndPrepareChangeItem(
-            this, newItem, oldItem, idQualifier, errorString)) {
+            this, newItem, oldItem, qualifier, errorString)) {
         return true;
       }
     }
   } else {
-    *errorString = "No setter registred for item type "+oldItem.idQualifier();
+    *errorString = "No setter registred for item type "+oldItem.qualifier();
   }
   return false;
 }
 
 bool SharedUiItemDocumentTransaction::changeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, QByteArray idQualifier,
+    SharedUiItem newItem, SharedUiItem oldItem, QByteArray qualifier,
     QString *errorString) {
   return _dm->processConstraintsAndPrepareChangeItem(
-        this, newItem, oldItem, idQualifier, errorString);
+        this, newItem, oldItem, qualifier, errorString);
 }
 
 SharedUiItem SharedUiItemDocumentTransaction::createNewItem(
-    QByteArray idQualifier, PostCreationModifier modifier,
+    QByteArray qualifier, PostCreationModifier modifier,
     QString *errorString) {
   SharedUiItemDocumentManager::Creator creator =
-      _dm->_creators.value(idQualifier);
+      _dm->_creators.value(qualifier);
   SharedUiItem nullItem;
   if (creator) {
-    auto id = _dm->generateNewId(this, idQualifier);
+    auto id = _dm->generateNewId(this, qualifier);
     SharedUiItem newItem = creator(this, id, errorString);
     if (newItem.isNull()) {
       return nullItem;
@@ -147,42 +147,42 @@ SharedUiItem SharedUiItemDocumentTransaction::createNewItem(
       if (modifier)
         modifier(this, &newItem, errorString);
       if (!_dm->processConstraintsAndPrepareChangeItem(
-            this, newItem, nullItem, idQualifier, errorString))
+            this, newItem, nullItem, qualifier, errorString))
         return nullItem;
     }
     return newItem;
   } else {
-    *errorString = "No creator registered for item of type "+idQualifier;
+    *errorString = "No creator registered for item of type "+qualifier;
     return nullItem;
   }
 }
 
 QByteArray SharedUiItemDocumentTransaction::generateNewId(
-    QByteArray idQualifier, QByteArray prefix) const {
-  return _dm->generateNewId(this, idQualifier, prefix);
+    QByteArray qualifier, QByteArray prefix) const {
+  return _dm->generateNewId(this, qualifier, prefix);
 }
 
 SharedUiItemDocumentTransaction::ChangeItemCommand::ChangeItemCommand(
     SharedUiItemDocumentManager *dm, SharedUiItem newItem, SharedUiItem oldItem,
-    QByteArray idQualifier, CoreUndoCommand *parent)
+    QByteArray qualifier, CoreUndoCommand *parent)
   : CoreUndoCommand(parent), _dm(dm), _newItem(newItem), _oldItem(oldItem),
-    _idQualifier(idQualifier)  {
+    _qualifier(qualifier)  {
   if (newItem.isNull())
-    setText("Deleting a "+oldItem.idQualifier());
+    setText("Deleting a "+oldItem.qualifier());
   else if (oldItem.isNull())
-    setText("Creating a "+newItem.idQualifier());
+    setText("Creating a "+newItem.qualifier());
   else
-    setText("Changing a "+oldItem.idQualifier());
+    setText("Changing a "+oldItem.qualifier());
 }
 
 void SharedUiItemDocumentTransaction::ChangeItemCommand::redo() {
   if (_dm)
-    _dm->commitChangeItem(_newItem, _oldItem, _idQualifier);
+    _dm->commitChangeItem(_newItem, _oldItem, _qualifier);
 }
 
 void SharedUiItemDocumentTransaction::ChangeItemCommand::undo() {
   if (_dm)
-    _dm->commitChangeItem(_oldItem, _newItem, _idQualifier);
+    _dm->commitChangeItem(_oldItem, _newItem, _qualifier);
 }
 
 int SharedUiItemDocumentTransaction::ChangeItemCommand::id() const {

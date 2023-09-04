@@ -17,12 +17,12 @@ QVariant SharedUiItemList<SharedUiItem>::paramRawValue(
     const Utf8String &key, const QVariant &def,
     const EvalContext &context) const {
   int colon = key.indexOf(':');
-  Utf8String idQualifier = colon >= 0 ? key.left(colon) : Utf8String{};
+  Utf8String qualifier = colon >= 0 ? key.left(colon) : Utf8String{};
   Utf8String sectionName = key.mid(colon+1);// works even with colon=-1
   for (auto item : *this) {
     // ignore item if keys contains a qualifier and it does not match item
     // e.g. "employee:name" and current item is qualified as "building"
-    if (!idQualifier.isEmpty() && item.idQualifier() != idQualifier)
+    if (!qualifier.isEmpty() && item.qualifier() != qualifier)
       continue;
     // ignore item if context contains a scope and it does not match item
     if (!context.hasScopeOrNone(item.paramScope()))
@@ -31,7 +31,7 @@ QVariant SharedUiItemList<SharedUiItem>::paramRawValue(
     if (sectionName == "id"_u8)
       return item.id();
     if (sectionName == "qualifier"_u8)
-      return item.idQualifier();
+      return item.qualifier();
     if (sectionName == "qualified_id"_u8)
       return item.qualifiedId();
     // section by name e.g. "name" or "employee:name"
@@ -54,7 +54,7 @@ Utf8StringSet SharedUiItemList<SharedUiItem>::paramKeys(
     const EvalContext &) const {
   Utf8StringSet keys, qualifiers;
   for (auto item: *this) {
-    auto q = item.idQualifier();
+    auto q = item.qualifier();
     if (qualifiers.contains(q))
       continue;
     qualifiers << q;

@@ -61,8 +61,7 @@ public:
     return _defaultMaxCellContentLength; }
   /** Format an item as a row.
    * If column headers are never written, being them enabled or not.
-   * If row headers are enabled, item.id() is used as a row header but if role
-   * is HeaderDisplayRole, in which case topLeftHeader is used insted. */
+   * If row headers are enabled, item.id() is used as a row header. */
   QString formatRow(
       const SharedUiItem &item, int role = Qt::DisplayRole) const {
     return formatRowInternal(item, role); }

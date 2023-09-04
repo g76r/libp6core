@@ -74,32 +74,32 @@ public:
   template<class T>
   inline T itemAt(QByteArray qualifier, const QModelIndex &index) const {
     SharedUiItem item = itemAt(index);
-    return item.idQualifier() == qualifier ? static_cast<T&>(item) : T();
+    return item.qualifier() == qualifier ? static_cast<T&>(item) : T();
   }
   /** Convenience template performing downcast. */
   template<class T>
   inline T itemAt(const char *qualifier, const QModelIndex &index) const {
     SharedUiItem item = itemAt(index);
-    return item.idQualifier() == qualifier ? static_cast<T&>(item) : T();
+    return item.qualifier() == qualifier ? static_cast<T&>(item) : T();
   }
   /** Convenience template performing downcast. */
   template<class T>
   inline T itemAt(QByteArray qualifier, int row, int column,
            const QModelIndex &parent = QModelIndex()) const {
     SharedUiItem item = itemAt(row, column, parent);
-    return item.idQualifier() == qualifier ? static_cast<T&>(item) : T();
+    return item.qualifier() == qualifier ? static_cast<T&>(item) : T();
   }
   /** Convenience template performing downcast. */
   template<class T>
   inline T itemAt(const char *qualifier, int row, int column,
            const QModelIndex &parent = QModelIndex()) const {
     SharedUiItem item = itemAt(row, column, parent);
-    return item.idQualifier() == qualifier ? static_cast<T&>(item) : T();
+    return item.qualifier() == qualifier ? static_cast<T&>(item) : T();
   }
   QModelIndex indexOf(SharedUiItem item) const {
     return indexOf(item.qualifiedId()); }
-  QModelIndex indexOf(QByteArray idQualifier, QByteArray id) const {
-    return indexOf(SharedUiItem::qualifiedId(idQualifier, id)); }
+  QModelIndex indexOf(QByteArray qualifier, QByteArray id) const {
+    return indexOf(SharedUiItem::qualifiedId(qualifier, id)); }
   virtual QModelIndex indexOf(QByteArray qualifiedId) const = 0;
   Qt::ItemFlags	flags(const QModelIndex &index) const override;
   bool setData(const QModelIndex &index, const QVariant &value,
@@ -147,7 +147,7 @@ public slots:
    * regardless oldItem is null or garbage or equals to newItem.
    *
    * If relevant this method can filter which items are actually handled or not,
-   * for example depending on newItem.idQualifier(). If so, some of the calls to
+   * for example depending on newItem.qualifier(). If so, some of the calls to
    * changeItem() may be ignored.
    *
    * This slot can be connected to SharedUiItemDocumentManager::itemChanged()
@@ -159,13 +159,13 @@ public slots:
    */
   // TODO switch signatures to const SharedUiItem & whenever possible
   virtual void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                          QByteArray idQualifier) = 0;
-  /** Short for changeItem(newItem, SharedUiItem(), newItem.idQualifier()). */
+                          QByteArray qualifier) = 0;
+  /** Short for changeItem(newItem, SharedUiItem(), newItem.qualifier()). */
   void createOrUpdateItem(SharedUiItem newItem) {
-    changeItem(newItem, SharedUiItem(), newItem.idQualifier()); }
-  /** Short for changeItem(SharedUiItem(), oldItem, oldItem.idQualifier()). */
+    changeItem(newItem, SharedUiItem(), newItem.qualifier()); }
+  /** Short for changeItem(SharedUiItem(), oldItem, oldItem.qualifier()). */
   void deleteItemIfExists(SharedUiItem oldItem) {
-    changeItem(SharedUiItem(), oldItem, oldItem.idQualifier()); }
+    changeItem(SharedUiItem(), oldItem, oldItem.qualifier()); }
   /** Reread the whole data from current document manager.
    *
    * This slot can be connected to SharedUiItemDocumentManager::dataReset() */
@@ -234,8 +234,8 @@ public:
   QModelIndex indexOf(SharedUiItem item) const {
     return _realModel ? mapFromReal(_realModel->indexOf(item))
                       : QModelIndex(); }
-  QModelIndex indexOf(QByteArray idQualifier, QByteArray id) const {
-    return _realModel ? mapFromReal(_realModel->indexOf(idQualifier, id))
+  QModelIndex indexOf(QByteArray qualifier, QByteArray id) const {
+    return _realModel ? mapFromReal(_realModel->indexOf(qualifier, id))
                       : QModelIndex(); }
   QModelIndex indexOf(QByteArray qualifiedId) const {
     return _realModel ? mapFromReal(_realModel->indexOf(qualifiedId))
@@ -255,27 +255,27 @@ public:
   template<class T>
   inline T itemAt(QByteArray qualifier, const QModelIndex &index) const {
     SharedUiItem item = itemAt(index);
-    return item.idQualifier() == qualifier ? static_cast<T&>(item) : T();
+    return item.qualifier() == qualifier ? static_cast<T&>(item) : T();
   }
   /** Convenience template performing downcast. */
   template<class T>
   inline T itemAt(const char *qualifier, const QModelIndex &index) const {
     SharedUiItem item = itemAt(index);
-    return item.idQualifier() == qualifier ? static_cast<T&>(item) : T();
+    return item.qualifier() == qualifier ? static_cast<T&>(item) : T();
   }
   /** Convenience template performing downcast. */
   template<class T>
   inline T itemAt(QByteArray qualifier, int row, int column,
            const QModelIndex &parent = QModelIndex()) const {
     SharedUiItem item = itemAt(row, column, parent);
-    return item.idQualifier() == qualifier ? static_cast<T&>(item) : T();
+    return item.qualifier() == qualifier ? static_cast<T&>(item) : T();
   }
   /** Convenience template performing downcast. */
   template<class T>
   inline T itemAt(const char *qualifier, int row, int column,
            const QModelIndex &parent = QModelIndex()) const {
     SharedUiItem item = itemAt(row, column, parent);
-    return item.idQualifier() == qualifier ? static_cast<T&>(item) : T();
+    return item.qualifier() == qualifier ? static_cast<T&>(item) : T();
   }
 };
 

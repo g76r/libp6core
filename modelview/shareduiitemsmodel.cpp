@@ -155,9 +155,9 @@ void SharedUiItemsModel::resetData() {
     removeRows(0, rows);
   if (_documentManager) {
     // LATER also populate data if _itemQualifierFilter is empty
-    for (auto idQualifier : _itemQualifierFilter) {
+    for (auto qualifier : _itemQualifierFilter) {
       for (const SharedUiItem &item
-           : _documentManager->itemsByIdQualifier(idQualifier)) {
+           : _documentManager->itemsByQualifier(qualifier)) {
         createOrUpdateItem(item);
       }
     }

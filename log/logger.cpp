@@ -70,7 +70,7 @@ public:
   int uiSectionByName(Utf8String sectionName) const override {
     return _uiSectionIndex.value(sectionName, -1); }
   Utf8String id() const override { return _id; }
-  Utf8String idQualifier() const override { return "logentry"_u8; }
+  Utf8String qualifier() const override { return "logentry"_u8; }
 };
 
 Logger::LogEntry::LogEntry(QDateTime timestamp, Utf8String message,

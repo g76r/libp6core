@@ -18,7 +18,7 @@ Utf8String SharedUiItemData::id() const {
   return Utf8String(uiData(0, Qt::DisplayRole));
 }
 
-Utf8String SharedUiItemData::idQualifier() const {
+Utf8String SharedUiItemData::qualifier() const {
   return {};
 }
 
@@ -62,7 +62,7 @@ bool SharedUiItemData::setUiData(
   *errorString =
       QObject::tr("Field \"%1\" is not ui-editable for item of type %2")
       .arg(uiHeaderData(section, Qt::DisplayRole).toString())
-      .arg(idQualifier());
+      .arg(qualifier());
   return false;
 }
 
@@ -139,7 +139,7 @@ Utf8String SharedUiItem::paramUtf8(
 }
 
 Utf8String SharedUiItemData::paramScope() const {
-  return idQualifier();
+  return qualifier();
 }
 
 Utf8String SharedUiItem::paramScope() const {
@@ -151,13 +151,13 @@ Utf8String SharedUiItem::paramScope() const {
 #if __cpp_impl_three_way_comparison >= 201711
 std::strong_ordering SharedUiItemData::operator<=>(
     const SharedUiItemData &that) const {
-  if (auto cmp = idQualifier() <=> that.idQualifier(); cmp != 0)
+  if (auto cmp = qualifier() <=> that.qualifier(); cmp != 0)
     return cmp;
   return id() <=> that.id();
 }
 #else
 bool SharedUiItemData::operator<(const SharedUiItemData &that) const {
-  return idQualifier() < that.idQualifier() || id() < that.id();
+  return qualifier() < that.qualifier() || id() < that.id();
 }
 #endif // C++ 20: spaceship op
 

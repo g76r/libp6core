@@ -100,9 +100,9 @@ SharedUiItem SharedUiItemsTableModel::itemAt(const QModelIndex &index) const {
 }
 
 void SharedUiItemsTableModel::changeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, QByteArray idQualifier) {
+    SharedUiItem newItem, SharedUiItem oldItem, QByteArray qualifier) {
   if (!itemQualifierFilter().isEmpty()
-      && !itemQualifierFilter().contains(idQualifier))
+      && !itemQualifierFilter().contains(qualifier))
     return;
   if (newItem.isNull()) {
     QModelIndex oldIndex = indexOf(oldItem);

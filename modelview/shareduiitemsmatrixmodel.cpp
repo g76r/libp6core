@@ -81,10 +81,10 @@ void SharedUiItemsMatrixModel::insertItemAt(
 }
 
 void SharedUiItemsMatrixModel::changeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, QByteArray idQualifier) {
-  Q_UNUSED(idQualifier)
+    SharedUiItem newItem, SharedUiItem oldItem, QByteArray qualifier) {
+  Q_UNUSED(qualifier)
   //qDebug() << "SharedUiItemsMatrixModel::changeItem" << newItem << oldItem
-  //         << idQualifier;
+  //         << qualifier;
   if (oldItem.isNull())
     return;
   for (int i = 0; i < _verticalHeaders.size(); ++i) {
@@ -197,7 +197,7 @@ QVariant SharedUiItemsMatrixModel::evaluate(
       return PercentEvaluator::eval(binding._tooltip,
                                     {&binding._item, {}, role});
   case Qt::EditRole:
-  case SharedUiItem::IdQualifierRole:
+  case SharedUiItem::QualifierRole:
   case SharedUiItem::IdRole:
   case SharedUiItem::QualifiedIdRole:
     return binding._item.uiData(binding._editableSection, role);

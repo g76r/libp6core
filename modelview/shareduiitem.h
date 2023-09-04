@@ -31,11 +31,11 @@ class SharedUiItemParamsProvider;
  * Subclassing guidelines:
  * - TL;DR: inherit from TemplatedSharedUiItem this will help you to follow
  *   most of the rules above.
- * - A subclass MUST implement idQualifier().
- * - The idQualifier MUST only contains ascii letters, digits and underscore (_)
+ * - A subclass MUST implement qualifier().
+ * - The qualifier MUST only contains ascii letters, digits and underscore (_)
  *   and MUST start with a letter. It SHOULD be directly related to the class
  *   name, e.g. "foobar" for FoobarData. Within a given application, all
- *   possible idQualifier SHOULD NOT need case-sensitivity to be distinguished
+ *   possible qualifier SHOULD NOT need case-sensitivity to be distinguished
  *   one from another.
  * - The id MUST be unique in the scope of the document/document manager for a
  *   given id qualifier and MUST NOT be empty. It MAY contain any utf8 encoded
@@ -85,12 +85,12 @@ public:
 
   // identity
   /** Return a string identifying the object among all other SharedUiItems
-   * sharing the same idQualifier().
+   * sharing the same qualifier().
    * Default: return uiData(0, Qt::DisplayRole) */
   virtual Utf8String id() const;
   /** Return a string identifiying the data type represented within the
    * application, e.g. "student", "calendar", "quote". */
-  virtual Utf8String idQualifier() const = 0;
+  virtual Utf8String qualifier() const = 0;
 
   // ui read
   /** Return UI sections count, like QAbstractItemModel::columnCount() does for
@@ -106,10 +106,10 @@ public:
   virtual int uiSectionByName(Utf8String sectionName) const = 0;
   /** Return UI data, like QAbstractItemModel::data().
    *
-   * Note that IdRole, IdQualifierRole, QualifiedIdRole and won't be queried
+   * Note that IdRole, QualifierRole, QualifiedIdRole and won't be queried
    * from SharedUiItemData::uiData() but are directly handled in
    * SharedUiItem::uiData() as calls to SharedUiItemData::id() and
-   * SharedUiItemData::idQualifier() instead, regardless the section. */
+   * SharedUiItemData::qualifier() instead, regardless the section. */
   virtual QVariant uiData(int section, int role = Qt::DisplayRole) const = 0;
   /** Return UI header data, like QAbstractItemModel::headerData().
    * Default: uiSectionName(section) for DisplayRole, EditRole and
@@ -132,7 +132,7 @@ public:
 
   // comparison
 #if __cpp_impl_three_way_comparison >= 201711
-  /** By default: compares identifers (idQualifier() then id(), which may
+  /** By default: compares identifers (qualifier() then id(), which may
    *  lead to inconsistency if comaring two versions of an object with same
    *  identifiers).
    *  Implementation can rely on SharedUiItem::operator<=> not calling
@@ -142,7 +142,7 @@ public:
   inline bool operator ==(const SharedUiItemData &that) const {
     return *this <=> that == std::strong_ordering::equal; }
 #else
-  /** By default: compares identifers (idQualifier() then id(), which may
+  /** By default: compares identifers (qualifier() then id(), which may
    *  lead to inconsistency if comaring two versions of an object with same
    *  identifiers).
    *  Implementation can rely on SharedUiItem::operator< not calling
@@ -307,9 +307,8 @@ protected:
 public:
   enum SharedUiItemRole {
     IdRole = Qt::UserRole+784,
-    IdQualifierRole,
+    QualifierRole,
     QualifiedIdRole,
-    HeaderDisplayRole,
     ExternalDataRole // for file/database storage or network transfer
   };
 
@@ -333,7 +332,7 @@ public:
     return *this <=> that == std::strong_ordering::equal; }
 #else
   inline bool operator==(const SharedUiItem &other) const {
-    return idQualifier() == other.idQualifier() && id() == other.id(); }
+    return qualifier() == other.qualifier() && id() == other.id(); }
   inline bool operator!=(const SharedUiItem &other) const {
     return !(*this == other); }
   inline bool operator<(const SharedUiItem &other) const {
@@ -351,48 +350,43 @@ public:
   inline Utf8String id() const { return _data ? _data->id() : Utf8String{}; }
   /** Item identifier qualifier, e.g. item type such as "invoice" for an
    * invoice data ui object. */
-  inline Utf8String idQualifier() const {
-    return _data ? _data->idQualifier() : Utf8String{}; }
+  inline Utf8String qualifier() const {
+    return _data ? _data->qualifier() : Utf8String{}; }
   /** Qualified item identifier.
    * The qualified identifier MUST be unique for any type of item within the
    * same document.
-   * @return idQualifier+':'+id if idQualifier is not empty, id otherwise. */
-  inline static Utf8String qualifiedId(Utf8String idQualifier, Utf8String id) {
-    return idQualifier+":"+id; }
+   * @return qualifier+':'+id if qualifier is not empty, id otherwise. */
+  inline static Utf8String qualifiedId(
+      const Utf8String &qualifier, const Utf8String &id) {
+    return qualifier+":"+id; }
   /** Qualified item identifier.
    * The qualified identifier MUST be unique for any type of item within the
    * same document.
-   * @return idQualifier+':'+id if idQualifier is not empty, id otherwise. */
+   * @return qualifier+':'+id if qualifier is not empty, id otherwise. */
   inline Utf8String qualifiedId() const {
-    return _data ? qualifiedId(_data->idQualifier(), _data->id())
-                 : Utf8String{}; }
+    return _data ? qualifiedId(_data->qualifier(), _data->id()) : Utf8String{};}
   /** Return UI sections count, like QAbstractItemModel::columnCount() does for
    * columns (anyway SharedUiItem sections are likely to be presented as
    * columns by a Model and displayed aas columns by a View). */
   inline int uiSectionCount() const {
-    return _data ? _data->uiSectionCount() : 0;
-  }
+    return _data ? _data->uiSectionCount() : 0; }
   /** Return UI data, like QAbstractItemModel::data().
-   * Using IdRole, IdQualifierRole and QualifiedIdRole query
-   * SharedUiItemData::id() and/or SharedUiItemData::idQualifier() instead of
-   * SharedUiItem::uiData(), regardless the section.
-   * Using HeaderDisplayRole query
-   * SharedUiItemData::uiHeaderData(section, Qt::DisplayRole) instead of
-   * SharedUiItem::uiData(). */
+   *
+   * Using IdRole, QualifierRole and QualifiedIdRole query
+   * SharedUiItemData::id() and/or SharedUiItemData::qualifier() instead of
+   * SharedUiItem::uiData(), regardless the section. */
   inline QVariant uiData(int section, int role = Qt::DisplayRole) const {
     if (!_data)
       return {};
     switch (role) {
       case IdRole:
         return _data->id();
-      case IdQualifierRole:
-        return _data->idQualifier();
+      case QualifierRole:
+        return _data->qualifier();
       case QualifiedIdRole: {
-        auto qualifier = _data->idQualifier();
+        auto qualifier = _data->qualifier();
         return qualifier.isEmpty() ? _data->id() : qualifier+":"+_data->id();
       }
-      case HeaderDisplayRole:
-        return _data->uiHeaderData(section, Qt::DisplayRole);
       default:
         return _data->uiData(section, role);
     }
@@ -403,16 +397,12 @@ public:
   }
   /** Return UI data, like QAbstractItemModel::data().
    *
-   * IdRole, IdQualifierRole and QualifiedIdRole query
-   * SharedUiItemData::id() and/or SharedUiItemData::idQualifier() instead of
+   * IdRole, QualifierRole and QualifiedIdRole query
+   * SharedUiItemData::id() and/or SharedUiItemData::qualifier() instead of
    * SharedUiItem::uiData(), regardless the section.
    *
-   * HeaderDisplayRole queries
-   * SharedUiItemData::uiHeaderData(section, Qt::DisplayRole) instead of
-   * SharedUiItem::uiData().
-   *
    * "id", "qualifier" and "qualified_id" section names query
-   * SharedUiItemData::id() and/or SharedUiItemData::idQualifier()
+   * SharedUiItemData::id() and/or SharedUiItemData::qualifier()
    * instead of SharedUiItem::uiSectionByName() and SharedUiItem::uiData(). */
   QVariant uiDataBySectionName(
       Utf8String sectionName, int role = Qt::DisplayRole) const {
@@ -420,21 +410,19 @@ public:
       return {};
     if (role == IdRole)
       return _data->id();
-    if (role == IdQualifierRole)
-      return _data->idQualifier();
+    if (role == QualifierRole)
+      return _data->qualifier();
     if (role == QualifiedIdRole)
       return qualifiedId();
     if (sectionName == "id"_u8)
       return _data->id();
     if (sectionName == "qualifier"_u8)
-      return _data->idQualifier();
+      return _data->qualifier();
     if (sectionName == "qualified_id"_u8)
       return qualifiedId();
     int section = uiSectionByName(sectionName);
     if (section < 0)
       return {};
-    if (role == HeaderDisplayRole)
-      return _data->uiHeaderData(section, Qt::DisplayRole);
     return uiData(section, role);
   }
   /** Convenience method for uiData(...).toString(). */

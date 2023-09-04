@@ -59,7 +59,7 @@ public:
   void insertItemAt(SharedUiItem newItem, int row,
                     QModelIndex parent = QModelIndex()) override;
   void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                  QByteArray idQualifier) override;
+                  QByteArray qualifier) override;
   QVariant data(const QModelIndex &index, int role) const override;
   bool setData(const QModelIndex &index, const QVariant &value,
                int role = Qt::EditRole) override;

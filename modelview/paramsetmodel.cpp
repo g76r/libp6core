@@ -61,11 +61,11 @@ QVariant ParamSetModel::data(const QModelIndex &index, int role) const {
       }
       break;
     case SharedUiItem::QualifiedIdRole:
-      return _idQualifier+':'+_rows.at(index.row())._key;
+      return _qualifier+':'+_rows.at(index.row())._key;
     case SharedUiItem::IdRole:
       return _rows.at(index.row())._key;
-    case SharedUiItem::IdQualifierRole:
-      return _idQualifier;
+    case SharedUiItem::QualifierRole:
+      return _qualifier;
     }
   }
   return QVariant();

@@ -139,26 +139,26 @@ bool InMemoryDatabaseDocumentManager::insertItemInDatabase(
     QString *errorString) {
   Q_UNUSED(transaction)
   Q_ASSERT(errorString != 0);
-  Creator creator = _creators.value(new_item.idQualifier());
+  Creator creator = _creators.value(new_item.qualifier());
   if (new_item.isNull() || !creator) {
     *errorString = "cannot insert into database item: "+new_item.qualifiedId()
         +" creator: "+(creator?"true":"false");
     return false;
   }
-  QString idQualifier = new_item.idQualifier();
+  QString qualifier = new_item.qualifier();
   QStringList columnNames, placeholders;
   for (int i = 0; i < new_item.uiSectionCount(); ++i) {
     columnNames << protectedColumnName(new_item.uiSectionName(i));
     placeholders << QStringLiteral("?");
   }
   QSqlQuery query(_db);
-  query.prepare("insert into "+idQualifier+" ("+columnNames.join(',')
+  query.prepare("insert into "+qualifier+" ("+columnNames.join(',')
                 +") values ("+placeholders.join(',')+")");
   for (int i = 0; i < new_item.uiSectionCount(); ++i)
     query.bindValue(i, new_item.uiData(i, SharedUiItem::ExternalDataRole));
   if (!query.exec()) {
     *errorString = tr("database error: cannot insert into table %1 %2: %3")
-                   .arg(idQualifier).arg(new_item.id())
+                   .arg(qualifier).arg(new_item.id())
                    .arg(query.lastError().text());
     qDebug() << "InMemoryDatabaseDocumentManager" << *errorString;
     return false;

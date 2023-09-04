@@ -23,7 +23,7 @@
  * - prepareChangeItem()
  * - commitChangeItem()
  * - itemById() (taking care not to hide overloaded forms)
- * - itemsByIdQualifier() (taking care not to hide overloaded forms)
+ * - itemsByQualifier() (taking care not to hide overloaded forms)
  *
  * @see SharedUiItem */
 class LIBP6CORESHARED_EXPORT SharedUiItemDocumentManager : public QObject {
@@ -197,18 +197,18 @@ public:
   }
   /** This method build a list of every item currently holded, given their
    *  qualifiedId, can bee very expensive depending of the data set size. */
-  virtual SharedUiItemList<SharedUiItem> itemsByIdQualifier(
+  virtual SharedUiItemList<SharedUiItem> itemsByQualifier(
       const Utf8String &qualifier) const = 0;
   /** Convenience template performing downcast. */
   template<class T>
-  inline SharedUiItemList<T> itemsByIdQualifier(
+  inline SharedUiItemList<T> itemsByQualifier(
       const Utf8String &qualifier) const {
     T *dummy;
     Q_UNUSED(static_cast<SharedUiItem*>(dummy)); // ensure T is a SharedUiItem
-    SharedUiItemList<SharedUiItem> list = itemsByIdQualifier(qualifier);
-    if (!list.isEmpty() && list[0].idQualifier() != qualifier) {
+    SharedUiItemList<SharedUiItem> list = itemsByQualifier(qualifier);
+    if (!list.isEmpty() && list[0].qualifier() != qualifier) {
       // LATER output warning
-      //qWarning() << "SharedUiItemList<T>::itemsByIdQualifier called with "
+      //qWarning() << "SharedUiItemList<T>::itemsByQualifier called with "
       //              "inconsistent types and qualifier";
       return SharedUiItemList<T>();
     }
@@ -280,9 +280,9 @@ public:
   void addChangeItemTrigger(const Utf8String &qualifier, TriggerFlags flags,
       ChangeItemTrigger trigger);
   /** Can be called to generate a new id not currently in use for the given
-   * idQualifier item type.
+   * qualifier item type.
    * Generate id of the form prefix+number (e.g. "foobar1"), most of the time
-   * one should choose idQualifier as prefix, which is the default (= if prefix
+   * one should choose qualifier as prefix, which is the default (= if prefix
    * is left empty). */
   Utf8String generateNewId(const Utf8String &qualifier,
                            const Utf8String &prefix = {}) const {
@@ -298,7 +298,7 @@ signals:
    * Otherwise the item is updated (changes anything apart its id).
    *
    * Notes: oldItem and newItem cannot be null at the same time, if none is null
-   * then oldItem.idQualifier() == newItem.idQualifier().
+   * then oldItem.qualifier() == newItem.qualifier().
    *
    * Subclasses may add specialized signals for their different item
    * types, e.g. "void customerChanged(Customer newItem, Customer oldItem)"
@@ -314,9 +314,9 @@ signals:
 
 protected:
   /** Can be called by createNewItem() implementations to generate a new id not
-   * currently in use for the given idQualifier item type.
+   * currently in use for the given qualifier item type.
    * Generate id of the form prefix+number (e.g. "foobar1"), most of the time
-   * one should choose idQualifier as prefix, which is the default (= if prefix
+   * one should choose qualifier as prefix, which is the default (= if prefix
    * is left empty). */
   Utf8String generateNewId(const SharedUiItemDocumentTransaction *transaction,
       const Utf8String &qualifier, const Utf8String &prefix = {}) const;
@@ -368,12 +368,12 @@ protected:
   /** To be called by createNewItem().
    * Should never be overriden apart by DtpDocumentManagerWrapper. */
   virtual SharedUiItemDocumentTransaction *internalCreateNewItem(
-      SharedUiItem *newItem, Utf8String idQualifier,
+      SharedUiItem *newItem, Utf8String qualifier,
       PostCreationModifier modifier, QString *errorString);
   /** To be called by changeItem().
    * Should never be overriden apart by DtpDocumentManagerWrapper. */
   virtual SharedUiItemDocumentTransaction *internalChangeItem(
-      SharedUiItem newItem, SharedUiItem oldItem, Utf8String idQualifier,
+      SharedUiItem newItem, SharedUiItem oldItem, Utf8String qualifier,
       QString *errorString);
   /** To be called by changeItemByUiData().
    * Should never be overriden apart by DtpDocumentManagerWrapper. */
@@ -385,30 +385,30 @@ private:
   // FIXME doc
   bool processConstraintsAndPrepareChangeItem(
       SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
-      SharedUiItem oldItem, Utf8String idQualifier, QString *errorString);
+      SharedUiItem oldItem, Utf8String qualifier, QString *errorString);
   // FIXME doc×6
   bool processBeforeUpdate(
       SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
-      SharedUiItem oldItem, Utf8String idQualifier, QString *errorString);
+      SharedUiItem oldItem, Utf8String qualifier, QString *errorString);
   bool processBeforeCreate(
       SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
-      Utf8String idQualifier, QString *errorString);
+      Utf8String qualifier, QString *errorString);
   bool processBeforeDelete(
       SharedUiItemDocumentTransaction *transaction, SharedUiItem oldItem,
-      Utf8String idQualifier, QString *errorString);
+      Utf8String qualifier, QString *errorString);
   bool processAfterUpdate(
       SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
-      SharedUiItem oldItem, Utf8String idQualifier, QString *errorString);
+      SharedUiItem oldItem, Utf8String qualifier, QString *errorString);
   bool processAfterCreate(
       SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
-      Utf8String idQualifier, QString *errorString);
+      Utf8String qualifier, QString *errorString);
   bool processAfterDelete(
       SharedUiItemDocumentTransaction *transaction, SharedUiItem oldItem,
-      Utf8String idQualifier, QString *errorString);
+      Utf8String qualifier, QString *errorString);
   // id as primary key (uniqueness, not empty, same qualifiers before and after)
   bool checkIdsConstraints(SharedUiItemDocumentTransaction *transaction,
                            SharedUiItem newItem, SharedUiItem oldItem,
-                           Utf8String idQualifier, QString *errorString);
+                           Utf8String qualifier, QString *errorString);
   /** Perform checks that are delayed until commit, such as referential
    * integrity checks. */
   bool delayedChecks(SharedUiItemDocumentTransaction *transaction,

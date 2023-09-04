@@ -25,25 +25,25 @@ class LIBP6CORESHARED_EXPORT GenericSharedUiItem : public SharedUiItem {
 public:
   GenericSharedUiItem();
   GenericSharedUiItem(const GenericSharedUiItem &other);
-  GenericSharedUiItem(Utf8String idQualifier, Utf8String id,
+  GenericSharedUiItem(Utf8String qualifier, Utf8String id,
                       QVariantList headers, QVariantList values);
-  /** Convenience constructor, with idQualifier="generic" */
+  /** Convenience constructor, with qualifier="generic" */
   GenericSharedUiItem(Utf8String id, QVariantList headers, QVariantList values)
     : GenericSharedUiItem("generic"_u8, id, headers, values) { }
-  /** Convenience constructor, with idQualifier="generic" and id=values[0] */
+  /** Convenience constructor, with qualifier="generic" and id=values[0] */
   GenericSharedUiItem(QVariantList headers, QVariantList values)
     : GenericSharedUiItem(
         "generic"_u8, values.size() > 0 ? Utf8String(values[0]) : Utf8String(),
         headers, values) { }
   /** Create empty item, without data or headers. */
-  GenericSharedUiItem(Utf8String idQualifier, Utf8String id);
+  GenericSharedUiItem(Utf8String qualifier, Utf8String id);
   /** Create empty item, without data or headers, by parsing qualifiedId. */
   explicit GenericSharedUiItem(Utf8String qualifiedId);
   GenericSharedUiItem &operator=(const GenericSharedUiItem &other) {
     SharedUiItem::operator=(other); return *this; }
   static QList<GenericSharedUiItem> fromCsv(CsvFile *csvFile, int idColumn = 0,
-      Utf8String idQualifier = "generic"_u8);
-  // LATER another fromCsv(), with idQualifierColumn
+      Utf8String qualifier = "generic"_u8);
+  // LATER another fromCsv(), with qualifierColumn
   /** Not only set ui data but also update id if updated section is id section.
    */
   template <int idSection>

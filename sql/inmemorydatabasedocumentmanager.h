@@ -18,7 +18,7 @@
 #include <QSqlDatabase>
 
 /** Simple generic implementation of SharedUiItemDocumentManager holding in
- * memory a repository of items by idQualifier and id, with database
+ * memory a repository of items by qualifier and id, with database
  * persistence.
  *
  * Database persistence is inefficient for large number of items (all mapped
@@ -32,7 +32,7 @@
  * uiData() and setUiData() implementation.
  *
  * To enable holding items, registerItemType() must be called for every
- * idQualifier, in such a way:
+ * qualifier, in such a way:
  *   dm->registerItemType(
  *         "foobar", static_cast<InMemorySharedUiItemDocumentManager::Setter>(
  *         &Foobar::setUiData),

@@ -29,7 +29,7 @@ using SharedUiItemDataFunctions = RadixTree<SharedUiItemDataFunction>;
  *  Actual SharedUiItemData implementation, e.g. FooData, can inherit from
  *  SharedUiItemDataBase<FooData> and won't have to reimplement some part of
  *  the boiler plate provided it have the folowing static members defined:
- *  - const static Utf8String _idQualifier e.g. = "foo"
+ *  - const static Utf8String _qualifier e.g. = "foo"
  *  - const static Utf8StringList _sectionNames e.g. = { "id", "parent", "name"}
  *  - const static Utf8StringList _headerNames e.g. = { "Id", "Parent", "Name"}
  *    (_headerNames can be = to _sectionNames if its convenient for you)
@@ -54,7 +54,7 @@ public:
   static const QMap<Utf8String,int> _sectionIndex;
 
   // SharedUiItemData interface
-  virtual Utf8String idQualifier() const override { return T::_idQualifier; }
+  virtual Utf8String qualifier() const override { return T::_qualifier; }
   int uiSectionCount() const override { return T::_sectionNames.size(); }
   Utf8String uiSectionName(int section) const override {
     return T::_sectionNames.value(section); }
@@ -71,7 +71,7 @@ public:
   }
 
   // ParamsProvider interface
-  Utf8String paramScope() const override { return T::_idQualifier; }
+  Utf8String paramScope() const override { return T::_qualifier; }
 };
 
 template<class T>

@@ -17,10 +17,10 @@
 #include "shareduiitemdocumentmanager.h"
 
 /** Simple generic implementation of SharedUiItemDocumentManager holding in
- * memory a repository of items by idQualifier and id.
+ * memory a repository of items by qualifier and id.
  *
  * To enable holding items, registerItemType() must be called for every
- * idQualifier, in such a way:
+ * qualifier, in such a way:
  *   dm->registerItemType(
  *         "foobar", static_cast<InMemorySharedUiItemDocumentManager::Setter>(
  *         &Foobar::setUiData),
@@ -48,8 +48,8 @@ public:
   using SharedUiItemDocumentManager::itemById;
   SharedUiItem itemById(
       const Utf8String &qualifier, const Utf8String &id) const override;
-  using SharedUiItemDocumentManager::itemsByIdQualifier;
-  SharedUiItemList<SharedUiItem> itemsByIdQualifier(
+  using SharedUiItemDocumentManager::itemsByQualifier;
+  SharedUiItemList<SharedUiItem> itemsByQualifier(
       const Utf8String &qualifier) const override;
 };
 

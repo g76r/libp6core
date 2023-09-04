@@ -71,7 +71,7 @@ public:
   using SharedUiItemsModel::indexOf;
   QModelIndex indexOf(QByteArray qualifiedId) const override;
   void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                  QByteArray idQualifier) override;
+                  QByteArray qualifier) override;
   bool removeRows(int row, int count, const QModelIndex &parent) override;
   void insertItemAt(SharedUiItem newItem, int row,
                     QModelIndex parent = QModelIndex()) override;

@@ -24,6 +24,6 @@ void MemoryLogger::doLog(const LogEntry &entry) {
   if (!_prefixFilter.isNull() && !entry.message().startsWith(_prefixFilter))
     return;
   QMetaObject::invokeMethod(_model, [entry,this](){
-    _model->changeItem(entry, SharedUiItem(), entry.idQualifier());
+    _model->changeItem(entry, SharedUiItem(), entry.qualifier());
   });
 }

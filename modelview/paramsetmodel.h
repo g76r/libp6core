@@ -60,7 +60,7 @@ private:
         _inherited(inherited) { }
   };
   ParamSet _params;
-  QByteArray _paramsetId, _idQualifier;
+  QByteArray _paramsetId, _qualifier;
   QList<ParamSetRow> _rows;
   QList<QString> _scopes;
   bool _inherit, _evaluate, _displayOverriden, _trimOnEdit;
@@ -123,12 +123,12 @@ public:
   template <class T>
   void connectToDocumentManager(
       T *documentManager, ParamSet initialParams,
-      QByteArray changeParamsIdFilter, QByteArray idQualifier,
+      QByteArray changeParamsIdFilter, QByteArray qualifier,
       ParamSetModel::ChangedSignal<T> changedSignal,
       ParamSetModel::ChangeSetter<T> changeSetter,
       QList<QString> scopes = {}) {
     _scopes = scopes;
-    _idQualifier = idQualifier;
+    _qualifier = qualifier;
     if (!changeParamsIdFilter.isEmpty())
       _changeParamsIdFilter = _paramsetId = changeParamsIdFilter;
     connect(documentManager, changedSignal,
@@ -141,13 +141,13 @@ public:
   template <class T>
   void connectToDocumentManager(
       T *documentManager, ParamSet initialParams,
-      QByteArray changeParamsIdFilter, QByteArray idQualifier,
+      QByteArray changeParamsIdFilter, QByteArray qualifier,
       ParamSetModel::ChangedSignal<T> changedSignal,
       ParamSetModel::ChangeSetter<T> changeSetter, QString localScope) {
     QList<QString> scopes;
     scopes.append(localScope);
     connectToDocumentManager(
-          documentManager, initialParams, changeParamsIdFilter, idQualifier,
+          documentManager, initialParams, changeParamsIdFilter, qualifier,
           changedSignal, changeSetter, {scopes});
   }
 

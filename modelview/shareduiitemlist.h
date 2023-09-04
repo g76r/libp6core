@@ -67,7 +67,7 @@ private:
       else
         s += separator;
       if (qualified) {
-        s += item.idQualifier();
+        s += item.qualifier();
         s += ':';
         s += item.id();
       } else

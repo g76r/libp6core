@@ -18,28 +18,28 @@
 
 class GenericSharedUiItemData : public SharedUiItemData {
 public:
-  Utf8String _idQualifier, _id;
+  Utf8String _qualifier, _id;
   QVariantList _headers, _values;
 
   GenericSharedUiItemData() { }
   GenericSharedUiItemData(
-      Utf8String idQualifier, Utf8String id, QVariantList headers,
+      Utf8String qualifier, Utf8String id, QVariantList headers,
       QVariantList values)
-    : _idQualifier(idQualifier), _id(id), _headers(headers), _values(values) { }
-  GenericSharedUiItemData(Utf8String idQualifier, Utf8String id)
-    : _idQualifier(idQualifier), _id(id) { }
+    : _qualifier(qualifier), _id(id), _headers(headers), _values(values) { }
+  GenericSharedUiItemData(Utf8String qualifier, Utf8String id)
+    : _qualifier(qualifier), _id(id) { }
   explicit GenericSharedUiItemData(Utf8String qualifiedId) {
     int i = qualifiedId.indexOf(':');
     if (i < 0) {
-      _idQualifier = "generic"_u8;
+      _qualifier = "generic"_u8;
       _id = qualifiedId;
     } else {
-      _idQualifier = qualifiedId.left(i);
+      _qualifier = qualifiedId.left(i);
       _id = qualifiedId.mid(i+1);
     }
   }
   Utf8String id() const override { return _id; }
-  Utf8String idQualifier() const override { return _idQualifier; }
+  Utf8String qualifier() const override { return _qualifier; }
   int uiSectionCount() const override { return _values.size(); }
   Utf8String uiSectionName(int section) const override {
     if (section < 0 || section > uiSectionCount())
@@ -74,15 +74,15 @@ GenericSharedUiItem::GenericSharedUiItem(const GenericSharedUiItem &other)
 }
 
 GenericSharedUiItem::GenericSharedUiItem(
-    Utf8String idQualifier, Utf8String id, QVariantList headers,
+    Utf8String qualifier, Utf8String id, QVariantList headers,
     QVariantList values)
-  : SharedUiItem(new GenericSharedUiItemData(idQualifier, id, headers,
+  : SharedUiItem(new GenericSharedUiItemData(qualifier, id, headers,
                                              values)) {
 }
 
 GenericSharedUiItem::GenericSharedUiItem(
-    Utf8String idQualifier, Utf8String id)
-  : SharedUiItem(new GenericSharedUiItemData(idQualifier, id)) {
+    Utf8String qualifier, Utf8String id)
+  : SharedUiItem(new GenericSharedUiItemData(qualifier, id)) {
 }
 
 GenericSharedUiItem::GenericSharedUiItem(Utf8String qualifiedId)
@@ -90,7 +90,7 @@ GenericSharedUiItem::GenericSharedUiItem(Utf8String qualifiedId)
 }
 
 QList<GenericSharedUiItem> GenericSharedUiItem::fromCsv(
-    CsvFile *csvFile, int idColumn, Utf8String idQualifier) {
+    CsvFile *csvFile, int idColumn, Utf8String qualifier) {
   QList<GenericSharedUiItem> list;
   if (!csvFile)
     return list;
@@ -106,7 +106,7 @@ QList<GenericSharedUiItem> GenericSharedUiItem::fromCsv(
     for (auto value: values)
       vValues.append(value);
     list.append(GenericSharedUiItem(
-                  idQualifier, id.toUtf8(), vHeaders, vValues));
+                  qualifier, id.toUtf8(), vHeaders, vValues));
   }
   return list;
 }

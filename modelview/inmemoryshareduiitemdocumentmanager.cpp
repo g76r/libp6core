@@ -44,10 +44,10 @@ SharedUiItem InMemorySharedUiItemDocumentManager::itemById(
 }
 
 SharedUiItemList<SharedUiItem> InMemorySharedUiItemDocumentManager
-::itemsByIdQualifier(const Utf8String &qualifier) const {
+::itemsByQualifier(const Utf8String &qualifier) const {
   SharedUiItemList<SharedUiItem> list;
   if (!_repository.contains(qualifier))
-    Log::warning() << "itemsByIdQualifier() called with id qualifier not found "
+    Log::warning() << "itemsByQualifier() called with id qualifier not found "
                       "in repository:" << qualifier;
   return _repository.value(qualifier).values();
 }

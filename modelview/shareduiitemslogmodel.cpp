@@ -30,7 +30,7 @@ public:
       _timestampSection(wrapped.uiSectionCount()) { }
   SharedUiItemLogWrapperData() : _timestampSection(0) { }
   Utf8String id() const override { return _id; }
-  Utf8String idQualifier() const override { return "suilogwrapper"_u8; }
+  Utf8String qualifier() const override { return "suilogwrapper"_u8; }
   int uiSectionCount() const override { return _timestampSection+1; }
   Utf8String uiSectionName(int section) const override {
     return section == _timestampSection
@@ -81,5 +81,5 @@ void SharedUiItemsLogModel::logItem(SharedUiItem newItem) {
   if (!newItem.isNull())
     SharedUiItemsTableModel::changeItem(
           SharedUiItemLogWrapper(newItem), SharedUiItem(),
-          newItem.idQualifier());
+          newItem.qualifier());
 }

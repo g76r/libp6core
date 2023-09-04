@@ -118,12 +118,12 @@ QModelIndex SharedUiItemsTreeModel::indexOf(QByteArray qualifiedId) const {
 }
 
 void SharedUiItemsTreeModel::changeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, QByteArray idQualifier) {
+    SharedUiItem newItem, SharedUiItem oldItem, QByteArray qualifier) {
   if (!itemQualifierFilter().isEmpty()
-      && !itemQualifierFilter().contains(idQualifier))
+      && !itemQualifierFilter().contains(qualifier))
     return;
   //qDebug() << "SharedUiItemsTreeModel::changeItem" << newItem.id()
-  //         << oldItem.id() << idQualifier;
+  //         << oldItem.id() << qualifier;
   if (newItem.isNull()) {
     if (!oldItem.isNull()) { // delete
       QModelIndex oldIndex = indexOf(oldItem);
