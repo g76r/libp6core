@@ -493,6 +493,14 @@ public:
   [[nodiscard]] friend inline std::strong_ordering operator<=>(
       const char *x, const Utf8String &y) {
     return Utf8String::cmp(x, ::strlen(x), y.constData(), y.size()); }
+  [[nodiscard]] friend inline std::strong_ordering operator<=>(
+      const Utf8String &x, const QString &y) {
+    QByteArray ba = y.toUtf8();
+    return Utf8String::cmp(x.constData(), x.size(), ba.constData(), ba.size()); }
+  [[nodiscard]] friend inline std::strong_ordering operator<=>(
+      const QString &x, const Utf8String &y) {
+    QByteArray ba = x.toUtf8();
+    return Utf8String::cmp(ba.constData(), ba.size(), y.constData(), y.size()); }
 
   [[nodiscard]] friend inline bool operator==(
       const Utf8String &x, const Utf8String &y) {
@@ -509,6 +517,14 @@ public:
   [[nodiscard]] friend inline bool operator==(
       const char *x, const Utf8String &y) {
     return Utf8String::cmp(x, ::strlen(x), y.constData(), y.size()) == 0; }
+  [[nodiscard]] friend inline bool operator==(
+      const Utf8String &x, const QString &y) {
+    QByteArray ba = y.toUtf8();
+    return Utf8String::cmp(x.constData(), x.size(), ba.constData(), ba.size()) == 0; }
+  [[nodiscard]] friend inline bool operator==(
+      const QString &x, const Utf8String &y) {
+    QByteArray ba = x.toUtf8();
+    return Utf8String::cmp(ba.constData(), ba.size(), y.constData(), y.size()) == 0; }
 #else
   [[nodiscard]] static inline int cmp(
       const char *x, qsizetype lenx, const char *y, qsizetype leny) {
