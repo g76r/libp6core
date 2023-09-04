@@ -29,5 +29,7 @@ int main(void) {
   qDebug() << PercentEvaluator::eval_utf8("%0,%{-1},%2,%8=foo bar baz,,bar,", &l);
   s = "aéÉb€¢\u03c3\u03c2\u03a3øœ×o'z"_u8;
   qDebug() << s << s.toUpper() << s.toLower() << s.toTitle() << s.isLower() << Utf8String::toTitle(0x01c6);
+  s = "abcdabababaaacda";
+  qDebug() << s.remove("ab") << "=cdaaacda";
   return 0;
 }

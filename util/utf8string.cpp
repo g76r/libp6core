@@ -575,3 +575,23 @@ QList<char> Utf8String::toBytesSortedList() const {
     set.insert(at(i));
   return QList<char>(set.cbegin(), set.cend());
 }
+
+Utf8String &Utf8String::remove(const char *needle, qsizetype len) {
+  Utf8String result;
+  if (!*needle || !len)
+    return *this;
+  auto s = constData();
+  auto end = s + size();
+  qsizetype i = 0;
+  for (; s < end; ++s) {
+    if (*s != needle[i]) { // not a match
+      result.append(s-i, i+1); // copy partial match + current char
+      i = 0;
+      continue;
+    }
+    if (++i == len) // matched
+      i = 0; // skip matched bytes and reset
+  }
+  result.append(s-i, i); // copy partial match
+  return *this = result;
+}

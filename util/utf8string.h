@@ -418,6 +418,13 @@ public:
 
   inline Utf8String &remove(qsizetype index, qsizetype len) {
     QByteArray::remove(index, len); return *this;}
+  Utf8String &remove(const char *needle, qsizetype len);
+  inline Utf8String &remove(char c) {
+    return remove(&c, 1); }
+  inline Utf8String &remove(const QByteArray &ba) {
+    return remove(ba.constData(), ba.size()); }
+  inline Utf8String &remove(char32_t c) {
+    return remove(encodeUtf8(c)); }
   inline Utf8String &removeAt(qsizetype pos) {
     QByteArray::removeAt(pos); return *this;}
   inline Utf8String &removeFirst() { QByteArray::removeFirst(); return *this;}

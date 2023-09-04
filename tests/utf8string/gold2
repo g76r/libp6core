@@ -11,3 +11,4 @@
 true false
 "foo bar baz,,bar,=foo bar baz,,bar,"
 "aéÉb€¢σςΣøœ×o'z" "AÉÉB€¢ΣΣΣØŒ×O'Z" "aééb€¢σςσøœ×o'z" "AÉÉB€¢ΣΣΣØŒ×O'Z" false '\u01c5'
+"cdaaacda" =cdaaacda
