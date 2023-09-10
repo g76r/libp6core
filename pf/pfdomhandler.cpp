@@ -62,7 +62,7 @@ bool PfDomHandler::binary(const QByteArray &data, const QString &surface) {
     setErrorString(tr("binary data before root node"));
     return false;
   }
-  _path.last().appendContent(data, surface);
+  _path.last().appendBinary(data, surface);
   return true;
 }
 

@@ -175,7 +175,7 @@ public:
   PfNode &operator=(const PfNode &other) { d = other.d; return *this; }
   /** Build a PfNode from PF external format.
    * @return first encountered root node or PfNode() */
-  static PfNode fromPf(QByteArray source, PfOptions options = PfOptions());
+  static PfNode fromPf(const QByteArray &source, const PfOptions &options = {});
 
   // Node related methods /////////////////////////////////////////////////////
 
@@ -289,7 +289,7 @@ public:
     return setAttribute(name, QString::fromUtf8(content)); }
   /** Convenience method (assume content is UTF-8 encoded) */
   PfNode &setAttribute(const QString &name, const Utf8String &utf8) {
-    return setAttribute(name, utf8); }
+    return setAttribute(name, utf8.toString()); }
   // LATER setAttribute() for QDateTime, QDate, QTime and QStringList/QSet<QString>
   /** Set a child named 'name' with 'content' content and remove any other child
    * named 'name'. The QStringList is formated as a space separated value list
@@ -384,10 +384,13 @@ public:
     return *this;
   }
   /** Append text fragment to context (and remove array if any). */
+  PfNode &appendContent(const Utf8String &text) {
+    return appendContent(text.toString()); }
+  /** Append text fragment to context (and remove array if any). */
   PfNode &appendContent(const char *utf8text) {
     return appendContent(QString::fromUtf8(utf8text)); }
   /** Append in-memory binary fragment to context (and remove array if any). */
-  PfNode &appendContent(QByteArray data, const QString &surface = QString()) {
+  PfNode &appendBinary(QByteArray data, const QString &surface = {}) {
     if (!d)
       d = new PfNodeData();
     d->_array.clear();
@@ -412,11 +415,14 @@ public:
   PfNode &setContent(const QString &text) {
     clearContent(); appendContent(text); return *this; }
   /** Replace current content with text fragment. */
+  PfNode &setContent(const Utf8String &text) {
+    clearContent(); appendContent(text.toString()); return *this; }
+  /** Replace current content with text fragment. */
   PfNode &setContent(const char *utf8text) {
     setContent(QString::fromUtf8(utf8text)); return *this; }
   /** Replace current content with in-memory binary fragment. */
-  PfNode &setContent(const QByteArray &data) {
-    clearContent(); appendContent(data); return *this; }
+  PfNode &setBinary(const QByteArray &data) {
+    clearContent(); appendBinary(data); return *this; }
   /** Replace current content with lazy-loaded binary fragment. */
   PfNode &setContent(QIODevice *device, qint64 length, qint64 offset) {
     clearContent(); appendContent(device, length, offset); return *this; }

@@ -466,7 +466,7 @@ PfNode &PfNode::removeChildrenByName(const QString &name) {
   return *this;
 }
 
-PfNode PfNode::fromPf(QByteArray source, PfOptions options) {
+PfNode PfNode::fromPf(const QByteArray &source, const PfOptions &options) {
   PfDomHandler h;
   PfParser p(&h);
   if (p.parse(source, options)) {
