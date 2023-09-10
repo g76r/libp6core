@@ -214,8 +214,8 @@ public:
   /** Escape all characters in string so that they no longer have special
    * meaning for evaluate() and splitAndEvaluate() methods.
    * That is: replace % with %% within the string. */
-  [[nodiscard]] static inline Utf8String escape(Utf8String utf8) {
-    return utf8.isNull() ? utf8 : utf8.replace('%', "%%"_u8); }
+  [[nodiscard]] static inline Utf8String escape(QByteArray utf8) {
+    return utf8.isNull() ? utf8 : utf8.replace('%', "%%"_ba); }
   /** Convenience method */
   [[nodiscard]] static inline Utf8String escape(const QVariant &v) {
     return v.isValid() ? Utf8String(v).replace('%', "%%"_u8) : Utf8String{}; }

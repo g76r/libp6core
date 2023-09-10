@@ -125,6 +125,18 @@ Utf8String ParamsProvider::paramUtf8(
   return Utf8String(paramValue(key, def, context));
 }
 
+QString ParamsProvider::paramRawUtf16(
+    const Utf8String &key, const QString &def,
+    const EvalContext &context) const {
+  return paramRawValue(key, def, context).toString();
+}
+
+QString ParamsProvider::paramUtf16(
+    const Utf8String &key, const QString &def,
+    const EvalContext &context) const {
+  return paramValue(key, def, context).toString();
+}
+
 Utf8StringList ParamsProvider::paramUtf8List(
     const Utf8String &key, const Utf8String &def,
     const EvalContext &context, QList<char> seps) const {
