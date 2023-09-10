@@ -571,20 +571,9 @@ protected:
    * e.g. const FooBarData *data = foobar.specializedData<FooBarData>();
    * useful to declare a const FooBarData *data() const method in FooBar class,
    * see subclassing guidelines above */
-  template <class T>
-  const T *specializedData() const {
-    union {
-      const QSharedDataPointer<SharedUiItemData> *generic;
-      const QSharedDataPointer<T> *specialized;
-    } pointer_alias_friendly_union;
-    // the implicit reinterpret_cast done through the union is safe because the
-    // static_cast at the end would fail if T wasn't a ShareUiItemData
-    // reinterpret_cast mustn't be used since it triggers a "dereferencing
-    // type-punned pointer will break strict-aliasing rules" warning, hence
-    // using a union instead, for explicit (or gcc-friendly) aliasing
-    pointer_alias_friendly_union.generic = &_data;
-    return static_cast<const T*>(
-          pointer_alias_friendly_union.specialized->data());
+  template <class T, std::enable_if_t<std::is_base_of_v<SharedUiItemData,T>,bool> = true>
+  inline const T *specializedData() const {
+    return reinterpret_cast<const QSharedDataPointer<T>&>(_data).constData();
   }
   /** Helper template to detach calling the specialized data class' copy
    * constructor rather than base SharedUiItemData's one, and return a non-const
@@ -592,20 +581,11 @@ protected:
    * e.g. FooBarData *data = foobar.detachedData<FooBarData>();
    * useful to declare a "FooBarData *data()" non const method in FooBar class,
    * see subclassing guidelines above */
-  template <class T>
+  template <class T, std::enable_if_t<std::is_base_of_v<SharedUiItemData,T>,bool> = true>
   T *detachedData() {
-    union {
-      QSharedDataPointer<SharedUiItemData> *generic;
-      QSharedDataPointer<T> *specialized;
-    } pointer_alias_friendly_union;
-    // the implicit reinterpret_cast done through the union is safe because the
-    // static_cast at the end would fail if T wasn't a ShareUiItemData
-    // reinterpret_cast mustn't be used since it triggers a "dereferencing
-    // type-punned pointer will break strict-aliasing rules" warning, hence
-    // using a union instead, for explicit (or gcc-friendly) aliasing
-    pointer_alias_friendly_union.generic = &_data;
-    pointer_alias_friendly_union.specialized->detach();
-    return static_cast<T*>(pointer_alias_friendly_union.specialized->data());
+    auto ptr = reinterpret_cast<QSharedDataPointer<T>&>(_data);
+    ptr.detach();
+    return ptr.data();
   }
   /** Set data from a UI point of view, i.e. called by a QAbstractItemModel
    * after user edition.
