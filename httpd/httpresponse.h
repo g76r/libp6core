@@ -157,6 +157,13 @@ public:
       bool secure = false, bool httponly = false) {
     setCookie(name, value.toBase64(), QDateTime(), path,
               domain, secure, httponly); }
+  /** Set a session cookie, encoding its value using base64. */
+  inline void setBase64SessionCookie(
+      const Utf8String &name, const Utf8String &value,
+      const Utf8String &path = {}, const Utf8String &domain = {},
+      bool secure = false, bool httponly = false) {
+    setCookie(name, value.toBase64(), QDateTime(), path,
+              domain, secure, httponly); }
   /** Set a persistent cookie.
    * Some characters are not allowed in value, see RFC6265 or use
    * setBase64PersistentCookie()
