@@ -50,8 +50,8 @@ QVariant SharedUiItemsModel::data(const QModelIndex &index, int role) const {
   return QVariant();
 }
 
-QVariant SharedUiItemsModel::headerData(int section, Qt::Orientation orientation,
-                                       int role) const {
+QVariant SharedUiItemsModel::headerData(
+    int section, Qt::Orientation orientation, int role) const {
   // LATER have an orientation parameter, do not assume item section == column
   return orientation == Qt::Horizontal && _mapRoleSectionHeader.contains(role)
       ? _mapRoleSectionHeader.value(role).value(section) : QVariant();
@@ -60,7 +60,7 @@ QVariant SharedUiItemsModel::headerData(int section, Qt::Orientation orientation
 void SharedUiItemsModel::setHeaderDataFromTemplate(
     SharedUiItem templateItem, int role) {
   _columnsCount = templateItem.uiSectionCount();
-  QHash<int,QVariant> mapSectionHeader;
+  QMap<int,QVariant> mapSectionHeader;
   _roleNames = QAbstractItemModel::roleNames();
   for (int section = 0; section < _columnsCount; ++section) {
     mapSectionHeader.insert(section, templateItem.uiHeaderData(section, role));
@@ -92,7 +92,7 @@ bool SharedUiItemsModel::setData(
 
 void SharedUiItemsModel::moveRowsByRownums(
     QModelIndex parent, QList<int> sourceRows, int targetRow) {
-  SharedUiItemList<> items;
+  SharedUiItemList items;
   for (int rownum : sourceRows)
     items.append(itemAt(index(rownum, 0, parent)));
   //qDebug() << "  list:" << items.join(' ', true);
@@ -193,7 +193,7 @@ QModelIndex SharedUiItemsProxyModelHelper::mapToReal(
   return apparentIndex;
 }
 
-QHash<int,QByteArray> SharedUiItemsModel::roleNames() const {
+QHash<int, QByteArray> SharedUiItemsModel::roleNames() const {
   return _roleNames;
 }
 
@@ -201,12 +201,14 @@ SharedUiItem SharedUiItemsModel::itemAt(const QModelIndex &) const {
   return SharedUiItem();
 }
 
-QModelIndex SharedUiItemsModel::indexOf(QByteArray) const {
+QModelIndex SharedUiItemsModel::indexOf(const Utf8String&) const {
   return QModelIndex();
 }
 
-void SharedUiItemsModel::insertItemAt(SharedUiItem, int, QModelIndex) {
+void SharedUiItemsModel::insertItemAt(
+    const SharedUiItem &, int, const QModelIndex &) {
 }
 
-void SharedUiItemsModel::changeItem(SharedUiItem, SharedUiItem, QByteArray) {
+void SharedUiItemsModel::changeItem(
+    const SharedUiItem &, const SharedUiItem &, const Utf8String &) {
 }

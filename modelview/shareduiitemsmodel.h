@@ -35,9 +35,9 @@ class LIBP6CORESHARED_EXPORT SharedUiItemsModel : public QAbstractItemModel {
   Q_OBJECT
   Q_DISABLE_COPY(SharedUiItemsModel)
   int _columnsCount;
-  QHash<int,QHash<int,QVariant>> _mapRoleSectionHeader;
+  QMap<int,QMap<int,QVariant>> _mapRoleSectionHeader;
   QHash<int,QByteArray> _roleNames;
-  QByteArrayList _itemQualifierFilter;
+  Utf8StringList _itemQualifierFilter;
 
 public:
   /** Mime type for space-separated list of qualified ids, for drag'n drop */
@@ -63,33 +63,33 @@ public:
                       int role) const override;
   /** Set header according to what template item returns.
    * Also set columns count. */
-  virtual void setHeaderDataFromTemplate(SharedUiItem templateItem,
-                                         int role = Qt::DisplayRole);
+  virtual void setHeaderDataFromTemplate(
+      SharedUiItem templateItem, int role = Qt::DisplayRole);
   virtual SharedUiItem itemAt(const QModelIndex &index) const = 0;
   inline SharedUiItem itemAt(int row, int column,
                       const QModelIndex &parent = QModelIndex()) const {
     return itemAt(index(row, column, parent));
   }
-  /** Convenience template performing downcast. */
+  /** Perform downcast, blindly trusting caller that qualifier implies T */
   template<class T>
-  inline T itemAt(QByteArray qualifier, const QModelIndex &index) const {
-    SharedUiItem item = itemAt(index);
+  inline T itemAt(const Utf8String &qualifier, const QModelIndex &index) const {
+    auto item = itemAt(index);
     return item.qualifier() == qualifier ? static_cast<T&>(item) : T();
   }
-  /** Convenience template performing downcast. */
+  /** Perform downcast, blindly trusting caller that qualifier implies T */
   template<class T>
   inline T itemAt(const char *qualifier, const QModelIndex &index) const {
     SharedUiItem item = itemAt(index);
     return item.qualifier() == qualifier ? static_cast<T&>(item) : T();
   }
-  /** Convenience template performing downcast. */
+  /** Perform downcast, blindly trusting caller that qualifier implies T */
   template<class T>
-  inline T itemAt(QByteArray qualifier, int row, int column,
+  inline T itemAt(const Utf8String &qualifier, int row, int column,
            const QModelIndex &parent = QModelIndex()) const {
     SharedUiItem item = itemAt(row, column, parent);
     return item.qualifier() == qualifier ? static_cast<T&>(item) : T();
   }
-  /** Convenience template performing downcast. */
+  /** Perform downcast, blindly trusting caller that qualifier implies T */
   template<class T>
   inline T itemAt(const char *qualifier, int row, int column,
            const QModelIndex &parent = QModelIndex()) const {
@@ -98,17 +98,17 @@ public:
   }
   QModelIndex indexOf(SharedUiItem item) const {
     return indexOf(item.qualifiedId()); }
-  QModelIndex indexOf(QByteArray qualifier, QByteArray id) const {
+  QModelIndex indexOf(const Utf8String &qualifier, const Utf8String &id) const {
     return indexOf(SharedUiItem::qualifiedId(qualifier, id)); }
-  virtual QModelIndex indexOf(QByteArray qualifiedId) const = 0;
+  virtual QModelIndex indexOf(const Utf8String &qualifiedId) const = 0;
   Qt::ItemFlags	flags(const QModelIndex &index) const override;
   bool setData(const QModelIndex &index, const QVariant &value,
                int role = Qt::EditRole) override;
   /** Insert an item before row 'row', or append it at the end if
    * row == rowCount().
    * @see QAbstractItemModel::insertRow */
-  virtual void insertItemAt(SharedUiItem newItem, int row,
-                            QModelIndex parent = QModelIndex()) = 0;
+  virtual void insertItemAt(const SharedUiItem &newItem, int row,
+                            const QModelIndex &parent = {}) = 0;
   Qt::DropActions supportedDropActions() const override;
   SharedUiItemDocumentManager *documentManager() const {
     return _documentManager; }
@@ -116,7 +116,7 @@ public:
    * and populate model with items matching changeItemQualifierFilter id
    * qualifiers (if setChangeItemQualifierFilter() has been called before). */
   virtual void setDocumentManager(SharedUiItemDocumentManager *documentManager);
-  QHash<int,QByteArray> roleNames() const override;
+  QHash<int, QByteArray> roleNames() const override;
   /** Set which items should be holded by the model depending on their id
    * qualifier.
    *
@@ -125,15 +125,15 @@ public:
    * populate model, respecting the list order (which matters e.g. for a tree
    * model with cascading an item types).
    */
-  void setItemQualifierFilter(QByteArrayList acceptedQualifiers) {
+  void setItemQualifierFilter(const Utf8StringList &acceptedQualifiers) {
     _itemQualifierFilter = acceptedQualifiers; }
   void setItemQualifierFilter(
-      std::initializer_list<QByteArray> acceptedQualifiers) {
-    _itemQualifierFilter = QByteArrayList{acceptedQualifiers}; }
-  void setItemQualifierFilter(QByteArray acceptedQualifier) {
-    _itemQualifierFilter = QByteArrayList{acceptedQualifier}; }
+      std::initializer_list<Utf8String> acceptedQualifiers) {
+    _itemQualifierFilter = Utf8StringList{acceptedQualifiers}; }
+  void setItemQualifierFilter(const Utf8String &acceptedQualifier) {
+    _itemQualifierFilter = Utf8StringList{acceptedQualifier}; }
   void clearItemQualifierFilter() { _itemQualifierFilter.clear(); }
-  QByteArrayList itemQualifierFilter() const { return _itemQualifierFilter; }
+  Utf8StringList itemQualifierFilter() const { return _itemQualifierFilter; }
 
 public slots:
   /** Operate a change on an item within this model.
@@ -158,8 +158,9 @@ public slots:
    * @see SharedUiItemDocumentManager::changeItem()
    */
   // TODO switch signatures to const SharedUiItem & whenever possible
-  virtual void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                          QByteArray qualifier) = 0;
+  virtual void changeItem(
+      const SharedUiItem &newItem, const SharedUiItem &oldItem,
+      const Utf8String &qualifier) = 0;
   /** Short for changeItem(newItem, SharedUiItem(), newItem.qualifier()). */
   void createOrUpdateItem(SharedUiItem newItem) {
     changeItem(newItem, SharedUiItem(), newItem.qualifier()); }
@@ -231,46 +232,46 @@ public:
       return _realModel->data(apparentIndex, role);
     return _realModel->data(mapToReal(apparentIndex), role);
   }
-  QModelIndex indexOf(SharedUiItem item) const {
+  QModelIndex indexOf(const SharedUiItem &item) const {
     return _realModel ? mapFromReal(_realModel->indexOf(item))
                       : QModelIndex(); }
-  QModelIndex indexOf(QByteArray qualifier, QByteArray id) const {
+  QModelIndex indexOf(const Utf8String &qualifier, const Utf8String &id) const {
     return _realModel ? mapFromReal(_realModel->indexOf(qualifier, id))
                       : QModelIndex(); }
-  QModelIndex indexOf(QByteArray qualifiedId) const {
+  QModelIndex indexOf(const Utf8String &qualifiedId) const {
     return _realModel ? mapFromReal(_realModel->indexOf(qualifiedId))
                       : QModelIndex(); }
   SharedUiItem itemAt(const QModelIndex &index) const {
     return _realModel ? _realModel->itemAt(mapToReal(index)) : SharedUiItem(); }
   SharedUiItem itemAt(int row, int column,
-                      const QModelIndex &parent = QModelIndex()) const {
+                      const QModelIndex &parent = {}) const {
     if (!_realModel)
-      return SharedUiItem();
+      return {};
     if (_proxies.isEmpty())
       return _realModel->itemAt(row, column, parent);
     return _realModel->itemAt(mapToReal(apparentModel()->index(row, column,
                                                                parent)));
   }
-  /** Convenience template performing downcast. */
+  /** Perform downcast, blindly trusting caller that qualifier implies T */
   template<class T>
-  inline T itemAt(QByteArray qualifier, const QModelIndex &index) const {
+  inline T itemAt(const Utf8String &qualifier, const QModelIndex &index) const {
     SharedUiItem item = itemAt(index);
     return item.qualifier() == qualifier ? static_cast<T&>(item) : T();
   }
-  /** Convenience template performing downcast. */
+  /** Perform downcast, blindly trusting caller that qualifier implies T */
   template<class T>
   inline T itemAt(const char *qualifier, const QModelIndex &index) const {
     SharedUiItem item = itemAt(index);
     return item.qualifier() == qualifier ? static_cast<T&>(item) : T();
   }
-  /** Convenience template performing downcast. */
+  /** Perform downcast, blindly trusting caller that qualifier implies T */
   template<class T>
-  inline T itemAt(QByteArray qualifier, int row, int column,
+  inline T itemAt(const Utf8String &qualifier, int row, int column,
            const QModelIndex &parent = QModelIndex()) const {
     SharedUiItem item = itemAt(row, column, parent);
     return item.qualifier() == qualifier ? static_cast<T&>(item) : T();
   }
-  /** Convenience template performing downcast. */
+  /** Perform downcast, blindly trusting caller that qualifier implies T */
   template<class T>
   inline T itemAt(const char *qualifier, int row, int column,
            const QModelIndex &parent = QModelIndex()) const {

@@ -26,7 +26,7 @@ class SharedUiItemDocumentManager;
 class LIBP6CORESHARED_EXPORT SharedUiItemDocumentTransaction
     : public CoreUndoCommand {
   SharedUiItemDocumentManager *_dm;
-  QHash<QByteArray,QHash<QByteArray,SharedUiItem>> _changingItems,
+  QHash<Utf8String,QHash<Utf8String,SharedUiItem>> _changingItems,
   _originalItems;
 
 public:
@@ -36,12 +36,13 @@ public:
   class LIBP6CORESHARED_EXPORT ChangeItemCommand : public CoreUndoCommand {
     QPointer<SharedUiItemDocumentManager> _dm;
     SharedUiItem _newItem, _oldItem;
-    QByteArray _qualifier;
+    Utf8String _qualifier;
 
   public:
-    ChangeItemCommand(SharedUiItemDocumentManager *dm, SharedUiItem newItem,
-                      SharedUiItem oldItem, QByteArray qualifier,
-                      CoreUndoCommand *parent);
+    ChangeItemCommand(
+        SharedUiItemDocumentManager *dm, const SharedUiItem &newItem,
+        const SharedUiItem &oldItem, const Utf8String &qualifier,
+        CoreUndoCommand *parent);
     void redo() override;
     void undo() override;
     int	id() const override;
@@ -49,62 +50,48 @@ public:
   };
 
   SharedUiItemDocumentTransaction(SharedUiItemDocumentManager *dm) : _dm(dm) { }
-  SharedUiItem itemById(QByteArray qualifier, QByteArray id) const;
+  SharedUiItem itemById(
+      const Utf8String &qualifier, const Utf8String &id) const;
+  /** Downcast blindly trusting caller that qualifier implies T */
   template <class T>
-  inline T itemById(QByteArray qualifier, QByteArray id) const {
+  inline T itemById(const Utf8String &qualifier, const Utf8String &id) const {
     SharedUiItem item = itemById(qualifier, id);
     return static_cast<T&>(item);
   }
-  SharedUiItem itemById(QByteArray qualifiedId) const {
+  SharedUiItem itemById(const Utf8String &qualifiedId) const {
     int colon = qualifiedId.indexOf(':');
     if (colon >= 0)
         return itemById(qualifiedId.left(colon), qualifiedId.mid(colon+1));
     return SharedUiItem();
   }
+  /** Perform downcast, blindly trusting caller that qualifier implies T */
   template <class T>
-  inline T itemById(QByteArray qualifiedId) const {
+  inline T itemById(const Utf8String &qualifiedId) const {
     SharedUiItem item = itemById(qualifiedId);
     return static_cast<T&>(item);
   }
-  SharedUiItemList<> itemsByQualifier(QByteArray qualifier) const;
-  template <class T>
-  inline SharedUiItemList<T> itemsByQualifier(QByteArray qualifier) const {
-    T *dummy;
-    Q_UNUSED(static_cast<SharedUiItem*>(dummy)); // ensure T is a SharedUiItem
-    SharedUiItemList<> list = itemsByQualifier(qualifier);
-    union {
-      SharedUiItemList<SharedUiItem> *generic;
-      SharedUiItemList<T> *specialized;
-    } pointer_alias_friendly_union;
-    // the implicit reinterpret_cast done through the union is safe because the
-    // static_cast at the begining would fail if T wasn't a ShareUiItem
-    // reinterpret_cast mustn't be used since it triggers a "dereferencing
-    // type-punned pointer will break strict-aliasing rules" warning, hence
-    // using a union instead, for explicit (or gcc-friendly) aliasing
-    pointer_alias_friendly_union.generic = &list;
-    return *pointer_alias_friendly_union.specialized;
-  }
-  SharedUiItemList<> foreignKeySources(
-      QByteArray sourceQualifier, int sourceSection,
-      QByteArray referenceId) const;
+  SharedUiItemList itemsByQualifier(const Utf8String &qualifier) const;
+  SharedUiItemList foreignKeySources(
+      const Utf8String &sourceQualifier, int sourceSection,
+      const Utf8String &referenceId) const;
 
   bool changeItemByUiData(
-      SharedUiItem oldItem, int section, const QVariant &value,
+      const SharedUiItem &oldItem, int section, const QVariant &value,
       QString *errorString);
-  bool changeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                  QByteArray qualifier, QString *errorString);
+  bool changeItem(const SharedUiItem &newItem, const SharedUiItem &oldItem,
+                  const Utf8String &qualifier, QString *errorString);
   SharedUiItem createNewItem(
-      QByteArray qualifier, PostCreationModifier modifier,
+      const Utf8String &qualifier, PostCreationModifier modifier,
       QString *errorString);
   /** @see SharedUiItemDocumentManager::generateNewId() */
-  QByteArray generateNewId(
-      QByteArray qualifier, QByteArray prefix = {}) const;
+  Utf8String generateNewId(
+      const Utf8String &qualifier, const Utf8String &prefix = {}) const;
 
 private:
-  void storeItemChange(SharedUiItem newItem, SharedUiItem oldItem,
-                       QByteArray qualifier);
-  SharedUiItemList<> changingItems() const;
-  SharedUiItemList<> originalItems() const;
+  void storeItemChange(const SharedUiItem &newItem, const SharedUiItem &oldItem,
+                       const Utf8String &qualifier);
+  SharedUiItemList changingItems() const;
+  SharedUiItemList originalItems() const;
   //SharedUiItem oldItemIdByChangingItem(SharedUiItem changingItem) const;
   friend class SharedUiItemDocumentManager;
 };

@@ -19,7 +19,7 @@ AbstractTextFormatter::~AbstractTextFormatter() {
 }
 
 QString AbstractTextFormatter::formatTable(
-    const SharedUiItemList<> &list, int role) const {
+    const SharedUiItemList &list, int role) const {
   QString s;
   const SharedUiItem first = list.isEmpty() ? SharedUiItem() : list.first();
   QStringList headers;

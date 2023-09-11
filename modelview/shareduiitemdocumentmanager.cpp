@@ -56,7 +56,7 @@ Utf8String SharedUiItemDocumentManager::generateNewId(
 }
 
 void SharedUiItemDocumentManager::reorderItems(
-    const SharedUiItemList<SharedUiItem> &) {
+    const SharedUiItemList &) {
 }
 
 void SharedUiItemDocumentManager::registerItemType(
@@ -437,13 +437,13 @@ bool SharedUiItemDocumentManager::delayedChecks(
     foreach (const ForeignKey &fk, _foreignKeys) {
       if (fk._referenceQualifier == qualifier) {
         auto oldReferenceId = oldItem.uiString(fk._referenceSection);
-        SharedUiItemList<> newItems =
+        SharedUiItemList newItems =
             transaction->itemsByQualifier(qualifier);
         // LATER optimize this: full scan of reference for each fk is just awful
         foreach (const SharedUiItem &newItem, newItems)
           if (newItem.uiString(fk._referenceSection) == oldReferenceId)
             goto reference_still_exists;
-        SharedUiItemList<> sources = transaction->foreignKeySources(
+        SharedUiItemList sources = transaction->foreignKeySources(
               fk._sourceQualifier, fk._sourceSection, oldItem.id());
         if (!sources.isEmpty()) {
           *errorString = "Cannot change "+qualifier+" \""+oldItem.id()
@@ -464,7 +464,7 @@ SharedUiItem SharedUiItemDocumentManager::itemById(
   return {};
 }
 
-SharedUiItemList<SharedUiItem> SharedUiItemDocumentManager::itemsByQualifier(
+SharedUiItemList SharedUiItemDocumentManager::itemsByQualifier(
     const Utf8String &) const {
   return {};
 }

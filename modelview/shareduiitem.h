@@ -24,7 +24,6 @@
 
 class QDebug;
 class SharedUiItemDocumentTransaction;
-class SharedUiItemParamsProvider;
 
 /** Parent class for SharedUiItem implementation data classes.
  *

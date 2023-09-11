@@ -19,7 +19,7 @@
 SharedUiItemsTreeModel::TreeItem::TreeItem(
     SharedUiItemsTreeModel *model, SharedUiItem item, TreeItem *parent,
     int row) : _model(model), _item(item), _row(row), _parent(parent) {
-  QByteArray id = item.qualifiedId();
+  auto id = item.qualifiedId();
   if (parent) {
     parent->_children.insert(row, this);
     for (++row; row < parent->_children.size(); ++row)
@@ -112,13 +112,16 @@ SharedUiItem SharedUiItemsTreeModel::itemAt(const QModelIndex &index) const {
   return treeItemByIndex(index)->item();
 }
 
-QModelIndex SharedUiItemsTreeModel::indexOf(QByteArray qualifiedId) const {
+QModelIndex SharedUiItemsTreeModel::indexOf(
+    const Utf8String &qualifiedId) const {
   TreeItem *treeItem = _itemsIndex.value(qualifiedId);
   return treeItem ? createIndex(treeItem->row(), 0, treeItem) : QModelIndex();
 }
 
 void SharedUiItemsTreeModel::changeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, QByteArray qualifier) {
+    const SharedUiItem &newItem, const SharedUiItem &originalOldItem,
+    const Utf8String &qualifier) {
+  SharedUiItem oldItem = originalOldItem;
   if (!itemQualifierFilter().isEmpty()
       && !itemQualifierFilter().contains(qualifier))
     return;
@@ -161,7 +164,7 @@ void SharedUiItemsTreeModel::changeItem(
       QModelIndex oldIndex = indexOf(oldItem);
       TreeItem *treeItem = treeItemByIndex(oldIndex);
       QModelIndex oldParent = oldIndex.parent(), newParent = oldParent;
-      QByteArray newId = newItem.qualifiedId(), oldId = oldItem.qualifiedId();
+      auto newId = newItem.qualifiedId(), oldId = oldItem.qualifiedId();
       int newRow = -1; // -1 will be replaced by size() in adjustTreeItemAndRow()
       determineItemPlaceInTree(newItem, &newParent, &newRow);
       TreeItem *newParentTreeItem = treeItemByIndex(newParent);
@@ -198,7 +201,7 @@ void SharedUiItemsTreeModel::changeItem(
 }
 
 void SharedUiItemsTreeModel::updateIndexIfIdChanged(
-    QByteArray newId, QByteArray oldId, TreeItem *newTreeItem) {
+    const Utf8String &newId, const Utf8String &oldId, TreeItem *newTreeItem) {
   if (newId != oldId) {
     _itemsIndex.remove(oldId);
     _itemsIndex.insert(newId, newTreeItem);
@@ -214,10 +217,7 @@ void SharedUiItemsTreeModel::adjustTreeItemAndRow(TreeItem **item, int *row) {
 }
 
 void SharedUiItemsTreeModel::determineItemPlaceInTree(
-    SharedUiItem newItem, QModelIndex *parent, int *row) {
-  Q_UNUSED(newItem)
-  Q_UNUSED(parent)
-  Q_UNUSED(row)
+    const SharedUiItem &, QModelIndex *, int *) {
   // do nothing since we leave the default value as is
 }
 
@@ -264,7 +264,7 @@ bool SharedUiItemsTreeModel::removeRows(
 }
 
 void SharedUiItemsTreeModel::insertItemAt(
-    SharedUiItem newItem, int row, QModelIndex parent) {
+    const SharedUiItem &newItem, int row, const QModelIndex &parent) {
   //qDebug() << "SharedUiItemsTreeModel::insertItemAt"
   //         << newItem << row << parent << itemAt(parent).id();
   TreeItem *parentTreeItem = treeItemByIndex(parent);
@@ -342,10 +342,10 @@ bool SharedUiItemsTreeModel::dropMimeData(
   //         << "pos:" << targetRow << targetColumn << droppedParent.data() << "data:"
   //         << QString::fromUtf8(data->data(suiQualifiedIdsListMimeType))
   //         << QString::fromUtf8(data->data(suiPlacesMimeType));
-  QByteArrayList idsArrays =
+  Utf8StringList idsArrays =
       data->data(_suiQualifiedIdsListMimeType).split(' ');
-  QList<QByteArray> pathsArrays = data->data(_suiPlacesMimeType).split(' ');
-  QString firstParentPath = splitPath(pathsArrays.value(0));
+  Utf8StringList pathsArrays = data->data(_suiPlacesMimeType).split(' ');
+  auto firstParentPath = splitPath(pathsArrays.value(0));
   QModelIndex sourceParent = indexFromPath(firstParentPath);
   QModelIndex targetParent = droppedParent;
   //qDebug() << "*******************" << targetRow << targetColumn
@@ -383,11 +383,10 @@ bool SharedUiItemsTreeModel::dropMimeData(
     return false;
   }
   for (int i = 0; i < idsArrays.size(); ++ i) {
-    QByteArray qualifiedId = idsArrays[i];
+    auto qualifiedId = idsArrays[i];
     int row;
     // can only move items if they are all child of same parent
-    if (splitPath(QString::fromLatin1(pathsArrays[i]), &row)
-        != firstParentPath)
+    if (splitPath(pathsArrays[i], &row) != firstParentPath)
       return false;
     TreeItem *treeItem = treeItemByIndex(index(row, 0, sourceParent));
     if (treeItem->childrenCount())
@@ -411,20 +410,21 @@ bool SharedUiItemsTreeModel::dropMimeData(
   return true;
 }
 
-QString SharedUiItemsTreeModel::itemPath(const QModelIndex &index) {
+Utf8String SharedUiItemsTreeModel::itemPath(const QModelIndex &index) {
   if (index.parent().isValid())
-      return itemPath(index.parent())+'.'+QString::number(index.row());
+      return itemPath(index.parent())+"."+Utf8String::number(index.row());
   if (index.isValid())
-    return QString::number(index.row());
-  return QString();
+    return Utf8String::number(index.row());
+  return {};
 }
 
-QString SharedUiItemsTreeModel::splitPath(QString path, int *rownum) {
+Utf8String SharedUiItemsTreeModel::splitPath(
+    const Utf8String &path, int *rownum) {
   int i = path.lastIndexOf('.');
   if (i < 0) {
     if (rownum)
       *rownum = path.toInt();
-    return QString();
+    return {};
   } else {
     if (rownum)
       *rownum = path.mid(i+1).toInt();
@@ -432,13 +432,13 @@ QString SharedUiItemsTreeModel::splitPath(QString path, int *rownum) {
   }
 }
 
-QModelIndex SharedUiItemsTreeModel::indexFromPath(QString path) {
+QModelIndex SharedUiItemsTreeModel::indexFromPath(const Utf8String &path) {
   if (path.isEmpty())
-    return QModelIndex();
-  QStringList elements = path.split('.');
+    return {};
+  auto elements = path.split('.');
   //qDebug() << "indexFromPath" << path << elements;
   QModelIndex index;
-  foreach (const QString &element, elements) {
+  for (auto element: elements) {
     int row = element.toInt();
     index = this->index(row, 0, index);
     //qDebug() << "  " << element << row << index;

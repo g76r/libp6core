@@ -147,6 +147,10 @@ bool GenericSharedUiItemData::setUiData(
                                      role);
 }
 
+const GenericSharedUiItemData *GenericSharedUiItem::data() const {
+  return specializedData<GenericSharedUiItemData>();
+}
+
 GenericSharedUiItemData *GenericSharedUiItem::data() {
   return SharedUiItem::detachedData<GenericSharedUiItemData>();
 }

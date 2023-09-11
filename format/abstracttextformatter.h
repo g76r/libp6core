@@ -70,7 +70,7 @@ public:
    * is empty), using item's section names.
    * If row headers are enabled, index in list is used (starting from 1). */
   QString formatTable(
-      const SharedUiItemList<> &list, int role = Qt::DisplayRole) const;
+      const SharedUiItemList &list, int role = Qt::DisplayRole) const;
   /** Format a row.
    * If column headers are never written, being them enabled or not.
    * If row headers are enabled, model's horizontal header is used. */

@@ -49,8 +49,7 @@ public:
   SharedUiItem itemById(
       const Utf8String &qualifier, const Utf8String &id) const override;
   using SharedUiItemDocumentManager::itemsByQualifier;
-  SharedUiItemList<SharedUiItem> itemsByQualifier(
-      const Utf8String &qualifier) const override;
+  SharedUiItemList itemsByQualifier(const Utf8String &qualifier) const override;
 };
 
 #endif // INMEMORYSHAREDUIITEMDOCUMENTMANAGER_H

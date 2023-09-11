@@ -121,7 +121,7 @@ public:
   virtual SharedUiItem createNewItem(
       const Utf8String &qualifier, PostCreationModifier modifier = nullptr,
       QString *errorString = nullptr);
-  /** Convenience template performing downcast. */
+  /** Perform downcast, blindly trusting caller that qualifier implies T */
   template<class T>
   inline T createNewItem(
       const Utf8String &qualifier, PostCreationModifier modifier = nullptr,
@@ -134,7 +134,7 @@ public:
       const Utf8String &qualifier, QString *errorString) {
     return createNewItem(qualifier, nullptr, errorString);
   }
-  /** Convenience template performing downcast. */
+  /** Perform downcast, blindly trusting caller that qualifier implies T */
   template<class T>
   inline T createNewItem(const Utf8String &qualifier, QString *errorString) {
     SharedUiItem item = createNewItem(qualifier, nullptr, errorString);
@@ -183,13 +183,13 @@ public:
       const Utf8String &qualifier, const Utf8String &id) const = 0;
   /** Default: parses qualifiedId and calls itemById(Utf8String,Utf8String). */
   virtual SharedUiItem itemById(const Utf8String &qualified_id) const;
-  /** Convenience template performing downcast. */
+  /** Perform downcast, blindly trusting caller that qualifier implies T */
   template<class T>
   T itemById(const Utf8String &qualifier, const Utf8String &id) const {
     auto item = itemById(qualifier, id);
     return static_cast<T&>(item);
   }
-  /** Convenience template performing downcast. */
+  /** Perform downcast, blindly trusting caller that qualifier implies T */
   template<class T>
   T itemById(const Utf8String &qualified_id) const {
     auto item = itemById(qualified_id);
@@ -197,33 +197,8 @@ public:
   }
   /** This method build a list of every item currently holded, given their
    *  qualifiedId, can bee very expensive depending of the data set size. */
-  virtual SharedUiItemList<SharedUiItem> itemsByQualifier(
+  virtual SharedUiItemList itemsByQualifier(
       const Utf8String &qualifier) const = 0;
-  /** Convenience template performing downcast. */
-  template<class T>
-  inline SharedUiItemList<T> itemsByQualifier(
-      const Utf8String &qualifier) const {
-    T *dummy;
-    Q_UNUSED(static_cast<SharedUiItem*>(dummy)); // ensure T is a SharedUiItem
-    SharedUiItemList<SharedUiItem> list = itemsByQualifier(qualifier);
-    if (!list.isEmpty() && list[0].qualifier() != qualifier) {
-      // LATER output warning
-      //qWarning() << "SharedUiItemList<T>::itemsByQualifier called with "
-      //              "inconsistent types and qualifier";
-      return SharedUiItemList<T>();
-    }
-    union {
-      SharedUiItemList<SharedUiItem> *generic;
-      SharedUiItemList<T> *specialized;
-    } pointer_alias_friendly_union;
-    // the implicit reinterpret_cast done through the union is safe because the
-    // static_cast at the begining would fail if T wasn't a ShareUiItem
-    // reinterpret_cast mustn't be used since it triggers a "dereferencing
-    // type-punned pointer will break strict-aliasing rules" warning, hence
-    // using a union instead, for explicit (or gcc-friendly) aliasing
-    pointer_alias_friendly_union.generic = &list;
-    return *pointer_alias_friendly_union.specialized;
-  }
   /** Change items order.
    *
    * Items list may contain a mix of several items type (i.e. with different
@@ -233,7 +208,7 @@ public:
    * may keep memory of their order (or of the orders of some item types).
    * Default implementation does nothing.
    */
-  virtual void reorderItems(const SharedUiItemList<SharedUiItem> &items);
+  virtual void reorderItems(const SharedUiItemList &items);
   /** This method must be called for every item type the document manager will
    * hold, to enable it to create and modify such items. */
   void registerItemType(
@@ -245,7 +220,7 @@ public:
                      SharedUiItemDocumentTransaction *, Utf8String id,
                      QString *) { return creator(id); });
   }
-  /** Convenience method. */
+  /** Perform downcast, blindly trusting caller that qualifier implies T */
   template <class T>
   inline void registerItemType(
       const Utf8String &qualifier, MemberSetter<T> setter, Creator creator) {
@@ -256,7 +231,7 @@ public:
             section, value, errorString, transaction, role);
     }, creator);
   }
-  /** Convenience method. */
+  /** Perform downcast, blindly trusting caller that qualifier implies T */
   template <class T>
   void registerItemType(
       const Utf8String &qualifier, MemberSetter<T> setter,

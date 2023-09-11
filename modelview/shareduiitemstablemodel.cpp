@@ -47,7 +47,7 @@ QModelIndex SharedUiItemsTableModel::parent(const QModelIndex &child) const {
   return QModelIndex();
 }
 
-void SharedUiItemsTableModel::setItems(SharedUiItemList<> items) {
+void SharedUiItemsTableModel::setItems(const SharedUiItemList &items) {
   if (!_items.isEmpty()) {
     beginRemoveRows(QModelIndex(), 0, _items.size()-1);
     _items.clear();
@@ -60,8 +60,8 @@ void SharedUiItemsTableModel::setItems(SharedUiItemList<> items) {
   }
 }
 
-void SharedUiItemsTableModel::insertItemAt(SharedUiItem newItem,
-    int row, QModelIndex parent) {
+void SharedUiItemsTableModel::insertItemAt(const SharedUiItem &newItem,
+    int row, const QModelIndex &parent) {
   if (row < 0 || row > rowCount() || parent.isValid())
     return;
   beginInsertRows(QModelIndex(), row, row);
@@ -100,7 +100,9 @@ SharedUiItem SharedUiItemsTableModel::itemAt(const QModelIndex &index) const {
 }
 
 void SharedUiItemsTableModel::changeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, QByteArray qualifier) {
+    const SharedUiItem &newItem, const SharedUiItem &originalOldItem,
+    const Utf8String &qualifier) {
+  SharedUiItem oldItem = originalOldItem;
   if (!itemQualifierFilter().isEmpty()
       && !itemQualifierFilter().contains(qualifier))
     return;
@@ -137,7 +139,8 @@ void SharedUiItemsTableModel::changeItem(
   emit itemChanged(newItem, oldItem);
 }
 
-QModelIndex SharedUiItemsTableModel::indexOf(QByteArray qualifiedId) const {
+QModelIndex SharedUiItemsTableModel::indexOf(
+    const Utf8String &qualifiedId) const {
   // TODO add index to improve lookup performance
   // see SharedUiItemsTreeModel for index example
   // don't forget to update index changeItem when id changes (= item renamed)
@@ -212,10 +215,10 @@ bool SharedUiItemsTableModel::dropMimeData(
   if (!data)
     return false;
   //qDebug() << "SharedUiItemsTableModel::dropMimeData" << action;
-  QByteArrayList idsArrays =
+  Utf8StringList idsArrays =
       data->data(_suiQualifiedIdsListMimeType).split(' ');
-  QList<QByteArray> rowsArrays = data->data(_suiPlacesMimeType).split(' ');
-  SharedUiItemList<> items;
+  Utf8StringList rowsArrays = data->data(_suiPlacesMimeType).split(' ');
+  SharedUiItemList items;
   QList<int> rows;
   if (droppedParent.isValid()) {
     // tree views will try to drop as child of hovered item
@@ -232,8 +235,8 @@ bool SharedUiItemsTableModel::dropMimeData(
     return false;
   }
   for (int i = 0; i < idsArrays.size(); ++ i) {
-    QByteArray qualifiedId = idsArrays[i];
-    int row = QString::fromLatin1(rowsArrays[i]).toInt();
+    auto qualifiedId = idsArrays[i];
+    int row = rowsArrays[i].toInt();
     if (!qualifiedId.isEmpty() && row >= 0 && row < _items.size()
         && _items[row].qualifiedId() == qualifiedId) {
       items.append(_items[row]);

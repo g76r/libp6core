@@ -15,7 +15,8 @@
 #include "shareduiitemdocumentmanager.h"
 
 void SharedUiItemDocumentTransaction::storeItemChange(
-    SharedUiItem newItem, SharedUiItem oldItem, QByteArray qualifier) {
+    const SharedUiItem &newItem, const SharedUiItem &oldItem,
+    const Utf8String &qualifier) {
   ChangeItemCommand *command =
       new ChangeItemCommand(_dm, newItem, oldItem, qualifier, this);
   switch (childCount()) {
@@ -26,8 +27,8 @@ void SharedUiItemDocumentTransaction::storeItemChange(
     setText(text()+" and other changes");
     break;
   }
-  QByteArray oldId = oldItem.id(), newId = newItem.id();
-  QHash<QByteArray,SharedUiItem> &changingItems = _changingItems[qualifier];
+  auto oldId = oldItem.id(), newId = newItem.id();
+  auto &changingItems = _changingItems[qualifier];
   if (!oldItem.isNull() && !changingItems.contains(oldId))
     _originalItems[qualifier].insert(oldId, oldItem);
   if (!oldItem.isNull())
@@ -37,28 +38,27 @@ void SharedUiItemDocumentTransaction::storeItemChange(
 }
 
 SharedUiItem SharedUiItemDocumentTransaction::itemById(
-    QByteArray qualifier, QByteArray id) const {
-  const QHash<QByteArray,SharedUiItem> newItems = _changingItems[qualifier];
+    const Utf8String &qualifier, const Utf8String &id) const {
+  auto newItems = _changingItems[qualifier];
   return newItems.contains(id) ? newItems.value(id)
                                : _dm->itemById(qualifier, id);
 }
 
-SharedUiItemList<> SharedUiItemDocumentTransaction::itemsByQualifier(
-    QByteArray qualifier) const {
-  QHash<QByteArray,SharedUiItem> changingItems =
-      _changingItems.value(qualifier);
-  SharedUiItemList<> items;
-  foreach (const SharedUiItem &item, changingItems.values())
+SharedUiItemList SharedUiItemDocumentTransaction::itemsByQualifier(
+    const Utf8String &qualifier) const {
+  auto changingItems = _changingItems.value(qualifier);
+  SharedUiItemList items;
+  for (auto item: changingItems.values())
     if (!item.isNull())
       items.append(item);
-  foreach (const SharedUiItem &item, _dm->itemsByQualifier(qualifier))
+  for (auto item: _dm->itemsByQualifier(qualifier))
     if (!changingItems.contains(item.id()))
       items.append(item);
   return items;
 }
 
-SharedUiItemList<> SharedUiItemDocumentTransaction::changingItems() const {
-  SharedUiItemList<> items;
+SharedUiItemList SharedUiItemDocumentTransaction::changingItems() const {
+  SharedUiItemList items;
   for (auto qualifier: _changingItems.keys())
     for (auto item: _changingItems.value(qualifier)) {
       if (!item.isNull())
@@ -67,8 +67,8 @@ SharedUiItemList<> SharedUiItemDocumentTransaction::changingItems() const {
   return items;
 }
 
-SharedUiItemList<> SharedUiItemDocumentTransaction::originalItems() const {
-  SharedUiItemList<> items;
+SharedUiItemList SharedUiItemDocumentTransaction::originalItems() const {
+  SharedUiItemList items;
   for (auto qualifier: _originalItems.keys())
     for (auto item: _originalItems.value(qualifier)) {
       if (!item.isNull())
@@ -84,18 +84,16 @@ SharedUiItemList<> SharedUiItemDocumentTransaction::originalItems() const {
   return SharedUiItem();
 }*/
 
-SharedUiItemList<> SharedUiItemDocumentTransaction::foreignKeySources(
-    QByteArray sourceQualifier, int sourceSection,
-    QByteArray referenceId) const {
-  SharedUiItemList<> sources;
-  QHash<QByteArray,SharedUiItem> changingItems =
-      _changingItems.value(sourceQualifier);
-  foreach (const SharedUiItem &item, changingItems.values()) {
+SharedUiItemList SharedUiItemDocumentTransaction::foreignKeySources(
+    const Utf8String &sourceQualifier, int sourceSection,
+    const Utf8String &referenceId) const {
+  SharedUiItemList sources;
+  auto changingItems = _changingItems.value(sourceQualifier);
+  for (auto item: changingItems.values()) {
     if (item.uiData(sourceSection) == referenceId)
       sources.append(item);
   }
-  foreach (const SharedUiItem &item,
-           _dm->itemsByQualifier(sourceQualifier)) {
+  for (auto item: _dm->itemsByQualifier(sourceQualifier)) {
     if (item.uiData(sourceSection) == referenceId
         && !changingItems.contains(item.id()))
       sources.append(item);
@@ -104,7 +102,7 @@ SharedUiItemList<> SharedUiItemDocumentTransaction::foreignKeySources(
 }
 
 bool SharedUiItemDocumentTransaction::changeItemByUiData(
-    SharedUiItem oldItem, int section, const QVariant &value,
+    const SharedUiItem &oldItem, int section, const QVariant &value,
     QString *errorString) {
   auto qualifier = oldItem.qualifier();
   SharedUiItemDocumentManager::Setter setter =
@@ -126,14 +124,14 @@ bool SharedUiItemDocumentTransaction::changeItemByUiData(
 }
 
 bool SharedUiItemDocumentTransaction::changeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, QByteArray qualifier,
-    QString *errorString) {
+    const SharedUiItem &newItem, const SharedUiItem &oldItem,
+    const Utf8String &qualifier, QString *errorString) {
   return _dm->processConstraintsAndPrepareChangeItem(
         this, newItem, oldItem, qualifier, errorString);
 }
 
 SharedUiItem SharedUiItemDocumentTransaction::createNewItem(
-    QByteArray qualifier, PostCreationModifier modifier,
+    const Utf8String &qualifier, PostCreationModifier modifier,
     QString *errorString) {
   SharedUiItemDocumentManager::Creator creator =
       _dm->_creators.value(qualifier);
@@ -157,14 +155,15 @@ SharedUiItem SharedUiItemDocumentTransaction::createNewItem(
   }
 }
 
-QByteArray SharedUiItemDocumentTransaction::generateNewId(
-    QByteArray qualifier, QByteArray prefix) const {
+Utf8String SharedUiItemDocumentTransaction::generateNewId(
+    const Utf8String &qualifier, const Utf8String &prefix) const {
   return _dm->generateNewId(this, qualifier, prefix);
 }
 
 SharedUiItemDocumentTransaction::ChangeItemCommand::ChangeItemCommand(
-    SharedUiItemDocumentManager *dm, SharedUiItem newItem, SharedUiItem oldItem,
-    QByteArray qualifier, CoreUndoCommand *parent)
+    SharedUiItemDocumentManager *dm, const SharedUiItem &newItem,
+    const SharedUiItem &oldItem, const Utf8String &qualifier,
+    CoreUndoCommand *parent)
   : CoreUndoCommand(parent), _dm(dm), _newItem(newItem), _oldItem(oldItem),
     _qualifier(qualifier)  {
   if (newItem.isNull())

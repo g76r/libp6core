@@ -34,7 +34,7 @@ private:
   int _maxrows;
 
 protected:
-  SharedUiItemList<> _items;
+  SharedUiItemList _items;
 
 public:
   explicit SharedUiItemsTableModel(QObject *parent = 0);
@@ -60,12 +60,10 @@ public:
    * "Older" rows are determined as opposite sides from defaultInsertionPoint().
    * Default: INT_MAX */
   void setMaxrows(int maxrows) { _maxrows = maxrows; }
-  void sortAndSetItems(SharedUiItemList<> items) {
-    std::sort(items.begin(), items.end());
-    setItems(items);
-  }
-  void insertItemAt(SharedUiItem newItem, int row,
-                    QModelIndex parent = QModelIndex()) override;
+  void sortAndSetItems(const SharedUiItemList &items) {
+    setItems(items.sorted()); }
+  void insertItemAt(const SharedUiItem &newItem, int row,
+                    const QModelIndex &parent = {}) override;
   // LATER add insertItemsAt(int row, QList<SharedUiItem> newItems)
   // or even template<class T> insertItemsAt(int row, QList<T> newItems)
   virtual bool removeItems(int first, int last);
@@ -73,9 +71,9 @@ public:
   SharedUiItem itemAt(const QModelIndex &index) const override;
   SharedUiItem itemAt(int row) const { return itemAt(index(row, 0)); }
   using SharedUiItemsModel::indexOf;
-  QModelIndex indexOf(QByteArray qualifiedId) const override;
-  void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                  QByteArray qualifier) override;
+  QModelIndex indexOf(const Utf8String &qualifiedId) const override;
+  void changeItem(const SharedUiItem &newItem, const SharedUiItem &oldItem,
+                  const Utf8String &qualifier) override;
   bool removeRows(int row, int count,
                   const QModelIndex &parent = QModelIndex()) override;
   Qt::ItemFlags flags(const QModelIndex &index) const override;
@@ -84,10 +82,10 @@ public:
   bool dropMimeData(
       const QMimeData *data, Qt::DropAction action, int targetRow,
       int targetColumn, const QModelIndex &droppedParent) override;
-  SharedUiItemList<> items() const { return _items; }
+  SharedUiItemList items() const { return _items; }
 
 public slots:
-  virtual void setItems(SharedUiItemList<> items);
+  virtual void setItems(const SharedUiItemList &items);
 
 private:
   // hide functions that cannot work with SharedUiItem paradigm to avoid

@@ -55,11 +55,12 @@ public:
   int columnCount(const QModelIndex &parent = QModelIndex()) const override;
   SharedUiItem itemAt(const QModelIndex &index) const override;
   using SharedUiItemsModel::indexOf;
-  QModelIndex indexOf(QByteArray qualifiedId) const override;
-  void insertItemAt(SharedUiItem newItem, int row,
-                    QModelIndex parent = QModelIndex()) override;
-  void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                  QByteArray qualifier) override;
+  QModelIndex indexOf(const Utf8String &qualifiedId) const override;
+  void insertItemAt(const SharedUiItem &newItem, int row,
+                    const QModelIndex &parent = {}) override;
+  void changeItem(
+      const SharedUiItem &newItem, const SharedUiItem &oldItem,
+                  const Utf8String &qualifier) override;
   QVariant data(const QModelIndex &index, int role) const override;
   bool setData(const QModelIndex &index, const QVariant &value,
                int role = Qt::EditRole) override;

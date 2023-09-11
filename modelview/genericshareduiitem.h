@@ -55,12 +55,11 @@ public:
   }
 
 private:
-  bool setUiDataWithIdSection(
+  inline bool setUiDataWithIdSection(
       int section, const QVariant &value, QString *errorString,
       SharedUiItemDocumentTransaction *transaction, int role, int idSection);
-  const GenericSharedUiItemData *data() const {
-    return specializedData<GenericSharedUiItemData>(); }
-  GenericSharedUiItemData *data();
+  inline const GenericSharedUiItemData *data() const;
+  inline GenericSharedUiItemData *data();
 };
 
 Q_DECLARE_TYPEINFO(GenericSharedUiItem, Q_MOVABLE_TYPE);

@@ -57,7 +57,8 @@ SharedUiItemsMatrixModel::cellBindingAt(const QModelIndex &index) const {
   return nullBinding;
 }
 
-QModelIndex SharedUiItemsMatrixModel::indexOf(QByteArray qualifiedId) const {
+QModelIndex SharedUiItemsMatrixModel::indexOf(
+    const Utf8String &qualifiedId) const {
   GenericSharedUiItem oldItem(qualifiedId);
   for (int i = 0; i < _cells.size(); ++i) {
     const QList<ItemBinding> &row = _cells[i];
@@ -68,21 +69,18 @@ QModelIndex SharedUiItemsMatrixModel::indexOf(QByteArray qualifiedId) const {
       }
     }
   }
-  return QModelIndex();
+  return {};
 }
 
 void SharedUiItemsMatrixModel::insertItemAt(
-    SharedUiItem newItem, int row, QModelIndex parent) {
-  Q_UNUSED(newItem)
-  Q_UNUSED(row)
-  Q_UNUSED(parent)
+    const SharedUiItem &, int , const QModelIndex &) {
   qWarning() << "SharedUiItemsMatrixModel::insertItemAt() called whereas it has"
                 " no meaning. Do nothing.";
 }
 
 void SharedUiItemsMatrixModel::changeItem(
-    SharedUiItem newItem, SharedUiItem oldItem, QByteArray qualifier) {
-  Q_UNUSED(qualifier)
+    const SharedUiItem &newItem, const SharedUiItem &oldItem,
+    const Utf8String &) {
   //qDebug() << "SharedUiItemsMatrixModel::changeItem" << newItem << oldItem
   //         << qualifier;
   if (oldItem.isNull())

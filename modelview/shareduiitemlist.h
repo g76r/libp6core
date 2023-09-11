@@ -17,116 +17,70 @@
 #include "shareduiitem.h"
 
 /** Specializing QList for SharedUiItems, the same way QStringList does. */
-template <class T = SharedUiItem>
-class LIBP6CORESHARED_EXPORT SharedUiItemList : public QList<T> {
-public:
-  inline SharedUiItemList() {
-    T *dummy;
-    Q_UNUSED(static_cast<SharedUiItem*>(dummy)); // ensure T is a SharedUiItem
-  }
-  inline SharedUiItemList(const SharedUiItemList<T> &other)
-    : QList<T>(other) {
-    T *dummy;
-    Q_UNUSED(static_cast<SharedUiItem*>(dummy)); // ensure T is a SharedUiItem
-  }
-  inline SharedUiItemList(const QList<T> &other) : QList<T>(other) {
-    T *dummy;
-    Q_UNUSED(static_cast<SharedUiItem*>(dummy)); // ensure T is a SharedUiItem
-  }
-  inline QString join(const QString &separator, bool qualified = false) const;
-  inline QString join(const QChar separator, bool qualified = false) const;
-  // conversion operator to enable upcasting any list to a SharedUiItem list
-  operator SharedUiItemList<SharedUiItem> &() {
-    return reinterpret_cast<SharedUiItemList<SharedUiItem>&>(*this);
-  }
-  // conversion operator to enable upcasting any list to a SharedUiItem list
-  operator const SharedUiItemList<SharedUiItem> &() const {
-    return reinterpret_cast<const SharedUiItemList<SharedUiItem>&>(*this);
-  }
-  // MAYDO add features
-  //SharedUiItemList filterByQualifier(QString qualifier) const;
-  //SharedUiItemList filterByQualifier(QRegularExpression qualifier) const;
-  //operator<<(SharedUiItem)
-  //operator<<(SharedUiItemList)
-  //operator<<(QList<SharedUiItem>)
-  //operator+=
-};
-
-/** Template specialization for SharedUiItemList<SharedUiItem> */
-template <>
-class LIBP6CORESHARED_EXPORT SharedUiItemList<SharedUiItem>
+class LIBP6CORESHARED_EXPORT SharedUiItemList
     : public QList<SharedUiItem>, public ParamsProvider {
-private:
-  template <class S>
-  inline QString generic_join(const S &separator, bool qualified) const {
-    QString s;
-    bool first = true;
-    for (const SharedUiItem &item : *this) {
-      if (first)
-        first = false;
-      else
-        s += separator;
-      if (qualified) {
-        s += item.qualifier();
-        s += ':';
-        s += item.id();
-      } else
-        s += item.id();
-    }
-    return s;
-  }
-
 public:
-  inline SharedUiItemList() { }
-  inline SharedUiItemList(const SharedUiItem &item)
-    : QList<SharedUiItem>({ item }) { }
+  inline SharedUiItemList() {}
+  inline SharedUiItemList(const SharedUiItemList &other)
+    : QList<SharedUiItem>(other) {}
+  inline SharedUiItemList(const QList<SharedUiItem> &other)
+    : QList<SharedUiItem>(other) {}
+  template <class T,
+            std::enable_if_t<std::is_base_of_v<SharedUiItem,T>,bool> = true>
+  inline SharedUiItemList(const QList<T> &other)
+    : QList<SharedUiItem>(reinterpret_cast<const QList<SharedUiItem>&>(other)) {
+  }
   inline SharedUiItemList(std::initializer_list<SharedUiItem> &items)
     : QList<SharedUiItem>(items) { }
-  inline SharedUiItemList(const SharedUiItemList<SharedUiItem> &other)
-    : QList<SharedUiItem>(other) { }
-  inline SharedUiItemList(const QList<SharedUiItem> &other)
-    : QList<SharedUiItem>(other) { }
-  // upcasting constructor to convert any list to a SharedUiItem list
-  template<class T>
-  inline SharedUiItemList(const SharedUiItemList<T> &other)
-    : QList<SharedUiItem>(reinterpret_cast<const QList<SharedUiItem>&>(other)) {
-    T *dummy;
-    Q_UNUSED(static_cast<SharedUiItem*>(dummy)); // ensure T is a SharedUiItem
-  }
-  // upcasting constructor to convert any list to a SharedUiItem list
-  template<class T>
-  inline SharedUiItemList(const QList<T>& other)
-    : QList<SharedUiItem>(reinterpret_cast<const QList<SharedUiItem>&>(other)) {
-    T *dummy;
-    Q_UNUSED(static_cast<SharedUiItem*>(dummy)); // ensure T is a SharedUiItem
-  }
-  QString join(const QString &separator, bool qualified = false) const {
-    return generic_join(separator, qualified);
-  }
-  QString join(const QChar separator, bool qualified = false) const {
-    return generic_join(separator, qualified);
-  }
+  Utf8String join(const QByteArray &separator, bool qualified = false) const;
+  Utf8String join(const char separator, bool qualified = false) const;
+  Utf8String join(const char32_t separator, bool qualified = false) const;
+  QString joinUtf16(const QString &separator, bool qualified = false) const;
+  QString joinUtf16(const QChar separator, bool qualified = false) const;
   QVariant paramRawValue(
       const Utf8String &key, const QVariant &def = {},
       const ParamsProvider::EvalContext &context = {}) const override;
   Utf8StringSet paramKeys(
       const ParamsProvider::EvalContext &context = {}) const override;
+  inline SharedUiItemList sorted() const {
+    SharedUiItemList sorted = *this;
+    std::sort(sorted.begin(), sorted.end());
+    return sorted;
+  }
+  /** Select items given their qualifier. Blindly trust that T and qualifier
+   *  match each other. */
+  template<class T = SharedUiItem>
+  inline QList<T> filtered(const Utf8String &qualifier) {
+    QList<T> subset;
+    for (auto sui: *this)
+      if (sui.qualifier() == qualifier)
+        subset += sui.casted<const T>();
+        //subset += static_cast<const T&>(sui);
+    return subset;
+  }
+  /** Select items given their qualifier. */
+  inline SharedUiItemList filtered(const Utf8StringSet &qualifiers) {
+    SharedUiItemList subset;
+    for (auto sui: *this)
+      if (qualifiers.contains(sui.qualifier()))
+        subset += sui;
+    return subset;
+  }
+  /** Append items if they're not yet present in the list.
+   *  Expensive on large lists. */
+  inline SharedUiItemList& operator|=(const SharedUiItemList &that) {
+    for (auto sui: that)
+      if (!contains(sui))
+        operator+=(sui);
+    return *this;
+  }
+  /** Append item if it's not yet present in the list.
+   *  Expensive on large lists. */
+  inline SharedUiItemList& operator|=(const SharedUiItem &sui) {
+    return this->operator |=({sui});
+  }
 };
 
-Q_DECLARE_METATYPE(SharedUiItemList<>)
-
-template <class T>
-inline QString SharedUiItemList<T>::join(
-    const QString &separator, bool qualified) const {
-  const SharedUiItemList<SharedUiItem> &upcasted = *this;
-  return upcasted.join(separator, qualified);
-}
-
-template <class T>
-inline QString SharedUiItemList<T>::join(
-    const QChar separator, bool qualified) const {
-  const SharedUiItemList<SharedUiItem> &upcasted = *this;
-  return upcasted.join(separator, qualified);
-}
+Q_DECLARE_METATYPE(SharedUiItemList)
 
 #endif // SHAREDUIITEMLIST_H

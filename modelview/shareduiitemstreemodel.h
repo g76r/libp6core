@@ -57,7 +57,7 @@ protected:
 
 private:
   TreeItem *_root;
-  QHash<QByteArray,TreeItem*> _itemsIndex; // key: qualified id
+  QHash<Utf8String,TreeItem*> _itemsIndex; // key: qualified id
 
 public:
   explicit SharedUiItemsTreeModel(QObject *parent = 0);
@@ -69,12 +69,12 @@ public:
   using SharedUiItemsModel::itemAt;
   SharedUiItem itemAt(const QModelIndex &index) const override;
   using SharedUiItemsModel::indexOf;
-  QModelIndex indexOf(QByteArray qualifiedId) const override;
-  void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
-                  QByteArray qualifier) override;
+  QModelIndex indexOf(const Utf8String &qualifiedId) const override;
+  void changeItem(const SharedUiItem &newItem, const SharedUiItem &oldItem,
+                  const Utf8String &qualifier) override;
   bool removeRows(int row, int count, const QModelIndex &parent) override;
-  void insertItemAt(SharedUiItem newItem, int row,
-                    QModelIndex parent = QModelIndex()) override;
+  void insertItemAt(const SharedUiItem &newItem, int row,
+                    const QModelIndex &parent = {}) override;
   Qt::ItemFlags flags(const QModelIndex &index) const override;
   QMimeData *mimeData(const QModelIndexList &indexes) const override;
   QStringList mimeTypes() const override;
@@ -95,22 +95,23 @@ protected:
    * actual row will be computed by caller.
    * Limit: on update, row is currently ignored if parent does not change. */
   virtual void determineItemPlaceInTree(
-      SharedUiItem newItem, QModelIndex *parent, int *row);
+      const SharedUiItem &newItem, QModelIndex *parent, int *row);
   /** Build a tree path string from index, e.g. "0.2.1" for second child of
    * third child of first child of root.
    * Usefull to serialize item position in tree e.g. for drag'n drop. */
-  static inline QString itemPath(const QModelIndex &index);
+  static inline Utf8String itemPath(const QModelIndex &index);
   /** Return parent path and set rownum to rightmost index in path, if rownum
    * != 0. */
-  static inline QString splitPath(QString path, int *rownum = 0);
+  static inline Utf8String splitPath(const Utf8String &path, int *rownum = 0);
   /** Create index knowing path string, as given by itemPath. */
-  inline QModelIndex indexFromPath(QString path);
+  inline QModelIndex indexFromPath(const Utf8String &path);
 
 private:
   /** *item = _root if null, row = (*item)->size() if < 0 or > count() */
   inline void adjustTreeItemAndRow(TreeItem **item, int *row);
-  inline void updateIndexIfIdChanged(QByteArray newId, QByteArray oldId,
-                                     TreeItem *newTreeItem);
+  inline void updateIndexIfIdChanged(
+      const Utf8String &newId, const Utf8String &oldId,
+      TreeItem *newTreeItem);
   /** Never return null, return _root when index is invalid. */
   inline TreeItem *treeItemByIndex(const QModelIndex &index) const;
   // hide functions that cannot work with SharedUiItem paradigm to avoid

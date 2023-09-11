@@ -13,7 +13,7 @@
  */
 #include "shareduiitemlist.h"
 
-QVariant SharedUiItemList<SharedUiItem>::paramRawValue(
+QVariant SharedUiItemList::paramRawValue(
     const Utf8String &key, const QVariant &def,
     const EvalContext &context) const {
   int colon = key.indexOf(':');
@@ -50,7 +50,7 @@ QVariant SharedUiItemList<SharedUiItem>::paramRawValue(
   return def;
 }
 
-Utf8StringSet SharedUiItemList<SharedUiItem>::paramKeys(
+Utf8StringSet SharedUiItemList::paramKeys(
     const EvalContext &) const {
   Utf8StringSet keys, qualifiers;
   for (auto item: *this) {
@@ -72,4 +72,49 @@ Utf8StringSet SharedUiItemList<SharedUiItem>::paramKeys(
     }
   }
   return keys;
+}
+
+template <class T, class S>
+inline T generic_join(const SharedUiItemList &list, const S &separator,
+                      bool qualified) {
+  T s;
+  bool first = true;
+  for (auto item : list) {
+    if (first)
+      first = false;
+    else
+      s += separator;
+    if (qualified) {
+      s += item.qualifier();
+      s += ':';
+      s += item.id();
+    } else
+      s += item.id();
+  }
+  return s;
+}
+
+Utf8String SharedUiItemList::join(
+    const QByteArray &separator, bool qualified) const {
+  return generic_join<Utf8String>(*this, separator, qualified);
+}
+
+Utf8String SharedUiItemList::join(
+    const char separator, bool qualified) const {
+  return generic_join<Utf8String>(*this, separator, qualified);
+}
+
+Utf8String SharedUiItemList::join(
+    const char32_t separator, bool qualified) const {
+  return generic_join<Utf8String>(*this, separator, qualified);
+}
+
+QString SharedUiItemList::joinUtf16(
+    const QString &separator, bool qualified) const {
+  return generic_join<QString>(*this, separator, qualified);
+}
+
+QString SharedUiItemList::joinUtf16(
+    const QChar separator, bool qualified) const {
+  return generic_join<QString>(*this, separator, qualified);
 }
