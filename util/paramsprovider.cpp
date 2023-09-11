@@ -141,7 +141,7 @@ Utf8StringList ParamsProvider::paramUtf8List(
     const Utf8String &key, const Utf8String &def,
     const EvalContext &context, QList<char> seps) const {
   Utf8StringList list;
-  auto raws = paramRawUtf8(key, def, context).split(seps);
+  auto raws = paramRawUtf8(key, def, context).split(seps, Qt::SkipEmptyParts);
   for (auto raw: raws)
     list += PercentEvaluator::eval_utf8(raw, context);
   return list;
@@ -156,7 +156,7 @@ QStringList ParamsProvider::paramUtf16List(
     const Utf8String &key, const Utf8String &def,
     const EvalContext &context, QList<char> seps) const {
   QStringList list;
-  auto raws = paramRawUtf8(key, def, context).split(seps);
+  auto raws = paramRawUtf8(key, def, context).split(seps, Qt::SkipEmptyParts);
   for (auto raw: raws)
     list += PercentEvaluator::eval_utf16(raw, context);
   return list;
