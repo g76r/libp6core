@@ -471,12 +471,11 @@ public:
   /** Copy a SharedUiItem using uiData() and setUiData() for every section but
    * the one that are specified to be ignored.
    * @param ignoredSections sections not to be copied, e.g. { 0 } */
-  template<class T>
+  template<class T, std::enable_if_t<std::is_base_of_v<SharedUiItem,T>,bool> = true>
   static inline bool copy(
       T *dest, const T &source,
       QString *errorString, SharedUiItemDocumentTransaction *transaction,
       const QSet<int> &ignoredSections, int role = Qt::DisplayRole) {
-    // LATER enforce dest and source are SUI subclasses
     int n = source.uiSectionCount();
     for (int i = 0; i < n; ++i) {
       if (ignoredSections.contains(i))
@@ -490,13 +489,12 @@ public:
   /** Copy a SharedUiItem using uiData() and setUiData() for every section but
    * the one that are specified to be ignored.
    * @param ignoredSections sections not to be copied, e.g. { "id" } */
-  template<class T>
+  template<class T, std::enable_if_t<std::is_base_of_v<SharedUiItem,T>,bool> = true>
   static inline bool copyBySectionName(
       T *dest, const T &source,
       QString *errorString, SharedUiItemDocumentTransaction *transaction,
       const QSet<Utf8String> &ignoredSections = { },
       int role = Qt::DisplayRole) {
-    // LATER enforce dest and source are SUI subclasses
     int n = source.uiSectionCount();
     for (int i = 0; i < n; ++i) {
       auto name = source.uiSectionName(i);
@@ -512,13 +510,14 @@ public:
    * the one that are specified to be ignored, supporting different kind of
    * item, mapping their section names.
    * @param ignoredSections sections not to be copied, e.g. { "id" } */
-  template<class D, class S>
+  template<class D, class S,
+           std::enable_if_t<std::is_base_of_v<SharedUiItem,D>,bool> = true,
+           std::enable_if_t<std::is_base_of_v<SharedUiItem,S>,bool> = true>
   static inline bool copyBySectionName(
       D *dest, const S &source,
       QString *errorString, SharedUiItemDocumentTransaction *transaction,
       const QSet<Utf8String> &ignoredSections = { },
       int role = Qt::DisplayRole) {
-    // LATER enforce dest and source are SUI subclasses
     int n = source.uiSectionCount();
     for (int i = 0; i < n; ++i) {
       auto name = source.uiSectionName(i);
@@ -530,6 +529,18 @@ public:
         return false;
     }
     return true;
+  }
+  /** Downcast blindly trusting caller that qualifier implies T */
+  template<class T,
+           std::enable_if_t<std::is_base_of_v<SharedUiItem,T>,bool> = true>
+  T &casted() const {
+    return static_cast<const T&>(*this);
+  }
+  /** Downcast blindly trusting caller that qualifier implies T */
+  template<class T,
+           std::enable_if_t<std::is_base_of_v<SharedUiItem,T>,bool> = true>
+  T &casted() {
+    return static_cast<T&>(*this);
   }
 
   // ParamSet interface
@@ -571,9 +582,11 @@ protected:
    * e.g. const FooBarData *data = foobar.specializedData<FooBarData>();
    * useful to declare a const FooBarData *data() const method in FooBar class,
    * see subclassing guidelines above */
-  template <class T, std::enable_if_t<std::is_base_of_v<SharedUiItemData,T>,bool> = true>
+  template <class T,
+            std::enable_if_t<std::is_base_of_v<SharedUiItemData,T>,bool> = true>
   inline const T *specializedData() const {
-    return reinterpret_cast<const QSharedDataPointer<T>&>(_data).constData();
+    auto ptr = reinterpret_cast<const QSharedDataPointer<T>*>(&_data);
+    return ptr->constData();
   }
   /** Helper template to detach calling the specialized data class' copy
    * constructor rather than base SharedUiItemData's one, and return a non-const
@@ -581,11 +594,12 @@ protected:
    * e.g. FooBarData *data = foobar.detachedData<FooBarData>();
    * useful to declare a "FooBarData *data()" non const method in FooBar class,
    * see subclassing guidelines above */
-  template <class T, std::enable_if_t<std::is_base_of_v<SharedUiItemData,T>,bool> = true>
+  template <class T,
+            std::enable_if_t<std::is_base_of_v<SharedUiItemData,T>,bool> = true>
   T *detachedData() {
-    auto ptr = reinterpret_cast<QSharedDataPointer<T>&>(_data);
-    ptr.detach();
-    return ptr.data();
+    auto ptr = reinterpret_cast<QSharedDataPointer<T>*>(&_data);
+    ptr->detach();
+    return ptr->data();
   }
   /** Set data from a UI point of view, i.e. called by a QAbstractItemModel
    * after user edition.
