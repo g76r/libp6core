@@ -474,13 +474,14 @@ Utf8String Utf8String::utf8Mid(qsizetype pos, qsizetype len) const {
   return Utf8String(begin, s-begin);
 }
 
-const Utf8StringList Utf8String::split(
+const Utf8StringList Utf8String::split_after(
     Utf8String sep, qsizetype offset, Qt::SplitBehavior behavior) const {
   Utf8StringList list;
-  if (offset < 0)
+  auto n = size(), w = sep.size();
+  if (offset < 0 || n == 0)
     return {};
   auto data = constData(), sep_data = sep.constData();
-  qsizetype imax = size()-sep.size()+1, w = sep.size(), i = offset, j = i;
+  qsizetype imax = n-w+1, i = offset, j = i;
   //  xx,y,zzzz
   //  012345678
   //  4-3=1
@@ -494,7 +495,7 @@ const Utf8StringList Utf8String::split(
   //  6-2=4
   while (i < imax) {
     if (::strncmp(data+i, sep_data, w) == 0) {
-      if (i-j >= (behavior == Qt::SkipEmptyParts ? 1 : 0))
+      if (i-j > 0 || behavior == Qt::KeepEmptyParts)
         list += mid(j, i-j);
       i += w;
       j = i;
@@ -502,17 +503,17 @@ const Utf8StringList Utf8String::split(
       ++i;
     }
   }
-  if (i-j >= (behavior == Qt::SkipEmptyParts ? 1 : 0))
+  if (i-j > 0 || behavior == Qt::KeepEmptyParts)
     list += mid(j, i-j);
   return list;
 }
 
-const Utf8StringList Utf8String::split(
+const Utf8StringList Utf8String::split_after(
     QList<char> seps, qsizetype offset, Qt::SplitBehavior behavior) const {
   Utf8StringList list;
-  if (offset < 0)
-    return {};
   qsizetype n = size(), i = offset, j = offset;
+  if (offset < 0 || n == 0)
+    return {};
   //  xx,y,zzzz
   //  012345678
   //  4-3=1
@@ -526,12 +527,12 @@ const Utf8StringList Utf8String::split(
   //  6-2=4
   for (; i < n; ++i) {
     if (seps.contains(at(i))) {
-      if (i-j >= (behavior == Qt::SkipEmptyParts ? 1 : 0))
+      if (i-j > 0 || behavior == Qt::KeepEmptyParts)
         list += mid(j, i-j);
       j = i+1;
     }
   }
-  if (i-j >= (behavior == Qt::SkipEmptyParts ? 1 : 0))
+  if (i-j > 0 || behavior == Qt::KeepEmptyParts)
     list += mid(j, i-j);
   return list;
 }
@@ -546,22 +547,27 @@ const Utf8StringList Utf8String::splitByLeadingChar(qsizetype offset) const {
   for (; eos < csv && (eos[0]&0b11000000) == 0b10000000; ++eos)
     ; // go forward over continuation bytes
   //qDebug() << "splitByLeadingChar" << offset << Utf8String(sep, eos-sep).toHex() << csv;
-  return split(Utf8String(sep, eos-sep), csv-begin);
+  return split_after(Utf8String(sep, eos-sep), csv-begin);
+}
+
+const Utf8StringList Utf8String::split_after(
+    const char sep, const qsizetype offset, Qt::SplitBehavior behavior) const {
+  return split_after(Utf8String(&sep, 1), offset, behavior);
 }
 
 const Utf8StringList Utf8String::split(
     QList<char> seps, Qt::SplitBehavior behavior) const {
-  return split(seps, 0, behavior);
-}
-
-const Utf8StringList Utf8String::split(
-    const char sep, const qsizetype offset, Qt::SplitBehavior behavior) const {
-  return split(QList<char>{sep}, offset, behavior);
+  return split_after(seps, 0, behavior);
 }
 
 const Utf8StringList Utf8String::split(
     const char sep, Qt::SplitBehavior behavior) const {
-  return split(sep, 0, behavior);
+  return split_after(Utf8String(&sep, 1), 0, behavior);
+}
+
+const Utf8StringList Utf8String::split(
+    Utf8String sep, Qt::SplitBehavior behavior) const{
+  return split_after(sep, 0, behavior);
 }
 
 QDebug operator<<(QDebug dbg, const Utf8String &s) {

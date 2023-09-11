@@ -16,6 +16,8 @@ int main(void) {
   s = "\xef\xbb\xbf\xef\xbb\xbf\xef\xbb\xbf§foo§bar§baz§\xef\xbb\xbf§§"_u8;
   auto sc = s.cleaned();
   qDebug() << s.size() << s.utf8Size() << sc.size() << sc.utf8Size() << sc;
+  qDebug() << "j k  l   m "_u8.split(' ') << "j k  l   m "_u8.split(' ', Qt::SkipEmptyParts)
+           << "jjj k"_u8.split(' ', Qt::SkipEmptyParts) << ""_u8.split(' ');
   qDebug() << "ab\xef\xbb\xbf"_u8.cleaned();
   qDebug() << s.splitByLeadingChar();
   qDebug() << "  f   oo\n\rbar\vbaz"_u8.split(Utf8String::AsciiWhitespace);

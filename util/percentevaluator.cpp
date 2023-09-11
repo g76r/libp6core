@@ -693,6 +693,6 @@ PercentEvaluator::EvalContext &PercentEvaluator::EvalContext::setScopeFilter(
   if (scope_expr.isEmpty()) // empty string means no filter: {}
     _scope_filter = {};
   else // to have an empty filter { "" } you need to pass "," string
-    _scope_filter = scope_expr.split(',',0, Qt::KeepEmptyParts).toSet();
+    _scope_filter = scope_expr.split(',', Qt::KeepEmptyParts).toSet();
   return *this;
 }

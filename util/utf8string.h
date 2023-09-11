@@ -188,24 +188,29 @@ public:
   // splitting
   /** Splitting utf8 string on ascii 7 separators, e.g. {',',';'}
     * @see Utf8String::AsciiWhitespace */
-  [[nodiscard]] const Utf8StringList split(
+  [[nodiscard]] const Utf8StringList split_after(
       QList<char> seps, qsizetype offset = 0,
+      Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
+  /** Splitting utf8 string on ascii 7 separator, e.g. ' ' */
+  [[nodiscard]] const Utf8StringList split_after(
+      const char sep, const qsizetype offset = 0,
+      Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
+  /** Splitting utf8 string on multi-byte (utf8) or multi-char separator,
+   *  e.g. "-->", "🥨"_u8, U'🥨', "<≠>"_u8 */
+  [[nodiscard]] const Utf8StringList split_after(
+      Utf8String sep, qsizetype offset = 0,
       Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
   /** Splitting utf8 string on ascii 7 separators, e.g. {',',';'}
     * @see Utf8String::AsciiWhitespace */
   [[nodiscard]] const Utf8StringList split(
-      QList<char> seps, Qt::SplitBehavior behavior) const;
+      QList<char> seps, Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
   /** Splitting utf8 string on ascii 7 separator, e.g. ' ' */
   [[nodiscard]] const Utf8StringList split(
-      const char sep, const qsizetype offset = 0,
-      Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
-  /** Splitting utf8 string on ascii 7 separator, e.g. ' ' */
-  [[nodiscard]] const Utf8StringList split(
-      const char sep, Qt::SplitBehavior behavior) const;
+      const char sep, Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
   /** Splitting utf8 string on multi-byte (utf8) or multi-char separator,
    *  e.g. "-->", "🥨"_u8, U'🥨', "<≠>"_u8 */
-  [[nodiscard]] const Utf8StringList split(Utf8String sep, qsizetype offset = 0,
-      Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
+  [[nodiscard]] const Utf8StringList split(
+      Utf8String sep, Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
   /** Split the string using its first utf8 char as a delimiter.
    *  e.g. "/foo/bar/g" -> { "foo", "bar", "g" }
    *  e.g. ",/,:,g" -> { "/", ":", "g" }
