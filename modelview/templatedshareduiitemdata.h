@@ -85,11 +85,19 @@ public:
   QVariant paramRawValue(
       const Utf8String &key, const QVariant &def,
       const PercentEvaluator::EvalContext &context) const override {
+    if (!context.hasScopeOrNone(SharedUiItemDataBase<T>::paramScope()))
+      return def;
     int ml;
     auto f = T::_paramFunctions.value(key, &ml);
     if (f)
       return f(this, key, context, ml);
     return SharedUiItemDataBase<T>::paramRawValue(key, def, context);
+  }
+  Utf8StringSet paramKeys(
+      const PercentEvaluator::EvalContext &context) const override {
+    Utf8StringSet keys = T::_paramFunctions.keys();
+    keys |= SharedUiItemDataBase<T>::paramKeys(context);
+    return keys;
   }
 };
 
@@ -99,12 +107,19 @@ class SharedUiItemDataWithMutableParams
 public:
   mutable AtomicValue<ParamSet> _params;
 
+  SharedUiItemDataWithMutableParams(
+      const ParamSet &params, const Utf8String &scope)
+    : _params(params) {
+    _params.lockedData()->setScope(scope);
+  }
   SharedUiItemDataWithMutableParams(const ParamSet &params = {})
-    : _params(params) {}
+    : SharedUiItemDataWithMutableParams(params, T::_qualifier) {}
   // ParamsProvider interface
   QVariant paramRawValue(
       const Utf8String &key, const QVariant &def,
       const PercentEvaluator::EvalContext &context) const override {
+    if (!context.hasScopeOrNone(SharedUiItemDataWithFunctions<T>::paramScope()))
+      return def;
     int ml;
     auto f = T::_paramFunctions.value(key, &ml);
     if (f)
@@ -112,13 +127,16 @@ public:
     QVariant v = _params.lockedData()->paramRawValue(key, {}, context);
     if (v.isValid())
       return v;
+    if (!_includeUiDataAsParam)
+      return def;
     return SharedUiItemDataBase<T>::paramRawValue(key, def, context);
   }
   Utf8StringSet paramKeys(
       const PercentEvaluator::EvalContext &context) const override {
     Utf8StringSet keys = _params.lockedData()->paramKeys(context);
+    keys |= T::_paramFunctions.keys();
     if (_includeUiDataAsParam)
-      keys += SharedUiItemDataBase<T>::paramKeys(context);
+      keys |= SharedUiItemDataBase<T>::paramKeys(context);
     return keys;
   }
 };
@@ -129,12 +147,19 @@ class SharedUiItemDataWithImmutableParams
 public:
   ParamSet _params;
 
+  SharedUiItemDataWithImmutableParams(
+      const ParamSet &params, const Utf8String &scope)
+    : _params(params) {
+    _params.setScope(scope);
+  }
   SharedUiItemDataWithImmutableParams(const ParamSet &params = {})
-    : _params(params) {}
+    : SharedUiItemDataWithImmutableParams(params, T::_qualifier) {}
   // ParamsProvider interface
   QVariant paramRawValue(
       const Utf8String &key, const QVariant &def,
       const PercentEvaluator::EvalContext &context) const override {
+    if (!context.hasScopeOrNone(SharedUiItemDataWithFunctions<T>::paramScope()))
+      return def;
     int ml;
     auto f = T::_paramFunctions.value(key, &ml);
     if (f)
@@ -142,11 +167,14 @@ public:
     QVariant v = _params.paramRawValue(key, {}, context);
     if (v.isValid())
       return v;
+    if (!_includeUiDataAsParam)
+      return def;
     return SharedUiItemDataBase<T>::paramRawValue(key, def, context);
   }
   Utf8StringSet paramKeys(
       const PercentEvaluator::EvalContext &context) const override {
     Utf8StringSet keys = _params.paramKeys(context);
+    keys |= T::_paramFunctions.keys();
     if (_includeUiDataAsParam)
       keys += SharedUiItemDataBase<T>::paramKeys(context);
     return keys;

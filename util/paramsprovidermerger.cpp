@@ -17,8 +17,9 @@
 QVariant ParamsProviderMerger::paramRawValue(
     const Utf8String &key, const QVariant &def,
     const EvalContext &context) const {
+  if (!context.hasScopeOrNone(paramScope()))
+    return def;
   int depth = 0;
-  // trying overrident params first, they match regardless the scope filter
   auto v = _overridingParams.paramRawValue(key, def, context);
   if (v.isValid())
     return v;
@@ -27,9 +28,6 @@ QVariant ParamsProviderMerger::paramRawValue(
     const ParamsProvider *pp = provider.d->_wild;
     if (!pp)
       pp = &provider.d->_owned;
-    // skip provider which have a scope that doesn't match context filter
-    if (!context.hasScopeOrNone(pp->paramScope()))
-      continue;
     auto v = pp->paramRawValue(key, context);
     if (v.isValid())
       return v;

@@ -86,12 +86,7 @@ public:
      *  to be accepetable) */
     inline bool containsScope(const Utf8String &scope) const {
       return _scope_filter.contains(scope); }
-//    /** hasn't this scope, may have no scope or other scopes */
-//    inline bool hasntScope(const Utf8String &scope) const {
-//      return !_scope_filter.contains(scope); }
-    //bool containsScope(const Utf8String &scope) const {
-    //  return _scope_filter.contains(scope); }
-    //const Utf8StringSet &scopeFilter() const { return _scope_filter; }
+    const Utf8StringSet &scopeFilter() const { return _scope_filter; }
     EvalContext &addVariable(const Utf8String &key) {
       _already_evaluated_variables.insert(key); return *this; }
     bool containsVariable(const Utf8String &key) const {

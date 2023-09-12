@@ -42,6 +42,7 @@ using EvalContext = ParamSet::EvalContext;
 const Utf8String ParamSet::DontInheritScope = "!inherit"_u8;
 const EvalContext ParamSet::DontInherit =
     ParamSet::EvalContext{ ParamSet::DontInheritScope };
+static Utf8StringSet _almost_empty_pretend_it_is{"!inherit"_u8};
 static QMap<Utf8String,ParamSet> _externals;
 static QMutex _externals_mutex;
 
@@ -49,10 +50,12 @@ class ParamSetData : public QSharedData {
 public:
   ParamSet _parent;
   QMap<Utf8String,QVariant> _params;
-  ParamSetData() { }
+  Utf8String _scope;
+  ParamSetData() = default;
+  ParamSetData(const ParamSetData &that) = default;
   ParamSetData(QMap<Utf8String,QVariant> params) : _params(params) { }
   ParamSetData(ParamSet parent) : _parent(parent) { }
-  void clear() { _parent = {}; _params.clear(); }
+  void clear() { _parent = {}; _params.clear(); _scope = {}; }
 };
 
 ParamSet::ParamSet() {
@@ -245,21 +248,21 @@ ParamSet ParamSet::parent() const {
 }
 
 void ParamSet::setParent(const ParamSet &parent) {
-  if (!d)
-    d = new ParamSetData();
+  if (!d) [[unlikely]]
+    d = new ParamSetData;
   if (d.constData() != parent.d.constData())
     d->_parent = parent;
 }
 
 void ParamSet::setValue(const Utf8String &key, const QVariant &value) {
-  if (!d)
-    d = new ParamSetData();
+  if (!d) [[unlikely]]
+    d = new ParamSetData;
   d->_params.insert(key, value);
 }
 
 void ParamSet::setValues(const ParamSet &params, bool inherit) {
-  if (!d)
-    d = new ParamSetData();
+  if (!d) [[unlikely]]
+    d = new ParamSetData;
   for (auto k: params.paramKeys(inherit ? EvalContext{} : DontInherit))
     d->_params.insert(k, params.paramRawValue(k));
 }
@@ -279,7 +282,8 @@ QVariant ParamSet::paramRawValue(
     const EvalContext &context) const {
   if (!d) [[unlikely]]
     return {};
-  if (context.hasScopeOrNone(paramScope())) {
+  if (context.hasScopeOrNone(paramScope())
+      || context.scopeFilter() == _almost_empty_pretend_it_is) {
     auto value = d->_params.value(key);
     if (value.isValid())
       return value;
@@ -294,10 +298,11 @@ Utf8StringSet ParamSet::paramKeys(const EvalContext &context) const {
   if (!d) [[unlikely]]
     return {};
   Utf8StringSet set;
-  if (context.hasScopeOrNone(paramScope()))
+  if (context.hasScopeOrNone(paramScope())
+      || context.scopeFilter() == _almost_empty_pretend_it_is)
     set += d->_params.keys();
   if (!context.containsScope(DontInheritScope))
-    set += parent().paramKeys();
+    set += parent().paramKeys(context);
   return set;
 }
 
@@ -385,20 +390,51 @@ const QMap<QString,QString> ParamSet::toUtf16Map(bool inherit) const {
 
 QDebug operator<<(QDebug dbg, const ParamSet &params) {
   dbg.nospace() << "{";
-  auto keys = params.paramKeys().values();
-  std::sort(keys.begin(), keys.end());
-  for (auto key: keys)
-    dbg.space() << key << "=" << params.paramRawValue(key) << ",";
-  dbg.nospace() << "}";
+  bool first = true;
+  for (ParamSet p = params; !p.isNull(); p = p.parent()) {
+    if (first)
+      first = false;
+    else
+      dbg.nospace().noquote() << "->>";
+    auto scope = p.paramScope();
+    auto keys = p.paramKeys(EvalContext(scope)).toSortedList();
+    for (auto key: keys)
+      if (scope.isEmpty())
+        dbg.space().noquote() << key << "="
+                              << params.paramRawValue(key);
+      else
+        dbg.space().noquote() << "["+scope+"]"+key << "="
+                              << params.paramRawValue(key);
+    if (keys.isEmpty())
+      dbg.space().noquote() << "0";
+    if (scope.isEmpty())
+      break;
+  }
+  dbg.nospace().noquote() << "}";
   return dbg.space();
 }
 
 LogHelper operator<<(LogHelper lh, const ParamSet &params) {
   lh << "{ ";
-  auto keys = params.paramKeys().values();
-  std::sort(keys.begin(), keys.end());
-  for (auto key: keys)
-    lh << key << "=" << params.paramRawValue(key) << " ";
+
+  bool first = true;
+  for (ParamSet p = params; !p.isNull(); p = p.parent()) {
+    if (first)
+      first = false;
+    else
+      lh << "->> ";
+    auto scope = p.paramScope();
+    auto keys = p.paramKeys(EvalContext(scope)).toSortedList();
+    for (auto key: keys)
+      if (scope.isEmpty())
+        lh << key << "=" << params.paramRawValue(key) << " ";
+      else
+        lh << "["+scope+"]"+key << "=" << params.paramRawValue(key) << " ";
+    if (keys.isEmpty())
+      lh << "0 ";
+    if (scope.isEmpty())
+      break;
+  }
   return lh << "}";
 }
 
@@ -549,4 +585,14 @@ Utf8StringList ParamSet::externalParamsNames() {
   auto list = _externals.keys();
   list.detach();
   return list;
+}
+
+void ParamSet::setScope(const Utf8String &scope) {
+  if (!d) [[unlikely]]
+    d = new ParamSetData;
+  d->_scope = scope;
+}
+
+Utf8String ParamSet::paramScope() const {
+  return d ? d->_scope : Utf8String{};
 }

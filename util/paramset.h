@@ -46,12 +46,13 @@ class QSqlDatabase;
  */
 class LIBP6CORESHARED_EXPORT ParamSet : public ParamsProvider {
   friend class ParamsProviderMerger;
+  friend class ParamsProvider; // TODO remove, only needed by DontInheritScope
   QSharedDataPointer<ParamSetData> d;
+  const static Utf8String DontInheritScope; // TODO remove
 
 public:
   /** Special evaluation scope to disallow inheritance from parent and up */
-  const static Utf8String DontInheritScope;
-  const static EvalContext DontInherit;
+  const static EvalContext DontInherit; // TODO remove
 
   ParamSet();
   /** First item processed as a key, second one as the matching value and so on.
@@ -132,8 +133,13 @@ public:
       const bool escape_percent = false, const ParamSet &parent = {} );
   ~ParamSet();
   ParamSet &operator=(const ParamSet &other);
-  ParamSet parent() const;
+  [[nodiscard]] ParamSet parent() const;
   void setParent(const ParamSet &parent);
+  [[nodiscard]] inline ParamSet withParent(const ParamSet &new_parent) const {
+    ParamSet params = *this;
+    params.setParent(new_parent);
+    return params;
+  }
   void setValue(const Utf8String &key, const QVariant &value);
   /** merge (override) params using another ParamSet content */
   void setValues(const ParamSet &params, bool inherit = true);
@@ -167,8 +173,6 @@ public:
    *  e.g. {"foo","bar"} is equivalent to {{0,"foo"},{1,"bar"}}. */
   void setValuesFromSqlDb(const Utf8String &dbname, const Utf8String &sql,
                           const Utf8StringList &bindings);
-  /** short for setValues(other) */
-  ParamSet &operator<<(const ParamSet &other){ setValues(other); return *this; }
   /** short for setValues(other) */
   ParamSet &operator+=(const ParamSet &other){ setValues(other); return *this; }
   void clear();
@@ -230,6 +234,15 @@ public:
   static void clearExternalParams();
   /** List names of external paramsets. */
   [[nodiscard]] static Utf8StringList externalParamsNames();
+
+  // scope
+  [[nodiscard]] Utf8String paramScope() const override;
+  void setScope(const Utf8String &scope);
+  [[nodiscard]] inline ParamSet withScope(const Utf8String &new_scope) const {
+    ParamSet params = *this;
+    params.setScope(new_scope);
+    return params;
+  }
 
 private:
   ParamSet(ParamSetData *data);
