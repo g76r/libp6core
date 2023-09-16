@@ -16,6 +16,7 @@
 #include <QUrl>
 #include <QDir>
 #include <QFileInfo>
+#include "util/utf8string.h"
 
 static QRegularExpression _slashBeforeDriveLetterRE{"^/[A-Z]:/"};
 
@@ -211,10 +212,10 @@ static const QRegularExpression slashFollowedByWildcard("/[^/]*[*?[]|\\]");
 
 QStringList IOUtils::findFiles(QString regexp) {
   QStringList files;
-  QString pat = QDir().absoluteFilePath(QDir::fromNativeSeparators(regexp));
-  int i = pat.indexOf(slashFollowedByWildcard);
-  QString dir = i >= 0 ? pat.left(i+1) : pat;
-  ::findFiles(QDir(dir), files, QRegularExpression("^"+pat+"$"));
-  //qDebug() << "returned file list:" << files;
+  int i = regexp.indexOf(slashFollowedByWildcard);
+  QString dir = i >= 0 ? Utf8String::fromCEscaped(regexp.left(i+1)).toString()
+                       : regexp;
+  ::findFiles(QDir(dir), files, QRegularExpression("^"+regexp+"$"));
+  //qDebug() << "IOUtils::findFiles" << regexp << i << dir << files;
   return files;
 }
