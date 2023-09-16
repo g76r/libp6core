@@ -601,3 +601,140 @@ Utf8String &Utf8String::remove(const char *needle, qsizetype len) {
   result.append(s-i, i); // copy partial match
   return *this = result;
 }
+
+Utf8String &Utf8String::remove_ascii_chars(QList<char> chars) {
+  Utf8String result;
+  auto s = constData();
+  auto end = s + size();
+  for (; s < end; ++s)
+    if (!chars.contains(*s))
+      result += *s;
+  return *this = result;
+}
+
+inline bool isoctal(const char c) {
+  return c >= '0' && c <= '7';
+}
+
+static const qint8 _hexdigits[] = {
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1,
+  -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+};
+
+inline qsizetype decode_oct_char(const char *s, const char *end, char32_t *c) {
+  *c = 0;
+  auto begin = s, max = std::min(end, s+3);
+  for (; s < max && isoctal(*s); ++s)
+    *c = (*c << 3) + (*s - '0');
+  return s-begin;
+}
+
+inline qsizetype decode_hex_char(
+    const char *s, const char *end, qsizetype digits, char32_t *c) {
+  *c = 0;
+  if (s+digits >= end)
+    return 0;
+  auto begin = s;
+  if (digits)
+    end = s+digits;
+  for (; s < end; ++s) {
+    auto i = _hexdigits[static_cast<unsigned char>(*s)];
+    if (i < 0)
+      return digits ? 0 : s-begin;
+    *c = (*c << 4) + i;
+  }
+  return digits;
+}
+
+Utf8String Utf8String::fromCEscaped(const char *s, qsizetype len) {
+  if (!s) [[unlikely]]
+    return {};
+  Utf8String result;
+  auto end = s + len;
+  char32_t c;
+  qsizetype taken;
+  for (; s < end; ++s) {
+    if (*s == '\\') {
+      ++s;
+      if (s == end)
+        break;
+      switch (*s) {
+        case 'a':
+          result += '\a';
+          break;
+        case 'b':
+          result += '\b';
+          break;
+        case 'f':
+          result += '\f';
+          break;
+        case 'n':
+          result += '\n';
+          break;
+        case 'r':
+          result += '\r';
+          break;
+        case 't':
+          result += '\t';
+          break;
+        case 'v':
+          result += '\v';
+          break;
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+          // TODO hande o{} C++23
+          // TODO hande N{} C++23
+          if ((taken = decode_oct_char(s, end, &c)))
+            result += c < 0x80 ? c : ReplacementCharacter;
+          s += taken-1;
+          break;
+        case 'x':
+          // TODO hande x{} C++23
+          if ((taken = decode_hex_char(++s, end, 0, &c)))
+            result += c < 0x80 ? c : ReplacementCharacter;
+          s += taken-1;
+          break;
+        case 'u':
+          // TODO hande u{} C++23
+          if (decode_hex_char(++s, end, 4, &c))
+            result += c;
+          s += 3;
+          break;
+        case 'U':
+          // TODO hande U{} C++23
+          if (decode_hex_char(++s, end, 8, &c))
+            result += c;
+          s += 7;
+          break;
+        default:
+          // \ ? ' " are standard; anything else is implementation defined, we
+          // decided to handle this way too
+          goto as_is;
+      }
+      continue;
+    }
+as_is:
+    result += *s;
+  }
+  return result;
+}

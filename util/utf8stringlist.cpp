@@ -83,7 +83,11 @@ LogHelper operator<<(LogHelper lh, const Utf8StringList &list) {
 }
 
 QDebug operator<<(QDebug dbg, const Utf8StringSet &set) {
-  return dbg << set.toSortedList();
+  return dbg << set.toList();
+}
+
+LogHelper operator<<(LogHelper lh, const Utf8StringSet &set) {
+  return lh << set.toList();
 }
 
 Utf8StringSet Utf8StringList::toSet() const {

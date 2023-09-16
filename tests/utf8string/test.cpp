@@ -33,5 +33,7 @@ int main(void) {
   qDebug() << s << s.toUpper() << s.toLower() << s.toTitle() << s.isLower() << Utf8String::toTitle(0x01c6);
   s = "abcdabababaaacda";
   qDebug() << s.remove("ab") << "=cdaaacda";
+  qDebug() << Utf8String::fromCEscaped("\\\\a\\x40\\60\\u00a7\\xa7\\U0001F968\\u8D8A\\U00008D8Aa\x1\x0001"_u8)
+              +"=\\a\x40\60\u00a7\xa7\U0001f968\u8D8A\U00008D8Aa\x1\x0001";
   return 0;
 }

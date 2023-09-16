@@ -117,11 +117,11 @@ public:
   /** Convert a unicode charater into its uppercase character, e.g. é -> É.
    *  Return the input character itself if no change is needed e.g. E É #
    */
-  static inline char32_t toUpper(char32_t c);
+  [[nodiscard]] static inline char32_t toUpper(char32_t c);
   /** Convert a unicode charater into its uppercase character, e.g. É -> é .
    *  Return the input character itself if no change is needed e.g. E é #
    */
-  static inline char32_t toLower(char32_t c);
+  [[nodiscard]] static inline char32_t toLower(char32_t c);
   /** Set the characters to title case.
    *  For most letters, title case is the same than upper case, but for some
    *  rare characters representing several letters at once, there is a title case
@@ -130,7 +130,7 @@ public:
    *  (unicode: 0x1C4) and to ǅ title case letter (unicode: 0x1C5)
    *  Return the input character itself if no change is needed e.g. E É #
    */
-  static inline char32_t toTitle(char32_t c);
+  [[nodiscard]] static inline char32_t toTitle(char32_t c);
   [[nodiscard]] Utf8String toUpper() const;
   [[nodiscard]] Utf8String toLower() const;
   [[nodiscard]] Utf8String toTitle();
@@ -432,6 +432,7 @@ public:
     return remove(encodeUtf8(c)); }
   inline Utf8String &removeAt(qsizetype pos) {
     QByteArray::removeAt(pos); return *this;}
+  Utf8String &remove_ascii_chars(QList<char> chars);
   inline Utf8String &removeFirst() { QByteArray::removeFirst(); return *this;}
   inline Utf8String &removeLast() { QByteArray::removeLast(); return *this;}
 
@@ -630,6 +631,16 @@ public:
   short convToShort(bool *ok) const { return toShort(ok, 0.0); }
   ushort convToUShort(bool *ok) const { return toUShort(ok, 0.0); }
 #endif
+
+  [[nodiscard]] static Utf8String fromCEscaped(
+      const char *escaped, qsizetype len);
+  [[nodiscard]] inline static Utf8String fromCEscaped(
+      const Utf8String &escaped) {
+    return fromCEscaped(escaped.constData(), escaped.size()); }
+  [[nodiscard]] inline static Utf8String fromCEscaped(
+      const QByteArrayView &escaped) {
+    return fromCEscaped(escaped.constData(), escaped.size()); }
+
 private:
   struct UnicodeCaseMapping {
     char32_t utf32;
