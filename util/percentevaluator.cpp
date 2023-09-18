@@ -91,7 +91,8 @@ _functions {
     return {};
   auto input = PercentEvaluator::eval(params.value(0), context);
   auto ref = PercentEvaluator::eval(params.value(1), context);
-  if (QVariant::compare(input, ref) != QPartialOrdering::Equivalent)
+  if (MathUtils::compareQVariantAsNumberOrString(input, ref, true)
+      != QPartialOrdering::Equivalent)
     return PercentEvaluator::eval(params.value(2), context);
   if (params.size() >= 4)
     return PercentEvaluator::eval(params.value(3), context);
@@ -106,7 +107,8 @@ _functions {
   int n = (params.size() - 1) / 2;
   for (int i = 0; i < n; ++i) {
     auto ref = PercentEvaluator::eval(params.value(1+i*2), context);
-    if (QVariant::compare(input, ref) == QPartialOrdering::Equivalent)
+    if (MathUtils::compareQVariantAsNumberOrString(input, ref, true)
+        == QPartialOrdering::Equivalent)
       return PercentEvaluator::eval(params.value(1+i*2+1), context);
   }
   // evaluating :default param, if any
