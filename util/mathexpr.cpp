@@ -82,7 +82,7 @@ static inline QPartialOrdering compareTwoOperands(
     bool anyStringRepresentation) {
   auto x = args.value(0)(context);
   auto y = args.value(1)(context);
-  auto po = MathUtils::compareQVariantAsNumber(x, y, anyStringRepresentation);
+  auto po = MathUtils::compareQVariantAsNumberOrString(x, y, anyStringRepresentation);
   return po;
 }
 

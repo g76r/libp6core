@@ -49,7 +49,7 @@ public:
    *  anyStringRepresentation == true, QVariant() is equal to an QString("")
    *  and to QDateTime())
    */
-  static QPartialOrdering compareQVariantAsNumber(
+  static QPartialOrdering compareQVariantAsNumberOrString(
     QVariant a, QVariant b, bool anyStringRepresentation = false);
   static QVariant addQVariantAsNumber(QVariant a, QVariant b);
   static QVariant subQVariantAsNumber(QVariant a, QVariant b);

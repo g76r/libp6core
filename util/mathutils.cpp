@@ -255,7 +255,7 @@ bool MathUtils::promoteToBestNumericType(QVariant *a, QVariant *b) {
   return false;
 }
 
-QPartialOrdering MathUtils::compareQVariantAsNumber(
+QPartialOrdering MathUtils::compareQVariantAsNumberOrString(
   QVariant a, QVariant b, bool anyStringRepresentation) {
   auto a0 = a, b0 = b;
   //qDebug() << "compareQVariantAsNumber" << a << b;
