@@ -24,10 +24,10 @@ static Utf8String _xffHeader;
 namespace {
 struct XffHeaderInitializer {
   XffHeaderInitializer() {
-    auto header = qgetenv("LIBPUMPKIN_X_FORWARDED_FOR_HEADER");
+    Utf8String header = qgetenv("LIBPUMPKIN_X_FORWARDED_FOR_HEADER");
     if (header.isNull())
       header = "X-Forwarded-For";
-    _xffHeader = header;
+    _xffHeader = header.toInternetHeaderCase();
   }
 } xffHeaderInitializer;
 }
@@ -105,14 +105,12 @@ bool HttpRequest::parseAndAddHeader(Utf8String rawHeader) {
   int i = rawHeader.indexOf(':');
   if (i == -1)
     return false;
-  // MAYDO remove special chars from keys and values?
   // TODO support multi-line headers
-  auto key = StringUtils::toAsciiSnakeUpperCamelCase(
-        rawHeader.left(i).trimmed());
+  auto key = rawHeader.left(i).trimmed().toInternetHeaderCase();
   auto value = rawHeader.right(rawHeader.size()-i-1).trimmed();
   //qDebug() << "header:" << rawHeader << key << value;
   d->_headers.insert(key, value);
-  if (key == "Cookie"_ba)
+  if (key == "Cookie"_u8)
     parseAndAddCookie(value);
   return true;
 }
@@ -237,13 +235,13 @@ Utf8String HttpRequest::header(
   // LATER handle case insensitivity in header names
   if (!d)
     return defaultValue;
-  auto v = d->_headers.value(name);
+  auto v = d->_headers.value(name.toInternetHeaderCase());
   return v.isNull() ? defaultValue : v;
 }
 
 Utf8StringList HttpRequest::headers(const Utf8String &name) const {
   // LATER handle case insensitivity in header names
-  return d ? d->_headers.values(name) : Utf8StringList{};
+  return d ? d->_headers.values(name.toInternetHeaderCase()) : Utf8StringList{};
 }
 
 QMultiMap<Utf8String, Utf8String> HttpRequest::headers() const {
@@ -308,7 +306,7 @@ QVariant HttpRequestPseudoParamsProvider::paramRawValue(
     } else if (key.startsWith("!param")) {
       return _request.param(key.mid(7));
     } else if (key.startsWith("!header")) {
-      return _request.header(key.mid(8));
+      return _request.header(key.mid(8).toInternetHeaderCase());
     }
   }
   return def;

@@ -378,6 +378,25 @@ static inline Utf8String foldCase(
   return folded;
 }
 
+static inline Utf8String foldCaseWithHoles(
+    const char *s, const char *end, std::function<char32_t(char32_t)> fold,
+    char32_t replacement) {
+  Q_ASSERT(s);
+  Q_ASSERT(end);
+  Utf8String folded;
+  char32_t previous = 0;
+  for (; align_on_char(s, end); ++s) {
+    auto c = fold(Utf8String::decodeUtf8(s, end));
+    if (c == Utf8String::ReplacementCharacter) {
+      if (previous != Utf8String::ReplacementCharacter)
+        folded += replacement;
+    } else
+      folded += c;
+    previous = c;
+  }
+  return folded;
+}
+
 static inline bool testCase(
     const char *s, const char *end, std::function<char32_t(char32_t)> fold) {
   Q_ASSERT(s);
@@ -396,13 +415,60 @@ Utf8String Utf8String::toUpper() const {
   return foldCase(s, end, [](char32_t c) { return Utf8String::toUpper(c); });
 }
 
+Utf8String Utf8String::toIdentifier(bool allow_non_ascii) const {
+  auto s = constData();
+  auto end = s + size();
+  auto f = [&allow_non_ascii](char32_t c) {
+    if (::isalnum(c))
+      return c;
+    if (allow_non_ascii && c > 0x7f)
+      return c;
+    return Utf8String::ReplacementCharacter;
+  };
+  if (s && (::isdigit(*s) || (allow_non_ascii && (*s & 0x80) == 0)))
+    return "_"_u8+foldCaseWithHoles(s, end, f, '_');
+  else
+    return foldCaseWithHoles(s, end, f, '_');
+}
+
+Utf8String Utf8String::toInternetHeaderName(bool ignore_trailing_colon) const {
+  auto s = constData();
+  auto end = s + size();
+  if (ignore_trailing_colon && s < end && end[-1] == ':')
+    --end;
+  auto f = [](char32_t c) {
+    // rfc5322 states that a header may contain any ascii printable char but ':'
+    if (c >= 0x21 && c <= 0x7f && c != ':')
+      return c;
+    return Utf8String::ReplacementCharacter;
+  };
+  return foldCaseWithHoles(s, end, f, '_');
+}
+
+Utf8String Utf8String::toInternetHeaderCase() const {
+  auto s = constData();
+  auto end = s + size();
+  bool leading = true;
+  auto f = [&leading](char32_t c) -> char32_t {
+    // TODO also (conditionaly) support lowerUpper as a separator
+    // TODO include in a more general case conversion scheme
+    // with snake, camel, pascal, allcaps, alllower
+    if (c == '-' || c == '_' || c == '.' || c == ':' || ::isspace(c)) {
+      leading = true;
+      return '-';
+    }
+    return leading ? Utf8String::toUpper(c) : Utf8String::toLower(c);
+  };
+  return foldCase(s, end, f);
+}
+
 Utf8String Utf8String::toLower() const {
   auto s = constData();
   auto end = s + size();
   return foldCase(s, end, [](char32_t c) { return Utf8String::toLower(c); });
 }
 
-Utf8String Utf8String::toTitle() {
+Utf8String Utf8String::toTitle() const {
   auto s = constData();
   auto end = s + size();
   return foldCase(s, end, [](char32_t c) { return Utf8String::toTitle(c); });

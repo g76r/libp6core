@@ -133,10 +133,33 @@ public:
   [[nodiscard]] static inline char32_t toTitle(char32_t c);
   [[nodiscard]] Utf8String toUpper() const;
   [[nodiscard]] Utf8String toLower() const;
-  [[nodiscard]] Utf8String toTitle();
+  [[nodiscard]] Utf8String toTitle() const;
   [[nodiscard]] bool isLower() const;
   [[nodiscard]] bool isUpper() const;
   [[nodiscard]] bool isTitle() const;
+  /** Convert to C-identifier: allow only letters, digits and underscores, by
+   *  replacing unallowed chars with '_' and prefixing with '_' if it begins
+   *  with a digit.
+   *  e.g. "::foo" -> "__foo", "42" -> "_42", "foo*bar" -> "foo_bar"
+   *  @param allow_non_ascii also allow >= 0x80 chars (but not as first char)
+   */
+  [[nodiscard]] Utf8String toIdentifier(bool allow_non_ascii = false) const;
+  /** Convert to valid Internet header (RFC 5322): allow only ascii printable
+   *  characters different from ':', by replacing unallowed chars with '_'.
+   *  @param ignore_trailing_colon remove trailing ':' rather than adding '_'
+   *  @see toInternetHeaderCase
+   */
+  [[nodiscard]] Utf8String toInternetHeaderName(
+      bool ignore_trailing_colon = true) const;
+  /** Convert to Kebab-Upper-Camel-Case, which is a common convention for
+   *  Internet header (event though RFC 5322 allows any case and some large
+   *  scale vendors such as AWS just ignore it).
+   *  e.g. "host" -> "Host", "x-forwarded-for" -> "X-Forwarded-For",
+   *  "_FOO" -> "-Foo", "foo_bar" -> "Foo-Bar", "2É" -> "2é"
+   *  @see toInternetHeaderName
+   */
+  [[nodiscard]] Utf8String toInternetHeaderCase() const;
+
   // FIXME inline int compare(QByteArrayView a, Qt::CaseSensitivity cs) const noexcept;
 
   /** Return utf8 characters count. Count utf8 sequences without ensuring

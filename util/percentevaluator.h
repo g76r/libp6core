@@ -124,6 +124,9 @@ public:
    *  Kind equivalent to eval("%{"+key+"}") without the overhead.
    *  Used for instance by MathExpr where unquoted tokens are considered
    *  variable so are to be evaluated.
+   *  Can also be used e.g. to evaluate the values of a regular map (not a
+   *  ParamSet or to map the values of a ParamSet excluding it from the
+   *  evaluating context).
    *
    *  eval_key("foo") -> value of param foo in the context
    *  eval_key("=date", 0) -> current date time without any context

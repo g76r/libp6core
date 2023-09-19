@@ -81,28 +81,6 @@ public:
    * "hello_world" -> "hello_world", "hello-World" -> "hello_world".
    */
   static QString toSnakeCase(const QString &anycase);
-  /** Convert an identifier to kebab + upper camel case.
-   * E.g. "hello-world" -> "Hello-World", "HelloWorld" -> "Helloworld",
-   * "hello_world" -> "Hello_world", "Hello-world" -> "Hello-World".
-   */
-  static Utf8String toSnakeUpperCamelCase(const Utf8String &anycase);
-  /** Convert an identifier to kebab + upper camel case.
-   * E.g. "hello-world" -> "Hello-World", "HelloWorld" -> "Helloworld",
-   * "hello_world" -> "Hello_world", "Hello-world" -> "Hello-World".
-   */
-  static Utf8String toSnakeUpperCamelCase(const char *anycase) {
-      return toSnakeUpperCamelCase(Utf8String(anycase)); }
-  /** Convert an identifier to kebab + upper camel case.
-   * E.g. "hello-world" -> "Hello-World", "HelloWorld" -> "Helloworld",
-   * "hello_world" -> "Hello_world", "Hello-world" -> "Hello-World".
-   */
-  static QString toSnakeUpperCamelCase(const QString &anycase);
-  /** Convert an identifier to kebab + upper camel case, converting only ASCII-7
-   * chars, like internet header names.
-   * E.g. "hello-world" -> "Hello-World", "HelloWorld" -> "Helloworld",
-   * "hello_world" -> "Hello_world", "Hello-world" -> "Hello-World".
-   */
-  static Utf8String toAsciiSnakeUpperCamelCase(const Utf8String &anycase);
 
 private:
   template <int DIR> // DIR: -1 left 0 middle +1 right

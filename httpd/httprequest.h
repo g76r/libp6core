@@ -29,8 +29,16 @@ class HttpRequestPseudoParamsProvider;
  */
 class LIBP6CORESHARED_EXPORT HttpRequest {
 public:
-  enum HttpMethod { NONE = 0, HEAD = 1, GET = 2, POST = 4, PUT = 8,
-                           DELETE = 16, OPTIONS = 32, ANY = 0x7fff} ;
+  enum HttpMethod : signed char {
+    NONE = 0,
+    HEAD = 1,
+    GET = 2,
+    POST = 4,
+    PUT = 8,
+    DELETE = 16,
+    OPTIONS = 32,
+    ANY = -1,
+  };
 
 private:
   QExplicitlySharedDataPointer<HttpRequestData> d;
