@@ -403,10 +403,10 @@ QDebug operator<<(QDebug dbg, const ParamSet &params) {
     for (auto key: keys)
       if (scope.isEmpty())
         dbg.space().noquote() << key << "="
-                              << params.paramRawValue(key);
+                              << p.paramRawValue(key);
       else
         dbg.space().noquote() << "["+scope+"]"+key << "="
-                              << params.paramRawValue(key);
+                              << p.paramRawValue(key);
     if (keys.isEmpty())
       dbg.space().noquote() << "0";
     if (scope.isEmpty())
@@ -429,9 +429,9 @@ LogHelper operator<<(LogHelper lh, const ParamSet &params) {
     auto keys = p.paramKeys(EvalContext(scope)).toSortedList();
     for (auto key: keys)
       if (scope.isEmpty())
-        lh << key << "=" << params.paramRawValue(key) << " ";
+        lh << key << "=" << p.paramRawValue(key) << " ";
       else
-        lh << "["+scope+"]"+key << "=" << params.paramRawValue(key) << " ";
+        lh << "["+scope+"]"+key << "=" << p.paramRawValue(key) << " ";
     if (keys.isEmpty())
       lh << "0 ";
     if (scope.isEmpty())
