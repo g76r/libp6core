@@ -255,6 +255,8 @@ void ParamSet::setParent(const ParamSet &parent) {
 }
 
 void ParamSet::setValue(const Utf8String &key, const QVariant &value) {
+  if (key.isEmpty()) [[unlikely]]
+    return;
   if (!d) [[unlikely]]
     d = new ParamSetData;
   d->_params.insert(key, value);
