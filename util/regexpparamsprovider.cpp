@@ -16,7 +16,9 @@
 
 QVariant RegexpParamsProvider::paramRawValue(
     const Utf8String &key, const QVariant &def,
-    const EvalContext &) const {
+    const EvalContext &context) const {
+  if (!context.hasScopeOrNone(paramScope()))
+    return def;
   if (key.isEmpty())
     return def;
   auto value = _match.captured(key);
@@ -33,7 +35,9 @@ QVariant RegexpParamsProvider::paramRawValue(
 }
 
 Utf8StringSet RegexpParamsProvider::paramKeys(
-    const EvalContext &) const {
+    const EvalContext &context) const {
+  if (!context.hasScopeOrNone(paramScope()))
+    return {};
   Utf8StringSet keys;
   qsizetype n = _match.capturedTexts().size();
   for (qsizetype i = 0; i < n; ++i)
