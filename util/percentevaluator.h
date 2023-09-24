@@ -214,9 +214,14 @@ public:
    * That is: replace % with %% within the string. */
   [[nodiscard]] static inline Utf8String escape(QByteArray utf8) {
     return utf8.isNull() ? utf8 : utf8.replace('%', "%%"_ba); }
-  /** Convenience method */
-  [[nodiscard]] static inline Utf8String escape(const QVariant &v) {
-    return v.isValid() ? Utf8String(v).replace('%', "%%"_u8) : Utf8String{}; }
+  /** Escape all characters in string so that they no longer have special
+   * meaning for evaluate() and splitAndEvaluate() methods.
+   * That is: replace % with %% within the string.
+   * Pass through if the string representation do not contain any %,
+   * e.g. escape(2) will return an integer QVariant, not "2" string. */
+  [[nodiscard]] static inline QVariant escape(const QVariant &v) {
+    Utf8String s(v);
+    return s.contains('%') ? s.replace('%', "%%"_u8) : v; }
   /** Return a regular expression that matches any string that can result
    * in evaluation of the rawValue.
    * For instance "foo%{=date:yyyy}-%{bar}.log" is converted into some pattern
