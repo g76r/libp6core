@@ -105,7 +105,7 @@ public:
   void disableBodyOutput();
   /** Syntaxic sugar for setHeader("Content-Type", type).
    * Default content type is "text/plain;charset=UTF-8". */
-  inline void setContentType(Utf8String type) {
+  inline void setContentType(const Utf8String &type) {
     setHeader("Content-Type"_u8, type); }
   /** Syntaxic sugar for setHeader("Content-Length", length). */
   inline void setContentLength(qint64 length) {
