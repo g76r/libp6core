@@ -20,7 +20,7 @@
 
 using SharedUiItemDataFunction = std::function<
 QVariant(const SharedUiItemData *data, const Utf8String &key,
-const PercentEvaluator::EvalContext context, int matched_length)>;
+const PercentEvaluator::EvalContext &context, int matched_length)>;
 
 using SharedUiItemDataFunctions = RadixTree<SharedUiItemDataFunction>;
 
