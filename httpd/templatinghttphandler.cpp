@@ -39,7 +39,7 @@ void TemplatingHttpHandler::sendLocalResource(
   setMimeTypeByName(file->fileName().toUtf8(), res);
   for (auto filter: _filters) {
     if (QRegularExpression(filter).match(file->fileName()).hasMatch()) {
-      QByteArray output;
+      Utf8String output;
       computePathToRoot(req, processingContext);
       applyTemplateFile(req, res, file, processingContext, &output);
       res.setContentLength(output.size());
@@ -78,8 +78,8 @@ void TemplatingHttpHandler::computePathToRoot(
 void TemplatingHttpHandler::applyTemplateFile(
     HttpRequest req, HttpResponse res, QFile *file,
     ParamsProviderMerger *processingContext,
-    QByteArray *output) {
-  if (!output) {
+    Utf8String *output) {
+  if (!output) [[unlikely]] {
     Log::error() << "TemplatingHttpHandler::applyTemplateFile called with null "
                     "output";
     return;
@@ -107,15 +107,13 @@ void TemplatingHttpHandler::applyTemplateFile(
     if (separatorPos >= markupContent.size()) {
       Log::warning() << "TemplatingHttpHandler found incorrect markup '"
                      << markupContent << "'";
-      output->append("?"_ba);
+      output->append('?');
     } else {
       auto markupId = markupContent.left(separatorPos);
-      if (markupContent.at(0) == '=') {
-        // syntax: <?=paramset_evaluable_expression?>
+      if (markupContent.at(0) == '=') { // syntax: <?=percent_expression?>
         output->append(PercentEvaluator::eval_utf8(
                          markupContent.mid(1), processingContext));
-      } else if (markupId == "view"_ba) {
-        // syntax: <?view:viewname?>
+      } else if (markupId == "view") { // syntax: <?view:viewname?>
         auto markupData = markupContent.mid(separatorPos+1);
         TextView *view = _views.value(markupData);
         if (view) {
@@ -126,8 +124,10 @@ void TemplatingHttpHandler::applyTemplateFile(
                          << markupData << "' among " << _views.keys();
           output->append("?"_ba);
         }
-      } else if (markupId == "value"_ba || markupId == "rawvalue"_ba) {
+      } else if (markupId == "value" || markupId == "rawvalue") {
         // syntax: <?[raw]value:variablename[:valueifnotdef[:valueifdef]]?>
+        // rawvalue disables html encoding (escaping special chars and links
+        // beautifying
         CharacterSeparatedExpression markupParams(markupContent, separatorPos);
         auto value = processingContext->paramUtf8(markupParams.value(0))
                      .toString();
@@ -143,9 +143,9 @@ void TemplatingHttpHandler::applyTemplateFile(
             value = markupParams.value(1);
           }
         }
-        convertData(&value, markupId == "rawvalue"_ba);
+        convertData(&value, markupId == "rawvalue");
         output->append(value.toUtf8());
-      } else if (markupId == "include"_ba) {
+      } else if (markupId == "include") {
         // syntax: <?include:path_relative_to_current_file_dir?>
         auto markupData = markupContent.mid(separatorPos+1);
         auto includePath = file->fileName();
@@ -161,9 +161,9 @@ void TemplatingHttpHandler::applyTemplateFile(
                          << "' in context 0x"
                          << QByteArray::number((long long)processingContext, 16)
                          << " : " << included.errorString();
-          output->append("?"_ba);
+          output->append('?');
         }
-      } else if (markupId == "override"_ba) {
+      } else if (markupId == "override") {
         // syntax: <?override:key:value?>
         CharacterSeparatedExpression markupParams(markupContent, separatorPos);
         auto key = markupParams.value(0);
@@ -178,7 +178,7 @@ void TemplatingHttpHandler::applyTemplateFile(
       } else [[unlikely]] {
         Log::warning() << "TemplatingHttpHandler found unsupported markup: <?"
                        << markupContent << "?>";
-        output->append("?"_ba);
+        output->append('?');
       }
     }
     pos = markupPos+2;

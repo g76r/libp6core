@@ -129,7 +129,7 @@ protected:
 private:
   void applyTemplateFile(HttpRequest req, HttpResponse res, QFile *file,
                          ParamsProviderMerger *processingContext,
-                         QByteArray *output);
+                         Utf8String *output);
   void convertData(QString *data, bool disableTextConversion) const;
 };
 
