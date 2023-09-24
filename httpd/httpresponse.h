@@ -27,7 +27,7 @@ class HttpResponseData;
  * several threads at a time. */
 class LIBP6CORESHARED_EXPORT HttpResponse {
 public:
-  enum WellKnownStatusCode {
+  enum WellKnownStatusCode : signed short {
     Unknown,
     HTTP_Continue = 100,
     HTTP_Switching_Protocols,
@@ -134,7 +134,7 @@ public:
   /** Value associated to a response header.
    * If the header is found several time, last value is returned. */
   Utf8String header(
-      const Utf8String &name, const Utf8String &defaultValue = {}) const;
+      const Utf8String &name, const Utf8String &def = {}) const;
   /** Values associated to a response header, last occurrence first. */
   Utf8StringList headers(const Utf8String &name) const;
   /** Full header hash */

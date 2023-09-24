@@ -184,12 +184,12 @@ void HttpResponse::setCookie(const Utf8String &name, const Utf8String &value,
 }
 
 Utf8String HttpResponse::header(
-    const Utf8String &name, const Utf8String &defaultValue) const {
+    const Utf8String &name, const Utf8String &def) const {
   // LATER handle case insensitivity in header names
   if (!d)
-    return defaultValue;
+    return def;
   auto v = d->_headers.value(name);
-  return v.isNull() ? defaultValue : v;
+  return v.isNull() ? def : v;
 }
 
 Utf8StringList HttpResponse::headers(const Utf8String &name) const {
