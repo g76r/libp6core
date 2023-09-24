@@ -68,10 +68,23 @@ ParamSet ParamsProvider::paramSnapshot() const {
 }
 
 QVariant ParamsProvider::paramValue(
-    const Utf8String &key, const QVariant &def,
-    const EvalContext &context) const {
-  // don't check if context scope is applicable here, because it's up to
-  // paramRawValue to do that
+    const Utf8String &original_key, const QVariant &def,
+    const EvalContext &original_context) const {
+  Utf8String key = original_key;
+  EvalContext context = original_context;
+  // support for [scope] prefix
+  // note that this is a duplicated test when paramValue() is called from
+  // PercentEvaluator::eval_key() but when calling directly
+  // ParamsProvider::paramXXX() it's far more consistent and convenient not to
+  // have to call PercentEvaluator::eval_key(key, my_context_plus_this) instead
+  if (key.value(0) == '[') {
+    auto eos = key.indexOf(']');
+    if (eos < 0) // no ] in key
+      return def;
+    context.setScopeFilter(key.mid(1, eos-1));
+    key = key.mid(eos+1);
+  }
+  // don't check scope filter here, because it's up to paramRawValue to do that
   auto v = paramRawValue(key, {}, context);
   if (!v.isValid())
     return def;
@@ -80,29 +93,12 @@ QVariant ParamsProvider::paramValue(
       && id != QMetaType::QString && id != QMetaType::QByteArray)
     return v; // passing QVariant through if number
   if (!context.paramsProvider()) { // if context has no pp, use this as a pp
-    EvalContext new_context = context;
-    new_context.setParamsProvider(this);
-    v =  PercentEvaluator::eval(Utf8String(v), new_context);
-  } else {
-#if 0
-    // TODO is it a good idea or just too dangerous to allow changing the ppm ?
-    auto ppm = dynamic_cast<ParamsProviderMerger*>(context.paramsProvider());
-    if (ppm) { // if context's pp is a ppm, prepend this
-      ppm->prepend(this);
-      EvalContext new_context = context;
-      new_context.setParamsProvider(ppm);
-      v =  PercentEvaluator::eval(Utf8String(v), new_context);
-      ppm->pop_front();
-    } else { // else create a ppm
-#endif
+    context.setParamsProvider(this);
+  } else { // else prepend this to the context pp
       auto ppm = ParamsProviderMerger(this)(context.paramsProvider());
-      EvalContext new_context = context;
-      new_context.setParamsProvider(&ppm);
-      v =  PercentEvaluator::eval(Utf8String(v), new_context);
-#if 0
-    }
-#endif
+      context.setParamsProvider(&ppm);
   }
+  v =  PercentEvaluator::eval(Utf8String(v), context);
   if (!v.isValid())
     return def;
   return v;

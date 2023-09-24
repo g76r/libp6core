@@ -53,8 +53,9 @@ public:
    *  formula can't be returned by paramKeys())
    *
    *  MUST check that its scope is compatible with context scope, for
-   *  instance with an if(context.hasScopeOrNone(paramScope())) and otherwise
-   *  return {}.
+   *  instance by starting the method with this code:
+   *    if(!context.hasScopeOrNone(paramScope()))
+   *      return {};
    *
    *  Default: always return def. */
   [[nodiscard]] virtual QVariant paramRawValue(
@@ -106,10 +107,11 @@ public:
 
   // %-evaluated values
   /** Return a parameter value.
-   *  Most users want rather to call one of the convenience method without
-   *  alreadyEvaluated param.
-   *  @param context is an evaluation context, uses this if null
-   *  @param alreadyEvaluated used for loop detections, must not be null */
+   *  @param key key of parameter to take value of, if it contains a [scope]
+   *         prefix, use it instead of the one in context
+   *  @param def default value
+   *  @param context %-evaluation context, params providers in the context
+   *         will be prepended with this before evaluation */
   [[nodiscard]] QVariant paramValue(
       const Utf8String &key, const QVariant &def = {},
       const EvalContext &context = {}) const;
