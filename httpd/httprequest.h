@@ -27,7 +27,7 @@ class HttpRequestPseudoParamsProvider;
  * very low cost in thread-safe manner, however it must not be accessed from
  * several threads at a time.
  */
-class LIBP6CORESHARED_EXPORT HttpRequest {
+class LIBP6CORESHARED_EXPORT HttpRequest : public ParamsProvider {
 public:
   enum HttpMethod : signed char {
     NONE = 0,
@@ -108,36 +108,32 @@ public:
   /** Create a ParamsProvider wrapper object to give access to ! pseudo params,
    * url params (query items) and base64 cookies, in this order (url params hide
    * cookies). */
-  inline HttpRequestPseudoParamsProvider pseudoParams() const;
+  using ParamsProvider::paramRawValue;
+  /** Expose as a ParamsProvider the following data/metadata:
+   *  - url URL without password e.g. "http://foobar.io/baz?a=b"
+   *  - method e.g. "GET"
+   *  - clientaddresses e.g. "127.0.0.1 1.2.3.4"
+   *  - param:xxx e.g. param:a -> "b" (works also with POST params)
+   *  - header:xxx e.g. header:Host -> "foobar.io"
+   *  - cookie:xxx content of xxx cookie
+   *  - base64cookie:xxx content of xxx cookie, decoded as base64
+   *  - value:xxx take value from param xxx if set, otherwise base64 cookie xxx
+   */
+  QVariant paramRawValue(
+      const Utf8String &key, const QVariant &def = {},
+      const EvalContext &context = {}) const override;
+  using ParamsProvider::paramKeys;
+  Utf8StringSet paramKeys(const EvalContext &context = {}) const override;
+  using ParamsProvider::paramScope;
+  /** Default: "http" */
+  Utf8String paramScope() const override;
+  /** Set param scope to something else than the default "http". */
+  HttpRequest &setScope(const Utf8String &scope);
   // LATER handle sessions
 
 private:
   inline void parseAndAddCookie(Utf8String rawHeaderValue);
   inline void cacheAllParams() const;
 };
-
-/** ParamsProvider wrapper for pseudo params. */
-class LIBP6CORESHARED_EXPORT HttpRequestPseudoParamsProvider
-    : public ParamsProvider {
-  HttpRequest _request;
-  Utf8String _scope;
-
-public:
-  inline HttpRequestPseudoParamsProvider(
-      HttpRequest request, Utf8String scope = "http"_u8)
-    : _request(request), _scope(scope) { }
-  using ParamsProvider::paramValue;
-  QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def = {},
-      const EvalContext &context = {}) const override;
-  Utf8StringSet paramKeys(const EvalContext &context = {}) const override;
-  Utf8String paramScope() const override;
-  HttpRequestPseudoParamsProvider &setScope(Utf8String scope) {
-    _scope = scope; return *this; }
-};
-
-inline HttpRequestPseudoParamsProvider HttpRequest::pseudoParams() const {
-  return HttpRequestPseudoParamsProvider(*this);
-}
 
 #endif // HTTPREQUEST_H

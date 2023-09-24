@@ -41,6 +41,7 @@ public:
   QUrl _url;
   QUrlQuery _query;
   Utf8StringList _clientAdresses;
+  Utf8String _scope = "http"_u8;
   explicit HttpRequestData(QAbstractSocket *input) : _input(input),
     _method(HttpRequest::NONE) { }
 };
@@ -289,41 +290,64 @@ Utf8StringList HttpRequest::clientAdresses() const {
   return d->_clientAdresses;
 }
 
-QVariant HttpRequestPseudoParamsProvider::paramRawValue(
+using EvalContext = ParamsProvider::EvalContext;
+
+static RadixTree <std::function<QVariant(const HttpRequest *req, const Utf8String &key, const EvalContext &context, int ml)>> _functions {
+{ "url", [](const HttpRequest *req, const Utf8String &, const EvalContext&, int) -> QVariant {
+  return req->url().toString(QUrl::RemovePassword);
+}},
+{ "method", [](const HttpRequest *req, const Utf8String &, const EvalContext&, int) -> QVariant {
+  return req->methodName();
+}},
+{ "clientaddresses", [](const HttpRequest *req, const Utf8String &, const EvalContext&, int) -> QVariant {
+  return req->clientAdresses().join(' ');
+}},
+{ "cookie", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
+  return req->cookie(key.mid(ml+1));
+}},
+{ "base64cookie", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
+  return req->base64Cookie(key.mid(ml+1));
+}},
+{ "param", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
+  return req->param(key.mid(ml+1));
+}},
+{ "value", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
+  auto v = req->param(key.mid(ml+1));
+  if (!v.isNull())
+    return v;
+  return req->base64Cookie(key.mid(ml+1));
+}},
+{ "header", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
+  return req->header(key.mid(ml+1).toInternetHeaderCase());
+}},
+};
+
+QVariant HttpRequest::paramRawValue(
     const Utf8String &key, const QVariant &def,
-    const EvalContext &) const {
-  if (key.startsWith('!')) {
-    if (key == "!url") {
-      return _request.url().toString(QUrl::RemovePassword);
-    } else if (key == "!method") {
-      return _request.methodName();
-    } else if (key == "!clientaddresses") {
-      return _request.clientAdresses().join(' ');
-    } else if (key.startsWith("!cookie")) {
-      return _request.cookie(key.mid(8));
-    } else if (key.startsWith("!base64cookie")) {
-      return _request.base64Cookie(key.mid(14));
-    } else if (key.startsWith("!param")) {
-      return _request.param(key.mid(7));
-    } else if (key.startsWith("!header")) {
-      return _request.header(key.mid(8).toInternetHeaderCase());
-    }
-  }
+    const EvalContext &context) const {
+  if (!context.hasScopeOrNone(paramScope()))
+    return def;
+  int ml;
+  auto f = _functions.value(key, &ml);
+  if (f)
+    return f(this, key, context, ml);
   return def;
 }
 
-Utf8StringSet HttpRequestPseudoParamsProvider::paramKeys(
-    const EvalContext &) const {
-  Utf8StringSet keys { "!url", "!method", "!clientaddresses" };
-  for (auto s: _request.cookies().keys())
-    keys << "!cookie:"+s;
-  for (auto s: _request.paramsAsMap().keys())
-    keys << "!param:"+s;
-  for (auto s: _request.headers().keys())
-    keys << "!header:"+s;
+Utf8StringSet HttpRequest::paramKeys(
+    const EvalContext &context) const {
+  if (!context.hasScopeOrNone(paramScope()))
+    return {};
+  Utf8StringSet keys { "url", "method", "clientaddresses" };
+  for (auto s: cookies().keys())
+    keys << "cookie:"+s;
+  for (auto s: paramsAsMap().keys())
+    keys << "param:"+s;
+  for (auto s: headers().keys())
+    keys << "header:"+s;
   return keys;
 }
 
-Utf8String HttpRequestPseudoParamsProvider::paramScope() const {
-  return _scope;
+Utf8String HttpRequest::paramScope() const {
+  return d ? d->_scope : Utf8String{};
 }

@@ -39,16 +39,12 @@ QString TextTableView::text(ParamsProvider *params, QString scope) const {
   QStringList rows = _rows;
   int rowsCount = rows.size();
   QString pageVariableName =
-      objectName().isEmpty() ? QStringLiteral("page") : objectName()+"-page";
+      objectName().isEmpty() ? u"page"_s : objectName()+u"-page"_s;
   QString pageVariableValue;
-  if (params) {
-    QVariant v = params->paramValue(pageVariableName);
-    if (v.isNull())
-      v = params->paramValue("!base64cookie:"+pageVariableName);
-    if (v.isNull())
-      v = params->paramValue("!param:"+pageVariableName);
-    pageVariableValue = v.toString();
-  }
+  if (params)
+    pageVariableValue = params->paramUtf16(
+                          "value:"_u8+pageVariableName,
+                          ParamsProvider::EvalContext{"http"_u8});
   int currentPage = qMax(1, pageVariableValue.toInt());
   int maxPage = currentPage;
   if (rowsCount == 0)
