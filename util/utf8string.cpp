@@ -457,7 +457,10 @@ Utf8String Utf8String::toInternetHeaderCase() const {
       leading = true;
       return '-';
     }
-    return leading ? Utf8String::toUpper(c) : Utf8String::toLower(c);
+    if (!leading)
+      return Utf8String::toLower(c);
+    leading = false;
+    return Utf8String::toUpper(c);
   };
   return foldCase(s, end, f);
 }
