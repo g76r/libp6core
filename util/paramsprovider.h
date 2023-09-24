@@ -136,7 +136,7 @@ public:
    *  Can be overloaded by ParamsProvider implementation that would have a
    *  more efficient way to get Utf8String than converting to and back from
    *  QVariant through paramValue(). */
-  [[nodiscard]] QString paramUtf16(
+  [[nodiscard]] virtual QString paramUtf16(
       const Utf8String &key, const QString &def = {},
       const EvalContext &context = {}) const;
   /** Convenience method */
