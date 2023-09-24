@@ -16,15 +16,19 @@
 
 QVariant ParamsProviderMerger::paramRawValue(
     const Utf8String &key, const QVariant &def,
-    const EvalContext &context) const {
-  if (!context.hasScopeOrNone(paramScope()))
-    return def;
-  int depth = 0;
+    const EvalContext &original_context) const {
+  auto merger_scope = paramScope();
+  EvalContext context = original_context;
+  if (!merger_scope.isEmpty()) {
+    // if merger has a scope, pretend that all merged providers have this scope
+    if (!context.hasScopeOrNone(paramScope()))
+      return def;
+    context.setScopeFilter({});
+  } // otherwise let merged providers filter themselves
   auto v = _overridingParams.paramRawValue(key, def, context);
   if (v.isValid())
     return v;
   for (auto provider: _providers) {
-    ++depth;
     const ParamsProvider *pp = provider.d->_wild;
     if (!pp)
       pp = &provider.d->_owned;
@@ -36,7 +40,15 @@ QVariant ParamsProviderMerger::paramRawValue(
 }
 
 Utf8StringSet ParamsProviderMerger::paramKeys(
-    const EvalContext &context) const {
+    const EvalContext &original_context) const {
+  auto merger_scope = paramScope();
+  EvalContext context = original_context;
+  if (!merger_scope.isEmpty()) {
+    // if merger has a scope, behave like if merged providers have this scope
+    if (!context.hasScopeOrNone(paramScope()))
+      return {};
+    context.setScopeFilter({});
+  } // otherwise let merged providers filter themselves
   Utf8StringSet keys { _overridingParams.paramKeys() };
   for (auto provider: _providers) {
     if (provider.d->_wild) {
@@ -79,7 +91,10 @@ QDebug operator<<(QDebug dbg, const ParamsProviderMerger *merger) {
   dbg.nospace() << "{";
   for (auto provider: merger->_providers) {
     dbg.space() << "provider: " << provider.d->_wild << " "
-                << provider.d->_owned << ",";
+                << provider.d->_owned << " scope: "
+                << (provider.d->_wild ? provider.d->_wild->paramScope()
+                                      : provider.d->_owned.paramScope())
+                << ",";
   }
   dbg.space() << "overridingParams: " << merger->overridingParams() << ",";
   dbg.space() << "stack size: " << merger->_providersStack.size() << " }";
@@ -92,6 +107,8 @@ LogHelper operator<<(LogHelper lh, const ParamsProviderMerger *merger) {
   lh << "{ ";
   for (auto provider: merger->_providers) {
     lh << " provider: " << provider.d->_wild << " " << provider.d->_owned
+       << " scope: " << (provider.d->_wild ? provider.d->_wild->paramScope()
+                                           : provider.d->_owned.paramScope())
        << ",";
   }
   lh << " overridingParams: " << merger->overridingParams() << ",";

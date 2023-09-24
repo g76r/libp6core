@@ -18,11 +18,18 @@
 
 /** This class builds up several ParamsProvider into only one, chaining
  * calls to paramRawValue().
+ *
  * Does not take ownership on referenced ParamsProvider, these objects must
  * not be deleted before the last call to ParamsProviderList::paramValue()
  * or must be removed from the ParamsProviderMerger before their destruction.
+ *
  * Therefore ParamsProviderMerger should only be used as a temporary object
- * around a call to some method taking a ParamsProvider as a parameter. */
+ * around a call to some method taking a ParamsProvider as a parameter.
+ *
+ * When a scope is set, behave like if all merged providers have this scope
+ * rather than their own, otherwise let every merged provider filtering using
+ * its own scope, which is a way to choose one of ther merged providers rather
+ * than previous one. */
 class LIBP6CORESHARED_EXPORT ParamsProviderMerger : public ParamsProvider {
   friend QDebug LIBP6CORESHARED_EXPORT operator<<(
       QDebug dbg, const ParamsProviderMerger *params);
