@@ -30,8 +30,10 @@ using SharedUiItemDataFunctions = RadixTree<SharedUiItemDataFunction>;
  *  SharedUiItemDataBase<FooData> and won't have to reimplement some part of
  *  the boiler plate provided it have the folowing static members defined:
  *  - const static Utf8String _qualifier e.g. = "foo"
- *  - const static Utf8StringList _sectionNames e.g. = { "id", "parent", "name"}
- *  - const static Utf8StringList _headerNames e.g. = { "Id", "Parent", "Name"}
+ *  - const static Utf8StringIndexedConstList _sectionNames
+ *      e.g. = { "id", "parent", "name"}
+ *  - const static Utf8StringIndexedConstList _headerNames
+ *      e.g. = { "Id", "Parent", "Name"}
  *    (_headerNames can be = to _sectionNames if its convenient for you)
  *
  *  Some more specialized templates with more features exist, to use
@@ -51,15 +53,13 @@ using SharedUiItemDataFunctions = RadixTree<SharedUiItemDataFunction>;
 template<class T>
 class SharedUiItemDataBase : public SharedUiItemData {
 public:
-  static const QMap<Utf8String,int> _sectionIndex;
-
   // SharedUiItemData interface
   virtual Utf8String qualifier() const override { return T::_qualifier; }
   int uiSectionCount() const override { return T::_sectionNames.size(); }
   Utf8String uiSectionName(int section) const override {
     return T::_sectionNames.value(section); }
   int uiSectionByName(Utf8String sectionName) const override {
-    return _sectionIndex.value(sectionName, -1); }
+    return T::_sectionNames.toIndex().value(sectionName, -1); }
   QVariant uiHeaderData(int section, int role) const override {
     switch (role) {
       case Qt::DisplayRole:
@@ -71,12 +71,8 @@ public:
   }
 
   // ParamsProvider interface
-  Utf8String paramScope() const override { return T::_qualifier; }
+  Utf8String paramScope() const override { return qualifier(); }
 };
-
-template<class T>
-const QMap<Utf8String,int> SharedUiItemDataBase<T>::_sectionIndex =
-    ContainerUtils::index(T::_sectionNames);
 
 template<class T>
 class SharedUiItemDataWithFunctions : public SharedUiItemDataBase<T> {
@@ -113,7 +109,8 @@ public:
     _params.lockedData()->setScope(scope);
   }
   SharedUiItemDataWithMutableParams(const ParamSet &params = {})
-    : SharedUiItemDataWithMutableParams(params, T::_qualifier) {}
+    : SharedUiItemDataWithMutableParams(
+        params, SharedUiItemDataWithFunctions<T>::paramScope()) {}
   // ParamsProvider interface
   QVariant paramRawValue(
       const Utf8String &key, const QVariant &def,
@@ -153,7 +150,8 @@ public:
     _params.setScope(scope);
   }
   SharedUiItemDataWithImmutableParams(const ParamSet &params = {})
-    : SharedUiItemDataWithImmutableParams(params, T::_qualifier) {}
+    : SharedUiItemDataWithImmutableParams(
+        params, SharedUiItemDataWithFunctions<T>::paramScope()) {}
   // ParamsProvider interface
   QVariant paramRawValue(
       const Utf8String &key, const QVariant &def,
