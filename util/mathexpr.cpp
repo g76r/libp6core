@@ -138,6 +138,15 @@ RadixTree<OperatorDef> operatordefs {
         auto x = args.value(0)(context).toLongLong(&ok);
         return ok ? QVariant(x) : QVariant();
       } }, true },
+  { "#", { 1, 3, false, [](QList<Operand> args, const EvalContext &context) {
+        // LATER support lists
+        auto x = Utf8String(args.value(0)(context));
+        return x.utf8Size();
+      } }, true },
+  { "##", { 1, 3, false, [](QList<Operand> args, const EvalContext &context) {
+        auto x = Utf8String(args.value(0)(context));
+        return x.size();
+      } }, true },
   { "*", { 2, 5, false, [](QList<Operand> args,const EvalContext &context) {
         return MathUtils::mulQVariantAsNumber(
               args.value(0)(context),

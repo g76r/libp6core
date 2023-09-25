@@ -518,7 +518,7 @@ following operators are supported with their usual (C, C++, Java, JS, bash...)
 meaning:
 binary operators: `+ - * / % */* .. <=> <= >= < > == != ==* !=* =~ !=~ && ^^ ||`
 `?? ??* <? >? <?* >?*`
-unary operators: `! !! ~ ~~ ?- !- ?* !*`
+unary operators: `! !! ~ ~~ ?- !- ?* !* # ##`
 ternary operator: `?:`
 please note that:
 - there are no unary - and + operators
@@ -531,6 +531,10 @@ please note that:
 - `!-` returns the opposite
 - `?*` returns "false" for null or invalid param and "true" otherwise
 - `!*` returns the opposite
+- `#` returns the size, for a string its length in characters, for a number, its
+  string representation length in characters
+- `##` returns the memory size, for a string its length in bytes, for a number,
+  its string representation length in bytes
 - `??` is a coalescence operator (`%{=rpn,',foo,??,'null,??}` -> foo value if
   not empty otherwise "null")
 - `??*` is a null coalescence operator (`%{=rpn,',foo,??,'null,??*}` -> foo
