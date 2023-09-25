@@ -20,7 +20,6 @@
 #include <QUrlQuery>
 
 class HttpRequestData;
-class HttpRequestPseudoParamsProvider;
 
 /** Class holding all information and actions about an HTTP incoming request.
  * This class uses Qt explicit sharing idiom, i.e. it can be copied for a
