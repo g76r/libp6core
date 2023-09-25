@@ -113,6 +113,8 @@ public:
    *         function like %=date will be available for evaluation) */
   [[nodiscard]] static inline const QVariant eval(
       const Utf8String &expr, const EvalContext &context = {}) {
+    if (expr.isEmpty())
+      return expr; // without this return, "" would be converted into {}
     auto begin = expr.constData();
     return eval(begin, begin+expr.size(), context);
   }
