@@ -180,10 +180,7 @@ examples:
 * `%foo` -> `%bar` if foo is `%%bar`
 * `%{=rpn,foo}` -> `bar` if foo is `bar`
 * `%{=rpn,'foo}` -> `foo`
-* `%{=rpn,'%foo}` -> `bar` if foo is `bar` because `%foo` is evaluated as `bar`
-                     by =rpn function before it's passed to MathExpr which will
-                     ask for evalutation of `'bar` which won't be evaluated
-                     thanks to its quote
+* `%{=rpn,'%foo}` -> `%foo` because =rpn does not %-evaluate its params
 
 %=ifneq
 -------
@@ -588,10 +585,7 @@ examples:
 * `%{=rpn,'aabcdaa,'c$,=~` -> false
 * `%{=rpn,foo}` -> "bar" if foo is "bar"
 * `%{=rpn,'foo}` -> "foo"
-* `%{=rpn,'%foo}` -> "bar" if foo is "bar" because `%foo` is evaluated as `bar`
-                     by =rpn function before it's passed to MathExpr which will
-                     ask for evalutation of `'bar` which won't be evaluated
-                     thanks to its quote
+* `%{=rpn,'%foo}` -> `%foo` because =rpn does not %-evaluate its params
 * `%{=rpn,'dt: ,=date,..}` -> "dt: " followed by current datetime
 * `%{=rpn,=rpn;'42;!!,'z,..}` -> "truez" but don't do that
 
@@ -614,10 +608,7 @@ examples:
 * `%{=rawvalue!foo!e}` -> `%%bar` if foo is `%bar`
 * `%{=rpn,foo}` -> `bar` if foo is `bar`
 * `%{=rpn,'foo}` -> `foo`
-* `%{=rpn,'%foo}` -> `bar` if foo is `bar` because `%foo` is evaluated as `bar`
-                     by =rpn function before it's passed to MathExpr which will
-                     ask for evalutation of `'bar` which won't be evaluated
-                     thanks to its quote
+* `%{=rpn,'%foo}` -> `%foo` because =rpn does not %-evaluate its params
 
 %=integer
 ---------
