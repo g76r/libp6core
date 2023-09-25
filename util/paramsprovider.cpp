@@ -94,11 +94,12 @@ QVariant ParamsProvider::paramValue(
     return v; // passing QVariant through if number
   if (!context.paramsProvider()) { // if context has no pp, use this as a pp
     context.setParamsProvider(this);
+    v = PercentEvaluator::eval(Utf8String(v), context);
   } else { // else prepend this to the context pp
       auto ppm = ParamsProviderMerger(this)(context.paramsProvider());
       context.setParamsProvider(&ppm);
+      v = PercentEvaluator::eval(Utf8String(v), context);
   }
-  v = PercentEvaluator::eval(Utf8String(v), context);
   if (!v.isValid())
     return def;
   return v;
