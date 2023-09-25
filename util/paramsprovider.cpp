@@ -98,7 +98,7 @@ QVariant ParamsProvider::paramValue(
       auto ppm = ParamsProviderMerger(this)(context.paramsProvider());
       context.setParamsProvider(&ppm);
   }
-  v =  PercentEvaluator::eval(Utf8String(v), context);
+  v = PercentEvaluator::eval(Utf8String(v), context);
   if (!v.isValid())
     return def;
   return v;

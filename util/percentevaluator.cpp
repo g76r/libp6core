@@ -448,7 +448,6 @@ static inline QVariant eval_key(
 /** key can have a scope filter specification e.g. "[bar]foo" */
 const QVariant PercentEvaluator::eval_key(
     const Utf8String &key, const EvalContext &context) {
-
   if (key.value(0) != '[') // no scope filter at the begining of the key
     return ::eval_key({}, key, context);
   auto eos = key.indexOf(']');
