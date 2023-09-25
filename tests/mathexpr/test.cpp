@@ -19,7 +19,7 @@ int main(void) {
            << PercentEvaluator::eval_utf8("3: %{=rpn,'1,'2,+}")
            << PercentEvaluator::eval("%{=rpn,'1,'2,+}")
            << PercentEvaluator::eval_utf8("6: %{=rpn,'1,x,+}", &x5)
-           << PercentEvaluator::eval_utf8("15: %{=rpn,'1,x,..}", &x5)
+           << PercentEvaluator::eval_utf8("15: %{=rpn,'1,x,@}", &x5)
            << PercentEvaluator::eval_utf8(": %{=rpn,'1,',+}")
            << PercentEvaluator::eval("%{=rpn,'1,',+}")
            << PercentEvaluator::eval_utf8("2: %{=rpn,'1,'true,+}")
@@ -51,14 +51,14 @@ int main(void) {
   qDebug() << PercentEvaluator::eval_utf8("%{=rpn,foo,inexistent,>?}=bar %{=rpn,foo,inexistent,>?*,'ø,??*}=ø "
               "%{=rpn,'0xffffffffffffffff','1,+,'ø,??*}=ø %{=rpn,'1,'foo,+,'ø,??*}=ø "
               "%{=rpn,'0xfffffffffffffffe','1,+,'ø,??*}=18446744073709551615 "
-              "%{=rpn,'abc,'12,'13,==,..}=abcfalse ", &p);
+              "%{=rpn,'abc,'12,'13,==,@}=abcfalse ", &p);
   qDebug() << PercentEvaluator::eval_utf8("%{=rpn,x,'true,&&,'ø,??*}=true %{=rpn,x,empty,&&,'ø,??*}=ø "
               "%{=rpn,x,nonexistent,&&,'ø,??*}=ø %{=rpn,<pi>}=3.141592653589793 "
               "%{=rpn,<null>}= %{=rpn,',?*}=true %{=rpn,<nil>,?*}=false", &p);
   qDebug() << PercentEvaluator::eval_utf8("%{=rpn,foo}=bar %{=rpn,'foo}=foo "
               "%{=rpn,'%foo}=%foo", // =rpn does not %evaluate it terms
               &p);
-  qDebug() << PercentEvaluator::eval_utf8("%{=rpn,=rpn;'42;!!,'z,..}=truez "
-              "%{=rpn,'dt: ,=date**2023,..}=dt: 2023-09-20 00:00:00,000", &p);
+  qDebug() << PercentEvaluator::eval_utf8("%{=rpn,=rpn;'42;!!,'z,@}=truez "
+              "%{=rpn,'dt: ,=date@@2023,@}=dt: 2023-09-20 00:00:00,000", &p);
   return 0;
 }

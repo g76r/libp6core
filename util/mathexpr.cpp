@@ -173,9 +173,9 @@ RadixTree<OperatorDef> operatordefs {
               args.value(0)(context),
               args.value(1)(context));
       } }, true },
-  { "..", { 2, 6, false, [](QList<Operand> args, const EvalContext &context) {
-        auto x = args.value(0)(context).toString();
-        auto y = args.value(1)(context).toString();
+  { "@", { 2, 6, false, [](QList<Operand> args, const EvalContext &context) {
+        auto x = Utf8String(args.value(0)(context));
+        auto y = Utf8String(args.value(1)(context));
         return x+y;
       } }, true },
   { "<?", { 2, 7, false, [](QList<Operand> args, const EvalContext &context) {

@@ -516,14 +516,14 @@ a simple quote and are considered variables (and will be %-evaluated) otherwise
 
 following operators are supported with their usual (C, C++, Java, JS, bash...)
 meaning:
-binary operators: `+ - * / % */* .. <=> <= >= < > == != ==* !=* =~ !=~ && ^^ ||`
+binary operators: `+ - * / % */* @ <=> <= >= < > == != ==* !=* =~ !=~ && ^^ ||`
 `?? ??* <? >? <?* >?*`
 unary operators: `! !! ~ ~~ ?- !- ?* !* # ##`
 ternary operator: `?:`
 please note that:
 - there are no unary - and + operators
-- `..` is a string concatenation operator whereas `+` is always a numerical
-  operator
+- `@` is a concatenation operator whereas `+` is always an addition operator
+  so @ will convert numbers to strings and then concatenate them
 - `=~` is a regexp matching operator (right operand is a regexp)
 - `!!` is a boolean conversion operator (`%{=rpn,1,!!}` -> true)
 - `~~` is an integer conversion operator (`%{=rpn,3.14,~~}` -> 3)
@@ -574,12 +574,12 @@ promotions and converting non null numbers to true booleans.
 
 examples:
 * `%{=rpn,'1,'2,+}` -> 3 (addition)
-* `%{=rpn,'1,'2,..}` -> "12" (concatenation)
+* `%{=rpn,'1,'2,@}` -> "12" (concatenation)
 * `%{=rpn,'1,x,+}` -> 2 if x is "1"
 * `%{=rpn,'0x20,x,+}` -> 33.5 if x is "1.5"
 * `%{=rpn,'2k,x,+}` -> 2001.5 if x is "1.5"
 * `%{=rpn,'1,',+}` -> invalid (because 2nd operand isn't a number)
-* `%{=rpn,'1,',..}` -> "1"
+* `%{=rpn,'1,',@}` -> "1"
 * `%{=rpn,'1,'true,+}` -> 2
 * `%{=rpn,'1,'true,&&}` -> true (1 is casted to true by && operator)
 * `%{=rpn,'1,'true,==}` -> false (1 is not a boolean)
@@ -590,8 +590,8 @@ examples:
 * `%{=rpn,foo}` -> "bar" if foo is "bar"
 * `%{=rpn,'foo}` -> "foo"
 * `%{=rpn,'%foo}` -> `%foo` because =rpn does not %-evaluate its params
-* `%{=rpn,'dt: ,=date,..}` -> "dt: " followed by current datetime
-* `%{=rpn,=rpn;'42;!!,'z,..}` -> "truez" but don't do that
+* `%{=rpn,'dt: ,=date,@}` -> "dt: " followed by current datetime
+* `%{=rpn,=rpn;'42;!!,'z,@}` -> "truez" but don't do that
 
 %'
 --
