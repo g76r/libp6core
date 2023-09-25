@@ -215,7 +215,7 @@ public:
    * meaning for evaluate() and splitAndEvaluate() methods.
    * That is: replace % with %% within the string. */
   [[nodiscard]] static inline Utf8String escape(QByteArray utf8) {
-    return utf8.isNull() ? utf8 : utf8.replace('%', "%%"_ba); }
+    return utf8.isNull() ? utf8 : utf8.replace('%', "%%"_u8); }
   /** Escape all characters in string so that they no longer have special
    * meaning for evaluate() and splitAndEvaluate() methods.
    * That is: replace % with %% within the string.

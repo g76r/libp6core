@@ -50,7 +50,7 @@ public:
   QByteArrayList toByteArrayList() const {
     return QByteArrayList(cbegin(), cend()); }
   Utf8StringSet toSet() const;
-  inline Utf8StringList toSortedDeduplicatedList() const;
+  Utf8StringList toSortedDeduplicatedList() const;
   std::set<Utf8String> toStdSet() const {
     return std::set<Utf8String>(cbegin(), cend()); }
   /** Return first string as value 1 and so on. Return join(' ') as value 0. */

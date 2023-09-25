@@ -72,7 +72,7 @@ QByteArray GraphvizImageHttpHandler::contentType(
 QByteArray GraphvizImageHttpHandler::contentEncoding(
     HttpRequest, ParamsProviderMerger *) const {
   QMutexLocker ml(&_mutex);
-  return (_imageFormat == Svgz) ? "gzip"_ba : QByteArray{};
+  return (_imageFormat == Svgz) ? "gzip"_u8 : QByteArray{};
 }
 
 QByteArray GraphvizImageHttpHandler::source(
@@ -230,14 +230,14 @@ void GraphvizImageHttpHandler::setImageFormat(ImageFormat imageFormat) {
   _imageFormat = imageFormat;
   switch (_imageFormat) {
   case Png:
-    _contentType = "image/png"_ba;
+    _contentType = "image/png"_u8;
     break;
   case Svg:
   case Svgz:
-    _contentType = "image/svg+xml"_ba;
+    _contentType = "image/svg+xml"_u8;
     break;
   case Plain:
-    _contentType = "text/plain;charset=UTF-8"_ba;
+    _contentType = "text/plain;charset=UTF-8"_u8;
     break;
   }
 }

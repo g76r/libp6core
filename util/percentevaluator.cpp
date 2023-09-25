@@ -673,8 +673,7 @@ void PercentEvaluator::enable_variable_not_found_logging(bool enabled) {
 
 const Utf8String PercentEvaluator::EvalContext::toUtf8() const {
   Utf8String s = "{ params: { "_u8;
-  s += _params_provider ? _params_provider->paramKeys().join(", ")
-                        : "null"_ba;
+  s += _params_provider ? _params_provider->paramKeys().join(", ") : "null"_u8;
   s += " } scopes: {" + Utf8String::number(_scope_filter.size()) + " "
        + _scope_filter.join(", ");
   s += " } role: " + Utf8String::number(_role) + " }";

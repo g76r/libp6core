@@ -30,7 +30,7 @@ public:
 
 private:
   GraphvizRenderer _renderer;
-  QByteArray _source, _contentType;
+  Utf8String _source, _contentType;
   QString _stderr;
   bool _renderingRequested, _renderingRunning;
   int _renderingNeeded;

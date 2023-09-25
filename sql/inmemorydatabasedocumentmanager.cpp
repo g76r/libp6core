@@ -201,7 +201,7 @@ bool InMemoryDatabaseDocumentManager::createTableAndSelectData(
              "invalid parameters");
   Utf8StringList columnNames;
   SharedUiItemDocumentTransaction transaction(this);
-  SharedUiItem item = creator(&transaction, "dummy"_ba, errorString);
+  SharedUiItem item = creator(&transaction, "dummy"_u8, errorString);
   if (!_db.isOpen())
     return true; // do nothing without a valid opened database
   if (item.isNull()) {
@@ -249,7 +249,7 @@ sqlite> drop table foo;
   }
   //qDebug() << "***** selected:" << query.executedQuery();
   while (query.next()) {
-    item = creator(&transaction, "dummy"_ba, errorString);
+    item = creator(&transaction, "dummy"_u8, errorString);
     if (item.isNull()) {
       qWarning() << "InMemoryDatabaseDocumentManager cannot create empty "
                     "item of type" << qualifier << ":" << *errorString;

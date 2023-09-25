@@ -109,17 +109,17 @@ void Log::shutdown() {
 Utf8String Log::severityToString(Severity severity) {
   switch (severity) {
   case Debug:
-    return "DEBUG"_ba;
+    return "DEBUG"_u8;
   case Info:
-    return "INFO"_ba;
+    return "INFO"_u8;
   case Warning:
-    return "WARNING"_ba;
+    return "WARNING"_u8;
   case Error:
-    return "ERROR"_ba;
+    return "ERROR"_u8;
   case Fatal:
-    return "FATAL"_ba;
+    return "FATAL"_u8;
   }
-  return "UNKNOWN"_ba;
+  return "UNKNOWN"_u8;
 }
 
 Log::Severity Log::severityFromString(Utf8String string) {
@@ -181,7 +181,7 @@ static void qtLogSamePatternWrapper(
   Utf8String taskid = QThread::currentThread()->objectName();
   sanitizeField(&taskid);
   if (taskid.isEmpty())
-    taskid = "?"_ba;
+    taskid = "?"_u8;
   Utf8String realMsg = msg;
   sanitizeMessage(&realMsg);
   Utf8String location =

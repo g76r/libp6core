@@ -27,7 +27,7 @@ TemplatingHttpHandler::_defaultTextConversion(HtmlEscapingWithUrlAsLinks);
 
 TemplatingHttpHandler::TemplatingHttpHandler(
     QObject *parent, const QByteArray &urlPathPrefix,
-    const QByteArray &documentRoot)
+    const Utf8String &documentRoot)
   : FilesystemHttpHandler(parent, urlPathPrefix, documentRoot),
     _textConversion(_defaultTextConversion),
     _maxValueLength(_defaultMaxValueLength) {
@@ -70,9 +70,9 @@ void TemplatingHttpHandler::computePathToRoot(
   bool ignoreOneSlash = prefix.isEmpty() ? path.startsWith('/')
                                          : !prefix.endsWith('/');
   int depth = path.count('/') - (ignoreOneSlash ? 1 : 0);
-  auto pathToRoot = depth ? "../"_ba.repeated(depth) : "./"_ba;
+  auto pathToRoot = depth ? "../"_u8.repeated(depth) : "./"_u8;
   if (processingContext)
-    processingContext->overrideParamValue("!pathtoroot"_ba, pathToRoot);
+    processingContext->overrideParamValue("!pathtoroot"_u8, pathToRoot);
 }
 
 void TemplatingHttpHandler::applyTemplateFile(
@@ -121,7 +121,7 @@ void TemplatingHttpHandler::applyTemplateFile(
         } else [[unlikely]] {
           Log::warning() << "TemplatingHttpHandler did not find view '"
                          << markupData << "' among " << _views.keys();
-          output->append("?"_ba);
+          output->append('?');
         }
       } else if (markupId == "value" || markupId == "rawvalue") {
         // syntax: <?[raw]value:variablename[:valueifnotdef[:valueifdef]]?>

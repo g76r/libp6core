@@ -28,7 +28,7 @@ static QAtomicInt _workersCounter(1);
 HttpWorker::HttpWorker(HttpServer *server)
   : _server(server), _thread(new QThread()) {
   _defaultCacheControlHeader = ParamsProvider::environment()
-      ->paramUtf8("HTTP_DEFAULT_CACHE_CONTROL_HEADER"_ba, "no-cache"_ba);
+      ->paramUtf8("HTTP_DEFAULT_CACHE_CONTROL_HEADER"_u8, "no-cache"_u8);
   _thread->setObjectName(QString("HttpWorker-%1")
                          .arg(_workersCounter.fetchAndAddOrdered(1)));
   connect(this, &HttpWorker::destroyed, _thread, &QThread::quit);
@@ -56,16 +56,16 @@ void HttpWorker::handleConnection(
     // emit error(_socket->error());
   }
   socket->setReadBufferSize(MAXIMUM_LINE_SIZE+2);
-  QByteArrayList args;
+  Utf8StringList args;
   HttpRequest req(socket);
   HttpResponse res(socket);
   ParamsProviderMerger processingContext;
   HttpHandler *handler = 0;
-  QByteArray uri;
+  Utf8String uri;
   QUrl url;
   //qDebug() << "new client socket" << socket->peerAddress();
   QTextStream out(socket);
-  QByteArray line;
+  Utf8String line;
   qint64 contentLength = 0;
   HttpRequest::HttpMethod method = HttpRequest::NONE;
   if (!socket->canReadLine()
@@ -139,14 +139,14 @@ void HttpWorker::handleConnection(
   if (uri.isEmpty() || uri[0] != '/')
     uri.insert(0, '/');
   // LATER is utf8 the right choice ? should encoding depend on headers ?
-  url = QUrl::fromEncoded("http://host"_ba+uri);
+  url = QUrl::fromEncoded("http://host"_u8+uri);
   req.overrideUrl(url);
   // load post params
   // LATER should probably also remove query items
   if (method == HttpRequest::POST
-      && req.header("Content-Type"_ba)
-      == "application/x-www-form-urlencoded"_ba) {
-    contentLength = req.header("Content-Length"_ba, "-1"_ba).toLongLong();
+      && req.header("Content-Type"_u8)
+      == "application/x-www-form-urlencoded"_u8) {
+    contentLength = req.header("Content-Length"_u8, "-1"_u8).toLongLong();
     if (contentLength < 0) [[unlikely]] {
       sendError(out, "411 Length Required");
       goto finally;
@@ -179,7 +179,7 @@ void HttpWorker::handleConnection(
       req.overrideParam(p.first.toUtf8(), p.second.toUtf8());
   }
   handler = _server->chooseHandler(req);
-  if (req.header("Expect"_ba) == "100-continue"_ba) {
+  if (req.header("Expect"_u8) == "100-continue"_u8) {
     // LATER only send 100 Continue if the URI is actually accepted by the handler
     out << "HTTP/1.1 100 Continue\r\n\r\n";
     out.flush();

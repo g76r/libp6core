@@ -64,13 +64,13 @@ QAbstractSocket *HttpResponse::output() {
         + statusAsString(d->_status) + "\r\n"_u8;
     // LATER sanitize well-known headers (Content-Type...) values
     // LATER handle multi-line headers and special chars
-    auto keys = d->_headers.keys();
-    for (auto name: QSet<Utf8String>(keys.begin(), keys.end()))
+    for (auto name: Utf8StringList(d->_headers.keys())
+         .toSortedDeduplicatedList())
       for (auto value: d->_headers.values(name))
-        ba += name + ": "_ba + value + "\r\n"_ba;
-    if (header("Content-Type"_ba).isEmpty())
-      ba += "Content-Type: text/plain;charset=UTF-8\r\n"_ba;
-    ba += "Connection: close\r\n\r\n"_ba;
+        ba += name + ": "_u8 + value + "\r\n"_u8;
+    if (header("Content-Type"_u8).isEmpty())
+      ba += "Content-Type: text/plain;charset=UTF-8\r\n"_u8;
+    ba += "Connection: close\r\n\r\n"_u8;
     d->_output->write(ba);
     d->_headersSent = true;
   }
@@ -123,8 +123,8 @@ void HttpResponse::redirect(Utf8String location, int status) {
   if (!d)
     return;
   setStatus(status);
-  setHeader("Location"_ba, location);
-  setContentType("text/html;charset=UTF-8"_ba);
+  setHeader("Location"_u8, location);
+  setContentType("text/html;charset=UTF-8"_u8);
   // LATER url encode
   output()->write("<html><body>Moved. Please click on <a href=\""
                   +location+"\">this link</a>");
@@ -152,9 +152,9 @@ void HttpResponse::setCookie(const Utf8String &name, const Utf8String &value,
                    << value;
     return;
   }
-  auto s = name+"="+value;
+  auto s = name+"="_u8+value;
   if (!expires.isNull())
-    s += "; Expires="_ba + TimeFormats::toRfc2822DateTime(expires).toUtf8();
+    s += "; Expires="_u8 + TimeFormats::toRfc2822DateTime(expires).toUtf8();
   if (!path.isEmpty()) {
     if (_pathRegexp.match(path).hasMatch())
       s.append("; Path=").append(path);

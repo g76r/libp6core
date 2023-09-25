@@ -58,7 +58,7 @@ public:
   void setAuthorizer(Authorizer *authorizer);
   void setRealm(const QByteArray &realm) {
     _realm = realm;
-    _authContext.setValue("realm"_ba, realm);
+    _authContext.setValue("realm"_u8, realm);
   }
   /** Define which param name will be used to set the (principal) user id in
    * HttpRequestContext. Default is "userid". Null or empty string disable

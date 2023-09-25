@@ -36,7 +36,7 @@ bool ImageHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
   res.setContentType(contentType(0));
   auto contentEncoding = this->contentEncoding(0);
   if (!contentEncoding.isEmpty())
-    res.setHeader("Content-Encoding"_ba, contentEncoding);
+    res.setHeader("Content-Encoding"_u8, contentEncoding);
   QByteArray data = imageData(req, processingContext, 0);
   res.setContentLength(data.size());
   if (req.method() != HttpRequest::HEAD)

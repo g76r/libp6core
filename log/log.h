@@ -50,13 +50,13 @@ public:
 #if LOG_LOCATION_ENABLED
   LogContext(Utf8String taskid = {}, Utf8String execid = {},
              source_location location = {})
-    : _taskid(field(taskid.isEmpty() ? current_thread_name() : taskid, "?"_ba)),
-      _execid(field(execid, "0"_ba)),
+    : _taskid(field(taskid.isEmpty() ? current_thread_name() : taskid, "?"_u8)),
+      _execid(field(execid, "0"_u8)),
 #if LOG_LOCATION_WITH_FUNCTION_ENABLED
-      _location(location.file_name()+":"_ba+QByteArray::number(location.line())
-                  +":"_ba+location.function_name()) { }
+      _location(location.file_name()+":"_u8+QByteArray::number(location.line())
+                  +":"_u8+location.function_name()) { }
 #else
-      _location(location.file_name()+":"_ba+QByteArray::number(
+      _location(location.file_name()+":"_u8+QByteArray::number(
                   location.line())) { }
 #endif
   LogContext(Utf8String taskid, quint64 execid,
@@ -71,9 +71,9 @@ public:
     : LogContext({}, QByteArray::number(execid), location) {}
 #else
   LogContext(Utf8String taskid = {}, Utf8String execid = {})
-    : _taskid(field(taskid.isEmpty() ? current_thread_name() : taskid, "?"_ba)),
-      _execid(field(execid, "0"_ba)),
-      _location(":"_ba) { }
+    : _taskid(field(taskid.isEmpty() ? current_thread_name() : taskid, "?"_u8)),
+      _execid(field(execid, "0"_u8)),
+      _location(":"_u8) { }
   LogContext(Utf8String taskid, quint64 execid)
     : LogContext(taskid, QByteArray::number(execid)) {}
   LogContext(quint64 execid)

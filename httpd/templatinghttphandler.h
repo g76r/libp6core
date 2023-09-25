@@ -90,7 +90,7 @@ private:
 public:
   explicit TemplatingHttpHandler(
       QObject *parent = 0, const QByteArray &urlPathPrefix = {},
-      const QByteArray &documentRoot = ":docroot/"_ba);
+      const Utf8String &documentRoot = ":docroot/"_u8);
   TemplatingHttpHandler *addView(const QByteArray &label, TextView *view) {
     _views.insert(label, view); return this; }
   TemplatingHttpHandler *addView(TextView *view);

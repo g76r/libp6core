@@ -52,7 +52,7 @@ bool UploadHttpHandler::handleRequest(
   QSemaphoreReleaser releaser(&_maxSimultaneousUploads, 1);
   if (handleCORS(req, res))
     return true;
-  if (req.header("Content-Length"_ba).toULongLong() > _maxBytesPerUpload) {
+  if (req.header("Content-Length"_u8).toULongLong() > _maxBytesPerUpload) {
     Log::warning() << "data too large when uploading data at "
                    << req.url().toString(QUrl::RemovePassword)
                    << " maximum is " << _maxBytesPerUpload;
