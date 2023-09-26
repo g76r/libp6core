@@ -108,13 +108,13 @@ bool ParamSetModel::setData(const QModelIndex &index, const QVariant &value,
       return false;
     if (_rows[index.row()]._key == s)
       return true; // nothing changed
-    newParams.removeValue(_rows[index.row()]._key);
-    newParams.setValue(s, _rows[index.row()]._value);
+    newParams.erase(_rows[index.row()]._key);
+    newParams.insert(s, _rows[index.row()]._value);
     break;
   case 1:
     if (_rows[index.row()]._value == s)
       return true; // nothing changed
-    newParams.setValue(_rows[index.row()]._key, s);
+    newParams.insert(_rows[index.row()]._key, s);
     break;
   default:
     return false;
@@ -142,7 +142,7 @@ static QString genererateNewKey(ParamSet params) {
 QString ParamSetModel::createNewParam() {
   QString key = genererateNewKey(_params), value = u"value"_s;
   ParamSet newParams = _params, oldParams = _params;
-  newParams.setValue(key, value);
+  newParams.insert(key, value);
   changeParams(newParams, oldParams, _paramsetId);
   emit paramsChanged(newParams, oldParams, _paramsetId);
   return key;
@@ -166,7 +166,7 @@ bool ParamSetModel::removeRows(
     return false; // cannot remove inherited rows (such rows are not selectable)
   ParamSet newParams = _params, oldParams = _params;
   for (int i = row; i < row+count; ++i)
-    newParams.removeValue(_rows[i]._key);
+    newParams.erase(_rows[i]._key);
   changeParams(newParams, oldParams, _paramsetId);
   emit paramsChanged(newParams, oldParams, _paramsetId);
   return true;

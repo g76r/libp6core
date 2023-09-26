@@ -144,43 +144,50 @@ public:
     params.setParent(new_parent);
     return params;
   }
-  void setValue(const Utf8String &key, const QVariant &value);
-  /** merge (override) params taking them from a SQL database query
+  ParamSet &insert(const Utf8String &key, const QVariant &value);
+  [[deprecated("use insert instead")]]
+  inline void setValue(const Utf8String &key, const QVariant &value) {
+    insert(key, value); }
+  /** insert (override) params taking them from a SQL database query
    *  SQL query is %-evaluated within parent context.
    *  QSqlDatabase must already be open.
-   *  e.g.: with setValuesFromSqlDb(db, "select foo, bar from t1
+   *  e.g.: with insertFromSqlDb(db, "select foo, bar from t1
    *  where id=42 limit 1", {{ 0, "foo"}, {1, "bar"}}),
    *  foo will contain value of column 1 and bar value of column 2.
-   *  e.g.: with setValuesFromSqlDb(db, "select distinct foo, null from t1
+   *  e.g.: with insertFromSqlDb(db, "select distinct foo, null from t1
    *  union select null, bar from t2", {{ 0, "foos"}, {1, "bars"}}),
    *  foos will be a space separated list of unique non null non empty values
    *  in column foo of table t1
    *  and bars of non null non empty values in column bar of table t2.
    */
-  void setValuesFromSqlDb(const QSqlDatabase &db, const Utf8String &sql,
-                          const QMap<int,Utf8String> &bindings);
-  /** merge (override) params taking them from a SQL database query.
+  void insertFromSqlDb(const QSqlDatabase &db, const Utf8String &sql,
+                       const QMap<int,Utf8String> &bindings);
+  /** insert (override) params taking them from a SQL database query.
    *  convenience method resolving sql database name. */
-  void setValuesFromSqlDb(
+  void insertFromSqlDb(
       const Utf8String &dbname, const Utf8String &sql,
       const QMap<int,Utf8String> &bindings);
-  /** merge (override) params taking them from a SQL database query.
+  /** insert (override) params taking them from a SQL database query.
    *  convenience method mapping each column in order
    *  e.g. {"foo","bar"} is equivalent to {{0,"foo"},{1,"bar"}}. */
-  void setValuesFromSqlDb(const QSqlDatabase &db, const Utf8String &sql,
+  void insertFromSqlDb(const QSqlDatabase &db, const Utf8String &sql,
                           const Utf8StringList &bindings);
-  /** merge (override) params taking them from a SQL database query.
+  /** insert (override) params taking them from a SQL database query.
    *  convenience method resolving sql database name and mapping each column
    *  in order
    *  e.g. {"foo","bar"} is equivalent to {{0,"foo"},{1,"bar"}}. */
-  void setValuesFromSqlDb(const Utf8String &dbname, const Utf8String &sql,
+  void insertFromSqlDb(const Utf8String &dbname, const Utf8String &sql,
                           const Utf8StringList &bindings);
-  /** merge (override) params using another ParamSet content */
-  ParamSet &operator+=(const ParamSet &other);
+  /** insert (override) params using another ParamSet content */
+  ParamSet &insert(const ParamSet &other);
+  /** short for insert() */
+  inline ParamSet &operator+=(const ParamSet &other) { return insert(other); }
+  /** merge (complement) params using another ParamSet content */
+  ParamSet &merge(const ParamSet &other);
+  /** short for merge() */
+  inline ParamSet &operator|=(const ParamSet &other) { return merge(other); }
   void clear();
-  void removeValue(const Utf8String &key);
-  /** Return all keys for which the ParamSet or one of its parents hold a value.
-    */
+  ParamSet &erase(const Utf8String &key);
 
   using ParamsProvider::paramRawValue;
   [[nodiscard]] QVariant paramRawValue(

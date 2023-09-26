@@ -130,7 +130,7 @@ public:
    * ParamsProvider, even those prepended. */
   ParamsProviderMerger &overrideParamValue(
       const Utf8String &key, const QVariant &value) {
-    _overridingParams.setValue(key, value);
+    _overridingParams.insert(key, value);
     return *this;
   }
   /** Remove all ParamsProvider and overriding params. */

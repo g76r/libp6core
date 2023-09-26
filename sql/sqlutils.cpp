@@ -68,7 +68,7 @@ void SqlUtils::setSqlParamsFromChildren(
   if (!params)
     return;
   for (auto sqlparams: config.childrenByName(childname))
-    params->setValuesFromSqlDb(sqlparams.attribute("db"),
+    params->insertFromSqlDb(sqlparams.attribute("db"),
                                sqlparams.attribute("sql"),
                                sqlparams.childrenByName("bindings").value(0)
                                  .contentAsStringList());

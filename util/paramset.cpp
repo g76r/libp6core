@@ -71,9 +71,9 @@ ParamSet::ParamSet(std::initializer_list<Utf8String> list) {
     auto key = *it;
     ++it;
     if (it != std::end(list)) {
-      setValue(key, *it);
+      insert(key, *it);
     } else {
-      setValue(key, ""_u8);
+      insert(key, ""_u8);
       break;
     }
   }
@@ -225,7 +225,7 @@ ParamSet::ParamSet(
     }
   }
   for (auto i: bindings.keys()) {
-    setValue(bindings.value(i), values[i].join(' '));
+    insert(bindings.value(i), values[i].join(' '));
   }
 }
 
@@ -256,15 +256,16 @@ void ParamSet::setParent(const ParamSet &parent) {
     d->_parent = parent;
 }
 
-void ParamSet::setValue(const Utf8String &key, const QVariant &value) {
+ParamSet &ParamSet::insert(const Utf8String &key, const QVariant &value) {
   if (key.isEmpty()) [[unlikely]]
-    return;
+    return *this;
   if (!d) [[unlikely]]
     d = new ParamSetData;
   d->_params.insert(key, value);
+  return *this;
 }
 
-ParamSet &ParamSet::operator+=(const ParamSet &params) {
+ParamSet &ParamSet::insert(const ParamSet &params) {
   if (!d) [[unlikely]]
     d = new ParamSetData;
   for (auto key: params.paramKeys())
@@ -272,9 +273,19 @@ ParamSet &ParamSet::operator+=(const ParamSet &params) {
   return *this;
 }
 
-void ParamSet::removeValue(const Utf8String &key) {
+ParamSet &ParamSet::merge(const ParamSet &params) {
+  if (!d) [[unlikely]]
+    d = new ParamSetData;
+  for (auto key: params.paramKeys())
+    if (!d->_params.contains(key))
+      d->_params.insert(key, params.paramRawValue(key));
+  return *this;
+}
+
+ParamSet &ParamSet::erase(const Utf8String &key) {
   if (d)
     d->_params.remove(key);
+  return *this;
 }
 
 void ParamSet::clear() {
@@ -469,32 +480,32 @@ void ParamSet::detach() {
   d.detach();
 }
 
-void ParamSet::setValuesFromSqlDb(
+void ParamSet::insertFromSqlDb(
     const QSqlDatabase &db, const Utf8String &sql,
     const QMap<int, Utf8String> &bindings) {
   *this += ParamSet(db, sql, bindings, *this);
 }
 
-void ParamSet::setValuesFromSqlDb(
+void ParamSet::insertFromSqlDb(
     const Utf8String &dbname, const Utf8String &sql,
     const QMap<int, Utf8String> &bindings) {
-  setValuesFromSqlDb(QSqlDatabase::database(dbname), sql, bindings);
+  insertFromSqlDb(QSqlDatabase::database(dbname), sql, bindings);
 }
 
-void ParamSet::setValuesFromSqlDb(
+void ParamSet::insertFromSqlDb(
     const Utf8String &dbname, const Utf8String &sql,
     const Utf8StringList &bindings) {
-  setValuesFromSqlDb(QSqlDatabase::database(dbname), sql, bindings);
+  insertFromSqlDb(QSqlDatabase::database(dbname), sql, bindings);
 }
 
-void ParamSet::setValuesFromSqlDb(
+void ParamSet::insertFromSqlDb(
     const QSqlDatabase &db, const Utf8String &sql,
     const Utf8StringList &bindings) {
   QMap<int,Utf8String> map;
   int i = 0;
   for (auto key: bindings)
     map.insert(i++, key);
-  setValuesFromSqlDb(db, sql, map);
+  insertFromSqlDb(db, sql, map);
 }
 
 ParamSetData *ParamSet::fromQIODevice(

@@ -63,7 +63,7 @@ ParamsProvider *ParamsProvider::_empty = new Empty();
 ParamSet ParamsProvider::paramSnapshot() const {
   ParamSet snapshot;
   for (auto key: paramKeys())
-    snapshot.setValue(key, PercentEvaluator::escape(paramValue(key)));
+    snapshot.insert(key, PercentEvaluator::escape(paramValue(key)));
   return snapshot;
 }
 
