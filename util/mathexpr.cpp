@@ -157,7 +157,7 @@ RadixTree<OperatorDef> operatordefs {
               args.value(0)(context),
               args.value(1)(context));
       } }, true },
-  { { "%", "*/*"},
+  { "%",
     { 2, 5, false, [](QList<Operand> args, const EvalContext &context) {
         return MathUtils::modQVariantAsNumber(
               args.value(0)(context),
