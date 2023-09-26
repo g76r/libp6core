@@ -233,19 +233,21 @@ public:
    *  every key. */
   [[nodiscard]] virtual ParamSet paramSnapshot() const;
 
+#if PARAMSET_SUPPORTS_DONTINHERIT
   // temporary partial backward compatibility with old API
   // it's partial because for some method it's broken about inherit
-  [[deprecated("evaluating with two sources (this,ctxt) is deprecated")]]
+  [[deprecated("use paramValue() or paramUtf8() instead")]]
   Utf8String evaluate(
       const Utf8String &key, const ParamsProvider *context = 0,
       Utf8StringSet *ae = 0) const;
-  [[deprecated("evaluating with two sources (this,ctxt) is deprecated")]]
+  [[deprecated("use paramValue() or paramUtf8() instead")]]
   Utf8String evaluate(const Utf8String &key, bool inherit,
       const ParamsProvider *context = 0, Utf8StringSet *ae = 0) const;
-  [[deprecated("split is a special case, do it elsewhere")]]
+  [[deprecated("use paramUtf8List() instead")]]
   Utf8StringList splitAndEvaluate(
       const Utf8String &key, const Utf8String &separators, bool fake_inherit,
       const ParamsProvider *context = 0, Utf8StringSet *ae = 0) const;
+#endif
 };
 
 /** Very simple ParamsProvider implementation, based on Utf8String -> QVariant

@@ -172,6 +172,7 @@ Utf8String ParamsProvider::paramScope() const {
   return {};
 }
 
+#if PARAMSET_SUPPORTS_DONTINHERIT
 Utf8String ParamsProvider::evaluate(
     const Utf8String &key, const ParamsProvider *context,
     Utf8StringSet *ae) const {
@@ -218,6 +219,7 @@ Utf8StringList ParamsProvider::splitAndEvaluate(
     result += PercentEvaluator::eval_utf8(input[i], new_context);
   return result;
 }
+#endif
 
 Utf8String SimpleParamsProvider::paramScope() const {
   return _scope;

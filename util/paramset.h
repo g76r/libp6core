@@ -48,11 +48,15 @@ class LIBP6CORESHARED_EXPORT ParamSet : public ParamsProvider {
   friend class ParamsProviderMerger;
   friend class ParamsProvider; // TODO remove, only needed by DontInheritScope
   QSharedDataPointer<ParamSetData> d;
+#if PARAMSET_SUPPORTS_DONTINHERIT
   const static Utf8String DontInheritScope; // TODO remove
+#endif
 
 public:
+#if PARAMSET_SUPPORTS_DONTINHERIT
   /** Special evaluation scope to disallow inheritance from parent and up */
   const static EvalContext DontInherit; // TODO remove
+#endif
 
   ParamSet();
   /** First item processed as a key, second one as the matching value and so on.
@@ -141,8 +145,6 @@ public:
     return params;
   }
   void setValue(const Utf8String &key, const QVariant &value);
-  /** merge (override) params using another ParamSet content */
-  void setValues(const ParamSet &params, bool inherit = true);
   /** merge (override) params taking them from a SQL database query
    *  SQL query is %-evaluated within parent context.
    *  QSqlDatabase must already be open.
@@ -173,8 +175,8 @@ public:
    *  e.g. {"foo","bar"} is equivalent to {{0,"foo"},{1,"bar"}}. */
   void setValuesFromSqlDb(const Utf8String &dbname, const Utf8String &sql,
                           const Utf8StringList &bindings);
-  /** short for setValues(other) */
-  ParamSet &operator+=(const ParamSet &other){ setValues(other); return *this; }
+  /** merge (override) params using another ParamSet content */
+  ParamSet &operator+=(const ParamSet &other);
   void clear();
   void removeValue(const Utf8String &key);
   /** Return all keys for which the ParamSet or one of its parents hold a value.
@@ -188,21 +190,25 @@ public:
   using ParamsProvider::paramKeys;
   [[nodiscard]] Utf8StringSet paramKeys(
       const EvalContext &context = {}) const override;
-  [[deprecated("use EvalContext{DonInherit} instead")]]
+#if PARAMSET_SUPPORTS_DONTINHERIT
+  [[deprecated("use [scope] filter or remove parent before evaluation")]]
   [[nodiscard]] inline const Utf8StringSet paramKeys(bool inherit) const {
     return paramKeys(inherit ? EvalContext{} : DontInherit); }
+#endif
 
   using ParamsProvider::paramContains;
   [[nodiscard]] bool paramContains(
       const Utf8String &key, const EvalContext &context = {}) const override;
-  [[deprecated("use EvalContext{DonInherit} instead")]]
+#if PARAMSET_SUPPORTS_DONTINHERIT
+  [[deprecated("use [scope] filter or remove parent before evaluation")]]
   [[nodiscard]] inline bool paramContains(
       const Utf8String &key, bool inherit) const {
     return paramContains(key, inherit ? EvalContext{} : DontInherit); }
+#endif
 
-  using ParamsProvider::paramUtf16List;
+#if PARAMSET_SUPPORTS_DONTINHERIT
   using ParamsProvider::paramUtf8List;
-  [[deprecated("use EvalContext{DonInherit} instead")]]
+  [[deprecated("use [scope] filter or remove parent before evaluation")]]
   [[nodiscard]] inline Utf8StringList paramUtf8List(
       const Utf8String &key, const Utf8String &def = {},
       const ParamsProvider *context = 0, bool inherit = true,
@@ -210,6 +216,7 @@ public:
     return paramUtf8List(key, def, inherit ? EvalContext{context} : DontInherit,
                          seps);
   }
+#endif
 
   [[nodiscard]] bool isNull() const;
   [[nodiscard]] int size() const;
@@ -250,7 +257,9 @@ private:
       QIODevice *input, const Utf8String &format,
       const QMap<Utf8String,Utf8String> options,
       const bool escape_percent, const ParamSet &parent);
+  inline Utf8StringSet unscopedParamKeys(bool inherit) const;
 
+#if PARAMSET_SUPPORTS_DONTINHERIT
 public:
   // temporary partial backward compatibility with old API
   // it's partial because for some method it's broken about inherit
@@ -322,6 +331,7 @@ public:
       const ParamsProvider *context = 0) const{
     Q_UNUSED(fake_inherit)
     return paramNumber<bool>(key, def, context); }
+#endif
 };
 
 Q_DECLARE_METATYPE(ParamSet)

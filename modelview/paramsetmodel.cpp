@@ -126,14 +126,15 @@ bool ParamSetModel::setData(const QModelIndex &index, const QVariant &value,
 
 static QString genererateNewKey(ParamSet params) {
   QString key, prefix = u"key"_s;
+  params.setParent({}); // don't inherit
   for (int i = 1; i < 100; ++i) {
     key = prefix+QString::number(i);
-    if (!params.paramContains(key, ParamSet::DontInherit))
+    if (!params.paramContains(key))
       return key;
   }
   forever {
     key = prefix+QString::number(QRandomGenerator::global()->generate());
-    if (!params.paramContains(key, ParamSet::DontInherit))
+    if (!params.paramContains(key))
       return key;
   }
 }
@@ -179,7 +180,8 @@ void ParamSetModel::fillRows(
     if (!parent.isNull())
       fillRows(rows, parent, depth+1, allKeys);
   }
-  auto localKeys = params.paramKeys(ParamSet::DontInherit).toSortedList();
+  params.setParent({}); // don't inherit
+  auto localKeys = params.paramKeys().toSortedList();
   QString scope = _scopes.value(depth);
   if (scope.isEmpty() && depth)
     scope = _defaultScopeForInheritedParams;

@@ -39,10 +39,12 @@
 
 using EvalContext = ParamSet::EvalContext;
 
+#if PARAMSET_SUPPORTS_DONTINHERIT
 const Utf8String ParamSet::DontInheritScope = "!inherit"_u8;
 const EvalContext ParamSet::DontInherit =
     ParamSet::EvalContext{ ParamSet::DontInheritScope };
 static Utf8StringSet _almost_empty_pretend_it_is{"!inherit"_u8};
+#endif
 static QMap<Utf8String,ParamSet> _externals;
 static QMutex _externals_mutex;
 
@@ -262,11 +264,12 @@ void ParamSet::setValue(const Utf8String &key, const QVariant &value) {
   d->_params.insert(key, value);
 }
 
-void ParamSet::setValues(const ParamSet &params, bool inherit) {
+ParamSet &ParamSet::operator+=(const ParamSet &params) {
   if (!d) [[unlikely]]
     d = new ParamSetData;
-  for (auto k: params.paramKeys(inherit ? EvalContext{} : DontInherit))
-    d->_params.insert(k, params.paramRawValue(k));
+  for (auto key: params.paramKeys())
+    d->_params.insert(key, params.paramRawValue(key));
+  return *this;
 }
 
 void ParamSet::removeValue(const Utf8String &key) {
@@ -285,13 +288,18 @@ QVariant ParamSet::paramRawValue(
   if (!d) [[unlikely]]
     return {};
   if (context.hasScopeOrNone(paramScope())
-      || context.scopeFilter() == _almost_empty_pretend_it_is) {
+#if PARAMSET_SUPPORTS_DONTINHERIT
+      || context.scopeFilter() == _almost_empty_pretend_it_is
+#endif
+      ) {
     auto value = d->_params.value(key);
     if (value.isValid())
       return value;
   }
+#if PARAMSET_SUPPORTS_DONTINHERIT
   if (context.containsScope(DontInheritScope))
     return false;
+#endif
   return parent().paramRawValue(key, def, context);
   return {};
 }
@@ -301,9 +309,14 @@ Utf8StringSet ParamSet::paramKeys(const EvalContext &context) const {
     return {};
   Utf8StringSet set;
   if (context.hasScopeOrNone(paramScope())
-      || context.scopeFilter() == _almost_empty_pretend_it_is)
+#if PARAMSET_SUPPORTS_DONTINHERIT
+      || context.scopeFilter() == _almost_empty_pretend_it_is
+#endif
+      )
     set += d->_params.keys();
+#if PARAMSET_SUPPORTS_DONTINHERIT
   if (!context.containsScope(DontInheritScope))
+#endif
     set += parent().paramKeys(context);
   return set;
 }
@@ -314,8 +327,10 @@ bool ParamSet::paramContains(
     return false;
   if (context.hasScopeOrNone(paramScope()) && d->_params.contains(key))
     return true;
+#if PARAMSET_SUPPORTS_DONTINHERIT
   if (context.containsScope(DontInheritScope))
     return false;
+#endif
   return parent().paramContains(key, context);
 }
 
@@ -331,12 +346,22 @@ bool ParamSet::isEmpty() const {
   return d ? d->_params.isEmpty() : true;
 }
 
+Utf8StringSet ParamSet::unscopedParamKeys(bool inherit) const {
+  Utf8StringSet keys;
+  if (!d)
+    return {};
+  keys = d->_params.keys();
+  if (inherit)
+    keys += d->_parent.unscopedParamKeys(true);
+  return keys;
+}
+
 const QString ParamSet::toString(bool inherit, bool decorate) const {
   QString s;
   if (decorate)
     s.append("{ ");
   bool first = true;
-  for(auto key: paramKeys(inherit ? EvalContext{} : DontInherit)) {
+  for(auto key: unscopedParamKeys(inherit).toSortedList()) {
     if (first)
       first = false;
     else
@@ -350,42 +375,42 @@ const QString ParamSet::toString(bool inherit, bool decorate) const {
 
 const QHash<Utf8String, QVariant> ParamSet::toHash(bool inherit) const {
   QHash<Utf8String,QVariant> hash;
-  for (auto key: paramKeys(inherit ? EvalContext{} : DontInherit))
+  for (auto key: unscopedParamKeys(inherit))
     hash.insert(key, paramRawValue(key));
   return hash;
 }
 
 const QMap<Utf8String, QVariant> ParamSet::toMap(bool inherit) const {
   QMap<Utf8String,QVariant> map;
-  for (auto key: paramKeys(inherit ? EvalContext{} : DontInherit))
+  for (auto key: unscopedParamKeys(inherit))
     map.insert(key, paramRawValue(key));
   return map;
 }
 
 const QHash<Utf8String, Utf8String> ParamSet::toUtf8Hash(bool inherit) const {
   QHash<Utf8String,Utf8String> hash;
-  for (auto key: paramKeys(inherit ? EvalContext{} : DontInherit))
+  for (auto key: unscopedParamKeys(inherit))
     hash.insert(key, paramRawUtf8(key));
   return hash;
 }
 
 const QMap<Utf8String, Utf8String> ParamSet::toUtf8Map(bool inherit) const {
   QMap<Utf8String,Utf8String> map;
-  for (auto key: paramKeys(inherit ? EvalContext{} : DontInherit))
+  for (auto key: unscopedParamKeys(inherit))
     map.insert(key, paramRawUtf8(key));
   return map;
 }
 
 const QHash<QString, QString> ParamSet::toUtf16Hash(bool inherit) const {
   QHash<QString,QString> hash;
-  for (auto key: paramKeys(inherit ? EvalContext{} : DontInherit))
+  for (auto key: unscopedParamKeys(inherit))
     hash.insert(key, paramRawValue(key).toString());
   return hash;
 }
 
 const QMap<QString,QString> ParamSet::toUtf16Map(bool inherit) const {
   QMap<QString,QString> map;
-  for (auto key: paramKeys(inherit ? EvalContext{} : DontInherit))
+  for (auto key: unscopedParamKeys(inherit))
     map.insert(key, paramRawValue(key).toString());
   return map;
 }
@@ -447,8 +472,7 @@ void ParamSet::detach() {
 void ParamSet::setValuesFromSqlDb(
     const QSqlDatabase &db, const Utf8String &sql,
     const QMap<int, Utf8String> &bindings) {
-  ParamSet params(db, sql, bindings, *this);
-  this->setValues(params, false);
+  *this += ParamSet(db, sql, bindings, *this);
 }
 
 void ParamSet::setValuesFromSqlDb(
