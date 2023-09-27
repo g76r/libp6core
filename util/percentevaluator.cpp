@@ -62,7 +62,7 @@ _functions {
   auto params = key.splitByLeadingChar(ml);
   for (int i = 0; i < params.size(); ++i) {
     auto v = PercentEvaluator::eval(params.value(i), context);
-    if (v.isValid())
+    if (!Utf8String(v).isEmpty())
       return v;
   }
   return {};
