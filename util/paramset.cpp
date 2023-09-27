@@ -261,7 +261,10 @@ ParamSet &ParamSet::insert(const Utf8String &key, const QVariant &value) {
     return *this;
   if (!d) [[unlikely]]
     d = new ParamSetData;
-  d->_params.insert(key, value);
+  if (value.isValid())
+    d->_params.insert(key, value);
+  else
+    d->_params.remove(key);
   return *this;
 }
 
