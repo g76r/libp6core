@@ -81,7 +81,8 @@ void HttpResponse::setStatus(int status) {
   if (d && !d->_headersSent) {
     d->_status = status;
   } else
-    Log::warning() << "HttpResponse: cannot set status after writing data";
+    Log::warning() << "HttpResponse: cannot set status after writing data:"
+                   << status;
 }
 
 int HttpResponse::status() const {
@@ -93,7 +94,8 @@ void HttpResponse::setHeader(const Utf8String &name, const Utf8String &value) {
   if (d && !d->_headersSent) {
     d->_headers.replace(name, value);
   } else
-    Log::warning() << "HttpResponse: cannot set header after writing data";
+    Log::warning() << "HttpResponse: cannot set header after writing data: "
+                   << name << ": " << value;
 }
 
 void HttpResponse::addHeader(const Utf8String &name, const Utf8String &value) {
@@ -101,7 +103,8 @@ void HttpResponse::addHeader(const Utf8String &name, const Utf8String &value) {
   if (d && !d->_headersSent) {
     d->_headers.insert(name, value);
   } else
-    Log::warning() << "HttpResponse: cannot set header after writing data";
+    Log::warning() << "HttpResponse: cannot set header after writing data: "
+                   << name << ": " << value;
 }
 
 void HttpResponse::appendValueToHeader(
@@ -111,7 +114,8 @@ void HttpResponse::appendValueToHeader(
   if (!d)
     return;
   if (!d->_headersSent) {
-    Log::warning() << "HttpResponse: cannot set header after writing data";
+    Log::warning() << "HttpResponse: cannot set header after writing data: "
+                   << name << ": " << value;
     return;
   }
   Utf8StringList values = d->_headers.values(name);
