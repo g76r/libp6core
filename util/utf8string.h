@@ -29,6 +29,7 @@ class Utf8StringSet;
 class LIBP6CORESHARED_EXPORT Utf8String : public QByteArray {
 public:
   const static QList<char> AsciiWhitespace;
+  const static QList<char32_t> UnicodeWhitespace;
   const static char32_t ReplacementCharacter = U'\ufffd';
   const static Utf8String ReplacementCharacterUtf8;
   const static Utf8String Empty;
