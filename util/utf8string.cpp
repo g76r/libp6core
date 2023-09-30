@@ -511,7 +511,7 @@ char32_t Utf8String::utf32Value(
   return utf8.isNull() ? def : decodeUtf8(utf8);
 }
 
-Utf8String Utf8String::utf8Left(qsizetype len) const {
+Utf8String Utf8String::utf8left(qsizetype len) const {
   auto s = constData();
   auto end = s + size();
   auto begin = align_on_char(s, end);
@@ -520,7 +520,7 @@ Utf8String Utf8String::utf8Left(qsizetype len) const {
   return Utf8String(begin, s-begin);
 }
 
-Utf8String Utf8String::utf8Right(qsizetype len) const {
+Utf8String Utf8String::utf8right(qsizetype len) const {
   auto begin = constData();
   auto s = begin + size(), end = s;
   for (qsizetype i = 0; i < len && backward_align_on_char(s, begin); --s, ++i)
@@ -530,7 +530,7 @@ Utf8String Utf8String::utf8Right(qsizetype len) const {
   return Utf8String(s, end-s);
 }
 
-Utf8String Utf8String::utf8Mid(qsizetype pos, qsizetype len) const {
+Utf8String Utf8String::utf8mid(qsizetype pos, qsizetype len) const {
   auto s = constData(), begin = s;
   auto end = s + size();
   for (qsizetype i = 0; i < pos && align_on_char(s, end); ++s, ++i)

@@ -212,7 +212,7 @@ _functions {
     if (flags.contains('b'))
       input = input.left(i);
     else
-      input = input.utf8Left(i);
+      input = input.utf8left(i);
   }
   return input;
 }, true},
@@ -226,7 +226,7 @@ _functions {
     if (flags.contains('b'))
       input = input.right(i);
     else
-      input = input.utf8Right(i);
+      input = input.utf8right(i);
   }
   return input;
 }, true},
@@ -241,7 +241,7 @@ _functions {
     if (flags.contains('b'))
       input = input.mid(i, ok ? j : -1);
     else
-      input = input.utf8Mid(i, ok ? j : -1);
+      input = input.utf8mid(i, ok ? j : -1);
   }
   return input;
 }, true},

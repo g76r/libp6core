@@ -189,22 +189,26 @@ public:
   [[nodiscard]] Utf8String mid(qsizetype pos, qsizetype len = -1) const {
     return QByteArray::mid(pos, len); }
   /** Return leftmost len utf8 characters. */
-  [[nodiscard]] Utf8String utf8Left(qsizetype len) const;
+  [[nodiscard]] Utf8String utf8left(qsizetype len) const;
   /** Return rightmost len utf8 characters. */
-  [[nodiscard]] Utf8String utf8Right(qsizetype len) const;
+  [[nodiscard]] Utf8String utf8right(qsizetype len) const;
   /** Return len utf8 characters starting at pos.
    *  Everything after pos if len < 0 or pos+len > size(). */
-  [[nodiscard]] Utf8String utf8Mid(qsizetype pos, qsizetype len = -1) const;
+  [[nodiscard]] Utf8String utf8mid(qsizetype pos, qsizetype len = -1) const;
   [[nodiscard]] Utf8String trimmed() const { return QByteArray::trimmed(); }
   Utf8String &trim() { *this = trimmed(); return *this; }
   [[nodiscard]] inline Utf8String chopped(qsizetype len) const {
     return QByteArray::chopped(len); }
+  /** like left() but crashes if out of bound. */
   [[nodiscard]] inline Utf8String first(qsizetype n) const {
     return QByteArray::first(n); }
+  /** like right() but crashes if out of bound. */
   [[nodiscard]] inline Utf8String last(qsizetype n) const {
     return QByteArray::last(n); }
+  /** like mid() but crashes if out of bound. */
   [[nodiscard]] inline Utf8String sliced(qsizetype pos) const {
     return QByteArray::sliced(pos); }
+  /** like mid() but crashes if out of bound. */
   [[nodiscard]] inline Utf8String sliced(qsizetype pos, qsizetype n) const {
     return QByteArray::sliced(pos, n); }
 
