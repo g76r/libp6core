@@ -188,31 +188,6 @@ public:
       const Utf8String &key, const EvalContext &context) const {
     return paramNumber<bool>(key, {}, context); }
 
-  // string lists %-evaluated vallues
-  /** Return a value splitted into strings, %-substitution is done after the
-   * split (i.e. "%foo bar" has two elements, regardless the number of spaces
-   * in %foo value). */
-  [[nodiscard]] Utf8StringList paramUtf8List(
-      const Utf8String &key, const Utf8String &def = {},
-      const EvalContext &context = {},
-      QList<char> seps = Utf8String::AsciiWhitespace) const;
-  /** Convenience method */
-  [[nodiscard]] Utf8StringList paramUtf8List(
-      const Utf8String &key, const EvalContext &context,
-      QList<char> seps = Utf8String::AsciiWhitespace) const;
-  /** Return a value splitted into strings, %-substitution is done after the
-   * split (i.e. "%foo bar" has two elements, regardless the number of spaces
-   * in %foo value). */
-  [[nodiscard]] QStringList paramUtf16List(
-      const Utf8String &key, const Utf8String &def = {},
-      const EvalContext &context = {},
-      QList<char> seps = Utf8String::AsciiWhitespace) const;
-  /** Convenience method */
-  [[nodiscard]] inline QStringList paramUtf16List(
-      const Utf8String &key, const EvalContext &context,
-      QList<char> seps = Utf8String::AsciiWhitespace) const {
-    return paramUtf16List(key, {}, context, seps); }
-
   // scope
   /** Return default scope, that is more or less a name or type for this
    *  ParamsProvider. e.g. "env", "customer:Customer123", "root", etc.
