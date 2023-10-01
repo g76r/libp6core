@@ -12,7 +12,7 @@ int main(void) {
   qDebug() << s << s.split('o') << s.split("§"_u8);
   qDebug() << s.splitByLeadingChar();
   qDebug() << "/foo/bar/baz///"_u8.splitByLeadingChar();
-  qDebug() << s.left(4) << "-" << s.utf8Left(6) << "-" << s.utf8Mid(4,3) << "-" << s.utf8Right(4); 
+  qDebug() << s.left(4) << "-" << s.utf8left(6) << "-" << s.utf8mid(4,3) << "-" << s.utf8right(4); 
   s = "\xef\xbb\xbf\xef\xbb\xbf\xef\xbb\xbf§foo§bar§baz§\xef\xbb\xbf§§"_u8;
   auto sc = s.cleaned();
   qDebug() << s.size() << s.utf8Size() << sc.size() << sc.utf8Size() << sc;
