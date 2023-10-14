@@ -213,7 +213,7 @@ static const QRegularExpression slashFollowedByWildcard("/[^/]*[*?[]|\\]");
 QStringList IOUtils::findFiles(QString regexp) {
   QStringList files;
   int i = regexp.indexOf(slashFollowedByWildcard);
-  QString dir = i >= 0 ? Utf8String::fromCEscaped(regexp.left(i+1)).toString()
+  QString dir = i >= 0 ? Utf8String::fromCEscaped(regexp.left(i+1)).toUtf16()
                        : regexp;
   ::findFiles(QDir(dir), files, QRegularExpression("^"+regexp+"$"));
   //qDebug() << "IOUtils::findFiles" << regexp << i << dir << files;

@@ -72,7 +72,7 @@ QDebug operator<<(QDebug dbg, const Utf8StringList &list) {
   if (list.size())
     s += "\""_u8+list.join("\", \""_u8)+"\" "_u8;
   s += "}"_u8;
-  return dbg.noquote() << s.toString();
+  return dbg.noquote() << s.toUtf16();
 }
 
 LogHelper operator<<(LogHelper lh, const Utf8StringList &list) {

@@ -355,7 +355,7 @@ Utf8StringList PfNode::utf8ChildrenByName(const Utf8String &name) const {
   Utf8StringList sl;
   if (!name.isEmpty())
     for (auto child: children())
-      if (!child.isNull() && child.d->_name == name.toString()
+      if (!child.isNull() && child.d->_name == name.toUtf16()
           && child.isText())
         sl.append(child.contentAsUtf8());
   return sl;
@@ -366,7 +366,7 @@ QList<QPair<Utf8String,Utf8String> > PfNode::utf8PairChildrenByName(
   QList<QPair<Utf8String,Utf8String> > l;
   if (!name.isEmpty())
     for (auto child: children())
-      if (!child.isNull() && child.d->_name == name.toString()
+      if (!child.isNull() && child.d->_name == name.toUtf16()
           && child.isText()) {
         QString s = child.contentAsUtf16().remove(_leadingwhitespace);
         qsizetype i = s.indexOf(_whitespace);
@@ -383,7 +383,7 @@ QList<QPair<Utf8String, qint64> > PfNode::utf8LongPairChildrenByName(
   QList<QPair<Utf8String,qint64>> l;
   if (!name.isEmpty())
     for (auto child: children())
-      if (!child.isNull() && child.d->_name == name.toString()
+      if (!child.isNull() && child.d->_name == name.toUtf16()
           && child.isText()) {
         QString s = child.contentAsUtf16().remove(_leadingwhitespace);
         qsizetype i = s.indexOf(_whitespace);

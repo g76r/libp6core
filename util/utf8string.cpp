@@ -37,7 +37,7 @@ static int staticInit() {
   QMetaType::registerConverter<Utf8String,QVariant>();
   QMetaType::registerConverter<QVariant,Utf8String>([](const QVariant &v) {
     return Utf8String(v); });
-  QMetaType::registerConverter<Utf8String,QString>(&Utf8String::toString);
+  QMetaType::registerConverter<Utf8String,QString>(&Utf8String::toUtf16);
   QMetaType::registerConverter<Utf8String,QByteArray>();
   QMetaType::registerConverter<QString,Utf8String>([](const QString &s) {
     return Utf8String(s); });
@@ -648,7 +648,7 @@ const Utf8StringList Utf8String::split(
 }
 
 QDebug operator<<(QDebug dbg, const Utf8String &s) {
-  return dbg << s.toString();
+  return dbg << s.toUtf16();
 }
 
 QList<char> Utf8String::toBytesSortedList() const {

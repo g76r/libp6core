@@ -289,7 +289,7 @@ public:
     return setAttribute(name, QString::fromUtf8(content)); }
   /** Convenience method (assume content is UTF-8 encoded) */
   PfNode &setAttribute(const QString &name, const Utf8String &utf8) {
-    return setAttribute(name, utf8.toString()); }
+    return setAttribute(name, utf8.toUtf16()); }
   // LATER setAttribute() for QDateTime, QDate, QTime and QStringList/QSet<QString>
   /** Set a child named 'name' with 'content' content and remove any other child
    * named 'name'. The QStringList is formated as a space separated value list
@@ -385,7 +385,7 @@ public:
   }
   /** Append text fragment to context (and remove array if any). */
   PfNode &appendContent(const Utf8String &text) {
-    return appendContent(text.toString()); }
+    return appendContent(text.toUtf16()); }
   /** Append text fragment to context (and remove array if any). */
   PfNode &appendContent(const char *utf8text) {
     return appendContent(QString::fromUtf8(utf8text)); }
@@ -416,7 +416,7 @@ public:
     clearContent(); appendContent(text); return *this; }
   /** Replace current content with text fragment. */
   PfNode &setContent(const Utf8String &text) {
-    clearContent(); appendContent(text.toString()); return *this; }
+    clearContent(); appendContent(text.toUtf16()); return *this; }
   /** Replace current content with text fragment. */
   PfNode &setContent(const char *utf8text) {
     setContent(QString::fromUtf8(utf8text)); return *this; }

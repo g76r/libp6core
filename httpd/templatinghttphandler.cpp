@@ -129,7 +129,7 @@ void TemplatingHttpHandler::applyTemplateFile(
         // beautifying
         CharacterSeparatedExpression markupParams(markupContent, separatorPos);
         auto value = processingContext->paramUtf8(markupParams.value(0))
-                     .toString();
+                     .toUtf16();
         if (!value.isNull()) {
           value = markupParams.value(2, value);
         } else {

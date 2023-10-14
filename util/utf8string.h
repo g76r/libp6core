@@ -99,7 +99,10 @@ public:
       qsizetype i, char32_t def = 0) const {
     return utf32Value(i, constData(), size(), def); }
 
+  [[deprecated("use toUtf16() instead")]]
   [[nodiscard]] inline QString toString() const {
+    return QString::fromUtf8(*this); }
+  [[nodiscard]] inline QString toUtf16() const {
     return QString::fromUtf8(*this); }
   [[nodiscard]] inline operator QVariant() const {
     return QVariant::fromValue(*this); }

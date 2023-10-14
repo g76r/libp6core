@@ -257,7 +257,7 @@ _functions {
   auto placeHolder = params.value(2, "..."_u8);
   if (!ok || placeHolder.size() > i || input.size() <= i)
     return input;
-  return StringUtils::elideRight(input.toString(), i, placeHolder);
+  return StringUtils::elideRight(input.toUtf16(), i, placeHolder);
 }, true},
 { "=elideleft", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
   auto params = key.splitByLeadingChar(ml);
@@ -267,7 +267,7 @@ _functions {
   auto placeHolder = params.value(2, "..."_u8);
   if (!ok || placeHolder.size() > i || input.size() <= i)
     return input;
-  return StringUtils::elideLeft(input.toString(), i, placeHolder);
+  return StringUtils::elideLeft(input.toUtf16(), i, placeHolder);
 }, true},
 { "=elidemiddle", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
   auto params = key.splitByLeadingChar(ml);
@@ -277,7 +277,7 @@ _functions {
   auto placeHolder = params.value(2, "..."_u8);
   if (!ok || placeHolder.size() > i || input.size() <= i)
     return input;
-  return StringUtils::elideMiddle(input.toString(), i, placeHolder);
+  return StringUtils::elideMiddle(input.toUtf16(), i, placeHolder);
 }, true},
 { "=htmlencode", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
   auto params = key.splitByLeadingChar(ml);
@@ -286,7 +286,7 @@ _functions {
   auto input = PercentEvaluator::eval_utf8(params.value(0), context);
   auto flags = params.value(1);
   return StringUtils::htmlEncode(
-        input.toString(), flags.contains('u'), // url as links
+        input.toUtf16(), flags.contains('u'), // url as links
         flags.contains('n')); // newline as <br>
 }, true},
 { "=random", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
