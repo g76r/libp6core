@@ -503,20 +503,13 @@ bool Utf8String::isTitle() const {
   return testCase(s, end, [](char32_t c) { return Utf8String::toTitle(c); });
 }
 
-Utf8String Utf8String::utf8Value(
-    qsizetype i, const char *s, qsizetype len, const Utf8String &def) {
+Utf8String Utf8String::utf8value(
+    qsizetype i, const char *s, const char *end, const Utf8String &def) {
   Q_ASSERT(s);
-  Q_ASSERT(len >= 0);
-  auto end = s + len;
+  Q_ASSERT(end >= s);
   for (qsizetype j = 0; j < i && align_on_char(s, end); ++j, ++s)
     ;
   return s < end ? Utf8String(s, end-s) : def;
-}
-
-char32_t Utf8String::utf32Value(
-    qsizetype i, const char *s, qsizetype len, const char32_t def) {
-  Utf8String utf8 = utf8Value(i, s, len, {});
-  return utf8.isNull() ? def : decodeUtf8(utf8);
 }
 
 Utf8String Utf8String::utf8left(qsizetype len) const {

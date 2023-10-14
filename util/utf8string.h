@@ -81,23 +81,29 @@ public:
     return size() < i+1 || i < 0 ? def : at(i); }
   /** Return ith utf8 character (bytes sequence) of the string. Safe if i
    *  is out of range. */
-  [[nodiscard]] static Utf8String utf8Value(
+  [[nodiscard]] inline static Utf8String utf8value(
       qsizetype i, const char *s, qsizetype len,
-      const Utf8String &def = Empty);
-  [[nodiscard]] inline static Utf8String utf8Value(
-      qsizetype i, const char *s, const char *end,
       const Utf8String &def = Empty) {
-    return utf8Value(i, s, end-s, def); }
-  [[nodiscard]] inline Utf8String utf8Value(
+    return utf8value(i, s, s+len, def); }
+  [[nodiscard]] static Utf8String utf8value(
+      qsizetype i, const char *s, const char *end,
+      const Utf8String &def = Empty);
+  [[nodiscard]] inline Utf8String utf8value(
       qsizetype i, const Utf8String &def = Empty) const {
-    return utf8Value(i, constData(), size(), def); }
+    return utf8value(i, constData(), size(), def); }
   /** Return ith unicode character (code point value) of the string. Safe if i
    *  is out of range. */
-  [[nodiscard]] static char32_t utf32Value(
-      qsizetype i, const char *s, qsizetype len, const char32_t def = 0);
-  [[nodiscard]] inline char32_t utf32Value(
+  [[nodiscard]] inline static char32_t utf32value(
+      qsizetype i, const char *s, qsizetype len, const char32_t def = 0) {
+    Utf8String utf8 = utf8value(i, s, len, {});
+    return utf8.isNull() ? def : decodeUtf8(utf8); }
+  [[nodiscard]] inline static char32_t utf32value(
+      qsizetype i, const char *s, const char *end, const char32_t def = 0) {
+    Utf8String utf8 = utf8value(i, s, end, {});
+    return utf8.isNull() ? def : decodeUtf8(utf8); }
+  [[nodiscard]] inline char32_t utf32value(
       qsizetype i, char32_t def = 0) const {
-    return utf32Value(i, constData(), size(), def); }
+    return utf32value(i, constData(), size(), def); }
 
   [[deprecated("use toUtf16() instead")]]
   [[nodiscard]] inline QString toString() const {
@@ -130,7 +136,7 @@ public:
    *  For most letters, title case is the same than upper case, but for some
    *  rare characters representing several letters at once, there is a title case
    *  for which the first letter is in upper case and others in lower cases.
-   *  For instance ǆ minuscule (unicode: 0x1C6) is mapped to Ǆ majuscule
+   *  For instance ǆ lower case (unicode: 0x1C6) is mapped to Ǆ upper case
    *  (unicode: 0x1C4) and to ǅ title case letter (unicode: 0x1C5)
    *  Return the input character itself if no change is needed e.g. E É #
    */
