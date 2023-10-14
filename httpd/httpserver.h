@@ -22,6 +22,15 @@ class HttpWorker;
 
 class LIBP6CORESHARED_EXPORT HttpServer : public QTcpServer {
   Q_OBJECT
+
+public:
+  enum LogPolicy : signed char {
+    LogDisabled,
+    LogErrorHits,
+    LogAllHits,
+  };
+
+private:
   QMutex _handlersMutex;
   QList<HttpHandler *> _handlers;
   HttpHandler *_defaultHandler;
@@ -29,6 +38,8 @@ class LIBP6CORESHARED_EXPORT HttpServer : public QTcpServer {
   QList<int> _queuedSockets;
   int _maxQueuedSockets;
   QThread *_thread;
+  LogPolicy _logPolicy;
+  Utf8String _logFormat;
 
 public:
   explicit HttpServer(int workersPoolSize = 16, int maxQueuedSockets = 32,
@@ -36,13 +47,24 @@ public:
   virtual ~HttpServer();
   /** The handler does not become a child of HttpServer but its deleteLater()
    * method is called by ~HttpServer(). */
-  void appendHandler(HttpHandler *handler);
+  HttpServer &appendHandler(HttpHandler *handler);
   /** The handler does not become a child of HttpServer but its deleteLater()
    * method is called by ~HttpServer(). */
-  void prependHandler(HttpHandler *handler);
+  HttpServer &prependHandler(HttpHandler *handler);
   HttpHandler *chooseHandler(HttpRequest req);
   bool listen(QHostAddress address = QHostAddress::Any, quint16 port = 0);
-  bool listen(quint16 port) { return listen (QHostAddress::Any, port); }
+  inline bool listen(quint16 port) { return listen(QHostAddress::Any, port); }
+  inline HttpServer &setLogPolicy(LogPolicy policy) {
+    _logPolicy = policy; return *this; }
+  inline LogPolicy logPolicy() const { return _logPolicy; }
+  static Utf8String logPolicyAsText(LogPolicy policy);
+  inline Utf8String logPolicyAsText() { return logPolicyAsText(logPolicy()); }
+  static LogPolicy logPolicyFromText(const Utf8String &text);
+  inline HttpServer &setLogPolicy(const Utf8String &policy) {
+    return setLogPolicy(logPolicyFromText(policy)); }
+  inline HttpServer &setLogFormat(const Utf8String &format) {
+    _logFormat = format; return *this; }
+  inline Utf8String logFormat() const { return _logFormat; }
 
 protected:
   void incomingConnection(qintptr handle) override;

@@ -50,60 +50,61 @@ public:
   HttpRequest(const HttpRequest &other);
   ~HttpRequest();
   HttpRequest &operator=(const HttpRequest &other);
-  QAbstractSocket *input();
+  [[nodiscard]] QAbstractSocket *input();
   void setMethod(HttpMethod method);
-  HttpRequest::HttpMethod method() const;
+  [[nodiscard]] HttpRequest::HttpMethod method() const;
   /** @return protocol and human readable string, e.g. "GET" */
-  Utf8String methodName() const { return methodName(method()); }
+  [[nodiscard]] Utf8String methodName() const { return methodName(method()); }
   /** @return protocol and human readable string, e.g. "GET" */
-  static Utf8String methodName(HttpMethod method);
+  [[nodiscard]] static Utf8String methodName(HttpMethod method);
   /** @return enum from protocol and human readable string, e.g. "GET"
    * @param name case sensitive, must be upper case */
-  static HttpMethod methodFromText(const Utf8String &name);
-  static QSet<HttpMethod> wellKnownMethods() { return _wellKnownMethods; }
-  static Utf8StringSet wellKnownMethodNames() {
+  [[nodiscard]] static HttpMethod methodFromText(const Utf8String &name);
+  [[nodiscard]] static QSet<HttpMethod> wellKnownMethods() {
+    return _wellKnownMethods; }
+  [[nodiscard]] static Utf8StringSet wellKnownMethodNames() {
     return _wellKnownMethodNames; }
-  bool parseAndAddHeader(Utf8String rawHeader);
+  [[nodiscard]] bool parseAndAddHeader(Utf8String rawHeader);
   /** Value associated to a request header.
    * If the header is found several time, last value is returned. */
-  Utf8String header(
+  [[nodiscard]] Utf8String header(
       const Utf8String &name, const Utf8String &defaultValue = {}) const;
   /** Values associated to a request header, last occurrence first. */
-  Utf8StringList headers(const Utf8String &name) const;
+  [[nodiscard]] Utf8StringList headers(const Utf8String &name) const;
   /** Full header hash */
-  QMultiMap<Utf8String,Utf8String> headers() const;
+  [[nodiscard]] QMultiMap<Utf8String,Utf8String> headers() const;
   /* Value of a given cookie, as is. */
-  Utf8String cookie(const Utf8String &name,
-                    const Utf8String &defaultValue = {}) const;
+  [[nodiscard]] Utf8String cookie(
+      const Utf8String &name, const Utf8String &defaultValue = {}) const;
   /* Value of a given cookie, decoded from base64 (implies that the cookie
    * content was encoded using base64). */
-  QByteArray base64Cookie(
+  [[nodiscard]] QByteArray base64Cookie(
       const Utf8String &name, const QByteArray &defaultValue = {}) const;
-  QMap<Utf8String,Utf8String> cookies() const;
+  [[nodiscard]] QMap<Utf8String,Utf8String> cookies() const;
   /** Replace url. If params have already been queried and new url has
    * different query items than former one, one should also call
    * discardParamsCache(). */ // LATER this behaviour is optimisable since Qt5
   void overrideUrl(QUrl url);
-  QUrl url() const;
-  QUrlQuery urlQuery() const;
+  [[nodiscard]] QUrl url() const;
+  [[nodiscard]] QUrlQuery urlQuery() const;
   /** Return an url param (query item) value.
    * Only first value of multi-valued items is kept. */
   // LATER manage to keep last value instead
-  Utf8String param(Utf8String key) const;
+  [[nodiscard]] Utf8String param(Utf8String key) const;
   void overrideParam(Utf8String key, Utf8String value);
   void overrideUnsetParam(Utf8String key);
   /** Retrieve url params (query items) as a ParamSet.
    * Only first value of multi-valued items is kept. */
   // LATER manage to keep last value instead
-  ParamSet paramsAsParamSet() const;
-  QMap<Utf8String,Utf8String> paramsAsMap() const;
-  Utf8String toUtf8() const;
+  [[nodiscard]] ParamSet paramsAsParamSet() const;
+  [[nodiscard]] QMap<Utf8String,Utf8String> paramsAsMap() const;
+  [[nodiscard]] Utf8String toUtf8() const;
   /** Client addresses.
    * Contains only one address for direct connection, or several when acceeded
    * through (reverse) proxies.
    * Same as X-Forwarded-For content, plus socket peer address at the end of
    * the list. */
-  Utf8StringList clientAdresses() const;
+  [[nodiscard]] Utf8StringList clientAdresses() const;
   /** Create a ParamsProvider wrapper object to give access to ! pseudo params,
    * url params (query items) and base64 cookies, in this order (url params hide
    * cookies). */
@@ -114,18 +115,20 @@ public:
    *  - clientaddresses e.g. "127.0.0.1 1.2.3.4"
    *  - param:xxx e.g. param:a -> "b" (works also with POST params)
    *  - header:xxx e.g. header:Host -> "foobar.io"
+   *  - requestheader:xxx e.g. requestheader:Host -> "foobar.io"
    *  - cookie:xxx content of xxx cookie
    *  - base64cookie:xxx content of xxx cookie, decoded as base64
    *  - value:xxx take value from param xxx if set, otherwise base64 cookie xxx
    */
-  QVariant paramRawValue(
+  [[nodiscard]] QVariant paramRawValue(
       const Utf8String &key, const QVariant &def = {},
       const EvalContext &context = {}) const override;
   using ParamsProvider::paramKeys;
-  Utf8StringSet paramKeys(const EvalContext &context = {}) const override;
+  [[nodiscard]] Utf8StringSet paramKeys(
+      const EvalContext &context = {}) const override;
   using ParamsProvider::paramScope;
   /** Default: "http" */
-  Utf8String paramScope() const override;
+  [[nodiscard]] Utf8String paramScope() const override;
   /** Set param scope to something else than the default "http". */
   HttpRequest &setScope(const Utf8String &scope);
   // LATER handle sessions

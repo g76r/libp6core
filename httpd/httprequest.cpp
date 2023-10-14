@@ -19,6 +19,8 @@
 #include <QHostAddress>
 #include <QRegularExpression>
 
+using EvalContext = ParamsProvider::EvalContext;
+
 static Utf8String _xffHeader;
 
 namespace {
@@ -290,11 +292,9 @@ Utf8StringList HttpRequest::clientAdresses() const {
   return d->_clientAdresses;
 }
 
-using EvalContext = ParamsProvider::EvalContext;
-
 static RadixTree <std::function<QVariant(const HttpRequest *req, const Utf8String &key, const EvalContext &context, int ml)>> _functions {
 { "url", [](const HttpRequest *req, const Utf8String &, const EvalContext&, int) -> QVariant {
-  return req->url().toString(QUrl::RemovePassword);
+  return "http://"_u8+req->header("Host"_u8)+req->url().toString(QUrl::RemoveScheme|QUrl::RemoveAuthority).toUtf8();
 }},
 { "method", [](const HttpRequest *req, const Utf8String &, const EvalContext&, int) -> QVariant {
   return req->methodName();
@@ -304,22 +304,22 @@ static RadixTree <std::function<QVariant(const HttpRequest *req, const Utf8Strin
 }},
 { "cookie", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
   return req->cookie(key.mid(ml+1));
-}},
+}, true},
 { "base64cookie", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
   return req->base64Cookie(key.mid(ml+1));
-}},
+}, true},
 { "param", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
   return req->param(key.mid(ml+1));
-}},
+}, true},
 { "value", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
   auto v = req->param(key.mid(ml+1));
   if (!v.isNull())
     return v;
   return req->base64Cookie(key.mid(ml+1));
-}},
-{ "header", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
+}, true},
+{ { "header", "requestheader" }, [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
   return req->header(key.mid(ml+1).toInternetHeaderCase());
-}},
+}, true},
 };
 
 QVariant HttpRequest::paramRawValue(
@@ -343,8 +343,10 @@ Utf8StringSet HttpRequest::paramKeys(
     keys << "cookie:"+s;
   for (auto s: paramsAsMap().keys())
     keys << "param:"+s;
-  for (auto s: headers().keys())
+  for (auto s: headers().keys()) {
     keys << "header:"+s;
+    keys << "requestheader:"+s;
+  }
   return keys;
 }
 

@@ -14,7 +14,7 @@
 #ifndef HTTPRESPONSE_H
 #define HTTPRESPONSE_H
 
-#include "util/utf8string.h"
+#include "util/paramsprovider.h"
 #include <QAbstractSocket>
 #include <QDateTime>
 
@@ -25,7 +25,7 @@ class HttpResponseData;
  * This class uses Qt explicit sharing idiom, i.e. it can be copied for a
  * very low cost in thread-safe manner, however it must not be accessed from
  * several threads at a time. */
-class LIBP6CORESHARED_EXPORT HttpResponse {
+class LIBP6CORESHARED_EXPORT HttpResponse : public ParamsProvider {
 public:
   enum WellKnownStatusCode : signed short {
     Unknown,
@@ -115,7 +115,11 @@ public:
    * @see StatusCode */
   void setStatus(int status);
   /** Current http status, as set by last setStatus() call */
-  int status() const;
+  [[nodiscard]] int status() const;
+  /** True iff status() >= 100 && < 300 */
+  [[nodiscard]] inline bool success() const {
+    auto s = status();
+    return s >= 100 && s < 300; }
   /** Replace any header of this name by one header with this value.
    * Must be called before output(). */
   void setHeader(const Utf8String &name, const Utf8String &value);
@@ -133,12 +137,12 @@ public:
       const Utf8String &separator = ", "_u8);
   /** Value associated to a response header.
    * If the header is found several time, last value is returned. */
-  Utf8String header(
+  [[nodiscard]] Utf8String header(
       const Utf8String &name, const Utf8String &def = {}) const;
   /** Values associated to a response header, last occurrence first. */
-  Utf8StringList headers(const Utf8String &name) const;
+  [[nodiscard]] Utf8StringList headers(const Utf8String &name) const;
   /** Full header hash */
-  QMultiMap<Utf8String,Utf8String> headers() const;
+  [[nodiscard]] QMultiMap<Utf8String,Utf8String> headers() const;
   /** Redirect to another URL, by default using a temporary redirect (302).
    * Must be called before output(). */
   void redirect(Utf8String location, int status = HTTP_Found);
@@ -210,8 +214,36 @@ public:
     setCookie(name, {}, QDateTime::fromMSecsSinceEpoch(0),
               path, domain, false, false); }
   // LATER session
-  Utf8String statusAsString() { return statusAsString(status()); }
-  static Utf8String statusAsString(int status);
+  [[nodiscard]] Utf8String statusAsString() { return statusAsString(status()); }
+  [[nodiscard]] static Utf8String statusAsString(int status);
+  [[nodiscard]] QDateTime receivedDate() const;
+  void setHandledDate(const QDateTime &ts = QDateTime::currentDateTime());
+  [[nodiscard]] QDateTime handledDate() const;
+  void setFlushedDate(const QDateTime &ts = QDateTime::currentDateTime());
+  [[nodiscard]] QDateTime flushedDate() const;
+  [[nodiscard]] qint64 servicems() const;
+  [[nodiscard]] qint64 handlingms() const;
+  /** Expose as a ParamsProvider the following data/metadata:
+   *  - status e.g. 200
+   *  - header:xxx e.g. header:Content-Type -> "text/plain"
+   *  - responseheader:xxx e.g. responseheader:Content-Type -> "text/plain"
+   *  - receiveddate
+   *  - handleddate
+   *  - flusheddate
+   *  - servicems
+   *  - handlingms
+   */
+  [[nodiscard]] QVariant paramRawValue(
+      const Utf8String &key, const QVariant &def = {},
+      const EvalContext &context = {}) const override;
+  using ParamsProvider::paramKeys;
+  [[nodiscard]] Utf8StringSet paramKeys(
+      const EvalContext &context = {}) const override;
+  using ParamsProvider::paramScope;
+  /** Default: "http" */
+  [[nodiscard]] Utf8String paramScope() const override;
+  /** Set param scope to something else than the default "http". */
+  HttpResponse &setScope(const Utf8String &scope);
 
 private:
   void setCookie(

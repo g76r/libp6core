@@ -48,7 +48,7 @@ static inline void sendError(QTextStream &out, const char *httpMessage,
 
 void HttpWorker::handleConnection(
     int socketDescriptor, std::function<void()> handledCallback) {
-  // LATER replace by QDateTime when Qt >= 4.7
+      // LATER replace by QDateTime when Qt >= 4.7
   //QTime before= QTime::currentTime();
   QTcpSocket *socket = new QTcpSocket(this);
   if (!socket->setSocketDescriptor(socketDescriptor)) [[unlikely]] {
@@ -186,9 +186,20 @@ void HttpWorker::handleConnection(
   }
   if (!_defaultCacheControlHeader.isEmpty()) [[likely]]
     res.setHeader("Cache-Control", _defaultCacheControlHeader);
+  processingContext(&req)(&res);
   handler->handleRequest(req, res, &processingContext);
-  res.output()->flush(); // calling output() ensures that header was sent
-  //qDebug() << req;
+  if (auto logPolicy = _server->logPolicy();
+      logPolicy == HttpServer::LogAllHits ||
+      (logPolicy == HttpServer::LogErrorHits && !res.success())) {
+    res.setHandledDate();
+    res.output()->flush(); // calling output() ensures that header was sent
+    res.setFlushedDate();
+    Log::info() << PercentEvaluator::eval_utf8(
+                     _server->logFormat(), &processingContext);
+  } else {
+    res.output()->flush(); // calling output() ensures that header was sent
+  }
+
 finally:
   out.flush();
   // LATER fix random warning "QAbstractSocket::waitForBytesWritten() is not allowed in UnconnectedState"

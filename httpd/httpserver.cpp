@@ -15,15 +15,23 @@
 #include "httpworker.h"
 #include "log/log.h"
 #include "pipelinehttphandler.h"
+#include "util/radixtree.h"
 #include <QMutexLocker>
 #include <QThread>
 #include <QMetaObject>
 #include <unistd.h>
 
+#define DEFAULT_LOG_FORMAT "HTTP %[http]url %[http]method %[http]status %[http]servicems %[http]clientaddresses"_u8
+
 HttpServer::HttpServer(int workersPoolSize, int maxQueuedSockets,
                        QObject *parent)
   : QTcpServer(parent), _defaultHandler(0), _maxQueuedSockets(maxQueuedSockets),
-    _thread(new QThread()) {
+    _thread(new QThread()),
+    _logPolicy(HttpServer::logPolicyFromText(
+                 ParamsProvider::environment()->paramUtf8(
+                   "HTTPD_LOG_POLICY", "LogErrorHits"))),
+    _logFormat(ParamsProvider::environment()->paramRawUtf8(
+                 "HTTPD_LOG_FORMAT", DEFAULT_LOG_FORMAT)) {
   _thread->setObjectName("HttpServer");
   connect(this, &HttpServer::destroyed, _thread, &QThread::quit);
   connect(_thread, &QThread::finished, _thread, &QThread::deleteLater);
@@ -76,20 +84,22 @@ void HttpServer::connectionHandled(HttpWorker *worker) {
   }
 }
 
-void HttpServer::appendHandler(HttpHandler *handler) {
+HttpServer &HttpServer::appendHandler(HttpHandler *handler) {
   QMutexLocker ml(&_handlersMutex);
   _handlers.append(handler);
   // cannot make handlers become children, hence connecting
   // server's destroyed() to handlers' deleteLater()
   connect(this, &HttpServer::destroyed, handler, &HttpHandler::deleteLater);
+  return *this;
 }
 
-void HttpServer::prependHandler(HttpHandler *handler) {
+HttpServer &HttpServer::prependHandler(HttpHandler *handler) {
   QMutexLocker ml(&_handlersMutex);
   _handlers.prepend(handler);
   // cannot make handlers become children, hence connecting
   // server's destroyed() to handlers' deleteLater()
   connect(this, &HttpServer::destroyed, handler, &HttpHandler::deleteLater);
+  return *this;
 }
 
 HttpHandler *HttpServer::chooseHandler(HttpRequest req) {
@@ -112,4 +122,20 @@ bool HttpServer::listen(QHostAddress address, quint16 port) {
       success = QTcpServer::listen(address, port);
     }, Qt::BlockingQueuedConnection);
   return success;
+}
+
+static RadixTree<HttpServer::LogPolicy> _logPoliciesFromText {
+  { "LogDisabled", HttpServer::LogDisabled },
+  { "LogErrorHits", HttpServer::LogErrorHits },
+  { "LogAllHits", HttpServer::LogAllHits },
+};
+
+static auto _logPoliciesToText = _logPoliciesFromText.toReversedUtf8Map();
+
+Utf8String HttpServer::logPolicyAsText(LogPolicy policy) {
+  return _logPoliciesToText.value(policy, "LogDisabled"_u8);
+}
+
+HttpServer::LogPolicy HttpServer::logPolicyFromText(const Utf8String &text) {
+  return _logPoliciesFromText.value(text, LogDisabled);
 }

@@ -17,8 +17,10 @@
 #include "format/timeformats.h"
 #include "io/dummysocket.h"
 #include <QRegularExpression>
+#include "util/radixtree.h"
 
 using namespace Qt::Literals::StringLiterals;
+using EvalContext = ParamsProvider::EvalContext;
 
 class HttpResponseData : public QSharedData {
 public:
@@ -26,9 +28,12 @@ public:
   int _status;
   bool _headersSent, _disableBodyOutput;
   QMultiMap<Utf8String,Utf8String> _headers;
+  QDateTime _received, _handled, _flushed;
+  Utf8String _scope;
   explicit HttpResponseData(QAbstractSocket *output)
     : _output(output), _status(200), _headersSent(false),
-      _disableBodyOutput(false) { }
+      _disableBodyOutput(false), _received(QDateTime::currentDateTime()),
+      _scope("http"_u8) { }
 };
 
 HttpResponse::HttpResponse(QAbstractSocket *output)
@@ -78,11 +83,14 @@ QAbstractSocket *HttpResponse::output() {
 }
 
 void HttpResponse::setStatus(int status) {
-  if (d && !d->_headersSent) {
-    d->_status = status;
-  } else
+  if (!d)
+    return;
+  if (d->_headersSent) {
     Log::warning() << "HttpResponse: cannot set status after writing data:"
                    << status;
+    return;
+  }
+  d->_status = status;
 }
 
 int HttpResponse::status() const {
@@ -91,20 +99,26 @@ int HttpResponse::status() const {
 
 void HttpResponse::setHeader(const Utf8String &name, const Utf8String &value) {
   // LATER handle case insensitivity in header names
-  if (d && !d->_headersSent) {
-    d->_headers.replace(name, value);
-  } else
+  if (!d)
+    return;
+  if (d->_headersSent) {
     Log::warning() << "HttpResponse: cannot set header after writing data: "
                    << name << ": " << value;
+    return;
+  }
+  d->_headers.replace(name, value);
 }
 
 void HttpResponse::addHeader(const Utf8String &name, const Utf8String &value) {
   // LATER handle case insensitivity in header names
-  if (d && !d->_headersSent) {
-    d->_headers.insert(name, value);
-  } else
+  if (!d)
+    return;
+  if (d->_headersSent) {
     Log::warning() << "HttpResponse: cannot set header after writing data: "
                    << name << ": " << value;
+    return;
+  }
+  d->_headers.insert(name, value);
 }
 
 void HttpResponse::appendValueToHeader(
@@ -113,7 +127,7 @@ void HttpResponse::appendValueToHeader(
   // LATER handle case insensitivity in header names
   if (!d)
     return;
-  if (!d->_headersSent) {
+  if (d->_headersSent) {
     Log::warning() << "HttpResponse: cannot set header after writing data: "
                    << name << ": " << value;
     return;
@@ -260,4 +274,100 @@ Utf8String HttpResponse::statusAsString(int status) {
   default:
     return "Status "_u8+Utf8String::number(status);
   }
+}
+
+QDateTime HttpResponse::receivedDate() const {
+  return d ? d->_received : QDateTime{};
+}
+
+void HttpResponse::setHandledDate(const QDateTime &ts) {
+  if (d)
+    d->_handled = ts;
+}
+
+QDateTime HttpResponse::handledDate() const {
+  return d ? d->_handled : QDateTime{};
+}
+
+void HttpResponse::setFlushedDate(const QDateTime &ts) {
+  if (d)
+    d->_flushed = ts;
+}
+
+QDateTime HttpResponse::flushedDate() const {
+  return d ? d->_flushed : QDateTime{};
+}
+
+qint64 HttpResponse::servicems() const {
+  if (!d)
+    return 0;
+  if (!d->_flushed.isValid() || !d->_received.isValid())
+    return 0;
+  return d->_received.msecsTo(d->_flushed);
+}
+
+qint64 HttpResponse::handlingms() const {
+  if (!d)
+    return 0;
+  if (!d->_handled.isValid() || !d->_received.isValid())
+    return 0;
+  return d->_received.msecsTo(d->_handled);
+}
+
+static RadixTree <std::function<QVariant(const HttpResponse *res, const Utf8String &key, const EvalContext &context, int ml)>> _functions {
+{ "status", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) -> QVariant {
+  return res->status();
+}},
+{ "receiveddate", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) -> QVariant {
+  return res->receivedDate();
+}},
+{ "handleddate", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) -> QVariant {
+  return res->handledDate();
+}},
+{ "flusheddate", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) -> QVariant {
+  return res->flushedDate();
+}},
+{ "servicems", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) -> QVariant {
+  return res->servicems();
+}},
+{ "handlingms", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) -> QVariant {
+  return res->handlingms();
+}},
+{ { "header", "requestheader" }, [](const HttpResponse *res, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
+  return res->header(key.mid(ml+1).toInternetHeaderCase());
+}, true},
+};
+
+QVariant HttpResponse::paramRawValue(
+    const Utf8String &key, const QVariant &def,
+    const EvalContext &context) const {
+  if (!context.hasScopeOrNone(paramScope()))
+    return def;
+  int ml;
+  auto f = _functions.value(key, &ml);
+  if (f)
+    return f(this, key, context, ml);
+  return def;
+}
+
+Utf8StringSet HttpResponse::paramKeys(const EvalContext &context) const {
+  if (!context.hasScopeOrNone(paramScope()))
+    return {};
+  Utf8StringSet keys { "status", "receiveddate", "handleddate", "flusheddate",
+                       "servicems", "handlingms"};
+  for (auto s: headers().keys()) {
+    keys << "header:"+s;
+    keys << "responseheader:"+s;
+  }
+  return keys;
+}
+
+Utf8String HttpResponse::paramScope() const {
+  return d ? d->_scope : Utf8String{};
+}
+
+HttpResponse &HttpResponse::setScope(const Utf8String &scope) {
+  if (d)
+    d->_scope = scope;
+  return *this;
 }
