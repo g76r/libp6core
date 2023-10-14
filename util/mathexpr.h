@@ -34,7 +34,7 @@ public:
   bool isValid() const { return !d; }
   const Utf8String expr() const;
   const QVariant eval(
-      const EvalContext &context, const QVariant &def) const;
+      const EvalContext &context, const QVariant &def = {}) const;
 };
 
 Q_DECLARE_METATYPE(MathExpr)
