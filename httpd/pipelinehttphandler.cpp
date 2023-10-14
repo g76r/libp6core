@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,20 +21,13 @@ bool PipelineHttpHandler::acceptRequest(HttpRequest req) {
 
 bool PipelineHttpHandler::handleRequest(
     HttpRequest req, HttpResponse res, ParamsProviderMerger *processingContext) {
-  if (_handlers.isEmpty()) {
+  if (_handlers.isEmpty()) [[unlikely]] {
     res.setStatus(404);
     res.output()->write("Error 404 - Not found");
     return true;
   }
-  foreach (HttpHandler *handler, _handlers) {
-    if (!handler) {
-      res.setStatus(404);
-      res.output()->write("Error 404 - Not found");
-      Log::error() << "PipelineHttpHandler containing a null handler";
-      return false;
-    }
+  for (HttpHandler *handler: _handlers)
     if (!handler->handleRequest(req, res, processingContext))
       return false;
-  }
   return true;
 }
