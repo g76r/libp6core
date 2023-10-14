@@ -97,7 +97,7 @@ Q_DECLARE_TYPEINFO(LogContext, Q_MOVABLE_TYPE);
   */
 class LIBP6CORESHARED_EXPORT Log {
 public:
-  enum Severity { Debug, Info, Warning, Error, Fatal };
+  enum Severity : signed char { Debug, Info, Warning, Error, Fatal };
   /** Add a new logger.
    * Takes the ownership of the logger (= will delete it).
    *
