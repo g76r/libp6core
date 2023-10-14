@@ -15,6 +15,7 @@
 #define ATOMICVALUE_H
 
 #include "libp6core_global.h"
+#include <QMutexLocker>
 
 /** Class protecting access to a value object with a mutex providing the same
  * kind of protection than e.g. a QAtomicInteger despite using a less scalable
