@@ -85,7 +85,6 @@ void TemplatingHttpHandler::applyTemplateFile(
     return;
   }
   ParamsProviderMergerRestorer restorer(processingContext);
-  processingContext->append(&req);
   if (processingContext->paramUtf8("!pathtoroot"_u8).isNull())
     computePathToRoot(req, processingContext);
   QBuffer buf;
