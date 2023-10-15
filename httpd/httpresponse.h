@@ -119,7 +119,7 @@ public:
   /** True iff status() >= 100 && < 300 */
   [[nodiscard]] inline bool success() const {
     auto s = status();
-    return s >= 100 && s < 300; }
+    return s >= 100 && s < 400; }
   /** Replace any header of this name by one header with this value.
    * Must be called before output(). */
   void setHeader(const Utf8String &name, const Utf8String &value);
