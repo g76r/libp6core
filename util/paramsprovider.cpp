@@ -72,6 +72,7 @@ QVariant ParamsProvider::paramValue(
     const EvalContext &original_context) const {
   Utf8String key = original_key;
   EvalContext context = original_context;
+  QVariant v;
   // support for [scope] prefix
   // note that this is a duplicated test when paramValue() is called from
   // PercentEvaluator::eval_key() but when calling directly
@@ -80,14 +81,17 @@ QVariant ParamsProvider::paramValue(
   if (key.value(0) == '[') {
     auto eos = key.indexOf(']');
     if (eos < 0) // no ] in key
-      return def;
-    context.setScopeFilter(key.mid(1, eos-1));
-    key = key.mid(eos+1);
+      v = def;
+    else {
+      context.setScopeFilter(key.mid(1, eos-1));
+      key = key.mid(eos+1);
+      // don't check scope filter here, because it's up to paramRawValue to do that
+      v = paramRawValue(key, def, context);
+    }
+  } else {
+    // don't check scope filter here, because it's up to paramRawValue to do that
+    v = paramRawValue(key, def, context);
   }
-  // don't check scope filter here, because it's up to paramRawValue to do that
-  auto v = paramRawValue(key, {}, context);
-  if (!v.isValid())
-    return def;
   auto id = v.metaType().id();
   if (v.canConvert<double>() && id != qMetaTypeId<Utf8String>()
       && id != QMetaType::QString && id != QMetaType::QByteArray)
@@ -100,8 +104,6 @@ QVariant ParamsProvider::paramValue(
       context.setParamsProvider(&ppm);
       v = PercentEvaluator::eval(Utf8String(v), context);
   }
-  if (!v.isValid())
-    return def;
   return v;
 }
 
