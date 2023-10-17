@@ -473,6 +473,35 @@ public:
   inline Utf8String &removeFirst() { QByteArray::removeFirst(); return *this;}
   inline Utf8String &removeLast() { QByteArray::removeLast(); return *this;}
 
+  /** Empty coalesce: replace with that if this is empty. */
+  inline Utf8String &coalesce(const Utf8String &that) {
+    if (isEmpty()) *this = that;
+    return *this; }
+  /** Empty coalesce: replace with that if this is empty. */
+  inline Utf8String &coalesce(const QString &that) {
+    if (isEmpty()) *this = that;
+    return *this; }
+  /** Empty coalesce: replace with that if this is empty.
+   *  Assume UTF-8. */
+  inline Utf8String &coalesce(const QByteArray &that) {
+    if (isEmpty()) *this = that;
+    return *this; }
+  /** Empty coalesce: replace with that if this is empty.
+   *  Assume UTF-8, len = -1 means zero-terminated string. */
+  inline Utf8String &coalesce(const char *s, qsizetype len = -1) {
+    if (isEmpty()) *this = QByteArray(s, len);
+    return *this; }
+  /** Empty coalesce operator */
+  inline Utf8String &operator|=(const Utf8String &that) {
+    return coalesce(that); }
+  /** Empty coalesce operator */
+  inline Utf8String &operator|=(const QString &that) {
+    return coalesce(that); }
+  /** Empty coalesce operator
+   *  Assume UTF-8. */
+  inline Utf8String &operator|=(const QByteArray &that) {
+    return coalesce(that); }
+
   inline Utf8String &operator+=(const Utf8String &s) {
     QByteArray::operator+=(s); return *this; }
   inline Utf8String &operator+=(const QByteArray &ba) {
@@ -700,6 +729,46 @@ inline Utf8String operator"" _u8(const char8_t *str, size_t size) noexcept {
   return Utf8String(QByteArrayData(nullptr, (char *)(str), qsizetype(size)));
 }
 #endif
+
+#if UTF8STRING_COALESCE_DOUBLE_PIPE_OPERATORS
+/** Empty coalesce operator */
+inline const Utf8String &operator||(const Utf8String &a1, const Utf8String &a2) {
+  return a1.isEmpty() ? a2 : a1; }
+/** Empty coalesce operator */
+inline const Utf8String operator||(const Utf8String &a1, const QString &a2) {
+  return a1.isEmpty() ? Utf8String(a2) : a1; }
+/** Empty coalesce operator */
+inline const Utf8String operator||(const QString &a1, const Utf8String &a2) {
+  return a1.isEmpty() ? a2 : Utf8String(a1); }
+/** Empty coalesce operator */
+inline const Utf8String operator||(const QString &a1, const QString &a2) {
+  return a1.isEmpty() ? a2 : a1; }
+/** Empty coalesce operator */
+inline const Utf8String operator||(const Utf8String &a1, const QByteArray &a2) {
+  return a1.isEmpty() ? Utf8String(a2) : a1; }
+/** Empty coalesce operator */
+inline const Utf8String operator||(const QByteArray &a1, const Utf8String &a2) {
+  return a1.isEmpty() ? a2 : Utf8String(a1); }
+#endif
+
+/** Empty coalesce operator */
+inline const Utf8String &operator|(const Utf8String &a1, const Utf8String &a2) {
+  return a1.isEmpty() ? a2 : a1; }
+/** Empty coalesce operator */
+inline const Utf8String operator|(const Utf8String &a1, const QString &a2) {
+  return a1.isEmpty() ? Utf8String(a2) : a1; }
+/** Empty coalesce operator */
+inline const Utf8String operator|(const QString &a1, const Utf8String &a2) {
+  return a1.isEmpty() ? a2 : Utf8String(a1); }
+/** Empty coalesce operator */
+inline const Utf8String operator|(const QString &a1, const QString &a2) {
+  return a1.isEmpty() ? a2 : a1; }
+/** Empty coalesce operator */
+inline const Utf8String operator|(const Utf8String &a1, const QByteArray &a2) {
+  return a1.isEmpty() ? Utf8String(a2) : a1; }
+/** Empty coalesce operator */
+inline const Utf8String operator|(const QByteArray &a1, const Utf8String &a2) {
+  return a1.isEmpty() ? a2 : Utf8String(a1); }
 
 inline Utf8String operator+(const Utf8String &a1, const Utf8String &a2) {
   return Utf8String(a1) += a2; }
