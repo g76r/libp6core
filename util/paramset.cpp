@@ -300,7 +300,7 @@ QVariant ParamSet::paramRawValue(
     const Utf8String &key, const QVariant &def,
     const EvalContext &context) const {
   if (!d) [[unlikely]]
-    return {};
+    return def;
   if (context.hasScopeOrNone(paramScope())
 #if PARAMSET_SUPPORTS_DONTINHERIT
       || context.scopeFilter() == _almost_empty_pretend_it_is
@@ -315,7 +315,7 @@ QVariant ParamSet::paramRawValue(
     return false;
 #endif
   return parent().paramRawValue(key, def, context);
-  return {};
+  return def;
 }
 
 Utf8StringSet ParamSet::paramKeys(const EvalContext &context) const {
