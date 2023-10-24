@@ -92,6 +92,8 @@ QVariant ParamsProvider::paramValue(
     // don't check scope filter here, because it's up to paramRawValue to do that
     v = paramRawValue(key, def, context);
   }
+  if (!v.isValid())
+    return v; // passing QVariant through if invalid
   auto id = v.metaType().id();
   if (v.canConvert<double>() && id != qMetaTypeId<Utf8String>()
       && id != QMetaType::QString && id != QMetaType::QByteArray)
