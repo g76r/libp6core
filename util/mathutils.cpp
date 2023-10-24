@@ -411,7 +411,7 @@ static inline QVariant bool_operation(
   convertOtherTypesToBestNumericTypeIfPossible(&a, &ta, &tta);
   convertOtherTypesToBestNumericTypeIfPossible(&b, &tb, &ttb);
   bool x = false;
-  switch (a.metaType().id()) {
+  switch (tta) {
     case QMetaType::Double:
     case QMetaType::LongLong:
     case QMetaType::ULongLong:
@@ -420,7 +420,7 @@ static inline QVariant bool_operation(
     default:
       return QVariant{};
   };
-  switch (b.metaType().id()) {
+  switch (ttb) {
     case QMetaType::Double:
     case QMetaType::LongLong:
     case QMetaType::ULongLong:
