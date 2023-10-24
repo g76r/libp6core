@@ -25,14 +25,14 @@ QVariant ParamsProviderMerger::paramRawValue(
       return def;
     context.setScopeFilter({});
   } // otherwise let merged providers filter themselves
-  auto v = _overridingParams.paramRawValue(key, def, context);
+  auto v = _overridingParams.paramRawValue(key, {}, context);
   if (v.isValid())
     return v;
   for (auto provider: _providers) {
     const ParamsProvider *pp = provider.d->_wild;
     if (!pp)
       pp = &provider.d->_owned;
-    auto v = pp->paramRawValue(key, context);
+    auto v = pp->paramRawValue(key, {}, context);
     if (v.isValid())
       return v;
   }
@@ -90,11 +90,14 @@ QDebug operator<<(QDebug dbg, const ParamsProviderMerger *merger) {
   }
   dbg.nospace() << "{";
   for (auto provider: merger->_providers) {
-    dbg.space() << "provider: " << provider.d->_wild << " "
-                << provider.d->_owned << " scope: "
-                << (provider.d->_wild ? provider.d->_wild->paramScope()
-                                      : provider.d->_owned.paramScope())
-                << ",";
+    dbg.space()
+        << "provider: " << provider.d->_wild << " "
+        << (provider.d->_wild ? provider.d->_wild->paramKeys().toSortedList()
+                              : Utf8StringList{})
+        << provider.d->_owned << " scope: "
+        << (provider.d->_wild ? provider.d->_wild->paramScope()
+                              : provider.d->_owned.paramScope())
+        << ",";
   }
   dbg.space() << "overridingParams: " << merger->overridingParams() << ",";
   dbg.space() << "stack size: " << merger->_providersStack.size() << " }";
@@ -106,9 +109,12 @@ LogHelper operator<<(LogHelper lh, const ParamsProviderMerger *merger) {
     return lh << "nullptr";
   lh << "{ ";
   for (auto provider: merger->_providers) {
-    lh << " provider: " << provider.d->_wild << " " << provider.d->_owned
-       << " scope: " << (provider.d->_wild ? provider.d->_wild->paramScope()
-                                           : provider.d->_owned.paramScope())
+    lh << " provider: " << provider.d->_wild << " "
+       << (provider.d->_wild ? provider.d->_wild->paramKeys().toSortedList()
+                             : Utf8StringList{})
+       << provider.d->_owned << " scope: "
+       << (provider.d->_wild ? provider.d->_wild->paramScope()
+                             : provider.d->_owned.paramScope())
        << ",";
   }
   lh << " overridingParams: " << merger->overridingParams() << ",";
