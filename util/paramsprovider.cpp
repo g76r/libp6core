@@ -92,12 +92,12 @@ QVariant ParamsProvider::paramValue(
     // don't check scope filter here, because it's up to paramRawValue to do that
     v = paramRawValue(key, def, context);
   }
-  if (!v.isValid())
-    return v; // passing QVariant through if invalid
   auto id = v.metaType().id();
-  if (v.canConvert<double>() && id != qMetaTypeId<Utf8String>()
-      && id != QMetaType::QString && id != QMetaType::QByteArray)
-    return v; // passing QVariant through if number
+  // passing QVariant through if non string type (number, invalid, QPointF...)
+  // LATER may add some types here: QJsonValue if text ?
+  if (id != qMetaTypeId<Utf8String>() && id != QMetaType::QString
+      && id != QMetaType::QByteArray)
+    return v;
   if (!context.paramsProvider()) { // if context has no pp, use this as a pp
     context.setParamsProvider(this);
     v = PercentEvaluator::eval(Utf8String(v), context);
