@@ -69,11 +69,9 @@ public:
   explicit inline Utf8String(QVariant v)
     : QByteArray(v.canConvert<QByteArray>()
                  ? v.toByteArray()
-                 : v.canConvert<Utf8String>()
-                   ? v.value<Utf8String>()
-                   : v.canConvert<QString>()
-                     ? v.toString().toUtf8()
-                     : QByteArray{}) { }
+                 : v.canConvert<QString>()
+                   ? v.toString().toUtf8()
+                   : QByteArray{}) { }
 
   /** Return ith byte of the string, like operator[] or at() but safe if i
    *  is out of range. */
