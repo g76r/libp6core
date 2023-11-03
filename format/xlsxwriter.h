@@ -26,7 +26,8 @@ class QFile;
  *  Deduplicate text strings (so called shared strings).
  *  Keep the less data possible in memory, by writing in temp files as soon as
  *  possible. The only scalability limit is temp disk space and text strings
- *  dictionay memory footprint (which btw is lightweight for repeated strings).
+ *  dictionay memory footprint (which is lightweight if the same strings are
+ *  heavily repeated).
  */
 class XlsxWriter {
 public:
