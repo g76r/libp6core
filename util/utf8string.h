@@ -747,6 +747,12 @@ inline const Utf8String operator||(const Utf8String &a1, const QByteArray &a2) {
 /** Empty coalesce operator */
 inline const Utf8String operator||(const QByteArray &a1, const Utf8String &a2) {
   return a1.isEmpty() ? a2 : Utf8String(a1); }
+/** Empty coalesce operator */
+inline const Utf8String operator||(const Utf8String &a1, const char *a2) {
+  return a1.isEmpty() ? Utf8String(a2) : a1; }
+/** Empty coalesce operator */
+inline const Utf8String operator||(const char *a1, const Utf8String &a2) {
+  return !a1 || !*a1 ? a2 : Utf8String(a1); }
 #endif
 
 /** Empty coalesce operator */
@@ -767,6 +773,12 @@ inline const Utf8String operator|(const Utf8String &a1, const QByteArray &a2) {
 /** Empty coalesce operator */
 inline const Utf8String operator|(const QByteArray &a1, const Utf8String &a2) {
   return a1.isEmpty() ? a2 : Utf8String(a1); }
+/** Empty coalesce operator */
+inline const Utf8String operator|(const Utf8String &a1, const char *a2) {
+  return a1.isEmpty() ? Utf8String(a2) : a1; }
+/** Empty coalesce operator */
+inline const Utf8String operator|(const char *a1, const Utf8String &a2) {
+  return !a1 || !*a1 ? a2 : Utf8String(a1); }
 
 inline Utf8String operator+(const Utf8String &a1, const Utf8String &a2) {
   return Utf8String(a1) += a2; }
