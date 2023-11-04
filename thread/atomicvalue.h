@@ -157,6 +157,18 @@ public:
   void unlockData() {
     _mutex.unlock();
   }
+  class ConstLockedData {
+    friend class AtomicValue<T>;
+    const AtomicValue<T> *_v;
+    QMutexLocker<QMutex> _ml;
+    ConstLockedData(const AtomicValue<T> *v) : _v(v), _ml(&v->_mutex) { }
+  public:
+    const T& operator*() const { return _v->_data; }
+    const T* operator->() const { return &_v->_data; }
+    operator const T*() const { return &_v->_data; }
+    void unlock() { _ml.unlock(); }
+    void relock() { _ml.relock(); }
+  };
   class LockedData {
     friend class AtomicValue<T>;
     AtomicValue<T> *_v;
@@ -169,6 +181,11 @@ public:
     void unlock() { _ml.unlock(); }
     void relock() { _ml.relock(); }
   };
+  /** Lock and keep locked until LockedData is destroyed, same pattern
+   * than QMutexLocker (RAII) and QPointer (smart pointer) combined */
+  ConstLockedData constLockedData() const {
+    return ConstLockedData(this);
+  }
   /** Lock and keep locked until LockedData is destroyed, same pattern
    * than QMutexLocker (RAII) and QPointer (smart pointer) combined */
   LockedData lockedData() {
