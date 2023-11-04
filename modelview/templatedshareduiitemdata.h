@@ -109,8 +109,7 @@ public:
     _params.lockedData()->setScope(scope);
   }
   SharedUiItemDataWithMutableParams(const ParamSet &params = {})
-    : SharedUiItemDataWithMutableParams(
-        params, SharedUiItemDataWithFunctions<T>::paramScope()) {}
+    : SharedUiItemDataWithMutableParams(params, T::_qualifier) {}
   // ParamsProvider interface
   QVariant paramRawValue(
       const Utf8String &key, const QVariant &def,
@@ -150,8 +149,7 @@ public:
     _params.setScope(scope);
   }
   SharedUiItemDataWithImmutableParams(const ParamSet &params = {})
-    : SharedUiItemDataWithImmutableParams(
-        params, SharedUiItemDataWithFunctions<T>::paramScope()) {}
+    : SharedUiItemDataWithImmutableParams(params, T::_qualifier) {}
   // ParamsProvider interface
   QVariant paramRawValue(
       const Utf8String &key, const QVariant &def,
