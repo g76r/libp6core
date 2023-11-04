@@ -229,6 +229,7 @@ public:
   [[nodiscard]] int size() const;
   [[nodiscard]] bool isEmpty() const;
   void detach();
+  ParamSet &detached() { detach(); return *this; }
   /** Turn the paramset into a human readable string showing its content.
    * @param inherit include params inherited from parents
    * @param decorate surround with curly braces */
