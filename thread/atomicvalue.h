@@ -93,7 +93,10 @@ class LIBP6CORESHARED_EXPORT AtomicValue {
 public:
   AtomicValue() {}
   explicit AtomicValue(T data) : _data(data) { }
-  explicit AtomicValue(const AtomicValue<T> &other) : _data(other.data()) { }
+  explicit AtomicValue(const AtomicValue<T> &other) {
+    QMutexLocker ml(&other._mutex);
+    _data = other._data;
+  }
   /** Take a copy of holded data.
    * Warning: if holded data needs a deep copy, rather use detachedData() or
    * lockedData().
