@@ -139,9 +139,9 @@ static QRegularExpression notNameRE{"[^a-zA-Z0-9\\_]+"};
 
 QString HtmlTableView::rowText(int row) {
   QAbstractItemModel *m = model();
-  if (!m)
-    return QString();
   QString v, id;
+  if (!m)
+    return v;
   if (!_rowAnchorPrefix.isNull())
     id = _rowAnchorPrefix
         + m->data(m->index(row, _rowAnchorColumn, QModelIndex()))

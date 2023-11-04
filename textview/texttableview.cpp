@@ -36,7 +36,8 @@ void TextTableView::setModel(QAbstractItemModel *model) {
 QString TextTableView::text(ParamsProvider *params, QString scope) const {
   Q_UNUSED(scope)
   QString v;
-  QStringList rows = _rows;
+  auto locked_rows = _rows.constLockedData();
+  const QStringList &rows = *locked_rows;
   int rowsCount = rows.size();
   QString pageVariableName =
       objectName().isEmpty() ? u"page"_s : objectName()+u"-page"_s;
@@ -85,7 +86,7 @@ void TextTableView::invalidateCache() {
 void TextTableView::resetAll() {
   layoutChanged();
   QAbstractItemModel *m = model();
-  _rows.clear();
+  _rows.lockedData()->clear();
   if (m && m->rowCount())
     rowsInserted(QModelIndex(), 0, m->rowCount()-1);
 }
@@ -94,35 +95,50 @@ void TextTableView::dataChanged(const QModelIndex &topLeft,
                                 const QModelIndex &bottomRight) {
   QAbstractItemModel *m = model();
   int start = topLeft.row(), end = bottomRight.row();
-  qsizetype size = _rows.size();
+  auto rows = _rows.lockedData();
+  qsizetype size = rows->size();
   if (!topLeft.isValid() || !bottomRight.isValid() || topLeft.parent().isValid()
-      || bottomRight.parent().isValid() || !m || start >= size)
+      || bottomRight.parent().isValid() || !m || size == 0)
     return;
+  if (start >= size)
+    start = size - 1;
+  if (start < 0)
+    start = 0;
   if (end > size)
     end = (int)size;
-  _rows.remove(start, end-start+1);
-  rowsInserted(QModelIndex(), start, end);
+  rows->remove(start, end-start+1);
+  doRowsInserted(rows, {}, start, end);
 }
 
 void TextTableView::rowsRemoved(const QModelIndex &parent, int start, int end) {
   QAbstractItemModel *m = model();
-  qsizetype size = _rows.size();
+  auto rows = _rows.lockedData();
+  qsizetype size = rows->size();
   if (parent.isValid() || !m || start >= size)
     return;
   if (end > size)
     end = (int)size;
-  _rows.remove(start, end-start+1);
+  rows->remove(start, end-start+1);
 }
 
 void TextTableView::rowsInserted (const QModelIndex &parent, int start,
                                   int end) {
+  auto rows = _rows.lockedData();
+  doRowsInserted(rows, parent, start, end);
+}
+
+void TextTableView::doRowsInserted(
+    AtomicValue<QStringList>::LockedData &rows,
+    const QModelIndex &parent, int start, int end) {
   QAbstractItemModel *m = model();
   if (parent.isValid() || !m)
     return;
+  if (start >= rows->size())
+    start = std::max(rows->size()-1, (qsizetype)0);
   if (_cachedRows > 0 && end > _cachedRows)
     end = _cachedRows;
   for (int row = start; row <= end; ++row)
-    _rows.insert(row, rowText(row));
+    rows->insert(row, rowText(row));
 }
 
 void TextTableView::layoutChanged() {

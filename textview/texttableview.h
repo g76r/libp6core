@@ -15,6 +15,7 @@
 #define TEXTTABLEVIEW_H
 
 #include "textview.h"
+#include "thread/atomicvalue.h"
 
 /** Base class for text table views.
  * @see HtmlTableView
@@ -25,7 +26,7 @@ class LIBP6CORESHARED_EXPORT TextTableView : public TextView {
 
   int _cachedRows, _rowsPerPage;
   QList<int> _columnIndexes, _effectiveColumnIndexes;
-  QStringList _rows;
+  AtomicValue<QStringList> _rows;
   QString _emptyPlaceholder, _ellipsePlaceholder;
 
 public:
@@ -97,6 +98,10 @@ protected:
    * Default: QString() */
   virtual QString footer(int currentPage, int lastPage,
                          QString pageVariableName) const;
+private:
+  void doRowsInserted(
+      AtomicValue<QStringList>::LockedData &rows,
+      const QModelIndex &parent, int start, int end);
 };
 
 #endif // TEXTTABLEVIEW_H
