@@ -65,24 +65,20 @@ public:
   [[nodiscard]] inline QVariant paramRawValue(
       const Utf8String &key, const EvalContext &context) const {
     return paramRawValue(key, {}, context); }
-  /** Same as paramRawValue with utf8.
-   *  CAN be overriden for performance (for implementation dealing only with
-   *  text, without QVariant overhead).
-   *  Default: call paramRawValue() */
-  [[nodiscard]] virtual Utf8String paramRawUtf8(
+  /** Convenience method */
+  [[nodiscard]] inline Utf8String paramRawUtf8(
       const Utf8String &key, const Utf8String &def = {},
-      const EvalContext &context = {}) const;
+      const EvalContext &context = {}) const {
+    return Utf8String(paramRawValue(key, def, context)); }
   /** Convenience method. */
   [[nodiscard]] inline Utf8String paramRawUtf8(
       const Utf8String &key, const EvalContext &context) const {
     return paramRawUtf8(key, {}, context); }
-  /** Same as paramRawValue with utf16.
-   *  CAN be overriden for performance (for implementation dealing only with
-   *  text, without QVariant overhead).
-   *  Default: call paramRawValue() */
-  [[nodiscard]] virtual QString paramRawUtf16(
+  /** Convenience method */
+  [[nodiscard]] inline QString paramRawUtf16(
       const Utf8String &key, const QString &def = {},
-      const EvalContext &context = {}) const;
+      const EvalContext &context = {}) const {
+    return paramRawValue(key, def, context).toString(); }
   /** Convenience method. */
   [[nodiscard]] inline QString paramRawUtf16(
       const Utf8String &key, const EvalContext &context) const {
@@ -121,26 +117,22 @@ public:
     return paramValue(key, {}, context); }
 
   // utf8 %-evaluated values
-  /** Default implem: calls paramValue().
-   *  Can be overloaded by ParamsProvider implementation that would have a
-   *  more efficient way to get Utf8String than converting to and back from
-   *  QVariant through paramValue(). */
-  [[nodiscard]] virtual Utf8String paramUtf8(
+  /** Convenience method */
+  [[nodiscard]] inline Utf8String paramUtf8(
       const Utf8String &key, const Utf8String &def = {},
-      const EvalContext &context = {}) const;
+      const EvalContext &context = {}) const {
+    return Utf8String(paramValue(key, def, context)); }
   /** Convenience method */
   [[nodiscard]] inline Utf8String paramUtf8(
       const Utf8String &key, const EvalContext &context) const {
     return paramUtf8(key, {}, context); }
 
   // utf16 %-evaluated values
-  /** Default implem: calls paramValue().
-   *  Can be overloaded by ParamsProvider implementation that would have a
-   *  more efficient way to get Utf8String than converting to and back from
-   *  QVariant through paramValue(). */
-  [[nodiscard]] virtual QString paramUtf16(
+  /** Convenience method */
+  [[nodiscard]] inline QString paramUtf16(
       const Utf8String &key, const QString &def = {},
-      const EvalContext &context = {}) const;
+      const EvalContext &context = {}) const {
+    return paramValue(key, def, context).toString(); }
   /** Convenience method */
   [[nodiscard]] inline QString paramUtf16(
       const Utf8String &key, const EvalContext &context) const {
