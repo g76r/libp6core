@@ -58,6 +58,9 @@ public:
     Utf8StringSet _scope_filter;
     Utf8StringSet _already_evaluated_variables; // loop detection
     int _role;
+    struct {
+      unsigned int _functions_evaluated : 1 = 0;
+    } _flags;
 
   public:
     /** implicit constructor: can cast from const ParamsProvider * */
@@ -92,6 +95,8 @@ public:
     bool containsVariable(const Utf8String &key) const {
       return _already_evaluated_variables.contains(key); }
     int role() const { return _role; }
+    bool functionsEvaluated() const { return _flags._functions_evaluated; }
+    void setFunctionsEvaluated() { _flags._functions_evaluated = 1; }
     LIBP6CORESHARED_EXPORT const Utf8String toUtf8() const;
   };
 
@@ -111,7 +116,7 @@ public:
    *
    *  @param context is an evaluation context, can be empty (only contextless
    *         function like %=date will be available for evaluation) */
-  [[nodiscard]] static inline const QVariant eval(
+  [[nodiscard]] static inline QVariant eval(
       const Utf8String &expr, const EvalContext &context = {}) {
     if (!expr.contains('%')) // passthrough keeps memory benefits of implicit
       return expr; // sharing (and avoids converting "" into {})
@@ -120,7 +125,7 @@ public:
     return eval(begin, begin+expr.size(), context);
   }
   /** Lower level version of the method with char* params. */
-  [[nodiscard]] static const QVariant eval(
+  [[nodiscard]] static QVariant eval(
       const char *expr, const char *end, const EvalContext &context = {});
   /** Low-level %-less key evaluation.
    *
@@ -138,10 +143,29 @@ public:
    *  @param key can begin with a scope specifier, e.g. "[bar]foo" (in which
    *         case it will override the one in context)
    *  @param context is an evaluation context, can be null (only contextless
-   *         function like %=date will be available for evaluation)
-   *  @param alreadyEvaluated used for loop detections, must not be null */
-  [[nodiscard]] static const QVariant eval_key(
+   *         function like %=date will be available for evaluation) */
+  [[nodiscard]] static QVariant eval_key(
       const Utf8String &key, const EvalContext &context = {});
+
+  /** Low-level function only evaluation.
+   *
+   *  Used internaly by ParamsProvider implementations, not intended for
+   *  application code use.
+   *
+   *  "'foo" -> "foo": a leading quote escapes param evaluation
+   *  "=date:%format" -> current date using format given by "format" param
+   *    in context
+   *  "foo" -> {} even if foo exists in context, foo is not a function
+   *  "%foo" -> {} even if foo exists in context, % or %foo is not a function
+   *
+   *  @param key only functions are evaluated
+   *  @param context is an evaluation context, can be null (only contextless
+   *         function like %=date will be available for evaluation)
+   *  @param found if not null will be set to true if key is evaluated as
+             a function otherwise to false. */
+  [[nodiscard]] static QVariant eval_function(
+      const Utf8String &key, const EvalContext &context = {},
+      bool *found = nullptr);
 
   // data conversion
   /** Evaluate and then convert result to utf8 text.

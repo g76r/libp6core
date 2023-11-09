@@ -1,10 +1,12 @@
 #include <QtDebug>
-#include "util/paramset.cpp"
+#include "util/paramset.h"
+#include "util/paramsprovidermerger.h"
 
 int main(void) {
   ParamSet p { "foo", "bar", "x", "1.5", "s1", "\xef\xbb\xbf\xef\xbb\xbf\xef\xbb\xbf§foo§bar§baz§\xef\xbb\xbf§§"_u8,
                "s2", "%{=left:%foo:1}", "baz", "42", "fooz", "%bar", "foozz", "%%bar",
                "h1", "at http://1.2.3.4/\nthere's something", "empty", "" };
+  auto ppm = ParamsProviderMerger(&p);
   qDebug() << p;
   qDebug() << p.paramUtf8("s2");
   qDebug() << PercentEvaluator::eval_utf8(
@@ -30,5 +32,7 @@ int main(void) {
   qDebug() << PercentEvaluator::eval_utf8( // overflows
                 "%{=integer:1e50}= %{=integer:10000P}= %{=rpn,'4G,'4G,*}= "
                 "%{=rpn,'4.0G,'4G,*}=1.6e+19");
+  qDebug() << PercentEvaluator::eval_function("'abcdef")
+           << p.paramRawValue("'abcdef") << p.paramUtf8("'abcdef") << ppm.paramUtf8("'abcdef");
   return 0;
 }

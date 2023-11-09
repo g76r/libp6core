@@ -19,13 +19,24 @@ QVariant ParamsProviderMerger::paramRawValue(
     const EvalContext &original_context) const {
   auto merger_scope = paramScope();
   EvalContext context = original_context;
+  QVariant v;
+  if (!context.functionsEvaluated()) {
+    bool is_function;
+    v = PercentEvaluator::eval_function(key, context, &is_function);
+    if (is_function)
+      return v;
+    // don't call context.setFunctionsEvaluated() because ParamsProvider
+    // implementation may include custom functions or other complex features
+    // implying %-evaluation re-entrance needing functions evaluation again
+    // (may do it for paramsets)
+  }
   if (!merger_scope.isEmpty()) {
     // if merger has a scope, pretend that all merged providers have this scope
     if (!context.hasScopeOrNone(paramScope()))
       return def;
     context.setScopeFilter({});
   } // otherwise let merged providers filter themselves
-  auto v = _overridingParams.paramRawValue(key, {}, context);
+  v = _overridingParams.paramRawValue(key, {}, context);
   if (v.isValid())
     return v;
   for (auto provider: _providers) {

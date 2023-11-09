@@ -405,6 +405,17 @@ _functions {
 }, true},
 };
 
+QVariant PercentEvaluator::eval_function(
+    const Utf8String &key, const EvalContext &context, bool *found) {
+  int matchedLength;
+  auto function = _functions.value(key, &matchedLength);
+  if (found)
+    *found = !!function;
+  if (function)
+    return function(key, context, matchedLength);
+  return {};
+}
+
 /** key musn't have a scope filter specification e.g. "[bar]foo" */
 static inline QVariant eval_key(
     const Utf8String &new_scope_filter, const Utf8String &key,
@@ -446,7 +457,7 @@ static inline QVariant eval_key(
 }
 
 /** key can have a scope filter specification e.g. "[bar]foo" */
-const QVariant PercentEvaluator::eval_key(
+QVariant PercentEvaluator::eval_key(
     const Utf8String &key, const EvalContext &context) {
   if (key.value(0) != '[') // no scope filter at the begining of the key
     return ::eval_key({}, key, context);
@@ -467,7 +478,7 @@ enum State {
 
 } // unnamed namespace
 
-const QVariant PercentEvaluator::eval(
+QVariant PercentEvaluator::eval(
     const char *begin, const char *end, const EvalContext &context) {
   Q_ASSERT(begin);
   Q_ASSERT(end);

@@ -298,7 +298,16 @@ void ParamSet::clear() {
 
 QVariant ParamSet::paramRawValue(
     const Utf8String &key, const QVariant &def,
-    const EvalContext &context) const {
+    const EvalContext &original_context) const {
+  EvalContext context = original_context;
+  QVariant v;
+  if (!context.functionsEvaluated()) {
+    bool is_function;
+    v = PercentEvaluator::eval_function(key, context, &is_function);
+    if (is_function)
+      return v;
+    context.setFunctionsEvaluated(); // avoid function eval in parents
+  }
   if (!d) [[unlikely]]
     return def;
   if (context.hasScopeOrNone(paramScope())
@@ -306,9 +315,9 @@ QVariant ParamSet::paramRawValue(
       || context.scopeFilter() == _almost_empty_pretend_it_is
 #endif
       ) {
-    auto value = d->_params.value(key);
-    if (value.isValid())
-      return value;
+    v = d->_params.value(key);
+    if (v.isValid())
+      return v;
   }
 #if PARAMSET_SUPPORTS_DONTINHERIT
   if (context.containsScope(DontInheritScope))

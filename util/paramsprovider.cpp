@@ -80,18 +80,25 @@ QVariant ParamsProvider::paramValue(
   // have to call PercentEvaluator::eval_key(key, my_context_plus_this) instead
   if (key.value(0) == '[') {
     auto eos = key.indexOf(']');
-    if (eos < 0) // no ] in key
+    if (eos < 0) {// no ] in key
       v = def;
-    else {
-      context.setScopeFilter(key.mid(1, eos-1));
-      key = key.mid(eos+1);
-      // don't check scope filter here, because it's up to paramRawValue to do that
-      v = paramRawValue(key, def, context);
+      goto skip_param_raw_value;
     }
-  } else {
-    // don't check scope filter here, because it's up to paramRawValue to do that
-    v = paramRawValue(key, def, context);
+    context.setScopeFilter(key.mid(1, eos-1));
+    key = key.mid(eos+1);
   }
+  if (!context.functionsEvaluated()) {
+    bool is_function;
+    v = PercentEvaluator::eval_function(key, context, &is_function);
+    if (is_function)
+      return v;
+    // don't call context.setFunctionsEvaluated() because ParamsProvider
+    // implementation may include custom functions or other complex features
+    // implying %-evaluation re-entrance needing functions evaluation again
+  }
+  // don't check scope filter here, because it's up to paramRawValue to do that
+  v = paramRawValue(key, def, context);
+skip_param_raw_value:
   auto id = v.metaType().id();
   // passing QVariant through if non string type (number, invalid, QPointF...)
   // LATER may add some types here: QJsonValue if text ?
