@@ -35,5 +35,9 @@ int main(void) {
   qDebug() << s.remove("ab") << "=cdaaacda";
   qDebug() << Utf8String::fromCEscaped("\\\\a\\x40\\60\\u00a7\\xa7\\U0001F968\\u8D8A\\U00008D8Aa\x1\x0001"_u8)
               +"=\\a\x40\60\u00a7\xa7\U0001f968\u8D8A\U00008D8Aa\x1\x0001";
+  ParamSet ps { "foo", "1", "bar", "2" };
+  auto bar = "%bar"_u8;
+  bar %= ps;
+  qDebug() << "%foo"_u8 % ps << "%foo"_u8 % &ps << bar;
   return 0;
 }

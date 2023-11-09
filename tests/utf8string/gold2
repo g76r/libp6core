@@ -14,3 +14,4 @@ true false
 "aéÉb€¢σςΣøœ×o'z" "AÉÉB€¢ΣΣΣØŒ×O'Z" "aééb€¢σςσøœ×o'z" "AÉÉB€¢ΣΣΣØŒ×O'Z" false '\u01c5'
 "cdaaacda" =cdaaacda
 "\\a@0§�🥨越越a\u0001\u0001=\\a@0§�🥨越越a\u0001\u0001"
+QVariant(Utf8String, "1") QVariant(Utf8String, "1") "2"

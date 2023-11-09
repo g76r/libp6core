@@ -250,5 +250,40 @@ QDebug LIBP6CORESHARED_EXPORT operator<<(
 LogHelper LIBP6CORESHARED_EXPORT operator<<(
     LogHelper lh, const PercentEvaluator::EvalContext &c);
 
+/** Syntaxic sugar to shorten PercentEvaluator::eval
+ *  Utf8String foo = "%foo"_u8 % params;
+ *  Utf8String date = "%=date"_u8 % {};
+ */
+inline QVariant operator%(
+    const Utf8String &expr, const PercentEvaluator::EvalContext &context) {
+  return PercentEvaluator::eval(expr, context);
+}
+
+/** Syntaxic sugar to shorten PercentEvaluator::eval
+ *  Utf8String foo = "%foo"_u8 % params;
+ *  Utf8String date = "%=date"_u8 % {};
+ */
+inline QVariant operator%(
+    const Utf8String &expr, const ParamsProvider &params) {
+  return PercentEvaluator::eval(expr, &params);
+}
+
+/** Syntaxic sugar to shorten PercentEvaluator::eval
+ *  auto foo = "%foo"_u8;
+ *  foo %= params;
+ */
+inline Utf8String &operator%=(
+    Utf8String &expr, const PercentEvaluator::EvalContext &context) {
+  return expr = PercentEvaluator::eval(expr, context);
+}
+
+/** Syntaxic sugar to shorten PercentEvaluator::eval
+ *  auto foo = "%foo"_u8;
+ *  foo %= params;
+ */
+inline Utf8String &operator%=(
+    Utf8String &expr, const ParamsProvider &params) {
+  return expr = PercentEvaluator::eval(expr, &params);
+}
 
 #endif // PERCENTEVALUATOR_H
