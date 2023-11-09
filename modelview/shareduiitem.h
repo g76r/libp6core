@@ -550,11 +550,6 @@ public:
   [[nodiscard]] QVariant paramRawValue(
       const Utf8String &key, const QVariant &def = {},
       const EvalContext &context = {}) const override;
-  using ParamsProvider::paramRawUtf8;
-  /** ParamsProvider interface, overridable by SharedUiData implementation. */
-  [[nodiscard]] Utf8String paramRawUtf8(
-      const Utf8String &key, const Utf8String &def = {},
-      const EvalContext &context = {}) const override;
   using ParamsProvider::paramKeys;
   /** ParamsProvider interface, overridable by SharedUiData implementation.
    *  Default: return every section names (named keys, section numbers and
@@ -564,11 +559,6 @@ public:
   /** ParamsProvider interface, overridable by SharedUiData implementation. */
   [[nodiscard]] bool paramContains(
       const Utf8String &key, const EvalContext &context = {}) const override;
-  using ParamsProvider::paramUtf8;
-  /** ParamsProvider interface, overridable by SharedUiData implementation. */
-  [[nodiscard]] Utf8String paramUtf8(
-      const Utf8String &key, const Utf8String &def = {},
-      const EvalContext &context = {}) const override;
   using ParamsProvider::paramScope;
   /** ParamsProvider interface, overridable by SharedUiData implementation.
    *  Default: return the id qualifier. */

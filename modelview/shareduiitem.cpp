@@ -95,14 +95,6 @@ QVariant SharedUiItem::paramRawValue(
   return _data->paramRawValue(key, def, context);
 }
 
-Utf8String SharedUiItem::paramRawUtf8(
-    const Utf8String &key, const Utf8String &def,
-    const EvalContext &context) const {
-  if (!_data)
-    return {};
-  return _data->paramRawUtf8(key, def, context);
-}
-
 Utf8StringSet SharedUiItemData::paramKeys(
     const EvalContext &) const {
   Utf8StringSet keys { "id"_u8, "qualifier"_u8, "qualified_id"_u8 };
@@ -128,14 +120,6 @@ bool SharedUiItem::paramContains(
   if (!_data)
     return {};
   return _data->paramContains(key, context);
-}
-
-Utf8String SharedUiItem::paramUtf8(
-    const Utf8String &key, const Utf8String &def,
-    const EvalContext &context) const {
-  if (!_data)
-    return {};
-  return _data->paramUtf8(key, def, context);
 }
 
 Utf8String SharedUiItemData::paramScope() const {
