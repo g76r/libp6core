@@ -321,7 +321,7 @@ QVariant ParamSet::paramRawValue(
   }
 #if PARAMSET_SUPPORTS_DONTINHERIT
   if (context.containsScope(DontInheritScope))
-    return false;
+    return def;
 #endif
   return parent().paramRawValue(key, def, context);
   return def;
