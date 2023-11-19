@@ -86,9 +86,13 @@ void TextTableView::invalidateCache() {
 void TextTableView::resetAll() {
   layoutChanged();
   QAbstractItemModel *m = model();
-  _rows.lockedData()->clear();
-  if (m && m->rowCount())
-    rowsInserted(QModelIndex(), 0, m->rowCount()-1);
+  auto rows = _rows.lockedData();
+  rows->clear();
+  if (m) {
+    auto size = m->rowCount();
+    if (size)
+      doRowsInserted(rows, {}, 0, size-1);
+  }
 }
 
 void TextTableView::dataChanged(const QModelIndex &topLeft,
@@ -96,16 +100,33 @@ void TextTableView::dataChanged(const QModelIndex &topLeft,
   QAbstractItemModel *m = model();
   int start = topLeft.row(), end = bottomRight.row();
   auto rows = _rows.lockedData();
-  qsizetype size = rows->size();
+  int size = rows->size(); // overflows if > 2G
   if (!topLeft.isValid() || !bottomRight.isValid() || topLeft.parent().isValid()
       || bottomRight.parent().isValid() || !m || size == 0)
     return;
-  if (start >= size)
+  if (start >= size) {
+    //qDebug() << "dataChanged start >= size:" << start << typeid(this).name()
+    //         << objectName();
     start = size - 1;
-  if (start < 0)
+  }
+  if (start < 0) {
+    //qDebug() << "dataChanged start < 0:" << start << typeid(this).name()
+    //         << objectName();
     start = 0;
-  if (end > size)
-    end = (int)size;
+  }
+  if (end >= size) {
+    /*if (size) {
+      qDebug() << "dataChanged end >= size:" << end << size
+               << typeid(this).name() << objectName() << rows->at(0);
+    if (size > 10)
+      qDebug() << rows->at(0) << rows->at(1) << rows->at(2) << rows->at(3)
+               << rows->at(4) << rows->at(5) << rows->at(6) << rows->at(7)
+               << rows->at(8) << rows->at(9);
+    } else
+      qDebug() << "dataChanged end >= size:" << end << size
+               << typeid(this).name() << objectName();*/
+    end = size-1;
+  }
   rows->remove(start, end-start+1);
   doRowsInserted(rows, {}, start, end);
 }
@@ -113,11 +134,19 @@ void TextTableView::dataChanged(const QModelIndex &topLeft,
 void TextTableView::rowsRemoved(const QModelIndex &parent, int start, int end) {
   QAbstractItemModel *m = model();
   auto rows = _rows.lockedData();
-  qsizetype size = rows->size();
-  if (parent.isValid() || !m || start >= size)
+  int size = rows->size(); // overflows if > 2G
+  if (parent.isValid() || !m)
     return;
-  if (end > size)
-    end = (int)size;
+  if (size <= 0 || start < 0 || start >= size || end < 0) {
+    //qDebug() << "rowRemoved size <= 0 || start < 0 || start >= size || end < 0:"
+    //         << start << end << size << typeid(this).name() << objectName();
+    return;
+  }
+  if (end > size) {
+    //qDebug() << "rowRemoved end > size:" << end << size << typeid(this).name()
+    //         << objectName();
+    end = size-1;
+  }
   rows->remove(start, end-start+1);
 }
 
@@ -133,8 +162,12 @@ void TextTableView::doRowsInserted(
   QAbstractItemModel *m = model();
   if (parent.isValid() || !m)
     return;
-  if (start >= rows->size())
-    start = std::max(rows->size()-1, (qsizetype)0);
+  int size = rows->size(); // overflows if > 2G
+  if (start > size) {
+    //qDebug() << "doRowsInserted start > size:" << start << size
+    //         << std::max(size-1, 0) << typeid(this).name() << objectName();
+    start = std::max(size-1, 0);
+  }
   if (_cachedRows > 0 && end > _cachedRows)
     end = _cachedRows;
   for (int row = start; row <= end; ++row)
