@@ -54,6 +54,7 @@ public:
   HttpHandler *chooseHandler(HttpRequest req);
   bool listen(QHostAddress address = QHostAddress::Any, quint16 port = 0);
   inline bool listen(quint16 port) { return listen(QHostAddress::Any, port); }
+  void close();
   inline HttpServer &setLogPolicy(LogPolicy policy) {
     _logPolicy = policy; return *this; }
   inline LogPolicy logPolicy() const { return _logPolicy; }

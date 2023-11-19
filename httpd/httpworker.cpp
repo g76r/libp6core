@@ -46,8 +46,7 @@ static inline void sendError(QTextStream &out, const char *httpMessage,
     Log::error() << QString(httpMessage)+", "+logDetails;
 }
 
-void HttpWorker::handleConnection(
-    int socketDescriptor, std::function<void()> handledCallback) {
+void HttpWorker::handleConnection(int socketDescriptor) {
       // LATER replace by QDateTime when Qt >= 4.7
   //QTime before= QTime::currentTime();
   QTcpSocket *socket = new QTcpSocket(this);
@@ -208,7 +207,7 @@ finally:
     ; //qDebug() << "waitForBytesWritten returned true" << socket->bytesToWrite();
   socket->close();
   socket->deleteLater();
-  QMetaObject::invokeMethod(_server, handledCallback);
+  emit connectionHandled(this);
   //long long duration = before.msecsTo(QTime::currentTime());
   //Statistics::record("server.http.hit", "", url.path(), duration,
   //                   req.header("Content-Length").toLongLong(), 1, 0, 0,

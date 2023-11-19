@@ -43,6 +43,8 @@ HttpServer::HttpServer(int workersPoolSize, int maxQueuedSockets,
     // remove them in ~HttpServer since some may be in use, hence connecting
     // server's destroyed() to workers' deleteLater()
     connect(this, &HttpServer::destroyed, worker, &HttpWorker::deleteLater);
+    connect(worker, &HttpWorker::connectionHandled,
+            this, &HttpServer::connectionHandled);
     _workersPool.append(worker);
   }
   moveToThread(_thread);
@@ -55,10 +57,8 @@ void HttpServer::incomingConnection(qintptr socketDescriptor)  {
   int fd = (int)socketDescriptor;
   if (!_workersPool.isEmpty()) {
     HttpWorker *worker = _workersPool.takeFirst();
-    QMetaObject::invokeMethod(worker, [this,worker,fd](){
-      worker->handleConnection(fd, [this,worker](){
-        connectionHandled(worker);
-      });
+    QMetaObject::invokeMethod(worker, [worker,fd](){
+      worker->handleConnection(fd);
     });
   } else {
     if (_queuedSockets.size() < _maxQueuedSockets) {
@@ -76,10 +76,8 @@ void HttpServer::connectionHandled(HttpWorker *worker) {
     _workersPool.append(worker);
   } else {
     int fd = _queuedSockets.takeFirst();
-    QMetaObject::invokeMethod(worker, [this,worker,fd](){
-      worker->handleConnection(fd, [this,worker](){
-        connectionHandled(worker);
-      });
+    QMetaObject::invokeMethod(worker, [worker,fd](){
+      worker->handleConnection(fd);
     });
   }
 }
@@ -138,4 +136,16 @@ Utf8String HttpServer::logPolicyAsText(LogPolicy policy) {
 
 HttpServer::LogPolicy HttpServer::logPolicyFromText(const Utf8String &text) {
   return _logPoliciesFromText.value(text, LogDisabled);
+}
+
+void HttpServer::close() {
+  auto shutdown = [this]() {
+    QTcpServer::close();
+  };
+  if (this->thread() == QThread::currentThread())
+    shutdown();
+  else
+    QMetaObject::invokeMethod(this, [shutdown](){
+      shutdown();
+    }, Qt::BlockingQueuedConnection);
 }

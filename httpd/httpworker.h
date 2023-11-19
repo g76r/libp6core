@@ -30,8 +30,10 @@ public:
   explicit HttpWorker(HttpServer *server);
 
 public slots:
-  void handleConnection(
-      int socketDescriptor, std::function<void(void)> handledCallback);
+  void handleConnection(int socketDescriptor);
+
+signals:
+  void connectionHandled(HttpWorker *worker);
 };
 
 #endif // HTTPWORKER_H
