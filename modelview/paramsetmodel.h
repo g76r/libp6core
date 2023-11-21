@@ -40,14 +40,14 @@ public:
   /** Pointer to document manager's signal notifying a paramset has changed.
    * To be connected to changeParams() slot. */
   template <class T>
-  using ChangedSignal = void (T::*)(ParamSet newParams, ParamSet oldParams,
-  QByteArray paramsetId);
+  using ChangedSignal = void (T::*)(const ParamSet &newParams,
+  const ParamSet &oldParams, const Utf8String &paramsetId);
   /** Pointer to document manager's method to propagate a user interface
    * change occuring through the model.
    * To be connected to paramsChanged() signal. */
   template <class T>
-  using ChangeSetter = void (T::*)(ParamSet newParams, ParamSet oldParams,
-  QByteArray paramsetId);
+  using ChangeSetter = void (T::*)(const ParamSet &newParams,
+  const ParamSet &oldParams, const Utf8String &paramsetId);
 
 private:
   struct ParamSetRow {
@@ -90,7 +90,7 @@ public:
   QModelIndex indexOf(QString key, bool allowInherited) const;
   Qt::ItemFlags flags(const QModelIndex &index) const override;
   QList<QString> scopes() const { return _scopes; }
-  void setScopes(QList<QString> scopes) { _scopes = scopes; }
+  void setScopes(const QList<QString> &scopes) { _scopes = scopes; }
   void setchangeParamsIdFilter(QString changeParamsIdFilter) {
     _changeParamsIdFilter = changeParamsIdFilter.toUtf8(); }
   void setchangeParamsIdFilter(const char *changeParamsIdFilter) {
@@ -122,11 +122,11 @@ public:
    * slot filter, and scopes. */
   template <class T>
   void connectToDocumentManager(
-      T *documentManager, ParamSet initialParams,
-      QByteArray changeParamsIdFilter, QByteArray qualifier,
+      T *documentManager, const ParamSet &initialParams,
+      const Utf8String &changeParamsIdFilter, const Utf8String &qualifier,
       ParamSetModel::ChangedSignal<T> changedSignal,
       ParamSetModel::ChangeSetter<T> changeSetter,
-      QList<QString> scopes = {}) {
+      const QList<QString> &scopes = {}) {
     _scopes = scopes;
     _qualifier = qualifier;
     if (!changeParamsIdFilter.isEmpty())
@@ -140,34 +140,34 @@ public:
   /** Convenience method */
   template <class T>
   void connectToDocumentManager(
-      T *documentManager, ParamSet initialParams,
-      QByteArray changeParamsIdFilter, QByteArray qualifier,
+      T *documentManager, const ParamSet &initialParams,
+      const Utf8String &changeParamsIdFilter, const Utf8String &qualifier,
       ParamSetModel::ChangedSignal<T> changedSignal,
-      ParamSetModel::ChangeSetter<T> changeSetter, QString localScope) {
+      ParamSetModel::ChangeSetter<T> changeSetter, const QString &localScope) {
     QList<QString> scopes;
     scopes.append(localScope);
     connectToDocumentManager(
           documentManager, initialParams, changeParamsIdFilter, qualifier,
-          changedSignal, changeSetter, {scopes});
+          changedSignal, changeSetter, scopes);
   }
 
 public slots:
   /** Must be signaled each time the ParamSet data changes. */
   // TODO use ParamSet,ParamSet,QString signature and add filter, the SUIM way
   // then update DM signature and web console connections to use only one signal
-  void changeParams(ParamSet newParams, ParamSet oldParams,
-                    QByteArray paramsetId);
+  void changeParams(const ParamSet &newParams, const ParamSet &oldParams,
+                    const Utf8String &paramsetId);
 
 signals:
   /** Signal emited whenever user interface change occured, e.g. setData()
    * or removeRows() is called.
    * Not emited when changeParams() is called. */
-  void paramsChanged(ParamSet newParams, ParamSet oldParams,
-                     QByteArray paramsetId);
+  void paramsChanged(const ParamSet &newParams, const ParamSet &oldParams,
+                     const Utf8String &paramsetId);
 
 private:
-  inline void fillRows(QList<ParamSetRow> *rows, ParamSet params, int depth,
-                       QSet<QString> *allKeys);
+  inline void fillRows(QList<ParamSetRow> *rows, const ParamSet &params,
+                       int depth, QSet<QString> *allKeys);
   // hide functions that cannot work with SharedUiItem paradigm to avoid
   // misunderstanding
   using QAbstractItemModel::insertRows;

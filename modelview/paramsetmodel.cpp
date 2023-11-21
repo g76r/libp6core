@@ -173,8 +173,9 @@ bool ParamSetModel::removeRows(
 }
 
 void ParamSetModel::fillRows(
-    QList<ParamSetRow> *rows, ParamSet params, int depth,
+    QList<ParamSetRow> *rows, const ParamSet &original_params, int depth,
     QSet<QString> *allKeys) {
+  ParamSet params = original_params;
   if (_inherit) {
     ParamSet parent = params.parent();
     if (!parent.isNull())
@@ -204,8 +205,9 @@ void ParamSetModel::fillRows(
   }
 }
 
-void ParamSetModel::changeParams(ParamSet newParams, ParamSet oldParams,
-                                 QByteArray paramsetId) {
+void ParamSetModel::changeParams(
+    const ParamSet &newParams, const ParamSet &oldParams,
+    const Utf8String &paramsetId) {
   Q_UNUSED(oldParams)
   if (!_changeParamsIdFilter.isEmpty() && _changeParamsIdFilter != paramsetId)
     return; // ignore filtered out paramsets
