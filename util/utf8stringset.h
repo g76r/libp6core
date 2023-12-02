@@ -48,6 +48,8 @@ public:
 
   Utf8StringSet &operator +=(const QSet<Utf8String> &set) {
     QSet<Utf8String>::operator +=(set); return *this; }
+  Utf8StringSet &operator +=(const Utf8String &s) {
+    QSet<Utf8String>::operator +=(s); return *this; }
 #if __cpp_concepts >= 201907
   Utf8StringSet &operator +=(const QSet<QByteArray> &set) {
     QSet<Utf8String>::operator +=(Utf8StringSet(set.cbegin(), set.cend()));
