@@ -808,3 +808,8 @@ as_is:
   }
   return result;
 }
+
+Utf8String &Utf8String::replace(
+    const QRegularExpression &re, const Utf8String &after) {
+  return *this = toUtf16().replace(re, after);
+}

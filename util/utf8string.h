@@ -412,6 +412,7 @@ public:
     QByteArray::replace(before, after); return *this; }
   inline Utf8String &replace(char before, char after) {
     QByteArray::replace(before, after); return *this; }
+  Utf8String &replace(const QRegularExpression &re, const Utf8String &after);
 
   inline Utf8String &append(char c) {
     QByteArray::append(c); return *this; }
