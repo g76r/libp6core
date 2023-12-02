@@ -224,8 +224,8 @@ ParamSet::ParamSet(
       values[i].append(PercentEvaluator::escape(s));
     }
   }
-  for (auto i: bindings.keys()) {
-    insert(bindings.value(i), values[i].join(' '));
+  for (auto [i,key]: bindings.asKeyValueRange()) {
+    insert(key, values[i].join(' '));
   }
 }
 
@@ -336,7 +336,8 @@ Utf8StringSet ParamSet::paramKeys(const EvalContext &context) const {
       || context.scopeFilter() == _almost_empty_pretend_it_is
 #endif
       )
-    set += d->_params.keys();
+    for (auto [k,v]: d->_params.asKeyValueRange())
+      set += k;
 #if PARAMSET_SUPPORTS_DONTINHERIT
   if (!context.containsScope(DontInheritScope))
 #endif
@@ -373,7 +374,8 @@ Utf8StringSet ParamSet::unscopedParamKeys(bool inherit) const {
   Utf8StringSet keys;
   if (!d)
     return {};
-  keys = d->_params.keys();
+  for (auto [k,v]: d->_params.asKeyValueRange())
+    keys += k;
   if (inherit)
     keys += d->_parent.unscopedParamKeys(true);
   return keys;

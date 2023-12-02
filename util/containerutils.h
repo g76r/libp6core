@@ -64,5 +64,14 @@ public:
   }
 };
 
+//template<typename T>
+//class kv_range {
+//  T data;
+//public:
+//  kv_range(T data) : data{data} { }
+//  //kv_range(T &&data) : data{data} { }
+//  auto begin() { return data.keyValueBegin(); }
+//  auto end() { return data.keyValueEnd(); }
+//};
 
 #endif // CONTAINERUTILS_H

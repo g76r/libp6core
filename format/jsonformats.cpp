@@ -25,8 +25,8 @@ namespace {
 template<class T>
 QString dict2string(const T &dict) {
   QJsonObject json;
-  for (const QString &key : dict.keys())
-    json.insert(key, dict.value(key));
+  for (auto [k,v] : dict.asKeyValueRange())
+    json.insert(k, v);
   QJsonDocument doc;
   doc.setObject(json);
   return QString::fromUtf8(doc.toJson()).replace(_linebreaksRE, u" "_s);

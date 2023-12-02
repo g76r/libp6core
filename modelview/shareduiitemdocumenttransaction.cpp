@@ -59,8 +59,8 @@ SharedUiItemList SharedUiItemDocumentTransaction::itemsByQualifier(
 
 SharedUiItemList SharedUiItemDocumentTransaction::changingItems() const {
   SharedUiItemList items;
-  for (auto qualifier: _changingItems.keys())
-    for (auto item: _changingItems.value(qualifier)) {
+  for (auto [qualifier,original_items]: _changingItems.asKeyValueRange())
+    for (auto item: original_items) {
       if (!item.isNull())
         items.append(item);
     }
@@ -69,8 +69,8 @@ SharedUiItemList SharedUiItemDocumentTransaction::changingItems() const {
 
 SharedUiItemList SharedUiItemDocumentTransaction::originalItems() const {
   SharedUiItemList items;
-  for (auto qualifier: _originalItems.keys())
-    for (auto item: _originalItems.value(qualifier)) {
+  for (auto [qualifier,original_items]: _originalItems.asKeyValueRange())
+    for (auto item: original_items) {
       if (!item.isNull())
         items.append(item);
     }

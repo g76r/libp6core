@@ -338,14 +338,16 @@ Utf8StringSet HttpRequest::paramKeys(
     const EvalContext &context) const {
   if (!context.hasScopeOrNone(paramScope()))
     return {};
-  Utf8StringSet keys { "url", "method", "clientaddresses" };
-  for (auto s: cookies().keys())
-    keys << "cookie:"+s;
-  for (auto s: paramsAsMap().keys())
-    keys << "param:"+s;
-  for (auto s: headers().keys()) {
-    keys << "header:"+s;
-    keys << "requestheader:"+s;
+  static const Utf8StringSet _const_keys {
+    "url"_u8, "method"_u8, "clientaddresses"_u8 };
+  Utf8StringSet keys = _const_keys;
+  for (auto [s,_]: cookies().asKeyValueRange())
+    keys << "cookie:"_u8+s;
+  for (auto [s,_]: paramsAsMap().asKeyValueRange())
+    keys << "param:"_u8+s;
+  for (auto [s,_]: headers().asKeyValueRange()) {
+    keys << "header:"_u8+s;
+    keys << "requestheader:"_u8+s;
   }
   return keys;
 }

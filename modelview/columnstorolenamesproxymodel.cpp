@@ -43,8 +43,8 @@ void ColumnsToRolenamesProxyModel::refreshRolenamesFromColumnHeaders() {
   }
   // keep default rolenames (provided no column header name overrides them)
   _roles = model->roleNames();
-  for (const int &key : _roles.keys())
-    _reverseRoles.insert(QString::fromUtf8(_roles.value(key)), key);
+  for (auto [k,v] : _roles.asKeyValueRange())
+    _reverseRoles.insert(QString::fromUtf8(v), k);
   // use column names as QML role names and map them to QtWidgets user roles,
   // force lower case names
   int count = columnCount();

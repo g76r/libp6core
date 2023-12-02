@@ -355,7 +355,7 @@ Utf8StringSet HttpResponse::paramKeys(const EvalContext &context) const {
     return {};
   Utf8StringSet keys { "status", "receiveddate", "handleddate", "flusheddate",
                        "servicems", "handlingms"};
-  for (auto s: headers().keys()) {
+  for (auto [s,_]: headers().asKeyValueRange()) {
     keys << "header:"+s;
     keys << "responseheader:"+s;
   }

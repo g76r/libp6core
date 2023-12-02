@@ -232,7 +232,7 @@ bool XlsxWriter::write(Utf8String filename) {
     return false;
   // closing sheet files
   Utf8String sheets_in_book, sheets_in_rels, sheets_in_content_types;
-  for (auto title: _sheets.keys()) {
+  for (auto [title,_]: _sheets.asKeyValueRange()) {
     auto sheet = _sheets[title];
     auto id_as_utf8 = Utf8String::number(sheet->_id);
     sheets_in_book += "    <sheet name=\""+html_protect(title)+"\" sheetId=\""
