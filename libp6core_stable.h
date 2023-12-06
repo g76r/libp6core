@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <cmath>
 #include <set>
+#include <bit>
 
 // C++ source_location depending on compiler version
 #if __has_include(<source_location>)
