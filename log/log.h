@@ -83,6 +83,10 @@ public:
   LogContext(qint64 execid)
     : LogContext({}, QByteArray::number(execid)) {}
 #endif
+  LogContext(Utf8String taskid, Utf8String execid, Utf8String location)
+    : _taskid(field(taskid.isEmpty() ? current_thread_name() : taskid, "?"_ba)),
+      _execid(field(execid, "0"_ba)),
+      _location(field(location, ":"_ba)) { }
   Utf8String taskid() const { return _taskid; }
   Utf8String execid() const { return _execid; }
   Utf8String location() const { return _location; }
