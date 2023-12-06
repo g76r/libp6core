@@ -33,8 +33,7 @@ QDebug operator<<(QDebug dbg, const Session &session) {
 
 LogHelper operator<<(LogHelper lh, const Session &session) {
   lh << "{ " << session.id() << ", { ";
-  auto params = SessionManager::params(session.id());
-  foreach(const char *key, params.keys())
-    lh << key << "=" << params.value(key) << " ";
+  for (auto [k,v]: SessionManager::params(session.id()).asKeyValueRange())
+    lh << k << "=" << v << " ";
   return lh << " } }";
 }

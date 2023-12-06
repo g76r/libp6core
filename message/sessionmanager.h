@@ -15,6 +15,7 @@
 #define SESSIONMANAGER_H
 
 #include "session.h"
+#include <QHash>
 
 class LIBP6CORESHARED_EXPORT SessionManager : public QObject {
   Q_OBJECT

@@ -193,9 +193,8 @@ qint64 IOUtils::grepWithContinuation(
 static void findFiles(QDir dir, QStringList &files,
                       const QRegularExpression &pattern) {
   //qDebug() << "findFiles:" << dir.path() << dir.entryInfoList().size() << files.size() << pattern.pattern();
-  foreach (const QFileInfo fi,
-           dir.entryInfoList(QDir::Dirs|QDir::Files|QDir::NoDotAndDotDot,
-                             QDir::Name)) {
+  for (auto fi: dir.entryInfoList(QDir::Dirs|QDir::Files|QDir::NoDotAndDotDot,
+                                  QDir::Name)) {
     const QString path = fi.filePath();
     //qDebug() << "  QFileInfo:" << path << fi.isDir() << fi.isFile();
     if (fi.isDir()) {

@@ -181,7 +181,7 @@ void SharedUiItemsProxyModelHelper::setApparentModel(
 
 QModelIndex SharedUiItemsProxyModelHelper::mapFromReal(
     QModelIndex realIndex) const {
-  foreach(QAbstractProxyModel *proxy, _proxies)
+  for (auto proxy: _proxies)
     realIndex = proxy->mapFromSource(realIndex);
   return realIndex;
 }

@@ -48,7 +48,7 @@ void MultiplexerLogger::addLogger(Logger *logger, bool autoRemovable) {
 
 void MultiplexerLogger::removeLogger(Logger *logger) {
   QMutexLocker locker(&_loggersMutex);
-  foreach(Logger *l, _loggers)
+  for (auto l: _loggers)
     if (l == logger) {
       logger->shutdown();
       _loggers.removeAll(logger);
@@ -91,13 +91,13 @@ void MultiplexerLogger::replaceLoggersPlusConsole(
 }
 
 void MultiplexerLogger::doReplaceLoggers(QList<Logger*> newLoggers) {
-  foreach(Logger *logger, _loggers)
+  for (auto logger: _loggers)
     if (logger->_autoRemovable) {
       if (!newLoggers.contains(logger))
         logger->shutdown();
       _loggers.removeAll(logger);
     }
-  foreach (Logger *logger, newLoggers) {
+  for (auto logger: newLoggers) {
     _loggers.append(logger);
   }
 }
@@ -107,7 +107,7 @@ QString MultiplexerLogger::pathToLastFullestLog() {
   QMutexLocker locker(&_loggersMutex);
   int severity = Log::Fatal+1;
   QString path;
-  foreach(Logger *logger, _loggers) {
+  for (auto logger: _loggers) {
     if (logger->minSeverity() < severity) {
       QString p = logger->currentPath();
       if (!p.isEmpty()) {
@@ -126,7 +126,7 @@ QStringList MultiplexerLogger::pathsToFullestLogs() {
   QMutexLocker locker(&_loggersMutex);
   int severity = Log::Fatal+1;
   QString path;
-  foreach(Logger *logger, _loggers) {
+  for (auto logger: _loggers) {
     if (logger->minSeverity() < severity) {
       QString p = logger->pathMatchingRegexp();
       if (!p.isEmpty()) {
@@ -147,7 +147,7 @@ QStringList MultiplexerLogger::pathsToAllLogs() {
   // LATER avoid locking here whereas loggers list won't change often
   QMutexLocker locker(&_loggersMutex);
   QStringList paths;
-  foreach(Logger *logger, _loggers) {
+  for (auto logger: _loggers) {
     QString p = logger->pathMatchingRegexp();
     if (!p.isEmpty())
       paths.append(p);

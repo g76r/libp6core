@@ -67,14 +67,14 @@ QString CsvFormatter::formatCell(QString data) const {
   if (!_fieldQuote.isNull())
     s.append(_fieldQuote);
   if (!_escapeChar.isNull()) {
-    foreach (const QChar c, data) {
+    for (auto c: data) {
       if (_specialChars.contains(c))
         s.append(_escapeChar);
       s.append(c);
     }
   } else if (!_replacementChar.isNull()) {
     bool first = true;
-    foreach (const QChar c, data) {
+    for (auto c: data) {
       if (_specialChars.contains(c)) {
         if (first) {
           s.append(_replacementChar);
@@ -86,7 +86,7 @@ QString CsvFormatter::formatCell(QString data) const {
       }
     }
   } else {
-    foreach (const QChar c, data)
+    for (auto c: data)
       if (!_specialChars.contains(c))
         s.append(c);
   }

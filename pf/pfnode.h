@@ -51,7 +51,7 @@ private:
   bool isText() const {
     return !isArray() && !isBinary() && !isComment(); }
   bool isBinary() const {
-    foreach (const PfFragment &f, _fragments)
+    for (auto f: _fragments)
       if (f.isBinary())
         return true;
     return false;
@@ -59,10 +59,10 @@ private:
   QString contentAsString() const {
     if (isArray())
       return QString();
-    QString s("");
-    foreach (const PfFragment &f, _fragments) {
+    QString s = u""_s;
+    for (auto f: _fragments) {
       if (f.isBinary())
-        return QString();
+        return {};
       s.append(f.text());
     }
     return s;

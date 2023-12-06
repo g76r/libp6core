@@ -111,7 +111,7 @@ public:
    * @see findFiles(QString) */
   static QStringList findFiles(QStringList patterns) {
     QStringList files;
-    foreach (const QString pattern, patterns)
+    for (auto pattern: patterns)
       files.append(findFiles(pattern));
     return files;
   }

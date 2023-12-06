@@ -273,7 +273,8 @@ bool SharedUiItemDocumentManager::processBeforeUpdate(
   if (!checkIdsConstraints(transaction, *newItem, oldItem, qualifier,
                            errorString))
     return false;
-  foreach (ChangeItemTrigger trigger, _triggersBeforeUpdate.values(qualifier))
+  for (const ChangeItemTrigger &trigger:
+       _triggersBeforeUpdate.values(qualifier))
     if (!trigger(transaction, newItem, oldItem, qualifier, errorString))
       return false;
   return true;
@@ -286,7 +287,8 @@ bool SharedUiItemDocumentManager::processBeforeCreate(
   if (!checkIdsConstraints(transaction, *newItem, SharedUiItem(), qualifier,
                            errorString))
     return false;
-  foreach (ChangeItemTrigger trigger, _triggersBeforeCreate.values(qualifier))
+  for (const ChangeItemTrigger &trigger:
+       _triggersBeforeCreate.values(qualifier))
     if (!trigger(transaction, newItem, SharedUiItem(), qualifier,
                  errorString))
       return false;
@@ -300,8 +302,8 @@ bool SharedUiItemDocumentManager::processBeforeDelete(
   if (!checkIdsConstraints(transaction, SharedUiItem(), oldItem, qualifier,
                            errorString))
     return false;
-  foreach (ChangeItemTrigger trigger,
-           _triggersBeforeDelete.values(qualifier)) {
+  for (const ChangeItemTrigger &trigger:
+       _triggersBeforeDelete.values(qualifier)) {
     SharedUiItem newItem;
     if (!trigger(transaction, &newItem, oldItem, qualifier, errorString))
       return false;
@@ -312,7 +314,7 @@ bool SharedUiItemDocumentManager::processBeforeDelete(
 bool SharedUiItemDocumentManager::processAfterUpdate(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
     SharedUiItem oldItem, Utf8String qualifier, QString *errorString) {
-  foreach (const ForeignKey &fk, _foreignKeys) {
+  for (const ForeignKey &fk: _foreignKeys) {
     // foreign keys referencing this item
     if (fk._referenceQualifier == qualifier) {
       auto newReferenceId = newItem.uiUtf8(fk._referenceSection);
@@ -323,18 +325,18 @@ bool SharedUiItemDocumentManager::processAfterUpdate(
         switch (fk._onUpdatePolicy) {
         case Cascade:
         case CascadeAnySection:
-          foreach (const SharedUiItem &oldSource,
-                   transaction->foreignKeySources(
-                     fk._sourceQualifier, fk._sourceSection, oldItem.id())) {
+          for (const SharedUiItem &oldSource:
+               transaction->foreignKeySources(
+                 fk._sourceQualifier, fk._sourceSection, oldItem.id())) {
             if (!transaction->changeItemByUiData(
                   oldSource, fk._sourceSection, newReferenceId, errorString))
               return false;
           }
           break;
         case SetNull:
-          foreach (const SharedUiItem &oldSource,
-                   transaction->foreignKeySources(
-                     fk._sourceQualifier, fk._sourceSection, oldItem.id())) {
+          for (const SharedUiItem &oldSource:
+               transaction->foreignKeySources(
+                 fk._sourceQualifier, fk._sourceSection, oldItem.id())) {
             if (!transaction->changeItemByUiData(
                   oldSource, fk._sourceSection, QVariant(), errorString))
               return false;
@@ -346,8 +348,8 @@ bool SharedUiItemDocumentManager::processAfterUpdate(
       }
     }
   }
-  foreach (ChangeItemTrigger trigger,
-           _triggersAfterUpdate.values(qualifier)) {
+  for (const ChangeItemTrigger &trigger:
+       _triggersAfterUpdate.values(qualifier)) {
     SharedUiItem tmpItem = newItem;
     if (!trigger(transaction, &tmpItem, oldItem, qualifier, errorString))
       return false;
@@ -358,8 +360,8 @@ bool SharedUiItemDocumentManager::processAfterUpdate(
 bool SharedUiItemDocumentManager::processAfterCreate(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem newItem,
     Utf8String qualifier, QString *errorString) {
-  foreach (ChangeItemTrigger trigger,
-           _triggersAfterCreate.values(qualifier)) {
+  for (const ChangeItemTrigger &trigger:
+       _triggersAfterCreate.values(qualifier)) {
     SharedUiItem tmpItem = newItem;
     if (!trigger(transaction, &tmpItem, SharedUiItem(), qualifier,
                  errorString))
@@ -371,25 +373,25 @@ bool SharedUiItemDocumentManager::processAfterCreate(
 bool SharedUiItemDocumentManager::processAfterDelete(
     SharedUiItemDocumentTransaction *transaction, SharedUiItem oldItem,
     Utf8String qualifier, QString *errorString) {
-  foreach (const ForeignKey &fk, _foreignKeys) {
+  for (const ForeignKey &fk: _foreignKeys) {
     // foreign keys referencing this item
     if (fk._referenceQualifier == qualifier) {
       // on delete policy
       switch (fk._onDeletePolicy) {
       case Cascade:
       case CascadeAnySection:
-        foreach (const SharedUiItem &oldSource,
-                 transaction->foreignKeySources(
-                   fk._sourceQualifier, fk._sourceSection, oldItem.id())) {
+        for (const SharedUiItem &oldSource:
+             transaction->foreignKeySources(
+               fk._sourceQualifier, fk._sourceSection, oldItem.id())) {
           if (!transaction->changeItem(
                 SharedUiItem(), oldSource, fk._sourceQualifier, errorString))
             return false;
         }
         break;
       case SetNull:
-        foreach (const SharedUiItem &oldSource,
-                 transaction->foreignKeySources(
-                   fk._sourceQualifier, fk._sourceSection, oldItem.id())) {
+        for (const SharedUiItem &oldSource:
+             transaction->foreignKeySources(
+               fk._sourceQualifier, fk._sourceSection, oldItem.id())) {
           if (!transaction->changeItemByUiData(
                 oldSource, fk._sourceSection, QVariant(), errorString))
             return false;
@@ -400,8 +402,8 @@ bool SharedUiItemDocumentManager::processAfterDelete(
       }
     }
   }
-  foreach (ChangeItemTrigger trigger,
-           _triggersAfterDelete.values(qualifier)) {
+  for (const ChangeItemTrigger &trigger:
+       _triggersAfterDelete.values(qualifier)) {
     SharedUiItem newItem;
     if (!trigger(transaction, &newItem, oldItem, qualifier, errorString))
       return false;
@@ -412,9 +414,9 @@ bool SharedUiItemDocumentManager::processAfterDelete(
 bool SharedUiItemDocumentManager::delayedChecks(
     SharedUiItemDocumentTransaction *transaction, QString *errorString) {
   // referential integrity for foreign keys referenced by changing items
-  foreach (const SharedUiItem &newItem, transaction->changingItems()) {
+  for (const SharedUiItem &newItem: transaction->changingItems()) {
     auto qualifier = newItem.qualifier();
-    foreach (const ForeignKey &fk, _foreignKeys) {
+    for (const ForeignKey &fk: _foreignKeys) {
       if (fk._sourceQualifier == qualifier) {
         auto referenceId = newItem.uiUtf8(fk._sourceSection);
         //qDebug() << "referential integrity check" << newItem.id()
@@ -432,15 +434,15 @@ bool SharedUiItemDocumentManager::delayedChecks(
     }
   }
   // referential integrity for foreign keys referencing original items
-  foreach (const SharedUiItem &oldItem, transaction->originalItems()) {
+  for (const SharedUiItem &oldItem: transaction->originalItems()) {
     auto qualifier = oldItem.qualifier();
-    foreach (const ForeignKey &fk, _foreignKeys) {
+    for (const ForeignKey &fk: _foreignKeys) {
       if (fk._referenceQualifier == qualifier) {
         auto oldReferenceId = oldItem.uiString(fk._referenceSection);
         SharedUiItemList newItems =
             transaction->itemsByQualifier(qualifier);
         // LATER optimize this: full scan of reference for each fk is just awful
-        foreach (const SharedUiItem &newItem, newItems)
+        for (const SharedUiItem &newItem: newItems)
           if (newItem.uiString(fk._referenceSection) == oldReferenceId)
             goto reference_still_exists;
         SharedUiItemList sources = transaction->foreignKeySources(

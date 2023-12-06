@@ -199,12 +199,8 @@ struct FtpScriptData : public QSharedData {
                                        result);
     if (finished) {
       *basenames = QStringList();
-      foreach (const QString &name, QString::fromUtf8(buffer->data())
-#if QT_VERSION >= 0x050f00
+      for (auto name: QString::fromUtf8(buffer->data())
                .split(_newlineRe, Qt::SkipEmptyParts)) {
-#else
-               .split(_newlineRe, QString::SkipEmptyParts)) {
-#endif
         // never list . and ..
         if (name == "." || name == "..")
           continue;

@@ -50,9 +50,9 @@ public:
    * Kind of extracting a vector from a transposed text matrix.
    */
   static QStringList columnFromRows(QList<QStringList> rows, int column,
-                                    QString defaultValue = QString()) {
+                                    QString defaultValue = {}) {
     QStringList list;
-    foreach (const QStringList &row, rows)
+    for (auto row: rows)
       list << row.value(column, defaultValue);
     return list;
   }

@@ -111,7 +111,7 @@ bool MailSender::send(QString sender, QStringList recipients, QVariant body,
         +socket.errorString();
     return false;
   }
-  foreach (QString recipient, recipients) {
+  for (auto recipient: recipients) {
     MailAddress addr(recipient);
     if (addr.isValid()) {
       socket.write(QString("RCPT To: %1\r\n").arg(addr).toLatin1());
@@ -133,8 +133,8 @@ bool MailSender::send(QString sender, QStringList recipients, QVariant body,
         +socket.errorString();
     return false;
   }
-  foreach (QString key, headers.uniqueKeys()) {
-    foreach (QString value, headers.values(key)) {
+  for (auto key: headers.uniqueKeys()) {
+      for (auto value: headers.values(key)) {
       // LATER normalize header case, ensure values validity, handle multi line headers, etc.
       if (socket.write(QString("%1: %2\r\n").arg(key).arg(value)
                        .toLatin1()) == -1) {

@@ -33,7 +33,7 @@ bool InMemoryRulesAuthorizer::authorizeUserData(
   //Log::fatal() << "authorize: i:" << userData.userId()
   //             << " r:" << userData.roles() << " a:" << actionScope
   //             << " d:" << dataScope << " t:" << timestamp;
-  foreach(const Rule &rule, _rules) {
+  for (auto rule: _rules) {
     //Log::fatal() << "authorize rule: r:" << rule._roles
     //             << " a:" << rule._actionScopePattern.pattern()
     //             << " d:" << rule._dataScopePattern.pattern()
@@ -41,7 +41,7 @@ bool InMemoryRulesAuthorizer::authorizeUserData(
     //             << " allow:" << rule._allow;
     if (rule._roles.isEmpty())
       goto roleok;
-    foreach (const QString &role, userData.roles())
+    for  (auto role: userData.roles())
       if (rule._roles.contains(role))
         goto roleok;
     //Log::fatal() << "authorize rule: roles not matching";

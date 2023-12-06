@@ -163,7 +163,7 @@ qint64 PfNodeData::internalWritePf(
     // must split content on \n because whereas it is not allowed in the on-disk
     // format, it can be added through the API
     QStringList lines = contentAsString().split("\n");
-    foreach (const QString line, lines) {
+    for (auto line: lines) {
       if (!indent.isNull()) {
         if ((r = target->write(indent.toUtf8())) < 0)
           return -1;
@@ -436,7 +436,7 @@ PfNode &PfNode::setAttribute(const QString &name, const QStringList &content) {
 
 PfNode &PfNode::setContent(const QStringList &strings) {
   QString v;
-  foreach(QString s, strings) {
+  for (auto s: strings) {
     s.replace('\\', "\\\\").replace(' ', "\\ ").replace('\t', "\\\t")
         .replace('\r', "\\\r").replace('\n', "\\\n");
     v.append(s).append(' ');
@@ -483,7 +483,7 @@ qint64 PfNodeData::writePfContent(
       PfNode tmp;
       _array.convertToChildrenTree(&tmp);
       qint64 total = 0, r;
-      foreach (PfNode child, tmp.children()) {
+      for (auto child: tmp.children()) {
         r = child.writePf(target, options);
         if (r == -1)
           return -1;
@@ -494,7 +494,7 @@ qint64 PfNodeData::writePfContent(
     return _array.writePf(target, options);
   }
   qint64 total = 0, r;
-  foreach (const PfFragment f, _fragments) {
+  for (auto f: _fragments) {
     r = f.writePf(target, options);
     if (r < 0)
       return -1;
@@ -508,7 +508,7 @@ qint64 PfNodeData::writeRawContent(
   if (isArray())
     return _array.writePf(target, options);
   qint64 total = 0, r;
-  foreach (const PfFragment f, _fragments) {
+  for (auto f: _fragments) {
     r = f.writeRaw(target, options);
     if (r < 0)
       return -1;
@@ -524,7 +524,7 @@ qint64 PfNodeData::writeXmlUsingBase64Content(
       PfNode tmp;
       _array.convertToChildrenTree(&tmp);
       qint64 total = 0, r;
-      foreach (PfNode child, tmp.children()) {
+      for (auto child: tmp.children()) {
         r = child.writeFlatXml(target, options);
         if (r == -1)
           return -1;
@@ -535,7 +535,7 @@ qint64 PfNodeData::writeXmlUsingBase64Content(
     return _array.writeTrTd(target, true, options);
   }
   qint64 total = 0, r;
-  foreach (const PfFragment f, _fragments) {
+  for (auto f: _fragments) {
     r = f.writeXmlUsingBase64(target, options);
     if (r < 0)
       return -1;

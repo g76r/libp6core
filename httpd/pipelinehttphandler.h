@@ -63,7 +63,7 @@ public:
     }
     return *this; }
   inline PipelineHttpHandler &clearHandlers() {
-    foreach (HttpHandler *handler, _handlers)
+    for (auto handler: _handlers)
       delete handler;
     _handlers.clear();
     return *this;

@@ -95,8 +95,7 @@ public:
   void appendHeaders(const QStringList &headers) {
     if (!d)
       d = new PfArrayData();
-    foreach (const QString &value, headers)
-      d->_headers.append(value);
+    d->_headers.append(headers);
   }
   void appendRow(const QStringList &values = QStringList()) {
     if (!d)
@@ -106,7 +105,7 @@ public:
       d->_headers.append(QString::number(i));
   }
   void appendRows(const QList<QStringList> &rows) {
-    foreach (const QStringList &row, rows)
+    for (auto row: rows)
       appendRow(row);
   }
   void appendCell(const QString &value) {

@@ -170,11 +170,11 @@ void HttpWorker::handleConnection(int socketDescriptor) {
       // replacing + with space in URI since this cannot be done in HttpRequest
       // see above
       line.replace('+', ' ');
-      foreach (const auto &p, QUrlQuery(line).queryItems(QUrl::FullyDecoded))
+      for (auto p: QUrlQuery(line).queryItems(QUrl::FullyDecoded))
         req.overrideParam(p.first.toUtf8(), p.second.toUtf8());
     }
     // override body parameters with query string parameters
-    foreach (const auto &p, QUrlQuery(url).queryItems(QUrl::FullyDecoded))
+    for (auto p: QUrlQuery(url).queryItems(QUrl::FullyDecoded))
       req.overrideParam(p.first.toUtf8(), p.second.toUtf8());
   }
   handler = _server->chooseHandler(req);

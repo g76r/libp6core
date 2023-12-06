@@ -24,7 +24,7 @@ qint64 PfArray::writePf(QIODevice *target, const PfOptions &options) const {
   bool first = true;
   if (isNull())
     return 0;
-  foreach (const QString header, d->_headers) {
+  for (auto header: d->_headers) {
     if (first)
       first = false;
     else
@@ -35,10 +35,10 @@ qint64 PfArray::writePf(QIODevice *target, const PfOptions &options) const {
   if ((r = target->write(line.toUtf8())) < 0)
     return -1;
   total += r;
-  foreach (const QStringList row, d->_rows) {
+  for (auto row: d->_rows) {
     line.clear();
     first = true;
-    foreach (const QString cell, row) {
+    for (auto cell: row) {
       if (first)
         first = false;
       else
@@ -62,16 +62,16 @@ qint64 PfArray::writeTrTd(QIODevice *target, bool withHeaders,
   QString line("<table>\n");
   if (withHeaders) {
     line.append("<tr>");
-    foreach (const QString header, d->_headers)
+    for (auto header: d->_headers)
       line.append("<th>").append(pftoxmltext(header)).append("</th>");
     line.append("</tr>\n");
     if ((r = target->write(line.toUtf8())) < 0)
       return -1;
     total += r;
   }
-  foreach (const QStringList row, d->_rows) {
+  for (auto row: d->_rows) {
     line = "<tr>";
-    foreach (const QString cell, row)
+    for (auto cell: row)
       line.append("<td>").append(pftoxmltext(cell)).append("</td>");
     line.append("</tr>\n");
     if ((r = target->write(line.toUtf8())) < 0)
@@ -103,12 +103,11 @@ void PfArray::convertToChildrenTree(PfNode *target,
       target->removeChildrenByName(QString::number(r));
   }
   int r = 0;
-  foreach (const QStringList row, rows()) {
+  for (auto row: rows()) {
     PfNode n(QString::number(r++));
     int c = 0;
-    foreach (const QString cell, row) {
+    for (auto cell: row)
       n.appendChild(PfNode(header(c++), cell));
-    }
     target->appendChild(n);
   }
 }

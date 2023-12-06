@@ -102,7 +102,7 @@ HttpServer &HttpServer::prependHandler(HttpHandler *handler) {
 
 HttpHandler *HttpServer::chooseHandler(HttpRequest req) {
   QMutexLocker ml(&_handlersMutex);
-  foreach (HttpHandler *h, _handlers) {
+  for (auto h: _handlers) {
     if (h->acceptRequest(req))
       return h;
   }

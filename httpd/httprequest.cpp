@@ -181,7 +181,7 @@ void HttpRequest::cacheAllParams() const {
     return;
   // note: + in values is replaced with space in HttpWorker::handleConnection()
   // so even if QUrl::FullyDecoded does not decode + it will be decoded anyway
-  foreach (const auto &p, d->_query.queryItems(QUrl::FullyDecoded)) {
+  for (auto p: d->_query.queryItems(QUrl::FullyDecoded)) {
     auto key = p.first.toUtf8();
     if (!d->_paramsCache.contains(key))
       d->_paramsCache.insert(key, p.second.toUtf8());

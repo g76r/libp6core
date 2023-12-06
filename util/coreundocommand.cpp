@@ -18,12 +18,12 @@ CoreUndoCommand::~CoreUndoCommand() {
 }
 
 void CoreUndoCommand::redo() {
-  foreach (CoreUndoCommand *child, _children)
+  for (auto child: _children)
     child->redo();
 }
 
 void CoreUndoCommand::undo() {
-  foreach (CoreUndoCommand *child, _children)
+  for (auto child: _children)
     child->undo();
 }
 

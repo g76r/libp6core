@@ -188,7 +188,7 @@ bool CsvFile::writeAll() {
       if (_headersEnabled)
         if (!writeRow(&file, _headers, specialChars))
           return false;
-      foreach (const QStringList &row, _rows)
+      for (auto row: _rows)
         if (!writeRow(&file, row, specialChars))
           return false;
       return file.commit();
@@ -200,7 +200,7 @@ bool CsvFile::writeAll() {
 bool CsvFile::writeRow(QSaveFile *file, QStringList row, QString specialChars) {
   QString s;
   bool firstColumn = true;
-  foreach (const QString &cell, row) {
+  for (auto cell: row) {
     if (firstColumn)
       firstColumn = false;
     else

@@ -301,7 +301,7 @@ QMimeData *SharedUiItemsTreeModel::mimeData(
   QSet<QString> pathsSet;
   QStringList ids;
   QStringList paths;
-  foreach (const QModelIndex &index, indexes) {
+  for  (auto index: indexes) {
     QString path = itemPath(index);
     if (!pathsSet.contains(path)) {
       ids.append(itemAt(index).qualifiedId());

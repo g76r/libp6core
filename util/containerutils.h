@@ -31,9 +31,8 @@ public:
   template<class K,class T>
   static QHash<K,T> reversed(QHash<T,K> source) {
     QHash<K,T> dest;
-    foreach (const T &key, source.keys()) {
-      dest.insert(source.value(key), key);
-    }
+    for (auto [k,v]: source.asKeyValueRange())
+      dest.insert(v, k);
     return dest;
   }
 
@@ -45,9 +44,8 @@ public:
   template<class K,class T>
   static QMap<K,T> reversed(QMap<T,K> source) {
     QMap<K,T> dest;
-    foreach (const T &key, source.keys()) {
-      dest.insert(source.value(key), key);
-    }
+    for (auto [k,v]: source.asKeyValueRange())
+      dest.insert(v, k);
     return dest;
   }
 

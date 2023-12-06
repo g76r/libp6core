@@ -186,7 +186,7 @@ void ParamSetModel::fillRows(
   QString scope = _scopes.value(depth);
   if (scope.isEmpty() && depth)
     scope = _defaultScopeForInheritedParams;
-  foreach (const QString &key, localKeys) {
+  for (auto key: localKeys) {
     if (allKeys->contains(key)) {
       for (int i = 0; i < rows->size(); ++i)
         if ((*rows)[i]._key == key) {

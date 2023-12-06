@@ -188,7 +188,7 @@ QMimeData *SharedUiItemsTableModel::mimeData(
   QSet<int> rowsSet;
   QStringList ids;
   QStringList rows;
-  foreach (const QModelIndex &index, indexes) {
+  for (auto index: indexes) {
     int row = index.row();
     if (!rowsSet.contains(row)) {
       ids.append(itemAt(row).qualifiedId());

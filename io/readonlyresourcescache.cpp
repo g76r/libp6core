@@ -163,24 +163,24 @@ QString ReadOnlyResourcesCache::asDebugString() {
   QMutexLocker ml(&_mutex);
   QString s;
   s += "ReadOnlyResourcesCache {\n  resources: {\n";
-  foreach (const QString &key, _resources.keys())
+  for (auto key: _resources.keys())
     s += "    " + key + ": " + QString::number(_resources.value(key).size())
         + "\n";
   s += "  }\n  age: {\n";
-  foreach (const QString &key, _ageTimestamp.keys())
+  for (auto key: _ageTimestamp.keys())
     s += "    " + key + ": "
       + QDateTime::fromMSecsSinceEpoch(_ageTimestamp.value(key)).toString()
       + "\n";
   s += "  }\n  stale: {\n";
-  foreach (const QString &key, _staleTimestamp.keys())
+  for (auto key: _staleTimestamp.keys())
     s += "    " + key + ": "
       + QDateTime::fromMSecsSinceEpoch(_staleTimestamp.value(key)).toString()
       + "\n";
   s += "  }\n  fetching: {\n";
-  foreach (const QString &key, _fetching)
+  for (auto key: _fetching)
     s += "    " + key + "\n";
   s += "  }\n  errorstrings: {\n";
-  foreach (const QString &key, _errorStrings.keys())
+  for (auto key: _errorStrings.keys())
     s += "    " + key + ": " + _errorStrings.value(key) + "\n";
   s += "}\n";
   return s;

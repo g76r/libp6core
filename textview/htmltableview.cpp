@@ -61,7 +61,7 @@ void HtmlTableView::updateHeaderAndFooterCache() {
       if (_rowHeadersEnabled)
         v.append("<th>").append(_topLeftHeader).append("</th>");
       int displayedColumn = 0;
-      foreach (int column, effectiveColumnIndexes()) {
+      for (int column: effectiveColumnIndexes()) {
         v.append("<th>");
         TextViewItemDelegate *d =
             itemDelegateForColumnOrDefault(displayedColumn);
@@ -172,7 +172,7 @@ QString HtmlTableView::rowText(int row) {
     v.append("</th>");
   }
   bool first = true;
-  foreach (int column, effectiveColumnIndexes()) {
+  for (int column: effectiveColumnIndexes()) {
     QModelIndex index = m->index(row, column, QModelIndex());
     v.append("<td>");
     if (first) {
