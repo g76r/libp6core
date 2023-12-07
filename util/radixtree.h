@@ -441,23 +441,27 @@ public:
     RadixTree<T> that;
     for (auto [k,v]: map.asKeyValueRange())
       that.insert(v, k);
+    return that;
   }
   static RadixTree<T> reversed(const QMap<T,Utf8String> &map) {
     RadixTree<T> that;
     for (auto [k,v]: map.asKeyValueRange())
       that.insert(v, k);
+    return that;
   }
   /** assumes that key is UTF-8 (or of course ASCII) */
   static RadixTree<T> reversed(const QMap<T,const char *> &map) {
     RadixTree<T> that;
     for (auto [k,v]: map.asKeyValueRange())
       that.insert(v, k);
+    return that;
   }
   /** assumes that key is UTF-8 (or of course ASCII) */
   static RadixTree<T> reversed(const QMap<T,QByteArray> &map) {
     RadixTree<T> that;
     for (auto [k,v]: map.asKeyValueRange())
       that.insert(v, k);
+    return that;
   }
   QMap<QString,T> toUtf16Map() {
     QMap<QString,T> map;
