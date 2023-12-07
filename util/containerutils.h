@@ -29,8 +29,33 @@ public:
    * associated as value in the reverted container. No mean to know which one.
    */
   template<class K,class T>
-  static QHash<K,T> reversed(QHash<T,K> source) {
+  static QHash<K,T> reversed_hash(QHash<T,K> source) {
     QHash<K,T> dest;
+    for (auto [k,v]: source.asKeyValueRange())
+      dest.insert(v, k);
+    return dest;
+  }
+
+  /** Build inverse mapping QMap.
+   * If original container had duplicate values, only one of its keys will be
+   * associated as value in the reverted container. No mean to know which one.
+   */
+  template<class K,class T>
+  static QMap<K,T> reversed_map(QHash<T,K> source) {
+    QMap<K,T> dest;
+    for (auto [k,v]: source.asKeyValueRange())
+      dest.insert(v, k);
+    return dest;
+  }
+
+  /** Build inverse mapping QMap.
+   * If original container had duplicate values, only one of its keys will be
+   * associated as value in the reverted container. The last one in the original
+   * keys order.
+   */
+  template<class K,class T>
+  static QMap<K,T> reversed_map(QMap<T,K> source) {
+    QMap<K,T> dest;
     for (auto [k,v]: source.asKeyValueRange())
       dest.insert(v, k);
     return dest;
@@ -42,8 +67,8 @@ public:
    * keys order.
    */
   template<class K,class T>
-  static QMap<K,T> reversed(QMap<T,K> source) {
-    QMap<K,T> dest;
+  static QHash<K,T> reversed_hash(QMap<T,K> source) {
+    QHash<K,T> dest;
     for (auto [k,v]: source.asKeyValueRange())
       dest.insert(v, k);
     return dest;
