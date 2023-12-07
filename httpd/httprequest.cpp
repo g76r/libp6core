@@ -78,9 +78,8 @@ static QMap<HttpRequest::HttpMethod,Utf8String> _methodToText {
   { HttpRequest::ANY, "ANY" },
 };
 
-static QMap<Utf8String,HttpRequest::HttpMethod> _methodFromText {
-  ContainerUtils::reversed(_methodToText)
-};
+static RadixTree<HttpRequest::HttpMethod> _methodFromText =
+    RadixTree<HttpRequest::HttpMethod>::reversed(_methodToText);
 
 QSet<HttpRequest::HttpMethod> HttpRequest::_wellKnownMethods {
   HttpRequest::HEAD, HttpRequest::GET, HttpRequest::POST, HttpRequest::PUT,
