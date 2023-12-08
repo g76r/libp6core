@@ -193,7 +193,8 @@ public:
     }
     return *this;
   }
-  bool isNull() const { return !d; }
+  [[nodiscard]] inline bool isNull() const { return !d; }
+  [[nodiscard]] inline bool operator!() const { return isNull(); }
   bool isComment() const { return d && d->isComment(); }
 
   // Children related methods /////////////////////////////////////////////////

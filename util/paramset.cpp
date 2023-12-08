@@ -178,7 +178,7 @@ ParamSet::ParamSet(
       d->_params.insert(k, value.isNull() ? ""_u8 : value);
     }
   }
-  if (d->_params.isEmpty() && parent.isNull())
+  if (d->_params.isEmpty() && !parent)
     d.reset();
 }
 
@@ -194,7 +194,7 @@ ParamSet::ParamSet(const PfNode &parentnode, const Utf8StringSet &attrnames,
       Utf8String value = child.contentAsUtf8();
       d->_params.insert(child.name(), value.isNull() ? ""_u8 : value);
     }
-  if (d->_params.isEmpty() && parent.isNull())
+  if (d->_params.isEmpty() && !parent)
     d.reset();
 }
 
@@ -358,10 +358,6 @@ bool ParamSet::paramContains(
   return parent().paramContains(key, context);
 }
 
-bool ParamSet::isNull() const {
-  return !d;
-}
-
 int ParamSet::size() const {
   return d ? d->_params.size() : 0;
 }
@@ -443,7 +439,7 @@ const QMap<QString,QString> ParamSet::toUtf16Map(bool inherit) const {
 QDebug operator<<(QDebug dbg, const ParamSet &params) {
   dbg.nospace() << "{";
   bool first = true;
-  for (ParamSet p = params; !p.isNull(); p = p.parent()) {
+  for (ParamSet p = params; !!p; p = p.parent()) {
     if (first)
       first = false;
     else
@@ -470,7 +466,7 @@ LogHelper operator<<(LogHelper lh, const ParamSet &params) {
   lh << "{ ";
 
   bool first = true;
-  for (ParamSet p = params; !p.isNull(); p = p.parent()) {
+  for (ParamSet p = params; !!p; p = p.parent()) {
     if (first)
       first = false;
     else

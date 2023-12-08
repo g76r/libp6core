@@ -30,7 +30,8 @@ public:
   UserData(UserDataData *data);
   ~UserData();
   UserData &operator=(const UserData &other);
-  bool isNull() const { return !d; }
+  [[nodiscard]] inline bool isNull() const { return !d; }
+  [[nodiscard]] inline bool operator!() const { return isNull(); }
   QString userId() const;
   QString userName() const;
   bool hasRole(QString role) const;

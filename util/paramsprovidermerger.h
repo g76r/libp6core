@@ -84,7 +84,7 @@ public:
   }
   /** Add a ParamsProvider that will be evaluated after those already added. */
   ParamsProviderMerger &append(ParamSet provider, bool inherit = true) {
-    if (!provider.isNull()) {
+    if (!!provider) {
       if (!inherit)
         provider.setParent({});
       _providers.append(provider);
@@ -101,7 +101,7 @@ public:
   /** Add a ParamsProvider that will be evaluated before those already added but
    * after parameters set with overrideParamValue(). */
   ParamsProviderMerger &prepend(ParamSet provider, bool inherit = true) {
-    if (!provider.isNull()) {
+    if (!!provider) {
       if (!inherit)
         provider.setParent({});
       _providers.prepend(provider);

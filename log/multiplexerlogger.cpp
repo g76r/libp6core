@@ -160,7 +160,7 @@ void MultiplexerLogger::doLog(const LogEntry &entry) {
   QMutexLocker locker(&_loggersMutex);
   for (auto logger : _loggers)
     logger->log(entry);
-  if (_threadModel == RootLogger && _loggers.isEmpty() && !entry.isNull()) {
+  if (_threadModel == RootLogger && _loggers.isEmpty() && !!entry) {
     switch(entry.severity()) {
       case Log::Debug:
         qDebug() << entry.message() << "(no logger configured)";

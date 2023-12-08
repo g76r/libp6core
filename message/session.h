@@ -44,8 +44,8 @@ public:
   /** Convenience method for param(key).toLongLong()
    * This method is thread-safe.*/
   qlonglong integer(const char *key) const { return param(key).toLongLong(); }
-  bool isNull() const { return _id == 0; }
-  operator bool() const { return !isNull(); }
+  [[nodiscard]] inline bool isNull() const { return _id == 0; }
+  [[nodiscard]] inline bool operator!() const { return isNull(); }
 };
 
 Q_DECLARE_METATYPE(Session)

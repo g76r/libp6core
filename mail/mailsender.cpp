@@ -81,7 +81,7 @@ bool MailSender::send(QString sender, QStringList recipients, QVariant body,
                       QList<QVariant> attachments, QString &errorString) {
   Q_UNUSED(attachments)
   MailAddress senderAddress(sender);
-  if (!senderAddress.isValid()) {
+  if (!senderAddress) {
     errorString = "invalid sender address: "+sender;
     return false;
   }
@@ -113,7 +113,7 @@ bool MailSender::send(QString sender, QStringList recipients, QVariant body,
   }
   for (auto recipient: recipients) {
     MailAddress addr(recipient);
-    if (addr.isValid()) {
+    if (!!addr) {
       socket.write(QString("RCPT To: %1\r\n").arg(addr).toLatin1());
       if (!socket.expectPrefix("2")) {
         errorString = "bad RCPT response on SMTP server "

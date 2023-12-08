@@ -342,7 +342,8 @@ public:
   inline bool operator>=(const SharedUiItem &other) const {
     return !(*this<other); }
 #endif // C++ 20: spaceship op
-  inline bool isNull() const { return !_data; }
+  [[nodiscard]] inline bool isNull() const { return !_data; }
+  [[nodiscard]] inline bool operator!() const { return isNull(); }
   /** Item identifier.
    * The identifier MUST be unique for the same type of item within the same
    * document. It can be any non empty utf8 string. */

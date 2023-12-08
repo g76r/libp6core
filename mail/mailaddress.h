@@ -27,8 +27,8 @@ public:
   MailAddress(const MailAddress &other);
   MailAddress &operator=(const MailAddress &other);
   ~MailAddress();
-  bool isNull() const { return !d; }
-  bool isValid() const { return !!d; }
+  [[nodiscard]] inline bool isNull() const { return !d; }
+  [[nodiscard]] inline bool operator!() const { return isNull(); }
   QString address() const;
   operator QString() const { return address(); }
 };

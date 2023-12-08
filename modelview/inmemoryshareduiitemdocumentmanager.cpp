@@ -29,10 +29,10 @@ bool InMemorySharedUiItemDocumentManager::prepareChangeItem(
 void InMemorySharedUiItemDocumentManager::commitChangeItem(
     const SharedUiItem &new_item, const SharedUiItem &old_item,
     const Utf8String &qualifier) {
-  if (!old_item.isNull() && new_item != old_item) { // renamed or deleted
+  if (!!old_item && new_item != old_item) { // renamed or deleted
     _repository[qualifier].remove(old_item.id());
   }
-  if (!new_item.isNull()) { // created or updated
+  if (!!new_item) { // created or updated
     _repository[qualifier][new_item.id()] = new_item;
   }
   emit itemChanged(new_item, old_item, qualifier);

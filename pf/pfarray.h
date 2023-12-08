@@ -44,7 +44,9 @@ public:
   }
   PfArray &operator=(const PfArray &other) { d = other.d; return *this; }
   /** @return true if null-size array (0 rows 0 columns 0 headers) */
-  bool isNull() const { return !d; }
+  [[nodiscard]] inline bool isNull() const { return !d; }
+  /** @return true if not null-size array (0 rows 0 columns 0 headers) */
+  [[nodiscard]] inline bool operator!() const { return isNull(); }
   /** @return true if no data (0 rows but maybe some headers defined) */
   bool isEmpty() const { return d ? d->_rows.isEmpty() : true; }
   int columnsCount() const { return d ? d->_headers.size() : 0; }

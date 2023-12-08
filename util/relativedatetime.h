@@ -89,7 +89,8 @@ public:
   RelativeDateTime(const RelativeDateTime &);
   RelativeDateTime &operator=(const RelativeDateTime &);
   ~RelativeDateTime();
-  bool isNull();
+  [[nodiscard]] inline bool isNull() const { return !d; }
+  [[nodiscard]] inline bool operator!() const { return isNull(); }
   /** Apply relative date expression to 'reference'.
    * If RelativeDateTime is null, return 'reference' as is. */
   QDateTime apply(QDateTime reference = QDateTime::currentDateTime());

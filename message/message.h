@@ -31,7 +31,8 @@ public:
   Message(const Message &);
   Message &operator=(const Message &);
   ~Message();
-  bool isNull() const { return !d; }
+  [[nodiscard]] inline bool isNull() const { return !d; }
+  [[nodiscard]] inline bool operator!() const { return isNull(); }
   Session session() const;
   PfNode node() const;
 

@@ -218,10 +218,6 @@ RelativeDateTime &RelativeDateTime::operator=(const RelativeDateTime &rhs) {
 RelativeDateTime::~RelativeDateTime() {
 }
 
-bool RelativeDateTime::isNull() {
-  return !d;
-}
-
 QDateTime RelativeDateTime::apply(QDateTime reference) {
   return d ? d->apply(reference) : reference;
 }

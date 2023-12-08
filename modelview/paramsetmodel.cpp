@@ -178,7 +178,7 @@ void ParamSetModel::fillRows(
   ParamSet params = original_params;
   if (_inherit) {
     ParamSet parent = params.parent();
-    if (!parent.isNull())
+    if (!!parent)
       fillRows(rows, parent, depth+1, allKeys);
   }
   params.setParent({}); // don't inherit

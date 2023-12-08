@@ -225,7 +225,8 @@ public:
   }
 #endif
 
-  [[nodiscard]] bool isNull() const;
+  [[nodiscard]] inline bool isNull() const { return !d; }
+  [[nodiscard]] inline bool operator!() const { return isNull(); }
   [[nodiscard]] int size() const;
   [[nodiscard]] bool isEmpty() const;
   void detach();
