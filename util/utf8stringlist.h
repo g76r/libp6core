@@ -74,7 +74,7 @@ LogHelper LIBP6CORESHARED_EXPORT operator<<(LogHelper lh,
  *  e.g. Utf8StringIndexedConstList({ "id", "parent", "name", "color"})
  *          .toIndex().value("name") -> 2 */
 class LIBP6CORESHARED_EXPORT Utf8StringIndexedConstList
-    : public Utf8StringList {
+    : private Utf8StringList {
 public:
   Utf8StringIndexedConstList() { }
   Utf8StringIndexedConstList(std::initializer_list<Utf8String> args)
@@ -96,56 +96,25 @@ public:
   Utf8StringIndexedConstList(InputIterator i1, InputIterator i2)
     : Utf8StringList(i1, i2) { build_index(); }
 #endif
-  QMap<Utf8String,int> toIndex() const { return _index; }
+  [[nodiscard]] inline QMap<Utf8String,int> toIndex() const { return _index; }
 
-  // make all non-const methods unavaillable (since index would be inconsistent)
-  void append() = delete;
+  // make only const methods availlable (otherwise index would be inconsistent)
   QList::const_reference back() const { return Utf8StringList::back(); }
   QList::const_iterator begin() const { return Utf8StringList::begin(); }
-  void clear() = delete;
   QList::const_pointer data() const { return Utf8StringList::data(); }
-  void emplace() = delete;
-  void emplaceBack() = delete;
-  void emplace_back() = delete;
   QList::const_iterator end() const { return Utf8StringList::end(); }
-  void erase() = delete;
-  void fill() = delete;
   const Utf8String &first() const { return Utf8StringList::first(); }
   QList::const_reference front() const { return Utf8StringList::front(); }
-  void insert() = delete;
   const Utf8String &last() const { return Utf8StringList::last(); }
-  void move() = delete;
-  void pop_back() = delete;
-  void pop_front() = delete;
-  void prepend() = delete;
-  void push_back() = delete;
-  void push_front() = delete;
   QList::const_reverse_iterator rbegin() const {
     return Utf8StringList::rbegin(); }
-  void remove() = delete;
-  void removeAll() = delete;
-  void removeAt() = delete;
-  void removeFirst() = delete;
-  void removeIf() = delete;
-  void removeLast() = delete;
-  void removeOne() = delete;
   QList::const_reverse_iterator rend() const { return Utf8StringList::rend(); }
-  void replace() = delete;
-  void reserve() = delete;
-  void resize() = delete;
-  void shrink_to_fit() = delete;
-  void squeeze() = delete;
-  void swapItemsAt() = delete;
-  void takeAt() = delete;
-  void takeFirst() = delete;
-  void takeLast() = delete;
-  void operator+(int) = delete;
-  void operator+=(int) = delete;
-  void operator|(int) = delete;
-  void operator|=(int) = delete;
-  void operator<<(int) = delete;
-  QList::const_reference operator[](qsizetype i) const {
+  [[nodiscard]] inline QList::const_reference operator[](qsizetype i) const {
     return Utf8StringList::operator[](i); }
+  [[nodiscard]] inline auto size() const { return Utf8StringList::size(); }
+  [[nodiscard]] inline Utf8String value(
+      qsizetype i, const Utf8String &def = {}) const {
+    return Utf8StringList::value(i, def); }
 
 private:
   QMap<Utf8String,int> _index;
