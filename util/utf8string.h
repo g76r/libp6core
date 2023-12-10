@@ -461,6 +461,10 @@ public:
 
   inline Utf8String &remove(qsizetype index, qsizetype len) {
     QByteArray::remove(index, len); return *this;}
+  // supporting int index avoid ambiguity when using 0 as a parameter since
+  // (int)0 can be converted to both (std::size_t)0 or (const char *)nullptr
+  inline Utf8String &remove(int index, qsizetype len) {
+    QByteArray::remove(index, len); return *this;}
   Utf8String &remove(const char *needle, qsizetype len);
   inline Utf8String &remove(char c) {
     return remove(&c, 1); }
