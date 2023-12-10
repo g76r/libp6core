@@ -253,6 +253,9 @@ public:
       const Utf8String &name, const Utf8String &defaultValue) const {
     PfNode child = firstTextChildByName(name);
     return child.isNull() ? defaultValue : child.contentAsUtf8(); }
+  /** Syntaxic sugar: node["foo"] === node.attribute("foo") */
+  [[nodiscard]] inline Utf8String operator[](const Utf8String &name) const {
+    return attribute(name); }
   /** Return the content (as string) of every child with a given name.
    * This is the same as attribute() with multi-valued semantics.
    * Skip children with non-text content.
