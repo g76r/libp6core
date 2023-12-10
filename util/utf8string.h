@@ -261,12 +261,18 @@ public:
   // conversions to numbers
   /** Converts to floating point, supporting e notation and SI suffixes from 'f'
    *  to 'P', 'u' is used as 1e-6 suffix e.g. ".1k" -> 100.0. */
-  [[nodiscard]] double toDouble(bool *ok = nullptr, double def = 0.0,
-                                bool suffixes_enabled = true) const;
+  [[nodiscard]] double toDouble(
+      bool *ok = nullptr, double def = 0.0, bool suffixes_enabled = true) const;
+  /** Syntaxic sugar */
+  [[nodiscard]] inline double toDouble(double def) const{
+    return toDouble(nullptr, def, true); }
   /** Converts to floating point, supporting e notation and SI suffixes from 'f'
    *  to 'P', 'u' is used as 1e-6 suffix e.g. ".1k" -> 100.0. */
   [[nodiscard]] float toFloat(bool *ok = nullptr, float def = 0.0,
                               bool suffixes_enabled = true) const;
+  /** Syntaxic sugar */
+  [[nodiscard]] inline float toFloat(float def) const{
+    return toFloat(nullptr, def, true); }
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
    *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
@@ -275,6 +281,15 @@ public:
   [[nodiscard]] qlonglong toLongLong(
       bool *ok = nullptr, int base = 0, qlonglong def = 0,
       bool suffixes_enabled = true, bool floating_point_enabled = true) const;
+  /** Syntaxic sugar */
+  [[nodiscard]] inline qlonglong toLongLong(qlonglong def) const {
+    return toLongLong(nullptr, 0, def, true); }
+  /** Syntaxic sugar */
+  [[nodiscard]] inline qlonglong toLongLong(long def) const {
+    return toLongLong(nullptr, 0, def, true); }
+  /** Syntaxic sugar */
+  [[nodiscard]] inline qlonglong toLongLong(int def) const {
+    return toLongLong(nullptr, 0, def, true); }
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
    *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
@@ -283,6 +298,15 @@ public:
   [[nodiscard]] qulonglong toULongLong(
       bool *ok = nullptr, int base = 0, qulonglong def = 0,
       bool suffixes_enabled = true, bool floating_point_enabled = true) const;
+  /** Syntaxic sugar */
+  [[nodiscard]] inline qulonglong toULongLong(qulonglong def) const {
+    return toULongLong(nullptr, 0, def, true); }
+  /** Syntaxic sugar */
+  [[nodiscard]] inline qulonglong toULongLong(ulong def) const {
+    return toULongLong(nullptr, 0, def, true); }
+  /** Syntaxic sugar */
+  [[nodiscard]] inline qulonglong toULongLong(uint def) const {
+    return toULongLong(nullptr, 0, def, true); }
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
    *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
@@ -291,6 +315,12 @@ public:
   [[nodiscard]] long toLong(
       bool *ok = nullptr, int base = 0, long def = 0,
       bool suffixes_enabled = true, bool floating_point_enabled = true) const;
+  /** Syntaxic sugar */
+  [[nodiscard]] inline long toLong(long def) const {
+    return toLong(nullptr, 0, def, true); }
+  /** Syntaxic sugar */
+  [[nodiscard]] inline long toLong(int def) const {
+    return toLong(nullptr, 0, def, true); }
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
    *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
@@ -299,6 +329,12 @@ public:
   [[nodiscard]] ulong toULong(
       bool *ok = nullptr, int base = 0, ulong def = 0,
       bool suffixes_enabled = true, bool floating_point_enabled = true) const;
+  /** Syntaxic sugar */
+  [[nodiscard]] inline ulong toULong(ulong def) const {
+    return toULong(nullptr, 0, def, true); }
+  /** Syntaxic sugar */
+  [[nodiscard]] inline ulong toULong(uint def) const {
+    return toULong(nullptr, 0, def, true); }
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
    *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
@@ -307,6 +343,9 @@ public:
   [[nodiscard]] int toInt(
       bool *ok = nullptr, int base = 0, int def = 0,
       bool suffixes_enabled = true, bool floating_point_enabled = true) const;
+  /** Syntaxic sugar */
+  [[nodiscard]] inline int toInt(int def) const {
+    return toInt(nullptr, 0, def, true); }
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
    *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
@@ -315,6 +354,9 @@ public:
   [[nodiscard]] uint toUInt(
       bool *ok = nullptr, int base = 0, uint def = 0,
       bool suffixes_enabled = true, bool floating_point_enabled = true) const;
+  /** Syntaxic sugar */
+  [[nodiscard]] inline uint toUInt(uint def) const {
+    return toUInt(nullptr, 0, def, true); }
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
    *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
@@ -323,6 +365,9 @@ public:
   [[nodiscard]] short toShort(
       bool *ok = nullptr, int base = 0, short def = 0,
       bool suffixes_enabled = true, bool floating_point_enabled = true) const;
+  /** Syntaxic sugar */
+  [[nodiscard]] inline short toShort(short def) const {
+    return toShort(nullptr, 0, def, true); }
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
    *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
@@ -331,9 +376,15 @@ public:
   [[nodiscard]] ushort toUShort(
       bool *ok = nullptr, int base = 0, ushort def = 0,
       bool suffixes_enabled = true, bool floating_point_enabled = true) const;
+  /** Syntaxic sugar */
+  [[nodiscard]] inline ushort toUShort(ushort def) const {
+    return toUShort(nullptr, 0, def, true); }
   /** Converts to bool, supporting case insensitive "true" and "false", and any
    *  integer number, 0 being false and everything else true. */
   [[nodiscard]] bool toBool(bool *ok = nullptr, bool def = false) const;
+  /** Syntaxic sugar */
+  [[nodiscard]] inline bool toBool(bool def) const {
+    return toBool(nullptr, def); }
   /** Converts to any number format, calling toXXX() methods above (and
    *  concerning integers, with base = 0 auto detection of base). */
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
