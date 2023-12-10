@@ -22,8 +22,6 @@
 #define INDENTATION_EOL_STRING "\n"
 #define INDENTATION_STRING "  "
 
-const QList<PfNode> PfNode::_emptyList;
-
 static QRegularExpression _whitespace("\\s");
 static QRegularExpression _leadingwhitespace("\\A\\s+");
 
@@ -298,56 +296,53 @@ qint64 PfNodeData::internalWritePfContent(
   return total;
 }
 
-QList<PfNode> PfNode::childrenByName(const QString &name) const {
+QList<PfNode> PfNode::childrenByName(const Utf8String &name) const {
   QList<PfNode> list;
-  if (!name.isEmpty())
-    for (auto child: children())
-      if (!child.isNull() && child.d->_name == name)
-        list.append(child);
+  for (auto child: children())
+    if (child ^ name)
+      list.append(child);
   return list;
 }
 
-QList<PfNode> PfNode::childrenByName(const QStringList &names) const {
+QList<PfNode> PfNode::childrenByName(const Utf8StringList &names) const {
   QList<PfNode> list;
-  if (!names.isEmpty())
-    for (auto child: children())
-      if (!child.isNull() && names.contains(child.d->_name))
+  for (auto child: children())
+    for (auto name: names)
+      if (child ^ name)
         list.append(child);
-  return list;
-}
-
-QList<PfNode> PfNode::grandChildrenByChildrenName(const QString &name) const {
-  QList<PfNode> list;
-  if (!name.isEmpty())
-    for (auto child: children())
-      if (!child.isNull() && child.d->_name == name)
-        list.append(child.children());
   return list;
 }
 
 QList<PfNode> PfNode::grandChildrenByChildrenName(
-    const QStringList &names) const {
+    const Utf8String &name) const {
   QList<PfNode> list;
-  if (!names.isEmpty())
-    for (auto child: children())
-      if (!child.isNull() && names.contains(child.d->_name))
+  for (auto child: children())
+    if (child ^ name)
+      list.append(child.children());
+  return list;
+}
+
+QList<PfNode> PfNode::grandChildrenByChildrenName(
+    const Utf8StringList &names) const {
+  QList<PfNode> list;
+  for (auto child: children())
+    for (auto name: names)
+      if (child ^ name)
         list.append(child.children());
   return list;
 }
 
-bool PfNode::hasChild(const QString &name) const {
-  if (!name.isEmpty())
-    for (auto child: children())
-      if (!child.isNull() && child.d->_name == name)
-        return true;
+bool PfNode::hasChild(const Utf8String &name) const {
+  for (auto child: children())
+    if (child ^ name)
+      return true;
   return false;
 }
 
-PfNode PfNode::firstTextChildByName(const QString &name) const {
-  if (!name.isEmpty())
-    for (auto child: children())
-      if (!child.isNull() && child.d->_name == name && child.isText())
-        return child;
+PfNode PfNode::firstTextChildByName(const Utf8String &name) const {
+  for (auto child: children())
+    if (child ^ name && child.isText())
+      return child;
   return PfNode();
 }
 
@@ -394,18 +389,6 @@ QList<QPair<Utf8String, qint64> > PfNode::utf8LongPairChildrenByName(
           l.append(QPair<Utf8String,qint64>(s, 0));
       }
   return l;
-}
-
-qint64 PfNode::contentAsLong(qint64 defaultValue, bool *ok) const {
-  return contentAsUtf8().toLongLong(ok, defaultValue);
-}
-
-double PfNode::contentAsDouble(double defaultValue, bool *ok) const {
-  return contentAsUtf8().toDouble(ok, defaultValue);
-}
-
-bool PfNode::contentAsBool(bool defaultValue, bool *ok) const {
-  return contentAsUtf8().toBool(ok, defaultValue);
 }
 
 QStringList PfNode::contentAsStringList() const {
@@ -458,7 +441,7 @@ PfNode &PfNode::removeChildrenByName(const QString &name) {
   if (d)
     for (int i = 0; i < d->_children.size(); ) {
       PfNode child = d->_children.at(i);
-      if (child.name() == name)
+      if (child ^ name)
         d->_children.removeAt(i);
       else
         ++i;

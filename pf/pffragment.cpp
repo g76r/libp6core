@@ -19,19 +19,18 @@
 
 static QRegularExpression _surfaceHeadRE { "\\A([^:]*)(:|$)" };
 
-QString PfAbstractBinaryFragmentData::takeFirstLayer(
-    QString &surface) {
+Utf8String PfAbstractBinaryFragmentData::takeFirstLayer(Utf8String &surface) {
   QRegularExpressionMatch match = _surfaceHeadRE.match(surface);
   if (!match.hasMatch())
-    return surface = QString();
+    return surface = {};
   QString first = match.captured(1);
   surface.remove(0, match.capturedEnd(2));
   return first;
 }
 
 bool PfAbstractBinaryFragmentData::removeSurface(
-    QByteArray &data, QString surface) const {
-  QString layer = takeFirstLayer(surface);
+    QByteArray &data, Utf8String surface) const {
+  auto layer = takeFirstLayer(surface);
   if (layer.isEmpty() || layer == "null") {
     // do nothing
   } else if (layer == "zlib") {
@@ -66,8 +65,8 @@ bool PfAbstractBinaryFragmentData::removeSurface(
 }
 
 bool PfAbstractBinaryFragmentData::applySurface(
-    QByteArray &data, QString surface) const {
-  QString layer = takeFirstLayer(surface);
+    QByteArray &data, Utf8String surface) const {
+  auto layer = takeFirstLayer(surface);
   if (!surface.isEmpty())
     if (!applySurface(data, surface))
       return false;
@@ -92,8 +91,8 @@ bool PfAbstractBinaryFragmentData::applySurface(
 }
 
 qint64 PfAbstractBinaryFragmentData::measureSurface(
-    const QByteArray &data, QString surface) const {
-  QString layer = takeFirstLayer(surface);
+    const QByteArray &data, Utf8String surface) const {
+  auto layer = takeFirstLayer(surface);
   if (layer.isEmpty() || layer == "null") {
     // do nothing
   } else if (layer == "zlib") {
@@ -137,16 +136,16 @@ qint64 PfAbstractBinaryFragmentData::measureSurface(
 }
 
 void PfBinaryFragmentData::setSurface(
-    const QString &surface, bool shouldAdjustSize) {
+    const Utf8String &surface, bool shouldAdjustSize) {
   _surface = PfOptions::normalizeSurface(surface);
-  if (shouldAdjustSize && !_surface.isNull()) {
+  if (shouldAdjustSize && !!_surface) {
     QByteArray data = _data;
     _size = measureSurface(data, _surface);
   }
 }
 
 void PfLazyBinaryFragmentData::setSurface(
-    const QString &surface, bool shouldAdjustSize) {
+    const Utf8String &surface, bool shouldAdjustSize) {
   _surface = PfOptions::normalizeSurface(surface);
   if (shouldAdjustSize && !_surface.isNull()) {
     qint64 pos = _device->pos();
@@ -292,12 +291,11 @@ bool PfLazyBinaryFragmentData::isLazyBinary() const {
 qint64 PfAbstractBinaryFragmentData::writeDataApplyingSurface(
     QIODevice *target, Format format, const PfOptions &options,
     QByteArray data) const {
-  QString outputSurface = options.outputSurface();
-  if (outputSurface.isNull() && format == Pf)
+  auto outputSurface = options.outputSurface();
+  if (!outputSurface && format == Pf)
     outputSurface = _surface; // for PF, default output surface is original one
   // handling surfaces
-  if ((!_surface.isNull() || !outputSurface.isNull())
-      && _surface != outputSurface) {
+  if ((!!_surface || !!outputSurface) && _surface != outputSurface) {
     // decoding input surface, i.e. surface of in-memory or lazy-loaded document
     if (!removeSurface(data, _surface))
       return -1;

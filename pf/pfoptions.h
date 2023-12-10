@@ -15,7 +15,7 @@
 #ifndef PFOPTIONS_H
 #define PFOPTIONS_H
 
-#include "libp6core_global.h"
+#include "util/utf8string.h"
 #include <QSharedData>
 
 enum PfPreferedCharactersProtection {
@@ -34,7 +34,7 @@ class LIBP6CORESHARED_EXPORT PfOptionsData : public QSharedData {
   bool _shouldIgnoreComment;
   bool _shouldWriteContentBeforeSubnodes;
   // LATER maxBinaryFragmentSize (then split them into several fragments)
-  QString _outputSurface;
+  Utf8String _outputSurface;
   PfPreferedCharactersProtection _preferedCharactersProtection;
   PfRootNodesParsingPolicy _rootNodesParsingPolicy;
   int _readTimeout; // ms
@@ -95,14 +95,14 @@ public:
     * then no surface will be used when writing, whatever surface has been
     * defined when parsing or creating the fragment through API.
     * Default: QString(). */
-  QString outputSurface() const { return d->_outputSurface; }
-  PfOptions &setOutputSurface(const QString &value) {
+  inline Utf8String outputSurface() const { return d->_outputSurface; }
+  inline PfOptions &setOutputSurface(const Utf8String &value) {
     d->_outputSurface = normalizeSurface(value); return *this; }
   /** Normalize a surface string description, e.g. transform ":::null:zlib:hex:"
     * into "zlib:hex".
     * This method is rather intended for internal use by the PF library but it
     * is part of the public API and can be used by any user code. */
-  static QString normalizeSurface(const QString &surface);
+  static Utf8String normalizeSurface(const Utf8String &surface);
   /** Prefered method to protect special characters.
     * default: PfDoubleQuoteProtection. */
   PfPreferedCharactersProtection preferedCharactersProtection() const {

@@ -100,7 +100,6 @@ private:
 class LIBP6CORESHARED_EXPORT PfNode {
   friend class PfNodeData;
   QSharedDataPointer<PfNodeData> d;
-  static const QList<PfNode> _emptyList;
 
   PfNode(PfNodeData *data) : d(data) { }
 
@@ -180,8 +179,8 @@ public:
   // Node related methods /////////////////////////////////////////////////////
 
   /** A node has an empty string name if and only if the node is null. */
-  QString name() const { return d ? d->_name : QString(); }
-  Utf8String utf8Name() const { return name(); }
+  [[nodiscard]] inline QString name() const { return d ? d->_name : QString(); }
+  inline Utf8String utf8Name() const { return name(); }
   /** Syntaxic sugar: node ^ "foo" === node.name() == "foo" */
   [[nodiscard]] inline bool operator^(const Utf8String &name) const {
     return utf8Name() == name; }
@@ -208,8 +207,8 @@ public:
 
   // Children related methods /////////////////////////////////////////////////
 
-  const QList<PfNode> children() const {
-    return d ? d->_children : _emptyList; }
+  [[nodiscard]] inline QList<PfNode> children() const {
+    return d ? d->_children : QList<PfNode>{}; }
   /** prepend a child to existing children (do nothing if child.isNull()) */
   inline PfNode &prependChild(const PfNode &child);
   /** append a child to existing children (do nothing if child.isNull()) */
@@ -229,30 +228,25 @@ public:
   /** @return first text child by name
    * Most of the time one will use attribute() and xxxAttribute() methods rather
    * than directly calling firstTextChildByName(). */
-  PfNode firstTextChildByName(const QString &name) const;
+  PfNode firstTextChildByName(const Utf8String &name) const;
   /** Return a child content knowing the child name.
-    * QString() if no text child exists.
-    * QString("") if child exists but has no content
+    * def if no text child exists.
+    * "" if child exists but has no content.
     * If several children have the same name the first text one is choosen.
     * The goal is to emulate XML attributes, hence the name. */
-  QString utf16attribute(const QString &name) const {
+  [[nodiscard]] inline QString utf16attribute(
+      const Utf8String &name, const QString &def = {}) const {
     PfNode child = firstTextChildByName(name);
-    return child.isNull() ? QString() : child.contentAsUtf16(); }
-  Utf8String attribute(const Utf8String &name) const {
-    PfNode child = firstTextChildByName(name);
-    return child.isNull() ? Utf8String{} : child.contentAsUtf8(); }
+    return child.isNull() ? def : child.contentAsUtf16(); }
   /** Return a child content knowing the child name.
-    * defaultValue if no text child exists.
-    * QString("") if child exists but has no content
+    * def if no text child exists.
+    * "" if child exists but has no content.
     * If several children have the same name the first text one is choosen.
     * The goal is to emulate XML attributes, hence the name. */
-  QString utf16attribute(const QString &name, const QString &defaultValue) const {
+  [[nodiscard]] inline Utf8String attribute(
+      const Utf8String &name, const Utf8String &def = {}) const {
     PfNode child = firstTextChildByName(name);
-    return child.isNull() ? defaultValue : child.contentAsUtf16(); }
-  Utf8String attribute(
-      const Utf8String &name, const Utf8String &defaultValue) const {
-    PfNode child = firstTextChildByName(name);
-    return child.isNull() ? defaultValue : child.contentAsUtf8(); }
+    return child.isNull() ? def : child.contentAsUtf8(); }
   /** Syntaxic sugar: node["foo"] === node.attribute("foo") */
   [[nodiscard]] inline Utf8String operator[](const Utf8String &name) const {
     return attribute(name); }
@@ -275,19 +269,17 @@ public:
    * @see stringsPairChildrenByName() */
   QList<QPair<Utf8String, qint64>> utf8LongPairChildrenByName(
       const Utf8String &name) const;
-  /** @see contentAsLong() */
-  qint64 longAttribute(const QString &name, qint64 defaultValue = 0,
+  [[deprecated("Use Utf8String.toDouble() instead")]]
+  qlonglong longAttribute(const QString &name, qint64 def = 0,
                        bool *ok = 0) const {
-    return firstTextChildByName(name).contentAsLong(defaultValue, ok); }
-  /** @see contentAsDouble() */
-  double doubleAttribute(const QString &name, double defaultValue,
-                         bool *ok = 0) const {
-    return firstTextChildByName(name).contentAsDouble(defaultValue, ok); }
-  // LATER contentAsDateTime()
-  /** @see contentAsBool() */
-  bool boolAttribute(const QString &name, bool defaultValue = false,
+    return firstTextChildByName(name).contentAsUtf8().toLong(ok, def); }
+  [[deprecated("Use Utf8String.toDouble() instead")]]
+  double doubleAttribute(const QString &name, double def, bool *ok = 0) const {
+    return firstTextChildByName(name).contentAsUtf8().toDouble(ok, def); }
+  [[deprecated("Use Utf8String.toDouble() instead")]]
+  bool boolAttribute(const QString &name, bool def = false,
                      bool *ok = 0) const {
-    return firstTextChildByName(name).contentAsBool(defaultValue, ok); }
+    return firstTextChildByName(name).contentAsUtf8().toBool(ok, def); }
   /** @see contentAsStringList() */
   QStringList stringListAttribute(const QString &name) const {
     return firstTextChildByName(name).contentAsStringList(); }
@@ -312,55 +304,65 @@ public:
    */
   PfNode &setAttribute(const QString &name, const QStringList &content);
   /** Construct a list of all children named 'name'. */
-  QList<PfNode> childrenByName(const QString &name) const;
-  QList<PfNode> childrenByName(const QStringList &names) const;
+  QList<PfNode> childrenByName(const Utf8String &name) const;
+  QList<PfNode> childrenByName(const Utf8StringList &names) const;
   /** Syntaxic sugar: node / "foo" === node.childrenByName("foo") */
   QList<PfNode> operator/(const Utf8String &name) const {
     return childrenByName(name); }
   /** Construct a list of all children of children named 'name'. */
-  QList<PfNode> grandChildrenByChildrenName(const QString &name) const;
-  QList<PfNode> grandChildrenByChildrenName(const QStringList &names) const;
-  bool hasChild(const QString &name) const;
+  QList<PfNode> grandChildrenByChildrenName(const Utf8String &name) const;
+  QList<PfNode> grandChildrenByChildrenName(const Utf8StringList &names) const;
+  bool hasChild(const Utf8String &name) const;
   /** This PfNode has no children. Null nodes are leaves */
-  inline bool isLeaf() const;
-  inline PfNode &removeAllChildren();
+  [[nodiscard]] inline bool isLeaf() const;
+  [[nodiscard]] inline PfNode &removeAllChildren();
   PfNode &removeChildrenByName(const QString &name);
 
   // Content related methods //////////////////////////////////////////////////
 
   /** @return true when there is no content (neither text or binary fragment or
    * array content) */
-  bool isEmpty() const { return !d || d->isEmpty(); }
+  [[nodiscard]] inline bool isEmpty() const { return !d || d->isEmpty(); }
   /** @return true if the content is an array */
-  bool isArray() const { return d && d->isArray(); }
+  [[nodiscard]] inline bool isArray() const { return d && d->isArray(); }
   /** @return true if the content consist only of text data (no binary no array)
    * or is empty or the node is null, false for comment nodes */
-  bool isText() const { return !d || d->isText(); }
+  [[nodiscard]] inline bool isText() const { return !d || d->isText(); }
   /** @return true if the content is (fully or partly) binary data, therefore
    * false when empty */
-  bool isBinary() const { return d && d->isBinary(); }
+  [[nodiscard]] inline bool isBinary() const { return d && d->isBinary(); }
   /** @return QString() if isBinary() or isArray() or isNull(), and QString("")
    * if isText() even if isEmpty() */
-  QString contentAsUtf16() const {
+  [[nodiscard]] inline QString contentAsUtf16() const {
     return d ? d->contentAsString() : QString(); }
-  Utf8String contentAsUtf8() const { return contentAsUtf16(); }
+  [[nodiscard]] inline Utf8String contentAsUtf8() const {
+    return contentAsUtf16(); }
   /** @return integer value if the string content is a valid integer
    * C-like prefixes are supported and both kmb and kMGTP suffixes are supported
    * surrounding whitespace is trimmed
    * e.g. 0x1f means 15, 12k means 12000, 12b and 12G mean 12000000000.
    * however mixing them is not supported e.g. 0x1fG isn't. */
-  qint64 contentAsLong(qint64 defaultValue = 0, bool *ok = 0) const;
+  [[deprecated("Use Utf8String.toLongLong() instead")]]
+  inline qlonglong contentAsLong(qint64 def = 0, bool *ok = 0) const {
+    return contentAsUtf8().toLongLong(ok, def);
+  }
   /** @return decimal value if the string content is a valid E notation number
    * the implementation does not fully support the PF specications since it
    * uses QString::toDouble() which relies on the default locale
    * (QLocale::setDefault()) to define the separators (especially comma versus
    * period) */
-  double contentAsDouble(double defaultValue = 0.0, bool *ok = 0) const;
+  [[deprecated("Use Utf8String.toDouble() instead")]]
+  inline double contentAsDouble(double def = 0.0, bool *ok = 0) const {
+    return contentAsUtf8().toDouble(ok, def);
+  }
   /** @return bool value if the child string content is a valid boolean
    * "true" regardless of case and any non null integer are regarded as true
    * "false" regardless of case and 0 are regarded as false
    * any other text is regarded as invalid */
-  bool contentAsBool(bool defaultValue = false, bool *ok = 0) const;
+  [[deprecated("Use Utf8String.toBool() instead")]]
+  inline bool contentAsBool(bool def = false, bool *ok = 0) const {
+    return contentAsUtf8().toBool(ok, def);
+  }
   /** Split text content into strings on whitespace (e.g. "foo bar baz" and
    * "    foo  bar\nbaz" are both interpreted as the same 3 items list).
    * Whitespace can be escaped with backspaces. Actually backspace must be
@@ -406,7 +408,7 @@ public:
   PfNode &appendContent(const char *utf8text) {
     return appendContent(QString::fromUtf8(utf8text)); }
   /** Append in-memory binary fragment to context (and remove array if any). */
-  PfNode &appendBinary(QByteArray data, const QString &surface = {}) {
+  PfNode &appendBinary(QByteArray data, const Utf8String &surface = {}) {
     if (!d)
       d = new PfNodeData();
     d->_array.clear();
@@ -418,7 +420,7 @@ public:
   }
   /** Append lazy-loaded binary fragment to context (and remove array if any) */
   PfNode &appendContent(QIODevice *device, qint64 length, qint64 offset,
-                        const QString &surface = QString()) {
+                        const Utf8String &surface = {}) {
     if (!d)
       d = new PfNodeData();
     d->_array.clear();

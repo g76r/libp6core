@@ -19,7 +19,7 @@ static const QRegularExpression _dupcolons { "::+" },
 _illegalsAndUseless { "\\A:+|[^a-zA-Z0-9:]*|:+\\z" },
 _nulls { "\\Anull\\z|null:|:null" };
 
-QString PfOptions::normalizeSurface(const QString &surface) {
+Utf8String PfOptions::normalizeSurface(const Utf8String &surface) {
   QString s = surface;
   s.remove(_illegalsAndUseless)
       .replace(_dupcolons, QStringLiteral(":"))
