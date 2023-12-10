@@ -182,6 +182,15 @@ public:
   /** A node has an empty string name if and only if the node is null. */
   QString name() const { return d ? d->_name : QString(); }
   Utf8String utf8Name() const { return name(); }
+  /** Syntaxic sugar: node ^ "foo" === node.name() == "foo" */
+  [[nodiscard]] inline bool operator^(const Utf8String &name) const {
+    return utf8Name() == name; }
+  /** Syntaxic sugar: node ^ "foo" === node.name() == "foo" */
+  [[nodiscard]] inline bool operator^(const QString &name) const {
+    return this->name() == name; }
+  /** Syntaxic sugar: node ^ node2 === node.name() == node2.name() */
+  [[nodiscard]] inline bool operator^(const PfNode &that) const {
+    return name() == that.name(); }
   /** Replace node name. If name is empty, the node will become null. */
   PfNode &setName(const QString &name) {
     if (name.isEmpty())
