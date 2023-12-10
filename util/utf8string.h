@@ -173,6 +173,8 @@ public:
   /** Return utf8 characters count. Count utf8 sequences without ensuring
     * their validity, so with invalid utf8 data this may overestimates. */
   [[nodiscard]] qsizetype utf8Size() const;
+  /** Syntaxic sugar: !s === s.isNull() and thus !!s === !s.isNull() */
+  [[nodiscard]] inline bool operator!() const { return isNull(); }
   inline Utf8String &fill(char c, qsizetype size = -1) {
     QByteArray::fill(c, size); return *this; }
   /** Return valid utf8 without invalid sequences (or having them replaced by
