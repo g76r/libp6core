@@ -314,6 +314,9 @@ public:
   /** Construct a list of all children named 'name'. */
   QList<PfNode> childrenByName(const QString &name) const;
   QList<PfNode> childrenByName(const QStringList &names) const;
+  /** Syntaxic sugar: node / "foo" === node.childrenByName("foo") */
+  QList<PfNode> operator/(const Utf8String &name) const {
+    return childrenByName(name); }
   /** Construct a list of all children of children named 'name'. */
   QList<PfNode> grandChildrenByChildrenName(const QString &name) const;
   QList<PfNode> grandChildrenByChildrenName(const QStringList &names) const;
