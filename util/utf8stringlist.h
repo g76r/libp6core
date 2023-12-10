@@ -54,11 +54,11 @@ public:
   std::set<Utf8String> toStdSet() const {
     return std::set<Utf8String>(cbegin(), cend()); }
   /** Return first string as value 1 and so on. Return join(' ') as value 0. */
-  QVariant paramRawValue(
+  [[nodiscard]] QVariant paramRawValue(
       const Utf8String &key, const QVariant &def = {},
       const ParamsProvider::EvalContext &context = {}) const override;
-  /** Return numbers from 0 to size(). */
-  Utf8StringSet paramKeys(
+  /** Return integers from 0 to size(). */
+  [[nodiscard]] Utf8StringSet paramKeys(
       const ParamsProvider::EvalContext &context = {}) const override;
 };
 
