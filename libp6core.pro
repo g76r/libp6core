@@ -29,7 +29,6 @@ CONFIG(debug,debug|release): BUILD_TYPE=debug
 CONFIG(release,debug|release): BUILD_TYPE=release
 
 DEFINES += LIBP6CORE_LIBRARY
- -DQT_NO_JAVA_STYLE_ITERATORS=1
 exists(/usr/bin/ccache):QMAKE_CXX = ccache $$QMAKE_CXX
 exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always
 QMAKE_CXXFLAGS += -Wextra -Woverloaded-virtual \
