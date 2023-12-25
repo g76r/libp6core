@@ -62,7 +62,8 @@ public:
   /** First item processed as a key, second one as the matching value and so on.
    * If list size is odd the last key will be inserted with "" value. */
   ParamSet(std::initializer_list<Utf8String> list);
-  ParamSet(std::initializer_list<std::pair<Utf8String,QVariant>> list);
+  ParamSet(std::initializer_list<std::pair<Utf8String,QVariant>> list,
+           const Utf8String &scope = {});
   ParamSet(const ParamSet &other);
   explicit ParamSet(const QHash<QString,QString> &params);
   explicit ParamSet(const QMap<QString,QString> &params);

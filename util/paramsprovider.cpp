@@ -188,8 +188,20 @@ Utf8String SimpleParamsProvider::paramScope() const {
 }
 
 QVariant SimpleParamsProvider::paramRawValue(
-    const Utf8String &key, const QVariant &def, const EvalContext &) const {
-  return _params.value(key, def);
+    const Utf8String &key, const QVariant &def,
+    const EvalContext &context) const {
+  if (!context.functionsEvaluated()) {
+    bool is_function;
+    auto v = PercentEvaluator::eval_function(key, context, &is_function);
+    if (is_function)
+      return v;
+  }
+  if (context.hasScopeOrNone(paramScope())) {
+    auto v = _params.value(key);
+    if (v.isValid())
+      return v;
+  }
+  return def;
 }
 
 Utf8StringSet SimpleParamsProvider::paramKeys(

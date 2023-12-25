@@ -219,15 +219,18 @@ public:
 
 /** Very simple ParamsProvider implementation, based on Utf8String -> QVariant
  *  map. */
+
 class LIBP6CORESHARED_EXPORT SimpleParamsProvider : public ParamsProvider {
   QMap<Utf8String,QVariant> _params;
   Utf8String _scope;
 
 public:
+  [[deprecated("use ParamSet instead")]]
   SimpleParamsProvider(
       const QMap<Utf8String,QVariant> &params = {},
       const Utf8String &scope = {})
     : _params(params), _scope(scope) { }
+  [[deprecated("use ParamSet instead")]]
   SimpleParamsProvider(
       std::initializer_list<std::pair<Utf8String,QVariant>> list,
       const Utf8String &scope = {}) : _scope(scope) {
