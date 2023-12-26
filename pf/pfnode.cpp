@@ -296,56 +296,6 @@ qint64 PfNodeData::internalWritePfContent(
   return total;
 }
 
-QList<PfNode> PfNode::childrenByName(const Utf8String &name) const {
-  QList<PfNode> list;
-  for (auto child: children())
-    if (child ^ name)
-      list.append(child);
-  return list;
-}
-
-QList<PfNode> PfNode::childrenByName(const Utf8StringList &names) const {
-  QList<PfNode> list;
-  for (auto child: children())
-    for (auto name: names)
-      if (child ^ name)
-        list.append(child);
-  return list;
-}
-
-QList<PfNode> PfNode::grandChildrenByChildrenName(
-    const Utf8String &name) const {
-  QList<PfNode> list;
-  for (auto child: children())
-    if (child ^ name)
-      list.append(child.children());
-  return list;
-}
-
-QList<PfNode> PfNode::grandChildrenByChildrenName(
-    const Utf8StringList &names) const {
-  QList<PfNode> list;
-  for (auto child: children())
-    for (auto name: names)
-      if (child ^ name)
-        list.append(child.children());
-  return list;
-}
-
-bool PfNode::hasChild(const Utf8String &name) const {
-  for (auto child: children())
-    if (child ^ name)
-      return true;
-  return false;
-}
-
-PfNode PfNode::firstTextChildByName(const Utf8String &name) const {
-  for (auto child: children())
-    if (child ^ name && child.isText())
-      return child;
-  return PfNode();
-}
-
 Utf8StringList PfNode::utf8ChildrenByName(const Utf8String &name) const {
   Utf8StringList sl;
   if (!name.isEmpty())

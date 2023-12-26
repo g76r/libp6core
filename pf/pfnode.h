@@ -18,6 +18,7 @@
 #include "pffragment_p.h"
 #include "pfarray.h"
 #include "util/utf8stringlist.h"
+#include <ranges>
 
 class PfNode;
 
@@ -179,19 +180,21 @@ public:
   // Node related methods /////////////////////////////////////////////////////
 
   /** A node has an empty string name if and only if the node is null. */
-  [[nodiscard]] inline QString name() const { return d ? d->_name : QString(); }
-  inline Utf8String utf8Name() const { return name(); }
-  /** Syntaxic sugar: node ^ "foo" === node.name() == "foo" */
+  [[nodiscard]] inline QString name() const { return d ? d->_name : QString{}; }
+  [[nodiscard]] inline Utf8String utf8Name() const {
+    return d ? Utf8String(d->_name) : Utf8String{}; }
+  /** Syntaxic sugar: node ^ "foo" === !!node && node.name() == "foo" */
   [[nodiscard]] inline bool operator^(const Utf8String &name) const {
-    return utf8Name() == name; }
-  /** Syntaxic sugar: node ^ "foo" === node.name() == "foo" */
+    return !!d && d->_name == name; }
+  /** Syntaxic sugar: node ^ "foo" === !!node && node.name() == "foo" */
   [[nodiscard]] inline bool operator^(const QString &name) const {
-    return this->name() == name; }
-  /** Syntaxic sugar: node ^ node2 === node.name() == node2.name() */
+    return !!d && d->_name == name; }
+  /** Syntaxic sugar:
+   *  node ^ node2 === !!node && !!node2 && node.name() == node2.name() */
   [[nodiscard]] inline bool operator^(const PfNode &that) const {
-    return name() == that.name(); }
+    return !!d && !!that.d && d->_name == that.d->_name; }
   /** Replace node name. If name is empty, the node will become null. */
-  PfNode &setName(const QString &name) {
+  PfNode &setName(const Utf8String &name) {
     if (name.isEmpty())
       d = 0;
     else {
@@ -207,8 +210,44 @@ public:
 
   // Children related methods /////////////////////////////////////////////////
 
-  [[nodiscard]] inline QList<PfNode> children() const {
-    return d ? d->_children : QList<PfNode>{}; }
+  /** Children as C++20 std::ranges::view.
+   *  For use in range for loops and views | combination. */
+  [[nodiscard]] inline auto children() const {
+    auto list = d ? d->_children : QList<PfNode>{};
+    // C++23: return list | std::views::as_const;
+    return std::views::all(list);
+  }
+  /** Children as C++20 std::ranges::view, filtered by their name.
+   *  For use in range for loops and views | combination. */
+  [[nodiscard]] inline auto children(const Utf8String &name) const {
+    return children() | std::views::filter([name](const PfNode &child) {
+      return child^name; }); }
+  /** Syntaxic sugar: node/"foo" === node.children("foo") */
+  [[nodiscard]] inline auto operator/(const Utf8String &name) const {
+    return children(name); }
+  /** Children as QList<PfNode>. Rather use children() if possible. */
+  //[[nodiscard]] inline QList<PfNode> children_list() const {
+  //  return d ? d->_children : QList<PfNode>{};
+  //}
+  /** Grandchildren as C++20 std::ranges::view, filtered by child name.
+   *  For use in range for loops and views | combination. */
+  [[nodiscard]] inline auto grandchildren(const Utf8String &child_name) const {
+    return children()
+        | std::views::filter(
+          [child_name](const PfNode &child) { return child^child_name; })
+        | std::views::transform(
+          [](const PfNode &child) { return child.children(); })
+        | std::views::join;
+  }
+  /** Grandchildren as QList<PfNode>. Rather use grandchildren() if possible. */
+  [[nodiscard]] inline QList<PfNode> grandchildren_list(
+      const Utf8String &child_name) const {
+    QList<PfNode> list;
+    for (auto grandchild: grandchildren(child_name))
+      list += grandchild;
+    return list;
+  }
+
   /** prepend a child to existing children (do nothing if child.isNull()) */
   inline PfNode &prependChild(const PfNode &child);
   /** append a child to existing children (do nothing if child.isNull()) */
@@ -225,27 +264,53 @@ public:
     return prependChild(createCommentNode(comment)); }
   PfNode &appendCommentChild(const QString &comment) {
     return appendChild(createCommentNode(comment)); }
-  /** @return first text child by name
-   * Most of the time one will use attribute() and xxxAttribute() methods rather
-   * than directly calling firstTextChildByName(). */
-  PfNode firstTextChildByName(const Utf8String &name) const;
+  /** @return First child matching name
+   * If you want its text content rather call attribute() or operator[]. */
+  [[nodiscard]] inline PfNode first_child(const Utf8String &name) const {
+    for (auto child: children(name))
+      return child;
+    return {};
+    /*
+    auto range = children();
+    auto first = std::ranges::find_if_not(range, [name](const PfNode &child) {
+      return child^name; });
+    return first != range.end() ? *first : PfNode{};
+    */
+  }
+  /** Return a pair of first two children with a given name.
+   *  Never fails (the children can be null).
+   *  Usefull e.g. to display an error message if a child is duplicated:
+   *  auto [child,unwanted] = node.first_two_children("foo")
+   *  if (!!child) { perform_action(); }
+   *  if (!!unwanted) { warn_duplicate(); } */
+  [[nodiscard]] inline std::pair<PfNode,PfNode> first_two_children(
+      const Utf8String &name) const {
+    auto range = children(name);
+    auto ptr = range.begin();
+    if (ptr == range.end())
+      return {};
+    auto first = *ptr++;
+    if (ptr == range.end())
+      return {first, {}};
+    return {first, *ptr};
+  }
   /** Return a child content knowing the child name.
-    * def if no text child exists.
-    * "" if child exists but has no content.
-    * If several children have the same name the first text one is choosen.
-    * The goal is to emulate XML attributes, hence the name. */
+    * def if no such child exists.
+    * "" if child exists but has no text content.
+    * If several children have the same name the first one is choosen.
+    * The intent is to emulate XML attributes, hence the name. */
   [[nodiscard]] inline QString utf16attribute(
       const Utf8String &name, const QString &def = {}) const {
-    PfNode child = firstTextChildByName(name);
+    PfNode child = first_child(name);
     return child.isNull() ? def : child.contentAsUtf16(); }
   /** Return a child content knowing the child name.
-    * def if no text child exists.
-    * "" if child exists but has no content.
-    * If several children have the same name the first text one is choosen.
-    * The goal is to emulate XML attributes, hence the name. */
+    * def if no such child exists.
+    * "" if child exists but has no text content.
+    * If several children have the same name the first one is choosen.
+    * The intent is to emulate XML attributes, hence the name. */
   [[nodiscard]] inline Utf8String attribute(
       const Utf8String &name, const Utf8String &def = {}) const {
-    PfNode child = firstTextChildByName(name);
+    PfNode child = first_child(name);
     return child.isNull() ? def : child.contentAsUtf8(); }
   /** Syntaxic sugar: node["foo"] === node.attribute("foo") */
   [[nodiscard]] inline Utf8String operator[](const Utf8String &name) const {
@@ -272,17 +337,17 @@ public:
   [[deprecated("Use Utf8String.toDouble() instead")]]
   qlonglong longAttribute(const QString &name, qint64 def = 0,
                        bool *ok = 0) const {
-    return firstTextChildByName(name).contentAsUtf8().toLong(ok, def); }
+    return first_child(name).contentAsUtf8().toLong(ok, def); }
   [[deprecated("Use Utf8String.toDouble() instead")]]
   double doubleAttribute(const QString &name, double def, bool *ok = 0) const {
-    return firstTextChildByName(name).contentAsUtf8().toDouble(ok, def); }
+    return first_child(name).contentAsUtf8().toDouble(ok, def); }
   [[deprecated("Use Utf8String.toDouble() instead")]]
   bool boolAttribute(const QString &name, bool def = false,
                      bool *ok = 0) const {
-    return firstTextChildByName(name).contentAsUtf8().toBool(ok, def); }
+    return first_child(name).contentAsUtf8().toBool(ok, def); }
   /** @see contentAsStringList() */
   QStringList stringListAttribute(const QString &name) const {
-    return firstTextChildByName(name).contentAsStringList(); }
+    return first_child(name).contentAsStringList(); }
   /** Set a child named 'name' with 'content' content and remove any other
     * child named 'name'. */
   PfNode &setAttribute(const QString &name, const QString &content);
@@ -303,16 +368,11 @@ public:
    * @see contentAsStringList()
    */
   PfNode &setAttribute(const QString &name, const QStringList &content);
-  /** Construct a list of all children named 'name'. */
-  QList<PfNode> childrenByName(const Utf8String &name) const;
-  QList<PfNode> childrenByName(const Utf8StringList &names) const;
-  /** Syntaxic sugar: node / "foo" === node.childrenByName("foo") */
-  QList<PfNode> operator/(const Utf8String &name) const {
-    return childrenByName(name); }
-  /** Construct a list of all children of children named 'name'. */
-  QList<PfNode> grandChildrenByChildrenName(const Utf8String &name) const;
-  QList<PfNode> grandChildrenByChildrenName(const Utf8StringList &names) const;
-  bool hasChild(const Utf8String &name) const;
+  [[nodiscard]] inline bool hasChild(const Utf8String &name) const {
+    auto range = children();
+    return std::ranges::find_if_not(range, [name](const PfNode &child) {
+      return child^name; }) != range.end();
+  }
   /** This PfNode has no children. Null nodes are leaves */
   [[nodiscard]] inline bool isLeaf() const;
   [[nodiscard]] inline PfNode &removeAllChildren();
