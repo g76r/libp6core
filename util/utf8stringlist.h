@@ -60,6 +60,7 @@ public:
   /** Return integers from 0 to size(). */
   [[nodiscard]] Utf8StringSet paramKeys(
       const ParamsProvider::EvalContext &context = {}) const override;
+  using QList<Utf8String>::empty; // hides ParamsProvider::empty
 };
 
 Q_DECLARE_METATYPE(Utf8StringList)
@@ -111,7 +112,13 @@ public:
   QList::const_reverse_iterator rend() const { return Utf8StringList::rend(); }
   [[nodiscard]] inline QList::const_reference operator[](qsizetype i) const {
     return Utf8StringList::operator[](i); }
+  [[nodiscard]] inline QList::const_reference at(qsizetype i) const {
+    return Utf8StringList::at(i); }
   [[nodiscard]] inline auto size() const { return Utf8StringList::size(); }
+  [[nodiscard]] inline auto count() const { return Utf8StringList::count(); }
+  [[nodiscard]] inline auto length() const { return Utf8StringList::length(); }
+  [[nodiscard]] inline auto empty() const { return Utf8StringList::empty(); }
+  [[nodiscard]] inline auto isEmpty() const { return Utf8StringList::isEmpty();}
   [[nodiscard]] inline Utf8String value(
       qsizetype i, const Utf8String &def = {}) const {
     return Utf8StringList::value(i, def); }
