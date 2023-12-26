@@ -28,8 +28,9 @@ static QRegularExpression _sqldbspec
 
 
 void SqlUtils::configureSqlDatabasesFromChildren(
-  PfNode config, QString childname, ParamsProvider *context) {
-  for (auto sqldb: config.childrenByName(childname)) {
+    const PfNode &config, const Utf8String &childname,
+    const ParamsProvider *context) {
+  for (auto sqldb: config/childname) {
     auto spec = PercentEvaluator::eval_utf16(sqldb.contentAsUtf16(), context);
     auto m = _sqldbspec.match(spec);
     if (!m.hasMatch()) {
@@ -58,19 +59,13 @@ void SqlUtils::configureSqlDatabasesFromChildren(
 
 }
 
-void SqlUtils::configureSqlDatabasesFromChildren(
-  PfNode config, QString childname, ParamSet context) {
-  configureSqlDatabasesFromChildren(config, childname, &context);
-}
-
 void SqlUtils::setSqlParamsFromChildren(
-  PfNode config, ParamSet *params, QString childname) {
+    const PfNode &config, ParamSet *params, const Utf8String &childname) {
   if (!params)
     return;
-  for (auto sqlparams: config.childrenByName(childname))
-    params->insertFromSqlDb(sqlparams.attribute("db"),
-                               sqlparams.attribute("sql"),
-                               sqlparams.childrenByName("bindings").value(0)
-                                 .contentAsStringList());
+  for (auto sqlparams: config/childname)
+    params->insertFromSqlDb(
+        sqlparams["db"], sqlparams["sql"],
+        sqlparams["bindings"].split(Utf8String::AsciiWhitespace,
+                                    Qt::SkipEmptyParts));
 }
-

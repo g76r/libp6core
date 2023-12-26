@@ -14,7 +14,7 @@
 #ifndef SQLUTILS_H
 #define SQLUTILS_H
 
-#include "libp6core_global.h"
+#include "util/utf8string.h"
 
 class PfNode;
 class ParamsProvider;
@@ -42,9 +42,13 @@ public:
    *  @param context if not null, connection string is %-evaluated within it
    */
   static void configureSqlDatabasesFromChildren(
-    PfNode config, QString childname, ParamsProvider *context = 0);
-  static void configureSqlDatabasesFromChildren(
-    PfNode config, QString childname, ParamSet context);
+      const PfNode &config, const Utf8String &childname,
+      const ParamsProvider *context = 0);
+  static inline void configureSqlDatabasesFromChildren(
+      const PfNode &config, const Utf8String &childname,
+      const ParamsProvider &context) {
+    configureSqlDatabasesFromChildren(config, childname, &context);
+  }
   /** calls ParamSet::setValuesFromSqlDb for each child with a given name,
    *  using its children "db", "sql" and "bindings" as parameters.
    *  e.g.
@@ -54,7 +58,7 @@ public:
    *  )
    */
   static void setSqlParamsFromChildren(
-    PfNode config, ParamSet *params, QString childname);
+      const PfNode &config, ParamSet *params, const Utf8String &childname);
 };
 
 #endif // SQLUTILS_H
