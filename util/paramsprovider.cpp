@@ -22,11 +22,16 @@ extern char **environ; // LATER use QProcessEnvironment::systemEnvironment()
 namespace {
 
 struct Environment : public ParamsProvider {
+  static Utf8String _scope;
   QVariant paramRawValue(
     const Utf8String &key, const QVariant &def,
-      const EvalContext &) const override {
-    auto v = qgetenv(key);
-    return v.isNull() ? def : QString::fromLocal8Bit(v);
+      const EvalContext &context) const override {
+    if (context.hasScopeOrNone(_scope)) {
+      auto v = qgetenv(key);
+      if (!v.isNull())
+        return QString::fromLocal8Bit(v);
+    }
+    return def;
   }
   Utf8StringSet paramKeys(const EvalContext &) const override {
     Utf8StringSet keys;
@@ -39,9 +44,11 @@ struct Environment : public ParamsProvider {
     return keys;
   }
   Utf8String paramScope() const override {
-    return "env"_u8;
+    return _scope;
   }
 };
+
+Utf8String Environment::_scope = "env"_u8;
 
 struct Empty : public ParamsProvider {
   QVariant paramRawValue(
