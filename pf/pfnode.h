@@ -193,6 +193,9 @@ public:
    *  node ^ node2 === !!node && !!node2 && node.name() == node2.name() */
   [[nodiscard]] inline bool operator^(const PfNode &that) const {
     return !!d && !!that.d && d->_name == that.d->_name; }
+  /** Syntaxic sugar: node ^ list === !!node && list.contains(node.name()) */
+  [[nodiscard]] inline bool operator^(const Utf8StringList &names) const {
+    return !!d && names.contains(d->_name); }
   /** Replace node name. If name is empty, the node will become null. */
   PfNode &setName(const Utf8String &name) {
     if (name.isEmpty())
@@ -222,13 +225,40 @@ public:
   [[nodiscard]] inline auto children(const Utf8String &name) const {
     return children() | std::views::filter([name](const PfNode &child) {
       return child^name; }); }
+  /** Children as C++20 std::ranges::view, filtered by their name.
+   *  For use in range for loops and views | combination. */
+  [[nodiscard]] inline auto children(const Utf8StringList &names) const {
+    return children() | std::views::filter([names](const PfNode &child) {
+      return child^names; }); }
   /** Syntaxic sugar: node/"foo" === node.children("foo") */
   [[nodiscard]] inline auto operator/(const Utf8String &name) const {
     return children(name); }
-  /** Children as QList<PfNode>. Rather use children() if possible. */
-  //[[nodiscard]] inline QList<PfNode> children_list() const {
-  //  return d ? d->_children : QList<PfNode>{};
-  //}
+  /** Syntaxic sugar: node/{"foo","bar"} === node.children({"foo","bar"}) */
+  [[nodiscard]] inline auto operator/(const Utf8StringList &names) const {
+    return children(names); }
+  /** Children as QList<PfNode>.
+   *  Most of time using children() or operator/ is more convenient. */
+  [[nodiscard]] inline QList<PfNode> children_as_list() const {
+    return d ? d->_children : QList<PfNode>{};
+  }
+  /** Children as QList<PfNode>.
+   *  Most of time using children() or operator/ is more convenient. */
+  [[nodiscard]] inline QList<PfNode> children_as_list(
+      const Utf8String &name) const {
+    QList<PfNode> list;
+    for (auto child: children(name))
+      list << child;
+    return list;
+  }
+  /** Children as QList<PfNode>.
+   *  Most of time using children() or operator/ is more convenient. */
+  [[nodiscard]] inline QList<PfNode> children_as_list(
+      const Utf8StringList &names) const {
+    QList<PfNode> list;
+    for (auto child: children(names))
+      list << child;
+    return list;
+  }
   /** Grandchildren as C++20 std::ranges::view, filtered by child name.
    *  For use in range for loops and views | combination. */
   [[nodiscard]] inline auto grandchildren(const Utf8String &child_name) const {
@@ -280,9 +310,9 @@ public:
   /** Return a pair of first two children with a given name.
    *  Never fails (the children can be null).
    *  Usefull e.g. to display an error message if a child is duplicated:
-   *  auto [child,unwanted] = node.first_two_children("foo")
+   *  auto [child,child2] = node.first_two_children("foo")
    *  if (!!child) { perform_action(); }
-   *  if (!!unwanted) { warn_duplicate(); } */
+   *  if (!!child2) { warn_duplicate(); } */
   [[nodiscard]] inline std::pair<PfNode,PfNode> first_two_children(
       const Utf8String &name) const {
     auto range = children(name);
