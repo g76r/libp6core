@@ -1,4 +1,4 @@
-/* Copyright 2016-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -96,5 +96,20 @@ public:
 //  auto begin() { return data.keyValueBegin(); }
 //  auto end() { return data.keyValueEnd(); }
 //};
+
+/** Object hiding a QList behind a range loop expression.
+ *  Usefull as an API return value waiting for C++23 and temporary
+ *  std::ranges::view actually working (not UB, not crashing).
+ *  Note that returning this object as a temporary for use as a range loop
+ *  expression is still UB anyway in C++20, but it's supported by GCC.
+ */
+template<typename T>
+class QListRange {
+  QList<T> _list;
+public:
+  QListRange(QList<T> list) : _list(list) {}
+  auto begin() const { return _list.constBegin(); }
+  auto end() const { return _list.constEnd(); }
+};
 
 #endif // CONTAINERUTILS_H

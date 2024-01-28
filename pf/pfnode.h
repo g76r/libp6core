@@ -1,4 +1,4 @@
-/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,6 +19,7 @@
 #include "pfarray.h"
 #include "util/utf8stringlist.h"
 #include <ranges>
+#include "util/containerutils.h"
 
 class PfNode;
 
@@ -213,23 +214,30 @@ public:
 
   // Children related methods /////////////////////////////////////////////////
 
-  /** Children as C++20 std::ranges::view.
-   *  For use in range for loops and views | combination. */
+  /** Children as range loop expression.
+   *  (will be std::ranges::view when C++23 will be supported). */
   [[nodiscard]] inline auto children() const {
     auto list = d ? d->_children : QList<PfNode>{};
-    // C++23: return list | std::views::as_const;
-    return std::views::all(list);
+    return QListRange<PfNode>(list);
   }
-  /** Children as C++20 std::ranges::view, filtered by their name.
-   *  For use in range for loops and views | combination. */
+  /** Children filtered by their name, as range loop expression.
+   *  (will be std::ranges::view when C++23 will be supported). */
   [[nodiscard]] inline auto children(const Utf8String &name) const {
-    return children() | std::views::filter([name](const PfNode &child) {
-      return child^name; }); }
-  /** Children as C++20 std::ranges::view, filtered by their name.
-   *  For use in range for loops and views | combination. */
+    QList<PfNode> list;
+    for (auto child: children())
+      if (child^name)
+        list += child;
+    return QListRange<PfNode>(list);
+  }
+  /** Children filtered by their name, as range loop expression.
+   *  (will be std::ranges::view when C++23 will be supported). */
   [[nodiscard]] inline auto children(const Utf8StringList &names) const {
-    return children() | std::views::filter([names](const PfNode &child) {
-      return child^names; }); }
+    QList<PfNode> list;
+    for (auto child: children())
+      if (child^names)
+        list += child;
+    return QListRange<PfNode>(list);
+  }
   /** Syntaxic sugar: node/"foo" === node.children("foo") */
   [[nodiscard]] inline auto operator/(const Utf8String &name) const {
     return children(name); }
@@ -237,44 +245,46 @@ public:
   [[nodiscard]] inline auto operator/(const Utf8StringList &names) const {
     return children(names); }
   /** Children as QList<PfNode>.
-   *  Most of time using children() or operator/ is more convenient. */
+   *  Rather use children() or operator/ if possible. */
   [[nodiscard]] inline QList<PfNode> children_as_list() const {
     return d ? d->_children : QList<PfNode>{};
   }
   /** Children as QList<PfNode>.
-   *  Most of time using children() or operator/ is more convenient. */
+   *  Rather use children() or operator/ if possible. */
   [[nodiscard]] inline QList<PfNode> children_as_list(
       const Utf8String &name) const {
     QList<PfNode> list;
-    for (auto child: children(name))
-      list << child;
+    for (auto child: children())
+      if (child^name)
+        list += child;
     return list;
   }
   /** Children as QList<PfNode>.
-   *  Most of time using children() or operator/ is more convenient. */
+   *  Rather use children() or operator/ if possible. */
   [[nodiscard]] inline QList<PfNode> children_as_list(
       const Utf8StringList &names) const {
     QList<PfNode> list;
-    for (auto child: children(names))
-      list << child;
+    for (auto child: children())
+      if (child^names)
+        list += child;
     return list;
   }
-  /** Grandchildren as C++20 std::ranges::view, filtered by child name.
-   *  For use in range for loops and views | combination. */
+  /** Grandchildren filtered by child name, as range loop expression.
+   *  (will be std::ranges::view when C++23 will be supported). */
   [[nodiscard]] inline auto grandchildren(const Utf8String &child_name) const {
-    return children()
-        | std::views::filter(
-          [child_name](const PfNode &child) { return child^child_name; })
-        | std::views::transform(
-          [](const PfNode &child) { return child.children(); })
-        | std::views::join;
+    QList<PfNode> list;
+    for (auto child: children())
+      if (child^child_name)
+        list += child.children_as_list();
+    return QListRange<PfNode>(list);
   }
   /** Grandchildren as QList<PfNode>. Rather use grandchildren() if possible. */
   [[nodiscard]] inline QList<PfNode> grandchildren_list(
       const Utf8String &child_name) const {
     QList<PfNode> list;
-    for (auto grandchild: grandchildren(child_name))
-      list += grandchild;
+    for (auto child: children())
+      if (child^child_name)
+        list += child.children_as_list();
     return list;
   }
 
@@ -297,15 +307,10 @@ public:
   /** @return First child matching name
    * If you want its text content rather call attribute() or operator[]. */
   [[nodiscard]] inline PfNode first_child(const Utf8String &name) const {
-    for (auto child: children(name))
-      return child;
+    for (auto child: children())
+      if (child^name)
+        return child;
     return {};
-    /*
-    auto range = children();
-    auto first = std::ranges::find_if_not(range, [name](const PfNode &child) {
-      return child^name; });
-    return first != range.end() ? *first : PfNode{};
-    */
   }
   /** Return a pair of first two children with a given name.
    *  Never fails (the children can be null).
@@ -315,14 +320,17 @@ public:
    *  if (!!child2) { warn_duplicate(); } */
   [[nodiscard]] inline std::pair<PfNode,PfNode> first_two_children(
       const Utf8String &name) const {
-    auto range = children(name);
-    auto ptr = range.begin();
-    if (ptr == range.end())
-      return {};
-    auto first = *ptr++;
-    if (ptr == range.end())
-      return {first, {}};
-    return {first, *ptr};
+    PfNode first,second;
+    for (auto child: children())
+      if (child^name) {
+        if (!first)
+          first = child;
+        else if (!second) {
+          second = child;
+          break;
+        }
+      }
+    return {first, second};
   }
   /** Return a child content knowing the child name.
     * def if no such child exists.
