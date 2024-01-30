@@ -407,9 +407,10 @@ public:
    */
   PfNode &setAttribute(const QString &name, const QStringList &content);
   [[nodiscard]] inline bool hasChild(const Utf8String &name) const {
-    auto range = children();
-    return std::ranges::find_if_not(range, [name](const PfNode &child) {
-      return child^name; }) != range.end();
+    for (auto child: children())
+      if (child^name)
+        return true;
+    return false;
   }
   /** This PfNode has no children. Null nodes are leaves */
   [[nodiscard]] inline bool isLeaf() const;
