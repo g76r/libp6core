@@ -130,8 +130,10 @@ XlsxWriter::XlsxWriter(const Utf8String &workdir, bool autoclean)
 
 XlsxWriter::Sheet *XlsxWriter::get_or_create_sheet(
     Utf8String title) {
-  if (title.isNull())
-    title = ""_u8;
+  if (title.isEmpty())
+    title = "Sheet1"_u8;
+  if (title.size() >= 32)
+    title = title.utf8left(31);
   if (_sheets.contains(title))
     return _sheets[title];
   Sheet *sheet = new Sheet(title, _sheets.size()+1, _workdir);
