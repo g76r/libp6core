@@ -255,11 +255,34 @@ availlable or param
 regular expressions are those supported by Qt's QRegularExpression, which
 are PCRE-powered, i.e. almost identical to Perl's regexps
 
+support for non-standard following flags:
+* ↑ convert result to upper case
+* ↓ convert result to lower case
+
 examples:
 * `%{=sub!foo!/o/O}` returns "fOo"
 * `%{=sub!foo!/o/O/g}` returns "fOO"
 * `%{=sub;%foo;/a/b/g;/([a-z]+)[0-9]/%1%bar/g}`
 * `%{=sub;2015-04-17;|.*-(?<month>[0-9]+)-.*|%month}` returns "04"
+* `%{=sub!_foo_bar_!/_/-/g↑}` returns "-FOO-BAR-"
+
+%=uppercase %=lowercase %=titlecase
+-----------------------------------
+`%{=uppercase:input}`
+
+`%{=lowercase:input}`
+
+`%{=titlecase:input}`
+
+input is the data to transform, it is evaluated (%foo become the content of
+foo param)
+
+case folding is done at unicode level
+
+examples:
+* `%{=uppercase:fooǆ}` -> "FOOǄ"
+* `%{=lowercase:Fooǆ}` -> "fooǆ"
+* `%{=titlecase:fooǆ}` -> "FOOǅ"
 
 %=left %=right
 --------------

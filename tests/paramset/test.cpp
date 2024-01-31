@@ -34,5 +34,7 @@ int main(void) {
                 "%{=rpn,'4.0G,'4G,*}=1.6e+19");
   qDebug() << PercentEvaluator::eval_function("'abcdef")
            << p.paramRawValue("'abcdef") << p.paramUtf8("'abcdef") << ppm.paramUtf8("'abcdef");
+  qDebug() << PercentEvaluator::eval_utf8("%{=uppercase:fooǆ}|%{=lowercase:fooǆ}|%{=titlecase:fooǆ}");
+  qDebug() << PercentEvaluator::eval_utf8("%{=sub;Foo_Barǆ;/_/-/g↑}|%{=sub;Foo_Barǆ;/_/-/g↓}");
   return 0;
 }

@@ -9,3 +9,5 @@ there's something)  s1 = QVariant(Utf8String, ﻿﻿§foo§bar§baz§﻿§§)  s
 "-3=-3 42=42 1000=1000 1000=1000"
 "= = = 1.6e+19=1.6e+19"
 QVariant(Utf8String, "abcdef") QVariant(Utf8String, "abcdef") "abcdef" "abcdef"
+"FOOǄ|fooǆ|FOOǅ"
+"FOO-BARǄ|foo-barǆ"

@@ -1,4 +1,4 @@
-/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -197,10 +197,29 @@ _functions {
       }
       //qDebug() << "transformed:" << transformed;
     } while(repeat);
+    if (optionsString.contains("↑"))
+      transformed = transformed.toUpper();
+    else if (optionsString.contains("↓"))
+      transformed = transformed.toLower();
     value = transformed;
   }
   //qDebug() << "value:" << value;
   return value;
+}, true},
+{ "=uppercase", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
+  auto params = key.splitByLeadingChar(ml);
+  auto input = PercentEvaluator::eval_utf8(params.value(0), context);
+  return input.toUpper();
+}, true},
+{ "=lowercase", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
+  auto params = key.splitByLeadingChar(ml);
+  auto input = PercentEvaluator::eval_utf8(params.value(0), context);
+  return input.toLower();
+}, true},
+{ "=titlecase", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
+  auto params = key.splitByLeadingChar(ml);
+  auto input = PercentEvaluator::eval_utf8(params.value(0), context);
+  return input.toTitle();
 }, true},
 { "=left", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
   auto params = key.splitByLeadingChar(ml);
