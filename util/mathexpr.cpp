@@ -1,4 +1,4 @@
-/* Copyright 2022-2023 Gregoire Barbier and others.
+/* Copyright 2022-2024 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -371,7 +371,8 @@ QMap<Utf8String, OperatorDef> operatordefsMap { operatordefs.toUtf8Map() };
 // stack: == '1' x
 // tree building: push(var x) push(const 1) pop(2);push(operator ==(x,'1'))
 
-static Operand compileRpn(Utf8StringList terms, bool *ok) {
+static Operand compileRpn(Utf8StringList terms, bool *ok,
+                          MathExpr::MathDialect dialect) {
   QList<Operand> stack;
   bool altok;
   if (!ok)
@@ -398,16 +399,21 @@ static Operand compileRpn(Utf8StringList terms, bool *ok) {
       }
       continue;
     }
-    if (term.size() && term.at(0) == '\'') {
-      qsizetype n = term.size()-1;
-      if (term.at(n) == '\'')
-        --n;
-      stack.prepend(Operand(term.mid(1, n)));
-      //qDebug() << "prepended constant " << term.mid(1, n);
-      continue;
+    if (dialect == MathExpr::CharacterSeparatedQuotedRpn) {
+      if (term.size() && term.at(0) == '\'') {
+        qsizetype n = term.size()-1;
+        if (term.at(n) == '\'')
+          --n;
+        stack.prepend(Operand(term.mid(1, n)));
+        //qDebug() << "prepended constant " << term.mid(1, n);
+        continue;
+      }
+      stack.prepend(Operand(term, QVariant()));
+      //qDebug() << "prepended variable " << term << " " << stack.size();
+    } else {
+      stack.prepend(Operand(term));
+      //qDebug() << "prepended term " << term;
     }
-    stack.prepend(Operand(term, QVariant()));
-    //qDebug() << "prepended variable " << term << " " << stack.size();
   }
   //qDebug() << "at end: " << stack.size();
   if (stack.size() != 1)
@@ -426,9 +432,10 @@ public:
     const Utf8String expr, MathExpr::MathDialect dialect) {
     bool ok = false;
     MathExprData *d = 0;
-    if (dialect == MathExpr::CharacterSeparatedRpn) {
+    if (dialect == MathExpr::CharacterSeparatedQuotedRpn
+        || dialect == MathExpr::CharacterSeparatedRpn) {
       auto terms = expr.splitByLeadingChar();
-      auto root = compileRpn(terms, &ok);
+      auto root = compileRpn(terms, &ok, dialect);
       if (ok)
         d = new MathExprData(root, expr);
     } else {

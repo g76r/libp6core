@@ -1,4 +1,4 @@
-/* Copyright 2022-2023 Gregoire Barbier and others.
+/* Copyright 2022-2024 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,15 +19,25 @@
 
 class MathExprData;
 
+/** Can evaluate expressions like:
+ *  ",foo,'bar,@" -> "hellobar" if foo holds "hello"
+ *  ",%{myprefix.%k.mysuffix},0,>=" -> returns true or false
+ *
+ * See %=rpn function in percent_evaluation.md for detailed syntax and full list
+ * of operators (this class is the implementation of %=rpn function).
+ *
+ * Don't use CharacterSeparatedQuotedRpn dialect which is only provided for
+ * backward compatibility.
+ */
 class LIBP6CORESHARED_EXPORT MathExpr {
   QSharedDataPointer<MathExprData> d;
 
 public:
   using EvalContext = PercentEvaluator::EvalContext;
 
-  enum MathDialect { Infix, CharacterSeparatedRpn };
+  enum MathDialect { CharacterSeparatedQuotedRpn, CharacterSeparatedRpn };
   MathExpr(const Utf8String expr, MathDialect dialect);
-  MathExpr() : MathExpr(Utf8String(), Infix) { }
+  MathExpr() : MathExpr(Utf8String(), CharacterSeparatedRpn) { }
   MathExpr(const MathExpr &other);
   MathExpr &operator=(const MathExpr &other);
   ~MathExpr();

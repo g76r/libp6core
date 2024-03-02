@@ -18,11 +18,11 @@ int main(void) {
                 "%{=hex!%{=frombase64:-_9h:u}!}=fbff61 %{=base64:§}=wqc= "
                 "%{=fromhex!25:62/61 7a!}=%%baz "
                 "%{=md5:%%baz}=96ab86a37cef7e27d8d45af9c29dc974 "
-                "%{=rpn,'0x20,x,+}=33.5 ", &p);
+                "%{=rpn,0x20,%x,+}=33.5 ", &p);
   qDebug() << PercentEvaluator::eval_utf8(
               "*** %foozz=%%bar %{'foo}=foo %{=rawvalue!fooz}=%%bar "
               "%{=rawvalue!fooz!e}=%%%%bar "
-              "%{=rpn,'%foo}=%%foo %{=rpn,'foo}=foo %{=rpn,foo}=bar ***", &p);
+              "%{=rpn,%%foo}=%%foo %{=rpn,foo}=foo %{=rpn,%foo}=bar ***", &p);
   qDebug() << PercentEvaluator::eval_utf8("%{=rawvalue:h1:hun}", &p);
   qDebug() << PercentEvaluator::eval_utf8(
                 "%{=htmlencode|%{=rawvalue:h1}|un}", &p);
@@ -30,8 +30,8 @@ int main(void) {
                 "%{=integer:-3.14}=-3 %{=integer:blurp:%baz}=42 "
                 "%{=integer:1e3}=1000 %{=integer:1k}=1000", &p);
   qDebug() << PercentEvaluator::eval_utf8( // overflows
-                "%{=integer:1e50}= %{=integer:10000P}= %{=rpn,'4G,'4G,*}= "
-                "%{=rpn,'4.0G,'4G,*}=1.6e+19");
+                "%{=integer:1e50}= %{=integer:10000P}= %{=rpn,4G,4G,*}= "
+                "%{=rpn,4.0G,4G,*}=1.6e+19");
   qDebug() << PercentEvaluator::eval_function("'abcdef")
            << p.paramRawValue("'abcdef") << p.paramUtf8("'abcdef") << ppm.paramUtf8("'abcdef");
   qDebug() << PercentEvaluator::eval_utf8("%{=uppercase:fooǆ}|%{=lowercase:fooǆ}|%{=titlecase:fooǆ}");

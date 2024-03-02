@@ -178,9 +178,9 @@ examples:
 * `%{=rawvalue:h1:hun}` is equivalent to `%{=htmlencode|%{=rawvalue:h1}|un}`
 * `%{'foo}` returns `foo` whereas `%{foo}` would have returned the value of foo
 * `%foo` -> `%bar` if foo is `%%bar`
-* `%{=rpn,foo}` -> `bar` if foo is `bar`
-* `%{=rpn,'foo}` -> `foo`
-* `%{=rpn,'%foo}` -> `%foo` because =rpn does not %-evaluate its params
+* `%{=rpn,%foo}` -> `bar` if foo is `bar`
+* `%{=rpn,foo}` -> `foo`
+* `%{=rpn,%%foo}` -> `%foo`
 
 %=ifneq
 -------
@@ -534,11 +534,10 @@ examples:
 
 compute a reverse polish notation mathematical expression
 
-terms are considered as constants if they begins (and optionnaly ends) with
-a simple quote and are considered variables (and will be %-evaluated) otherwise
+terms are %-evaluated
 
-following operators are supported with their usual (C, C++, Java, JS, bash...)
-meaning:
+following operators are supported with their usual (C, C++, Java, JS, bash,
+OCaml...) meaning:
 binary operators: `+ - * / % @ <=> <= >= < > == != ==* !=* =~ !=~ && ^^ ||`
 `?? ??* <? >? <?* >?*`
 unary operators: `! !! ~ ~~ ?- !- ?* !* # ##`
@@ -558,11 +557,11 @@ please note that:
   string representation length in characters
 - `##` returns the memory size, for a string its length in bytes, for a number,
   its string representation length in bytes
-- `??` is a coalescence operator (`%{=rpn,',foo,??,'null,??}` -> foo value if
+- `??` is a coalescence operator (`%{=rpn,,%foo,??,null,??}` -> foo value if
   not empty otherwise "null")
-- `??*` is a null coalescence operator (`%{=rpn,',foo,??,'null,??*}` -> foo
+- `??*` is a null coalescence operator (`%{=rpn,<null>,%foo,??,null,??*}` -> foo
   value, including empty if foo is set, event to an empty string, and otherwise
-  "null"; `%{=rpn,',foo,??*}` -> always return an empty string)
+  "null"; `%{=rpn,,%foo,??*}` -> always return an empty string)
 - `==` and `!=\ consider non set variable or any invalid QVariant or valid
   QVariant not convertible to a number or string as if it were an empty string,
   and thus always return either true or false
@@ -575,12 +574,12 @@ please note that:
   to a number or a string
 - `+ - *` will return null if one of their operand is not convertible to a
   number or if an integer operation overflows e.g.
-  `%{=rpn,'0xffffffffffffffff','1,+}` and `%{=rpn,'1,'foo,+}` both return
+  `%{=rpn,0xffffffffffffffff,1,+}` and `%{=rpn,1,foo,+}` both return
   null
 - `/ % && ^^ ||` will return null if one of their operand is not convertible
   to a number
-- `<?` and `>?` are min and max operators (`%{=rpn,'abc,'ABC,<?}` -> ABC
-  and `%{=rpn,'100,~~,'20,~~,>?}` -> 100), they pretend an null, invalid or
+- `<?` and `>?` are min and max operators (`%{=rpn,abc,ABC,<?}` -> ABC
+  and `%{=rpn,100,~~,20,~~,>?}` -> 100), they pretend an null, invalid or
   unconvertible operand to be an empty string
 - `<?*` and `>?*` do the same but will return null as soon as one of their
   operand is null, invalid or unconvertible
@@ -595,25 +594,25 @@ of course there are plenty of implicit type conversions, such as integer
 promotions and converting non null numbers to true booleans.
 
 examples:
-* `%{=rpn,'1,'2,+}` -> 3 (addition)
-* `%{=rpn,'1,'2,@}` -> "12" (concatenation)
-* `%{=rpn,'1,x,+}` -> 2 if x is "1"
-* `%{=rpn,'0x20,x,+}` -> 33.5 if x is "1.5"
-* `%{=rpn,'2k,x,+}` -> 2001.5 if x is "1.5"
-* `%{=rpn,'1,',+}` -> invalid (because 2nd operand isn't a number)
-* `%{=rpn,'1,',@}` -> "1"
-* `%{=rpn,'1,'true,+}` -> 2
-* `%{=rpn,'1,'true,&&}` -> true (1 is casted to true by && operator)
-* `%{=rpn,'1,'true,==}` -> false (1 is not a boolean)
-* `%{=rpn,'42,!!,'true,==}` -> true (42 is casted to true by !! operator)
-* `%{=rpn,'1,'2,==,'3,'4,?:}` -> "4"
-* `%{=rpn,'aabcdaa,'a$,=~` -> true
-* `%{=rpn,'aabcdaa,'c$,=~` -> false
-* `%{=rpn,foo}` -> "bar" if foo is "bar"
-* `%{=rpn,'foo}` -> "foo"
-* `%{=rpn,'%foo}` -> `%foo` because =rpn does not %-evaluate its params
-* `%{=rpn,'dt: ,=date,@}` -> "dt: " followed by current datetime
-* `%{=rpn,=rpn;'42;!!,'z,@}` -> "truez" but don't do that
+* `%{=rpn,1,2,+}` -> 3 (addition)
+* `%{=rpn,1,2,@}` -> "12" (concatenation)
+* `%{=rpn,1,%x,+}` -> 2 if x is "1"
+* `%{=rpn,0x20,%x,+}` -> 33.5 if x is "1.5"
+* `%{=rpn,2k,%x,+}` -> 2001.5 if x is "1.5"
+* `%{=rpn,1,,+}` -> invalid (because 2nd operand isn't a number)
+* `%{=rpn,1,,@}` -> "1"
+* `%{=rpn,1,true,+}` -> 2
+* `%{=rpn,1,true,&&}` -> true (1 is casted to true by && operator)
+* `%{=rpn,1,true,==}` -> false (1 is not a boolean)
+* `%{=rpn,42,!!,true,==}` -> true (42 is casted to true by !! operator)
+* `%{=rpn,1,2,==,3,4,?:}` -> "4"
+* `%{=rpn,aabcdaa,a$,=~` -> true
+* `%{=rpn,aabcdaa,c$,=~` -> false
+* `%{=rpn,%foo}` -> "bar" if foo is "bar"
+* `%{=rpn,foo}` -> "foo"
+* `%{=rpn,%%foo}` -> "%foo"
+* `%{=rpn,dt: ,%=date,@}` -> "dt: " followed by current datetime
+* `%{=rpn,%{=rpn;42;!!},z,@}` -> "truez" but please don't do that
 
 %'
 --
@@ -632,9 +631,9 @@ examples:
 * `%foo` -> `%bar` if foo is `%%bar`
 * `%{=rawvalue!foo}` -> `%bar` if foo is `%bar`
 * `%{=rawvalue!foo!e}` -> `%%bar` if foo is `%bar`
-* `%{=rpn,foo}` -> `bar` if foo is `bar`
-* `%{=rpn,'foo}` -> `foo`
-* `%{=rpn,'%foo}` -> `%foo` because =rpn does not %-evaluate its params
+* `%{=rpn,%foo}` -> `bar` if foo is `bar`
+* `%{=rpn,foo}` -> `foo`
+* `%{=rpn,%%foo}` -> `%foo`
 
 %=integer
 ---------
