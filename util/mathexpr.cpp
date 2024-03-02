@@ -44,10 +44,10 @@ class Operand {
 
 public:
   // constant (incl. default)
-  explicit Operand(QVariant value = QVariant())
-    : Operand([value](const EvalContext &) {
+  explicit Operand(const Utf8String &value = {})
+    : Operand([value](const EvalContext &context) {
     //qDebug() << "Operand constant " << value;
-    return value;
+    return value % context;
   }) { }
   // variable
   Operand(const Utf8String &key, const QVariant &defaultValue)
