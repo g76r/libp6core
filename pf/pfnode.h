@@ -372,14 +372,14 @@ public:
    * @see stringsPairChildrenByName() */
   QList<QPair<Utf8String, qint64>> utf8LongPairChildrenByName(
       const Utf8String &name) const;
-  [[deprecated("Use Utf8String.toDouble() instead")]]
+  [[deprecated("Use Utf8String.toLongLong() instead")]]
   qlonglong longAttribute(const QString &name, qint64 def = 0,
                        bool *ok = 0) const {
-    return first_child(name).contentAsUtf8().toLong(ok, def); }
+    return first_child(name).contentAsUtf8().toLongLong(ok, def); }
   [[deprecated("Use Utf8String.toDouble() instead")]]
   double doubleAttribute(const QString &name, double def, bool *ok = 0) const {
     return first_child(name).contentAsUtf8().toDouble(ok, def); }
-  [[deprecated("Use Utf8String.toDouble() instead")]]
+  [[deprecated("Use Utf8String.toBool() instead")]]
   bool boolAttribute(const QString &name, bool def = false,
                      bool *ok = 0) const {
     return first_child(name).contentAsUtf8().toBool(ok, def); }
