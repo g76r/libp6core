@@ -1,4 +1,4 @@
-/* Copyright 2023 Gregoire Barbier and others.
+/* Copyright 2023-2024 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -547,6 +547,10 @@ public:
   inline Utf8String &coalesce(const char *s, qsizetype len = -1) {
     if (isEmpty()) *this = QByteArray(s, len);
     return *this; }
+  /** Empty coalesce: replace with that if this is empty. */
+  inline Utf8String &coalesce(const QVariant &that) {
+    if (isEmpty()) *this = that;
+    return *this; }
   /** Empty coalesce operator */
   inline Utf8String &operator|=(const Utf8String &that) {
     return coalesce(that); }
@@ -556,6 +560,9 @@ public:
   /** Empty coalesce operator
    *  Assume UTF-8. */
   inline Utf8String &operator|=(const QByteArray &that) {
+    return coalesce(that); }
+  /** Empty coalesce operator */
+  inline Utf8String &operator|=(const QVariant &that) {
     return coalesce(that); }
 
   inline Utf8String &operator+=(const Utf8String &s) {
@@ -837,6 +844,12 @@ inline const Utf8String operator|(const Utf8String &a1, const char *a2) {
 /** Empty coalesce operator */
 inline const Utf8String operator|(const char *a1, const Utf8String &a2) {
   return !a1 || !*a1 ? a2 : Utf8String(a1); }
+/** Empty coalesce operator */
+inline const Utf8String operator|(const Utf8String &a1, const QVariant &a2) {
+  return a1.isEmpty() ? Utf8String(a2) : a1; }
+/** Empty coalesce operator */
+inline const Utf8String operator|(const QVariant &a1, const Utf8String &a2) {
+  Utf8String s{a1}; return s.isEmpty() ? a2 : s; }
 
 inline Utf8String operator+(const Utf8String &a1, const Utf8String &a2) {
   return Utf8String(a1) += a2; }
