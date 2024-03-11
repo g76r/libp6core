@@ -1,4 +1,4 @@
-/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -71,6 +71,10 @@ public:
     return static_cast<T&>(item);
   }
   SharedUiItemList itemsByQualifier(const Utf8String &qualifier) const;
+  SharedUiItem lastItemByQualifier(const Utf8String &qualifier) const {
+    auto list = itemsByQualifier(qualifier);
+    return list.isEmpty() ? SharedUiItem{} : list.last();
+  }
   SharedUiItemList foreignKeySources(
       const Utf8String &sourceQualifier, int sourceSection,
       const Utf8String &referenceId) const;
