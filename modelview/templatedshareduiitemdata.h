@@ -54,7 +54,9 @@ template<class T>
 class SharedUiItemDataBase : public SharedUiItemData {
 public:
   // SharedUiItemData interface
+#ifndef SHAREDUIITEMDATABASE_QUALIFIER_IS_NOT_STATIC
   virtual Utf8String qualifier() const override { return T::_qualifier; }
+#endif
   int uiSectionCount() const override { return T::_sectionNames.size(); }
   Utf8String uiSectionName(int section) const override {
     return T::_sectionNames.value(section); }
@@ -109,7 +111,11 @@ public:
     _params.lockedData()->setScope(scope);
   }
   SharedUiItemDataWithMutableParams(const ParamSet &params = {})
+#ifdef SHAREDUIITEMDATABASE_QUALIFIER_IS_NOT_STATIC
+    : SharedUiItemDataWithMutableParams(params, {}) {}
+#else
     : SharedUiItemDataWithMutableParams(params, T::_qualifier) {}
+#endif
   // ParamsProvider interface
   QVariant paramRawValue(
       const Utf8String &key, const QVariant &def,
@@ -149,7 +155,11 @@ public:
     _params.setScope(scope);
   }
   SharedUiItemDataWithImmutableParams(const ParamSet &params = {})
+#ifdef SHAREDUIITEMDATABASE_QUALIFIER_IS_NOT_STATIC
+    : SharedUiItemDataWithImmutableParams(params, {}) {}
+#else
     : SharedUiItemDataWithImmutableParams(params, T::_qualifier) {}
+#endif
   // ParamsProvider interface
   QVariant paramRawValue(
       const Utf8String &key, const QVariant &def,
