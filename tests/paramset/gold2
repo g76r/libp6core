@@ -1,5 +1,5 @@
 { baz = QVariant(Utf8String, 42)  empty = QVariant(Utf8String, )  foo = QVariant(Utf8String, bar)  fooz = QVariant(Utf8String, %bar)  foozz = QVariant(Utf8String, %%bar)  h1 = QVariant(Utf8String, at http://1.2.3.4/
-there's something)  s1 = QVariant(Utf8String, ﻿﻿§foo§bar§baz§﻿§§)  s2 = QVariant(Utf8String, %{=left:%foo:1})  x = QVariant(Utf8String, 1.5) }
+there's something)  i = QVariant(Utf8String, 0x1f)  s1 = QVariant(Utf8String, ﻿﻿§foo§bar§baz§﻿§§)  s2 = QVariant(Utf8String, %{=left:%foo:1})  x = QVariant(Utf8String, 1.5) }
 "b"
 "~~~ a=a o§b=o§b foo§=foo§ ~~~"
 "bG9naW46cGFzc3dvcmQ==bG9naW46cGFzc3dvcmQ= 2009=2009 fbff61=fbff61 wqc==wqc= %baz=%baz 96ab86a37cef7e27d8d45af9c29dc974=96ab86a37cef7e27d8d45af9c29dc974 33.5=33.5 "
@@ -11,3 +11,4 @@ there's something)  s1 = QVariant(Utf8String, ﻿﻿§foo§bar§baz§﻿§§)  s
 QVariant(Utf8String, "abcdef") QVariant(Utf8String, "abcdef") "abcdef" "abcdef"
 "FOOǄ|fooǆ|FOOǅ"
 "FOO-BARǄ|foo-barǆ"
+"001f=001f 0x1f=0x1f 31=31 00ffffffff=00ffffffff 002000=002000 ø=ø ffffffffffffffff=ffffffffffffffff 1.000000e+06=1.000000e+06 1.00=1.00 true=true false=false true=true = false=false"

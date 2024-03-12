@@ -649,3 +649,50 @@ examples:
 * `%{=integer:blurp:0}` -> 0
 * `%{=integer:blurp:zero}` -> invalid
 * `%{=integer:blurp:%foo:2k}` -> 2000 if foo's value cannot be converted to int
+
+%=formatint64,=formatuint64
+---------------------------
+`{=formatint64:input[:base[:padding[:default]]]}`
+
+* input: casted to a 64 bits signed (int64) or unsigned (uint64) integer
+* base: default: 10
+* padding: left padding pattern, e.g. "0000000000" or "        "
+* default: used if input cannot be casted to an integer
+
+examples:
+* `%{=formatint64:31:16:0000}` -> `001f`
+* `0x%{=formatint64:31:16}` -> `0x1f`
+* `%{=formatint64:%i::%j}` -> `31` if i=`0x1f`, value of j if i=`foo`
+* `%{=formatuint64:0xffffffff:16:0000000000:ø}` -> `00ffffffff`
+* `%{=formatint64:2e3:16:000000:ø}` -> `002000`
+* `%{=formatint64:0xffffffffffffffff:16::ø}` -> `ø`
+* `%{=formatuint64:0xffffffffffffffff:16::ø}` -> `ffffffffffffffff`
+
+%=formatdouble
+--------------
+`{=formatdouble:input[:format[:precision[:default]]]}`
+
+* input: casted to at less 64 bits floating point
+* format: among "eEfFgG", default: g (choose most concise between e and f)
+* precision: number of significant digits (gG formats) or after decimal point
+  (eEfF formats), default: 6
+* default: used if input cannot be casted to a floating point number
+
+examples:
+* `%{=formatdouble:1M:e}` -> `1.0e+6`
+* `%{=formatdouble:1}` -> `1.0`
+
+%=formatboolean
+--------------
+`{=formatboolean:input[:format[:default]]}`
+
+* input: casted to boolean
+* format: ignored, reserved for future usage
+* default: used if input cannot be casted to a boolean
+
+examples:
+* `%{=formatboolean:1M}` -> `true`
+* `%{=formatboolean:0}` -> `false`
+* `%{=formatboolean:true}` -> `true`
+* `%{=formatboolean:Z}` -> ``
+* `%{=formatboolean:Z::false}` -> `false`

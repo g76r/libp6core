@@ -5,7 +5,7 @@
 int main(void) {
   ParamSet p { "foo", "bar", "x", "1.5", "s1", "\xef\xbb\xbf\xef\xbb\xbf\xef\xbb\xbf§foo§bar§baz§\xef\xbb\xbf§§"_u8,
                "s2", "%{=left:%foo:1}", "baz", "42", "fooz", "%bar", "foozz", "%%bar",
-               "h1", "at http://1.2.3.4/\nthere's something", "empty", "" };
+               "h1", "at http://1.2.3.4/\nthere's something", "empty", "", "i", "0x1f" };
   auto ppm = ParamsProviderMerger(&p);
   qDebug() << p;
   qDebug() << p.paramUtf8("s2");
@@ -36,5 +36,13 @@ int main(void) {
            << p.paramRawValue("'abcdef") << p.paramUtf8("'abcdef") << ppm.paramUtf8("'abcdef");
   qDebug() << PercentEvaluator::eval_utf8("%{=uppercase:fooǆ}|%{=lowercase:fooǆ}|%{=titlecase:fooǆ}");
   qDebug() << PercentEvaluator::eval_utf8("%{=sub;Foo_Barǆ;/_/-/g↑}|%{=sub;Foo_Barǆ;/_/-/g↓}");
+  qDebug() << PercentEvaluator::eval_utf8(
+                "%{=formatint64:31:16:0000}=001f 0x%{=formatint64:31:16}=0x1f %{=formatint64:%i::%j}=31 "
+                "%{=formatuint64:0xffffffff:16:0000000000:ø}=00ffffffff "
+                "%{=formatint64:2e3::000000:ø}=002000 %{=formatint64:0xffffffffffffffff:16::ø}=ø "
+                "%{=formatuint64:0xffffffffffffffff:16::ø}=ffffffffffffffff "
+                "%{=formatdouble:1M:e}=1.000000e+06 %{=formatdouble:1::2}=1.00 "
+                "%{=formatboolean:1M}=true %{=formatboolean:0}=false %{=formatboolean:true}=true "
+                "%{=formatboolean:Z}= %{=formatboolean:Z::false}=false", &p);
   return 0;
 }

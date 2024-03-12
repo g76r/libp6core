@@ -422,6 +422,46 @@ _functions {
   }
   return {};
 }, true},
+{ "=formatint64", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
+  auto params = key.splitByLeadingChar(ml);
+  bool ok;
+  auto i = PercentEvaluator::eval_number<qint64>(params.value(0), context, &ok);
+  if (!ok)
+    return PercentEvaluator::eval_utf8(params.value(3), context);
+  auto base = PercentEvaluator::eval_number<int>(params.value(1), 10, context);
+  auto padding = PercentEvaluator::eval_utf8(params.value(2), context);
+  auto s = Utf8String::number(i, base);
+  return padding.utf8left(padding.utf8Size()-s.utf8Size())+s;
+}, true},
+{ "=formatuint64", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
+  auto params = key.splitByLeadingChar(ml);
+  bool ok;
+  auto i = PercentEvaluator::eval_number<quint64>(params.value(0), context, &ok);
+  if (!ok)
+    return PercentEvaluator::eval_utf8(params.value(3), context);
+  auto base = PercentEvaluator::eval_number<int>(params.value(1), 10, context);
+  auto padding = PercentEvaluator::eval_utf8(params.value(2), context);
+  auto s = Utf8String::number(i, base);
+  return padding.utf8left(padding.utf8Size()-s.utf8Size())+s;
+}, true},
+{ "=formatdouble", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
+  auto params = key.splitByLeadingChar(ml);
+  bool ok;
+  auto d = PercentEvaluator::eval_number<double>(params.value(0), context, &ok);
+  char fmt = PercentEvaluator::eval_utf8(
+                  params.value(1), "g"_u8, context).value(0);
+  auto prec = PercentEvaluator::eval_number<int>(params.value(2), 6, context);
+  auto def = PercentEvaluator::eval_utf8(params.value(3), context);
+  return ok ? Utf8String::number(d, fmt, prec) : def;
+}, true},
+{ "=formatboolean", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
+  auto params = key.splitByLeadingChar(ml);
+  bool ok;
+  auto b = PercentEvaluator::eval_number<bool>(params.value(0), context, &ok);
+  // param 2 (format) is ignored
+  auto def = PercentEvaluator::eval_utf8(params.value(2), context);
+  return ok ? Utf8String::number(b) : def;
+}, true},
 };
 
 QVariant PercentEvaluator::eval_function(
