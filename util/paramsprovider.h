@@ -157,13 +157,15 @@ public:
   [[nodiscard]] T paramNumber(
       const Utf8String &key, const T &def = {},
       const EvalContext &context = {}) const {
-    auto v = paramRawValue(key);
+    auto v = paramValue(key, {}, context);
+    if (!v.isValid())
+      return def;
     auto mtid = v.metaType().id();
-    if (v.canConvert<T>() && mtid != qMetaTypeId<Utf8String>()
-        && mtid != QMetaType::QString && mtid != QMetaType::QByteArray)
-      return v.value<T>(); // passing QVariant trough
-    auto expr = Utf8String(v);
-    return PercentEvaluator::eval_number<T>(expr, def, context);
+    // text types and types not convertible to a number are for Utf8String
+    if (!v.canConvert<T>() || mtid == qMetaTypeId<Utf8String>()
+        || mtid == QMetaType::QString || mtid == QMetaType::QByteArray)
+      return Utf8String(v).toNumber<T>(def);
+    return v.value<T>();
   }
   /** Convenience methods */
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
