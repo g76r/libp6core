@@ -679,8 +679,8 @@ examples:
 * default: used if input cannot be casted to a floating point number
 
 examples:
-* `%{=formatdouble:1M:e}` -> `1.0e+6`
-* `%{=formatdouble:1}` -> `1.0`
+* `%{=formatdouble:1M:e}` -> `1.000000e+06`
+* `%{=formatdouble:1::2}` -> `1.00`
 
 %=formatboolean
 --------------
