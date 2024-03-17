@@ -1,4 +1,4 @@
-/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,13 +19,15 @@
 class GenericSharedUiItemData : public SharedUiItemData {
 public:
   Utf8String _qualifier, _id;
-  QVariantList _headers, _values;
+  Utf8StringList _section_names;
+  QVariantList _values;
 
   GenericSharedUiItemData() { }
   GenericSharedUiItemData(
-      Utf8String qualifier, Utf8String id, QVariantList headers,
+      Utf8String qualifier, Utf8String id, Utf8StringList section_names,
       QVariantList values)
-    : _qualifier(qualifier), _id(id), _headers(headers), _values(values) { }
+    : _qualifier(qualifier), _id(id), _section_names(section_names),
+      _values(values) { }
   GenericSharedUiItemData(Utf8String qualifier, Utf8String id)
     : _qualifier(qualifier), _id(id) { }
   explicit GenericSharedUiItemData(Utf8String qualifiedId) {
@@ -42,14 +44,15 @@ public:
   Utf8String qualifier() const override { return _qualifier; }
   int uiSectionCount() const override { return _values.size(); }
   Utf8String uiSectionName(int section) const override {
-    if (section < 0 || section > uiSectionCount())
-      return {};
-    return "_"_u8+Utf8String::number(section);
+    return _section_names.value(section);
   }
   int uiSectionByName(Utf8String sectionName) const override {
-    if (sectionName.value(0) != '_')
-      return -1;
-    return sectionName.mid(1).toNumber<int>(-1);
+    auto i = _section_names.indexOf(sectionName);
+    if (i >= 0)
+      return i;
+    if (sectionName.value(0) == '_')
+      return sectionName.mid(1).toNumber<int>(-1);
+    return -1;
   }
   QVariant uiData(int section, int role) const override {
     if (role == Qt::DisplayRole || role == Qt::EditRole
@@ -58,7 +61,7 @@ public:
     return QVariant();
   }
   QVariant uiHeaderData(int section, int role) const override {
-    return role == Qt::DisplayRole ? _headers.value(section) : QVariant();
+    return role == Qt::DisplayRole ? uiSectionName(section) : QVariant();
   }
   Qt::ItemFlags uiFlags(int section) const override;
   bool setUiData(
@@ -74,9 +77,9 @@ GenericSharedUiItem::GenericSharedUiItem(const GenericSharedUiItem &other)
 }
 
 GenericSharedUiItem::GenericSharedUiItem(
-    Utf8String qualifier, Utf8String id, QVariantList headers,
+    Utf8String qualifier, Utf8String id, Utf8StringList section_names,
     QVariantList values)
-  : SharedUiItem(new GenericSharedUiItemData(qualifier, id, headers,
+  : SharedUiItem(new GenericSharedUiItemData(qualifier, id, section_names,
                                              values)) {
 }
 
@@ -94,19 +97,16 @@ QList<GenericSharedUiItem> GenericSharedUiItem::fromCsv(
   QList<GenericSharedUiItem> list;
   if (!csvFile)
     return list;
-  QVariantList vHeaders;
-  for (auto header: csvFile->headers())
-    vHeaders.append(header);
+  Utf8StringList section_names;
+  for (Utf8String header: csvFile->headers())
+    section_names.append(header.toIdentifier());
   for (int i = 0; i < csvFile->rowCount(); ++i) {
-    QStringList values = csvFile->row(i);
-    QString id;
-    if (values.size() > idColumn)
-      id = values[idColumn];
-    QVariantList vValues;
-    for (auto value: values)
-      vValues.append(value);
-    list.append(GenericSharedUiItem(
-                  qualifier, id.toUtf8(), vHeaders, vValues));
+    Utf8StringList row = csvFile->row(i);
+    auto id = row.value(idColumn);
+    QVariantList values;
+    for (auto value: row)
+      values.append(value);
+    list.append(GenericSharedUiItem(qualifier, id, section_names, values));
   }
   return list;
 }
@@ -125,7 +125,8 @@ bool GenericSharedUiItem::setUiDataWithIdSection(
 
 Qt::ItemFlags GenericSharedUiItemData::uiFlags(int section) const {
   Qt::ItemFlags flags = SharedUiItemData::uiFlags(section);
-  if (section >= 0 && (section < _values.size() || section < _headers.size())) {
+  if (section >= 0 && (section < _values.size()
+                       || section < _section_names.size())) {
     flags |= Qt::ItemIsEditable;
   }
   return flags;
@@ -136,7 +137,8 @@ bool GenericSharedUiItemData::setUiData(
     SharedUiItemDocumentTransaction *transaction, int role) {
   Q_ASSERT(transaction != 0);
   Q_ASSERT(errorString != 0);
-  if (section >= 0 && (section < _values.size() || section < _headers.size())) {
+  if (section >= 0 && (section < _values.size()
+                       || section < _section_names.size())) {
     QString s = value.toString().trimmed();
     while (_values.size() < section+1)
       _values.append(QVariant());

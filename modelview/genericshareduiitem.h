@@ -1,4 +1,4 @@
-/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -26,18 +26,19 @@ public:
   GenericSharedUiItem();
   GenericSharedUiItem(const GenericSharedUiItem &other);
   GenericSharedUiItem(Utf8String qualifier, Utf8String id,
-                      QVariantList headers, QVariantList values);
+                      Utf8StringList section_names, QVariantList values);
   /** Convenience constructor, with qualifier="generic" */
-  GenericSharedUiItem(Utf8String id, QVariantList headers, QVariantList values)
-    : GenericSharedUiItem("generic"_u8, id, headers, values) { }
+  GenericSharedUiItem(Utf8String id, Utf8StringList section_names,
+                      QVariantList values)
+    : GenericSharedUiItem("generic"_u8, id, section_names, values) { }
   /** Convenience constructor, with qualifier="generic" and id=values[0] */
-  GenericSharedUiItem(QVariantList headers, QVariantList values)
+  GenericSharedUiItem(Utf8StringList section_names, QVariantList values)
     : GenericSharedUiItem(
         "generic"_u8, values.size() > 0 ? Utf8String(values[0]) : Utf8String(),
-        headers, values) { }
-  /** Create empty item, without data or headers. */
+        section_names, values) { }
+  /** Create empty item, without data or section_names. */
   GenericSharedUiItem(Utf8String qualifier, Utf8String id);
-  /** Create empty item, without data or headers, by parsing qualifiedId. */
+  /** Create empty item, without data or section_names, by parsing qualifiedId. */
   explicit GenericSharedUiItem(Utf8String qualifiedId);
   GenericSharedUiItem &operator=(const GenericSharedUiItem &other) {
     SharedUiItem::operator=(other); return *this; }
