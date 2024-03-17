@@ -1,4 +1,4 @@
-/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -115,7 +115,6 @@ private:
   bool createTableAndSelectData(
       const Utf8String &qualifier, Setter setter, Creator creator,
       int id_section, QString *errorString);
-  static inline QString protectedColumnName(QString column_name);
   bool insertItemInDatabase(
       SharedUiItemDocumentTransaction *transaction,
       const SharedUiItem &new_item, QString *errorString);

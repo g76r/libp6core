@@ -1,4 +1,4 @@
-/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,9 +14,6 @@
 #include "inmemorydatabasedocumentmanager.h"
 #include <QSqlQuery>
 #include <QSqlError>
-
-static QRegularExpression _unallowedColumnCharsSequence {
-  "(^[^a-zA-Z_]+)|([^a-zA-Z0-9_]+)" };
 
 InMemoryDatabaseDocumentManager::InMemoryDatabaseDocumentManager(QObject *parent)
   : InMemorySharedUiItemDocumentManager(parent) {
@@ -95,8 +92,8 @@ bool InMemoryDatabaseDocumentManager::changeItemInDatabase(
   if (!old_item.isNull()) {
     QSqlQuery query(_db);
     query.prepare("delete from "+qualifier+" where "
-                  +protectedColumnName(old_item.uiSectionName(
-                                         _id_sections.value(qualifier)))
+                  +old_item.uiSectionName(
+                    _id_sections.value(qualifier)).toIdentifier()
                   +" = ?");
     query.bindValue(0, old_item.id());
     if (!query.exec()) {
@@ -148,14 +145,15 @@ bool InMemoryDatabaseDocumentManager::insertItemInDatabase(
   QString qualifier = new_item.qualifier();
   QStringList columnNames, placeholders;
   for (int i = 0; i < new_item.uiSectionCount(); ++i) {
-    columnNames << protectedColumnName(new_item.uiSectionName(i));
-    placeholders << QStringLiteral("?");
+    columnNames << new_item.uiSectionName(i).toIdentifier();
+    placeholders << u"?"_s;
   }
   QSqlQuery query(_db);
   query.prepare("insert into "+qualifier+" ("+columnNames.join(',')
                 +") values ("+placeholders.join(',')+")");
-  for (int i = 0; i < new_item.uiSectionCount(); ++i)
+  for (int i = 0; i < new_item.uiSectionCount(); ++i) {
     query.bindValue(i, new_item.uiData(i, SharedUiItem::ExternalDataRole));
+  }
   if (!query.exec()) {
     *errorString = tr("database error: cannot insert into table %1 %2: %3")
                    .arg(qualifier).arg(new_item.id())
@@ -210,7 +208,7 @@ bool InMemoryDatabaseDocumentManager::createTableAndSelectData(
     return false;
   }
   for (int i = 0; i < item.uiSectionCount(); ++i) {
-    columnNames << protectedColumnName(item.uiSectionName(i));
+    columnNames << item.uiSectionName(i).toIdentifier();
   }
   QSqlQuery query(_db);
   query.exec("select count(*) from "+qualifier);
@@ -270,9 +268,4 @@ sqlite> drop table foo;
           item, SharedUiItem(), qualifier);
   }
   return true;
-}
-
-QString InMemoryDatabaseDocumentManager::protectedColumnName(
-    QString column_name) {
-  return column_name.replace(_unallowedColumnCharsSequence, u"_"_s);
 }
