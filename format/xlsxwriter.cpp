@@ -466,7 +466,7 @@ bool XlsxWriter::write(Utf8String filename) {
   if (!filename.startsWith('/'))
     filename = Utf8String(QDir::currentPath())+"/"+filename;
   zip.setWorkingDirectory(_workdir);
-  zip.start("zip", { "-rX9q", filename, "." });
+  zip.start("zip", { "-rX6qm", filename, "." });
   while (zip.state() != QProcess::NotRunning)
     zip.waitForFinished();
   if (zip.exitStatus() != QProcess::NormalExit || zip.exitCode() != 0) {
