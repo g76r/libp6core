@@ -1,0 +1,1 @@
+"(root(child1 a)(child2 b)(child1 c)ab\xC3\xA9""c\xE2\x82\xAC""d\xF0\x9F\xA5\xA8""e)" "a" "abéc€d🥨e" "abéc€d🥨e"
