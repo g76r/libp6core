@@ -14,7 +14,7 @@
 #ifndef MATHEXPR_H
 #define MATHEXPR_H
 
-#include "percentevaluator.h"
+#include "util/percentevaluator.h"
 #include "log/log.h"
 
 class MathExprData;
