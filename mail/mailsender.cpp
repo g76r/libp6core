@@ -148,8 +148,8 @@ bool MailSender::send(QString sender, QStringList recipients, QVariant body,
     return false;
   }
   // LATER remove . line in body
-  // LATER handle body encoding (force utf8 ?)
-  if (socket.write(body.toString().toLatin1()) == -1) {
+  // LATER handle body encoding
+  if (socket.write(body.toString().toUtf8()) == -1) {
     errorString = "error writing body: "+socket.errorString();
     return false;
   }
