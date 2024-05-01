@@ -48,7 +48,9 @@ void MultiplexerLogger::addLogger(Logger *logger, bool autoRemovable) {
 
 void MultiplexerLogger::removeLogger(Logger *logger) {
   QMutexLocker locker(&_loggersMutex);
-  for (auto l: _loggers)
+  QList<Logger*> old_loggers(_loggers);
+  old_loggers.detach();
+  for (auto l: old_loggers)
     if (l == logger) {
       logger->shutdown();
       _loggers.removeAll(logger);
@@ -91,7 +93,9 @@ void MultiplexerLogger::replaceLoggersPlusConsole(
 }
 
 void MultiplexerLogger::doReplaceLoggers(QList<Logger*> newLoggers) {
-  for (auto logger: _loggers)
+  QList<Logger*> old_loggers(_loggers);
+  old_loggers.detach();
+  for (auto logger: old_loggers)
     if (logger->_autoRemovable) {
       if (!newLoggers.contains(logger))
         logger->shutdown();
