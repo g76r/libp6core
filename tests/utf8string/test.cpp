@@ -39,5 +39,6 @@ int main(void) {
   auto bar = "%bar"_u8;
   bar %= ps;
   qDebug() << "%foo"_u8 % ps << "%foo"_u8 % &ps << bar;
+  qDebug() << "42"_u8.toNumber<long long>() << "0x1b"_u8.toNumber<int>() << "1e6M"_u8.toNumber<double>();
   return 0;
 }

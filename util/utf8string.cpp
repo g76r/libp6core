@@ -190,7 +190,8 @@ static inline I toInteger(
   //}
   if (suffixes_enabled) {
     auto len = s.size();
-    if (len >= 2) {
+    // accept suffixes only in base 10 (otherwise 0x1b would be 1 billion)
+    if (len >= 2 && (base == 10 || (base == 0 && (s.at(0) != '0'||len == 2)))) {
       auto m = _multipliers[static_cast<unsigned char>(s.at(len-1))];
       if (!m.isNull())
         s = s.left(len-1)+m;
