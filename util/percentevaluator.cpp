@@ -462,6 +462,17 @@ _functions {
   auto def = PercentEvaluator::eval_utf8(params.value(2), context);
   return ok ? Utf8String::number(b) : def;
 }, true},
+{ "=apply", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
+  auto params = key.splitByLeadingChar(ml);
+  if (params.size() < 1)
+    return {};
+  auto variable = params.takeFirst();
+  EvalContext new_context = context;
+  auto ppm = ParamsProviderMerger(&params)(context);
+  new_context.setParamsProvider(&ppm);
+  //return ppm.paramValue(variable, {}, new_context);
+  return PercentEvaluator::eval_key(variable, new_context);
+}, true},
 };
 
 QVariant PercentEvaluator::eval_function(

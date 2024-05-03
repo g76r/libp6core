@@ -652,7 +652,7 @@ examples:
 
 %=formatint64,=formatuint64
 ---------------------------
-`{=formatint64:input[:base[:padding[:default]]]}`
+`%{=formatint64:input[:base[:padding[:default]]]}`
 
 * input: casted to a 64 bits signed (int64) or unsigned (uint64) integer
 * base: default: 10
@@ -670,7 +670,7 @@ examples:
 
 %=formatdouble
 --------------
-`{=formatdouble:input[:format[:precision[:default]]]}`
+`%{=formatdouble:input[:format[:precision[:default]]]}`
 
 * input: casted to at less 64 bits floating point
 * format: among "eEfFgG", default: g (choose most concise between e and f)
@@ -684,7 +684,7 @@ examples:
 
 %=formatboolean
 --------------
-`{=formatboolean:input[:format[:default]]}`
+`%{=formatboolean:input[:format[:default]]}`
 
 * input: casted to boolean
 * format: ignored, reserved for future usage
@@ -696,3 +696,18 @@ examples:
 * `%{=formatboolean:true}` -> `true`
 * `%{=formatboolean:Z}` -> ``
 * `%{=formatboolean:Z::false}` -> `false`
+
+%=apply
+-------
+`%{=apply:variable[:param1[:param2[...]]]}`
+
+* variable: variable name to %-evaluate with given params
+* param1: value for %1 when evaluating variable
+* param2: value for %2
+* ...
+
+examples:
+* `%{=apply:func1:a}` -> `A` if func1 is `%{=uppercase:%1}`
+* `%{=apply:func2:a:B}` -> `Ab` if func2 is `%{=uppercase:%1}%{=lowercase:%2}`
+* `%{=apply:tosqlin:foo bar baz}` -> `('foo','bar','baz')`
+                                     if tosqlin is `('%{=sub:%1:/ +/','/g}')`

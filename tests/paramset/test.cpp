@@ -5,7 +5,9 @@
 int main(void) {
   ParamSet p { "foo", "bar", "x", "1.5", "s1", "\xef\xbb\xbf\xef\xbb\xbf\xef\xbb\xbf§foo§bar§baz§\xef\xbb\xbf§§"_u8,
                "s2", "%{=left:%foo:1}", "baz", "42", "fooz", "%bar", "foozz", "%%bar",
-               "h1", "at http://1.2.3.4/\nthere's something", "empty", "", "i", "0x1f" };
+               "h1", "at http://1.2.3.4/\nthere's something", "empty", "", "i", "0x1f",
+               "func1", "%{=uppercase:%1}", "func2", "%{=uppercase:%1}%{=lowercase:%2}",
+               "tosqlin", "('%{=sub:%1:/ +/','/g}')" };
   auto ppm = ParamsProviderMerger(&p);
   qDebug() << p;
   qDebug() << p.paramUtf8("s2");
@@ -44,5 +46,7 @@ int main(void) {
                 "%{=formatdouble:1M:e}=1.000000e+06 %{=formatdouble:1::2}=1.00 "
                 "%{=formatboolean:1M}=true %{=formatboolean:0}=false %{=formatboolean:true}=true "
                 "%{=formatboolean:Z}= %{=formatboolean:Z::false}=false", &p);
+  qDebug() << PercentEvaluator::eval_utf8(
+                "%{=apply:func1:a}=A %{=apply:func2:a:B}=Ab %{=apply:tosqlin:foo bar baz}=('foo','bar','baz')", &p);
   return 0;
 }
