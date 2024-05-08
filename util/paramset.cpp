@@ -18,7 +18,6 @@
 #include "format/stringutils.h"
 #include "radixtree.h"
 #include "pf/pfnode.h"
-#include "util/mathexpr.h"
 #include "pf/pfutils.h"
 #include "csv/csvfile.h"
 #include "util/utf8string.h"

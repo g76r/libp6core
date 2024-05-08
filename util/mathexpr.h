@@ -19,15 +19,7 @@
 
 class MathExprData;
 
-/** Can evaluate expressions like:
- *  ",foo,'bar,@" -> "hellobar" if foo holds "hello"
- *  ",%{myprefix.%k.mysuffix},0,>=" -> returns true or false
- *
- * See %=rpn function in percent_evaluation.md for detailed syntax and full list
- * of operators (this class is the implementation of %=rpn function).
- *
- * Don't use CharacterSeparatedQuotedRpn dialect which is only provided for
- * backward compatibility.
+/** @deprecated use ParamsFormula instead
  */
 class LIBP6CORESHARED_EXPORT MathExpr {
   QSharedDataPointer<MathExprData> d;
@@ -36,8 +28,9 @@ public:
   using EvalContext = PercentEvaluator::EvalContext;
 
   enum MathDialect { CharacterSeparatedQuotedRpn, CharacterSeparatedRpn };
+  [[deprecated("use ParamsFormula instead")]]
   MathExpr(const Utf8String expr, MathDialect dialect);
-  MathExpr() : MathExpr(Utf8String(), CharacterSeparatedRpn) { }
+  MathExpr();
   MathExpr(const MathExpr &other);
   MathExpr &operator=(const MathExpr &other);
   ~MathExpr();

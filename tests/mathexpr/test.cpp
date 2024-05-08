@@ -1,5 +1,5 @@
 #include "util/paramset.h"
-#include "util/mathexpr.h"
+#include "util/paramsformula.h"
 #include "util/mathutils.h"
 
 int main(void) {
@@ -40,6 +40,16 @@ int main(void) {
            << PercentEvaluator::eval_utf8("7: %{=rpn,foo§bar,#}")
            << PercentEvaluator::eval_utf8("8: %{=rpn,foo§bar,##}")
   ;
+  qDebug() << PercentEvaluator::eval_utf8("1: %{=rpn,5,4,-}")
+           << PercentEvaluator::eval_utf8("-1: %{=rpn,5,4,:=:,-}")
+           << PercentEvaluator::eval_utf8("16: %{=rpn,4,4,<dup>,*}")
+           << PercentEvaluator::eval_utf8(": %{=rpn,*}")
+           << "ø: "+ParamsFormula(",*", ParamsFormula::RpnWithPercents).eval_utf8({}, "ø")
+           << "ø: "+ParamsFormula(",<nil>,<nil>,@", ParamsFormula::RpnWithPercents).eval_utf8({}, "ø")
+           << ": "+ParamsFormula(",<nil>,,@", ParamsFormula::RpnWithPercents).eval_utf8({}, "ø")
+           << "ø: "+ParamsFormula(",1,<nil>,*", ParamsFormula::RpnWithPercents).eval_utf8({}, "ø")
+           << "ø: "+ParamsFormula(",1,foo,*", ParamsFormula::RpnWithPercents).eval_utf8({}, "ø")
+  ;
   ParamSet p { "foo", "bar", "empty", "", "x", "42" };
   qDebug() << PercentEvaluator::eval_utf8(
               "%{=rpn,%empty,?-}=false %{=rpn,%empty,?*}=true "
@@ -59,6 +69,6 @@ int main(void) {
               "%{=rpn,%%foo}=%foo",
               &p);
   qDebug() << PercentEvaluator::eval_utf8("%{=rpn,%{=rpn;42;!!},z,@}=truez "
-              "%{=rpn,dt: ,%{=date@@2023-09-20},@}=dt: 2023-09-20 00:00:00,000", &p);
+              "%{=rpn,dt:,%{=date@@2023-09-20},@}=dt: 2023-09-20 00:00:00,000", &p);
   return 0;
 }

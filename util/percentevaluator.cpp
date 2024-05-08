@@ -17,7 +17,7 @@
 #include "util/utf8stringset.h"
 #include "util/radixtree.h"
 #include "util/mathutils.h"
-#include "util/mathexpr.h"
+#include "util/paramsformula.h"
 #include "util/regexpparamsprovider.h"
 #include "util/paramsprovidermerger.h"
 #include "format/timeformats.h"
@@ -408,9 +408,8 @@ _functions {
   return value;
 }, true},
 { "=rpn", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  // TODO set up a MathExpr cache
-   MathExpr expr(key.mid(ml), MathExpr::CharacterSeparatedRpn);
-   return expr.eval(context, {});
+   ParamsFormula formula(key.mid(ml), ParamsFormula::RpnWithPercents);
+   return formula.eval(context, {});
 }, true},
 { "=integer", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
   auto params = key.split_headed_list(ml);

@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
+# Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
 # This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
 # Libpumpkin is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -62,6 +62,7 @@ PRECOMPILED_HEADER *= \
     libp6core_stable.h
 
 SOURCES *= \
+    util/paramsformula.cpp \
     util/percentevaluator.cpp \
     util/utf8string.cpp \
     util/utf8stringlist.cpp \
@@ -167,6 +168,7 @@ SOURCES *= \
 
 HEADERS *=\
     modelview/templatedshareduiitemdata.h \
+    util/paramsformula.h \
     util/percentevaluator.h \
     util/utf8string.h \
     util/utf8stringlist.h \

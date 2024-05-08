@@ -532,9 +532,11 @@ examples:
 -----
 `%{=rpn,term1[,term2[,...]]}`
 
-compute a reverse polish notation mathematical expression
-
-terms are %-evaluated
+compute a reverse polish notation mathematical expression using a stack (like
+HP calculators, PostScript interpreters, Forth programming language or rrdtool
+formulas).
+terms are %-evaluated.
+see https://en.wikipedia.org/wiki/Reverse_Polish_notation
 
 following operators are supported with their usual (C, C++, Java, JS, bash,
 OCaml...) meaning:
@@ -542,6 +544,8 @@ binary operators: `+ - * / % @ <=> <= >= < > == != ==* !=* =~ !=~ && ^^ ||`
 `?? ??* <? >? <?* >?*`
 unary operators: `! !! ~ ~~ ?- !- ?* !* # ##`
 ternary operator: `?:`
+stack operators: `:=: <swap> <dup>`
+constant operators: `<pi> <null> <nil>`
 please note that:
 - there are no unary - and + operators
 - `@` is a concatenation operator whereas `+` is always an addition operator
@@ -583,13 +587,14 @@ please note that:
   unconvertible operand to be an empty string
 - `<?*` and `>?*` do the same but will return null as soon as one of their
   operand is null, invalid or unconvertible
-
-some constants are also supported:
 - `<null>` and `<nil>` which are synonymous and hold a null value (an invalid
   QVariant)
 - `<pi>` holds Archimedes' constant
+- `:=:` (and its `<swap>` synonymous) swaps the two previous values in the stack
+  e.g. `%{=rpn,5,4,:=:,-}` -> -1
+- `<dup>` duplicates previous value e.g. `%{=rpn,4,4,<dup>,*}` -> 16
 
-see also MathExpr which is used as %=rpn engine.
+see also ParamsFormula class which is used as %=rpn engine.
 of course there are plenty of implicit type conversions, such as integer
 promotions and converting non null numbers to true booleans.
 

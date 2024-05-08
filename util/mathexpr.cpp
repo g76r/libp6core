@@ -453,6 +453,10 @@ MathExpr::MathExpr(const Utf8String expr, MathDialect dialect)
   : d(MathExprData::fromExpr(expr, dialect)) {
 }
 
+MathExpr::MathExpr()
+  : d(MathExprData::fromExpr({}, CharacterSeparatedRpn)) {
+}
+
 MathExpr::MathExpr(const MathExpr &other) : d{other.d} {
 }
 
