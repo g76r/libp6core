@@ -256,14 +256,14 @@ bool MathUtils::promoteToBestNumericType(QVariant *a, QVariant *b) {
 }
 
 QPartialOrdering MathUtils::compareQVariantAsNumberOrString(
-  QVariant a, QVariant b, bool anyStringRepresentation) {
+  QVariant a, QVariant b, bool pretends_invalid_is_empty) {
   auto a0 = a, b0 = b;
   //qDebug() << "compareQVariantAsNumber" << a << b;
   if (promoteToBestNumericType(&a, &b)) {
     //qDebug() << "  promoted" << a << b;
     return QVariant::compare(a, b);
   }
-  if (anyStringRepresentation) {
+  if (pretends_invalid_is_empty) {
     convertToUtf16(&a0);
     convertToUtf16(&b0);
     auto c = a0.toString().compare(b0.toString());

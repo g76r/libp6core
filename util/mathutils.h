@@ -1,4 +1,4 @@
-/* Copyright 2022-2023 Gregoire Barbier and others.
+/* Copyright 2022-2024 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -39,18 +39,18 @@ public:
    *  datetimes to msecs since 1970, times to msecs since midnight, booleans to
    *  1 or 0. try to compare signed and unsigned whenever possible
    *  (provided the unsigned one is lower than signed long long positive max).
-   *  - then if anyStringRepresentation is false (the default) :
+   *  - then if pretends_invalid_is_empty is false (the default) :
    *  if a or b cannot be converted to a number but both can be converted as
    *  strings, compare them as strings (for instance: QDateTime
    *  compared to an ISO timestamp in a QString)
-   *  - or, if anyStringRepresentation is true: compare the string
+   *  - or, if pretends_invalid_is_empty is true: compare the string
    *  representation of variants, whatever they are. including invalid objects
    *  that will be processed as if they were an empty string (so using
-   *  anyStringRepresentation == true, QVariant() is equal to an QString("")
+   *  pretends_invalid_is_empty == true, QVariant() is equal to an QString("")
    *  and to QDateTime())
    */
   static QPartialOrdering compareQVariantAsNumberOrString(
-    QVariant a, QVariant b, bool anyStringRepresentation = false);
+      QVariant a, QVariant b, bool pretends_invalid_is_empty = false);
   static QVariant addQVariantAsNumber(QVariant a, QVariant b);
   static QVariant subQVariantAsNumber(QVariant a, QVariant b);
   static QVariant mulQVariantAsNumber(QVariant a, QVariant b);
