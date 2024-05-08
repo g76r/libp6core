@@ -1,4 +1,4 @@
-/* Copyright 2023 Gregoire Barbier and others.
+/* Copyright 2023-2024 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -45,6 +45,8 @@ public:
 #endif
   Utf8String join(const Utf8String &separator) const;
   Utf8String join(const char separator) const;
+  Utf8String headed_join(const Utf8String &separator) const;
+  Utf8String headed_join(const char separator) const;
   QStringList toStringList() const {
     return QStringList(cbegin(), cend()); }
   QByteArrayList toByteArrayList() const {

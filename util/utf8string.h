@@ -255,8 +255,9 @@ public:
    *  e.g. "越foo越bar越g" -> { "foo", "bar", "g" }
    *  e.g. "🥨foo🥨bar🥨g" -> { "foo", "bar", "g" }
    */
-  [[nodiscard]] const Utf8StringList splitByLeadingChar(
-      qsizetype offset = 0) const;
+  [[nodiscard]] Utf8StringList split_headed_list(qsizetype offset = 0) const;
+  [[deprecated("use split_headed_list instead")]]
+  [[nodiscard]] Utf8StringList splitByLeadingChar(qsizetype offset = 0) const;
 
   // conversions to numbers
   /** Converts to floating point, supporting e notation and SI suffixes from 'f'

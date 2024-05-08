@@ -13,7 +13,6 @@
  */
 #include "mathexpr.h"
 #include "util/radixtree.h"
-#include "util/characterseparatedexpression.h"
 #include "mathutils.h"
 #include <QRegularExpression>
 #include "util/percentevaluator.h"
@@ -434,7 +433,7 @@ public:
     MathExprData *d = 0;
     if (dialect == MathExpr::CharacterSeparatedQuotedRpn
         || dialect == MathExpr::CharacterSeparatedRpn) {
-      auto terms = expr.splitByLeadingChar();
+      auto terms = expr.split_headed_list();
       auto root = compileRpn(terms, &ok, dialect);
       if (ok)
         d = new MathExprData(root, expr);

@@ -49,7 +49,7 @@ _functions {
         QDateTime::currentDateTime(), key.mid(ml), context);
 }, true},
 { "=coarsetimeinterval", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   auto msecs = PercentEvaluator::eval_number<double>(
                  params.value(0), 0.0, context)*1000;
   return TimeFormats::toCoarseHumanReadableTimeInterval(msecs);
@@ -59,7 +59,7 @@ _functions {
   return PercentEvaluator::eval(v, context);
 }, true},
 { "=default", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   for (int i = 0; i < params.size(); ++i) {
     auto v = PercentEvaluator::eval(params.value(i), context);
     if (!Utf8String(v).isEmpty())
@@ -68,7 +68,7 @@ _functions {
   return {};
 }, true},
 { "=rawvalue", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   if (params.size() < 1 || !context)
     return {};
   const ParamsProvider *pp = context;
@@ -85,7 +85,7 @@ _functions {
   return v;
 }, true},
 { "=ifneq", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   // TODO remove =ifneq, only keep =switch
   if (params.size() < 3) [[unlikely]]
     return {};
@@ -99,7 +99,7 @@ _functions {
   return input;
 }, true},
 { "=switch", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   if (params.size() < 1) [[unlikely]]
     return {};
   auto input = PercentEvaluator::eval(params.value(0), context);
@@ -118,7 +118,7 @@ _functions {
   return input;
 }, true},
 { "=match", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   if (params.size() < 1) [[unlikely]]
     return {};
   auto input = PercentEvaluator::eval(params.value(0), context);
@@ -145,11 +145,11 @@ _functions {
   return input;
 }, true},
 { "=sub", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   //qDebug() << "%=sub:" << key << params.size() << params;
   auto value = PercentEvaluator::eval_utf8(params.value(0), context);
   for (int i = 1; i < params.size(); ++i) {
-    auto sFields = params[i].splitByLeadingChar();
+    auto sFields = params[i].split_headed_list();
     //qDebug() << "pattern" << i << params[i] << sFields.size() << sFields;
     auto optionsString = sFields.value(2);
     QRegularExpression::PatternOptions patternOptions
@@ -207,22 +207,22 @@ _functions {
   return value;
 }, true},
 { "=uppercase", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context);
   return input.toUpper();
 }, true},
 { "=lowercase", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context);
   return input.toLower();
 }, true},
 { "=titlecase", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context);
   return input.toTitle();
 }, true},
 { "=left", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context);
   bool ok;
   int i = params.value(1).toInt(&ok);
@@ -236,7 +236,7 @@ _functions {
   return input;
 }, true},
 { "=right", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context);
   bool ok;
   int i = params.value(1).toInt(&ok);
@@ -250,7 +250,7 @@ _functions {
   return input;
 }, true},
 { "=mid", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context);
   bool ok;
   int i = params.value(1).toInt(&ok);
@@ -269,7 +269,7 @@ _functions {
   return input.trimmed();
 }, true},
 { "=elideright", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context);
   bool ok;
   int i = params.value(1).toInt(&ok);
@@ -279,7 +279,7 @@ _functions {
   return StringUtils::elideRight(input.toUtf16(), i, placeHolder);
 }, true},
 { "=elideleft", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context);
   bool ok;
   int i = params.value(1).toInt(&ok);
@@ -289,7 +289,7 @@ _functions {
   return StringUtils::elideLeft(input.toUtf16(), i, placeHolder);
 }, true},
 { "=elidemiddle", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context);
   bool ok;
   int i = params.value(1).toInt(&ok);
@@ -299,7 +299,7 @@ _functions {
   return StringUtils::elideMiddle(input.toUtf16(), i, placeHolder);
 }, true},
 { "=htmlencode", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   if (params.size() < 1)
     return {};
   auto input = PercentEvaluator::eval_utf8(params.value(0), context);
@@ -309,7 +309,7 @@ _functions {
         flags.contains('n')); // newline as <br>
 }, true},
 { "=random", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   auto modulo = ::llabs(PercentEvaluator::eval_number<qlonglong>(
                           params.value(0), 0, context));
   auto shift = PercentEvaluator::eval_number<qlonglong>(
@@ -321,7 +321,7 @@ _functions {
   return Utf8String::number(i);
 }, true},
 { "=env", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   auto env = ParamsProvider::environment();
   int i = 0;
   auto ppm = ParamsProviderMerger(env)(context);
@@ -338,7 +338,7 @@ _functions {
   return PercentEvaluator::eval(params.value(i), context);
 }, true},
 { "=ext", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   auto ext = ParamSet::externalParams(params.value(0));
   int i = 1;
   auto ppm = ParamsProviderMerger(ext)(context);
@@ -372,18 +372,18 @@ _functions {
                       value, QCryptographicHash::Md5).toHex());
 }, true},
 { "=hex", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   auto value = PercentEvaluator::eval_utf8(params.value(0), context);
   auto separator = params.value(1);
   return value.toHex(separator.value(0));
 }, true},
 { "=fromhex", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   auto value = PercentEvaluator::eval_utf8(params.value(0), context);
   return QByteArray::fromHex(value);
 }, true},
 { "=base64", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   auto value = PercentEvaluator::eval_utf8(params.value(0), context);
   auto flags = params.value(1);
   QByteArray::Base64Options options =
@@ -395,7 +395,7 @@ _functions {
   return value;
 }, true},
 { "=frombase64", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   auto value = PercentEvaluator::eval_utf8(params.value(0), context);
   auto flags = params.value(1);
   QByteArray::Base64Options options =
@@ -413,7 +413,7 @@ _functions {
    return expr.eval(context, {});
 }, true},
 { "=integer", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   for (auto param: params) {
     bool ok;
     auto i = PercentEvaluator::eval_number<qlonglong>(param, context, &ok);
@@ -423,7 +423,7 @@ _functions {
   return {};
 }, true},
 { "=formatint64", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   bool ok;
   auto i = PercentEvaluator::eval_number<qint64>(params.value(0), context, &ok);
   if (!ok)
@@ -434,7 +434,7 @@ _functions {
   return padding.utf8left(padding.utf8Size()-s.utf8Size())+s;
 }, true},
 { "=formatuint64", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   bool ok;
   auto i = PercentEvaluator::eval_number<quint64>(params.value(0), context, &ok);
   if (!ok)
@@ -445,7 +445,7 @@ _functions {
   return padding.utf8left(padding.utf8Size()-s.utf8Size())+s;
 }, true},
 { "=formatdouble", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   bool ok;
   auto d = PercentEvaluator::eval_number<double>(params.value(0), context, &ok);
   char fmt = PercentEvaluator::eval_utf8(
@@ -455,7 +455,7 @@ _functions {
   return ok ? Utf8String::number(d, fmt, prec) : def;
 }, true},
 { "=formatboolean", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   bool ok;
   auto b = PercentEvaluator::eval_number<bool>(params.value(0), context, &ok);
   // param 2 (format) is ignored
@@ -463,7 +463,7 @@ _functions {
   return ok ? Utf8String::number(b) : def;
 }, true},
 { "=apply", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.splitByLeadingChar(ml);
+  auto params = key.split_headed_list(ml);
   if (params.size() < 1)
     return {};
   auto variable = params.takeFirst();

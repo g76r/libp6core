@@ -193,7 +193,7 @@ bool MathUtils::convertToUtf16(QVariant *a) {
     return true;
   }
   if (id == qMetaTypeId<Utf8StringSet>()) {
-    *a = a->value<Utf8StringSet>().sortedJoin(" ");
+    *a = a->value<Utf8StringSet>().sorted_join(" ");
     return true;
   }
   return false;

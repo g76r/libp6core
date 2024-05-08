@@ -1,4 +1,4 @@
-/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,6 @@
  */
 #include "timeformats.h"
 #include "log/log.h"
-#include "util/characterseparatedexpression.h"
 #include <QRegularExpression>
 #include "util/percentevaluator.h"
 
@@ -328,7 +327,7 @@ QString TimeFormats::toCustomTimestamp(
 const QString TimeFormats::toMultifieldSpecifiedCustomTimestamp(
   const QDateTime &dt, const Utf8String &multifieldSpecifiedFormat,
   const ParamsProvider::EvalContext &context) {
-  auto params = multifieldSpecifiedFormat.splitByLeadingChar();
+  auto params = multifieldSpecifiedFormat.split_headed_list();
   auto format = PercentEvaluator::eval_utf16(params.value(0), context);
   auto rel_dt = PercentEvaluator::eval_utf16(params.value(1), context);
   QTimeZone tz(PercentEvaluator::eval_utf8(params.value(2), context)

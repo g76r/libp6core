@@ -1,4 +1,4 @@
-/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,7 +14,6 @@
 #include "templatinghttphandler.h"
 #include "io/ioutils.h"
 #include "log/log.h"
-#include "util/characterseparatedexpression.h"
 #include "format/stringutils.h"
 #include <QFile>
 #include <QBuffer>
@@ -91,7 +90,7 @@ void TemplatingHttpHandler::applyTemplateFile(
   buf.open(QIODevice::WriteOnly);
   IOUtils::copy(&buf, file);
   buf.close();
-  auto input = buf.data();
+  Utf8String input = buf.data();
   int pos = 0, markupPos;
   while ((markupPos = input.indexOf("<?", pos)) >= 0) {
     output->append(input.mid(pos, markupPos-pos));
@@ -126,7 +125,7 @@ void TemplatingHttpHandler::applyTemplateFile(
         // syntax: <?[raw]value:variablename[:valueifnotdef[:valueifdef]]?>
         // rawvalue disables html encoding (escaping special chars and links
         // beautifying
-        CharacterSeparatedExpression markupParams(markupContent, separatorPos);
+        auto markupParams = markupContent.split_headed_list(separatorPos);
         auto value = processingContext->paramUtf8(markupParams.value(0))
                      .toUtf16();
         if (!value.isNull()) {
@@ -149,7 +148,7 @@ void TemplatingHttpHandler::applyTemplateFile(
         auto includePath = file->fileName();
         includePath =
             includePath.left(includePath.lastIndexOf(_directorySeparatorRE));
-        QFile included(includePath+"/"+markupData);
+        QFile included(includePath+"/"_u8+markupData);
         // LATER detect include loops
         if (included.open(QIODevice::ReadOnly)) {
           applyTemplateFile(req, res, &included, processingContext, output);
@@ -163,7 +162,7 @@ void TemplatingHttpHandler::applyTemplateFile(
         }
       } else if (markupId == "override") {
         // syntax: <?override:key:value?>
-        CharacterSeparatedExpression markupParams(markupContent, separatorPos);
+        auto markupParams = markupContent.split_headed_list(separatorPos);
         auto key = markupParams.value(0);
         if (key.isEmpty()) [[unlikely]] {
           Log::debug() << "TemplatingHttpHandler cannot set parameter with "

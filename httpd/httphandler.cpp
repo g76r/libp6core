@@ -80,7 +80,7 @@ bool HttpHandler::handleCORS(
 granted:
   res.setHeader("Access-Control-Allow-Origin", origin);
   if (req.method() == HttpRequest::OPTIONS) {
-    res.setHeader("Access-Control-Allow-Methods", methods.sortedJoin(", "));
+    res.setHeader("Access-Control-Allow-Methods", methods.sorted_join(", "));
     res.setHeader("Access-Control-Allow-Headers", "X-Requested-With, Content-Type"); // Origin, Accept, Authorization ?
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Access-Control-Max-Age", "86400");

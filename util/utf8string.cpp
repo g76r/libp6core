@@ -608,7 +608,7 @@ const Utf8StringList Utf8String::split_after(
   return list;
 }
 
-const Utf8StringList Utf8String::splitByLeadingChar(qsizetype offset) const {
+Utf8StringList Utf8String::split_headed_list(qsizetype offset) const {
   auto begin = constData();
   auto s = begin + offset;
   auto end = begin + size();
@@ -619,6 +619,10 @@ const Utf8StringList Utf8String::splitByLeadingChar(qsizetype offset) const {
     ; // go forward over continuation bytes
   //qDebug() << "splitByLeadingChar" << offset << Utf8String(sep, eos-sep).toHex() << csv;
   return split_after(Utf8String(sep, eos-sep), csv-begin);
+}
+
+Utf8StringList Utf8String::splitByLeadingChar(qsizetype offset) const {
+  return split_headed_list(offset);
 }
 
 const Utf8StringList Utf8String::split_after(

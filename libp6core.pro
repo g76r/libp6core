@@ -129,7 +129,6 @@ SOURCES *= \
     csv/csvfilemodel.cpp \
     modelview/shareduiitemdocumentmanager.cpp \
     modelview/shareduiitemlist.cpp \
-    util/characterseparatedexpression.cpp \
     util/paramsprovidermerger.cpp \
     modelview/shareduiitemslogmodel.cpp \
     util/regexpparamsprovider.cpp \
@@ -240,7 +239,6 @@ HEADERS *=\
     csv/csvfilemodel.h \
     modelview/shareduiitemdocumentmanager.h \
     modelview/shareduiitemlist.h \
-    util/characterseparatedexpression.h \
     thread/atomicvalue.h \
     thread/circularbuffer.h \
     modelview/shareduiitemslogmodel.h \
