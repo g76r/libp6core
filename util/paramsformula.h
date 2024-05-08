@@ -35,14 +35,23 @@ public:
   using EvalContext = PercentEvaluator::EvalContext;
   enum FormulaDialect {
     InvalidFormula = 0,
-    PercentExpression, // e.g. "%{=date:YYYY}" -> "2024"
+    PercentExpression, // e.g. "%{=uppercase:%foo}" -> "HELLO" if foo="hello"
     RpnWithPercents, // e.g. ",%foo,bar,@" -> "hellobar" if foo="hello"
     // LATER: percent infix expression e.g. "1+1", "%foo@bar", "(%foo +4)*  2 "
   };
 
-  ParamsFormula(const Utf8String expr, FormulaDialect dialect);
-  ParamsFormula(const Utf8StringList list, FormulaDialect dialect);
-  ParamsFormula() : ParamsFormula(Utf8StringList{}, InvalidFormula) {}
+  /** Creates a formula
+   *  e.g.:
+   *  ParamsFormula(",%foo,bar,@", ParamsFormula::RpnWithPercents)
+   *  ParamsFormula("%{=uppercase:%foo}", ParamsFormula::PercentExpression)
+   */
+  ParamsFormula(const Utf8String &expr, FormulaDialect dialect);
+  /** Optimized constructor if expr has already been parsed and splitted as a
+   *  list.
+   */
+  ParamsFormula(const Utf8StringList &list, const Utf8String &expr,
+                FormulaDialect dialect);
+  ParamsFormula() : ParamsFormula(Utf8String{}, InvalidFormula) {}
   ParamsFormula(const ParamsFormula &other);
   ParamsFormula &operator=(const ParamsFormula &other);
   ~ParamsFormula();
@@ -52,11 +61,14 @@ public:
   [[nodiscard]] FormulaDialect dialect() const;
   [[nodiscard]] QVariant eval(
       const EvalContext &context = {}, const QVariant &def = {}) const;
-  // LATER add eval_utf8, eval_number etc. like on PercentEvaluator
   [[nodiscard]] inline Utf8String eval_utf8(
       const EvalContext &context = {}, const QVariant &def = {}) const {
     return Utf8String{eval(context, def)};
   }
+
+private:
+  inline void init_rpn(ParamsFormulaData *data, const Utf8StringList &list, const Utf8String &expr);
+  inline void init_percent(ParamsFormulaData *data, const Utf8String &expr);
 };
 
 Q_DECLARE_METATYPE(ParamsFormula)

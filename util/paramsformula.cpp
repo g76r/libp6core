@@ -436,72 +436,67 @@ struct ParamsFormulaData : public QSharedData {
   QVariant eval(const EvalContext &context, const QVariant &def) const;
 };
 
-ParamsFormula::ParamsFormula(const Utf8String expr, FormulaDialect dialect) {
-  // LATER implement a formula cache (expr,dialect)->ParamsFormulaData
-  auto data = new ParamsFormulaData{expr, dialect};
+void ParamsFormula::init_rpn(
+    ParamsFormulaData *data, const Utf8StringList &list,
+    const Utf8String &expr) {
+  data->_dialect = RpnWithPercents;
+  data->_expr = expr;
+  for (auto i : list) {
+    auto operator_definition = _operatorDefinitionsMap.value(i);
+    if (!!operator_definition) {
+      data->_stack.push(operator_definition._op);
+      continue;
+    }
+    // LATER support ::int[eger] ::double ::bool[ean] etc. suffixes or prefixes list:: ::
+    data->_stack.push(i);
+    // LATER better guess if %-eval is needed or not
+    if (i.contains('%'))
+      data->_stack.push(_percentOperator);
+  }
+}
+
+void ParamsFormula::init_percent(
+    ParamsFormulaData *data, const Utf8String &expr) {
+  data->_dialect = PercentExpression;
+  data->_expr = expr;
+  data->_stack.push(data->_expr);
+  // LATER better guess if %-eval is needed or not
+  if (data->_expr.contains('%'))
+    data->_stack.push(_percentOperator);
+}
+
+ParamsFormula::ParamsFormula(const Utf8String &expr, FormulaDialect dialect) {
+  auto data = new ParamsFormulaData;
+  d = data;
   switch(dialect) {
     case PercentExpression:
-      data->_stack.push(expr);
-      // LATER better guess if %-eval is needed or not
-      if (expr.contains('%'))
-        data->_stack.push(_percentOperator);
+      init_percent(data, expr);
       break;
     case RpnWithPercents: {
-      auto list = expr.split_headed_list();
-      for (auto i : list) {
-        auto operator_definition = _operatorDefinitionsMap.value(i);
-        if (!!operator_definition) {
-          data->_stack.push(operator_definition._op);
-          continue;
-        }
-        // LATER support ::int[eger] ::double ::bool[ean] etc. suffixes or prefixes list:: ::
-        data->_stack.push(i);
-        // LATER better guess if %-eval is needed or not
-        if (i.contains('%'))
-          data->_stack.push(_percentOperator);
-      }
+      init_rpn(data, expr.split_headed_list(), expr);
       break;
     }
     case InvalidFormula:
-      data->_expr = {};
       ;
   }
-  d = data;
 }
 
 ParamsFormula::ParamsFormula(
-    const Utf8StringList list, FormulaDialect dialect) {
-  auto data = new ParamsFormulaData{"FIXME", dialect};
+    const Utf8StringList &list, const Utf8String &expr, FormulaDialect dialect){
+  auto data = new ParamsFormulaData;
+  d = data;
   switch(dialect) {
     case PercentExpression:
-      data->_expr = list.value(0);
-      data->_stack.push(data->_expr);
-      // LATER better guess if %-eval is needed or not
-      if (data->_expr.contains('%'))
-        data->_stack.push(_percentOperator);
+      init_percent(data, expr);
       break;
     case RpnWithPercents: {
-      for (auto i : list) {
-        auto operator_definition = _operatorDefinitionsMap.value(i);
-        if (!!operator_definition) {
-          data->_stack.push(operator_definition._op);
-          continue;
-        }
-        // LATER support ::int[eger] ::double ::bool[ean] etc. suffixes or prefixes list:: ::
-        data->_stack.push(i);
-        // LATER better guess if %-eval is needed or not
-        if (i.contains('%'))
-          data->_stack.push(_percentOperator);
-      }
+      init_rpn(data, list, expr);
       break;
     }
     case InvalidFormula:
-      data->_expr = {};
       ;
   }
-  d = data;
 }
-
 
 ParamsFormula::ParamsFormula(const ParamsFormula &other) : d{other.d} {
 }
@@ -533,8 +528,6 @@ QVariant ParamsFormulaData::eval(
   auto stack = _stack;
   stack.detach();
   auto x = stack.popeval(&stack, context, def);
-  //if (!stack.is_empty()) // FIXME probably remove
-  //  qDebug() << "FormulaData::eval with non empty stack at evaluation end";
   return x;
 }
 
