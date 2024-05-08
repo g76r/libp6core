@@ -1,4 +1,4 @@
-/* Copyright 2016-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -463,31 +463,31 @@ public:
       that.insert(v, k);
     return that;
   }
-  QMap<QString,T> toUtf16Map() {
+  QMap<QString,T> toUtf16Map() const {
     QMap<QString,T> map;
     for (auto key : keys())
       map.insert(key, value(key));
     return map;
   }
-  QMap<Utf8String,T> toUtf8Map() {
+  QMap<Utf8String,T> toUtf8Map() const {
     QMap<Utf8String,T> map;
     for (auto key : keys())
       map.insert(key, value(key));
     return map;
   }
-  QMap<T,QString> toReversedUtf16Map() {
+  QMap<T,QString> toReversedUtf16Map() const {
     QMap<T,QString> map;
     for (auto key : keys())
       map.insert(value(key),key);
     return map;
   }
-  QMap<T,Utf8String> toReversedUtf8Map() {
+  QMap<T,Utf8String> toReversedUtf8Map() const {
     QMap<T,Utf8String> map;
     for (auto key : keys())
       map.insert(value(key),key);
     return map;
   }
-  QString toDebugString() {
+  QString toDebugString() const {
     QString s = "RadixTree 0x" + QString::number((quint64)this, 16) + '\n';
     if (d->_root)
       s += d->_root->toDebugString();
