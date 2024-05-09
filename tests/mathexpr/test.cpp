@@ -9,6 +9,7 @@ int main(void) {
   ParamSet x1_5 { "x", "1.5" };
   ParamSet x4 { "x", "4" };
   ParamSet x5 { "x", "5" };
+  ParamSet xa_d { "x", "a$" };
   qDebug() << x.metaType().name() << y.metaType().name()
            << MathUtils::promoteToBestNumericType(&x, &y)
            << x.metaType().name() << y.metaType().name()
@@ -37,6 +38,7 @@ int main(void) {
            << PercentEvaluator::eval_utf8("false: %{=rpn,aabcdaa,bC,=~}")
            << PercentEvaluator::eval_utf8("false: %{=rpn,aabcdaa,c$,=~}")
            << PercentEvaluator::eval_utf8("true: %{=rpn,aabcdaa,a$,=~}")
+           << PercentEvaluator::eval_utf8("true: %{=rpn,aabcdaa,%x,=~}", &xa_d)
            << PercentEvaluator::eval_utf8("7: %{=rpn,foo§bar,#}")
            << PercentEvaluator::eval_utf8("8: %{=rpn,foo§bar,##}")
   ;

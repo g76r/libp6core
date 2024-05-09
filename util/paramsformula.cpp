@@ -23,7 +23,7 @@ using FormulaDialect = ParamsFormula::FormulaDialect;
 
 namespace {
 
-static const auto _defaultReOpts =
+static const auto _default_re_opts =
   QRegularExpression::DotMatchesEverythingOption // can be canceled with (?-s)
   | QRegularExpression::DontCaptureOption // can be canceled with (?-n)
   ;
@@ -36,19 +36,29 @@ class Stack {
 public:
   Stack() {}
   inline void push(StackItem &&item) { _items.push(item); }
-  /** safe popeval and eval
+  /** Safe popeval and eval.
    *  @return def if stack is empty
    */
   inline QVariant popeval(
       Stack *stack, const EvalContext &context, const QVariant &def);
+  /** Safe popeval and eval as text.
+   *  @return def if stack is empty
+   */
   inline Utf8String popeval_utf8(
       Stack *stack, const EvalContext &context, const QVariant &def) {
     return Utf8String{popeval(stack, context, def)};
   }
+  /** Safe popeval and eval as boolean.
+   *  @return def if stack is empty
+   */
   inline bool popeval_bool(
       Stack *stack, const EvalContext &context, bool def) {
     auto x = popeval(stack, context, {});
     return x.isValid() ? x.toBool() : def;
+  }
+  /** /!\ This function assumes the stack isn't empty. */
+  inline StackItem &top() {
+    return _items.top();
   }
   inline void detach() {
     _items.detach();
@@ -77,6 +87,12 @@ public:
                              const QVariant &def) {
     return _op(stack, context, def);
   }
+  inline StackItem &operator=(const QVariant &constant_value) {
+    _op = [constant_value](Stack *, const EvalContext &, const QVariant &) {
+      return constant_value;
+    };
+    return *this;
+  }
 };
 
 QVariant Stack::popeval(Stack *stack, const EvalContext &context,
@@ -89,11 +105,11 @@ QVariant Stack::popeval(Stack *stack, const EvalContext &context,
 struct OperatorDefinition {
   int _arity = -1;
   int _priority = -1;
-  bool _rightToLeft = false;
+  bool _right_to_left = false;
   // https://en.wikipedia.org/wiki/Operators_in_C_and_C%2B%2B#Operator_precedence
   // https://en.wikipedia.org/wiki/Order_of_operations#Programming_languages
   // at some extends: https://www.lua.org/manual/5.4/manual.html#3.4.8
-  bool _lastArgIsRegexp = false;
+  bool _last_arg_is_regexp = false;
   StackItemOperator _op;
   bool operator!() const { return _arity == -1; }
 };
@@ -355,10 +371,11 @@ const RadixTree<OperatorDefinition> _operatorDefinitions {
   { "=~", { 2, 10, false, true, [](Stack *stack, const EvalContext &context, const QVariant &def) -> QVariant  {
         auto y = stack->popeval(stack, context, {});
         QRegularExpression re;
+        //qDebug() << "seeing regexp at eval time:" << y;
         if (y.metaType().id() == QMetaType::QRegularExpression)//qMetaTypeId<QRegularExpression>())
           re = y.toRegularExpression();
         else
-          re = QRegularExpression(y.toString(), _defaultReOpts);
+          re = QRegularExpression(y.toString(), _default_re_opts);
         if (!re.isValid())
           return def;
         auto x = stack->popeval_utf8(stack, context, {});
@@ -367,10 +384,11 @@ const RadixTree<OperatorDefinition> _operatorDefinitions {
   { "!=~", { 2, 10, false, true, [](Stack *stack, const EvalContext &context, const QVariant &def) -> QVariant  {
         auto y = stack->popeval(stack, context, {});
         QRegularExpression re;
+        //qDebug() << "seeing regexp at eval time:" << y;
         if (y.metaType().id() == QMetaType::QRegularExpression)//qMetaTypeId<QRegularExpression>())
           re = y.toRegularExpression();
         else
-          re = QRegularExpression(y.toString(), _defaultReOpts);
+          re = QRegularExpression(y.toString(), _default_re_opts);
         if (!re.isValid())
           return def;
         auto x = stack->popeval_utf8(stack, context, {});
@@ -441,17 +459,33 @@ void ParamsFormula::init_rpn(
     const Utf8String &expr) {
   data->_dialect = RpnWithPercents;
   data->_expr = expr;
-  for (auto i : list) {
-    auto operator_definition = _operatorDefinitionsMap.value(i);
+  bool previous_was_constant = false;
+  for (qsizetype i = 0, len = list.size(); i < len; ++i) {
+    auto item = list[i];
+    auto operator_definition = _operatorDefinitionsMap.value(item);
     if (!!operator_definition) {
+      if (operator_definition._last_arg_is_regexp && previous_was_constant) {
+        // if possible, compile regular expression now rather than at eval time
+        // a string can be substituted with a QRegularExpression provided
+        // previous item was a QVariant (not an operator) and we already know
+        // its value (it has not to be %-evaluated at eval time)
+        data->_stack.top() =
+            QRegularExpression(list[i-1].toUtf16(), _default_re_opts);
+        //qDebug() << "compiling regexp at parse time:" << list[i-1];
+      }
       data->_stack.push(operator_definition._op);
+      previous_was_constant = false;
       continue;
     }
     // LATER support ::int[eger] ::double ::bool[ean] etc. suffixes or prefixes list:: ::
-    data->_stack.push(i);
-    // LATER better guess if %-eval is needed or not
-    if (i.contains('%'))
+    if (PercentEvaluator::is_independent(item)) {
+      data->_stack.push(PercentEvaluator::eval_utf8(item));
+      previous_was_constant = true;
+    } else {
+      data->_stack.push(item);
       data->_stack.push(_percentOperator);
+      previous_was_constant = false;
+    }
   }
 }
 
@@ -459,10 +493,12 @@ void ParamsFormula::init_percent(
     ParamsFormulaData *data, const Utf8String &expr) {
   data->_dialect = PercentExpression;
   data->_expr = expr;
-  data->_stack.push(data->_expr);
-  // LATER better guess if %-eval is needed or not
-  if (data->_expr.contains('%'))
+  if (PercentEvaluator::is_independent(data->_expr)) {
+    data->_stack.push(PercentEvaluator::eval_utf8(data->_expr));
+  } else {
+    data->_stack.push(data->_expr);
     data->_stack.push(_percentOperator);
+  }
 }
 
 ParamsFormula::ParamsFormula(const Utf8String &expr, FormulaDialect dialect) {
