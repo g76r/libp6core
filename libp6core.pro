@@ -168,6 +168,7 @@ SOURCES *= \
 
 HEADERS *=\
     modelview/templatedshareduiitemdata.h \
+    util/datacache.h \
     util/paramsformula.h \
     util/percentevaluator.h \
     util/utf8string.h \
