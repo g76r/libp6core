@@ -230,7 +230,7 @@ all parameters are evaluated, hence %foo is replaced by foo's value
 
 if default_value is not specified, leave input as is if no case matches
 
-see also %=switch if regexps are not needed
+rather use %=switch if regexps are not needed
 
 examples:
 * `%{=match:%foo:^a:false:true}` -> if starts with 'a': `false` else: `true`
@@ -594,7 +594,8 @@ please note that:
   e.g. `%{=rpn,5,4,:=:,-}` -> -1
 - `<dup>` duplicates previous value e.g. `%{=rpn,4,4,<dup>,*}` -> 16
 
-see also ParamsFormula class which is used as %=rpn engine.
+see also ParamsFormula class which is then engine used by %=rpn.
+
 of course there are plenty of implicit type conversions, such as integer
 promotions and converting non null numbers to true booleans.
 
