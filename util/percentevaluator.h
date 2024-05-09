@@ -249,6 +249,30 @@ public:
   [[nodiscard]] static inline QVariant escape(const QVariant &v) {
     Utf8String s(v);
     return s.contains('%') ? s.replace('%', "%%"_u8) : v; }
+  /** Detects if a string evaluation is independent from params and functions.
+   *  e.g. "abc" "" "%%foo" "abc%%foo" are independent whereas "abc%foo" is not.
+   *  Note that independent does not means constant: "abc" is constant whereas
+   *  "abc%%foo" will be evaluated as "abc%foo". */
+  [[nodiscard]] static inline bool is_independent(const QByteArray &utf8) {
+    auto s = utf8.constData();
+    auto len = utf8.size();
+    for (qsizetype i = 0; i < len; ++i)
+      if (s[i] == '%' && (!i || s[i-1] != '%'))
+        return false;
+    return true;
+  }
+  /** Detects if a string evaluation is independent from params and functions.
+   *  e.g. "abc" "" "%%foo" "abc%%foo" are independent whereas "abc%foo" is not.
+   *  Note that independent does not means constant: "abc" is constant whereas
+   *  "abc%%foo" will be evaluated as "abc%foo". */
+  [[nodiscard]] static inline bool is_independent(const QString &utf16) {
+    auto s = utf16.constData();
+    auto len = utf16.size();
+    for (qsizetype i = 0; i < len; ++i)
+      if (s[i] == '%' && (!i || s[i-1] != '%'))
+        return false;
+    return true;
+  }
   /** Return a regular expression that matches any string that can result
    * in evaluation of the rawValue.
    * For instance "foo%{=date:yyyy}-%{bar}.log" is converted into some pattern
