@@ -15,6 +15,7 @@
 #include "util/percentevaluator.h"
 #include "util/radixtree.h"
 #include "util/mathutils.h"
+#include "util/datacache.h"
 #include <functional>
 #include <QStack>
 
@@ -23,7 +24,8 @@ using FormulaDialect = ParamsFormula::FormulaDialect;
 
 namespace {
 
-static const auto _default_re_opts =
+static thread_local DataCache<QString,QRegularExpression> _regexp_cache{ 4096 };
+static const auto _re_match_opts =
   QRegularExpression::DotMatchesEverythingOption // can be canceled with (?-s)
   | QRegularExpression::DontCaptureOption // can be canceled with (?-n)
   ;
@@ -374,8 +376,14 @@ const RadixTree<OperatorDefinition> _operatorDefinitions {
         //qDebug() << "seeing regexp at eval time:" << y;
         if (y.metaType().id() == QMetaType::QRegularExpression)//qMetaTypeId<QRegularExpression>())
           re = y.toRegularExpression();
-        else
-          re = QRegularExpression(y.toString(), _default_re_opts);
+        else {
+          auto pattern = y.toString();
+          re = _regexp_cache.get_or_create(pattern, [&](){
+            auto re = QRegularExpression(pattern, _re_match_opts);
+            re.optimize();
+            return re;
+          });
+        }
         if (!re.isValid())
           return def;
         auto x = stack->popeval_utf8(stack, context, {});
@@ -387,8 +395,14 @@ const RadixTree<OperatorDefinition> _operatorDefinitions {
         //qDebug() << "seeing regexp at eval time:" << y;
         if (y.metaType().id() == QMetaType::QRegularExpression)//qMetaTypeId<QRegularExpression>())
           re = y.toRegularExpression();
-        else
-          re = QRegularExpression(y.toString(), _default_re_opts);
+        else {
+          auto pattern = y.toString();
+          re = _regexp_cache.get_or_create(pattern, [&](){
+            auto re = QRegularExpression(pattern, _re_match_opts);
+            re.optimize();
+            return re;
+          });
+        }
         if (!re.isValid())
           return def;
         auto x = stack->popeval_utf8(stack, context, {});
@@ -469,8 +483,13 @@ void ParamsFormula::init_rpn(
         // a string can be substituted with a QRegularExpression provided
         // previous item was a QVariant (not an operator) and we already know
         // its value (it has not to be %-evaluated at eval time)
-        data->_stack.top() =
-            QRegularExpression(list[i-1].toUtf16(), _default_re_opts);
+        auto pattern = list[i-1].toUtf16();
+        auto re = _regexp_cache.get_or_create(pattern, [&](){
+          auto re = QRegularExpression(pattern, _re_match_opts);
+          re.optimize();
+          return re;
+        });
+        data->_stack.top() = re;
         //qDebug() << "compiling regexp at parse time:" << list[i-1];
       }
       data->_stack.push(operator_definition._op);
