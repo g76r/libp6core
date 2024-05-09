@@ -1,4 +1,4 @@
-/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -235,12 +235,12 @@ public:
    * meaning for evaluate() and splitAndEvaluate() methods.
    * That is: replace % with %% within the string. */
   [[nodiscard]] static inline QString escape(QString utf16) {
-    return utf16.isNull() ? utf16 : utf16.replace('%', u"%%"_s); }
+    return utf16.isEmpty() ? utf16 : utf16.replace('%', u"%%"_s); }
   /** Escape all characters in string so that they no longer have special
    * meaning for evaluate() and splitAndEvaluate() methods.
    * That is: replace % with %% within the string. */
   [[nodiscard]] static inline Utf8String escape(QByteArray utf8) {
-    return utf8.isNull() ? utf8 : utf8.replace('%', "%%"_u8); }
+    return utf8.isEmpty() ? utf8 : utf8.replace('%', "%%"_u8); }
   /** Escape all characters in string so that they no longer have special
    * meaning for evaluate() and splitAndEvaluate() methods.
    * That is: replace % with %% within the string.
