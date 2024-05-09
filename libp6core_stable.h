@@ -78,6 +78,7 @@ using std::experimental::source_location;
 #include <QNetworkRequest>
 #include <QObject>
 #include <QPair>
+#include <QPartialOrdering>
 #include <QPointer>
 #include <QProcess>
 #include <QRandomGenerator>
