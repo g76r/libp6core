@@ -83,21 +83,19 @@ static const QRegularExpression _iso8601timezoneOffsetRe {
 // [english-day-of-week3,] day-of-month english-month-name3 year4 hour24:min:sec { {+|-}0000 | zone-name3 }
 // Wed   ,   1  Jan   2013   23:59:62+0400
 // Wed, 01 Jan 2013 23:59:62 GMT
-QString TimeFormats::toRfc2822DateTime(QDateTime dt) {
-  if (dt.isValid()) {
-    if (dt.timeSpec() != Qt::UTC)
-      dt = dt.toUTC();
-    return
-        u"%1, %2 %3 %4 %5:%6:%7 GMT"_s
-        .arg(_toDaysOfWeek3.value(dt.date().dayOfWeek()))
-        .arg(dt.date().day())
-        .arg(_toMonth3.value(dt.date().month()))
-        .arg(dt.date().year(), 4, 10, QChar('0'))
-        .arg(dt.time().hour(), 2, 10, QChar('0'))
-        .arg(dt.time().minute(), 2, 10, QChar('0'))
-        .arg(dt.time().second(), 2, 10, QChar('0'));
-  } else
+QString TimeFormats::toRfc2822DateTime(const QDateTime &dt) {
+  if (!dt.isValid())
     return {};
+  if (dt.timeSpec() != Qt::UTC)
+    return toRfc2822DateTime(dt.toUTC());
+  return u"%1, %2 %3 %4 %5:%6:%7 GMT"_s
+      .arg(_toDaysOfWeek3.value(dt.date().dayOfWeek()))
+      .arg(dt.date().day())
+      .arg(_toMonth3.value(dt.date().month()))
+      .arg(dt.date().year(), 4, 10, QChar('0'))
+      .arg(dt.time().hour(), 2, 10, QChar('0'))
+      .arg(dt.time().minute(), 2, 10, QChar('0'))
+      .arg(dt.time().second(), 2, 10, QChar('0'));
 }
 
 QDateTime TimeFormats::fromRfc2822DateTime(
@@ -205,7 +203,7 @@ QString TimeFormats::toCoarseHumanReadableTimeInterval(
 }
 
 QString TimeFormats::toCoarseHumanReadableRelativeDate(
-    QDateTime dt, QDateTime reference) {
+      const QDateTime &dt, const QDateTime &reference) {
   // LATER i18n
   qint64 msecs = reference.msecsTo(dt);
   if (msecs == 0)
@@ -306,15 +304,10 @@ int main(int argc, char *argv[]) {
 */
 
 QString TimeFormats::toCustomTimestamp(
-    QDateTime dt, QString format, RelativeDateTime relativeDateTime,
-    QTimeZone tz) {
-  /*if (tz.isValid())
-    qDebug() << "TimeFormats::toCustomTimestamp converting tz"
-             << dt << tz << relativeDateTime.apply(dt)
-             << relativeDateTime.apply(dt).toTimeZone(tz);*/
-  if (!tz.isValid())
-    tz = QTimeZone::systemTimeZone();
-  dt = relativeDateTime.apply(dt).toTimeZone(tz);
+    const QDateTime &original_dt, const QString &format,
+      const RelativeDateTime &relativeDateTime, const QTimeZone &tz) {
+  auto dt = relativeDateTime.apply(original_dt)
+            .toTimeZone(tz.isValid() ? tz : QTimeZone::systemTimeZone());
   if (format.isEmpty() || format == "iso")
     return dt.toString(u"yyyy-MM-dd hh:mm:ss,zzz"_s);
   if (format == "ms1970")

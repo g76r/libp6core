@@ -1,4 +1,4 @@
-/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -39,10 +39,13 @@ class RelativeDateTimeData : public QSharedData {
   QTime _time; // reference time, interpreted depending on method
   QTimeZone _tz; // reference timezone, interpreted depending on method
   ReferenceMethod _method; // method used to interpret reference date and time
-public:
-  RelativeDateTimeData() : _delta(0), _method(Today) { }
+  QString _expr;
 
-  RelativeDateTimeData(QString expression) : _delta(0), _method(Today) {
+public:
+  inline RelativeDateTimeData() : _delta(0), _method(Today) { }
+
+  explicit inline RelativeDateTimeData(const QString &expression)
+    : _delta(0), _method(Today), _expr(expression) {
     if (!expression.isEmpty()) {
       //qDebug() << "RelativeDateTimeData" << expression;
       auto m = _wholeDateRE.match(expression);
@@ -146,7 +149,7 @@ public:
     }
   }
 
-  QDateTime apply(QDateTime reference) {
+  inline QDateTime apply(QDateTime reference) const {
     //qDebug() << "applying" << _method << _date << _time << _delta << "to" << reference;
     QDate date = reference.date();
     switch (_method) {
@@ -183,6 +186,7 @@ public:
     //qDebug() << "applied:" << reference;
     return reference;
   }
+  inline QString expr() const { return _expr; }
 };
 
 RelativeDateTime::RelativeDateTime() {
@@ -218,6 +222,10 @@ RelativeDateTime &RelativeDateTime::operator=(const RelativeDateTime &rhs) {
 RelativeDateTime::~RelativeDateTime() {
 }
 
-QDateTime RelativeDateTime::apply(QDateTime reference) {
+QDateTime RelativeDateTime::apply(const QDateTime &reference) const {
   return d ? d->apply(reference) : reference;
+}
+
+QString RelativeDateTime::expr() const {
+  return d ? d->expr() : QString{};
 }

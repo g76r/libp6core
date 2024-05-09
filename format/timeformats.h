@@ -1,4 +1,4 @@
-/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,7 +24,7 @@ class LIBP6CORESHARED_EXPORT TimeFormats {
 public:
   TimeFormats() = delete;
   // TODO switch to QDateTime::toString(Qt::RFC2822Date) now that it exists
-  static QString toRfc2822DateTime(QDateTime dt);
+  static QString toRfc2822DateTime(const QDateTime &dt);
   static QDateTime fromRfc2822DateTime(
       const QString &rfc2822DateTime, QString *errorString = 0);
   /** e.g. "1.250 seconds", "10 months and 3 days", "-10 months and 3 days"
@@ -34,7 +34,8 @@ public:
   /** e.g. "1.250 seconds ago", "in 10 months and 3 days"
     * invalid QDateTime gives null QString */
   static QString toCoarseHumanReadableRelativeDate(
-      QDateTime dt, QDateTime reference = QDateTime::currentDateTime());
+      const QDateTime &dt,
+      const QDateTime &reference = QDateTime::currentDateTime());
   /** Format a given timestamp using given format and RelativeDateTime shift.
    *
    * Supported format strings are those supported by QDateTime::toString() plus:
@@ -43,9 +44,9 @@ public:
    * - empty string defaults to pseudo-iso8601: yyyy-MM-dd hh:mm:ss,zzz
    */
   static QString toCustomTimestamp(
-      QDateTime dt, QString format = {},
-      RelativeDateTime relativeDateTime = RelativeDateTime(),
-      QTimeZone tz = QTimeZone());
+      const QDateTime &dt, const QString &format = {},
+      const RelativeDateTime &relativeDateTime = {},
+      const QTimeZone &tz = {});
   /** Syntactic sugar over toCustomTimestamp with an multifieldSpecifiedFormat
    * parameter of the form !format!relativedatetime!timezone
    *

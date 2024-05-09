@@ -1,4 +1,4 @@
-/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -93,7 +93,9 @@ public:
   [[nodiscard]] inline bool operator!() const { return isNull(); }
   /** Apply relative date expression to 'reference'.
    * If RelativeDateTime is null, return 'reference' as is. */
-  QDateTime apply(QDateTime reference = QDateTime::currentDateTime());
+  [[nodiscard]] QDateTime apply(
+      const QDateTime &reference = QDateTime::currentDateTime()) const;
+  [[nodiscard]] QString expr() const;
 };
 
 #endif // RELATIVEDATETIME_H
