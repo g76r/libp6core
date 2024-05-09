@@ -71,6 +71,8 @@ int main(void) {
               "%{=rpn,%%foo}=%foo",
               &p);
   qDebug() << PercentEvaluator::eval_utf8("%{=rpn,%{=rpn;42;!!},z,@}=truez "
-              "%{=rpn,dt:,%{=date@@2023-09-20},@}=dt:2023-09-20 00:00:00,000", &p);
+              "%{=rpn,dt:,%{=date@@2023-09-20},@}=dt:2023-09-20 00:00:00,000 "
+              "%{=rpn,dt:,%{=date@@2023-09-20},@}=dt:2023-09-20 00:00:00,000 "
+              "%{=rpn,1,2,+}=3", &p);
   return 0;
 }

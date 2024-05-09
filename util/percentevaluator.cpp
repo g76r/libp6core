@@ -23,6 +23,7 @@
 #include "format/timeformats.h"
 #include "format/stringutils.h"
 #include "log/log.h"
+#include "util/datacache.h"
 #include <functional>
 #include <stdlib.h>
 #include <QCryptographicHash>
@@ -37,6 +38,8 @@ static int staticInit() {
 Q_CONSTRUCTOR_FUNCTION(staticInit)
 
 using EvalContext = PercentEvaluator::EvalContext;
+
+static thread_local DataCache<Utf8String,ParamsFormula> _rpn_cache{ 4096 };
 
 static RadixTree<std::function<
 QVariant(const Utf8String &key, const EvalContext &context, int ml)>>
@@ -408,8 +411,11 @@ _functions {
   return value;
 }, true},
 { "=rpn", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-   ParamsFormula formula(key.mid(ml), ParamsFormula::RpnWithPercents);
-   return formula.eval(context, {});
+  auto expr = key.mid(ml);
+  auto formula = _rpn_cache.get_or_create(expr, [&]() {
+    return ParamsFormula(expr, ParamsFormula::RpnWithPercents);
+  });
+  return formula.eval(context, {});
 }, true},
 { "=integer", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
   auto params = key.split_headed_list(ml);
