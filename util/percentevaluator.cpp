@@ -40,6 +40,14 @@ Q_CONSTRUCTOR_FUNCTION(staticInit)
 using EvalContext = PercentEvaluator::EvalContext;
 
 static thread_local DataCache<Utf8String,ParamsFormula> _rpn_cache{ 4096 };
+static thread_local DataCache<Utf8String,QRegularExpression> _regexp_cache{ 4096 };
+static const auto _re_match_opts =
+    QRegularExpression::DotMatchesEverythingOption // can be canceled with (?-s)
+    | QRegularExpression::DontCaptureOption // can be canceled with (?-n)
+    ;
+static const auto _re_sub_opts =
+    QRegularExpression::DotMatchesEverythingOption // can be canceled with (?-s)
+    ;
 
 static RadixTree<std::function<
 QVariant(const Utf8String &key, const EvalContext &context, int ml)>>
@@ -129,9 +137,11 @@ _functions {
   int n = (params.size() - 1) / 2;
   for (int i = 0; i < n; ++i) {
     auto ref = PercentEvaluator::eval_utf16(params.value(1+i*2), {}, context);
-    QRegularExpression re(
-        ref, QRegularExpression::DotMatchesEverythingOption // can be canceled with (?-s)
-        ); // LATER set up a regexp cache
+    auto re = _regexp_cache.get_or_create(ref, [&](){
+      QRegularExpression re(ref, _re_match_opts);
+      re.optimize(); // not sure
+      return re;
+    });
     auto match = re.match(input.toString());
     if (match.hasMatch()) {
       auto rpp = RegexpParamsProvider(match);
@@ -154,17 +164,16 @@ _functions {
   for (int i = 1; i < params.size(); ++i) {
     auto sFields = params[i].split_headed_list();
     //qDebug() << "pattern" << i << params[i] << sFields.size() << sFields;
+    auto pattern = sFields.value(0);
     auto optionsString = sFields.value(2);
-    QRegularExpression::PatternOptions patternOptions
-        = QRegularExpression::DotMatchesEverythingOption // can be canceled with (?-s)
-      ;
     if (optionsString.contains('i'))
-      patternOptions |= QRegularExpression::CaseInsensitiveOption;
+      pattern = "(?i)"_u8+pattern;
     // LATER add support for other available options: s,x...
-    // LATER add a regexp cache because same =sub is likely to be evaluated several times
-    // options must be part of the cache key
-    // not sure if QRegularExpression::optimize() should be called
-    QRegularExpression re(sFields.value(0), patternOptions);
+    auto re = _regexp_cache.get_or_create(pattern, [&](){
+      QRegularExpression re(pattern, _re_sub_opts);
+      re.optimize(); // not sure
+      return re;
+    });
     if (!re.isValid()) [[unlikely]] {
       Log::warning() << "%=sub with invalid regular expression: "
                      << sFields.value(0);
@@ -174,7 +183,7 @@ _functions {
     int offset = 0;
     Utf8String transformed;
     do {
-      QRegularExpressionMatch match = re.match(value, offset);
+      auto match = re.match(value, offset);
       if (match.hasMatch()) {
         //qDebug() << "match:" << match.captured()
         //         << value.mid(offset, match.capturedStart()-offset);
@@ -695,7 +704,6 @@ stop:
 
 const QString PercentEvaluator::matching_regexp(const Utf8String &expr) {
   QString pattern;
-  QRegularExpression re;
   auto begin = expr.constData(), s = begin;
   auto end = begin + expr.size();
   qsizetype i;

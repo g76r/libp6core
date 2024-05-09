@@ -38,6 +38,7 @@ int main(void) {
            << p.paramRawValue("'abcdef") << p.paramUtf8("'abcdef") << ppm.paramUtf8("'abcdef");
   qDebug() << PercentEvaluator::eval_utf8("%{=uppercase:fooǆ}|%{=lowercase:fooǆ}|%{=titlecase:fooǆ}");
   qDebug() << PercentEvaluator::eval_utf8("%{=sub;Foo_Barǆ;/_/-/g↑}|%{=sub;Foo_Barǆ;/_/-/g↓}");
+  qDebug() << PercentEvaluator::eval_utf8("%{=sub;Foo_Bar;/O/z/gi}=Fzz_Bar %{=sub;Foo_Bar;/O/z/g}=Foo_Bar %{=sub;Foo_Bar;/(?i)O/z/g}=Fzz_Bar");
   qDebug() << PercentEvaluator::eval_utf8(
                 "%{=formatint64:31:16:0000}=001f 0x%{=formatint64:31:16}=0x1f %{=formatint64:%i::%j}=31 "
                 "%{=formatuint64:0xffffffff:16:0000000000:ø}=00ffffffff "
