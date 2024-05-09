@@ -67,6 +67,11 @@ public:
    * %=date!format!relativedatetime!timezone
    * and is usable by any other kind of timestamp formating within a
    * ParamsProvider.
+   *
+   * Internally it uses RelativeDateTime class, with a cache on relativedatetime
+   * field value.
+   *
+   * @see RelativeDateTime
    */
   static const QString toMultifieldSpecifiedCustomTimestamp(
       const QDateTime &dt, const Utf8String &multifieldSpecifiedFormat,

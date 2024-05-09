@@ -15,6 +15,9 @@
 #include "log/log.h"
 #include <QRegularExpression>
 #include "util/percentevaluator.h"
+#include "util/datacache.h"
+
+static thread_local DataCache<QString,RelativeDateTime> _rdt_cache { 4096 };
 
 // [english-day-of-week3,] day-of-month english-month-name3 year4 hour24:min:sec { {+|-}0000 | zone-name3 }
 // Wed   ,   1  Jan   2013   23:59:62+0400
@@ -325,7 +328,10 @@ const QString TimeFormats::toMultifieldSpecifiedCustomTimestamp(
   auto rel_dt = PercentEvaluator::eval_utf16(params.value(1), context);
   QTimeZone tz(PercentEvaluator::eval_utf8(params.value(2), context)
                .trimmed());
-  return toCustomTimestamp(dt, format, RelativeDateTime(rel_dt), tz);
+  auto rdt = _rdt_cache.get_or_create(rel_dt, [&](){
+    return RelativeDateTime(rel_dt);
+  });
+  return toCustomTimestamp(dt, format, rdt, tz);
 }
 
 const QTimeZone TimeFormats::tzFromIso8601(

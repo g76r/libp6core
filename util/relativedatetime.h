@@ -85,7 +85,7 @@ class LIBP6CORESHARED_EXPORT RelativeDateTime {
 
 public:
   RelativeDateTime();
-  explicit RelativeDateTime(const QString &expression);
+  explicit RelativeDateTime(const QString &expr);
   RelativeDateTime(const RelativeDateTime &);
   RelativeDateTime &operator=(const RelativeDateTime &);
   ~RelativeDateTime();

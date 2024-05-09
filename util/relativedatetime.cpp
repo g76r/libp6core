@@ -14,8 +14,6 @@
 #include "relativedatetime.h"
 #include "format/timeformats.h"
 #include <QRegularExpression>
-#include <QMutexLocker>
-#include <QCache>
 
 #define TERM_RE "([+-][0-9]+)(ms|mil|s|min|h|d|w|mon|y)[a-z]*"
 #define TZ_RE "(?:Z|(?:[+-][0-9]{2}:[0-9]{2}))"
@@ -27,9 +25,6 @@ static QRegularExpression _isoLikeDateRE {
   "\\A(?:(?:([0-9]{4})-)?(?:([0-9]{2})-))?([0-9]{2})" };
 static QRegularExpression _isoLikeTimeRE {
   "(?:\\A|[T ])([0-9]{2}):([0-9]{2})(?::([0-9]{2})(?:[,.]([0-9]{3}))?)?(" TZ_RE ")?\\z" };
-
-static QMutex _cacheMutex;
-static QCache<QString, RelativeDateTime> _cache(1'000);
 
 class RelativeDateTimeData : public QSharedData {
   enum ReferenceMethod { Today = 0, DayOfWeek = 1, DayOfMonth, MonthAndDay,
@@ -195,18 +190,8 @@ RelativeDateTime::RelativeDateTime() {
 RelativeDateTime::RelativeDateTime(RelativeDateTimeData *other) : d(other) {
 }
 
-RelativeDateTime::RelativeDateTime(const QString &expression) {
-  if (expression.isEmpty())
-    return;
-  auto trimmed = expression.trimmed();
-  QMutexLocker locker(&_cacheMutex);
-  RelativeDateTime *cached = _cache.object(trimmed);
-  if (cached) {
-    d = cached->d;
-    return;
-  }
-  d = new RelativeDateTimeData(trimmed);
-  _cache.insert(trimmed, new RelativeDateTime(d));
+RelativeDateTime::RelativeDateTime(const QString &expr)
+  : d(expr.isEmpty() ? 0 : new RelativeDateTimeData(expr.trimmed())) {
 }
 
 RelativeDateTime::RelativeDateTime(const RelativeDateTime &rhs)
