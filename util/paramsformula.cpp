@@ -192,7 +192,7 @@ const RadixTree<OperatorDefinition> _operatorDefinitions {
       } }, true },
   { "#", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) -> QVariant {
         // LATER support lists
-        return stack->popeval_utf8(stack, context, {}).utf8Size();
+        return stack->popeval_utf8(stack, context, {}).utf8size();
       } }, true },
   { "##", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) -> QVariant {
         return stack->popeval_utf8(stack, context, {}).size();

@@ -31,6 +31,7 @@ public:
   const static QList<char> AsciiWhitespace;
   const static QList<char32_t> UnicodeWhitespace;
   const static char32_t ReplacementCharacter = U'\ufffd';
+  const static char32_t ByteOrderMark = U'\ufeff';
   const static Utf8String ReplacementCharacterUtf8;
   const static Utf8String Empty;
 
@@ -55,7 +56,7 @@ public:
   inline Utf8String(const char *s, qsizetype size = -1)
     : QByteArray(s, size) { }
   explicit inline Utf8String(const char c) : QByteArray(&c, 1) { }
-  explicit inline Utf8String(char32_t c) : QByteArray(encodeUtf8(c)) { }
+  explicit inline Utf8String(char32_t u) : QByteArray(encode_utf8(u)) { }
   inline ~Utf8String() {}
   //template <typename Char,if_compatible_char<Char>>
   //Utf8String(const Char *s, qsizetype size = -1) : QByteArray(s, size) { }
@@ -83,7 +84,7 @@ public:
       qsizetype i, const char *s, qsizetype len,
       const Utf8String &def = Empty) {
     return utf8value(i, s, s+len, def); }
-  [[nodiscard]] static Utf8String utf8value(
+  [[nodiscard]] inline static Utf8String utf8value(
       qsizetype i, const char *s, const char *end,
       const Utf8String &def = Empty);
   [[nodiscard]] inline Utf8String utf8value(
@@ -94,11 +95,11 @@ public:
   [[nodiscard]] inline static char32_t utf32value(
       qsizetype i, const char *s, qsizetype len, const char32_t def = 0) {
     Utf8String utf8 = utf8value(i, s, len, {});
-    return utf8.isNull() ? def : decodeUtf8(utf8); }
+    return utf8.isNull() ? def : decode_utf8(utf8); }
   [[nodiscard]] inline static char32_t utf32value(
       qsizetype i, const char *s, const char *end, const char32_t def = 0) {
     Utf8String utf8 = utf8value(i, s, end, {});
-    return utf8.isNull() ? def : decodeUtf8(utf8); }
+    return utf8.isNull() ? def : decode_utf8(utf8); }
   [[nodiscard]] inline char32_t utf32value(
       qsizetype i, char32_t def = 0) const {
     return utf32value(i, constData(), size(), def); }
@@ -111,25 +112,65 @@ public:
   [[nodiscard]] inline operator QVariant() const {
     return QVariant::fromValue(*this); }
 
-  [[nodiscard]] static inline Utf8String encodeUtf8(char32_t c);
-  [[nodiscard]] static inline char32_t decodeUtf8(
-      const char *s, qsizetype len);
-  [[nodiscard]] static inline char32_t decodeUtf8(
+  [[nodiscard]] static inline Utf8String encode_utf8(char32_t u);
+  /** Decode first unicode character in utf8 bytes.
+   *  Return replacement character (\ufffd) if an invalid sequence is found.
+   *  Return a BOM character (\ufeff) if first bytes sequence is a BOM (\xef
+   *  \xbb \xbf). */
+  [[nodiscard]] static inline char32_t decode_utf8(
       const char *s, const char *end) {
-    return decodeUtf8(s, end-s); }
-  [[nodiscard]] static inline char32_t decodeUtf8(const QByteArray &s) {
-    return decodeUtf8(s.constData(), s.size()); }
-  [[nodiscard]] static inline char32_t decodeUtf8(const char *s) {
-    return s ? decodeUtf8(s, ::strlen(s)) : 0; }
+    return decode_utf8_and_step_forward(&s, end, true); }
+  [[nodiscard]] static inline char32_t decode_utf8(
+      const char *s, qsizetype len) {
+    return decode_utf8_and_step_forward(&s, s+len, true); }
+  [[nodiscard]] static inline char32_t decode_utf8(const QByteArray &s) {
+    auto s2 = s.constData();
+    return decode_utf8_and_step_forward(&s2, s2+s.size(), true); }
+  [[nodiscard]] static inline char32_t decode_utf8(const char *s) {
+    return decode_utf8_and_step_forward(&s, s+::strlen(s), true); }
+  /** Low-level one utf8 character decoder.
+   *  Decode utf8 character at *s and set *s after the character's byte
+   *  sequence, never reading *end and beyond.
+   *  Return replacement char (\ufffd) if sequence at *s is invalid (in this
+   *  case set *s to the next possible valid sequence position, or at end if the
+   *  sequence is invalid because it's incomplete).
+   *  When strict is false: accept over long sequences (such as 0xc0 0x80 for
+   *  \0), ignore 2 most significant bits of continuation bytes (0xc3 0x09 will
+   *  form a É as 0xc3 0x89) because with valid utf8 it makes the code faster.
+   */
+  [[nodiscard]] static inline char32_t decode_utf8_and_step_forward(
+      const char **s, const char *end, bool strict);
+  /** Low-level one utf8 character encoder.
+   *  Encode utf8 character at *d and set *d after the character's byte
+   *  sequence, there must be enough room in *d for that.
+   *  Don't write and advance if c is invalid or a replacement character.
+   */
+  static inline void encode_utf8_and_step_forward(char **d, char32_t u);
+  /** Low-level non-decoding begin of next utf8 char finder.
+   *  Intrement s until at the begin of a valid utf8 bytes sequence.
+   *  If s is already at a char begin, do nothing.
+   *  Return nullptr if end is reached.
+   *  Skip out of sequence (erroneous) bytes and optionnaly BOMs.
+   */
+  static inline const char *go_forward_to_utf8_char(
+      const char **s, const char *end, bool skip_bom = true);
+  /** Low-level non-decoding begin of previous utf8 char finder.
+   *  Decrement s until at the begin of a valid utf8 bytes sequence.
+   *  If s is already at a char begin, do nothing.
+   *  Return nullptr if begin is exceeded.
+   *  Skip out of sequence (erroneous) bytes and optionnaly BOMs.
+   */
+  static inline const char *go_backward_to_utf8_char(
+      const char **s, const char *begin, bool skip_bom = true);
 
-  /** Convert a unicode charater into its uppercase character, e.g. é -> É.
+  /** Convert a unicode charater into its upper case character, e.g. é -> É.
    *  Return the input character itself if no change is needed e.g. E É #
    */
-  [[nodiscard]] static inline char32_t toUpper(char32_t c);
-  /** Convert a unicode charater into its uppercase character, e.g. É -> é .
-   *  Return the input character itself if no change is needed e.g. E é #
+  [[nodiscard]] static inline char32_t toUpper(char32_t u);
+  /** Convert a unicode charater into its lower case character, e.g. É -> é .
+   *  Return the input character itself if no change is needed e.g. e é #
    */
-  [[nodiscard]] static inline char32_t toLower(char32_t c);
+  [[nodiscard]] static inline char32_t toLower(char32_t u);
   /** Set the characters to title case.
    *  For most letters, title case is the same than upper case, but for some
    *  rare characters representing several letters at once, there is a title case
@@ -138,7 +179,7 @@ public:
    *  (unicode: 0x1C4) and to ǅ title case letter (unicode: 0x1C5)
    *  Return the input character itself if no change is needed e.g. E É #
    */
-  [[nodiscard]] static inline char32_t toTitle(char32_t c);
+  [[nodiscard]] static inline char32_t toTitle(char32_t u);
   [[nodiscard]] Utf8String toUpper() const;
   [[nodiscard]] Utf8String toLower() const;
   [[nodiscard]] Utf8String toTitle() const;
@@ -170,43 +211,67 @@ public:
 
   // FIXME inline int compare(QByteArrayView a, Qt::CaseSensitivity cs) const noexcept;
 
-  /** Return utf8 characters count. Count utf8 sequences without ensuring
+  /** Return unicode characters count. Count utf8 sequences without ensuring
     * their validity, so with invalid utf8 data this may overestimates. */
-  [[nodiscard]] qsizetype utf8Size() const;
+  [[nodiscard]] inline qsizetype utf8size() const;
+  [[deprecated("use utf8size (without capital letter) instead")]]
+  [[nodiscard]] inline qsizetype utf8Size() const { return utf8size(); }
   /** Syntaxic sugar: !s === s.isNull() and thus !!s === !s.isNull() */
   [[nodiscard]] inline bool operator!() const { return isNull(); }
   inline Utf8String &fill(char c, qsizetype size = -1) {
     QByteArray::fill(c, size); return *this; }
-  /** Return valid utf8 without invalid sequences (or having them replaced by
-   *  so called replacement character), without BOMs and without overlong
-   *  encoding. */
-  [[nodiscard]] inline Utf8String cleaned() const {
-    return cleaned(constData(), size()); }
-  [[nodiscard]] inline static Utf8String cleaned(const char *s, qsizetype len) {
-    return cleaned(s, s+len); }
-  [[nodiscard]] static Utf8String cleaned(const char *s, const char *end);
-  Utf8String &clean() { return *this = cleaned(); }
+  /** Return valid utf8 without invalid sequences.
+   *  @param strict don't be tolerant to encoding errors (overlong sequences,
+   *    etc.)
+   *  @param keep_replacement_chars write a replacement char where there was one
+   *    or where there was an invalid sequence
+   *  @param keep_bom keep byte order marks if any
+   */
+  [[nodiscard]] inline Utf8String cleaned(
+      bool strict = true, bool keep_replacement_chars = false,
+      bool keep_bom = false) const {
+    return cleaned(constData(), size(), strict, keep_replacement_chars,
+                   keep_bom); }
+  /** Return valid utf8 without invalid sequences. */
+  [[nodiscard]] inline static Utf8String cleaned(
+      const char *s, qsizetype len, bool strict = true,
+      bool keep_replacement_chars = false, bool keep_bom = false) {
+    return cleaned(s, s+len, strict, keep_replacement_chars, keep_bom); }
+  /** Return valid utf8 without invalid sequences. */
+  [[nodiscard]] inline static Utf8String cleaned(
+      const char *s, const char *end, bool strict = true,
+      bool keep_replacement_chars = false, bool keep_bom = false);
+  /** Reencode valid utf8 in-place without invalid sequences. */
+  inline Utf8String &clean(
+      bool strict = true, bool keep_replacement_chars = false,
+      bool keep_bom = false);
+  /** Reencode valid utf8 in-place without invalid sequences. */
+  inline static void clean(
+      char *s, const char *end, bool strict = true,
+      bool keep_replacement_chars = false, bool keep_bom = false);
 
   // slicing: left right mid trimmed sliced chopped...
   /** Return leftmost len bytes. Empty if len < 0. */
-  [[nodiscard]] Utf8String left(qsizetype len) const {
+  [[nodiscard]] inline Utf8String left(qsizetype len) const {
     return QByteArray::left(len); }
   /** Return rightmost len bytes. Empty if len < 0. */
-  [[nodiscard]] Utf8String right(qsizetype len) const {
+  [[nodiscard]] inline Utf8String right(qsizetype len) const {
     return QByteArray::right(len); }
   /** Return len bytes starting at pos.
    *  Everything after pos if len < 0 or pos+len > size(). */
-  [[nodiscard]] Utf8String mid(qsizetype pos, qsizetype len = -1) const {
+  [[nodiscard]] inline Utf8String mid(qsizetype pos, qsizetype len = -1) const {
     return QByteArray::mid(pos, len); }
-  /** Return leftmost len utf8 characters. */
-  [[nodiscard]] Utf8String utf8left(qsizetype len) const;
-  /** Return rightmost len utf8 characters. */
-  [[nodiscard]] Utf8String utf8right(qsizetype len) const;
-  /** Return len utf8 characters starting at pos.
+  /** Return leftmost len unicode characters. */
+  [[nodiscard]] inline Utf8String utf8left(qsizetype len) const;
+  /** Return rightmost len unicode characters. */
+  [[nodiscard]] inline Utf8String utf8right(qsizetype len) const;
+  /** Return len unicode characters starting at pos.
    *  Everything after pos if len < 0 or pos+len > size(). */
-  [[nodiscard]] Utf8String utf8mid(qsizetype pos, qsizetype len = -1) const;
-  [[nodiscard]] Utf8String trimmed() const { return QByteArray::trimmed(); }
-  Utf8String &trim() { *this = trimmed(); return *this; }
+  [[nodiscard]] inline Utf8String utf8mid(
+      qsizetype pos, qsizetype len = -1) const;
+  [[nodiscard]] inline Utf8String trimmed() const {
+    return QByteArray::trimmed(); }
+  inline Utf8String &trim() { *this = trimmed(); return *this; }
   [[nodiscard]] inline Utf8String chopped(qsizetype len) const {
     return QByteArray::chopped(len); }
   /** like left() but crashes if out of bound. */
@@ -419,8 +484,8 @@ public:
   /** Write a number using a given arbitrary bijective base.
    *  0 is always "", 1 is the first char of the base etc.
    *  e.g. "ABCDEFGHIJKLMNOPQRSTUVWXYZ" is used for spreadsheets column notation
-   *  and european driving plate left and right parts. 1 -> A, 26 -> Z,
-   *  27 -> AA, 16384 -> XFD
+   *  and (with fewer letters) for european driving plate left and right parts.
+   *  1 -> A, 26 -> Z, 27 -> AA, 16384 -> XFD
    *  @see https://en.wikipedia.org/wiki/Bijective_numeration */
   [[nodiscard]] static inline Utf8String bijectiveBaseNumber(
       qulonglong i, const QByteArray &base) {
@@ -480,8 +545,8 @@ public:
     QByteArray::append(a); return *this; }
   inline Utf8String &append(QByteArrayView a) {
     QByteArray::append(a); return *this; }
-  inline Utf8String &append(char32_t c) {
-    QByteArray::append(encodeUtf8(c)); return *this; }
+  inline Utf8String &append(char32_t u) {
+    QByteArray::append(encode_utf8(u)); return *this; }
 
   inline Utf8String &prepend(char c) {
     QByteArray::prepend(c); return *this; }
@@ -495,8 +560,8 @@ public:
     QByteArray::prepend(a); return *this; }
   inline Utf8String &prepend(QByteArrayView a) {
     QByteArray::prepend(a); return *this; }
-  inline Utf8String &prepend(char32_t c) {
-    QByteArray::prepend(encodeUtf8(c)); return *this; }
+  inline Utf8String &prepend(char32_t u) {
+    QByteArray::prepend(encode_utf8(u)); return *this; }
 
   inline Utf8String &insert(qsizetype i, QByteArrayView data) {
     QByteArray::insert(i, data); return *this; }
@@ -522,8 +587,8 @@ public:
     return remove(&c, 1); }
   inline Utf8String &remove(const QByteArray &ba) {
     return remove(ba.constData(), ba.size()); }
-  inline Utf8String &remove(char32_t c) {
-    return remove(encodeUtf8(c)); }
+  inline Utf8String &remove(char32_t u) {
+    return remove(encode_utf8(u)); }
   inline Utf8String &removeAt(qsizetype pos) {
     QByteArray::removeAt(pos); return *this;}
   Utf8String &remove_ascii_chars(QList<char> chars);
@@ -574,8 +639,8 @@ public:
     QByteArray::operator+=(ch); return *this; }
   inline Utf8String &operator+=(const char *s) {
     QByteArray::operator+=(s); return *this; }
-  inline Utf8String &operator+=(char32_t c) {
-    QByteArray::operator+=(encodeUtf8(c)); return *this; }
+  inline Utf8String &operator+=(char32_t u) {
+    QByteArray::operator+=(encode_utf8(u)); return *this; }
 
   inline Utf8String &operator=(const Utf8String &other) {
     QByteArray::operator =(other); return *this; }
@@ -860,167 +925,273 @@ inline Utf8String operator+(const char *a1, const Utf8String &a2) {
 
 QDebug LIBP6CORESHARED_EXPORT operator<<(QDebug dbg, const Utf8String &s);
 
-char32_t Utf8String::decodeUtf8(const char *s, qsizetype len) {
-  auto c = reinterpret_cast<const unsigned char *>(s);
-  Q_ASSERT(s);
-  Q_ASSERT(len > 0);
-#if __cpp_lib_bitops >= 201907L // C++ < 20: bitops
-  switch(std::countl_one(c[0])) {
-    [[likely]] case 0:
-      return *s;
-    case 1:
-      return ReplacementCharacter; // unexpected continuation character
-    case 2:
-      if (len < 2) [[unlikely]]
-        return ReplacementCharacter;
-      return (c[0] & 0b00111111) << 6 | (c[1] & 0b00111111);
-    case 3: {
-      if (len < 3) [[unlikely]]
-        return ReplacementCharacter;
-      char32_t u = ((c[0] & 0b00011111) << 12) | ((c[1] & 0b00111111) << 6)
-          | (c[2] & 0b00111111);
-#if !UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629
-      if (u >= 0xd800 && u <= 0xdfff) [[unlikely]]
-        return ReplacementCharacter; // RFC 3629: surrogate halves are invalid
-#endif
-      return u;
+const char *Utf8String::go_forward_to_utf8_char(
+    const char **s, const char *end, bool skip_bom) {
+  forever {
+    auto c = reinterpret_cast<const unsigned char *>(*s);
+    if (*s >= end)
+      return 0; // end reached
+    if ((c[0] & 0b1100'0000) == 0b1000'0000) [[unlikely]] {
+      ++*s;
+      continue; // skip continuation byte
     }
-    case 4: {
-      if (len < 4) [[unlikely]]
-        return ReplacementCharacter;
-      char32_t u = ((c[0] & 0b00001111) << 18) | ((c[1] & 0b00111111) << 12)
-          | ((c[2] & 0b00111111) << 6) | (c[3] & 0b00111111);
-  #if !UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629
-      if (u >= 0x10ffff) [[unlikely]]
-        return ReplacementCharacter;  // RFC 3629: > 0x10ffff are invalid
-  #endif
-      return u;
+    if (skip_bom && c[0] == 0xef && *s+3 <= end && c[1] == 0xbb
+        && c[2] == 0xbf) [[unlikely]] {
+      *s += 3;
+      continue; // skip byte order mark
     }
-#if UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629 // RFC 3629: > 0x10ffff are invalid
-    case 5:
-      if (len < 5) [[unlikely]]
-        return ReplacementCharacter;
-      return ((c[0] & 0b00000111) << 24) | ((c[1] & 0b00111111) << 18)
-          | ((c[2] & 0b00111111) << 12) | ((c[3] & 0b00111111) << 6)
-          | (c[4] & 0b00111111);
-    case 6:
-      if (len < 6) [[unlikely]]
-        return ReplacementCharacter;
-      return ((c[0] & 0b00000011) << 30) | ((c[1] & 0b00111111) << 24)
-          | ((c[2] & 0b00111111) << 18) | ((c[3] & 0b00111111) << 12)
-          | ((c[4] & 0b00111111) << 6) | (c[5] & 0b00111111);
-#endif
+    return *s; // begin of valid sequence found
   }
-#else // C++ < 20: bitops
-  if (c[0] <= 0x7f)
-    return *s;
-  if ((c[0] & 0b01000000) == 0)
-    return ReplacementCharacter; // unexpected continuation character
-  if ((c[0] & 0b00100000) == 0 && len > 1)
-    return (c[0] & 0b00011111) << 6 | (c[1] & 0b00111111);
-  if ((c[0] & 0b00010000) == 0 && len > 2) {
-    char32_t u = ((c[0] & 0b00001111) << 12) | ((c[1] & 0b00111111) << 6)
-        | (c[2] & 0b00111111);
-#if !UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629
-    if (u >= 0xd800 && u <= 0xdfff)
-      return ReplacementCharacter;  // RFC 3629: surrogate halves are invalid
-#endif
-    return u;
-  }
-  if ((c[0] & 0b00001000) == 0 && len > 3) {
-    char32_t u = ((c[0] & 0b00000111) << 18) | ((c[1] & 0b00111111) << 12)
-        | ((c[2] & 0b00111111) << 6) | (c[3] & 0b00111111);
-#if !UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629
-    if (u >= 0x10ffff) // includes 0xfe 0xff bytes exclusion
-        return ReplacementCharacter; // RFC 3629: > 0x10ffff are invalid
-#endif
-    return u;
-  }
-#if UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629 // RFC 3629: > 0x10ffff are invalid
-  if ((c[0] & 0b00000100) == 0 && len > 4)
-    return ((c[0] & 0b00000011) << 24) | ((c[1] & 0b00111111) << 18)
-        | ((c[2] & 0b00111111) << 12) | ((c[3] & 0b00111111) << 6)
-        | (c[4] & 0b00111111);
-  if ((c[0] & 0b00000010) == 0 && len > 5)
-    return ((c[0] & 0b00000001) << 30) | ((c[1] & 0b00111111) << 24)
-        | ((c[2] & 0b00111111) << 18) | ((c[3] & 0b00111111) << 12)
-        | ((c[4] & 0b00111111) << 6) | (c[5] & 0b00111111);
-#endif
-#endif // C++ < 20: bitops
-  return ReplacementCharacter;
 }
 
-Utf8String Utf8String::encodeUtf8(char32_t c) {
-  if (c <= 0x7f) {
-    unsigned char a = c & 0x7f;
-    return Utf8String(&a, 1);
+const char *Utf8String::go_backward_to_utf8_char(
+    const char **s, const char *begin, bool skip_bom) {
+  forever {
+    auto c = reinterpret_cast<const unsigned char *>(*s);
+    if (*s < begin)
+      return 0; // begin reached
+    if ((c[0] & 0b1100'0000) == 0b1000'0000) [[unlikely]] {
+      --*s;
+      continue; // skip continuation byte
+    }
+    if (skip_bom && c[0] == 0xbf && *s-3 >= begin && c[-1] == 0xbb
+        && c[-2] == 0xef) [[unlikely]] {
+      *s -= 3;
+      continue; // skip byte order mark
+    }
+    return *s; // begin of valid sequence found
   }
-  if (c <= 0x7ff) {
+}
+
+char32_t Utf8String::decode_utf8_and_step_forward(
+    const char **s, const char *end, bool strict) {
+  auto c = reinterpret_cast<const unsigned char *>(*s);
+  if (c[0] < 0b1000'0000) [[likely]] {
+    *s += 1; // ascii, 1 byte
+    return c[0];
+  }
+  if (c[0] < 0b1100'0000) [[unlikely]] {
+    *s += 1;
+    return ReplacementCharacter; // out of sequence continuation byte
+  }
+  if (c[0] < 0b1110'0000) {
+    *s += 2; // 2 bytes
+    if (*s > end) [[unlikely]] {
+      *s = end;
+      return ReplacementCharacter; // incomplete sequence at end
+    }
+    char32_t u = (c[0] & 0b0001'1111) << 6 | (c[1] & 0b0011'1111);
+    if (strict && u < 0x80) [[unlikely]]
+      return ReplacementCharacter; // overlong sequence
+    if (strict && (c[1] & 0b1100'0000) != 0b1000'0000) [[unlikely]]
+      return ReplacementCharacter; // invalid continuation byte
+    return u;
+  }
+  if (c[0] < 0b1111'0000) {
+    *s += 3; // 3 bytes
+    if (*s > end) [[unlikely]] {
+      *s = end;
+      return ReplacementCharacter; // incomplete sequence at end
+    }
+    char32_t u = ((c[0] & 0b0000'1111) << 12) | ((c[1] & 0b0011'1111) << 6)
+        | (c[2] & 0b0011'1111);
+    if (u >= 0xd800 && u <= 0xdfff) [[unlikely]]
+      return ReplacementCharacter; // RFC 3629: surrogate halves are invalid
+    if (strict && u < 0x800) [[unlikely]]
+      return ReplacementCharacter; // overlong sequence
+    if (strict && ((c[1] & 0b1100'0000) != 0b1000'0000
+                   || (c[2] & 0b1100'0000) != 0b1000'0000)) [[unlikely]]
+      return ReplacementCharacter; // invalid continuation byte
+    return u;
+  }
+  *s += 4; // 4 bytes
+  if (*s > end) [[unlikely]] {
+    *s = end;
+    return ReplacementCharacter; // incomplete sequence at end
+  }
+  // note: first byte mask intentionnaly keeps 0b0000'1000 bit so that a 5+ bytes
+  // sequence will be >= 0x10'ffff and discarded without specific test
+  char32_t u = ((c[0] & 0b0000'1111) << 18) | ((c[1] & 0b0011'1111) << 12)
+      | ((c[2] & 0b0011'1111) << 6) | (c[3] & 0b0011'1111);
+  if (u >= 0x10'ffff) [[unlikely]]
+    return ReplacementCharacter;  // RFC 3629: > 0x10ffff are invalid
+  if (strict && u < 0x10000) [[unlikely]]
+    return ReplacementCharacter; // overlong sequence
+  if (strict && ((c[1] & 0b1100'0000) != 0b1000'0000
+                 || (c[2] & 0b1100'0000) != 0b1000'0000
+                 || (c[3] & 0b1100'0000) != 0b1000'0000)) [[unlikely]]
+    return ReplacementCharacter; // invalid continuation byte
+  return u;
+}
+
+void Utf8String::encode_utf8_and_step_forward(char **d, char32_t u) {
+  auto c = reinterpret_cast<unsigned char *>(*d);
+  if (u < 0x80) [[likely]] { // ascii, 1 byte
+    c[0] = u;
+    *d += 1;
+    return;
+  }
+  if (u < 0x800) {
+    c[0] = 0b1100'0000 + (u >> 6);
+    c[1] = 0b1000'0000 + (u & 0b11'1111);
+    *d += 2;
+    return;
+  }
+  if (u >= 0xd800 && u <= 0xdfff) [[unlikely]]
+    return; // RFC 3629: surrogate halves are invalid
+  if (u < 0x10000) {
+    c[0] = 0b1110'0000 + (u >> 12);
+    c[1] = 0b1000'0000 + ((u >> 6) & 0b11'1111);
+    c[2] = 0b1000'0000 + (u & 0b11'1111);
+    *d += 3;
+    return;
+  }
+  if (u > 0x10'ffff) [[unlikely]]
+    return; // RFC 3629: > 0x10ffff are invalid
+  c[0] = 0b1111'0000 + (u >> 18);
+  c[1] = 0b1000'0000 + ((u >> 12) & 0b11'1111);
+  c[2] = 0b1000'0000 + ((u >> 6) & 0b11'1111);
+  c[3] = 0b1000'0000 + (u & 0b11'1111);
+  *d += 4;
+}
+
+Utf8String Utf8String::encode_utf8(char32_t u) {
+  if (u < 0x80) [[likely]] { // ascii, 1 byte
+    unsigned char c = u;
+    return Utf8String(&c, 1);
+  }
+  if (u < 0x800) {
     unsigned char s[2];
-    s[0] = 0b11000000 + (c >> 6);
-    s[1] = 0b10000000 + (c & 0b111111);
+    s[0] = 0b1100'0000 + (u >> 6);
+    s[1] = 0b1000'0000 + (u & 0b11'1111);
     return Utf8String(s, sizeof s);
   }
-#if !UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629
-  if (c >= 0xd800 && c <= 0xdfff) // RFC 3629: surrogate halves are invalid
-    return ReplacementCharacterUtf8;
-#endif
-  if (c <= 0xffff) {
+  if (u >= 0xd800 && u <= 0xdfff) [[unlikely]]
+    return ReplacementCharacterUtf8; // RFC 3629: surrogate halves are invalid
+  if (u < 0x10000) {
     unsigned char s[3];
-    s[0] = 0b11100000 + (c >> 12);
-    s[1] = 0b10000000 + ((c >> 6) & 0b111111);
-    s[2] = 0b10000000 + (c & 0b111111);
+    s[0] = 0b1110'0000 + (u >> 12);
+    s[1] = 0b1000'0000 + ((u >> 6) & 0b11'1111);
+    s[2] = 0b1000'0000 + (u & 0b11'1111);
     return Utf8String(s, sizeof s);
   }
-#if !UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629
-  if (c >= 0x10ffff) // RFC 3629: > 0x10ffff are invalid
-    return ReplacementCharacterUtf8;
-#endif
-  if (c <= 0x1fffff) {
-    unsigned char s[4];
-    s[0] = 0b11110000 + (c >> 18);
-    s[1] = 0b10000000 + ((c >> 12) & 0b111111);
-    s[2] = 0b10000000 + ((c >> 6) & 0b111111);
-    s[3] = 0b10000000 + (c & 0b111111);
-    return Utf8String(s, sizeof s);
-  }
-#if UTF8_FULL_UCS4_INSTEAD_OF_RFC_3629 // RFC 3629: > 0x10ffff are invalid
-  if (c <= 0x3ffffff) {
-    unsigned char s[5];
-    s[0] = 0b11111000 + (c >> 24);
-    s[1] = 0b10000000 + ((c >> 18) & 0b111111);
-    s[2] = 0b10000000 + ((c >> 12) & 0b111111);
-    s[3] = 0b10000000 + ((c >> 6) & 0b111111);
-    s[4] = 0b10000000 + (c & 0b111111);
-    return Utf8String(s, sizeof s);
-  }
-  if (c <= 0x7fffffff) {
-    unsigned char s[6];
-    s[0] = 0b11111100 + (c >> 30);
-    s[1] = 0b10000000 + ((c >> 24) & 0b111111);
-    s[2] = 0b10000000 + ((c >> 18) & 0b111111);
-    s[3] = 0b10000000 + ((c >> 12) & 0b111111);
-    s[4] = 0b10000000 + ((c >> 6) & 0b111111);
-    s[5] = 0b10000000 + (c & 0b111111);
-    return Utf8String(s, sizeof s);
-  }
-#endif
-  return ReplacementCharacterUtf8;
+  if (u > 0x10'ffff) [[unlikely]]
+    return ReplacementCharacterUtf8; // RFC 3629: > 0x10ffff are invalid
+  unsigned char s[4];
+  s[0] = 0b1111'0000 + (u >> 18);
+  s[1] = 0b1000'0000 + ((u >> 12) & 0b11'1111);
+  s[2] = 0b1000'0000 + ((u >> 6) & 0b11'1111);
+  s[3] = 0b1000'0000 + (u & 0b11'1111);
+  return Utf8String(s, sizeof s);
 }
 
-char32_t Utf8String::toUpper(char32_t c) {
-  auto cm = std::lower_bound(_case_mapping.cbegin(), _case_mapping.cend(), c);
-  return cm == _case_mapping.end() || cm->utf32 != c ? c : cm->upper_utf32;
+void Utf8String::clean(
+    char *s, const char *end, bool strict, bool keep_replacement_chars,
+    bool keep_bom) {
+  char *d = s; // destination
+  while (s < end) {
+    auto c = decode_utf8_and_step_forward(const_cast<const char**>(&s), end, strict);
+    if (!keep_replacement_chars && c == ReplacementCharacter) [[unlikely]]
+      continue;
+    if (!keep_bom && c == ByteOrderMark) [[unlikely]]
+      continue;
+    encode_utf8_and_step_forward(&d, c);
+  }
 }
 
-char32_t Utf8String::toLower(char32_t c) {
-  auto cm = std::lower_bound(_case_mapping.cbegin(), _case_mapping.cend(), c);
-  return cm == _case_mapping.end() || cm->utf32 != c ? c : cm->lower_utf32;
+Utf8String &Utf8String::clean(
+    bool strict, bool keep_replacement_chars, bool keep_bom) {
+  char *s = data(), *d = s, *begin = s, *end = s+size();
+  while (s < end) {
+    auto c = decode_utf8_and_step_forward(const_cast<const char**>(&s), end, strict);
+    if (!keep_replacement_chars && c == ReplacementCharacter) [[unlikely]]
+      continue;
+    if (!keep_bom && c == ByteOrderMark) [[unlikely]]
+      continue;
+    encode_utf8_and_step_forward(&d, c);
+  }
+  truncate(d-begin);
+  return *this;
 }
 
-char32_t Utf8String::toTitle(char32_t c) {
-  auto cm = std::lower_bound(_case_mapping.cbegin(), _case_mapping.cend(), c);
-  return cm == _case_mapping.end() || cm->utf32 != c ? c : cm->title_utf32;
+Utf8String Utf8String::cleaned(
+    const char *s, const char *end, bool strict, bool keep_replacement_chars,
+    bool keep_bom) {
+  QByteArray cleaned(end-s, Qt::Uninitialized);
+  char *d = cleaned.data(), *begin = d; // destination
+  while (s < end) {
+    auto c = decode_utf8_and_step_forward(&s, end, strict);
+    if (!keep_replacement_chars && c == ReplacementCharacter) [[unlikely]]
+      continue;
+    if (!keep_bom && c == ByteOrderMark) [[unlikely]]
+      continue;
+    encode_utf8_and_step_forward(&d, c);
+  }
+  cleaned.truncate(d-begin);
+  return cleaned;
+}
+
+Utf8String Utf8String::utf8value(
+    qsizetype i, const char *s, const char *end, const Utf8String &def) {
+  for (qsizetype j = 0; j < i && go_forward_to_utf8_char(&s, end); ++j, ++s)
+    ;
+  return s < end ? Utf8String(s, end-s) : def;
+}
+
+Utf8String Utf8String::utf8left(qsizetype len) const {
+  auto s = constData();
+  auto end = s + size();
+  auto begin = go_forward_to_utf8_char(&s, end);
+  for (qsizetype i = 0; i < len && go_forward_to_utf8_char(&s, end); ++s, ++i)
+    ;
+  return Utf8String(begin, s-begin);
+}
+
+Utf8String Utf8String::utf8right(qsizetype len) const {
+  auto begin = constData();
+  auto s = begin + size(), end = s;
+  for (qsizetype i = 0; i < len && go_backward_to_utf8_char(&s, begin); --s,++i)
+    ;
+  if (s < begin)
+    s  = begin;
+  return Utf8String(s, end-s);
+}
+
+Utf8String Utf8String::utf8mid(qsizetype pos, qsizetype len) const {
+  auto s = constData(), begin = s;
+  auto end = s + size();
+  for (qsizetype i = 0; i < pos && go_forward_to_utf8_char(&s, end); ++s, ++i)
+    ;
+  if (len < 0)
+    return Utf8String(s, size()-(s-begin));
+  begin = s;
+  for (qsizetype i = 0; i < len && go_forward_to_utf8_char(&s, end); ++s, ++i)
+    ;
+  return Utf8String(begin, s-begin);
+}
+
+qsizetype Utf8String::utf8size() const {
+  auto s = constData();
+  auto end = s + size();
+  qsizetype i = 0;
+  for (; go_forward_to_utf8_char(&s, end); ++s)
+    ++i;
+  return i;
+}
+
+char32_t Utf8String::toUpper(char32_t u) {
+  auto cm = std::lower_bound(_case_mapping.cbegin(), _case_mapping.cend(), u);
+  return cm == _case_mapping.end() || cm->utf32 != u ? u : cm->upper_utf32;
+}
+
+char32_t Utf8String::toLower(char32_t u) {
+  auto cm = std::lower_bound(_case_mapping.cbegin(), _case_mapping.cend(), u);
+  return cm == _case_mapping.end() || cm->utf32 != u ? u : cm->lower_utf32;
+}
+
+char32_t Utf8String::toTitle(char32_t u) {
+  auto cm = std::lower_bound(_case_mapping.cbegin(), _case_mapping.cend(), u);
+  return cm == _case_mapping.end() || cm->utf32 != u ? u : cm->title_utf32;
 }
 
 [[nodiscard]] inline Utf8String Utf8String::number(bool b) {

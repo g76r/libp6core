@@ -445,7 +445,7 @@ _functions {
   auto base = PercentEvaluator::eval_number<int>(params.value(1), 10, context);
   auto padding = PercentEvaluator::eval_utf8(params.value(2), context);
   auto s = Utf8String::number(i, base);
-  return padding.utf8left(padding.utf8Size()-s.utf8Size())+s;
+  return padding.utf8left(padding.utf8size()-s.utf8size())+s;
 }, true},
 { "=formatuint64", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
   auto params = key.split_headed_list(ml);
@@ -456,7 +456,7 @@ _functions {
   auto base = PercentEvaluator::eval_number<int>(params.value(1), 10, context);
   auto padding = PercentEvaluator::eval_utf8(params.value(2), context);
   auto s = Utf8String::number(i, base);
-  return padding.utf8left(padding.utf8Size()-s.utf8Size())+s;
+  return padding.utf8left(padding.utf8size()-s.utf8size())+s;
 }, true},
 { "=formatdouble", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
   auto params = key.split_headed_list(ml);

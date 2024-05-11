@@ -8,18 +8,18 @@ int main(void) {
   Log::init();
   Log::addConsoleLogger(Log::Debug);
   Utf8String s("§foo§bar§baz§§§");
-  qDebug() << s.size() << s.utf8Size();
+  qDebug() << s.size() << s.utf8size();
   qDebug() << s << s.split('o') << s.split("§"_u8);
-  qDebug() << s.splitByLeadingChar();
-  qDebug() << "/foo/bar/baz///"_u8.splitByLeadingChar();
+  qDebug() << s.split_headed_list();
+  qDebug() << "/foo/bar/baz///"_u8.split_headed_list();
   qDebug() << s.left(4) << "-" << s.utf8left(6) << "-" << s.utf8mid(4,3) << "-" << s.utf8right(4); 
   s = "\xef\xbb\xbf\xef\xbb\xbf\xef\xbb\xbf§foo§bar§baz§\xef\xbb\xbf§§"_u8;
   auto sc = s.cleaned();
-  qDebug() << s.size() << s.utf8Size() << sc.size() << sc.utf8Size() << sc;
+  qDebug() << s.size() << s.utf8size() << sc.size() << sc.utf8size() << sc;
   qDebug() << "j k  l   m "_u8.split(' ') << "j k  l   m "_u8.split(' ', Qt::SkipEmptyParts)
            << "jjj k"_u8.split(' ', Qt::SkipEmptyParts) << ""_u8.split(' ');
   qDebug() << "ab\xef\xbb\xbf"_u8.cleaned();
-  qDebug() << s.splitByLeadingChar();
+  qDebug() << s.split_headed_list();
   qDebug() << "  f   oo\n\rbar\vbaz"_u8.split(Utf8String::AsciiWhitespace);
   const char *p = "foo";
   qDebug() << Utf8String(false) << "-" << Utf8String(p != s) << "-"

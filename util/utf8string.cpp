@@ -1,4 +1,4 @@
-/* Copyright 2023 Gregoire Barbier and others.
+/* Copyright 2023-2024 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -119,9 +119,6 @@ static inline F toFloating(
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   };
-  //for (unsigned char i = 64; i < 124; ++i) {
-  //  qDebug() << (char)i << " ->" << _multipliers[i];
-  //}
   s = s.trimmed();
   F mul = 1.0;
   if (suffixes_enabled) {
@@ -185,9 +182,6 @@ static inline I toInteger(
     {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
     {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
   };
-  //for (unsigned char i = 64; i < 124; ++i) {
-  //  qDebug() << (char)i << " ->" << _multipliers[i];
-  //}
   if (suffixes_enabled) {
     auto len = s.size();
     // accept suffixes only in base 10 (otherwise 0x1b would be 1 billion)
@@ -325,77 +319,22 @@ found:
   return b;
 }
 
-/** Increment s until a start of char sequence is reached.
- *  If s is already at a char start, do nothing.
- *  Actually: skips BOMs and (erroneous) out of sequence bytes.
- *  Returns 0 if end is reached.
- */
-static inline const char *align_on_char(const char *&s, const char *end) {
-  // skip every BOM and every unexpected continuation (0b10xxxxxx) byte
-  // being it at the end of previous sequence or unexpected
-  while ((s+3 <= end && (s[0]&0xff) == 0xef && (s[1]&0xff) == 0xbb &&
-          (s[2]&0xff) == 0xbf) || // BOM
-         (s+1 <= end && (s[0]&0b11000000) == 0b10000000)) // continuation byte
-    ++s;
-  return s < end ? s : 0;
-}
-
-/** Decrement s until a start of char sequence is reached.
- *  If s is already at a char start, do nothing.
- *  Actually: skips BOMs and (erroneous) out of sequence bytes.
- *  Returns 0 if begin is exceeded.
- */
-static inline const char *backward_align_on_char(
-    const char *&s, const char *begin) {
-  // skip every BOM and every unexpected continuation (0b10xxxxxx) byte
-  // being it at the end of previous sequence or unexpected
-  while ((s-3 >= begin && (s[-2]&0xff) == 0xef && (s[-1]&0xff) == 0xbb
-          && (s[0]&0xff) == 0xbf) || // BOM
-         (s-1 >= begin && (s[0]&0b11000000) == 0b10000000)) // continuation byte
-    --s;
-  return s >= begin ? s : 0;
-}
-
-qsizetype Utf8String::utf8Size() const {
-  auto s = constData();
-  auto end = s + size();
-  qsizetype i = 0;
-  for (; align_on_char(s, end); ++s)
-    ++i;
-  return i;
-}
-
-Utf8String Utf8String::cleaned(const char *s, const char *end) {
-  Q_ASSERT(s);
-  Q_ASSERT(end);
-  Utf8String cleaned;
-  for (; align_on_char(s, end); ++s) {
-    auto c = decodeUtf8(s, end);
-    auto u = encodeUtf8(c);
-    cleaned += u;
-  }
-  return cleaned;
-}
-
 static inline Utf8String foldCase(
     const char *s, const char *end, std::function<char32_t(char32_t)> fold) {
-  Q_ASSERT(s);
-  Q_ASSERT(end);
   Utf8String folded;
-  for (; align_on_char(s, end); ++s)
-    folded += fold(Utf8String::decodeUtf8(s, end));
+  for (; Utf8String::go_forward_to_utf8_char(&s, end); ++s) {
+    folded += fold(Utf8String::decode_utf8(s, end));
+  }
   return folded;
 }
 
 static inline Utf8String foldCaseWithHoles(
     const char *s, const char *end, std::function<char32_t(char32_t)> fold,
     char32_t replacement) {
-  Q_ASSERT(s);
-  Q_ASSERT(end);
   Utf8String folded;
   char32_t previous = 0;
-  for (; align_on_char(s, end); ++s) {
-    auto c = fold(Utf8String::decodeUtf8(s, end));
+  for (; Utf8String::go_forward_to_utf8_char(&s, end); ++s) {
+    auto c = fold(Utf8String::decode_utf8(s, end));
     if (c == Utf8String::ReplacementCharacter) {
       if (previous != Utf8String::ReplacementCharacter)
         folded += replacement;
@@ -410,8 +349,8 @@ static inline bool testCase(
     const char *s, const char *end, std::function<char32_t(char32_t)> fold) {
   Q_ASSERT(s);
   Q_ASSERT(end);
-  for (; align_on_char(s, end); ++s) {
-    char32_t orig = Utf8String::decodeUtf8(s, end);
+  for (; Utf8String::go_forward_to_utf8_char(&s, end); ++s) {
+    char32_t orig = Utf8String::decode_utf8(s, end);
     if (orig != fold(orig))
       return false;
   }
@@ -421,7 +360,7 @@ static inline bool testCase(
 Utf8String Utf8String::toUpper() const {
   auto s = constData();
   auto end = s + size();
-  return foldCase(s, end, [](char32_t c) { return Utf8String::toUpper(c); });
+  return foldCase(s, end, [](char32_t u) { return Utf8String::toUpper(u); });
 }
 
 Utf8String Utf8String::toIdentifier(bool allow_non_ascii) const {
@@ -445,10 +384,10 @@ Utf8String Utf8String::toInternetHeaderName(bool ignore_trailing_colon) const {
   auto end = s + size();
   if (ignore_trailing_colon && s < end && end[-1] == ':')
     --end;
-  auto f = [](char32_t c) {
+  auto f = [](char32_t u) {
     // rfc5322 states that a header may contain any ascii printable char but ':'
-    if (c >= 0x21 && c <= 0x7f && c != ':')
-      return c;
+    if (u >= 0x21 && u <= 0x7f && u != ':')
+      return u;
     return Utf8String::ReplacementCharacter;
   };
   return foldCaseWithHoles(s, end, f, '_');
@@ -458,18 +397,18 @@ Utf8String Utf8String::toInternetHeaderCase() const {
   auto s = constData();
   auto end = s + size();
   bool leading = true;
-  auto f = [&leading](char32_t c) -> char32_t {
+  auto f = [&leading](char32_t u) -> char32_t {
     // TODO also (conditionaly) support lowerUpper as a separator
     // TODO include in a more general case conversion scheme
     // with snake, camel, pascal, allcaps, alllower
-    if (c == '-' || c == '_' || c == '.' || c == ':' || ::isspace(c)) {
+    if (u == '-' || u == '_' || u == '.' || u == ':' || ::isspace(u)) {
       leading = true;
       return '-';
     }
     if (!leading)
-      return Utf8String::toLower(c);
+      return Utf8String::toLower(u);
     leading = false;
-    return Utf8String::toUpper(c);
+    return Utf8String::toUpper(u);
   };
   return foldCase(s, end, f);
 }
@@ -477,72 +416,31 @@ Utf8String Utf8String::toInternetHeaderCase() const {
 Utf8String Utf8String::toLower() const {
   auto s = constData();
   auto end = s + size();
-  return foldCase(s, end, [](char32_t c) { return Utf8String::toLower(c); });
+  return foldCase(s, end, [](char32_t u) { return Utf8String::toLower(u); });
 }
 
 Utf8String Utf8String::toTitle() const {
   auto s = constData();
   auto end = s + size();
-  return foldCase(s, end, [](char32_t c) { return Utf8String::toTitle(c); });
+  return foldCase(s, end, [](char32_t u) { return Utf8String::toTitle(u); });
 }
 
 bool Utf8String::isUpper() const {
   auto s = constData();
   auto end = s + size();
-  return testCase(s, end, [](char32_t c) { return Utf8String::toUpper(c); });
+  return testCase(s, end, [](char32_t u) { return Utf8String::toUpper(u); });
 }
 
 bool Utf8String::isLower() const {
   auto s = constData();
   auto end = s + size();
-  return testCase(s, end, [](char32_t c) { return Utf8String::toLower(c); });
+  return testCase(s, end, [](char32_t u) { return Utf8String::toLower(u); });
 }
 
 bool Utf8String::isTitle() const {
   auto s = constData();
   auto end = s + size();
-  return testCase(s, end, [](char32_t c) { return Utf8String::toTitle(c); });
-}
-
-Utf8String Utf8String::utf8value(
-    qsizetype i, const char *s, const char *end, const Utf8String &def) {
-  Q_ASSERT(s);
-  Q_ASSERT(end >= s);
-  for (qsizetype j = 0; j < i && align_on_char(s, end); ++j, ++s)
-    ;
-  return s < end ? Utf8String(s, end-s) : def;
-}
-
-Utf8String Utf8String::utf8left(qsizetype len) const {
-  auto s = constData();
-  auto end = s + size();
-  auto begin = align_on_char(s, end);
-  for (qsizetype i = 0; i < len && align_on_char(s, end); ++s, ++i)
-    ;
-  return Utf8String(begin, s-begin);
-}
-
-Utf8String Utf8String::utf8right(qsizetype len) const {
-  auto begin = constData();
-  auto s = begin + size(), end = s;
-  for (qsizetype i = 0; i < len && backward_align_on_char(s, begin); --s, ++i)
-    ;
-  if (s < begin)
-    s  = begin;
-  return Utf8String(s, end-s);
-}
-
-Utf8String Utf8String::utf8mid(qsizetype pos, qsizetype len) const {
-  auto s = constData(), begin = s;
-  auto end = s + size();
-  for (qsizetype i = 0; i < pos && align_on_char(s, end); ++s, ++i)
-    ;
-  if (len < 0)
-    return Utf8String(s, size()-(s-begin));
-  begin = s;
-  for (qsizetype i = 0; i < len && align_on_char(s, end); ++s, ++i)
-    ;
-  return Utf8String(begin, s-begin);
+  return testCase(s, end, [](char32_t u) { return Utf8String::toTitle(u); });
 }
 
 const Utf8StringList Utf8String::split_after(
@@ -553,17 +451,6 @@ const Utf8StringList Utf8String::split_after(
     return {};
   auto data = constData(), sep_data = sep.constData();
   qsizetype imax = n-w+1, i = offset, j = i;
-  //  xx,y,zzzz
-  //  012345678
-  //  4-3=1
-  //  2-0=2
-  //  ,x,,zzzz
-  //  01234567
-  //  0-0=0
-  //  3-3=0
-  //  x,zzzz
-  //  012345
-  //  6-2=4
   while (i < imax) {
     if (::strncmp(data+i, sep_data, w) == 0) {
       if (i-j > 0 || behavior == Qt::KeepEmptyParts)
@@ -585,17 +472,6 @@ const Utf8StringList Utf8String::split_after(
   qsizetype n = size(), i = offset, j = offset;
   if (offset < 0 || n == 0)
     return {};
-  //  xx,y,zzzz
-  //  012345678
-  //  4-3=1
-  //  2-0=2
-  //  ,x,,zzzz
-  //  01234567
-  //  0-0=0
-  //  3-3=0
-  //  x,zzzz
-  //  012345
-  //  6-2=4
   for (; i < n; ++i) {
     if (seps.contains(at(i))) {
       if (i-j > 0 || behavior == Qt::KeepEmptyParts)
@@ -612,12 +488,11 @@ Utf8StringList Utf8String::split_headed_list(qsizetype offset) const {
   auto begin = constData();
   auto s = begin + offset;
   auto end = begin + size();
-  auto sep = align_on_char(s, end); // begin of leading separator
-  auto csv = align_on_char(++s, end); // begin of char separated values
+  auto sep = go_forward_to_utf8_char(&s, end); // begin of leading separator
+  auto csv = go_forward_to_utf8_char(&++s, end); // begin of char separated values
   auto eos = sep+1; // end of separator (byte after the end of the separator)
   for (; eos < csv && (eos[0]&0b11000000) == 0b10000000; ++eos)
     ; // go forward over continuation bytes
-  //qDebug() << "splitByLeadingChar" << offset << Utf8String(sep, eos-sep).toHex() << csv;
   return split_after(Utf8String(sep, eos-sep), csv-begin);
 }
 
@@ -710,17 +585,17 @@ static const qint8 _hexdigits[] = {
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 };
 
-inline qsizetype decode_oct_char(const char *s, const char *end, char32_t *c) {
-  *c = 0;
+inline qsizetype decode_oct_char(const char *s, const char *end, char32_t *u) {
+  *u = 0;
   auto begin = s, max = std::min(end, s+3);
   for (; s < max && isoctal(*s); ++s)
-    *c = (*c << 3) + (*s - '0');
+    *u = (*u << 3) + (*s - '0');
   return s-begin;
 }
 
 inline qsizetype decode_hex_char(
-    const char *s, const char *end, qsizetype digits, char32_t *c) {
-  *c = 0;
+    const char *s, const char *end, qsizetype digits, char32_t *u) {
+  *u = 0;
   if (s+digits >= end)
     return 0;
   auto begin = s;
@@ -730,7 +605,7 @@ inline qsizetype decode_hex_char(
     auto i = _hexdigits[static_cast<unsigned char>(*s)];
     if (i < 0)
       return digits ? 0 : s-begin;
-    *c = (*c << 4) + i;
+    *u = (*u << 4) + i;
   }
   return digits;
 }
@@ -740,7 +615,7 @@ Utf8String Utf8String::fromCEscaped(const char *s, qsizetype len) {
     return {};
   Utf8String result;
   auto end = s + len;
-  char32_t c;
+  char32_t u;
   qsizetype taken;
   for (; s < end; ++s) {
     if (*s == '\\') {
@@ -777,28 +652,28 @@ Utf8String Utf8String::fromCEscaped(const char *s, qsizetype len) {
         case '5':
         case '6':
         case '7':
-          // TODO hande o{} C++23
-          // TODO hande N{} C++23
-          if ((taken = decode_oct_char(s, end, &c)))
-            result += c < 0x80 ? c : ReplacementCharacter;
+          // LATER handle o{} C++23
+          // LATER handle N{} C++23
+          if ((taken = decode_oct_char(s, end, &u)))
+            result += u < 0x80 ? u : ReplacementCharacter;
           s += taken-1;
           break;
         case 'x':
-          // TODO hande x{} C++23
-          if ((taken = decode_hex_char(++s, end, 0, &c)))
-            result += c < 0x80 ? c : ReplacementCharacter;
+          // LATER handle x{} C++23
+          if ((taken = decode_hex_char(++s, end, 0, &u)))
+            result += u < 0x80 ? u : ReplacementCharacter;
           s += taken-1;
           break;
         case 'u':
-          // TODO hande u{} C++23
-          if (decode_hex_char(++s, end, 4, &c))
-            result += c;
+          // LATER handle u{} C++23
+          if (decode_hex_char(++s, end, 4, &u))
+            result += u;
           s += 3;
           break;
         case 'U':
-          // TODO hande U{} C++23
-          if (decode_hex_char(++s, end, 8, &c))
-            result += c;
+          // LATER handle U{} C++23
+          if (decode_hex_char(++s, end, 8, &u))
+            result += u;
           s += 7;
           break;
         default:
