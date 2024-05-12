@@ -1,4 +1,4 @@
-/* Copyright 2016-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -12,6 +12,12 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "message.h"
+
+static int staticInit() {
+  qRegisterMetaType<Message>();
+  return 0;
+}
+Q_CONSTRUCTOR_FUNCTION(staticInit)
 
 class MessageData : public QSharedData {
 public:
@@ -27,7 +33,6 @@ Message::Message(const Session &session, PfNode node)
 
 Message::Message() {
 }
-
 
 Message::Message(const Message &other) : d(other.d) {
 }

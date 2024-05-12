@@ -1,4 +1,4 @@
-/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,6 +21,12 @@
 
 using namespace Qt::Literals::StringLiterals;
 using EvalContext = ParamsProvider::EvalContext;
+
+static int staticInit() {
+  qRegisterMetaType<HttpResponse>();
+  return 0;
+}
+Q_CONSTRUCTOR_FUNCTION(staticInit)
 
 class HttpResponseData : public QSharedData {
 public:

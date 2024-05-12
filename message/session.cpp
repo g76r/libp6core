@@ -1,4 +1,4 @@
-/* Copyright 2016-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,6 +13,12 @@
  */
 #include "session.h"
 #include "sessionmanager.h"
+
+static int staticInit() {
+  qRegisterMetaType<Session>();
+  return 0;
+}
+Q_CONSTRUCTOR_FUNCTION(staticInit)
 
 QVariant Session::param(const char *key) const {
   return SessionManager::param(_id, key);

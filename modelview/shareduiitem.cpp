@@ -14,6 +14,12 @@
 #include "shareduiitem.h"
 #include "util/paramset.h"
 
+static int staticInit() {
+  qRegisterMetaType<SharedUiItem>();
+  return 0;
+}
+Q_CONSTRUCTOR_FUNCTION(staticInit)
+
 Utf8String SharedUiItemData::id() const {
   return Utf8String(uiData(0, Qt::DisplayRole));
 }

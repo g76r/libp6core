@@ -1,4 +1,4 @@
-/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,6 +24,12 @@
 
 static QRegularExpression _whitespace("\\s");
 static QRegularExpression _leadingwhitespace("\\A\\s+");
+
+static int staticInit() {
+  qRegisterMetaType<PfNode>();
+  return 0;
+}
+Q_CONSTRUCTOR_FUNCTION(staticInit)
 
 qint64 PfNodeData::writePf(QIODevice *target, const PfOptions &options) const {
   if (options.shouldIndent())

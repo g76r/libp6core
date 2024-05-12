@@ -46,6 +46,12 @@ static Utf8StringSet _almost_empty_pretend_it_is{"!inherit"_u8};
 static QMap<Utf8String,ParamSet> _externals;
 static QMutex _externals_mutex;
 
+static int staticInit() {
+  qRegisterMetaType<ParamSet>();
+  return 0;
+}
+Q_CONSTRUCTOR_FUNCTION(staticInit)
+
 class ParamSetData : public QSharedData {
 public:
   ParamSet _parent;

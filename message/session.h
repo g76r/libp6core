@@ -1,4 +1,4 @@
-/* Copyright 2016-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -49,7 +49,7 @@ public:
 };
 
 Q_DECLARE_METATYPE(Session)
-Q_DECLARE_TYPEINFO(Session, Q_MOVABLE_TYPE);
+Q_DECLARE_TYPEINFO(Session, Q_RELOCATABLE_TYPE);
 
 inline uint qHash(const Session &session) { return qHash(session.id()); }
 

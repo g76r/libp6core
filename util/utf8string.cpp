@@ -33,7 +33,7 @@ const Utf8String Utf8String::Empty = ""_u8;
 #include "util/unicodedata.cpp"
 
 static int staticInit() {
-  qMetaTypeId<Utf8String>();
+  qRegisterMetaType<Utf8String>();
   QMetaType::registerConverter<Utf8String,QVariant>();
   QMetaType::registerConverter<QVariant,Utf8String>([](const QVariant &v) {
     return Utf8String(v); });

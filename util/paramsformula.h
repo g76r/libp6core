@@ -72,7 +72,7 @@ private:
 };
 
 Q_DECLARE_METATYPE(ParamsFormula)
-Q_DECLARE_TYPEINFO(ParamsFormula, Q_MOVABLE_TYPE);
+Q_DECLARE_TYPEINFO(ParamsFormula, Q_RELOCATABLE_TYPE);
 
 inline uint qHash(const ParamsFormula &f) { return qHash(f.expr()); }
 

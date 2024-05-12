@@ -1,4 +1,4 @@
-/* Copyright 2022-2023 Gregoire Barbier and others.
+/* Copyright 2022-2024 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,6 +18,12 @@
 static const QRegularExpression _emailAddressRE
     { "\\A\\s*(?<address>(?<local>[a-zA-Z0-9!#$%&'*+/=?^_`.{|}~-]+)@"
      "(?<host>[a-zA-Z0-9_.-]+|\\[[0-9a-fA-F:]+\\]))\\s*\\z" };
+
+static int staticInit() {
+  qRegisterMetaType<MailAddress>();
+  return 0;
+}
+Q_CONSTRUCTOR_FUNCTION(staticInit)
 
 class MailAddressData : public QSharedData {
 public:

@@ -1,4 +1,4 @@
-/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,6 +22,12 @@
 using EvalContext = ParamsProvider::EvalContext;
 
 static Utf8String _xffHeader;
+
+static int staticInit() {
+  qRegisterMetaType<HttpRequest>();
+  return 0;
+}
+Q_CONSTRUCTOR_FUNCTION(staticInit)
 
 namespace {
 struct XffHeaderInitializer {

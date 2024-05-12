@@ -22,6 +22,12 @@
 using EvalContext = ParamsFormula::EvalContext;
 using FormulaDialect = ParamsFormula::FormulaDialect;
 
+static int staticInit() {
+  qRegisterMetaType<ParamsFormula>();
+  return 0;
+}
+Q_CONSTRUCTOR_FUNCTION(staticInit)
+
 namespace {
 
 static thread_local DataCache<QString,QRegularExpression> _regexp_cache{ 4096 };

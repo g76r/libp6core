@@ -606,10 +606,10 @@ public:
 };
 
 Q_DECLARE_METATYPE(PfNode)
-Q_DECLARE_TYPEINFO(PfNode, Q_MOVABLE_TYPE);
+Q_DECLARE_TYPEINFO(PfNode, Q_RELOCATABLE_TYPE);
 
 // following methods are those that should be declared after
-// Q_DECLARE_TYPEINFO(PfNode, Q_MOVABLE_TYPE) because they call QList methods
+// Q_DECLARE_TYPEINFO(PfNode, Q_RELOCATABLE_TYPE) because they call QList methods
 // that depends on its internal memory layout, and 'inline' declaration does not
 // guarantee that the method will be inlined by the compiler
 

@@ -1,4 +1,4 @@
-/* Copyright 2022-2023 Gregoire Barbier and others.
+/* Copyright 2022-2024 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -35,4 +35,5 @@ public:
 
 #endif // MAILADDRESS_H
 
-Q_DECLARE_TYPEINFO(MailAddress, Q_MOVABLE_TYPE);
+Q_DECLARE_METATYPE(MailAddress)
+Q_DECLARE_TYPEINFO(MailAddress, Q_RELOCATABLE_TYPE);

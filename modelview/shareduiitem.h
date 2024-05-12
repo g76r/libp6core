@@ -1,4 +1,4 @@
-/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -222,12 +222,12 @@ protected:
  *     Foobar &operator=(const Foobar &other) {
  *       SharedUiItem::operator=(other); return *this; }
  * - A subclass MUST NOT override comparison operators (==, <, etc.)
- * - A subclass MUST be declared as Q_MOVABLE_TYPE, in such a way:
+ * - A subclass MUST be declared as Q_RELOCATABLE_TYPE, in such a way:
  *     // in .h, after class definition
- *     Q_DECLARE_TYPEINFO(Foobar, Q_MOVABLE_TYPE);
+ *     Q_DECLARE_TYPEINFO(Foobar, Q_RELOCATABLE_TYPE);
  *   Otherwise, the application will crash, e.g. as soon as you store subclasses
  *   in a QList<SharedUiItem>. This because SharedUiItem itself is declared
- *   Q_MOVABLE_TYPE (which is the right thing to do anyway, since it actually
+ *   Q_RELOCATABLE_TYPE (which is the right thing to do anyway, since it actually
  *   can be moved using memcpy()).
  * - A subclass MAY also be declared as metatype e.g. if it is intended to be
  *   sent through a signal, in such a way:
@@ -636,7 +636,7 @@ protected:
 };
 
 Q_DECLARE_METATYPE(SharedUiItem)
-Q_DECLARE_TYPEINFO(SharedUiItem, Q_MOVABLE_TYPE);
+Q_DECLARE_TYPEINFO(SharedUiItem, Q_RELOCATABLE_TYPE);
 
 inline uint qHash(const SharedUiItem &i) { return qHash(i.id()); }
 

@@ -1,4 +1,4 @@
-/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -32,7 +32,7 @@ struct Node {
 };
 
 // LATER would be nice but conflicts w/ unnamed namespace:
-// Q_DECLARE_TYPEINFO(Node, Q_MOVABLE_TYPE);
+// Q_DECLARE_TYPEINFO(Node, Q_RELOCATABLE_TYPE);
 
 enum State { TopLevel, Name, Content, SpaceInContent, Comment, Quote,
              BinarySurfaceOrLength, BinaryLength, ArrayHeader, ArrayBody,
