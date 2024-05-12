@@ -85,6 +85,7 @@ public:
    * different query items than former one, one should also call
    * discardParamsCache(). */ // LATER this behaviour is optimisable since Qt5
   void overrideUrl(QUrl url);
+  [[nodiscard]] Utf8String path() const;
   [[nodiscard]] QUrl url() const;
   [[nodiscard]] QUrlQuery urlQuery() const;
   /** Return an url param (query item) value.

@@ -49,7 +49,7 @@ public:
   QUrl _url;
   QUrlQuery _query;
   Utf8StringList _clientAdresses;
-  Utf8String _scope = "http"_u8;
+  Utf8String _scope = "http"_u8, _path;
   explicit HttpRequestData(QAbstractSocket *input) : _input(input),
     _method(HttpRequest::NONE) { }
 };
@@ -214,7 +214,12 @@ void HttpRequest::overrideUrl(QUrl url) {
   if (d) {
     d->_url = url;
     d->_query = QUrlQuery(url);
+    d->_path = url.path().toUtf8();
   }
+}
+
+Utf8String HttpRequest::path() const {
+  return d ? d->_path : Utf8String{};
 }
 
 QUrl HttpRequest::url() const {
@@ -301,6 +306,9 @@ static RadixTree <std::function<QVariant(const HttpRequest *req, const Utf8Strin
 { "url", [](const HttpRequest *req, const Utf8String &, const EvalContext&, int) -> QVariant {
   return "http://"_u8+req->header("Host"_u8)+req->url().toString(QUrl::RemoveScheme|QUrl::RemoveAuthority).toUtf8();
 }},
+{ "path", [](const HttpRequest *req, const Utf8String &, const EvalContext&, int) -> QVariant {
+  return req->path();
+}},
 { "method", [](const HttpRequest *req, const Utf8String &, const EvalContext&, int) -> QVariant {
   return req->methodName();
 }},
@@ -344,7 +352,7 @@ Utf8StringSet HttpRequest::paramKeys(
   if (!context.hasScopeOrNone(paramScope()))
     return {};
   static const Utf8StringSet _const_keys {
-    "url"_u8, "method"_u8, "clientaddresses"_u8 };
+    "url"_u8, "path"_u8, "method"_u8, "clientaddresses"_u8 };
   Utf8StringSet keys = _const_keys;
   for (auto [s,_]: cookies().asKeyValueRange())
     keys << "cookie:"_u8+s;
