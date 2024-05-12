@@ -443,7 +443,7 @@ bool Utf8String::isTitle() const {
   return testCase(s, end, [](char32_t u) { return Utf8String::toTitle(u); });
 }
 
-const Utf8StringList Utf8String::split_after(
+Utf8StringList Utf8String::split_after(
     Utf8String sep, qsizetype offset, Qt::SplitBehavior behavior) const {
   Utf8StringList list;
   auto n = size(), w = sep.size();
@@ -466,7 +466,7 @@ const Utf8StringList Utf8String::split_after(
   return list;
 }
 
-const Utf8StringList Utf8String::split_after(
+Utf8StringList Utf8String::split_after(
     QList<char> seps, qsizetype offset, Qt::SplitBehavior behavior) const {
   Utf8StringList list;
   qsizetype n = size(), i = offset, j = offset;
@@ -500,22 +500,22 @@ Utf8StringList Utf8String::splitByLeadingChar(qsizetype offset) const {
   return split_headed_list(offset);
 }
 
-const Utf8StringList Utf8String::split_after(
+Utf8StringList Utf8String::split_after(
     const char sep, const qsizetype offset, Qt::SplitBehavior behavior) const {
   return split_after(Utf8String(&sep, 1), offset, behavior);
 }
 
-const Utf8StringList Utf8String::split(
+Utf8StringList Utf8String::split(
     QList<char> seps, Qt::SplitBehavior behavior) const {
   return split_after(seps, 0, behavior);
 }
 
-const Utf8StringList Utf8String::split(
+Utf8StringList Utf8String::split(
     const char sep, Qt::SplitBehavior behavior) const {
   return split_after(Utf8String(&sep, 1), 0, behavior);
 }
 
-const Utf8StringList Utf8String::split(
+Utf8StringList Utf8String::split(
     Utf8String sep, Qt::SplitBehavior behavior) const{
   return split_after(sep, 0, behavior);
 }
