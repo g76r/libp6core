@@ -122,10 +122,20 @@ struct OperatorDefinition {
   bool operator!() const { return _arity == -1; }
 };
 
+// static inline Utf8String tostr(QPartialOrdering o) {
+//   if (o == QPartialOrdering::Equivalent) return "equivalent";
+//   if (o == QPartialOrdering::Less) return "less";
+//   if (o == QPartialOrdering::Greater) return "greater";
+//   if (o == QPartialOrdering::Unordered) return "unordered";
+//   return "default";
+// }
+
 static inline QPartialOrdering compareTwoOperands(
   Stack *stack, const EvalContext &context, bool pretends_invalid_is_empty) {
   auto y = stack->popeval(stack, context, {});
   auto x = stack->popeval(stack, context, {});
+  //if (x.metaType().id() == QMetaType::QDateTime || !x.isValid())
+  //qDebug() << "****** compareTwoOperands" << x << y << tostr(MathUtils::compareQVariantAsNumberOrString(x, y, pretends_invalid_is_empty));
   if ((!x.isValid() || !y.isValid()) && !pretends_invalid_is_empty)
     return QPartialOrdering::Unordered;
   auto po = MathUtils::compareQVariantAsNumberOrString(x, y, pretends_invalid_is_empty);
@@ -319,7 +329,7 @@ const RadixTree<OperatorDefinition> _operatorDefinitions {
   { ">=", { 2, 9, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) -> QVariant  {
         auto po = compareTwoOperands(stack, context, false);
         if (po == QPartialOrdering::Less)
-          return true;
+          return false;
         if (po == QPartialOrdering::Equivalent)
           return true;
         if (po == QPartialOrdering::Greater)
