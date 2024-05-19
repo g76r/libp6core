@@ -1,4 +1,4 @@
-/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -148,14 +148,14 @@ bool FilesystemHttpHandler::handleCacheHeadersAndSend304(
     else
       lastModified = info.lastModified().toUTC();
     if (lastModified.isValid())
-      res.setHeader("Last-Modified", TimeFormats::toRfc2822DateTime(
-                      lastModified).toUtf8());
+      res.setHeader("Last-Modified",
+                    TimeFormats::toRfc2822DateTime(lastModified).toUtf8());
     auto ifModifiedSinceString = req.header("If-Modified-Since");
     if (!ifModifiedSinceString.isEmpty() && lastModified.isValid()) {
       QString errorString;
       QDateTime ifModifiedSince(
-            TimeFormats::fromRfc2822DateTime(ifModifiedSinceString,
-                                             &errorString).toUTC());
+            TimeFormats::fromRfc2822DateTime(ifModifiedSinceString,&errorString)
+            .toUTC());
       if (ifModifiedSince.isValid()) {
         // compare to If-Modified-Since +1" against rounding issues
         if (lastModified <= ifModifiedSince.addSecs(1)) {

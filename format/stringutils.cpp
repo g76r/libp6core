@@ -1,4 +1,4 @@
-/* Copyright 2016-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -96,4 +96,34 @@ Utf8String StringUtils::toSnakeCase(const Utf8String &anycase) {
 
 QString StringUtils::toSnakeCase(const QString &anycase) {
     return ::toSnakeCase(anycase);
+}
+
+template <int DIR> // DIR: -1 left 0 middle +1 right
+static inline QString elide(
+    const QString &string, int maxsize, const QString &placeholder) {
+  if (maxsize < 0 || string.size() < maxsize)
+    return string;
+  if (placeholder.size() > maxsize)
+    return DIR >= 0 ? placeholder.left(maxsize) : placeholder.right(maxsize);
+  if (DIR > 0)
+    return string.left(maxsize-placeholder.size())+placeholder;
+  if (DIR < 0)
+    return placeholder+string.right(maxsize-placeholder.size());
+  return string.left(maxsize/2-placeholder.size())+placeholder
+      +string.right(maxsize-maxsize/2);
+}
+
+QString StringUtils::elideRight(const QString &string, int maxsize,
+                                const QString &placeholder) {
+  return elide<+1>(string, maxsize, placeholder);
+}
+
+QString StringUtils::elideLeft(const QString &string, int maxsize,
+                               const QString &placeholder) {
+  return elide<-1>(string, maxsize, placeholder);
+}
+
+QString StringUtils::elideMiddle(const QString &string, int maxsize,
+                                 const QString &placeholder) {
+  return elide<0>(string, maxsize, placeholder);
 }
