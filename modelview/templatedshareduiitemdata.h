@@ -224,8 +224,7 @@ public:
   }
 };
 
-template<class T, bool INCLUDE_UI_DATA_AS_PARAM = false
-         , bool QUALIFIER_IS_STATIC = true>
+template<class T, bool INCLUDE_UI_DATA_AS_PARAM = false>
 class SharedUiItemDataWithImmutableParams
     : public SharedUiItemDataWithFunctions<T> {
 public:
