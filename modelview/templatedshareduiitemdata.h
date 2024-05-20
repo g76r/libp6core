@@ -1,4 +1,4 @@
-/* Copyright 2023 Gregoire Barbier and others.
+/* Copyright 2023-2024 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -30,6 +30,9 @@ using SharedUiItemDataFunctions = RadixTree<SharedUiItemDataFunction>;
  *  SharedUiItemDataBase<FooData> and won't have to reimplement some part of
  *  the boiler plate provided it have the folowing static members defined:
  *  - const static Utf8String _qualifier e.g. = "foo"
+ *     (but if QUALIFIER_IS_STATIC = false, which is useful in complex cases
+ *     where you implement several qualifiers with the same class or with a
+ *     class hierarchy)
  *  - const static Utf8StringIndexedConstList _sectionNames
  *      e.g. = { "id", "parent", "name"}
  *  - const static Utf8StringIndexedConstList _headerNames
@@ -50,13 +53,16 @@ using SharedUiItemDataFunctions = RadixTree<SharedUiItemDataFunction>;
  *  @see SharedUiItemData
  *  @see SharedUiItem
  */
-template<class T>
+template<class T, bool QUALIFIER_IS_STATIC = true>
 class SharedUiItemDataBase : public SharedUiItemData {
 public:
   // SharedUiItemData interface
-#ifndef SHAREDUIITEMDATABASE_QUALIFIER_IS_NOT_STATIC
-  virtual Utf8String qualifier() const override { return T::_qualifier; }
-#endif
+  virtual Utf8String qualifier() const override {
+    if constexpr (QUALIFIER_IS_STATIC)
+      return T::_qualifier;
+    else
+      return {};
+  }
   int uiSectionCount() const override { return T::_sectionNames.size(); }
   Utf8String uiSectionName(int section) const override {
     return T::_sectionNames.value(section); }
@@ -76,32 +82,36 @@ public:
   Utf8String paramScope() const override { return qualifier(); }
 };
 
-template<class T>
-class SharedUiItemDataWithFunctions : public SharedUiItemDataBase<T> {
+template<class T, bool QUALIFIER_IS_STATIC = true>
+class SharedUiItemDataWithFunctions
+    : public SharedUiItemDataBase<T, QUALIFIER_IS_STATIC> {
 public:
   // ParamsProvider interface
   QVariant paramRawValue(
       const Utf8String &key, const QVariant &def,
       const PercentEvaluator::EvalContext &context) const override {
-    if (!context.hasScopeOrNone(SharedUiItemDataBase<T>::paramScope()))
+    if (!context.hasScopeOrNone(
+          SharedUiItemDataBase<T, QUALIFIER_IS_STATIC>::paramScope()))
       return def;
     int ml;
     auto f = T::_paramFunctions.value(key, &ml);
     if (f)
       return f(this, key, context, ml);
-    return SharedUiItemDataBase<T>::paramRawValue(key, def, context);
+    return SharedUiItemDataBase<T, QUALIFIER_IS_STATIC>
+        ::paramRawValue(key, def, context);
   }
   Utf8StringSet paramKeys(
       const PercentEvaluator::EvalContext &context) const override {
     Utf8StringSet keys = T::_paramFunctions.keys();
-    keys |= SharedUiItemDataBase<T>::paramKeys(context);
+    keys |= SharedUiItemDataBase<T, QUALIFIER_IS_STATIC>::paramKeys(context);
     return keys;
   }
 };
 
-template<class T, bool _includeUiDataAsParam = false>
+template<class T, bool INCLUDE_UI_DATA_AS_PARAM = false,
+         bool QUALIFIER_IS_STATIC = true>
 class SharedUiItemDataWithMutableParams
-    : public SharedUiItemDataWithFunctions<T> {
+    : public SharedUiItemDataWithFunctions<T, QUALIFIER_IS_STATIC> {
 public:
   mutable AtomicValue<ParamSet> _params;
 
@@ -111,16 +121,16 @@ public:
     _params.lockedData()->setScope(scope);
   }
   SharedUiItemDataWithMutableParams(const ParamSet &params = {})
-#ifdef SHAREDUIITEMDATABASE_QUALIFIER_IS_NOT_STATIC
-    : SharedUiItemDataWithMutableParams(params, {}) {}
-#else
-    : SharedUiItemDataWithMutableParams(params, T::_qualifier) {}
-#endif
+    : _params(params) {
+    if constexpr (QUALIFIER_IS_STATIC)
+      _params.lockedData()->setScope(T::_qualifier);
+  }
   // ParamsProvider interface
   QVariant paramRawValue(
       const Utf8String &key, const QVariant &def,
       const PercentEvaluator::EvalContext &context) const override {
-    if (!context.hasScopeOrNone(SharedUiItemDataWithFunctions<T>::paramScope()))
+    if (!context.hasScopeOrNone(
+          SharedUiItemDataWithFunctions<T, QUALIFIER_IS_STATIC>::paramScope()))
       return def;
     int ml;
     auto f = T::_paramFunctions.value(key, &ml);
@@ -129,23 +139,25 @@ public:
     QVariant v = _params.lockedData()->paramRawValue(key, {}, context);
     if (v.isValid())
       return v;
-    if (!_includeUiDataAsParam)
+    if constexpr (!INCLUDE_UI_DATA_AS_PARAM)
       return def;
-    return SharedUiItemDataBase<T>::paramRawValue(key, def, context);
+    return SharedUiItemDataBase<T, QUALIFIER_IS_STATIC>
+        ::paramRawValue(key, def, context);
   }
   Utf8StringSet paramKeys(
       const PercentEvaluator::EvalContext &context) const override {
     Utf8StringSet keys = _params.lockedData()->paramKeys(context);
     keys |= T::_paramFunctions.keys();
-    if (_includeUiDataAsParam)
-      keys |= SharedUiItemDataBase<T>::paramKeys(context);
+    if constexpr (INCLUDE_UI_DATA_AS_PARAM)
+      keys |= SharedUiItemDataBase<T, QUALIFIER_IS_STATIC>::paramKeys(context);
     return keys;
   }
 };
 
-template<class T, bool _includeUiDataAsParam = false>
+template<class T, bool INCLUDE_UI_DATA_AS_PARAM = false
+         , bool QUALIFIER_IS_STATIC = true>
 class SharedUiItemDataWithImmutableParams
-    : public SharedUiItemDataWithFunctions<T> {
+    : public SharedUiItemDataWithFunctions<T, QUALIFIER_IS_STATIC> {
 public:
   ParamSet _params;
 
@@ -155,16 +167,16 @@ public:
     _params.setScope(scope);
   }
   SharedUiItemDataWithImmutableParams(const ParamSet &params = {})
-#ifdef SHAREDUIITEMDATABASE_QUALIFIER_IS_NOT_STATIC
-    : SharedUiItemDataWithImmutableParams(params, {}) {}
-#else
-    : SharedUiItemDataWithImmutableParams(params, T::_qualifier) {}
-#endif
+    : _params(params) {
+    if constexpr (QUALIFIER_IS_STATIC)
+      _params.setScope(T::_qualifier);
+  }
   // ParamsProvider interface
   QVariant paramRawValue(
       const Utf8String &key, const QVariant &def,
       const PercentEvaluator::EvalContext &context) const override {
-    if (!context.hasScopeOrNone(SharedUiItemDataWithFunctions<T>::paramScope()))
+    if (!context.hasScopeOrNone(
+          SharedUiItemDataWithFunctions<T, QUALIFIER_IS_STATIC>::paramScope()))
       return def;
     int ml;
     auto f = T::_paramFunctions.value(key, &ml);
@@ -173,16 +185,18 @@ public:
     QVariant v = _params.paramRawValue(key, {}, context);
     if (v.isValid())
       return v;
-    if (!_includeUiDataAsParam)
+    if constexpr (!INCLUDE_UI_DATA_AS_PARAM)
       return def;
-    return SharedUiItemDataBase<T>::paramRawValue(key, def, context);
+    return SharedUiItemDataBase<T, QUALIFIER_IS_STATIC>
+        ::paramRawValue(key, def, context);
   }
   Utf8StringSet paramKeys(
       const PercentEvaluator::EvalContext &context) const override {
     Utf8StringSet keys = _params.paramKeys(context);
     keys |= T::_paramFunctions.keys();
-    if (_includeUiDataAsParam)
-      keys += SharedUiItemDataBase<T>::paramKeys(context);
+    if constexpr (INCLUDE_UI_DATA_AS_PARAM)
+      keys += SharedUiItemDataBase<T, QUALIFIER_IS_STATIC>
+          ::paramKeys(context);
     return keys;
   }
 };
