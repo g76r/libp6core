@@ -164,7 +164,7 @@ examples:
 
 return unevaluated value of a variable
 * flags is a combination of letters with the following meaning:
-  * e %-escape value (in case it will be further %-evaluated) replace evevry %
+  * e %-escape value (in case it will be further %-evaluated) replace evry %
       with %%
   * h html encode value, see %=htmlencode
   * u html encode will transform urls them into a links
