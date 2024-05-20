@@ -24,51 +24,17 @@ const PercentEvaluator::EvalContext &context, int matched_length)>;
 
 using SharedUiItemDataFunctions = RadixTree<SharedUiItemDataFunction>;
 
-/** Helper class template to implement SharedUiItemData.
- *
- *  Actual SharedUiItemData implementation, e.g. FooData, can inherit from
- *  SharedUiItemDataBase<FooData> and won't have to reimplement some part of
- *  the boiler plate provided it have the folowing static members defined:
- *  - const static Utf8String _qualifier e.g. = "foo"
- *     (but if QUALIFIER_IS_STATIC = false, which is useful in complex cases
- *     where you implement several qualifiers with the same class or with a
- *     class hierarchy)
- *  - const static Utf8StringIndexedConstList _sectionNames
- *      e.g. = { "id", "parent", "name"}
- *  - const static Utf8StringIndexedConstList _headerNames
- *      e.g. = { "Id", "Parent", "Name"}
- *    (_headerNames can be = to _sectionNames if its convenient for you)
- *
- *  Some more specialized templates with more features exist, to use
- *  SharedUiItemDataWithFunction<FooData> you also need
- *  - const static SharedUiItemDataFunctions _paramFunctions
- *
- *  When using SharedUiItemDataWithImmutableParams or
- *  SharedUiItemDataWithMutableParams you'll have a _params non-static member
- *  (you don't have to define it it will be inherited from the template).
- *
- *  @see SharedUiItemDataWithFunction
- *  @see SharedUiItemDataWithImmutableParams
- *  @see SharedUiItemDataWithMutableParams
- *  @see SharedUiItemData
- *  @see SharedUiItem
- */
-template<class T, bool QUALIFIER_IS_STATIC = true>
-class SharedUiItemDataBase : public SharedUiItemData {
+template<class T>
+class SharedUiItemDynamicData : public SharedUiItemData {
 public:
   // SharedUiItemData interface
-  virtual Utf8String qualifier() const override {
-    if constexpr (QUALIFIER_IS_STATIC)
-      return T::_qualifier;
-    else
-      return {};
-  }
-  int uiSectionCount() const override { return T::_sectionNames.size(); }
-  Utf8String uiSectionName(int section) const override {
+  [[gnu::const]] int uiSectionCount() const final {
+    return T::_sectionNames.size(); }
+  [[gnu::const]] Utf8String uiSectionName(int section) const final {
     return T::_sectionNames.value(section); }
-  int uiSectionByName(Utf8String sectionName) const override {
+  [[gnu::const]] int uiSectionByName(Utf8String sectionName) const final {
     return T::_sectionNames.toIndex().value(sectionName, -1); }
-  QVariant uiHeaderData(int section, int role) const override {
+  [[gnu::const]] QVariant uiHeaderData(int section, int role) const final {
     switch (role) {
       case Qt::DisplayRole:
       case Qt::EditRole:
@@ -82,36 +48,100 @@ public:
   Utf8String paramScope() const override { return qualifier(); }
 };
 
-template<class T, bool QUALIFIER_IS_STATIC = true>
-class SharedUiItemDataWithFunctions
-    : public SharedUiItemDataBase<T, QUALIFIER_IS_STATIC> {
+/** Helper class template to implement SharedUiItemData.
+ *
+ *  Actual SharedUiItemData implementation, e.g. FooData, can inherit from
+ *  SharedUiItemDataBase<FooData> and won't have to reimplement some part of
+ *  the boiler plate provided it have the folowing static members defined:
+ *  - const static Utf8String _qualifier e.g. = "foo"
+ *     (but with XxxDynamicXxx variants, which is useful in complex cases
+ *     where you implement several qualifiers with the same class or with a
+ *     class hierarchy)
+ *  - const static Utf8StringIndexedConstList _sectionNames
+ *      e.g. = { "id", "parent", "name"}
+ *  - const static Utf8StringIndexedConstList _headerNames
+ *      e.g. = { "Id", "Parent", "Name"}
+ *    (_headerNames can be = to _sectionNames if its convenient for you)
+ *
+ *  Some more specialized templates with more features exist, to use
+ *  SharedUiItemDataWithFunction<FooData> you also need
+ *  - const static SharedUiItemDataFunctions _paramFunctions
+ *
+ *  When using XxxDataWithImmutableParams or XxxDataWithMutableParams you'll
+ *  have a ParamSet or AtomicValue<ParamSet> _params non-static member
+ *  (you don't have to define it it will be inherited from the template).
+ *
+ *  @see SharedUiItemDataWithFunction
+ *  @see SharedUiItemDataWithImmutableParams
+ *  @see SharedUiItemDataWithMutableParams
+ *  @see SharedUiItemDynamicData
+ *  @see SharedUiItemDynamicDataWithFunction
+ *  @see SharedUiItemDynamicDataWithImmutableParams
+ *  @see SharedUiItemDynamicDataWithMutableParams
+ *  @see SharedUiItemData
+ *  @see SharedUiItem
+ */
+template<class T>
+class SharedUiItemDataBase : public SharedUiItemDynamicData<T> {
+public:
+  // SharedUiItemData interface
+  [[gnu::const]] virtual Utf8String qualifier() const final {
+    return T::_qualifier; }
+
+  // ParamsProvider interface
+  [[gnu::const]] Utf8String paramScope() const final {
+    return T::_qualifier; }
+};
+
+template<class T>
+class SharedUiItemDataWithFunctions : public SharedUiItemDataBase<T> {
 public:
   // ParamsProvider interface
   QVariant paramRawValue(
       const Utf8String &key, const QVariant &def,
       const PercentEvaluator::EvalContext &context) const override {
-    if (!context.hasScopeOrNone(
-          SharedUiItemDataBase<T, QUALIFIER_IS_STATIC>::paramScope()))
+    if (!context.hasScopeOrNone(SharedUiItemDataBase<T>::paramScope()))
       return def;
     int ml;
     auto f = T::_paramFunctions.value(key, &ml);
     if (f)
       return f(this, key, context, ml);
-    return SharedUiItemDataBase<T, QUALIFIER_IS_STATIC>
-        ::paramRawValue(key, def, context);
+    return SharedUiItemDataBase<T>::paramRawValue(key, def, context);
   }
   Utf8StringSet paramKeys(
       const PercentEvaluator::EvalContext &context) const override {
     Utf8StringSet keys = T::_paramFunctions.keys();
-    keys |= SharedUiItemDataBase<T, QUALIFIER_IS_STATIC>::paramKeys(context);
+    keys |= SharedUiItemDataBase<T>::paramKeys(context);
     return keys;
   }
 };
 
-template<class T, bool INCLUDE_UI_DATA_AS_PARAM = false,
-         bool QUALIFIER_IS_STATIC = true>
+template<class T>
+class SharedUiItemDynamicDataWithFunctions : public SharedUiItemDynamicData<T> {
+public:
+  // ParamsProvider interface
+  QVariant paramRawValue(
+      const Utf8String &key, const QVariant &def,
+      const PercentEvaluator::EvalContext &context) const override {
+    if (!context.hasScopeOrNone(SharedUiItemDynamicData<T>::paramScope()))
+      return def;
+    int ml;
+    auto f = T::_paramFunctions.value(key, &ml);
+    if (f)
+      return f(this, key, context, ml);
+    return SharedUiItemDynamicData<T>::paramRawValue(key, def, context);
+  }
+  Utf8StringSet paramKeys(
+      const PercentEvaluator::EvalContext &context) const override {
+    Utf8StringSet keys = T::_paramFunctions.keys();
+    keys |= SharedUiItemDynamicData<T>::paramKeys(context);
+    return keys;
+  }
+};
+
+template<class T, bool INCLUDE_UI_DATA_AS_PARAM = false>
 class SharedUiItemDataWithMutableParams
-    : public SharedUiItemDataWithFunctions<T, QUALIFIER_IS_STATIC> {
+    : public SharedUiItemDataWithFunctions<T> {
 public:
   mutable AtomicValue<ParamSet> _params;
 
@@ -121,16 +151,14 @@ public:
     _params.lockedData()->setScope(scope);
   }
   SharedUiItemDataWithMutableParams(const ParamSet &params = {})
-    : _params(params) {
-    if constexpr (QUALIFIER_IS_STATIC)
-      _params.lockedData()->setScope(T::_qualifier);
-  }
+    : SharedUiItemDataWithMutableParams(params, T::_qualifier) {}
+
   // ParamsProvider interface
   QVariant paramRawValue(
       const Utf8String &key, const QVariant &def,
       const PercentEvaluator::EvalContext &context) const override {
     if (!context.hasScopeOrNone(
-          SharedUiItemDataWithFunctions<T, QUALIFIER_IS_STATIC>::paramScope()))
+          SharedUiItemDataWithFunctions<T>::paramScope()))
       return def;
     int ml;
     auto f = T::_paramFunctions.value(key, &ml);
@@ -141,7 +169,49 @@ public:
       return v;
     if constexpr (!INCLUDE_UI_DATA_AS_PARAM)
       return def;
-    return SharedUiItemDataBase<T, QUALIFIER_IS_STATIC>
+    return SharedUiItemDataBase<T>::paramRawValue(key, def, context);
+  }
+  Utf8StringSet paramKeys(
+      const PercentEvaluator::EvalContext &context) const override {
+    Utf8StringSet keys = _params.lockedData()->paramKeys(context);
+    keys |= T::_paramFunctions.keys();
+    if constexpr (INCLUDE_UI_DATA_AS_PARAM)
+      keys |= SharedUiItemDataBase<T>::paramKeys(context);
+    return keys;
+  }
+};
+
+template<class T, bool INCLUDE_UI_DATA_AS_PARAM = false>
+class SharedUiItemDynamicDataWithMutableParams
+    : public SharedUiItemDynamicDataWithFunctions<T> {
+public:
+  mutable AtomicValue<ParamSet> _params;
+
+  SharedUiItemDynamicDataWithMutableParams(
+      const ParamSet &params, const Utf8String &scope)
+    : _params(params) {
+    _params.lockedData()->setScope(scope);
+  }
+  SharedUiItemDynamicDataWithMutableParams(const ParamSet &params = {})
+    : SharedUiItemDynamicDataWithMutableParams(params, {}) { }
+
+  // ParamsProvider interface
+  QVariant paramRawValue(
+      const Utf8String &key, const QVariant &def,
+      const PercentEvaluator::EvalContext &context) const override {
+    if (!context.hasScopeOrNone(
+          SharedUiItemDynamicDataWithFunctions<T>::paramScope()))
+      return def;
+    int ml;
+    auto f = T::_paramFunctions.value(key, &ml);
+    if (f)
+      return f(this, key, context, ml);
+    QVariant v = _params.lockedData()->paramRawValue(key, {}, context);
+    if (v.isValid())
+      return v;
+    if constexpr (!INCLUDE_UI_DATA_AS_PARAM)
+      return def;
+    return SharedUiItemDynamicDataWithFunctions<T>
         ::paramRawValue(key, def, context);
   }
   Utf8StringSet paramKeys(
@@ -149,7 +219,7 @@ public:
     Utf8StringSet keys = _params.lockedData()->paramKeys(context);
     keys |= T::_paramFunctions.keys();
     if constexpr (INCLUDE_UI_DATA_AS_PARAM)
-      keys |= SharedUiItemDataBase<T, QUALIFIER_IS_STATIC>::paramKeys(context);
+      keys |= SharedUiItemDynamicDataWithFunctions<T>::paramKeys(context);
     return keys;
   }
 };
@@ -157,7 +227,7 @@ public:
 template<class T, bool INCLUDE_UI_DATA_AS_PARAM = false
          , bool QUALIFIER_IS_STATIC = true>
 class SharedUiItemDataWithImmutableParams
-    : public SharedUiItemDataWithFunctions<T, QUALIFIER_IS_STATIC> {
+    : public SharedUiItemDataWithFunctions<T> {
 public:
   ParamSet _params;
 
@@ -167,16 +237,13 @@ public:
     _params.setScope(scope);
   }
   SharedUiItemDataWithImmutableParams(const ParamSet &params = {})
-    : _params(params) {
-    if constexpr (QUALIFIER_IS_STATIC)
-      _params.setScope(T::_qualifier);
-  }
+    : SharedUiItemDataWithImmutableParams(params, T::_qualifier) { }
+
   // ParamsProvider interface
   QVariant paramRawValue(
       const Utf8String &key, const QVariant &def,
       const PercentEvaluator::EvalContext &context) const override {
-    if (!context.hasScopeOrNone(
-          SharedUiItemDataWithFunctions<T, QUALIFIER_IS_STATIC>::paramScope()))
+    if (!context.hasScopeOrNone(SharedUiItemDataWithFunctions<T>::paramScope()))
       return def;
     int ml;
     auto f = T::_paramFunctions.value(key, &ml);
@@ -187,7 +254,49 @@ public:
       return v;
     if constexpr (!INCLUDE_UI_DATA_AS_PARAM)
       return def;
-    return SharedUiItemDataBase<T, QUALIFIER_IS_STATIC>
+    return SharedUiItemDataWithFunctions<T>::paramRawValue(key, def, context);
+  }
+  Utf8StringSet paramKeys(
+      const PercentEvaluator::EvalContext &context) const override {
+    Utf8StringSet keys = _params.paramKeys(context);
+    keys |= T::_paramFunctions.keys();
+    if constexpr (INCLUDE_UI_DATA_AS_PARAM)
+      keys += SharedUiItemDataWithFunctions<T>::paramKeys(context);
+    return keys;
+  }
+};
+
+template<class T, bool INCLUDE_UI_DATA_AS_PARAM = false>
+class SharedUiItemDynamicDataWithImmutableParams
+    : public SharedUiItemDynamicDataWithFunctions<T> {
+public:
+  ParamSet _params;
+
+  SharedUiItemDynamicDataWithImmutableParams(
+      const ParamSet &params, const Utf8String &scope)
+    : _params(params) {
+    _params.setScope(scope);
+  }
+  SharedUiItemDynamicDataWithImmutableParams(const ParamSet &params = {})
+    : SharedUiItemDynamicDataWithImmutableParams(params, {}) { }
+
+  // ParamsProvider interface
+  QVariant paramRawValue(
+      const Utf8String &key, const QVariant &def,
+      const PercentEvaluator::EvalContext &context) const override {
+    if (!context.hasScopeOrNone(
+          SharedUiItemDynamicDataWithFunctions<T>::paramScope()))
+      return def;
+    int ml;
+    auto f = T::_paramFunctions.value(key, &ml);
+    if (f)
+      return f(this, key, context, ml);
+    QVariant v = _params.paramRawValue(key, {}, context);
+    if (v.isValid())
+      return v;
+    if constexpr (!INCLUDE_UI_DATA_AS_PARAM)
+      return def;
+    return SharedUiItemDynamicDataWithFunctions<T>
         ::paramRawValue(key, def, context);
   }
   Utf8StringSet paramKeys(
@@ -195,8 +304,7 @@ public:
     Utf8StringSet keys = _params.paramKeys(context);
     keys |= T::_paramFunctions.keys();
     if constexpr (INCLUDE_UI_DATA_AS_PARAM)
-      keys += SharedUiItemDataBase<T, QUALIFIER_IS_STATIC>
-          ::paramKeys(context);
+      keys += SharedUiItemDynamicDataWithFunctions<T>::paramKeys(context);
     return keys;
   }
 };
