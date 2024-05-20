@@ -99,7 +99,8 @@ public:
   Utf8StringIndexedConstList(InputIterator i1, InputIterator i2)
     : Utf8StringList(i1, i2) { build_index(); }
 #endif
-  [[nodiscard]] inline QMap<Utf8String,int> toIndex() const { return _index; }
+  [[gnu::const]] [[nodiscard]] inline QMap<Utf8String,int> toIndex() const {
+    return _index; }
 
   // make only const methods availlable (otherwise index would be inconsistent)
   QList::const_reference back() const { return Utf8StringList::back(); }
@@ -112,16 +113,23 @@ public:
   QList::const_reverse_iterator rbegin() const {
     return Utf8StringList::rbegin(); }
   QList::const_reverse_iterator rend() const { return Utf8StringList::rend(); }
-  [[nodiscard]] inline QList::const_reference operator[](qsizetype i) const {
+  [[gnu::const]] [[nodiscard]] inline QList::const_reference operator[](
+      qsizetype i) const {
     return Utf8StringList::operator[](i); }
-  [[nodiscard]] inline QList::const_reference at(qsizetype i) const {
+  [[gnu::const]] [[nodiscard]] inline QList::const_reference at(
+      qsizetype i) const {
     return Utf8StringList::at(i); }
-  [[nodiscard]] inline auto size() const { return Utf8StringList::size(); }
-  [[nodiscard]] inline auto count() const { return Utf8StringList::count(); }
-  [[nodiscard]] inline auto length() const { return Utf8StringList::length(); }
-  [[nodiscard]] inline auto empty() const { return Utf8StringList::empty(); }
-  [[nodiscard]] inline auto isEmpty() const { return Utf8StringList::isEmpty();}
-  [[nodiscard]] inline Utf8String value(
+  [[gnu::const]] [[nodiscard]] inline auto size() const {
+    return Utf8StringList::size(); }
+  [[gnu::const]] [[nodiscard]] inline auto count() const {
+    return Utf8StringList::count(); }
+  [[gnu::const]] [[nodiscard]] inline auto length() const {
+    return Utf8StringList::length(); }
+  [[gnu::const]] [[nodiscard]] inline auto empty() const {
+    return Utf8StringList::empty(); }
+  [[gnu::const]] [[nodiscard]] inline auto isEmpty() const {
+    return Utf8StringList::isEmpty(); }
+  [[gnu::const]] [[nodiscard]] inline Utf8String value(
       qsizetype i, const Utf8String &def = {}) const {
     return Utf8StringList::value(i, def); }
 

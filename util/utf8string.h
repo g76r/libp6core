@@ -166,11 +166,11 @@ public:
   /** Convert a unicode charater into its upper case character, e.g. é -> É.
    *  Return the input character itself if no change is needed e.g. E É #
    */
-  [[nodiscard]] static inline char32_t toUpper(char32_t u);
+  [[gnu::pure]] [[nodiscard]] static inline char32_t toUpper(char32_t u);
   /** Convert a unicode charater into its lower case character, e.g. É -> é .
    *  Return the input character itself if no change is needed e.g. e é #
    */
-  [[nodiscard]] static inline char32_t toLower(char32_t u);
+  [[gnu::pure]] [[nodiscard]] static inline char32_t toLower(char32_t u);
   /** Set the characters to title case.
    *  For most letters, title case is the same than upper case, but for some
    *  rare characters representing several letters at once, there is a title case
@@ -179,7 +179,7 @@ public:
    *  (unicode: 0x1C4) and to ǅ title case letter (unicode: 0x1C5)
    *  Return the input character itself if no change is needed e.g. E É #
    */
-  [[nodiscard]] static inline char32_t toTitle(char32_t u);
+  [[gnu::pure]] [[nodiscard]] static inline char32_t toTitle(char32_t u);
   [[nodiscard]] Utf8String toUpper() const;
   [[nodiscard]] Utf8String toLower() const;
   [[nodiscard]] Utf8String toTitle() const;
@@ -843,7 +843,7 @@ private:
     // LATER add already encoded utf8 here as optimization
     operator char32_t() const { return utf32; }
   };
-  static std::vector<UnicodeCaseMapping> _case_mapping;
+  const static std::vector<UnicodeCaseMapping> _case_mapping;
 };
 
 Q_DECLARE_METATYPE(Utf8String)

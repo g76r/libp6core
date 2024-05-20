@@ -16,7 +16,7 @@ while IFS=';' read -r code_value character_name general_category canonical_combi
 done
 
 cat <<EOF # header
-std::vector<Utf8String::UnicodeCaseMapping> Utf8String::_case_mapping = {
+const std::vector<Utf8String::UnicodeCaseMapping> Utf8String::_case_mapping = {
 EOF
 
 #echo $code_values
