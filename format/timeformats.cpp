@@ -320,7 +320,7 @@ QString TimeFormats::toCustomTimestamp(
   return dt.toString(format);
 }
 
-const QString TimeFormats::toMultifieldSpecifiedCustomTimestamp(
+QString TimeFormats::toMultifieldSpecifiedCustomTimestamp(
   const QDateTime &dt, const Utf8String &multifieldSpecifiedFormat,
   const ParamsProvider::EvalContext &context) {
   auto params = multifieldSpecifiedFormat.split_headed_list();
@@ -334,7 +334,7 @@ const QString TimeFormats::toMultifieldSpecifiedCustomTimestamp(
   return toCustomTimestamp(dt, format, rdt, tz);
 }
 
-const QTimeZone TimeFormats::tzFromIso8601(
+QTimeZone TimeFormats::tzFromIso8601(
       const QString &offset, const QTimeZone &defaultValue) {
   auto o = offset.trimmed();
   if (o == u"Z")

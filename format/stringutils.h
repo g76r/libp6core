@@ -25,27 +25,27 @@ namespace StringUtils {
    * Return string as is if maxsize < 0.
    * Return a subset of placeholder if maxsize < placeholder.size().
    */
-QString elideRight(const QString &string, int maxsize,
-                   const QString &placeholder = u"..."_s);
+QString LIBP6CORESHARED_EXPORT elideRight(
+    const QString &string, int maxsize, const QString &placeholder = u"..."_s);
 /** Ellide a string if needed, keeping its right part.
    * ("foobar",5,"...") -> "...ar"
    * Return string as is if maxsize < 0.
    * Return a subset of placeholder if maxsize < placeholder.size().
    */
-QString elideLeft(const QString &string, int maxsize,
-                  const QString &placeholder = u"..."_s);
+QString LIBP6CORESHARED_EXPORT elideLeft(
+    const QString &string, int maxsize, const QString &placeholder = u"..."_s);
 /** Ellide a string if needed, removing the middle part.
    * ("foobar",5,"...") -> "f...r"
    * Return string as is if maxsize < 0.
    * Return a subset of placeholder if maxsize < placeholder.size().
    */
-QString elideMiddle(const QString &string, int maxsize,
-                    const QString &placeholder = u"..."_s);
+QString LIBP6CORESHARED_EXPORT elideMiddle(
+    const QString &string, int maxsize, const QString &placeholder = u"..."_s);
 /** Return a column as a QStringList from QList<QStringList> list of rows.
    * Kind of extracting a vector from a transposed text matrix.
    */
-inline QStringList columnFromRows(QList<QStringList> rows, int column,
-                                  QString defaultValue = {}) {
+inline QStringList columnFromRows(
+    QList<QStringList> rows, int column, QString defaultValue = {}) {
   QStringList list;
   for (auto row: rows)
     list << row.value(column, defaultValue);
@@ -58,13 +58,13 @@ inline QStringList columnFromRows(QList<QStringList> rows, int column,
    * document, e.g. using QString::toUtf8()).
    * @urlAsLinks if true strings like "http://foo/bar" will be converted into html links
    */
-QString htmlEncode(QString text, bool urlAsLinks = true,
-                   bool newlineAsBr = true);
+QString LIBP6CORESHARED_EXPORT htmlEncode(
+    QString text, bool urlAsLinks = true, bool newlineAsBr = true);
 /** Convert an identifier to snake case.
    * E.g. "hello world" -> "hello_world", "HelloWorld" -> "hello_world",
    * "hello_world" -> "hello_world", "hello-World" -> "hello_world".
    */
-Utf8String toSnakeCase(const Utf8String &anycase);
+Utf8String LIBP6CORESHARED_EXPORT toSnakeCase(const Utf8String &anycase);
 /** Convert an identifier to snake case.
    * E.g. "hello world" -> "hello_world", "HelloWorld" -> "hello_world",
    * "hello_world" -> "hello_world", "hello-World" -> "hello_world".
@@ -75,7 +75,7 @@ inline Utf8String toSnakeCase(const char *anycase) {
    * E.g. "hello world" -> "hello_world", "HelloWorld" -> "hello_world",
    * "hello_world" -> "hello_world", "hello-World" -> "hello_world".
    */
-QString toSnakeCase(const QString &anycase);
+QString LIBP6CORESHARED_EXPORT toSnakeCase(const QString &anycase);
 
 } // namespace
 

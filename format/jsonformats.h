@@ -21,29 +21,30 @@
 namespace JsonFormats {
 
 /** convert a QHash<QString,QString> to a JSON object formatted string */
-QString hash2string(const QHash<QString,QString> &hash);
+QString LIBP6CORESHARED_EXPORT hash2string(const QHash<QString,QString> &hash);
 
 /** convert a JSON object formatted string to a QHash<QString,QString> */
-QHash<QString,QString> string2hash(const QString &string);
+QHash<QString,QString> LIBP6CORESHARED_EXPORT string2hash(
+    const QString &string);
 
 /** convert a QMap<QString,QString> to a JSON object formatted string */
-QString map2string(const QMap<QString,QString> &hash);
+QString LIBP6CORESHARED_EXPORT map2string(const QMap<QString,QString> &hash);
 
 /** convert a JSON object formatted string to a QMap<QString,QString> */
-QMap<QString,QString> string2map(const QString &string);
+QMap<QString,QString> LIBP6CORESHARED_EXPORT string2map(const QString &string);
 
 /** convert a QList<QString> to a JSON array formatted string */
-QString list2string(const QList<QString> &list);
+QString LIBP6CORESHARED_EXPORT list2string(const QList<QString> &list);
 
 /** convert a JSON array formatted string to a QList<QString> */
-QStringList string2list(const QString &string);
+QStringList LIBP6CORESHARED_EXPORT string2list(const QString &string);
 
 /** insert value in a descendant object using a dot separated path
    *  e.g. recursive_insert(o, "foo.bar", "a") sets bar=a in foo child
    *  actually: creates foo if neeeded then calls QJsonObject::insert("bar","a")
    *  on it
    *  if path is empty (or only contains dots), do nothing */
-void recursive_insert(
+void LIBP6CORESHARED_EXPORT recursive_insert(
     QJsonObject &target, QStringList path, const QJsonValue &value);
 inline void recursive_insert(
     QJsonObject &target, QString path, const QJsonValue &value) {

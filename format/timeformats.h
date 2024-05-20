@@ -21,16 +21,16 @@
 namespace TimeFormats {
 
 // TODO switch to QDateTime::toString(Qt::RFC2822Date) now that it exists
-QString toRfc2822DateTime(const QDateTime &dt);
-QDateTime fromRfc2822DateTime(
+QString LIBP6CORESHARED_EXPORT toRfc2822DateTime(const QDateTime &dt);
+QDateTime LIBP6CORESHARED_EXPORT fromRfc2822DateTime(
     const QString &rfc2822DateTime, QString *errorString = 0);
 /** e.g. "1.250 seconds", "10 months and 3 days", "-10 months and 3 days"
  * @param absolute if false, add initial "-" if msec < 0 */
-QString toCoarseHumanReadableTimeInterval(
+QString LIBP6CORESHARED_EXPORT toCoarseHumanReadableTimeInterval(
     qint64 msecs, bool absolute = false);
 /** e.g. "1.250 seconds ago", "in 10 months and 3 days"
   * invalid QDateTime gives null QString */
-QString toCoarseHumanReadableRelativeDate(
+QString LIBP6CORESHARED_EXPORT toCoarseHumanReadableRelativeDate(
     const QDateTime &dt,
     const QDateTime &reference = QDateTime::currentDateTime());
 /** Format a given timestamp using given format and RelativeDateTime shift.
@@ -40,7 +40,7 @@ QString toCoarseHumanReadableRelativeDate(
  * - "ms1970" : milliseconds since 1970-01-01 00:00:00
  * - empty string defaults to pseudo-iso8601: yyyy-MM-dd hh:mm:ss,zzz
  */
-QString toCustomTimestamp(
+QString LIBP6CORESHARED_EXPORT toCustomTimestamp(
     const QDateTime &dt, const QString &format = {},
     const RelativeDateTime &relativeDateTime = {},
     const QTimeZone &tz = {});
@@ -70,7 +70,7 @@ QString toCustomTimestamp(
  *
  * @see RelativeDateTime
  */
-const QString toMultifieldSpecifiedCustomTimestamp(
+QString LIBP6CORESHARED_EXPORT toMultifieldSpecifiedCustomTimestamp(
     const QDateTime &dt, const Utf8String &multifieldSpecifiedFormat,
     const ParamsProvider::EvalContext &context = {});
 /** Creates a QTimeZone from an ISO 8601 pattern.
@@ -79,7 +79,7 @@ const QString toMultifieldSpecifiedCustomTimestamp(
  *  Returns defaultValue if empty or invalid.
  *  Trims before analyzing pattern.
  */
-const QTimeZone tzFromIso8601(
+QTimeZone LIBP6CORESHARED_EXPORT tzFromIso8601(
     const QString &offset, const QTimeZone &defaultValue = {});
 
 } // namespace
