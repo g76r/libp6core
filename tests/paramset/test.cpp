@@ -65,5 +65,11 @@ int main(void) {
                 "%{=box:%foo:4:l::...}=...1 %{=box:%foo:4:m::...}=...1 "
                 "%{=box:%foo:3:::abc}=abc %{=box:%foo:3:::abcdef}=abc "
                 , &p);
+  qDebug() << PercentEvaluator::eval_utf8(
+                "%{=elideright:%foo%foo:6}=123... %{=elideleft:%foo%foo:6}=...345 "
+                "%{=elidemiddle:%foo%foo:6}=1...45 "
+                "%{=elideright:%foo%foo:6:…}=12345… %{=elideleft:%foo%foo:6:…}=…12345 "
+                "%{=elidemiddle:%foo%foo:6:…}=12…345 "
+                , &p);
   return 0;
 }

@@ -315,41 +315,32 @@ _functions {
 { "=elideright", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
   auto params = key.split_headed_list(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context);
-  bool ok;
-  int i = params.value(1).toInt(&ok);
-  auto placeHolder = params.value(2, "..."_u8);
-  if (!ok || placeHolder.size() > i || input.size() <= i)
-    return input;
-  return StringUtils::elideRight(input.toUtf16(), i, placeHolder);
+  auto size = PercentEvaluator::eval_number<qsizetype>(params.value(1),context);
+  auto ellipsis = PercentEvaluator::eval_utf8(params.value(2),context)|"..."_u8;
+  return Utf8String::elide_right(input, size, ellipsis);
 }, true},
 { "=elideleft", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
   auto params = key.split_headed_list(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context);
-  bool ok;
-  int i = params.value(1).toInt(&ok);
-  auto placeHolder = params.value(2, "..."_u8);
-  if (!ok || placeHolder.size() > i || input.size() <= i)
-    return input;
-  return StringUtils::elideLeft(input.toUtf16(), i, placeHolder);
+  auto size = PercentEvaluator::eval_number<qsizetype>(params.value(1),context);
+  auto ellipsis = PercentEvaluator::eval_utf8(params.value(2),context)|"..."_u8;
+  return Utf8String::elide_left(input, size, ellipsis);
 }, true},
 { "=elidemiddle", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
   auto params = key.split_headed_list(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context);
-  bool ok;
-  int i = params.value(1).toInt(&ok);
-  auto placeHolder = params.value(2, "..."_u8);
-  if (!ok || placeHolder.size() > i || input.size() <= i)
-    return input;
-  return StringUtils::elideMiddle(input.toUtf16(), i, placeHolder);
+  auto size = PercentEvaluator::eval_number<qsizetype>(params.value(1),context);
+  auto ellipsis = PercentEvaluator::eval_utf8(params.value(2),context)|"..."_u8;
+  return Utf8String::elide_middle(input, size, ellipsis);
 }, true},
 { "=htmlencode", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
   auto params = key.split_headed_list(ml);
   if (params.size() < 1)
     return {};
-  auto input = PercentEvaluator::eval_utf8(params.value(0), context);
+  auto input = PercentEvaluator::eval_utf16(params.value(0), context);
   auto flags = params.value(1);
   return StringUtils::htmlEncode(
-        input.toUtf16(), flags.contains('u'), // url as links
+        input, flags.contains('u'), // url as links
         flags.contains('n')); // newline as <br>
 }, true},
 { "=random", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
