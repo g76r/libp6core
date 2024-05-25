@@ -16,7 +16,7 @@
 
 #include "modelview/shareduiitem.h"
 #include "thread/atomicvalue.h"
-#include "util/paramsprovidermerger.h"
+#include "util/paramset.h"
 
 using SharedUiItemDataFunction = std::function<
 QVariant(const SharedUiItemData *data, const Utf8String &key,
