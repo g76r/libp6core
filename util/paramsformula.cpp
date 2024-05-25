@@ -18,6 +18,9 @@
 #include "util/datacache.h"
 #include <functional>
 #include <QStack>
+#if __cpp_lib_math_constants >= 201907L
+#include <numbers>
+#endif
 
 using EvalContext = ParamsFormula::EvalContext;
 using FormulaDialect = ParamsFormula::FormulaDialect;
@@ -455,7 +458,11 @@ const RadixTree<OperatorDefinition> _operatorDefinitions {
         return {};
       } }, true },
   { "<pi>", { 0, 0, false, false, [](Stack *, const EvalContext &, const QVariant &) -> QVariant {
+#if __cpp_lib_math_constants >= 201907L
+        return std::numbers::pi;
+#else
         return 3.141592653589793238462643383279502884;
+#endif
       } }, true },
   { { ":=:", "<swap>" }, { 2, -1, true, false, [](Stack *stack, const EvalContext &context, const QVariant &def) -> QVariant {
         auto y = stack->popeval(stack, context, def);
