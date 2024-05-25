@@ -27,6 +27,7 @@
 #include <functional>
 #include <stdlib.h>
 #include <QCryptographicHash>
+#include <QRandomGenerator>
 
 static bool _variableNotFoundLoggingEnabled = false;
 
@@ -274,6 +275,37 @@ _functions {
     else
       input = input.utf8mid(i, ok ? j : -1);
   }
+  return input;
+}, true},
+{ "=box", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
+  auto params = key.split_headed_list(ml);
+  auto input = PercentEvaluator::eval_utf8(params.value(0), context);
+  auto size = PercentEvaluator::eval_number<qsizetype>(params.value(1),context);
+  auto flags = params.value(2);
+  if (flags.contains('t')) // trim before anything else
+    input.trim();
+  if (size <= 0) // if size is invalid, neither pad nor elide
+    return input;
+  auto b = flags.contains('b'); // count bytes rather than characters
+  auto is = b ? input.size() : input.utf8size();
+  if (is < size) { // too short -> must pad
+    auto padding = PercentEvaluator::eval_utf8(params.value(3), context)
+                   | " "_u8;
+    if (flags.contains('r'))
+      return Utf8String::pad(1, b, input, size, padding);
+    if (flags.contains('c'))
+      return Utf8String::pad(0, b, input, size, padding);
+    return Utf8String::pad(-1, b, input, size, padding);
+  }
+  if (is > size && !flags.contains('o')) { // too long -> must elide
+    auto ellipsis = PercentEvaluator::eval_utf8(params.value(4), context);
+    if (flags.contains('l'))
+      return Utf8String::elide(-1, b, input, size, ellipsis);
+    if (flags.contains('m'))
+      return Utf8String::elide(0, b, input, size, ellipsis);
+    return Utf8String::elide(1, b, input, size, ellipsis);
+  }
+  // nothing to do, (trimmed) input was already the right size
   return input;
 }, true},
 { "=trim", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {

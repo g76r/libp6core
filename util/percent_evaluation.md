@@ -319,6 +319,57 @@ examples:
 * `%{=mid:%foo:4}`
 * `%{=mid:%{=frombase64,%foo}:4:5:b}`
 
+%=box
+-----
+`{=box:input[:size[:flags[:padding[:ellipsis]]]]}`
+
+pad and (optionnaly) elide an input text string to make it fit in a fixed size
+text box
+
+* input is the data to transform, it is evaluated (%foo become the content of
+foo param)
+* size is the number of characters the output must have, if negative or
+  invalid, or omitted, the input is neither padded nor elided (but can still be
+  trimmed)
+* padding is the padding pattern, by default ' ' (one regular space character),
+  it will be repeated as many times as necessary to fill in the blank,
+  if empty disable padding (only enable trimming with t option and elision)
+* ellipsis is the elision placeholder used when input is longer than size,
+  by default, it's an empty string, but e.g. '...' (three regular ASCII dot
+  characters) or '…' (unicode ellipsis character) can be convenient to make the
+  ellision visible
+* if flags contains 'r' pad on the right instead of left (left justify the text)
+* if flags contains 'c' pad evenly on both sides (center the text) 
+* if flags contains 'o' allow overflow if input is longer than size (no elision)
+* if flags contains 'l' elision is done on the left instead of right
+* if flags contains 'm' elision is done in the middle
+* if flags contains 'b' measure sizes in bytes rather than unicode characters
+* if flags contains 't' input is trimmed before padding or eliding
+
+examples:
+* `%{=box:foo:6}` -> "   foo"
+* `%{=box:foo:6:r}` -> "foo   "
+* `%{=box:foo:6:c}` -> " foo  "
+* `%{=box:%foo:6::0}` -> "012345" if foo is "12345"
+* `%{=box:%foo:8:r: }` -> "12345   " if foo is "12345"
+* `%{=box:%foo:8:r:.,}` -> "12345.,." if foo is "12345"
+* `%{=box:%foo:8:c: }` -> " 12345  " if foo is "12345"
+* `%{=box:%foo:8::}` -> "12345" if foo is "12345" (padding disabled because of
+                        empty padding parameter)
+* `%{=box:  bar::t}` -> "bar" (neither padding nor elision because of invalid
+                        (empty) length parameter)
+* `%{=box:  bar:🥨:t}` -> "bar" (neither padding nor elision because of invalid
+                          (non number) length parameter)
+* `%{=box:%foo:3}` -> "123" if foo is "12345"
+* `%{=box:%foo:3:l}` -> "345" if foo is "12345"
+* `%{=box:%foo:3:m}` -> "145" if foo is "12345"
+* `%{=box:%foo:3:m::…}` -> "1…5" if foo is "12345"
+* `%{=box:%foo:4:::...}` -> "1..." if foo is "12345"
+* `%{=box:%foo:4:l::...}` -> "...1" if foo is "12345"
+* `%{=box:%foo:4:m::...}` -> "...1" if foo is "12345"
+* `%{=box:%foo:3:::abc}` -> "abc" if foo is longer than 3
+* `%{=box:%foo:3:::abcdef}` -> "abc" if foo is longer than 3
+
 %=trim
 -----
 `%{=trim:input}`
@@ -327,9 +378,12 @@ removes whitespace at begining and end of input
 * input is the data to transform, it is evaluated (%foo become the content of
 foo param)
 
+see also %=box which can do trimming, padding and elision at once
+
 examples:
 * `%{=trim:%foo}`
 * `%{=trim:  bar}` -> "bar"
+* `%{=box:  bar::t}` -> "bar"
 
 %=htmlencode
 ------------
@@ -351,17 +405,20 @@ examples:
 
 %=elideright %=elideleft %=elidemiddle
 --------------------------------------
-`%{=elideright:input:length[:placeholder]}`
+`%{=elideright:input:length[:ellipsis]}`
 
-`%{=elideleft:input:length[:placeholder]}`
+`%{=elideleft:input:length[:ellipsis]}`
 
-`%{=elidemiddle:input:length[:placeholder]}`
+`%{=elidemiddle:input:length[:ellipsis]}`
 
 * input is the data to transform, it is evaluated (%foo become the content of
 foo param)
 * length is the number of character to keep from the input, if negative or
 invalid or smaller than placeholder, the whole input is kept
-* placeholder is the string replacing removed characters, by default "..."
+* ellipsis is the string replacing removed characters, by default "..." (three
+  regular ASCII dot characters)
+
+see also %=box which can do trimming, padding and elision at once
 
 examples:
 * `%{=elideright:%foo:40}`
@@ -369,6 +426,7 @@ examples:
 * `%{=elideright:Hello World !:10:(...)}` -> Hello(...)
 * `%{=elideleft:Hello World !:10}` -> ...World !
 * `%{=elidemiddle:Hello World !:10}` -> Hell...d !
+* `%{=box:%foo:4:::...}` -> "1..." if foo is "12345"
 
 %=random
 --------

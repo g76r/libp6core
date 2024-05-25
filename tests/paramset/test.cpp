@@ -49,5 +49,21 @@ int main(void) {
                 "%{=formatboolean:Z}= %{=formatboolean:Z::false}=false", &p);
   qDebug() << PercentEvaluator::eval_utf8(
                 "%{=apply:func1:a}=A %{=apply:func2:a:B}=Ab %{=apply:tosqlin:foo bar baz}=('foo','bar','baz')", &p);
+  qDebug() << PercentEvaluator::eval_utf8(
+                "'%{=box:foo:6}'='   foo' '%{=box:foo:6:r}'='foo   ' '%{=box:foo:6:c}'=' foo  '");
+  p.insert("foo", "12345");
+  qDebug() << PercentEvaluator::eval_utf8(
+                "%{=box:%foo:6::0}=012345 %{=box:%foo:8:r:+}=12345+++ "
+                "%{=box:%foo:8:r:.,}=12345.,. %{=box:%foo:8:c:+}=+12345++ "
+                "%{=box:%foo:8::+}=+++12345 %{=box:  bar::t}=bar %{=box:  bar:🥨:t}=bar "
+                "%{=box:%foo:3}=123 %{=box:%foo:3:l}=345 %{=box:%foo:3:m}=145 "
+                "%{=box:%foo:3:m::…}=1…5 %{=box:%foo:3:mb::…}=… "
+                "%{=box:%foo:3:m::🥨}=1🥨5 %{=box:%foo:3:r::🥨}=12🥨 "
+                "%{=box:%foo%foo:8:m::...}=12...345 %{=box:%foo%foo:7:m::...}=12...45 "
+                "%{=box:%foo%foo:6:m::...}=1...45 "
+                "%{=box:%foo:4:::...}=1... "
+                "%{=box:%foo:4:l::...}=...1 %{=box:%foo:4:m::...}=...1 "
+                "%{=box:%foo:3:::abc}=abc %{=box:%foo:3:::abcdef}=abc "
+                , &p);
   return 0;
 }
