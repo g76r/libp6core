@@ -44,7 +44,7 @@ int main(void) {
   ;
   qDebug() << PercentEvaluator::eval_utf8("1: %{=rpn,5,4,-}")
            << PercentEvaluator::eval_utf8("-1: %{=rpn,5,4,:=:,-}")
-           << PercentEvaluator::eval_utf8("16: %{=rpn,4,4,<dup>,*}")
+           << PercentEvaluator::eval_utf8("16: %{=rpn,4,<dup>,*}")
            << PercentEvaluator::eval_utf8(": %{=rpn,*}")
            << "ø: "+ParamsFormula(",*", ParamsFormula::RpnWithPercents).eval_utf8({}, "ø")
            << "ø: "+ParamsFormula(",<nil>,<nil>,@", ParamsFormula::RpnWithPercents).eval_utf8({}, "ø")

@@ -624,7 +624,7 @@ please note that:
 - `??*` is a null coalescence operator (`%{=rpn,<null>,%foo,??,null,??*}` -> foo
   value, including empty if foo is set, event to an empty string, and otherwise
   "null"; `%{=rpn,,%foo,??*}` -> always return an empty string)
-- `==` and `!=\ consider non set variable or any invalid QVariant or valid
+- `==` and `!=` consider non set variable or any invalid QVariant or valid
   QVariant not convertible to a number or string as if it were an empty string,
   and thus always return either true or false
 - `==*` and `!=*` consider invalid QVariant or QVariant not convertible to a
@@ -650,7 +650,7 @@ please note that:
 - `<pi>` holds Archimedes' constant
 - `:=:` (and its `<swap>` synonymous) swaps the two previous values in the stack
   e.g. `%{=rpn,5,4,:=:,-}` -> -1
-- `<dup>` duplicates previous value e.g. `%{=rpn,4,4,<dup>,*}` -> 16
+- `<dup>` duplicates previous value e.g. `%{=rpn,4,<dup>,*}` -> 16
 
 see also ParamsFormula class which is then engine used by %=rpn.
 
