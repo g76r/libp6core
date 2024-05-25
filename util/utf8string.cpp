@@ -13,7 +13,6 @@
  */
 
 #define UTF8STRING_IMPL_CPP
-#include "utf8string.h"
 #include "utf8stringlist.h"
 #include <set>
 #include <QDateTime>
@@ -29,6 +28,8 @@ const QList<char32_t> Utf8String::UnicodeWhitespace = {
 };
 const Utf8String Utf8String::ReplacementCharacterUtf8 = "\xef\xbf\xbd"_u8;
 const Utf8String Utf8String::Empty = ""_u8;
+const Utf8String Utf8String::DefaultEllipsis = "..."_u8;
+const Utf8String Utf8String::DefaultPadding = " "_u8;
 
 #include "util/unicodedata.cpp"
 

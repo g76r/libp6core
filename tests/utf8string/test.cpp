@@ -40,5 +40,13 @@ int main(void) {
   bar %= ps;
   qDebug() << "%foo"_u8 % ps << "%foo"_u8 % &ps << bar;
   qDebug() << "42"_u8.toNumber<long long>() << "0x1b"_u8.toNumber<int>() << "1e6M"_u8.toNumber<double>();
+  ps = { "foo", "12345"};
+  qDebug() << Utf8String::elide(0,false,"foobar",5,"§") << "fo§ar"_u8
+           << Utf8String::elide(-1,true,"foo§ar",4,"") << "§ar"_u8
+           << Utf8String::pad(-1,false,"fo§",6,"+") << "+++fo§"_u8
+           << Utf8String::pad(-1,true,"fo§",6,"+") << "++fo§"_u8
+           << Utf8String::pad(0,false,"hi!",7," ") << "  hi!  "_u8
+           << Utf8String::pad(0,false,"fo§",6,"12345") << "1fo§23"_u8
+              ;
   return 0;
 }

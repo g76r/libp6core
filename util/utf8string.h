@@ -17,7 +17,6 @@
 
 #include "libp6core_global.h"
 #include <QVariant>
-#include <bit>
 
 using namespace Qt::Literals::StringLiterals;
 
@@ -34,6 +33,8 @@ public:
   const static char32_t ByteOrderMark = U'\ufeff';
   const static Utf8String ReplacementCharacterUtf8;
   const static Utf8String Empty;
+  const static Utf8String DefaultEllipsis;
+  const static Utf8String DefaultPadding;
 
   inline Utf8String(const QByteArray &ba = {}) : QByteArray(ba) {}
   inline Utf8String(const QByteArray &&ba) : QByteArray(ba) {}
@@ -286,6 +287,126 @@ public:
   /** like mid() but crashes if out of bound. */
   [[nodiscard]] inline Utf8String sliced(qsizetype pos, qsizetype n) const {
     return QByteArray::sliced(pos, n); }
+
+  // eliding
+  /** Truncate string to match at most maxsize characters/bytes, adding an
+   *  ellipsis string (e.g. "...") where truncated.
+   *  e.g. elide(0,false,"foobar",5,"§") -> "fo§ar"
+   *  e.g. elide(-1,true,"foo§ar",4,"") -> "§ar" ("§" is 2 bytes long)
+   *  You probably rather want to call specialized forms like elide_right().
+   * @param direction: -1 left 0 middle +1 right
+   * @param binary true to count bytes, false to count unicode chars
+   */
+  [[nodiscard, gnu::always_inline]] static inline Utf8String elide(
+      const int direction, const bool binary, const Utf8String &s,
+      const qsizetype maxsize, const Utf8String &ellipsis) {
+    auto ss = binary ? s.size() : s.utf8size();
+    if (maxsize < 0 || ss < maxsize) [[likely]] // input string already fits
+      return s;
+    auto es = binary ? ellipsis.size() : ellipsis.utf8size();
+    if (es >= maxsize) [[unlikely]] { // ellipsis is larger than maxsize
+      if (direction >= 0) // elide by right or center will elide by right
+        return (binary ? ellipsis.left(maxsize) : ellipsis.utf8left(maxsize));
+      return (binary ? ellipsis.right(maxsize) : ellipsis.utf8right(maxsize));
+    }
+    if (direction > 0) // elide by right, keep left
+      return binary ? s.left(maxsize-es)+ellipsis
+                    : s.utf8left(maxsize-es)+ellipsis;
+    if (direction < 0) // elide by left, keep right
+      return binary ? ellipsis+s.right(maxsize-es)
+                    : ellipsis+s.utf8right(maxsize-es);
+    // elide by center
+    auto half = (maxsize-es)/2;
+    return binary ? s.left(half)+ellipsis+s.right(maxsize-es-half)
+                  : s.utf8left(half)+ellipsis+s.utf8right(maxsize-es-half);
+  }
+  [[nodiscard]] static inline Utf8String elide_right(
+      const Utf8String &s, const qsizetype maxsize,
+      const Utf8String &ellipsis = DefaultEllipsis, const bool binary = false) {
+    return elide(1, binary, s, maxsize, ellipsis); }
+  [[nodiscard]] inline Utf8String &elide_right(
+      const qsizetype maxsize,
+      const Utf8String &ellipsis = DefaultEllipsis, const bool binary = false) {
+    return *this = elide(1, binary, *this, maxsize, ellipsis); }
+  [[nodiscard]] static inline Utf8String elide_left(
+      const Utf8String &s, const qsizetype maxsize,
+      const Utf8String &ellipsis = DefaultEllipsis, const bool binary = false) {
+    return elide(-1, binary, s, maxsize, ellipsis); }
+  [[nodiscard]] inline Utf8String &elide_left(
+      const qsizetype maxsize,
+      const Utf8String &ellipsis = DefaultEllipsis, const bool binary = false) {
+    return *this = elide(-1, binary, *this, maxsize, ellipsis); }
+  [[nodiscard]] static inline Utf8String elide_middle(
+      const Utf8String &s, const qsizetype maxsize,
+      const Utf8String &ellipsis = DefaultEllipsis, const bool binary = false) {
+    return elide(0, binary, s, maxsize, ellipsis); }
+  [[nodiscard]] inline Utf8String &elide_middle(
+      const qsizetype maxsize,
+      const Utf8String &ellipsis = DefaultEllipsis, const bool binary = false) {
+    return *this = elide(0, binary, *this, maxsize, ellipsis); }
+
+  // padding
+  /** Pad string to match at less size characters/bytes, adding a padding
+   *  pattern (e.g. " " or "0") on one or both sides.
+   *  e.g. pad(-1,false,"fo§",6,"+") -> "+++fo§"
+   *  e.g. pad(-1,true,"fo§",6,"+") -> "++fo§" ("§" is 2 bytes long)
+   *  e.g. pad(0,false,"hi!",7," ") -> "  hi!  "
+   *  e.g. pad(0,false,"fo§",6,"12345") -> "1fo§23"
+   *  You probably rather want to call specialized forms like pad_left().
+   * @param direction: -1 left 0 center +1 right
+   * @param binary true to count bytes, false to count unicode chars
+   */
+  [[nodiscard, gnu::always_inline]] static inline Utf8String pad(
+      const int direction, const bool binary, const Utf8String &s,
+      const qsizetype size, const Utf8String &padding) {
+    auto ss = binary ? s.size() : s.utf8size();
+    if (ss >= size) [[unlikely]] // nothing to do
+      return s;
+    auto ps = binary ? padding.size() : padding.utf8size();
+    if (ps == 0) [[unlikely]] // don't pad with empty padding pattern
+      return s;
+    Utf8String real_padding = padding;
+    if (ps < size-ss) { // not enough padding, must repeat it
+      real_padding = padding.repeated((size-ss)/ps + ((size-ss)%ps ? 1 : 0));
+      ps = binary ? real_padding.size() : real_padding.utf8size();
+    }
+    if (ps > size-ss) // padding too long, keep left part
+      real_padding = binary ? real_padding.left(size-ss)
+                            : real_padding.utf8left(size-ss);
+    if (direction == 1) // pad on right
+      return s+real_padding;
+    if (direction == -1) // pad on left
+      return real_padding+s;
+    // pad on center
+    auto half = (size-ss)/2;
+    if (binary)
+      return real_padding.left(half)+s+real_padding.right(size-ss-half);
+    return real_padding.utf8left(half)+s+real_padding.utf8right(size-ss-half);
+  }
+  [[nodiscard]] static inline Utf8String pad_left(
+      const Utf8String &s, const qsizetype size,
+      const Utf8String &padding = DefaultPadding, const bool binary = false) {
+    return pad(1, binary, s, size, padding); }
+  [[nodiscard]] inline Utf8String &pad_left(
+      const qsizetype size, const Utf8String &padding = DefaultPadding,
+      const bool binary = false) {
+    return *this = pad(1, binary, *this, size, padding); }
+  [[nodiscard]] static inline Utf8String pad_right(
+      const Utf8String &s, const qsizetype size,
+      const Utf8String &padding = DefaultPadding, const bool binary = false) {
+    return pad(-1, binary, s, size, padding); }
+  [[nodiscard]] inline Utf8String &pad_right(
+      const qsizetype size, const Utf8String &padding = DefaultPadding,
+      const bool binary = false) {
+    return *this = pad(-1, binary, *this, size, padding); }
+  [[nodiscard]] static inline Utf8String pad_center(
+      const Utf8String &s, const qsizetype size,
+      const Utf8String &padding = DefaultPadding, const bool binary = false) {
+    return pad(0, binary, s, size, padding); }
+  [[nodiscard]] inline Utf8String &pad_center(
+      const qsizetype size, const Utf8String &padding = DefaultPadding,
+      const bool binary = false) {
+    return *this = pad(0, binary, *this, size, padding); }
 
   // splitting
   /** Splitting utf8 string on ascii 7 separators, e.g. {',',';'}

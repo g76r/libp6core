@@ -16,3 +16,4 @@ true false
 "\\a@0§�🥨越越a\u0001\u0001=\\a@0§�🥨越越a\u0001\u0001"
 QVariant(Utf8String, "1") QVariant(Utf8String, "1") "2"
 42 27 1e+12
+"fo§ar" "fo§ar" "§ar" "§ar" "+++fo§" "+++fo§" "++fo§" "++fo§" "  hi!  " "  hi!  " "1fo§23" "1fo§23"
