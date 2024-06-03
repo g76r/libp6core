@@ -18,6 +18,7 @@
 #include "util/datacache.h"
 #include <functional>
 #include <QStack>
+#include <QRegularExpression>
 #if __cpp_lib_math_constants >= 201907L
 #include <numbers>
 #endif

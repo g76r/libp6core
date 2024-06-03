@@ -1,4 +1,4 @@
-/* Copyright 2016-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -118,7 +118,8 @@ public:
 // "delete buffer" and "delete top" won't be called if hte command is not
 // executed and finished, e.g. if the script is deleted before execution or
 // aborted before reaching this particular command
-struct FtpScriptData : public QSharedData {
+class FtpScriptData : public QSharedData {
+public:
   //int _id;
   FtpClient *_client;
   QList<FtpCommand> _commands;

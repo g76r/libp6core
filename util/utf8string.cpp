@@ -60,7 +60,7 @@ static int staticInit() {
   QMetaType::registerConverter<double,Utf8String>([](const double &n) {
     return Utf8String::number(n); });
   QMetaType::registerConverter<float,Utf8String>([](const float &n) {
-    return Utf8String::number(n); });
+    return Utf8String::number((double)n); });
   QMetaType::registerConverter<qlonglong,Utf8String>([](const qlonglong &n) {
     return Utf8String::number(n); });
   QMetaType::registerConverter<qulonglong,Utf8String>([](const qulonglong &n) {
@@ -196,7 +196,7 @@ static inline I toInteger(
   I i = wrapped(s, &_ok, base);
   if (!_ok && floating_point_enabled) {
     // try to convert to double and then truncate to integer part
-    double d = toFloating<double>(s, &_ok, NAN, suffixes_enabled,
+    double d = toFloating<double>(s, &_ok, (double)NAN, suffixes_enabled,
                                   [](const QByteArray &s, bool *ok) {
       return s.toDouble(ok);
     });

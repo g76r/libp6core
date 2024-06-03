@@ -34,6 +34,8 @@ public:
     : QList<SharedUiItem>(items) { }
   inline SharedUiItemList(const SharedUiItem &item)
     : QList<SharedUiItem>({item}) {}
+  SharedUiItemList &operator=(const SharedUiItemList &that) {
+    QList::operator=(that); return *this; }
   Utf8String join(const QByteArray &separator, bool qualified = false) const;
   Utf8String join(const char separator, bool qualified = false) const;
   Utf8String join(const char32_t separator, bool qualified = false) const;

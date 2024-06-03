@@ -16,6 +16,7 @@
 
 #include "libp6core_global.h"
 #include <QSharedDataPointer>
+#include <QMetaType>
 
 class MailAddressData;
 
