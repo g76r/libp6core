@@ -452,8 +452,8 @@ Utf8StringList Utf8String::split_after(
     return {};
   auto data = constData(), sep_data = sep.constData();
   qsizetype imax = n-w+1, i = offset, j = i;
-  while (i < imax) {
-    if (::strncmp(data+i, sep_data, w) == 0) {
+  while (i < n) {
+    if (i < imax && ::strncmp(data+i, sep_data, w) == 0) {
       if (i-j > 0 || behavior == Qt::KeepEmptyParts)
         list += mid(j, i-j);
       i += w;
