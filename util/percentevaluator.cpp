@@ -44,7 +44,7 @@ static thread_local DataCache<Utf8String,ParamsFormula> _rpn_cache{ 4096 };
 static thread_local DataCache<Utf8String,QRegularExpression> _regexp_cache{ 4096 };
 static const auto _re_match_opts =
     QRegularExpression::DotMatchesEverythingOption // can be canceled with (?-s)
-    | QRegularExpression::DontCaptureOption // can be canceled with (?-n)
+    //| QRegularExpression::DontCaptureOption // can be canceled with (?-n)
     ;
 static const auto _re_sub_opts =
     QRegularExpression::DotMatchesEverythingOption // can be canceled with (?-s)
