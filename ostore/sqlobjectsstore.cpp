@@ -1,4 +1,4 @@
-/* Copyright 2017-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -28,13 +28,12 @@ SqlObjectsStore::SqlObjectsStore(const QMetaObject *metaobject,
   _tableName = tableName;
   int first = metaobject->propertyOffset();
   int count = metaobject->propertyCount();
-  for (int i = first, j = 0; i < count; ++i) {
+  for (int i = first; i < count; ++i) {
     QMetaProperty prop = metaobject->property(i);
     if (!prop.isStored()) // MAYDO maybe there are other props to ignore
       continue;
     _storedProperties.append(prop);
     _storedPropertiesByName.insert(prop.name(), prop);
-    ++j;
   }
   metaobject = metaObject(); // switching to this' meta object
   count = metaobject->methodCount();
