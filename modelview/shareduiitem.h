@@ -575,8 +575,7 @@ protected:
   template <class T,
             std::enable_if_t<std::is_base_of_v<SharedUiItemData,T>,bool> = true>
   inline const T *specializedData() const {
-    auto ptr = reinterpret_cast<const QSharedDataPointer<T>*>(&_data);
-    return ptr->constData();
+    return static_cast<const T*>(_data.constData());
   }
   /** Helper template to detach calling the specialized data class' copy
    * constructor rather than base SharedUiItemData's one, and return a non-const
@@ -588,7 +587,9 @@ protected:
             std::enable_if_t<std::is_base_of_v<SharedUiItemData,T>,bool> = true>
   T *detachedData() {
     auto ptr = reinterpret_cast<QSharedDataPointer<T>*>(&_data);
-    ptr->detach();
+    // data() must be called after type conversion in order to detach() to be
+    // able to call actual copy constructor TData::TData() rather than base
+    // class' SharedUiItemData::SharedUiItemData()
     return ptr->data();
   }
   /** Set data from a UI point of view, i.e. called by a QAbstractItemModel
