@@ -358,7 +358,7 @@ public:
    * @return qualifier+':'+id if qualifier is not empty, id otherwise. */
   inline static Utf8String qualifiedId(
       const Utf8String &qualifier, const Utf8String &id) {
-    return qualifier+":"+id; }
+    Utf8String s{qualifier}; s += ':'; s += id; return s; }
   /** Qualified item identifier.
    * The qualified identifier MUST be unique for any type of item within the
    * same document.
