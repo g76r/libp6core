@@ -315,23 +315,23 @@ static RadixTree <std::function<QVariant(const HttpRequest *req, const Utf8Strin
 { "clientaddresses", [](const HttpRequest *req, const Utf8String &, const EvalContext&, int) -> QVariant {
   return req->clientAdresses().join(' ');
 }},
-{ "cookie", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
-  return req->cookie(key.mid(ml+1));
+{ "cookie:", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
+  return req->cookie(key.mid(ml));
 }, true},
-{ "base64cookie", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
-  return req->base64Cookie(key.mid(ml+1));
+{ "base64cookie:", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
+  return req->base64Cookie(key.mid(ml));
 }, true},
-{ "param", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
-  return req->param(key.mid(ml+1));
+{ "param:", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
+  return req->param(key.mid(ml));
 }, true},
-{ "value", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
-  auto v = req->param(key.mid(ml+1));
+{ "value:", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
+  auto v = req->param(key.mid(ml));
   if (!v.isNull())
     return v;
-  return req->base64Cookie(key.mid(ml+1));
+  return req->base64Cookie(key.mid(ml));
 }, true},
-{ { "header", "requestheader" }, [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
-  return req->header(key.mid(ml+1).toInternetHeaderCase());
+{ { "header:", "requestheader:" }, [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
+  return req->header(key.mid(ml).toInternetHeaderCase());
 }, true},
 };
 
@@ -344,6 +344,15 @@ QVariant HttpRequest::paramRawValue(
   auto f = _functions.value(key, &ml);
   if (f)
     return f(this, key, context, ml);
+  auto v = param(key);
+  if (!v.isNull())
+    return v;
+  v = base64Cookie(key);
+  if (!v.isNull())
+    return v;
+  v = header(key);
+  if (!v.isNull())
+    return v;
   return def;
 }
 
@@ -354,13 +363,18 @@ Utf8StringSet HttpRequest::paramKeys(
   static const Utf8StringSet _const_keys {
     "url"_u8, "path"_u8, "method"_u8, "clientaddresses"_u8 };
   Utf8StringSet keys = _const_keys;
-  for (auto [s,_]: cookies().asKeyValueRange())
+  for (auto [s,_]: cookies().asKeyValueRange()) {
     keys << "cookie:"_u8+s;
-  for (auto [s,_]: paramsAsMap().asKeyValueRange())
+    keys << s;
+  }
+  for (auto [s,_]: paramsAsMap().asKeyValueRange()) {
     keys << "param:"_u8+s;
+    keys << s;
+  }
   for (auto [s,_]: headers().asKeyValueRange()) {
     keys << "header:"_u8+s;
     keys << "requestheader:"_u8+s;
+    keys << s;
   }
   return keys;
 }

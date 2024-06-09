@@ -353,6 +353,9 @@ QVariant HttpResponse::paramRawValue(
   auto f = _functions.value(key, &ml);
   if (f)
     return f(this, key, context, ml);
+  auto v = header(key);
+  if (!v.isNull())
+    return v;
   return def;
 }
 
@@ -364,6 +367,7 @@ Utf8StringSet HttpResponse::paramKeys(const EvalContext &context) const {
   for (auto [s,_]: headers().asKeyValueRange()) {
     keys << "header:"+s;
     keys << "responseheader:"+s;
+    keys << s;
   }
   return keys;
 }
