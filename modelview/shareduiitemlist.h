@@ -36,11 +36,21 @@ public:
     : QList<SharedUiItem>({item}) {}
   SharedUiItemList &operator=(const SharedUiItemList &that) {
     QList::operator=(that); return *this; }
-  Utf8String join(const QByteArray &separator, bool qualified = false) const;
-  Utf8String join(const char separator, bool qualified = false) const;
-  Utf8String join(const char32_t separator, bool qualified = false) const;
-  QString joinUtf16(const QString &separator, bool qualified = false) const;
-  QString joinUtf16(const QChar separator, bool qualified = false) const;
+  Utf8String join(const QByteArray &separator) const;
+  Utf8String join(const char separator) const;
+  Utf8String join(const char32_t separator) const;
+  Utf8String join(const Utf8String &separator, const Utf8String &format,
+                  const Utf8StringSet &qualifiers = {}) const;
+  Utf8String join(const char separator, const Utf8String &format,
+                  const Utf8StringSet &qualifiers = {}) const;
+  Utf8String join(const char32_t separator, const Utf8String &format,
+                  const Utf8StringSet &qualifiers = {}) const;
+  QString joinUtf16(const QString &separator) const;
+  QString joinUtf16(const QChar separator) const;
+  QString joinUtf16(const QString &separator, const Utf8String &format,
+                    const Utf8StringSet &qualifiers = {}) const;
+  QString joinUtf16(const QChar separator, const Utf8String &format,
+                    const Utf8StringSet &qualifiers = {}) const;
   QVariant paramRawValue(
       const Utf8String &key, const QVariant &def = {},
       const ParamsProvider::EvalContext &context = {}) const override;

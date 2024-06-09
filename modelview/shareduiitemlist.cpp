@@ -1,4 +1,4 @@
-/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -94,27 +94,71 @@ inline T generic_join(const SharedUiItemList &list, const S &separator,
   return s;
 }
 
-Utf8String SharedUiItemList::join(
-    const QByteArray &separator, bool qualified) const {
-  return generic_join<Utf8String>(*this, separator, qualified);
+Utf8String SharedUiItemList::join(const QByteArray &separator) const {
+  return generic_join<Utf8String>(*this, separator, false);
+}
+
+Utf8String SharedUiItemList::join(const char separator) const {
+  return generic_join<Utf8String>(*this, separator, false);
+}
+
+Utf8String SharedUiItemList::join(const char32_t separator) const {
+  return generic_join<Utf8String>(*this, separator, false);
+}
+
+QString SharedUiItemList::joinUtf16(const QString &separator) const {
+  return generic_join<QString>(*this, separator, false);
+}
+
+QString SharedUiItemList::joinUtf16(const QChar separator) const {
+  return generic_join<QString>(*this, separator, false);
+}
+
+template <class S>
+inline Utf8String generic_join(
+    const SharedUiItemList &list, const S &separator,
+    const Utf8String &format, const Utf8StringSet &qualifiers) {
+  Utf8String s;
+  bool first = true, filtered = !qualifiers.isEmpty();
+  for (auto item : list) {
+    if (filtered && !qualifiers.contains(item.qualifier()))
+      continue;
+    if (first)
+      first = false;
+    else
+      s += separator;
+    s += Utf8String{format % item};
+  }
+  return s;
 }
 
 Utf8String SharedUiItemList::join(
-    const char separator, bool qualified) const {
-  return generic_join<Utf8String>(*this, separator, qualified);
+    const Utf8String &separator, const Utf8String &format,
+    const Utf8StringSet &qualifiers) const {
+  return generic_join<>(*this, separator, format, qualifiers);
 }
 
 Utf8String SharedUiItemList::join(
-    const char32_t separator, bool qualified) const {
-  return generic_join<Utf8String>(*this, separator, qualified);
+    const char separator, const Utf8String &format,
+    const Utf8StringSet &qualifiers) const {
+  return generic_join<>(*this, separator, format, qualifiers);
+}
+
+Utf8String SharedUiItemList::join(
+    const char32_t separator, const Utf8String &format,
+    const Utf8StringSet &qualifiers) const {
+  return generic_join<>(*this, separator, format, qualifiers);
 }
 
 QString SharedUiItemList::joinUtf16(
-    const QString &separator, bool qualified) const {
-  return generic_join<QString>(*this, separator, qualified);
+    const QString &separator, const Utf8String &format,
+    const Utf8StringSet &qualifiers) const {
+  return generic_join<>(*this, separator, format, qualifiers);
 }
 
 QString SharedUiItemList::joinUtf16(
-    const QChar separator, bool qualified) const {
-  return generic_join<QString>(*this, separator, qualified);
+    const QChar separator, const Utf8String &format,
+    const Utf8StringSet &qualifiers) const {
+  return generic_join<>(*this, (char32_t)separator.unicode(), format,
+                        qualifiers);
 }
