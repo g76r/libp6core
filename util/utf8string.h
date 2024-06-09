@@ -762,6 +762,10 @@ public:
     QByteArray::operator+=(s); return *this; }
   inline Utf8String &operator+=(char32_t u) {
     QByteArray::operator+=(encode_utf8(u)); return *this; }
+  inline Utf8String &operator+=(const QVariant &v) {
+    QByteArray::operator+=(Utf8String{v}); return *this; }
+  inline Utf8String &operator+=(const QString &s) {
+    QByteArray::operator+=(Utf8String{s}); return *this; }
 
   inline Utf8String &operator=(const Utf8String &other) {
     QByteArray::operator =(other); return *this; }
