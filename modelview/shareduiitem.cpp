@@ -85,8 +85,15 @@ QVariant SharedUiItemData::paramRawValue(
   auto section = uiSectionByName(key);
   if (section < 0)
     section = key.toNumber<int>(-1);
-  if (section < 0)
+  if (section < 0) {
+    if (key == "id"_u8)
+      return id();
+    if (key == "qualifier"_u8)
+      return qualifier();
+    if (key == "qualified_id"_u8)
+      return SharedUiItem::qualifiedId(qualifier(), id());
     return def;
+  }
   auto value = uiData(section, context.role());
   if (!value.isValid())
     return def;
