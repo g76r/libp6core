@@ -234,3 +234,7 @@ void Logger::doLog(const LogEntry &) {
 
 void Logger::doShutdown() {
 }
+
+const Logger::LogEntryData *Logger::LogEntry::data() const {
+  return specializedData<Logger::LogEntryData>();
+}

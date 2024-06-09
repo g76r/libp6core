@@ -55,8 +55,7 @@ public:
     Utf8String location() const;
 
   private:
-    const LogEntryData *data() const {
-      return reinterpret_cast<const LogEntryData*>(SharedUiItem::data()); }
+    inline const LogEntryData *data() const;
   };
   enum ThreadModel {
     DirectCall, // the logger is already thread-safe and cannot block
