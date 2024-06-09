@@ -53,7 +53,8 @@ public:
   }
   /** Select items given their qualifier. Blindly trust that T and qualifier
    *  match each other. */
-  template<class T = SharedUiItem>
+  template<class T = SharedUiItem,
+           std::enable_if_t<std::is_base_of_v<SharedUiItem,T>,bool> = true>
   inline QList<T> filtered(const Utf8String &qualifier) {
     QList<T> subset;
     for (auto sui: *this)
