@@ -62,6 +62,7 @@ PRECOMPILED_HEADER *= \
     libp6core_stable.h
 
 SOURCES *= \
+    format/svgwriter.cpp \
     io/opensshcommand.cpp \
     util/paramsformula.cpp \
     util/percentevaluator.cpp \
@@ -167,6 +168,7 @@ SOURCES *= \
     modelview/stringlistdiffmodel.cpp
 
 HEADERS *=\
+    format/svgwriter.h \
     io/opensshcommand.h \
     modelview/templatedshareduiitemdata.h \
     util/datacache.h \

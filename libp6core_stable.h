@@ -1,4 +1,4 @@
-/* Copyright 2023 Gregoire Barbier and others.
+/* Copyright 2023-2024 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -82,6 +82,7 @@ using std::experimental::source_location;
 #include <QPointer>
 #include <QProcess>
 #include <QRandomGenerator>
+#include <QRect>
 #include <QRecursiveMutex>
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
