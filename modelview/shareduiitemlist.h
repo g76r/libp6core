@@ -71,6 +71,21 @@ public:
         subset += sui;
     return subset;
   }
+  /** Blindly trust that every item in list is of type T.
+   *  This is undefinied behaviour, use filtered() or join() instead. */
+  template<class T = SharedUiItem,
+           std::enable_if_t<std::is_base_of_v<SharedUiItem,T>,bool> = true>
+  inline QList<T> &casted() {
+    return reinterpret_cast<QList<T>&>(static_cast<QList<SharedUiItem>&>(*this));
+  }
+  /** Blindly trust that every item in list is of type T.
+   *  This is undefinied behaviour, use filtered() or join() instead. */
+  template<class T = SharedUiItem,
+           std::enable_if_t<std::is_base_of_v<SharedUiItem,T>,bool> = true>
+  inline const QList<T> &casted() const {
+    return reinterpret_cast<const QList<T>&>(static_cast<const QList<SharedUiItem>&>(*this));
+  }
+
   /** Append items if they're not yet present in the list.
    *  Expensive on large lists. */
   inline SharedUiItemList& operator|=(const SharedUiItemList &that) {
