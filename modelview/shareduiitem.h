@@ -533,7 +533,7 @@ public:
   /** Downcast blindly trusting caller that qualifier implies T */
   template<class T,
            std::enable_if_t<std::is_base_of_v<SharedUiItem,T>,bool> = true>
-  T &casted() const {
+  const T &casted() const {
     return static_cast<const T&>(*this);
   }
   /** Downcast blindly trusting caller that qualifier implies T */
