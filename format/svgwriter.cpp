@@ -60,6 +60,10 @@ void SvgWriter::drawText(
   // LATER enforce bounding box for real
 }
 
+void SvgWriter::comment(const Utf8String &text) {
+  _svg += "<!-- "+text+" -->\n";
+}
+
 Utf8String SvgWriter::data() const {
   return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
          "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.0//EN\""
@@ -89,46 +93,58 @@ bool SvgWriter::write(const Utf8String &filename) const {
 }
 
 QMap<Utf8String,Utf8String> SvgWriter::_icons {
-  { "square", "m -4 -4 h 8 v 8 h -8 z" }, // ■
-  // FIXME { "circle", "a 4 4 0 0" }, // ●
-  // FIXME { "marriage", "m -1 0 a 3 3 m 2 0 a 3 3" }, // ⚭
-  { "diamond", "m 0 -4 l 4 4 l -4 4 l -4 -4 z" }, // ♦
-  //{ "arrowr", "v -4 l 4 4 l -4 4 z" }, // ►
-  { "arrowu", "m 0 -4 l -4 6 h 8 z" }, // ▲
-  { "arrowr", "m 4 0 l -6 -4 v 8 z" }, // ►
+  { "square", "m-4,-4 h8 v8 h-8 z" }, // ■
+  { "osquare", "m-4,-4 h8,-8 v8 h8,-8 m8,0 h-8,8 v-8 h-8,8" }, // □
+  { "board22", "v-4 h4 v4 h-8 v4 h4 z m-4,-4 h8 h-8 v8 m8,0 h-8 h8 v-8" }, // 2x2 checkered square
+  { "circle", "m-4,0 a4,4 0 0,0 8,0 a4,4 0 0,0 -8,0" }, // ●
+  // for arc-based paths, see:
+  // https://www.w3.org/TR/SVG/paths.html#PathDataEllipticalArcCommands
+  // https://stackoverflow.com/questions/5737975/circle-drawing-with-svgs-arc-path
+  { "ginkgo", "m-4,0 a4,4 0 0,1 4,4 a4,4 0 0,1 4,-4 a4,4 0 0,0 -8,0 z" }, // ginkgo leaf
+  { "droplet", "m-4,0 a4,4 0 0,0 8,0 l-4,-4 z" }, // 🌢
+  { "pacman", "l2.83,-2.83 a4,4 0 1,0 0,5.66 z" },
+  { "crescentl", "m0,-4 a4,4 0 0,0 0,8 a6,6 0 0,1 0,-8 z" }, // ☾ north waning crescent
+  { "crescentr", "m0,-4 a4,4 0 0,1 0,8 a6,6 0 0,0 0,-8 z" }, // ☽ north waxing crescent
+  { "heart", "m-3.5,0 a2,2 0 0,1 3.5,-3.5 a2,2 0 0,1 3.5,3.5 l-3.5,3.5 z" }, // ♥
+  // TODO { "marriage", "" }, // ⚭
+  { "diamond", "m0,-4 l4,4 l-4,4 l-4,-4 z" }, // ♦
+  { "arrowu", "m0,-3 l-4,6 h8 z" }, // ▲
+  { "arrowd", "m0,3 l-4,-6 h8 z" }, // ▼
+  { "arrowr", "m3,0 l-6,-4 v8 z" }, // ►
+  { "arrowl", "m-3,0 l6,-4 v8 z" }, // ◄
   { "hourglass", "m -4 -4 h 8 l -8 8 h 8 z" }, // ⧗
   { "bowtie",    "m -4 -4 l 8 8 v -8 l -8 8 z" }, // ⧓
-  // FIXME { "droplet", "m 0 -1 a 3 3 h -3 l 3 -4 l 3 4 z" }, // 🌢
   { "times", "m -4 -4 l 8 8 m -8 0 l 8 -8" }, // ×
-  { "equal", "m -3 -3 h 6 m 0 6 h -6" }, // =
-  // FIXME { "pause", "m -3 -3 v 6 m 6 0 v -6" }, // ║
+  { "equal", "m-3,-1 h6 m0,3 h-6" }, // =
+  { "pause", "m-1,-3 v6 m3,0 v-6" }, // ║
   { "bars", "m -3 -3 h 6 m 0 3 h -6 m 0 3 h 6" }, // ≡
-  { "ground", "m -2 4 h 4 m -5 -2 h 6 m -7 -2 h 8 m -4 0 l 0 -4" }, // ⏚
-  // FIXME { "funnel", "m -1 0 l -3 -4 h 8 l -3 4 v 4 m -2 0 v -4" },
-  { "erlenmeyer", "m -1 -4 v 4 l -3 4 h 8 l -3 -4 v -4" },
   // slashed
-  // FIXME { "scircle", "a 3 3 m -4 4 l 8 -8" }, // ∅
+  // TODO { "scircle", "a 3 3 m -4 4 l 8 -8" }, // ∅
   // back-slashed
-  // FIXME { "bcircle", "a 3 3 m -4 -4 l 8 8" }, // ⦰
+  // TODO { "bcircle", "a 3 3 m -4 -4 l 8 8" }, // ⦰
   // cross-slashed
-  // FIXME { "xcircle", "a 3 3 m -4 -4 l 8 8 m -8 0 l 8 -8" }, // ⦻
+  // TODO { "xcircle", "a 3 3 m -4 -4 l 8 8 m -8 0 l 8 -8" }, // ⦻
   // circled
-  // FIXME { "odash", "a 4 4 m -2 0 h 4" }, // ⊝
-  // FIXME { "oplus", "a 4 4 m -2 0 h 4 m -2 -2 v 4" }, // ⊕
-  // FIXME { "otimes", "a 4 4 m -2 -2 l 4 4 m -4 0 l 4 -4" }, // ⊗
-  // FIXME { "ocircle", "a 4 4 a 2 2" }, // ⦾
+  // TODO { "odash", "a 4 4 m -2 0 h 4" }, // ⊝
+  // TODO { "oplus", "a 4 4 m -2 0 h 4 m -2 -2 v 4" }, // ⊕
+  // TODO { "otimes", "a 4 4 m -2 -2 l 4 4 m -4 0 l 4 -4" }, // ⊗
+  // TODO { "ocircle", "a 4 4 a 2 2" }, // ⦾
   // squared
-  // FIXME { "rdash", "v -4 h 4 v 8 h -8 v -8 z m 4 4 m -2 0 h 4" }, // ⊟
-  // FIXME { "rplus", "v -4 h 4 v 8 h -8 v -8 z m 4 4 m -2 0 h 4 m -2 -2 v 4" }, // ⊞
-  // FIXME { "rtimes", "v -4 h 4 v 8 h -8 v -8 z m 4 4 m -2 -2 l 4 4 m -4 0 l 4 -4" }, // ⊠
-  // FIXME { "rcircle", "v -4 h 4 v 8 h -8 v -8 z m 4 4 a 2 2" }, // ⊡
+  // TODO { "rdash", "v -4 h 4 v 8 h -8 v -8 z m 4 4 m -2 0 h 4" }, // ⊟
+  // TODO { "rplus", "v -4 h 4 v 8 h -8 v -8 z m 4 4 m -2 0 h 4 m -2 -2 v 4" }, // ⊞
+  // TODO { "rtimes", "v -4 h 4 v 8 h -8 v -8 z m 4 4 m -2 -2 l 4 4 m -4 0 l 4 -4" }, // ⊠
+  // TODO { "rcircle", "v -4 h 4 v 8 h -8 v -8 z m 4 4 a 2 2" }, // ⊡
   // ideograms
-  // FIXME { "warning", "m -4 l -4 8 h 8 z m 0 2 v 4 m 0 2 a 1 1" }, // ⚠
-  //{ "chuu", "m -4 -2 v 4 m 0 -4 h 8 m 0 0 v 4 m -8 -1 h 8 m -4 -5 v 8" }, // 中
-  { "chuu", "m -4 3 v -4 h 8 v 4 v -1 h -8 m 4 -6 v 8" }, // 中
-  // LATER /\-+|z⦀⦵⦶⦷⧋◄▼⧳ pacman •⁙ ⸭ ⸪ ⸫ ⸬ ⁚ ⁛ ⁘ ⁖ ㊅ ⁑⁎⁕ ⫯⫰⫱
-  // LATER ⏏⏭†‡※☀★♠♣♦♥☻☺♯♮♭♬♫♪♩⚀⚁⚂⚃⚄⚅⚑⚮⚬♀♂♁☘☉🏁⚑
-  // LATER ⽕🔥🜊⼟🗲⎔☩☨☦⛌⤫⤬⤭⨯⚔☁∪⊎⩈⼤⽊⟲⟳⥀⥁⭮⭯▦▩🉁	☾☽
+  { "ground", "m -2 4 h 4 m -5 -2 h 6 m -7 -2 h 8 m -4 0 l 0 -4" }, // ⏚
+  { "erlenmeyer", "m-1,-4 v4 l-3,4 h8 l-3,-4 v-4" },
+  { "funnel", "m-1,4 v-4 l-3,-4 h8 l-3,4 v4" },
+  // TODO { "warning", "m -4 l -4 8 h 8 z m 0 2 v 4 m 0 2 a 1 1" }, // ⚠
+  { "chuu", "m-4,-2 v4,-4 h8 v4,-4 h-8 v3 h8,-8 m4,-5 v8" }, // 中 center
+  { "nin", "m0,-4 v3 a6,6 0 0,1 -4,5 a6,6 0 0,0 4,-5 a6,6 0 0,0 4,5 a6,6 0 0,1 -4,-5" }, // 人 human
+  { "ka", "m0,-4 v3 a6,6 0 0,1 -4,5 a6,6 0 0,0 4,-5 a6,6 0 0,0 4,5 a6,6 0 0,1 -4,-5 m3,-2 a6,6 0 0,1 -2,2 m-2,0 l-2,-2" }, // 火 fire
+  // LATER /\-+|z⦀⦵⦶⦷⧋⧳ •⁙ ⸭ ⸪ ⸫ ⸬ ⁚ ⁛ ⁘ ⁖ ㊅ ⁑⁎⁕ ⫯⫰⫱
+  // LATER ⏏⏭†‡※☀★♠♣☻☺♯♮♭♬♫♪♩⚀⚁⚂⚃⚄⚅⚑⚮⚬♀♂♁☘☉🏁⚑
+  // LATER 🜊⼟🗲⎔☩☨☦⛌⤫⤬⤭⨯⚔☁∪⊎⩈⼤⽊⟲⟳⥀⥁⭮⭯▦▩🉁❂
 };
 
 Utf8StringList SvgWriter::_iconNames = SvgWriter::_icons.keys();

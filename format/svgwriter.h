@@ -44,6 +44,7 @@ public:
       const Utf8String &font_name = {}, int font_size = 12) {
     drawText({x, y, w, h}, flags, text, brush_color, font_name, font_size);
   }
+  void comment(const Utf8String &text);
   static inline Utf8StringList iconNames() { return _iconNames; }
   bool write(const Utf8String &filename) const;
   Utf8String data() const;
