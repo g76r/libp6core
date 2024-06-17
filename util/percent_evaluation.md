@@ -44,8 +44,6 @@ Detailed % syntax examples
                convention their name always begin with =
 *  `%{=date:YYYY}` -> current year in local timezone, using 4 digits
 *  `%éœ§越🥨` -> value of param "éœ§越🥨": chars outside ascii are not special
-*  `%{'%foo}` -> "%foo": a leading quote escapes param evaluation
-*  `%'foo` -> "foo": remember, one leading special char is allowed
 *  `%%` -> "%" : % escapes itself
 *  `%{=date:%format}` -> current date using format given by "format" param
 *  `%{=left:%{input}:3}` -> 3 left most utf8 characters of param "input"
@@ -170,13 +168,12 @@ return unevaluated value of a variable
   * u html encode will transform urls them into a links
   * n html encode will add br whenever it founds a newline
 
-see also %' and %=htmlencode
+see also %=htmlencode
 
 examples:
 * `%{=rawvalue!foo}` -> `%bar` if foo is `%bar`
 * `%{=rawvalue!foo!e}` -> `%%bar` if foo is `%bar`
 * `%{=rawvalue:h1:hun}` is equivalent to `%{=htmlencode|%{=rawvalue:h1}|un}`
-* `%{'foo}` returns `foo` whereas `%{foo}` would have returned the value of foo
 * `%foo` -> `%bar` if foo is `%%bar`
 * `%{=rpn,%foo}` -> `bar` if foo is `bar`
 * `%{=rpn,foo}` -> `foo`
@@ -677,27 +674,6 @@ examples:
 * `%{=rpn,%%foo}` -> "%foo"
 * `%{=rpn,dt: ,%=date,@}` -> "dt: " followed by current datetime
 * `%{=rpn,%{=rpn;42;!!},z,@}` -> "truez" but please don't do that
-
-%'
---
-`%{'anything}`
-
-returns "anything" without evaluating it
-
-this is usefull when an application process an input as always %-evaluated
-(being in config files or elsewhere) because it make it possible to provide
-a constant anyway, see %=rpn for instance
-
-see also %=rawvalue with e option
-
-examples:
-* `%{'foo}` returns `foo` whereas `%{foo}` would have returned the value of foo
-* `%foo` -> `%bar` if foo is `%%bar`
-* `%{=rawvalue!foo}` -> `%bar` if foo is `%bar`
-* `%{=rawvalue!foo!e}` -> `%%bar` if foo is `%bar`
-* `%{=rpn,%foo}` -> `bar` if foo is `bar`
-* `%{=rpn,foo}` -> `foo`
-* `%{=rpn,%%foo}` -> `%foo`
 
 %=integer
 ---------

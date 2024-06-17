@@ -22,7 +22,7 @@ int main(void) {
                 "%{=md5:%%baz}=96ab86a37cef7e27d8d45af9c29dc974 "
                 "%{=rpn,0x20,%x,+}=33.5 ", &p);
   qDebug() << PercentEvaluator::eval_utf8(
-              "*** %foozz=%%bar %{'foo}=foo %{=rawvalue!fooz}=%%bar "
+              "*** %foozz=%%bar foo=foo %{=rawvalue!fooz}=%%bar "
               "%{=rawvalue!fooz!e}=%%%%bar "
               "%{=rpn,%%foo}=%%foo %{=rpn,foo}=foo %{=rpn,%foo}=bar ***", &p);
   qDebug() << PercentEvaluator::eval_utf8("%{=rawvalue:h1:hun}", &p);

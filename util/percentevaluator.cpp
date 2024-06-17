@@ -53,9 +53,6 @@ static const auto _re_sub_opts =
 static RadixTree<std::function<
 QVariant(const Utf8String &key, const EvalContext &context, int ml)>>
 _functions {
-{ "'", [](const Utf8String &key, const EvalContext&, int) -> QVariant {
-  return key.mid(1);
-}, true},
 { "=date", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
   return TimeFormats::toMultifieldSpecifiedCustomTimestamp(
         QDateTime::currentDateTime(), key.mid(ml), context);
