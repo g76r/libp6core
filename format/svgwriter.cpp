@@ -95,7 +95,7 @@ bool SvgWriter::write(const Utf8String &filename) const {
 QMap<Utf8String,Utf8String> SvgWriter::_icons {
   { "square", "m-4,-4 h8 v8 h-8 z" }, // ■
   { "osquare", "m-4,-4 h8,-8 v8 h8,-8 m8,0 h-8,8 v-8 h-8,8" }, // □
-  { "board22", "v-4 h4 v4 h-8 v4 h4 z m-4,-4 h8 h-8 v8 m8,0 h-8 h8 v-8" }, // 2x2 checkered square
+  { "board22", "v-4 h4 v4 h-8 v4 h4 z m-4,-4 h8 h-8 v8 m8,0 h-8 h8 v-8" }, // 🙾 2x2 checkered square
   { "circle", "m-4,0 a4,4 0 0,0 8,0 a4,4 0 0,0 -8,0" }, // ●
   // for arc-based paths, see:
   // https://www.w3.org/TR/SVG/paths.html#PathDataEllipticalArcCommands
@@ -112,6 +112,9 @@ QMap<Utf8String,Utf8String> SvgWriter::_icons {
   { "arrowd", "m0,3 l-4,-6 h8 z" }, // ▼
   { "arrowr", "m3,0 l-6,-4 v8 z" }, // ►
   { "arrowl", "m-3,0 l6,-4 v8 z" }, // ◄
+  { "blockedarrow", "m4,-4 h-6 l5,4 l-5,4 h6 z m-8,1 l4,3 l-4,3 l4-3 l-4,-3 v6 l4,-3 l-4,3 v-6" }, // arrow to right blocked by clog
+  //{ "blockedarrow", "m4,-4 h-6 l5,4 l-5,4 h6 z m-8,1 l4,3 l-4,3 z" }, same with filled arrow
+  { "crossedarrows", "m1,0 l3,-3 v6 z m-1,-1 l3,-3 h-6 z m-1,1 l-3,-3 v6 z m1,1 l3,3 h-6 z" },
   { "hourglass", "m -4 -4 h 8 l -8 8 h 8 z" }, // ⧗
   { "bowtie",    "m -4 -4 l 8 8 v -8 l -8 8 z" }, // ⧓
   { "times", "m -4 -4 l 8 8 m -8 0 l 8 -8" }, // ×
@@ -145,6 +148,10 @@ QMap<Utf8String,Utf8String> SvgWriter::_icons {
   // LATER /\-+|z⦀⦵⦶⦷⧋⧳ •⁙ ⸭ ⸪ ⸫ ⸬ ⁚ ⁛ ⁘ ⁖ ㊅ ⁑⁎⁕ ⫯⫰⫱
   // LATER ⏏⏭†‡※☀★♠♣☻☺♯♮♭♬♫♪♩⚀⚁⚂⚃⚄⚅⚑⚮⚬♀♂♁☘☉🏁⚑
   // LATER 🜊⼟🗲⎔☩☨☦⛌⤫⤬⤭⨯⚔☁∪⊎⩈⼤⽊⟲⟳⥀⥁⭮⭯▦▩🉁❂
+  // LATER https://www.compart.com/fr/unicode/block/U+25A0 ◧
+  // LATER haglaz ᚺ haegl ᚻ wunjo ᚹ féhu ᚠ algiz ᛉ calc ᛣ mannaz ᛗ ing ᛝ tvimadur ᛯ gar ᚸ aleph א
+  // LATER https://fr.wikipedia.org/wiki/Balisage
+  // LATER segno 𝄋 fclef 𝄢 ᚋ ᚌ ᚍ ᚎ ᚏ
 };
 
 Utf8StringList SvgWriter::_iconNames = SvgWriter::_icons.keys();
