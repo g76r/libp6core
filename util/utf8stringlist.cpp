@@ -15,6 +15,38 @@
 #include "utf8stringset.h"
 #include "log/log.h"
 
+static int staticInit() {
+  qRegisterMetaType<Utf8StringList>();
+  qRegisterMetaType<Utf8StringSet>();
+  qRegisterMetaType<Utf8StringIndexedConstList>();
+  QMetaType::registerConverter<Utf8StringList,QVariant>();
+  QMetaType::registerConverter<Utf8StringSet,QVariant>();
+  QMetaType::registerConverter<Utf8StringIndexedConstList,QVariant>();
+  QMetaType::registerConverter<Utf8StringList,Utf8String>([](const Utf8StringList &v) -> Utf8String {
+    return v.join(' '); });
+  QMetaType::registerConverter<Utf8StringSet,Utf8String>([](const Utf8StringSet &v) -> Utf8String {
+    return v.sorted_join(' '); });
+  QMetaType::registerConverter<Utf8StringIndexedConstList,Utf8String>([](const Utf8StringIndexedConstList &v) -> Utf8String {
+    return v.join(' '); });
+  QMetaType::registerConverter<Utf8StringList,QString>([](const Utf8StringList &v) -> QString {
+    return v.join(' '); });
+  QMetaType::registerConverter<Utf8StringSet,QString>([](const Utf8StringSet &v) -> QString {
+    return v.sorted_join(' '); });
+  QMetaType::registerConverter<Utf8StringIndexedConstList,QString>([](const Utf8StringIndexedConstList &v) -> QString {
+    return v.join(' '); });
+#if REGISTER_CONVERSION_FROM_UTF8STRINGCONTAINERS_TO_QBYTEARRAY
+  // not sure it's semantically correct to convert to a binary data type
+  QMetaType::registerConverter<Utf8StringList,QByteArray>([](const Utf8StringList &v) -> QByteArray {
+    return v.join(' '); });
+  QMetaType::registerConverter<Utf8StringSet,QByteArray>([](const Utf8StringSet &v) -> QByteArray {
+    return v.sorted_join(' '); });
+  QMetaType::registerConverter<Utf8StringIndexedConstList,QByteArray>([](const Utf8StringIndexedConstList &v) -> QByteArray {
+    return v.join(' '); });
+#endif
+  return 0;
+}
+Q_CONSTRUCTOR_FUNCTION(staticInit)
+
 template<typename C,typename T>
 static inline Utf8String join(const C &container, const T &separator) {
   Utf8String joined;
@@ -124,11 +156,11 @@ Utf8StringList Utf8StringList::toSortedDeduplicatedList() const {
   return toSet().toSortedList();
 }
 
-Utf8String Utf8StringSet::sorted_join(const Utf8String &separator) {
+Utf8String Utf8StringSet::sorted_join(const Utf8String &separator) const {
   return toSortedList().join(separator);
 }
 
-Utf8String Utf8StringSet::sorted_join(const char separator) {
+Utf8String Utf8StringSet::sorted_join(const char separator) const {
   return toSortedList().join(separator);
 }
 

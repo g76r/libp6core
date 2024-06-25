@@ -63,6 +63,8 @@ public:
   [[nodiscard]] Utf8StringSet paramKeys(
       const ParamsProvider::EvalContext &context = {}) const override;
   using QList<Utf8String>::empty; // hides ParamsProvider::empty
+  [[nodiscard]] inline operator QVariant() const {
+    return QVariant::fromValue(*this); }
 };
 
 Q_DECLARE_METATYPE(Utf8StringList)
@@ -132,6 +134,10 @@ public:
   [[gnu::const]] [[nodiscard]] inline Utf8String value(
       qsizetype i, const Utf8String &def = {}) const {
     return Utf8StringList::value(i, def); }
+  [[nodiscard]] inline operator QVariant() const {
+    return QVariant::fromValue(*this); }
+  using Utf8StringList::join;
+  using Utf8StringList::headed_join;
 
 private:
   QMap<Utf8String,int> _index;

@@ -73,8 +73,8 @@ public:
 
   Utf8String join(const Utf8String &separator) const;
   Utf8String join(const char separator) const;
-  Utf8String sorted_join(const Utf8String &separator);
-  Utf8String sorted_join(const char separator);
+  Utf8String sorted_join(const Utf8String &separator) const;
+  Utf8String sorted_join(const char separator) const;
   Utf8String headed_join(const Utf8String &separator) const;
   Utf8String headed_join(const char separator) const;
   Utf8String headed_sorted_join(const Utf8String &separator);
@@ -82,6 +82,8 @@ public:
   Utf8StringList toList() const;
   Utf8StringList toSortedList() const;
   std::set<Utf8String> toStdSet() const;
+  [[nodiscard]] inline operator QVariant() const {
+    return QVariant::fromValue(*this); }
 };
 
 Q_DECLARE_METATYPE(Utf8StringSet)
