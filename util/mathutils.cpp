@@ -154,46 +154,14 @@ bool MathUtils::convertToUtf16(QVariant *a) {
   if (!a)
     return false;
   auto id = a->metaType().id();
-  switch(id) {
-    case QMetaType::Bool:
-    case QMetaType::Int:
-    case QMetaType::UInt:
-    case QMetaType::QChar:
-    case QMetaType::Long:
-    case QMetaType::LongLong:
-    case QMetaType::Short:
-    case QMetaType::Char:
-    case QMetaType::Char16:
-    case QMetaType::Char32:
-    case QMetaType::ULong:
-    case QMetaType::UShort:
-    case QMetaType::SChar:
-    case QMetaType::UChar:
-    case QMetaType::Double:
-    case QMetaType::Float:
-    case QMetaType::ULongLong:
-    case QMetaType::QDateTime:
-    case QMetaType::QDate:
-    case QMetaType::QTime:
-    case QMetaType::QByteArray:
-      *a = a->toString();
-      return true;
-    case QMetaType::QString:
-      return true;
-    case QMetaType::QStringList:
-      *a = a->toStringList().join(" ");
-      return true;
-  }
-  if (id == qMetaTypeId<Utf8String>()) {
-    *a = a->toString();
+  if (id == QMetaType::QString)
+    return true;
+  if (id == QMetaType::QStringList) {
+    *a = a->toStringList().join(' ');
     return true;
   }
-  if (id == qMetaTypeId<Utf8StringList>()) {
-    *a = a->value<Utf8StringList>().join(" ");
-    return true;
-  }
-  if (id == qMetaTypeId<Utf8StringSet>()) {
-    *a = a->value<Utf8StringSet>().sorted_join(" ");
+  if (auto s = a->toString(); !s.isNull()) {
+    *a = s;
     return true;
   }
   return false;

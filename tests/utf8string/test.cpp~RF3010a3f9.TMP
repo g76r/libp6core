@@ -36,16 +36,16 @@ int main(void) {
     operator QVariant() const { return QVariant::fromValue(*this); }
   } foobar;
   QVariant foobarv = foobar;
-  qDebug() << (MathUtils::compareQVariantAsNumberOrString(foobar, ""_u8) == QPartialOrdering::Unordered)
-           << (MathUtils::compareQVariantAsNumberOrString(foobar, u""_s) == QPartialOrdering::Unordered)
-           << (MathUtils::compareQVariantAsNumberOrString(foobar, QString()) == QPartialOrdering::Unordered)
-           << (MathUtils::compareQVariantAsNumberOrString(foobar, QString()) == QPartialOrdering::Unordered)
+  qDebug() << (MathUtils::compareQVariantAsNumberOrString(foobar, ""_u8) == QPartialOrdering::Equivalent)
+           << (MathUtils::compareQVariantAsNumberOrString(foobar, u""_s) == QPartialOrdering::Equivalent)
+           << (MathUtils::compareQVariantAsNumberOrString(foobar, QString()) == QPartialOrdering::Equivalent)
+           << (MathUtils::compareQVariantAsNumberOrString(foobar, QString()) == QPartialOrdering::Equivalent)
               ;
-  qDebug() << MathUtils::convertToUtf16(&foobarv);
-  qDebug() << (MathUtils::compareQVariantAsNumberOrString(foobarv, ""_u8) == QPartialOrdering::Unordered)
-           << (MathUtils::compareQVariantAsNumberOrString(foobarv, u""_s) == QPartialOrdering::Unordered)
-           << (MathUtils::compareQVariantAsNumberOrString(foobarv, QString()) == QPartialOrdering::Unordered)
-           << (MathUtils::compareQVariantAsNumberOrString(foobarv, QString()) == QPartialOrdering::Unordered)
+  qDebug() << convertToUtf16(&foobarv);
+  qDebug() << (MathUtils::compareQVariantAsNumberOrString(foobarv, ""_u8) == QPartialOrdering::Equivalent)
+           << (MathUtils::compareQVariantAsNumberOrString(foobarv, u""_s) == QPartialOrdering::Equivalent)
+           << (MathUtils::compareQVariantAsNumberOrString(foobarv, QString()) == QPartialOrdering::Equivalent)
+           << (MathUtils::compareQVariantAsNumberOrString(foobarv, QString()) == QPartialOrdering::Equivalent)
               ;
   s = "aéÉb€¢\u03c3\u03c2\u03a3øœ×o'z"_u8;
   qDebug() << s << s.toUpper() << s.toLower() << s.toTitle() << s.isLower() << Utf8String::toTitle(0x01c6);
