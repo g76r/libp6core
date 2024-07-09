@@ -77,7 +77,7 @@ static bool convertOtherTypesToBestNumericTypeIfPossible(
       return true;
     case QMetaType::QByteArray:
     case QMetaType::QString:
-      s = a->toByteArray();
+      s = a->value<Utf8String>();
       break;
     case QMetaType::QDate:
     case QMetaType::QDateTime: {
