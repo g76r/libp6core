@@ -67,7 +67,9 @@ public:
   /** convert bool to "true" or "false" */
   explicit inline Utf8String(bool o) : QByteArray(o ? "true"_ba : "false"_ba) {}
   /** take QByteArray if v.canConvert<QByteArray>() (assuming UTF-8) otherwise
-   * take QString and convert to UTF-8 */
+   * take QString and convert to UTF-8 othewise {}
+   * this means that Utf8String(QVariant()) == Utf8String() or also that
+   * Utf8String(v).isNull() when !v.isValid() */
   explicit inline Utf8String(QVariant v)
     : QByteArray(v.canConvert<QByteArray>()
                  ? v.toByteArray()
