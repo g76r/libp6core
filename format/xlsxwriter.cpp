@@ -170,7 +170,7 @@ bool XlsxWriter::appendRow(
     return false;
   Sheet *sheet = this->get_or_create_sheet(sheet_title);
   auto rownum = sheet->_rowcount+1;
-  QByteArray bytes = "  <row r=\""+Utf8String::number(rownum)
+  Utf8String bytes = "  <row r=\""+Utf8String::number(rownum)
                      +"\" spans=\"1:"+Utf8String::number(row.size())
                      +"\">\n";
   long colnum = 1;
@@ -204,12 +204,12 @@ bool XlsxWriter::appendRow(
       bytes += " t=\"b\" s=\"6\"><v>"+(v.toBool() ? "1"_u8 : "0"_u8)
                +"</v></c>\n";
     else { // will be handled as a string
-      auto ba = v.toByteArray();
-      if (ba.isEmpty())
+      auto s = v.value<Utf8String>();
+      if (s.isEmpty())
         bytes += " t=\"str\"><v/></c>\n"; // FIXME str or number ?
       else // LATER should we use str instead of s below some minimal size ?
         bytes += " t=\"s\"><v>"
-                 +Utf8String::number(share_string(v.toByteArray(), true))
+                 +Utf8String::number(share_string(s, true))
                  +"</v></c>\n";
     }
     ++colnum;
