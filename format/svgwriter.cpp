@@ -51,11 +51,11 @@ void SvgWriter::drawText(
     _svg += "style=\"font-family:"+font_name+";font-size="
             +Utf8String::number(font_size)+"\" ";
   if (flags & Qt::AlignLeft)
-    _svg += "text-anchor\"start\" ";
+    _svg += "text-anchor=\"start\" ";
   else if (flags & Qt::AlignHCenter)
-    _svg += "text-anchor\"center\" ";
+    _svg += "text-anchor=\"middle\" ";
   else if (flags & Qt::AlignRight)
-    _svg += "text-anchor\"end\" ";
+    _svg += "text-anchor=\"end\" ";
   _svg += ">"+text+"</text>\n";
   // LATER enforce bounding box for real
 }
