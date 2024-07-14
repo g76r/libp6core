@@ -14,7 +14,7 @@
 #ifndef SVGWRITER_H
 #define SVGWRITER_H
 
-#include <util/utf8stringlist.h>
+#include "util/utf8stringlist.h"
 #include <QRect>
 
 /** Write a SVG file with simplified vector drawing instructions.
