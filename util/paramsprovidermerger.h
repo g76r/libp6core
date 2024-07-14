@@ -1,4 +1,4 @@
-/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -131,6 +131,11 @@ public:
   ParamsProviderMerger &overrideParamValue(
       const Utf8String &key, const QVariant &value) {
     _overridingParams.insert(key, value);
+    return *this;
+  }
+  /** Remove an override set using overrideParamValue(). */
+  ParamsProviderMerger &unoverrideParamValue(const Utf8String &key) {
+    _overridingParams.erase(key);
     return *this;
   }
   /** Remove all ParamsProvider and overriding params. */
