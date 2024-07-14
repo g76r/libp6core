@@ -26,7 +26,7 @@ class LIBP6CORESHARED_EXPORT GraphvizRenderer : public QProcess {
 
 public:
   enum Layout { Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage };
-  enum Format { Png, Svg, Svgz, Plain, DotFormat };
+  enum Format { Png, Svg, Svgz, Plain, Gv, Xdot };
 
 private:
   Utf8String _source, _tmp, _stderr, _output;
@@ -58,7 +58,7 @@ public:
   Utf8String run(ParamsProvider *params_evaluation_context = 0,
                  const Utf8String &source = {});
   static Utf8String mime_type(Format format);
-  static Format formatFromString(const Utf8String &s, Format def = DotFormat);
+  static Format formatFromString(const Utf8String &s, Format def = Gv);
   static Utf8String formatAsString(Format format);
   static Layout layoutFromString(const Utf8String &s, Layout def = Dot);
   static Utf8String layoutAsString(Layout layout);

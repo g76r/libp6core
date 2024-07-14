@@ -114,7 +114,9 @@ static QMap<Utf8String,GraphvizRenderer::Format> _formatFromString {
   { "svg", GraphvizRenderer::Svg },
   { "svgz", GraphvizRenderer::Svgz },
   { "plain", GraphvizRenderer::Plain },
-  { "dot", GraphvizRenderer::DotFormat },
+  { "dot", GraphvizRenderer::Gv }, // hidden by gv in reversed _formatAsString
+  { "gv", GraphvizRenderer::Gv },
+  { "xdot", GraphvizRenderer::Xdot },
 };
 
 static auto _formatAsString = ContainerUtils::reversed_map(_formatFromString);
@@ -158,7 +160,8 @@ Utf8String GraphvizRenderer::mime_type(Format format) {
   case Svgz:
     return "image/svg+xml"_u8;
   case Plain:
-  case DotFormat:
+  case Gv:
+  case Xdot:
     return "text/plain;charset=UTF-8"_u8;
   }
   return "application/octet-stream"_u8;
