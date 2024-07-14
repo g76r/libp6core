@@ -62,6 +62,7 @@ PRECOMPILED_HEADER *= \
     libp6core_stable.h
 
 SOURCES *= \
+    format/graphvizrenderer.cpp \
     format/svgwriter.cpp \
     io/opensshcommand.cpp \
     util/paramsformula.cpp \
@@ -168,6 +169,7 @@ SOURCES *= \
     modelview/stringlistdiffmodel.cpp
 
 HEADERS *=\
+    format/graphvizrenderer.h \
     format/svgwriter.h \
     io/opensshcommand.h \
     modelview/templatedshareduiitemdata.h \
