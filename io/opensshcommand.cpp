@@ -29,7 +29,7 @@ void OpensshCommand::start(
 
   QStringList cmdline, sshCmdline;
   const auto raw_hostname =
-      _params.paramRawUtf8("ssh.hostname") | start_hostname | _hostname;
+      start_hostname | _params.paramRawUtf8("ssh.hostname") | _hostname;
   const auto hostname = (raw_hostname % ppm).toString();
   const auto username = _params.paramUtf8("ssh.username", context);
   const auto port = _params.paramNumber<int>("ssh.port", -1, context);
