@@ -44,6 +44,11 @@ public:
       const Utf8String &font_name = {}, int font_size = 12) {
     drawText({x, y, w, h}, flags, text, brush_color, font_name, font_size);
   }
+  /** start <a> element, must be followed by matching endAnchor()
+   *  @param title set xlink:title attribute (used as tooltip by web browsers)
+   */
+  void startAnchor(const Utf8String &title);
+  void endAnchor();
   void comment(const Utf8String &text);
   static inline Utf8StringList iconNames() { return _iconNames; }
   bool write(const Utf8String &filename) const;

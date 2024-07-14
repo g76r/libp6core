@@ -60,6 +60,14 @@ void SvgWriter::drawText(
   // LATER enforce bounding box for real
 }
 
+void SvgWriter::startAnchor(const Utf8String &title) {
+  _svg += "<a xlink:title=\""+title+"\">\n";
+}
+
+void SvgWriter::endAnchor() {
+  _svg += "</a>\n";
+}
+
 void SvgWriter::comment(const Utf8String &text) {
   _svg += "<!-- "+text+" -->\n";
 }
@@ -70,7 +78,8 @@ Utf8String SvgWriter::data() const {
          " \"http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd\">\n"
          "<svg width=\""+Utf8String::number(_viewport.width())
       +"px\" height=\""+Utf8String::number(_viewport.height())
-      +"px\" xmlns=\"http://www.w3.org/2000/svg\">\n"
+      +"px\" xmlns=\"http://www.w3.org/2000/svg\" "
+       "xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n"
        "<g>\n"
       +_svg
       +"</g>\n</svg>\n";
