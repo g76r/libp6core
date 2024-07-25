@@ -37,22 +37,40 @@ private:
   QMutex _mutex;
 
 public:
-  explicit GraphvizRenderer(
-      const Utf8String &source, Layout layout = Dot,
-      Format format = Plain, const ParamSet &params = {});
+  GraphvizRenderer(
+      QObject *parent, const Utf8String &source,
+      Layout layout = Dot, Format format = Plain, const ParamSet &params = {});
+  GraphvizRenderer(
+      QObject *parent, const Utf8String &source, Format format,
+      const ParamSet &params = {})
+    : GraphvizRenderer(parent, source, Dot, format, params) {}
+  GraphvizRenderer(
+      QObject *parent, Layout layout, Format format = Plain,
+      const ParamSet &params = {})
+    : GraphvizRenderer(parent, {}, layout, format, params) {}
+  GraphvizRenderer(QObject *parent, Format format, const ParamSet &params = {})
+    : GraphvizRenderer(parent, {}, Dot, format, params) {}
+  GraphvizRenderer(QObject *parent, const Utf8String &source,
+                   const ParamSet &params)
+    : GraphvizRenderer(parent, source, Dot, Plain, params) {}
+  GraphvizRenderer(QObject *parent, const ParamSet &params)
+    : GraphvizRenderer(parent, {}, Dot, Plain, params) {}
+  explicit GraphvizRenderer(QObject *parent, const Utf8String &source = ""_u8)
+    : GraphvizRenderer(parent, source, Dot, Plain, {}) {}
+  GraphvizRenderer()
+    : GraphvizRenderer(nullptr, ""_u8, Dot, Plain, {}) {}
   GraphvizRenderer(
       const Utf8String &source, Format format, const ParamSet &params = {})
-    : GraphvizRenderer(source, Dot, format, params) {}
+    : GraphvizRenderer(nullptr, source, Dot, format, params) {}
   explicit GraphvizRenderer(
       Layout layout, Format format = Plain, const ParamSet &params = {})
-    : GraphvizRenderer({}, layout, format, params) {}
+    : GraphvizRenderer(nullptr, {}, layout, format, params) {}
   explicit GraphvizRenderer(Format format, const ParamSet &params = {})
-    : GraphvizRenderer({}, Dot, format, params) {}
+    : GraphvizRenderer(nullptr, {}, Dot, format, params) {}
   GraphvizRenderer(const Utf8String &source, const ParamSet &params)
-    : GraphvizRenderer(source, Dot, Plain, params) {}
+    : GraphvizRenderer(nullptr, source, Dot, Plain, params) {}
   explicit GraphvizRenderer(const ParamSet &params)
-    : GraphvizRenderer({}, Dot, Plain, params) {}
-  GraphvizRenderer() : GraphvizRenderer(""_u8) {}
+    : GraphvizRenderer(nullptr, {}, Dot, Plain, params) {}
   /** Synchronously start and wait for process finished, then return output
    *  Thread-safe (by blocking and allowing only one rendering at a time).
    */

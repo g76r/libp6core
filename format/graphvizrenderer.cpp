@@ -18,10 +18,11 @@
 #include <QCoreApplication>
 #include <QThread>
 
-GraphvizRenderer::GraphvizRenderer(
+GraphvizRenderer::GraphvizRenderer(QObject *parent,
     const Utf8String &source, Layout layout, Format format,
     const ParamSet &params)
-  : _source(source), _layout(layout), _format(format), _params(params) {
+  : QProcess(parent), _source(source), _layout(layout), _format(format),
+    _params(params) {
   connect(this, &QProcess::finished,
           this, &GraphvizRenderer::process_finished);
   connect(this, &QProcess::errorOccurred,

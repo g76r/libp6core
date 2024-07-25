@@ -12,6 +12,7 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "graphvizimagehttphandler.h"
+#include "httpd/httpworker.h"
 #include "log/log.h"
 #include <QTimer>
 
@@ -23,7 +24,7 @@ GraphvizImageHttpHandler::GraphvizImageHttpHandler(
 }
 
 QByteArray GraphvizImageHttpHandler::imageData(
-    HttpRequest, ParamsProviderMerger *context, int timeoutMillis) {
+    HttpRequest req, ParamsProviderMerger *context, int timeoutMillis) {
   QMutexLocker ml(&_mutex);
   if (!_renderingNeeded)
     return _data;
@@ -32,8 +33,8 @@ QByteArray GraphvizImageHttpHandler::imageData(
     _renderingNeeded = false;
     return _data;
   }
-  auto gvr = new GraphvizRenderer(_format);
-  auto timer = new QTimer(this);
+  auto gvr = new GraphvizRenderer(req.worker(), _format);
+  auto timer = new QTimer(gvr);
   if (timeoutMillis > 0) {
     connect(timer, &QTimer::timeout, gvr, &GraphvizRenderer::kill);
     timer->setSingleShot(true);
@@ -41,7 +42,6 @@ QByteArray GraphvizImageHttpHandler::imageData(
   }
   _data = gvr->run(context, _source);
   timer->stop();
-  timer->deleteLater();
   gvr->deleteLater();
   _renderingNeeded = false;
   return _data;
