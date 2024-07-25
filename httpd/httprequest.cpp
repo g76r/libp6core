@@ -11,8 +11,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "httprequest.h"
 #include "httpcommon.h"
+#include "httpworker.h"
 #include "util/radixtree.h"
 #include "util/containerutils.h"
 #include "format/stringutils.h"
@@ -50,12 +50,13 @@ public:
   QUrlQuery _query;
   Utf8StringList _clientAdresses;
   Utf8String _scope = "http"_u8, _path;
-  explicit HttpRequestData(QAbstractSocket *input) : _input(input),
-    _method(HttpRequest::NONE) { }
+  QPointer<HttpWorker> _worker;
+  HttpRequestData(QAbstractSocket *input, HttpWorker *worker)
+    : _input(input), _method(HttpRequest::NONE), _worker(worker) {}
 };
 
-HttpRequest::HttpRequest(QAbstractSocket *input)
-  : d(new HttpRequestData(input)) {
+HttpRequest::HttpRequest(QAbstractSocket *input, HttpWorker *worker)
+  : d(new HttpRequestData(input, worker)) {
 }
 
 HttpRequest::HttpRequest() {
@@ -381,4 +382,8 @@ Utf8StringSet HttpRequest::paramKeys(
 
 Utf8String HttpRequest::paramScope() const {
   return d ? d->_scope : Utf8String{};
+}
+
+HttpWorker *HttpRequest::worker() const {
+  return d ? d->_worker.data() : nullptr;
 }

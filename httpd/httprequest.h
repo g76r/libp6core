@@ -20,6 +20,7 @@
 #include <QUrlQuery>
 
 class HttpRequestData;
+class HttpWorker;
 
 /** Class holding all information and actions about an HTTP incoming request.
  * This class uses Qt explicit sharing idiom, i.e. it can be copied for a
@@ -45,7 +46,7 @@ private:
   static Utf8StringSet _wellKnownMethodNames;
 
 public:
-  HttpRequest(QAbstractSocket *input);
+  HttpRequest(QAbstractSocket *input, HttpWorker *worker);
   HttpRequest();
   HttpRequest(const HttpRequest &other);
   ~HttpRequest();
@@ -132,6 +133,7 @@ public:
   [[nodiscard]] Utf8String paramScope() const override;
   /** Set param scope to something else than the default "http". */
   HttpRequest &setScope(const Utf8String &scope);
+  HttpWorker *worker() const;
   // LATER handle sessions
 
 private:
