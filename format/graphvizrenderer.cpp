@@ -53,7 +53,9 @@ void GraphvizRenderer::do_start(
   auto source = start_source | ppm.paramRawUtf8("source") | _source;
   Format format = formatFromString(ppm.paramRawUtf8("format"), _format);
   Layout layout = layoutFromString(ppm.paramRawUtf8("layout"), _layout);
-  Log::debug() << "starting graphviz rendering with this data: " << source;
+  // Log::debug() << "starting graphviz rendering with this data: " << source;
+  // Log::debug() << "graphviz command line: " << layoutAsString(layout)
+  //              << " -T"_u8 << formatAsString(format);
   QProcess::start(layoutAsString(layout), {{"-T"_u8 + formatAsString(format)}});
   waitForStarted();
   qint64 written = write(source);
@@ -75,9 +77,10 @@ void GraphvizRenderer::process_finished(
                  << " having produced a " << _tmp.size() << " bytes output";
     _output = _tmp | "empty"_u8;
   } else {
-    Log::warning() << "graphviz rendering process failed with return code "
-                   << exitCode << ", QProcess::ExitStatus " << (int)exitStatus
-                   << " and stderr content: " << _stderr;
+    Log::error() << "graphviz rendering process failed with return code "
+                 << exitCode << ", QProcess::ExitStatus " << (int)exitStatus
+                 << " error: " << errorString()
+                 << " and stderr content: " << _stderr;
     _output = _stderr | "error"_u8; // LATER placeholder image
   }
   _tmp.clear();

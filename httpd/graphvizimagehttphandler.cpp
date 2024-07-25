@@ -1,4 +1,4 @@
-/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,54 +13,38 @@
  */
 #include "graphvizimagehttphandler.h"
 #include "log/log.h"
-#include <QCoreApplication>
-#include <QThread>
-#include <unistd.h>
+#include <QTimer>
 
-#define UPDATE_EVENT (QEvent::Type(QEvent::User+1))
-
-GraphvizImageHttpHandler::GraphvizImageHttpHandler(QObject *parent,
-                                                   RefreshStrategy refreshStrategy)
-  : ImageHttpHandler(parent), _renderer(Dot), _renderingRequested(false),
-    _renderingRunning(false), _renderingNeeded(0),
-    _process(new QProcess(this)), _refreshStrategy(refreshStrategy),
-    _imageFormat(Png) {
-  connect(_process, &QProcess::finished,
-          this, &GraphvizImageHttpHandler::processFinished);
-  connect(_process, &QProcess::errorOccurred,
-          this, &GraphvizImageHttpHandler::processError);
-  connect(_process, &QProcess::readyReadStandardOutput,
-          this, &GraphvizImageHttpHandler::readyReadStandardOutput);
-  connect(_process, &QProcess::readyReadStandardError,
-          this, &GraphvizImageHttpHandler::readyReadStandardError);
+GraphvizImageHttpHandler::GraphvizImageHttpHandler(
+    QObject *parent, GraphvizRenderer::Layout layout,
+    GraphvizRenderer::Format format)
+  : ImageHttpHandler(parent), _layout(layout), _format(format),
+    _renderingNeeded(false) {
 }
 
 QByteArray GraphvizImageHttpHandler::imageData(
-  HttpRequest, ParamsProviderMerger *, int timeoutMillis) {
+    HttpRequest, ParamsProviderMerger *context, int timeoutMillis) {
   QMutexLocker ml(&_mutex);
-  if (_refreshStrategy == OnDemandWithCache && _renderingNeeded) {
-    //Log::debug() << "imageData() with rendering needed";
-    qint64 deadline = QDateTime::currentMSecsSinceEpoch()+timeoutMillis;
-    ml.unlock();
-    if (QThread::currentThread() == thread())
-      startRendering();
-    else
-      QCoreApplication::postEvent(this, new QEvent(UPDATE_EVENT));
-    while (QDateTime::currentMSecsSinceEpoch() <= deadline
-           && _renderingNeeded) {
-      if (QThread::currentThread() == thread()) {
-        if (_process->waitForFinished(
-              deadline - QDateTime::currentMSecsSinceEpoch())) {
-          processFinished(_process->exitCode(), _process->exitStatus());
-          break; // avoid testing _renderingNeeded: in case a new modification
-          // has been done meanwhile we don't want to wait again for a rendering
-        }
-      } else
-        ::usleep(qMin(50000LL, deadline - QDateTime::currentMSecsSinceEpoch()));
-    }
-    ml.relock();
+  if (!_renderingNeeded)
+    return _data;
+  if (_source.isEmpty()) {
+    _data.clear();
+    _renderingNeeded = false;
+    return _data;
   }
-  return _imageData;
+  auto gvr = new GraphvizRenderer(_format);
+  auto timer = new QTimer(this);
+  if (timeoutMillis > 0) {
+    connect(timer, &QTimer::timeout, gvr, &GraphvizRenderer::kill);
+    timer->setSingleShot(true);
+    timer->start(timeoutMillis);
+  }
+  _data = gvr->run(context, _source);
+  timer->stop();
+  timer->deleteLater();
+  gvr->deleteLater();
+  _renderingNeeded = false;
+  return _data;
 }
 
 QByteArray GraphvizImageHttpHandler::contentType(
@@ -72,7 +56,7 @@ QByteArray GraphvizImageHttpHandler::contentType(
 QByteArray GraphvizImageHttpHandler::contentEncoding(
     HttpRequest, ParamsProviderMerger *) const {
   QMutexLocker ml(&_mutex);
-  return (_imageFormat == Svgz) ? "gzip"_u8 : QByteArray{};
+  return (_format == GraphvizRenderer::Svgz) ? "gzip"_u8 : QByteArray{};
 }
 
 QByteArray GraphvizImageHttpHandler::source(
@@ -84,160 +68,18 @@ QByteArray GraphvizImageHttpHandler::source(
 void GraphvizImageHttpHandler::setSource(const QByteArray &source) {
   QMutexLocker ml(&_mutex);
   _source = source;
-  ++_renderingNeeded;
-  if (_refreshStrategy == OnChange) {
-    //Log::debug() << "setSource() with OnChange strategy";
-    QCoreApplication::postEvent(this, new QEvent(UPDATE_EVENT));
-  }
+  _renderingNeeded = true;
 }
 
-void GraphvizImageHttpHandler::customEvent(QEvent *event) {
-  if (event->type() == UPDATE_EVENT) {
-    QCoreApplication::removePostedEvents(this, UPDATE_EVENT);
-    startRendering();
-  } else {
-    ImageHttpHandler::customEvent(event);
-  }
-}
-
-void GraphvizImageHttpHandler::startRendering() {
+void GraphvizImageHttpHandler::setLayout(GraphvizRenderer::Layout layout) {
   QMutexLocker ml(&_mutex);
-  if (_renderingRunning)
-    return; // postponing after currently running rendering
-  _renderingRequested = false;
-  _renderingRunning = true;
-  _tmp.clear();
-  _stderr.clear();
-  QByteArray cmd = "dot"; // default to dot
-  switch (_renderer) {
-  case Neato:
-    cmd = "neato";
-    break;
-  case TwoPi:
-    cmd = "twopi";
-    break;
-  case Circo:
-    cmd = "circo";
-    break;
-  case Dot:
-    cmd = "dot";
-    break;
-  case Fdp:
-    cmd = "fdp";
-    break;
-  case Sfdp:
-    cmd = "sfdp";
-    break;
-  case Osage:
-    cmd = "osage";
-    break;
-  }
-  QStringList args;
-  switch (_imageFormat) {
-  case Png:
-    args << "-Tpng";
-    break;
-  case Svg:
-    args << "-Tsvg";
-    break;
-  case Svgz:
-    args << "-Tsvgz";
-    break;
-  case Plain:
-    args << "-Tdot";
-    break;
-  }
-  Log::debug() << "starting graphviz rendering with this data: "
-               << _source;
-  _process->start(cmd, args);
-  _process->waitForStarted();
-  qint64 written = _process->write(_source);
-  if (written != _source.size())
-    Log::debug() << "cannot write to graphviz processor "
-                 << written << " " << _source.size() << " "
-                 << (int)_process->error() << " " << _process->errorString();
-  _process->closeWriteChannel();
+  _layout = layout;
+  _renderingNeeded = true;
 }
 
-void GraphvizImageHttpHandler::processError(QProcess::ProcessError error) {
-  readyReadStandardError();
-  readyReadStandardOutput();
-  Log::warning() << "graphviz rendering process crashed with "
-                    "QProcess::ProcessError code " << (int)error << " ("
-                 << _process->errorString() << ") and stderr content: "
-                 << _stderr;
-  _process->kill();
-  processFinished(-1, QProcess::CrashExit);
-}
-
-void GraphvizImageHttpHandler::processFinished(
-    int exitCode, QProcess::ExitStatus exitStatus) {
+void GraphvizImageHttpHandler::setFormat(GraphvizRenderer::Format format) {
   QMutexLocker ml(&_mutex);
-  if (!_renderingRunning)
-    return; // avoid double execution of processFinished in OnDemand strategy
-  readyReadStandardError();
-  readyReadStandardOutput();
-  bool success = (exitStatus == QProcess::NormalExit && exitCode == 0);
-  if (success) {
-    Log::debug() << "graphviz rendering process successful with return code "
-                 << exitCode << " and QProcess::ExitStatus " << (int)exitStatus
-                 << " having produced a " << _tmp.size() << " bytes output";
-    _imageData = _tmp;
-  } else {
-    Log::warning() << "graphviz rendering process failed with return code "
-                   << exitCode << ", QProcess::ExitStatus " << (int)exitStatus
-                   << " and stderr content: " << _stderr;
-    //_contentType = "text/plain;charset=UTF-8";
-    _imageData = _stderr.toUtf8(); // LATER placeholder image
-  }
-  _renderingRunning = false;
-  if (_refreshStrategy == OnChange) {
-    if (_renderingRequested) {
-      ml.unlock();
-      startRendering();
-    }
-  } else {
-    if (_renderingNeeded > 1) {
-      _renderingNeeded = 1;
-      ml.unlock();
-      startRendering();
-    } else {
-      _renderingNeeded = 0;
-      ml.unlock();
-    }
-  }
-  emit contentChanged();
-  _tmp.clear();
-  _stderr.clear();
-}
-
-void GraphvizImageHttpHandler::readyReadStandardOutput() {
-  _process->setReadChannel(QProcess::StandardOutput);
-  QByteArray ba;
-  while (!(ba = _process->read(1024)).isEmpty())
-    _tmp.append(ba);
-}
-
-void GraphvizImageHttpHandler::readyReadStandardError() {
-  _process->setReadChannel(QProcess::StandardError);
-  QByteArray ba;
-  while (!(ba = _process->read(1024)).isEmpty())
-    _stderr.append(QString::fromUtf8(ba));
-}
-
-void GraphvizImageHttpHandler::setImageFormat(ImageFormat imageFormat) {
-  QMutexLocker ml(&_mutex);
-  _imageFormat = imageFormat;
-  switch (_imageFormat) {
-  case Png:
-    _contentType = "image/png"_u8;
-    break;
-  case Svg:
-  case Svgz:
-    _contentType = "image/svg+xml"_u8;
-    break;
-  case Plain:
-    _contentType = "text/plain;charset=UTF-8"_u8;
-    break;
-  }
+  _format = format;
+  _contentType = GraphvizRenderer::mime_type(format);
+  _renderingNeeded = true;
 }

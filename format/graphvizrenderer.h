@@ -23,10 +23,11 @@
  */
 class LIBP6CORESHARED_EXPORT GraphvizRenderer : public QProcess {
   Q_OBJECT
+  Q_DISABLE_COPY(GraphvizRenderer)
 
 public:
-  enum Layout { Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage };
-  enum Format { Png, Svg, Svgz, Plain, Gv, Xdot };
+  enum Layout : long { Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage };
+  enum Format : long { Png, Svg, Svgz, Plain, Gv, Xdot };
 
 private:
   Utf8String _source, _tmp, _stderr, _output;

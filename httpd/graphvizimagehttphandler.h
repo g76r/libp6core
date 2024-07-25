@@ -1,4 +1,4 @@
-/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,7 +15,8 @@
 #define GRAPHVIZIMAGEHTTPHANDLER_H
 
 #include "imagehttphandler.h"
-#include <QRecursiveMutex>
+#include "format/graphvizrenderer.h"
+#include <QMutex>
 #include <QProcess>
 
 class LIBP6CORESHARED_EXPORT GraphvizImageHttpHandler
@@ -23,26 +24,19 @@ class LIBP6CORESHARED_EXPORT GraphvizImageHttpHandler
   Q_OBJECT
   Q_DISABLE_COPY(GraphvizImageHttpHandler)
 
-public:
-  enum GraphvizRenderer { Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage };
-  enum RefreshStrategy { OnChange, OnDemandWithCache };
-  enum ImageFormat { Png, Svg, Svgz, Plain };
-
 private:
-  GraphvizRenderer _renderer;
+  GraphvizRenderer::Layout _layout;
+  GraphvizRenderer::Format _format;
   Utf8String _source, _contentType;
-  QString _stderr;
-  bool _renderingRequested, _renderingRunning;
-  int _renderingNeeded;
-  mutable QRecursiveMutex _mutex;
-  QProcess *_process;
-  QByteArray _imageData, _tmp;
-  RefreshStrategy _refreshStrategy;
-  ImageFormat _imageFormat;
+  bool _renderingNeeded;
+  mutable QMutex _mutex;
+  QByteArray _data;
 
 public:
   explicit GraphvizImageHttpHandler(
-      QObject *parent = 0, RefreshStrategy refreshStrategy = OnDemandWithCache);
+      QObject *parent = 0,
+      GraphvizRenderer::Layout layout = GraphvizRenderer::Dot,
+      GraphvizRenderer::Format format = GraphvizRenderer::Svg);
   QByteArray imageData(
       HttpRequest req, ParamsProviderMerger *params = 0, int timeoutMillis
       = IMAGEHTTPHANDLER_DEFAULT_ONDEMAND_RENDERING_TIMEOUT) override;
@@ -52,28 +46,15 @@ public:
     HttpRequest req, ParamsProviderMerger *processingContext) const override;
   QByteArray source(
     HttpRequest req, ParamsProviderMerger *processingContext) const override;
-  GraphvizRenderer renderer() const { return _renderer; }
-  void setRenderer(GraphvizRenderer renderer) { _renderer = renderer; }
-  RefreshStrategy refreshStrategy() const { return _refreshStrategy; }
-  ImageFormat imageFormat() const;
-  void setImageFormat(ImageFormat imageFormat);
+  GraphvizRenderer::Layout layout() const { return _layout; }
+  void setLayout(GraphvizRenderer::Layout layout);
+  GraphvizRenderer::Format format() const { return _format; }
+  void setFormat(GraphvizRenderer::Format format);
 
 public slots:
   /** Set new graphviz-format source and, if refresh strategy is OnChange,
    * trigger image layout processing */
   void setSource(const QByteArray &source);
-
-protected:
-  void customEvent(QEvent *event) override;
-
-private slots:
-  void processError(QProcess::ProcessError error);
-  void processFinished(int exitCode, QProcess::ExitStatus exitStatus);
-  void readyReadStandardOutput();
-  void readyReadStandardError();
-
-private:
-  void startRendering();
 };
 
 #endif // GRAPHVIZIMAGEHTTPHANDLER_H
