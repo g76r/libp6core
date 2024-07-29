@@ -7,7 +7,7 @@ int main(void) {
                "s2", "%{=left:%foo:1}", "baz", "42", "fooz", "%bar", "foozz", "%%bar",
                "h1", "at http://1.2.3.4/\nthere's something", "empty", "", "i", "0x1f",
                "func1", "%{=uppercase:%1}", "func2", "%{=uppercase:%1}%{=lowercase:%2}",
-               "tosqlin", "('%{=sub:%1:/ +/','/g}')" };
+               "tosqlin", "('%{=sub:%1:/ +/','/g}')", "ooks", "%baz", "x42", "43" };
   auto ppm = ParamsProviderMerger(&p);
   qDebug() << p;
   qDebug() << p.paramUtf8("s2");
@@ -24,6 +24,7 @@ int main(void) {
   qDebug() << PercentEvaluator::eval_utf8(
               "*** %foozz=%%bar foo=foo %{=rawvalue!fooz}=%%bar "
               "%{=rawvalue!fooz!e}=%%%%bar "
+              "%ooks=42 %{%ooks}= %{=eval:ooks}=42 %{x%ooks}= %{=eval:x%ooks}=43 "
               "%{=rpn,%%foo}=%%foo %{=rpn,foo}=foo %{=rpn,%foo}=bar ***", &p);
   qDebug() << PercentEvaluator::eval_utf8("%{=rawvalue:h1:hun}", &p);
   qDebug() << PercentEvaluator::eval_utf8(

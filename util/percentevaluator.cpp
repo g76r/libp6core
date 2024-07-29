@@ -64,8 +64,8 @@ _functions {
   return TimeFormats::toCoarseHumanReadableTimeInterval(msecs);
 }, true},
 { "=eval", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto v = PercentEvaluator::eval_utf8(key.mid(ml+1), context);
-  return PercentEvaluator::eval(v, context);
+  auto v = "%{"_u8+PercentEvaluator::eval_utf8(key.mid(ml+1), context)+'}';
+  return v % context;
 }, true},
 { "=default", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
   auto params = key.split_headed_list(ml);
