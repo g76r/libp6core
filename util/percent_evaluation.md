@@ -162,7 +162,7 @@ examples:
 
 return unevaluated value of a variable
 * flags is a combination of letters with the following meaning:
-  * e %-escape value (in case it will be further %-evaluated) replace evry %
+  * e %-escape value (in case it will be further %-evaluated) replace every %
       with %%
   * h html encode value, see %=htmlencode
   * u html encode will transform urls them into a links
@@ -495,7 +495,25 @@ variable (or expression) value
 
 examples:
 * `%{=eval!%foo}` -> `baz` if foo is `%bar` and bar is `baz`
+* `%{=eval!%{=rawvalue:foo:e}}` -> `%%bar` if foo is `%bar`
 * `%{=eval!%{=rawvalue:foo}}` -> very complicated equivalent of `%foo`
+
+%=escape
+--------
+
+%=escape seems a good idea if you don't think twice but is nonsense, it did
+exist in the past and was inconsistent and removed the right ways for %-escaping
+an expression are:
+
+1) not %-evaluating it at all
+2) have it already %-escaped by hand, example: `%%foo` -> `%foo`
+3) `%{=rawvalue!foo!e}` -> `%%bar` if foo contains `%bar`
+
+especially, writing this would be nonsens/inconsistent:
+`%{=escape!%foo}` -> `%%bar`
+because %bar would be evaluated to stay consistent with global %-evaluation
+semantics, the only way to %-evaluate with a depth of only 1 is to use
+%=rawvalue and its e option %-escapes the result
 
 %=sha1
 ------
