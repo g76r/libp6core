@@ -494,7 +494,8 @@ double-evaluate expression to provide a way to force %-evaluation of a
 variable (or expression) value
 
 examples:
-* `%{=eval!%foo}` -> `baz` if foo is `%bar` and bar is `baz`
+* `%{=eval:x%ooks}` -> `43` if ooks is `42` and x42 is `43`
+* `%{=eval:x%ooks}` -> `43` if ooks is `baz`, baz is `42` and x42 is `43`
 * `%{=eval!%{=rawvalue:foo:e}}` -> `%%bar` if foo is `%bar`
 * `%{=eval!%{=rawvalue:foo}}` -> very complicated equivalent of `%foo`
 
