@@ -17,8 +17,7 @@
 #include <QTimer>
 
 GraphvizImageHttpHandler::GraphvizImageHttpHandler(
-    QObject *parent, GraphvizRenderer::Layout layout,
-    GraphvizRenderer::Format format)
+    QObject *parent, Layout layout, Format format)
   : ImageHttpHandler(parent), _layout(layout), _format(format),
     _renderingNeeded(false) {
 }
@@ -56,7 +55,7 @@ QByteArray GraphvizImageHttpHandler::contentType(
 QByteArray GraphvizImageHttpHandler::contentEncoding(
     HttpRequest, ParamsProviderMerger *) const {
   QMutexLocker ml(&_mutex);
-  return (_format == GraphvizRenderer::Svgz) ? "gzip"_u8 : QByteArray{};
+  return (_format == Svgz) ? "gzip"_u8 : QByteArray{};
 }
 
 QByteArray GraphvizImageHttpHandler::source(
@@ -71,13 +70,13 @@ void GraphvizImageHttpHandler::setSource(const QByteArray &source) {
   _renderingNeeded = true;
 }
 
-void GraphvizImageHttpHandler::setLayout(GraphvizRenderer::Layout layout) {
+void GraphvizImageHttpHandler::setLayout(Layout layout) {
   QMutexLocker ml(&_mutex);
   _layout = layout;
   _renderingNeeded = true;
 }
 
-void GraphvizImageHttpHandler::setFormat(GraphvizRenderer::Format format) {
+void GraphvizImageHttpHandler::setFormat(Format format) {
   QMutexLocker ml(&_mutex);
   _format = format;
   _contentType = GraphvizRenderer::mime_type(format);

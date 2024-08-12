@@ -24,9 +24,15 @@ class LIBP6CORESHARED_EXPORT GraphvizImageHttpHandler
   Q_OBJECT
   Q_DISABLE_COPY(GraphvizImageHttpHandler)
 
+public:
+  using Layout = GraphvizRenderer::Layout;
+  using enum GraphvizRenderer::Layout;
+  using Format = GraphvizRenderer::Format;
+  using enum GraphvizRenderer::Format;
+
 private:
-  GraphvizRenderer::Layout _layout;
-  GraphvizRenderer::Format _format;
+  Layout _layout;
+  Format _format;
   Utf8String _source, _contentType;
   bool _renderingNeeded;
   mutable QMutex _mutex;
@@ -34,9 +40,7 @@ private:
 
 public:
   explicit GraphvizImageHttpHandler(
-      QObject *parent = 0,
-      GraphvizRenderer::Layout layout = GraphvizRenderer::Dot,
-      GraphvizRenderer::Format format = GraphvizRenderer::Svg);
+      QObject *parent = 0, Layout layout = Dot, Format format = Svg);
   QByteArray imageData(
       HttpRequest req, ParamsProviderMerger *params = 0, int timeoutMillis
       = IMAGEHTTPHANDLER_DEFAULT_ONDEMAND_RENDERING_TIMEOUT) override;
@@ -46,10 +50,10 @@ public:
     HttpRequest req, ParamsProviderMerger *processingContext) const override;
   QByteArray source(
     HttpRequest req, ParamsProviderMerger *processingContext) const override;
-  GraphvizRenderer::Layout layout() const { return _layout; }
-  void setLayout(GraphvizRenderer::Layout layout);
-  GraphvizRenderer::Format format() const { return _format; }
-  void setFormat(GraphvizRenderer::Format format);
+  Layout layout() const { return _layout; }
+  void setLayout(Layout layout);
+  Format format() const { return _format; }
+  void setFormat(Format format);
 
 public slots:
   /** Set new graphviz-format source and, if refresh strategy is OnChange,
