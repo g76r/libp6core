@@ -1,4 +1,4 @@
-/* Copyright 2023 Gregoire Barbier and others.
+/* Copyright 2023-2024 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,13 +20,13 @@
 class XlsxWriter::Sheet {
 public:
   Utf8String _title;
-  int _id;
+  size_t _index;
   QFile *_file;
-  long _rowcount = 0;
+  size_t _rowcount = 0;
   bool _success = true;
-  Sheet(const Utf8String &title, int id, const Utf8String &workdir)
-    : _title(title), _id(id) {
-    _file = new QFile(workdir+"/"+"sheet"+Utf8String::number(_id)+".xml");
+  Sheet(const Utf8String &title, size_t index, const Utf8String &workdir)
+    : _title(title), _index(index) {
+    _file = new QFile(workdir+"/"+"sheet"+Utf8String::number(_index)+".xml");
     if (!_file->open(QIODevice::Append|QIODevice::WriteOnly
                      |QIODevice::Truncate)
         || _file->write(
@@ -50,8 +50,8 @@ public:
 inline Utf8String html_protect(
     const Utf8String &s, bool *has_spaces = nullptr) {
   Utf8String q;
-  auto n = s.size();
-  for (int i = 0; i < n; ++i)
+  size_t n = s.size();
+  for (size_t i = 0; i < n; ++i)
     switch (s[i]) {
       case '<':
         q += "&lt;"_u8;
@@ -81,7 +81,7 @@ inline Utf8String html_protect(
   return q;
 }
 
-inline Utf8String cell_ref(long rownum, long colnum) {
+inline Utf8String cell_ref(size_t rownum, size_t colnum) {
   return Utf8String::bijectiveBaseNumber(
         colnum, "ABCDEFGHIJKLMNOPQRSTUVWXYZ"_ba) + Utf8String::number(rownum);
 }
@@ -128,8 +128,7 @@ XlsxWriter::XlsxWriter(const Utf8String &workdir, bool autoclean)
   }
 }
 
-XlsxWriter::Sheet *XlsxWriter::get_or_create_sheet(
-    Utf8String title) {
+XlsxWriter::Sheet *XlsxWriter::get_or_create_sheet(Utf8String title) {
   if (title.isEmpty())
     title = "Sheet1"_u8;
   if (title.size() >= 32)
@@ -143,11 +142,11 @@ XlsxWriter::Sheet *XlsxWriter::get_or_create_sheet(
   return sheet;
 }
 
-long XlsxWriter::share_string(Utf8String string, bool incr_counter) {
+size_t XlsxWriter::share_string(Utf8String string, bool incr_counter) {
   if (string.isNull())
     string = ""_u8;
-  long i = _strings.value(string, -1);
-  if (i < 0) {
+  auto i = _strings.value(string, SIZE_MAX);
+  if (i == SIZE_MAX) {
     i = _strings.size();
     _strings.insert(string, i);
     bool has_spaces = false;
@@ -173,7 +172,7 @@ bool XlsxWriter::appendRow(
   Utf8String bytes = "  <row r=\""+Utf8String::number(rownum)
                      +"\" spans=\"1:"+Utf8String::number(row.size())
                      +"\">\n";
-  long colnum = 1;
+  size_t colnum = 1;
   for (auto v: row) {
     auto id = v.metaType().id();
     bytes += "<c r=\""+cell_ref(rownum, colnum)+"\"";
@@ -224,7 +223,7 @@ bool XlsxWriter::appendRow(
   return true;
 }
 
-long XlsxWriter::rowCount(const Utf8String &sheet_title) const {
+size_t XlsxWriter::rowCount(const Utf8String &sheet_title) const {
   auto sheet = _sheets[sheet_title];
   return sheet ? sheet->_rowcount : 0;
 }
@@ -236,7 +235,7 @@ bool XlsxWriter::write(Utf8String filename) {
   Utf8String sheets_in_book, sheets_in_rels, sheets_in_content_types;
   for (auto [title,_]: _sheets.asKeyValueRange()) {
     auto sheet = _sheets[title];
-    auto id_as_utf8 = Utf8String::number(sheet->_id);
+    auto id_as_utf8 = Utf8String::number(sheet->_index);
     sheets_in_book += "    <sheet name=\""+html_protect(title)+"\" sheetId=\""
                       +id_as_utf8+"\" r:id=\"rId"+id_as_utf8+"\"/>\n";
     sheets_in_rels += "  <Relationship Id=\"rId"+id_as_utf8

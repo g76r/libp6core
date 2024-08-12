@@ -1,4 +1,4 @@
-/* Copyright 2023 Gregoire Barbier and others.
+/* Copyright 2023-2024 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -34,23 +34,23 @@ public:
   explicit XlsxWriter(const Utf8String &workdir, bool autoclean = true);
   ~XlsxWriter();
   bool appendRow(const QVariantList &row, const Utf8String &sheet_title = {});
-  long rowCount(const Utf8String &sheet_title = {}) const;
+  size_t rowCount(const Utf8String &sheet_title = {}) const;
   bool write(Utf8String filename);
   bool failed() const { return !_success; }
 
 private:
   class Sheet;
   QMap<Utf8String,Sheet*> _sheets;
-  QHash<Utf8String,long> _strings;
+  QHash<Utf8String,size_t> _strings;
   QFile *_strings_file = nullptr;
-  long _strings_ref = 0;
+  size_t _strings_ref = 0;
   bool _success = true;
   Utf8String _workdir;
   bool _autoclean = true;
   bool _bool_as_text = false;
 
-  Sheet *get_or_create_sheet(Utf8String sheet_title = {});
-  long share_string(Utf8String string, bool incr_counter);
+  inline Sheet *get_or_create_sheet(Utf8String sheet_title = {});
+  inline size_t share_string(Utf8String string, bool incr_counter);
 };
 
 #endif // XLSXWRITER_H
