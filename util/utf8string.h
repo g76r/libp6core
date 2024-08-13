@@ -54,9 +54,12 @@ public:
     : QByteArray((const char *)s, size) { }
   inline Utf8String(const signed char *s, qsizetype size = -1)
     : QByteArray((const char *)s, size) { }
+  inline Utf8String(const char8_t *s, qsizetype size = -1)
+    : QByteArray((const char *)s, size) { }
   inline Utf8String(const char *s, qsizetype size = -1)
     : QByteArray(s, size) { }
   explicit inline Utf8String(const char c) : QByteArray(&c, 1) { }
+  explicit inline Utf8String(const char8_t c) : QByteArray((char*)&c, 1) { }
   explicit inline Utf8String(char32_t u) : QByteArray(encode_utf8(u)) { }
   inline ~Utf8String() {}
   //template <typename Char,if_compatible_char<Char>>
