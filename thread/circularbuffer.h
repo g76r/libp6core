@@ -1,4 +1,4 @@
-/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -44,7 +44,8 @@
 template <class T>
 class LIBP6CORESHARED_EXPORT CircularBuffer {
 public:
-  long _sizeMinusOne, _putCounter, _getCounter, _free, _used;
+  const size_t _sizeMinusOne;
+  size_t _putCounter, _getCounter, _free, _used;
   QMutex _mutex;
   QWaitCondition _notEmpty, _notFull;
   T *_buffer;
@@ -179,19 +180,19 @@ public:
     _mutex.unlock();
   }
   /** Total size of buffer. */
-  inline long size() const { return _sizeMinusOne+1; }
+  inline size_t size() const { return _sizeMinusOne+1; }
   /** Currently free size of buffer.
    * Beware that this value is not consistent from thread to thread. */
-  inline long free() const { return _free; }
+  inline size_t free() const { return _free; }
   /** Currently used size of buffer.
    * Beware that this value is not consistent from thread to thread. */
-  inline long used() const { return _used; }
+  inline size_t used() const { return _used; }
   /** Number of successful put so far.
    * This method is only usefull for testing or benchmarking this class. */
-  inline long putCounter() const { return _putCounter; }
+  inline size_t putCounter() const { return _putCounter; }
   /** Number of successful get so far.
    * This method is only usefull for testing or benchmarking this class. */
-  inline long getCounter() const { return _getCounter; }
+  inline size_t getCounter() const { return _getCounter; }
 };
 
 #endif // CIRCULARBUFFER_H
