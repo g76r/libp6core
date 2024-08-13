@@ -1,4 +1,4 @@
-/* Copyright 2017-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -79,10 +79,11 @@ public:
   /** Apply f to every object in the store.
    * Index is given in call order, without order warranty, and even without the
    * warranty that the order will be the same every time apply() is called. */
-  virtual long apply(std::function<void(QObject *object, ObjectsStore *store,
-                                        long index)> f) = 0;
+  virtual size_t apply(
+      std::function<void(QObject *object, ObjectsStore *store,
+                         size_t index)> f) = 0;
   /** Apply f to every object in the store */
-  virtual long apply(std::function<void(QObject *object)> f);
+  virtual size_t apply(std::function<void(QObject *object)> f);
 
 public slots:
   /** Create a new object in the store and fetch it.

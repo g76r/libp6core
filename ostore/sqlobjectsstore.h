@@ -1,4 +1,4 @@
-/* Copyright 2017-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -52,7 +52,8 @@ public:
   Result fetch() override;
   Result persist(QObject *object) override;
   Result dispose(QObject *object, bool shouldDelete = true) override;
-  long apply(std::function<void(QObject*,ObjectsStore*,long)> f) override;
+  size_t apply(
+      std::function<void(QObject*,ObjectsStore*,size_t)> f) override;
   using ObjectsStore::apply;
 
 private:

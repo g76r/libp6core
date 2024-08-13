@@ -19,8 +19,12 @@ ObjectsStore::Result ObjectsStore::withdraw(
   return dispose(object, false);
 }
 
-long ObjectsStore::apply(std::function<void(QObject*)> f) {
-  return apply([&f](QObject *o, ObjectsStore*, long) { f(o); });
+size_t ObjectsStore::apply(std::function<void (QObject *, ObjectsStore *, size_t)>) {
+  return 0; // should never happen
+};
+
+size_t ObjectsStore::apply(std::function<void(QObject*)> f) {
+  return apply([&f](QObject *o, ObjectsStore*, size_t) { f(o); });
 }
 
 ObjectsStore::Result ObjectsStore::create(const QHash<QString,QVariant> &){

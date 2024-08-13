@@ -226,9 +226,9 @@ ObjectsStore::Result SqlObjectsStore::dispose(
                 error.driverText()+" "+error.databaseText()+" : "+sql);
 }
 
-long SqlObjectsStore::apply(
-    std::function<void(QObject*,ObjectsStore*,long)> f) {
-  long i = 0;
+size_t SqlObjectsStore::apply(
+    std::function<void (QObject *, ObjectsStore *, size_t)> f) {
+  size_t i = 0;
   for (QObject *o: _byPk) {
     f(o, this, i);
     ++i;
