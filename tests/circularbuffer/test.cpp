@@ -1,4 +1,4 @@
-/* Copyright 2015-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,6 +19,7 @@
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QTimer>
+#include "util/utf8string.h"
 
 template <class T>
 class PutterThread : public QThread {
@@ -81,24 +82,51 @@ protected:
 
 int main(int argc, char **argv) {
   QCoreApplication app(argc, argv);
-  CircularBuffer<QString> *stringBuffer = new CircularBuffer<QString>(10);
-  CircularBuffer<int> *intBuffer = new CircularBuffer<int>(10);
-  PutterThread<QString> *t11 = new PutterThread<QString>(
-        "This is a test string", stringBuffer);
-  GetterThread<QString> *t12 = new GetterThread<QString>(stringBuffer);
-  PutterThread<int> *t21 = new PutterThread<int>(8086, intBuffer);
-  GetterThread<int> *t22 = new GetterThread<int>(intBuffer);
-  QTimer timer1, timer2;
-  QObject::connect(&timer1, SIGNAL(timeout()), t11, SLOT(terminate()));
-  QObject::connect(&timer1, SIGNAL(timeout()), t12, SLOT(terminate()));
-  QObject::connect(&timer1, SIGNAL(timeout()), t21, SLOT(start()));
-  QObject::connect(&timer1, SIGNAL(timeout()), t22, SLOT(start()));
-  QObject::connect(&timer2, SIGNAL(timeout()), t21, SLOT(terminate()));
-  QObject::connect(&timer2, SIGNAL(timeout()), t22, SLOT(terminate()));
-  QObject::connect(&timer2, SIGNAL(timeout()), &app, SLOT(quit()));
-  timer1.start(5000);
-  timer2.start(10000);
+  auto stringBuffer = new CircularBuffer<QString>(10);
+  auto t11 = new PutterThread<QString>("This is a utf16 test string", stringBuffer);
+  //auto t11 = new PutterThread<QString>("u16", stringBuffer);
+  auto t12 = new GetterThread<QString>(stringBuffer);
+  auto intBuffer = new CircularBuffer<int>(10);
+  auto t21 = new PutterThread<int>(8086, intBuffer);
+  auto t22 = new GetterThread<int>(intBuffer);
+  auto utf8Buffer = new CircularBuffer<Utf8String>(10);
+  auto t31 = new PutterThread<Utf8String>("This is a utf8 test string", utf8Buffer);
+  //auto t31 = new PutterThread<Utf8String>("u8", utf8Buffer);
+  auto t32 = new GetterThread<Utf8String>(utf8Buffer);
+  auto sizeBuffer = new CircularBuffer<size_t>(10);
+  auto t41 = new PutterThread<size_t>(8087, sizeBuffer);
+  auto t42 = new GetterThread<size_t>(sizeBuffer);
+  auto timer = new QTimer;
+  timer->setSingleShot(true);
+  QObject::connect(timer, &QTimer::timeout, t11, &QThread::terminate);
+  QObject::connect(timer, &QTimer::timeout, t12, &QThread::terminate);
+  QObject::connect(timer, &QTimer::timeout, [&]() {
+    timer->disconnect();
+    QObject::connect(timer, &QTimer::timeout, t21, &QThread::terminate);
+    QObject::connect(timer, &QTimer::timeout, t22, &QThread::terminate);
+    QObject::connect(timer, &QTimer::timeout, [&]() {
+      timer->disconnect();
+      QObject::connect(timer, &QTimer::timeout, t31, &QThread::terminate);
+      QObject::connect(timer, &QTimer::timeout, t32, &QThread::terminate);
+      QObject::connect(timer, &QTimer::timeout, [&]() {
+        timer->disconnect();
+        QObject::connect(timer, &QTimer::timeout, t41, &QThread::terminate);
+        QObject::connect(timer, &QTimer::timeout, t42, &QThread::terminate);
+        QObject::connect(timer, &QTimer::timeout, &app, &QCoreApplication::quit);
+        t42->start();
+        t41->start();
+        timer->start(5000);
+      });
+      t32->start();
+      t31->start();
+      timer->start(5000);
+    });
+    t22->start();
+    t21->start();
+    timer->start(5000);
+  });
   t12->start();
   t11->start();
+  timer->start(5000);
   app.exec();
 }

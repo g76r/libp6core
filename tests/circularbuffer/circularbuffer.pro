@@ -17,7 +17,25 @@ QT += core network sql
 TARGET = test
 CONFIG += console largefile c++20
 CONFIG -= app_bundle
+
+TARGET_OS=default
+unix: TARGET_OS=unix
+linux: TARGET_OS=linux
+android: TARGET_OS=android
+macx: TARGET_OS=macx
+win32: TARGET_OS=win32
+BUILD_TYPE=unknown
+CONFIG(debug,debug|release): BUILD_TYPE=debug
+CONFIG(release,debug|release): BUILD_TYPE=release
+
+!isEmpty(OPTIMIZE_LEVEL):QMAKE_CXXFLAGS_DEBUG += -O$$OPTIMIZE_LEVEL
+!isEmpty(OPTIMIZE_LEVEL):QMAKE_CXXFLAGS_RELEASE += -O$$OPTIMIZE_LEVEL
+!isEmpty(OPTIMIZE_LEVEL):QMAKE_CXXFLAGS_RELEASE_WITH_DEBUGINFO += -O$$OPTIMIZE_LEVEL
+
 INCLUDEPATH += ../..
+LIBS += \
+    -L../../../build-p6core-$$TARGET_OS/$$BUILD_TYPE
+LIBS += -lp6core
 
 exists(/usr/bin/ccache):QMAKE_CXX = ccache g++
 exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always
