@@ -14,6 +14,7 @@
 #include "mathutils.h"
 #include "util/utf8stringlist.h"
 #include <QDateTime>
+#include <cstdint>
 
 /** following constants are not compliant to C++ standard since they assume that
  * integers are implemented with 2's complement
@@ -21,11 +22,11 @@
  * see proposal P0907R4
  * https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0907r4.html
  */
-#define INT_MAX_AS_LL ((1LL<<(8*sizeof(int)-1))-1)
-#define INT_MIN_AS_LL (-(1LL<<(8*sizeof(int)-1)))
-#define INT_MAX_AS_ULL ((1ULL<<(8*sizeof(int)-1))-1)
-#define UINT_MAX_AS_LL ((1LL<<(8*sizeof(int)))-1)
-#define UINT_MAX_AS_ULL ((1ULL<<(8*sizeof(int)))-1)
+#define INT_MAX_AS_LL   ((std::int64_t)INT_MAX)
+#define INT_MIN_AS_LL   ((std::int64_t)INT_MIN)
+#define INT_MAX_AS_ULL  ((std::uint64_t)INT_MAX)
+#define UINT_MAX_AS_LL  ((std::int64_t)UINT_MAX)
+#define UINT_MAX_AS_ULL ((std::uint64_t)UINT_MAX)
 
 static int numericsPromotion(int typeId) {
   switch(typeId) {
