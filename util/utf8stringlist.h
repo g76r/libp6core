@@ -65,6 +65,12 @@ public:
   using QList<Utf8String>::empty; // hides ParamsProvider::empty
   [[nodiscard]] inline operator QVariant() const {
     return QVariant::fromValue(*this); }
+  /** Append if not already in the list. */
+  Utf8StringList &operator*=(const Utf8String& s) {
+    if (!contains(s))
+      append(s);
+    return *this;
+  }
 };
 
 Q_DECLARE_METATYPE(Utf8StringList)
