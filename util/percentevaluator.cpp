@@ -24,7 +24,6 @@
 #include "format/stringutils.h"
 #include "log/log.h"
 #include "util/datacache.h"
-#include <functional>
 #include <stdlib.h>
 #include <QCryptographicHash>
 #include <QRandomGenerator>
@@ -50,8 +49,7 @@ static const auto _re_sub_opts =
     QRegularExpression::DotMatchesEverythingOption // can be canceled with (?-s)
     ;
 
-static RadixTree<std::function<
-QVariant(const Utf8String &key, const EvalContext &context, int ml)>>
+static RadixTree<PercentEvaluator::EvalFunction>
 _functions {
 { "=date", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
   return TimeFormats::toMultifieldSpecifiedCustomTimestamp(
@@ -508,6 +506,11 @@ _functions {
   return PercentEvaluator::eval_key(variable, new_context);
 }, true},
 };
+
+void PercentEvaluator::register_function(
+    const char *key, PercentEvaluator::EvalFunction function) {
+  _functions.insert(key, function, true);
+}
 
 QVariant PercentEvaluator::eval_function(
     const Utf8String &key, const EvalContext &context, bool *found) {

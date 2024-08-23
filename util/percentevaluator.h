@@ -99,6 +99,9 @@ public:
     void setFunctionsEvaluated() { _flags._functions_evaluated = 1; }
     LIBP6CORESHARED_EXPORT const Utf8String toUtf8() const;
   };
+  /** Evaluation function */
+  using EvalFunction = std::function<
+  QVariant(const Utf8String &key, const EvalContext &context, int ml)>;
 
   PercentEvaluator() = delete;
 
@@ -285,6 +288,10 @@ public:
    * Defaults: disabled, but if "ENABLE_PERCENT_VARIABLE_NOT_FOUND_LOGGING"
    * environment variable is set to "true". */
   static void enable_variable_not_found_logging(bool enabled = true);
+
+  // extension
+  /** Add a custom %= function. */
+  static void register_function(const char *key, EvalFunction function);
 };
 
 QDebug LIBP6CORESHARED_EXPORT operator<<(
