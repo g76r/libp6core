@@ -1,4 +1,4 @@
-/* Copyright 2017-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -98,13 +98,16 @@ QString CsvFormatter::formatCell(QString data) const {
 QString CsvFormatter::formatTableHeader(
     const QStringList &columnHeaders) const {
   QString s;
-  if (rowHeadersEnabled())
-    s.append(formatCell(topLeftHeader())).append(_fieldSeparator);
+  if (rowHeadersEnabled()) {
+    s.append(formatCell(topLeftHeader()));
+    if (!_fieldSeparator.isNull())
+      s.append(_fieldSeparator);
+  }
   bool first = true;
   for (const QString &header : columnHeaders) {
     if (first)
       first = false;
-    else
+    else if (!_fieldSeparator.isNull())
       s.append(_fieldSeparator);
     s.append(formatCell(header));
   }
@@ -121,13 +124,16 @@ QString CsvFormatter::formatTableFooter(
 QString CsvFormatter::formatRow(const QStringList &cells,
                                 QString rowHeader) const {
   QString s;
-  if (rowHeadersEnabled())
-    s.append(formatCell(rowHeader)).append(_fieldSeparator);
+  if (rowHeadersEnabled()) {
+    s.append(formatCell(rowHeader));
+    if (!_fieldSeparator.isNull())
+      s.append(_fieldSeparator);
+  }
   bool first = true;
   for (const QString &cell : cells) {
     if (first)
       first = false;
-    else
+    else if (!_fieldSeparator.isNull())
       s.append(_fieldSeparator);
     s.append(formatCell(cell));
   }
