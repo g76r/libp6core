@@ -116,6 +116,7 @@ QMap<Utf8String,Utf8String> SvgWriter::_icons {
   { "crescentr", "m0,-4 a4,4 0 0,1 0,8 a6,6 0 0,0 0,-8 z" }, // ☽ north waxing crescent
   { "heart", "m-3.5,0 a2,2 0 0,1 3.5,-3.5 a2,2 0 0,1 3.5,3.5 l-3.5,3.5 z" }, // ♥
   // TODO { "marriage", "" }, // ⚭
+  // TODO coat of arms / shield 🛡
   { "diamond", "m0,-4 l4,4 l-4,4 l-4,-4 z" }, // ♦
   { "arrowu", "m0,-3 l-4,6 h8 z" }, // ▲
   { "arrowd", "m0,3 l-4,-6 h8 z" }, // ▼
@@ -151,16 +152,19 @@ QMap<Utf8String,Utf8String> SvgWriter::_icons {
   { "erlenmeyer", "m-1,-4 v4 l-3,4 h8 l-3,-4 v-4" },
   { "funnel", "m-1,4 v-4 l-3,-4 h8 l-3,4 v4" },
   // TODO { "warning", "m -4 l -4 8 h 8 z m 0 2 v 4 m 0 2 a 1 1" }, // ⚠
+  // TODO compass rose (4 winds, 8 winds, circled) 🧭
+  // TODO fleur de lis ⚜
   { "chuu", "m-4,-2 v4,-4 h8 v4,-4 h-8 v3 h8,-8 m4,-5 v8" }, // 中 center
   { "nin", "m0,-4 v3 a6,6 0 0,1 -4,5 a6,6 0 0,0 4,-5 a6,6 0 0,0 4,5 a6,6 0 0,1 -4,-5" }, // 人 human
   { "ka", "m0,-4 v3 a6,6 0 0,1 -4,5 a6,6 0 0,0 4,-5 a6,6 0 0,0 4,5 a6,6 0 0,1 -4,-5 m3,-2 a6,6 0 0,1 -2,2 m-2,0 l-2,-2" }, // 火 fire
-  // LATER /\-+|z⦀⦵⦶⦷⧋⧳ •⁙ ⸭ ⸪ ⸫ ⸬ ⁚ ⁛ ⁘ ⁖ ㊅ ⁑⁎⁕ ⫯⫰⫱
+  // LATER /\-+|z⦀⦵⦶⦷⧋ •⁙ ⸭ ⸪ ⸫ ⸬ ⁚ ⁛ ⁘ ⁖ ㊅ ⁑⁎⁕ ⫯⫰⫱ ⎋ ⧮⧯⧰⧱⧲⧳
   // LATER ⏏⏭†‡※☀★♠♣☻☺♯♮♭♬♫♪♩⚀⚁⚂⚃⚄⚅⚑⚮⚬♀♂♁☘☉🏁⚑
   // LATER 🜊⼟🗲⎔☩☨☦⛌⤫⤬⤭⨯⚔☁∪⊎⩈⼤⽊⟲⟳⥀⥁⭮⭯▦▩🉁❂
   // LATER https://www.compart.com/fr/unicode/block/U+25A0 ◧
   // LATER haglaz ᚺ haegl ᚻ wunjo ᚹ féhu ᚠ algiz ᛉ calc ᛣ mannaz ᛗ ing ᛝ tvimadur ᛯ gar ᚸ aleph א
   // LATER https://fr.wikipedia.org/wiki/Balisage
   // LATER segno 𝄋 fclef 𝄢 ᚋ ᚌ ᚍ ᚎ ᚏ
+  // LATER https://en.wikipedia.org/wiki/Chemical_symbol#Daltonian_symbols
 };
 
 Utf8StringList SvgWriter::_iconNames = SvgWriter::_icons.keys();
