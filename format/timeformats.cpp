@@ -174,7 +174,7 @@ QDateTime TimeFormats::fromRfc2822DateTime(
     // MAYDO accept timestamp w/o timezone and assume GMT
     // MAYDO check consistency of day of week with other fields
     return QDateTime(QDate(year, month, day), QTime(hours, minutes, seconds),
-                     Qt::UTC).addSecs(-60*(tz%100)-3600*(tz/100));
+                     QTimeZone{Qt::UTC}).addSecs(-60*(tz%100)-3600*(tz/100));
   }
   if (errorString)
     *errorString = "invalid rfc2822 timestamp: '"+rfc2822DateTime+"'";
