@@ -61,6 +61,8 @@ public:
   explicit inline Utf8String(const char c) : QByteArray(&c, 1) { }
   explicit inline Utf8String(const char8_t c) : QByteArray((char*)&c, 1) { }
   explicit inline Utf8String(char32_t u) : QByteArray(encode_utf8(u)) { }
+  QT_MOVE_ASSIGNMENT_OPERATOR_IMPL_VIA_PURE_SWAP(Utf8String)
+  inline void swap(Utf8String &other) noexcept { QByteArray::swap(other); }
   inline ~Utf8String() {}
   //template <typename Char,if_compatible_char<Char>>
   //Utf8String(const Char *s, qsizetype size = -1) : QByteArray(s, size) { }
@@ -977,6 +979,8 @@ private:
 };
 
 Q_DECLARE_METATYPE(Utf8String)
+//TODO Q_DECLARE_SHARED(Utf8String)
+//or at less: Q_DECLARE_TYPEINFO(Utf8String, Q_RELOCATABLE_TYPE);
 
 inline Utf8String operator"" _u8(const char *str, size_t size) noexcept {
   return Utf8String(QByteArrayData(nullptr, const_cast<char *>(str),
