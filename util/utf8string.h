@@ -759,6 +759,48 @@ public:
   inline Utf8String &operator|=(const QVariant &that) {
     return coalesce(that); }
 
+  /** Null coalesce: replace with that if this is null. */
+  inline Utf8String &null_coalesce(const Utf8String &that) {
+    if (isNull()) *this = that;
+    return *this; }
+  /** Null coalesce: replace with ""_u8 if this is null. */
+  inline Utf8String &null_coalesce();
+  /** Null coalesce: replace with that if this is null. */
+  inline Utf8String &null_coalesce(const QString &that) {
+    if (isNull()) *this = that;
+    return *this; }
+  /** Null coalesce: replace with that if this is null.
+   *  Assume UTF-8. */
+  inline Utf8String &null_coalesce(const QByteArray &that) {
+    if (isNull()) *this = that;
+    return *this; }
+  /** Null coalesce: replace with that if this is null.
+   *  Assume UTF-8, len = -1 means zero-terminated string. */
+  inline Utf8String &null_coalesce(const char *s, qsizetype len = -1) {
+    if (isNull()) *this = QByteArray(s, len);
+    return *this; }
+  /** Null coalesce: replace with that if this is null. */
+  inline Utf8String &null_coalesce(const QVariant &that) {
+    if (isNull()) *this = that;
+    return *this; }
+  /** Null coalesced: return that if this is null. */
+  [[nodiscard]] inline Utf8String null_coalesced(const Utf8String &that) const {
+    return isNull() ? that : *this; }
+  /** Null coalesced: return ""_u8 if this is null. */
+  [[nodiscard]] inline Utf8String null_coalesced() const;
+  /** Null coalesced: return that if this is null. */
+  [[nodiscard]] inline Utf8String null_coalesced(const QString &that) const {
+    return isNull() ? Utf8String(that) : *this; }
+  /** Null coalesced: return that if this is null. */
+  [[nodiscard]] inline Utf8String null_coalesced(const QByteArray &that) const {
+    return isNull() ? Utf8String(that) : *this; }
+  /** Null coalesced: return that if this is null. */
+  [[nodiscard]] inline Utf8String null_coalesced(const char *s, qsizetype len = -1) const {
+    return isNull() ? Utf8String(s, len) : *this; }
+  /** Null coalesced: return that if this is null. */
+  [[nodiscard]] inline Utf8String null_coalesced(const QVariant &that) const {
+    return isNull() ? Utf8String(that) : *this; }
+
   inline Utf8String &operator+=(const Utf8String &s) {
     QByteArray::operator+=(s); return *this; }
   inline Utf8String &operator+=(const QByteArray &ba) {
@@ -1330,6 +1372,14 @@ char32_t Utf8String::toTitle(char32_t u) {
 
 [[nodiscard]] inline Utf8String Utf8String::number(bool b) {
   return b ? "true"_u8: "false"_u8;
+}
+
+inline Utf8String &Utf8String::null_coalesce() {
+  return null_coalesce(""_u8);
+}
+
+[[nodiscard]] inline Utf8String Utf8String::null_coalesced() const {
+  return null_coalesced(""_u8);
 }
 
 template<>
