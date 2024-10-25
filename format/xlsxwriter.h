@@ -49,8 +49,10 @@ private:
   bool _autoclean = true;
   bool _bool_as_text = false;
 
-  inline Sheet *get_or_create_sheet(Utf8String sheet_title = {});
-  inline size_t share_string(Utf8String string, bool incr_counter);
+  /** empty title becomes "Sheet1", longer than 31 char titles are truncated. */
+  inline static Utf8String normalized_sheet_name(const Utf8String &sheet_title);
+  inline Sheet *get_or_create_sheet(const Utf8String &sheet_title);
+  inline size_t share_string(const Utf8String &string, bool incr_counter);
 };
 
 #endif // XLSXWRITER_H

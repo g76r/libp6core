@@ -128,11 +128,17 @@ XlsxWriter::XlsxWriter(const Utf8String &workdir, bool autoclean)
   }
 }
 
-XlsxWriter::Sheet *XlsxWriter::get_or_create_sheet(Utf8String title) {
+Utf8String XlsxWriter::normalized_sheet_name(const Utf8String &title) {
   if (title.isEmpty())
-    title = "Sheet1"_u8;
-  if (title.size() >= 32)
-    title = title.utf8left(31);
+    return "Sheet1"_u8;
+  if (title.utf8size() >= 32)
+    return title.utf8left(31);
+  return title;
+}
+
+XlsxWriter::Sheet *XlsxWriter::get_or_create_sheet(
+    const Utf8String &original_title) {
+  auto title = normalized_sheet_name(original_title);
   if (_sheets.contains(title))
     return _sheets[title];
   Sheet *sheet = new Sheet(title, _sheets.size()+1, _workdir);
@@ -142,9 +148,9 @@ XlsxWriter::Sheet *XlsxWriter::get_or_create_sheet(Utf8String title) {
   return sheet;
 }
 
-size_t XlsxWriter::share_string(Utf8String string, bool incr_counter) {
-  if (string.isNull())
-    string = ""_u8;
+size_t XlsxWriter::share_string(
+    const Utf8String &original_string, bool incr_counter) {
+  auto string = original_string.null_coalesced();
   auto i = _strings.value(string, SIZE_MAX);
   if (i == SIZE_MAX) {
     i = _strings.size();
@@ -223,8 +229,9 @@ bool XlsxWriter::appendRow(
   return true;
 }
 
-size_t XlsxWriter::rowCount(const Utf8String &sheet_title) const {
-  auto sheet = _sheets[sheet_title];
+size_t XlsxWriter::rowCount(const Utf8String &original_title) const {
+  auto title = normalized_sheet_name(original_title);
+  auto sheet = _sheets[title];
   return sheet ? sheet->_rowcount : 0;
 }
 
