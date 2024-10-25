@@ -16,6 +16,8 @@
 
 #include "paramset.h"
 
+class ParamsProviderMergerData;
+
 /** This class builds up several ParamsProvider into only one, chaining
  * calls to paramRawValue().
  *
@@ -28,14 +30,16 @@
  *
  * When a scope is set, behave like if all merged providers have this scope
  * rather than their own, otherwise let every merged provider filtering using
- * its own scope, which is a way to choose one of ther merged providers rather
+ * its own scope, which is a way to choose one of their merged providers rather
  * than previous one. */
 class LIBP6CORESHARED_EXPORT ParamsProviderMerger : public ParamsProvider {
   friend QDebug LIBP6CORESHARED_EXPORT operator<<(
       QDebug dbg, const ParamsProviderMerger *params);
   friend LogHelper LIBP6CORESHARED_EXPORT operator<<(
       LogHelper lh, const ParamsProviderMerger *merger);
+  QSharedPointer<ParamsProviderMergerData> _data;
 
+public:
   class ProviderData : public QSharedData {
   public:
     const ParamsProvider *_wild;
@@ -54,118 +58,66 @@ class LIBP6CORESHARED_EXPORT ParamsProviderMerger : public ParamsProvider {
     Provider(const ParamSet &owned) : d(new ProviderData(owned)) { }
   };
 
-  QList<Provider> _providers;
-  ParamSet _overridingParams;
-  QList<QList<Provider> > _providersStack;
-  QList<ParamSet> _overridingParamsStack;
-  Utf8String _scope;
-
-public:
-  ParamsProviderMerger() { }
-  ParamsProviderMerger(const ParamsProviderMerger &other)
-    : ParamsProvider(), _providers(other._providers),
-      _overridingParams(other._overridingParams), _scope(other._scope) { }
-  ParamsProviderMerger(const ParamsProvider *provider, Utf8String scope = {})
-    : _scope(scope) {
-    append(provider);
-  }
-  ParamsProviderMerger(
-      ParamSet provider, bool inherit = true, Utf8String scope = {})
-    : _scope(scope) {
-    append(provider, inherit);
-  }
-  ParamsProviderMerger(ParamSet provider, Utf8String scope)
+  ParamsProviderMerger();
+  ParamsProviderMerger(const ParamsProviderMerger &other);
+  explicit ParamsProviderMerger(
+      const ParamsProvider *provider, const Utf8String &scope = {});
+  explicit ParamsProviderMerger(
+      const ParamSet &provider, bool inherit = true,
+      const Utf8String &scope = {});
+  ParamsProviderMerger(const ParamSet &provider, const Utf8String &scope)
     : ParamsProviderMerger(provider, true, scope) { }
-  /** Add a ParamsProvider that will be evaluated after those already added. */
-  ParamsProviderMerger &append(const ParamsProvider *provider) {
-    if (provider)
-      _providers.append(provider);
+  inline ParamsProviderMerger &operator=(const ParamsProviderMerger &other) {
+    if (this != &other)
+      _data = other._data;
     return *this;
   }
   /** Add a ParamsProvider that will be evaluated after those already added. */
-  ParamsProviderMerger &append(ParamSet provider, bool inherit = true) {
-    if (!!provider) {
-      if (!inherit)
-        provider.setParent({});
-      _providers.append(provider);
-    }
-    return *this;
-  }
+  ParamsProviderMerger &append(const ParamsProvider *provider);
+  /** Add a ParamsProvider that will be evaluated after those already added. */
+  ParamsProviderMerger &append(const ParamSet &provider, bool inherit = true);
   /** Add a ParamsProvider that will be evaluated before those already added but
    * after parameters set with overrideParamValue(). */
-  ParamsProviderMerger &prepend(const ParamsProvider *provider) {
-    if (provider)
-      _providers.prepend(provider);
-    return *this;
-  }
+  ParamsProviderMerger &prepend(const ParamsProvider *provider);
   /** Add a ParamsProvider that will be evaluated before those already added but
    * after parameters set with overrideParamValue(). */
-  ParamsProviderMerger &prepend(ParamSet provider, bool inherit = true) {
-    if (!!provider) {
-      if (!inherit)
-        provider.setParent({});
-      _providers.prepend(provider);
-    }
-    return *this;
-  }
-  ParamsProviderMerger &pop_front() {
-    if (!_providers.isEmpty())
-      _providers.pop_front();
-    return *this;
-  }
-  ParamsProviderMerger &pop_back() {
-    if (!_providers.isEmpty())
-      _providers.pop_back();
-    return *this;
-  }
+  ParamsProviderMerger &prepend(const ParamSet &provider, bool inherit = true);
+  ParamsProviderMerger &pop_front();
+  ParamsProviderMerger &pop_back();
   /** Convenience operator for append() */
-  ParamsProviderMerger &operator()(const ParamsProvider *provider) {
+  inline ParamsProviderMerger &operator()(const ParamsProvider *provider) {
     return append(provider);
   }
   /** Convenience operator for append() */
-  ParamsProviderMerger &operator()(ParamSet provider, bool inherit = true) {
+  inline ParamsProviderMerger &operator()(
+      const ParamSet &provider, bool inherit = true) {
     return append(provider, inherit);
   }
   /** Parameters set through overrideParamValue() will override any
    * ParamsProvider, even those prepended. */
   ParamsProviderMerger &overrideParamValue(
-      const Utf8String &key, const QVariant &value) {
-    _overridingParams.insert(key, value);
-    return *this;
-  }
+      const Utf8String &key, const QVariant &value);
   /** Remove an override set using overrideParamValue(). */
-  ParamsProviderMerger &unoverrideParamValue(const Utf8String &key) {
-    _overridingParams.erase(key);
-    return *this;
-  }
+  ParamsProviderMerger &unoverrideParamValue(const Utf8String &key);
   /** Remove all ParamsProvider and overriding params. */
-  ParamsProviderMerger &clear() {
-    _providers.clear();
-    _overridingParams.clear();
-    return *this;
-  }
-   /** Saves the current state (pushes the state onto a stack). */
-  void save();
-  /** Restores the current state (pops a saved state off the stack). */
-  void restore();
+  ParamsProviderMerger &clear();
+  //  /** Saves the current state (pushes the state onto a stack). */
+  // void save();
+  // /** Restores the current state (pops a saved state off the stack). */
+  // void restore();
   using ParamsProvider::paramRawValue;
   [[nodiscard]] QVariant paramRawValue(
       const Utf8String &key, const QVariant &def = {},
       const EvalContext &context = {}) const override;
-  /** Give access to currently overriding params. */
-  [[nodiscard]] const ParamSet overridingParams() const {
-    return _overridingParams; }
   [[nodiscard]] Utf8StringSet paramKeys(
       const EvalContext &context = {}) const override;
   [[nodiscard]] Utf8String paramScope() const override;
-  ParamsProviderMerger &setScope(Utf8String scope) {
-    _scope = scope; return *this; }
+  ParamsProviderMerger &setScope(Utf8String scope);
+  /** Give access to currently overriding params. */
+  [[nodiscard]] const ParamSet overridingParams() const;
 };
 
 /** RAII helper for ParamsProviderMerger save/restore.
- *
- * Calls ParamsProviderMerger::save() in constructor and
- * ParamsProviderMerger::restore() in destructor.
  *
  * Can be used that way:
  * void myfunc(ParamsProviderMerger *merger) {
@@ -174,19 +126,20 @@ public:
  * }
  */
 class LIBP6CORESHARED_EXPORT ParamsProviderMergerRestorer {
-  ParamsProviderMerger *_merger;
+  ParamsProviderMerger *_merger, _backup;
   ParamsProviderMergerRestorer() = delete;
   ParamsProviderMergerRestorer(const ParamsProviderMergerRestorer &) = delete;
 public:
-  ParamsProviderMergerRestorer(ParamsProviderMerger *merger) : _merger(merger) {
+  ParamsProviderMergerRestorer(ParamsProviderMerger *merger)
+    : _merger(merger) {
     if (_merger)
-      _merger->save();
+      _backup = *merger;
   }
   ParamsProviderMergerRestorer(ParamsProviderMerger &merger)
     : ParamsProviderMergerRestorer(&merger) { }
   ~ParamsProviderMergerRestorer() {
     if (_merger)
-      _merger->restore();
+      *_merger = _backup;
   }
 };
 
