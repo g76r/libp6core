@@ -40,6 +40,14 @@ int main(int, char **) {
   sw.appendRow(QVariantList{"a","b","z",QVariant(true)}, "One");
   sw.appendRow(QVariantList{"'a","   a",QVariant(),"2",2,2.0}, "One");
   sw.write("output.xlsx");
+  XlsxWriter sw2("/tmp/xlsxwriter_test2", false);
+  auto sheet_title = "SheetNameFar🥨ver31CharactersWhichIsTheMaximumAllowed";
+  qDebug() << "rowcount:" << sw2.rowCount(sheet_title) << "== 0";
+  sw2.appendRow({"foo", "bar"}, sheet_title);
+  sw2.appendRow({"foo", "bar"}, sheet_title);
+  sw2.appendRow({"foo", "bar"}, sheet_title);
+  qDebug() << "rowcount:" << sw2.rowCount(sheet_title) << "== 3";
+  sw2.write("output2.xlsx");
   ::usleep(1'000'000);
   return 0;
 }
