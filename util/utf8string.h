@@ -1130,7 +1130,7 @@ const char *Utf8String::go_backward_to_utf8_char(
   forever {
     auto c = reinterpret_cast<const unsigned char *>(*s);
     if (*s < begin)
-      return 0; // begin reached
+      return 0; // begin overtaken
     if ((c[0] & 0b1100'0000) == 0b1000'0000) [[unlikely]] {
       --*s;
       continue; // skip continuation byte
@@ -1331,10 +1331,10 @@ Utf8String Utf8String::utf8left(qsizetype len) const {
 Utf8String Utf8String::utf8right(qsizetype len) const {
   auto begin = constData();
   auto s = begin + size(), end = s;
-  for (qsizetype i = 0; i < len && go_backward_to_utf8_char(&s, begin); --s,++i)
+  for (qsizetype i = 0; i < len && go_backward_to_utf8_char(&--s, begin); ++i)
     ;
   if (s < begin)
-    s  = begin;
+    s = begin;
   return Utf8String(s, end-s);
 }
 

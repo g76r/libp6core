@@ -85,5 +85,6 @@ int main(void) {
            << Utf8String("9007199254740995.0").toULongLong() << "= 0" // > 2**53 would be rounded to 900...996
            << Utf8String("1e3").toULongLong() << "= 1000"
               ;
+  qDebug() << "abc§越🥨"_u8 << "abc§越🥨"_u8.utf8right(3) << ""_u8.utf8right(2) << "abc§越🥨"_u8.utf8right(0);
   return 0;
 }
