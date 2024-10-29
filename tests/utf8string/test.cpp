@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include "util/paramset.h"
 #include "util/mathutils.h"
+#include <cfloat>
 
 int main(void) {
   Log::init();
@@ -65,6 +66,12 @@ int main(void) {
            << Utf8String::pad(-1,true,"fo§",6,"+") << "++fo§"_u8
            << Utf8String::pad(0,false,"hi!",7," ") << "  hi!  "_u8
            << Utf8String::pad(0,false,"fo§",6,"12345") << "1fo§23"_u8
+              ;
+  qDebug() << Utf8String("9223372036854775807.0").toULongLong() << "= 0" // > 2**53 would be rounded to 922...808
+           << Utf8String("9223372036854775807").toULongLong() << "= 9223372036854775807"
+           << Utf8String("9007199254740992.0").toULongLong() << "= 9007199254740992" // 2**53
+           << Utf8String("9007199254740995.0").toULongLong() << "= 0" // > 2**53 would be rounded to 900...996
+           << Utf8String("1e3").toULongLong() << "= 1000"
               ;
   return 0;
 }
