@@ -582,31 +582,56 @@ inline bool isoctal(const char c) {
   return c >= '0' && c <= '7';
 }
 
-static const qint8 _hexdigits[] = {
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1,
-  -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-};
-
 inline qsizetype decode_oct_char(const char *s, const char *end, char32_t *u) {
   *u = 0;
   auto begin = s, max = std::min(end, s+3);
   for (; s < max && isoctal(*s); ++s)
     *u = (*u << 3) + (*s - '0');
   return s-begin;
+}
+
+inline qint8 hex_digit_value(char c) {
+  switch(c) {
+    case '0':
+      return 0;
+    case '1':
+      return 1;
+    case '2':
+      return 2;
+    case '3':
+      return 3;
+    case '4':
+      return 4;
+    case '5':
+      return 5;
+    case '6':
+      return 6;
+    case '7':
+      return 7;
+    case '8':
+      return 8;
+    case '9':
+      return 9;
+    case 'a':
+    case 'A':
+      return 10;
+    case 'b':
+    case 'B':
+      return 11;
+    case 'c':
+    case 'C':
+      return 12;
+    case 'd':
+    case 'D':
+      return 13;
+    case 'e':
+    case 'E':
+      return 14;
+    case 'f':
+    case 'F':
+      return 15;
+  };
+  return -1;
 }
 
 inline qsizetype decode_hex_char(
@@ -618,7 +643,7 @@ inline qsizetype decode_hex_char(
   if (digits)
     end = s+digits;
   for (; s < end; ++s) {
-    auto i = _hexdigits[static_cast<unsigned char>(*s)];
+    auto i = hex_digit_value(*s);
     if (i < 0)
       return digits ? 0 : s-begin;
     *u = (*u << 4) + i;
