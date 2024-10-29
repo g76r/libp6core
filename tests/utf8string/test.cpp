@@ -87,5 +87,15 @@ int main(void) {
               ;
   qDebug() << "abc§越🥨"_u8 << "abc§越🥨"_u8.utf8right(3) << ""_u8.utf8right(2) << "abc§越🥨"_u8.utf8right(0);
   qDebug() << "abcdef"_u8.utf8chopped(3) << ""_u8.utf8chopped(3) << "abc§越🥨"_u8.utf8chopped(3) << Utf8String{}.utf8chopped(3);
+  qDebug() << Utf8String("1e3k").toDouble() << "= 1e+06"
+           << Utf8String("1000k").toLongLong() << "= 1000000"
+           << Utf8String("3.14u").toDouble() << "= 3.14e-06"
+           << Utf8String("3.14µ").toDouble() << "= 3.14e-06"
+           << Utf8String("3.14P").toDouble() << "= 3.14e+15"
+           << Utf8String("8M").toLongLong() << "= 8000000"
+           << Utf8String("8m").toLongLong() << "= 8000000"
+           << Utf8String("8G").toLongLong() << "= 8000000000"
+           << Utf8String("8b").toLongLong() << "= 8000000000"
+              ;
   return 0;
 }

@@ -99,43 +99,52 @@ Q_CONSTRUCTOR_FUNCTION(staticInit)
 
 template<typename F>
 static inline F toFloating(
-    QByteArray s, bool *ok, F def, bool suffixes_enabled,
+    QByteArray ba, bool *ok, F def, bool suffixes_enabled,
     std::function<F(const QByteArray &,bool*)> wrapped) {
-  // cannot go further 'P' because 'E' means exponent
-  // won't go further 'f' by consistency: 1e15~1e-15
-  static const F _multipliers[] = {
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 1e9, 0, 0, 0, 0, 0, 1e6, 0, 0,
-    1e15, 0, 0, 0, 1e12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 1e-15, 0, 0, 0, 0, 1e3, 0, 1e-3, 1e-9, 0,
-    1e-12, 0, 0, 0, 0, 1e-6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  };
-  s = s.trimmed();
+  Utf8String s = ba.trimmed();
   F mul = 1.0;
-  if (suffixes_enabled) {
-    auto len = s.size();
-    if (len >= 2) {
-      auto m = _multipliers[static_cast<unsigned char>(s.at(len-1))];
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wfloat-equal"
-      if (m != 0) {
-#pragma GCC diagnostic pop
-        mul = m;
-        s.chop(1);
-      }
+  if (auto len = s.utf8size(); suffixes_enabled && len >= 2) {
+    switch (s.utf32value(len-1)) {
+      case 'k':
+        mul = 1e3;
+        break;
+      case 'M':
+        mul = 1e6;
+        break;
+      case 'G':
+        mul = 1e9;
+        break;
+      case 'T':
+        mul = 1e12;
+        break;
+      case 'P':
+        mul = 1e15;
+        break;
+        // cannot go further 'P' because 'E' means exponent
+      case 'm':
+        mul = 1e-3;
+        break;
+      case 'u':
+      case 0xb5: // µ (micro symbol)
+      case 0x3bc: // μ (mu greek letter)
+        mul = 1e-6;
+        break;
+      case 'n':
+        mul = 1e-9;
+        break;
+      case 'p':
+        mul = 1e-12;
+        break;
+      case 'f':
+        mul = 1e-15;
+        break;
+        // won't go further 'f' by consistency with 'P': 1e15~1e-15 range
+      default:
+        goto no_suffix;
     }
+    s.utf8chop(1);
   }
+no_suffix:
   bool _ok;
   F f = wrapped(s, &_ok);
   if (ok)
@@ -177,33 +186,28 @@ static inline I toInteger(
     bool floating_point_enabled,
     std::function<I(const QByteArray &,bool*,int)> wrapped) {
   s = s.trimmed();
-  // won't go further 'P' because 'E' means exponent
-  // TODO simplify: this QBA array is inneficient since non decimal radix are no longer supported
-  static const QByteArray _multipliers[] {
-    {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
-    {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
-    {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
-    {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
-    {}, {}, {}, {}, {}, {}, {}, "000000000", {}, {}, {}, {}, {}, "000000", {}, {},
-    "000000000000000", {}, {}, {}, "000000000000", {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
-    {}, {}, "000000000", {}, {}, {}, {}, {}, {}, {}, {}, "000", {}, "000000", {}, {},
-    {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
-    {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
-    {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
-    {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
-    {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
-    {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
-    {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
-    {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
-    {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
-  };
-  if (suffixes_enabled) {
-    auto len = s.size();
-    // accept suffixes only in base 10 (otherwise 0x1b would be 1 billion)
-    if (len >= 2 && (base == 10 || (base == 0 && (s.at(0) != '0'||len == 2)))) {
-      auto m = _multipliers[static_cast<unsigned char>(s.at(len-1))];
-      if (!m.isNull())
-        s = s.left(len-1)+m;
+  // accept suffixes only in base 10 (otherwise 0x1b would be 1 billion)
+  if (auto len = s.size(); suffixes_enabled && len >= 2
+      && (base == 10 || (base == 0 && (s.at(0) != '0'||len == 2)))) {
+    switch(s.at(len-1)) {
+      case 'k':
+        s = s.left(len-1)+"000";
+        break;
+      case 'm':
+      case 'M':
+        s = s.left(len-1)+"000000";
+        break;
+      case 'b':
+      case 'G':
+        s = s.left(len-1)+"000000000";
+        break;
+      case 'T':
+        s = s.left(len-1)+"000000000000";
+        break;
+      case 'P':
+        s = s.left(len-1)+"000000000000000";
+        break;
+        // won't go further 'P' because 'E' means exponent
     }
   }
   bool _ok;
