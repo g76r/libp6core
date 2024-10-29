@@ -27,14 +27,14 @@ class Utf8StringSet;
  * UTF-8 encoded string (QByteArray, char *, etc.). */
 class LIBP6CORESHARED_EXPORT Utf8String : public QByteArray {
 public:
-  const static QList<char> AsciiWhitespace;
-  const static QList<char32_t> UnicodeWhitespace;
+  const static QList<char> AsciiWhitespace; // ' ', '\t', '\n'...
+  const static QList<char32_t> UnicodeWhitespace; // same plus \u0084, \u2000...
   const static char32_t ReplacementCharacter = U'\ufffd';
   const static char32_t ByteOrderMark = U'\ufeff';
-  const static Utf8String ReplacementCharacterUtf8;
-  const static Utf8String Empty;
-  const static Utf8String DefaultEllipsis;
-  const static Utf8String DefaultPadding;
+  const static Utf8String ReplacementCharacterUtf8; // "\xef\xbf\xbd"_u8
+  const static Utf8String Empty; // ""_u8
+  const static Utf8String DefaultEllipsis; // "..."_u8
+  const static Utf8String DefaultPadding; // " "_u8
 
   inline Utf8String(const QByteArray &ba = {}) : QByteArray(ba) {}
   inline Utf8String(const QByteArray &&ba) : QByteArray(ba) {}
@@ -63,7 +63,7 @@ public:
   explicit inline Utf8String(char32_t u) : QByteArray(encode_utf8(u)) { }
   QT_MOVE_ASSIGNMENT_OPERATOR_IMPL_VIA_PURE_SWAP(Utf8String)
   inline void swap(Utf8String &other) noexcept { QByteArray::swap(other); }
-  inline ~Utf8String() {}
+  inline ~Utf8String() = default;
   //template <typename Char,if_compatible_char<Char>>
   //Utf8String(const Char *s, qsizetype size = -1) : QByteArray(s, size) { }
   /** convert arithmetic types using QByteArray::number() */
@@ -71,10 +71,15 @@ public:
   explicit inline Utf8String(T o) : QByteArray(QByteArray::number(o)) {}
   /** convert bool to "true" or "false" */
   explicit inline Utf8String(bool o) : QByteArray(o ? "true"_ba : "false"_ba) {}
-  /** take QByteArray if v.canConvert<QByteArray>() (assuming UTF-8) otherwise
-   * take QString and convert to UTF-8 othewise {}
-   * this means that Utf8String(QVariant()) == Utf8String() or also that
-   * Utf8String(v).isNull() when !v.isValid() */
+  /** Build Utf8String from QVariant.
+   *  Take:
+   *  - QByteArray if v.canConvert<QByteArray>() (assuming UTF-8), which
+   *    includes Utf8String (since Utf8String is a QByteArray)
+   *  - otherwise take QString and convert to UTF-8
+   *  - otherwise {}
+   *  This means that Utf8String(QVariant{}) == Utf8String{} or also that
+   *  Utf8String(v).isNull() when !v.isValid(), so if you use QVariant{}
+   *  semanticaly as a null value it will be consistent with Utf8String{}. */
   explicit inline Utf8String(QVariant v)
     : QByteArray(v.canConvert<QByteArray>()
                  ? v.toByteArray()

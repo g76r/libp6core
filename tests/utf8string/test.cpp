@@ -67,6 +67,18 @@ int main(void) {
            << Utf8String::pad(0,false,"hi!",7," ") << "  hi!  "_u8
            << Utf8String::pad(0,false,"fo§",6,"12345") << "1fo§23"_u8
               ;
+  qDebug() << Utf8String().isNull() << Utf8String(QVariant()).isNull()
+           << Utf8String(QString()).isNull() << Utf8String(QByteArray()).isNull()
+           << Utf8String(QAnyStringView(QString())).isNull()
+           << Utf8String(QByteArrayView(QByteArray())).isNull()
+           << Utf8String(QVariant(QString())).isNull()
+           << Utf8String(QVariant(QByteArray())).isNull()
+           << Utf8String((const char *)0, -1).isNull()
+           << QString().toUtf8().isNull()
+              ; // everything should be true here
+  qDebug() << Utf8String(u""_s).isNull() << Utf8String(QVariant(u""_s)).isNull()
+           << u""_s.toUtf8().isNull()
+              ; // everything should be false here
   qDebug() << Utf8String("9223372036854775807.0").toULongLong() << "= 0" // > 2**53 would be rounded to 922...808
            << Utf8String("9223372036854775807").toULongLong() << "= 9223372036854775807"
            << Utf8String("9007199254740992.0").toULongLong() << "= 9007199254740992" // 2**53
