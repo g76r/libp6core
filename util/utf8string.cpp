@@ -16,6 +16,7 @@
 #include "utf8stringlist.h"
 #include <set>
 #include <QDateTime>
+#include <cfloat>
 
 const QList<char> Utf8String::AsciiWhitespace = {
   ' ', '\t', '\n', '\r', '\v', '\f',
@@ -159,12 +160,25 @@ float Utf8String::toFloat(bool *ok, float def, bool suffixes_enabled) const {
 }
 
 template<typename I>
+inline bool double_fits_integer(double d) {
+  if (std::numeric_limits<I>::digits >= DBL_MANT_DIG) {
+    // use double value only if it's within DBL_MANT_DIG bits integer range
+    // (if double is IEE754 double precision, DBL_MANT_DIG == 53)
+    return d >= -(1LL<<DBL_MANT_DIG) && d <= (1LL<<DBL_MANT_DIG);
+  }
+  // use double value only if it fits in the integer type
+  return d >= std::numeric_limits<I>::min() &&
+      d <= std::numeric_limits<I>::max();
+}
+
+template<typename I>
 static inline I toInteger(
     QByteArray s, bool *ok, int base, I def, bool suffixes_enabled,
     bool floating_point_enabled,
     std::function<I(const QByteArray &,bool*,int)> wrapped) {
   s = s.trimmed();
   // won't go further 'P' because 'E' means exponent
+  // TODO simplify: this QBA array is inneficient since non decimal radix are no longer supported
   static const QByteArray _multipliers[] {
     {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
     {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
@@ -200,13 +214,10 @@ static inline I toInteger(
                                   [](const QByteArray &s, bool *ok) {
       return s.toDouble(ok);
     });
-    if (_ok) { // use double value only if it fits in the integer type
-      if (d >= std::numeric_limits<I>::min() &&
-          d <= std::numeric_limits<I>::max())
-        i = d;
-      else
-        _ok = false;
-    }
+    if(_ok && double_fits_integer<I>(d))
+      i = d;
+    else
+      _ok = false;
   }
   if (ok)
     *ok = _ok;

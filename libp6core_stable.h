@@ -15,22 +15,23 @@
 #define LIBP6CORE_STABLE_H
 
 // C
-#include <stdlib.h>
-#include <unistd.h>
-#include <time.h>
-#include <signal.h>
 #include <fcntl.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <time.h>
+#include <unistd.h>
 
 #if defined __cplusplus
 
 // C++
-#include <climits>
-#include <type_traits>
-#include <functional>
 #include <algorithm>
-#include <cmath>
-#include <set>
 #include <bit>
+#include <cfloat>
+#include <climits>
+#include <cmath>
+#include <functional>
+#include <set>
+#include <type_traits>
 
 // C++ source_location depending on compiler version
 #if __has_include(<source_location>)
@@ -40,7 +41,6 @@ using std::source_location;
 #include <experimental/source_location>
 using std::experimental::source_location;
 #endif
-#include <bit>
 
 // Qt
 #include <QAbstractItemModel>
@@ -117,6 +117,3 @@ using std::experimental::source_location;
 #endif // __cplusplus
 
 #endif // LIBP6CORE_STABLE_H
-
-
-
