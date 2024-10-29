@@ -86,5 +86,6 @@ int main(void) {
            << Utf8String("1e3").toULongLong() << "= 1000"
               ;
   qDebug() << "abc§越🥨"_u8 << "abc§越🥨"_u8.utf8right(3) << ""_u8.utf8right(2) << "abc§越🥨"_u8.utf8right(0);
+  qDebug() << "abcdef"_u8.utf8chopped(3) << ""_u8.utf8chopped(3) << "abc§越🥨"_u8.utf8chopped(3) << Utf8String{}.utf8chopped(3);
   return 0;
 }

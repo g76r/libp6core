@@ -25,3 +25,4 @@ true true true true true true true true true true
 false false false
 0 = 0 9223372036854775807 = 9223372036854775807 9007199254740992 = 9007199254740992 0 = 0 1000 = 1000
 "abc§越🥨" "§越🥨" "" ""
+"abc" "" "abc" ""

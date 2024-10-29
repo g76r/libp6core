@@ -287,6 +287,10 @@ public:
   inline Utf8String &trim() { *this = trimmed(); return *this; }
   [[nodiscard]] inline Utf8String chopped(qsizetype len) const {
     return QByteArray::chopped(len); }
+  /** remove last len unicode characters */
+  inline void utf8chop(qsizetype len);
+  /** return a string without last len unicode characters */
+  [[nodiscard]] inline Utf8String utf8chopped(qsizetype len) const;
   /** like left() but crashes if out of bound. */
   [[nodiscard]] inline Utf8String first(qsizetype n) const {
     return QByteArray::first(n); }
@@ -1349,6 +1353,21 @@ Utf8String Utf8String::utf8mid(qsizetype pos, qsizetype len) const {
   for (qsizetype i = 0; i < len && go_forward_to_utf8_char(&s, end); ++s, ++i)
     ;
   return Utf8String(begin, s-begin);
+}
+
+void Utf8String::utf8chop(qsizetype len) {
+  auto begin = constData();
+  auto s = begin + size();
+  for (qsizetype i = 0; i < len && go_backward_to_utf8_char(&--s, begin); ++i)
+    ;
+  if (s >= begin)
+    truncate(s-begin);
+}
+
+Utf8String Utf8String::utf8chopped(qsizetype len) const {
+  Utf8String s = *this;
+  s.utf8chop(len);
+  return s;
 }
 
 qsizetype Utf8String::utf8size() const {
