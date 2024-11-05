@@ -91,20 +91,6 @@ _functions {
           flags.contains('n')); // newline as <br>
   return v;
 }, true},
-{ "=ifneq", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.split_headed_list(ml);
-  // TODO remove =ifneq, only keep =switch
-  if (params.size() < 3) [[unlikely]]
-    return {};
-  auto input = PercentEvaluator::eval(params.value(0), context);
-  auto ref = PercentEvaluator::eval(params.value(1), context);
-  if (MathUtils::compareQVariantAsNumberOrString(input, ref, true)
-      != QPartialOrdering::Equivalent)
-    return PercentEvaluator::eval(params.value(2), context);
-  if (params.size() >= 4)
-    return PercentEvaluator::eval(params.value(3), context);
-  return input;
-}, true},
 { "=switch", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
   auto params = key.split_headed_list(ml);
   if (params.size() < 1) [[unlikely]]

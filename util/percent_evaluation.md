@@ -179,23 +179,6 @@ examples:
 * `%{=rpn,foo}` -> `foo`
 * `%{=rpn,%%foo}` -> `%foo`
 
-%=ifneq
--------
-`%{=ifneq!input!reference!value_if_not_equal[!value_else]}`
-
-using %=ifneq is deprecated, it's kept for backward compatibility but one
-shoud use %=switch instead.
-it can be reworded as %=switch!input!reference!value_else!value_if_not_equal
-or (without value_else) %=switch!input!reference!!value_if_not_equal
-
-examples:
-* `%{=ifneq:%foo:0:true:false}` -> "true" if not 0, else "false"
-* `%{=switch:%foo:0:false:true}` -> same
-* `%{=ifneq:%foo::notempty}` -> "notempty" if not empty, else ""
-* `%{=switch:%foo:::notempty}` -> same
-* `%{=ifneq:%foo::<a href="page?param=%foo">%foo</a>}` -> html link if %foo is set
-* `%{=switch:%foo:::<a href="page?param=%foo">%foo</a>}` -> same
-
 %=switch
 --------
 `%{=switch:input[:case1:value1[:case2:value2[...]]][:default_value]}`

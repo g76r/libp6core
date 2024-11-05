@@ -49,10 +49,10 @@
  * intent: displays the result of a ParamSet %-evaluated formula
  * see also: <?[raw]value?> and ParamSet
  * examples:
- * - <?=%{=ifneq:%31::<a href="taskdoc.html?taskid=%31">%31</a>}?> displays
+ * - <?=%{=switch:%31:::<a href="taskdoc.html?taskid=%31">%31</a>}?> displays
  *   value of field #31 surrounded with an html link if field is not empty,
  *   or displays nothing
- * - <?=%{=ifneq:%27::<i class="icon-fire"></i>&nbsp;%27:}?> displays value of
+ * - <?=%{=switch:%27:::<i class="icon-fire"></i>&nbsp;%27:}?> displays value of
  *   field #27, plus an icon if the field is not empty
  * - <?=%name?> displays variable name without length limitation nor html
  *   encoding
