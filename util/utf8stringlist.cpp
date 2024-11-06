@@ -125,18 +125,20 @@ Utf8StringSet Utf8StringList::paramKeys(const EvalContext &) const {
   return keys;
 }
 
-QDebug operator<<(QDebug dbg, const Utf8StringList &list) {
+Utf8String Utf8StringList::human_readable() const {
   auto s = "{ "_u8;
-  if (list.size())
-    s += "\""_u8+list.join("\", \""_u8)+"\" "_u8;
+  if (size())
+    s += "\""_u8+join("\", \""_u8)+"\" "_u8;
   s += "}"_u8;
-  return dbg.noquote() << s.toUtf16();
+  return s;
+}
+
+QDebug operator<<(QDebug dbg, const Utf8StringList &list) {
+  return dbg.noquote() << list.human_readable().toUtf16();
 }
 
 LogHelper operator<<(LogHelper lh, const Utf8StringList &list) {
-  lh << "{"_u8;
-  if (list.size())
-    lh << "\""_u8+list.join("\", \""_u8)+"\" }"_u8;
+  lh << list.human_readable();
   return lh;
 }
 

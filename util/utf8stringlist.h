@@ -71,6 +71,7 @@ public:
       append(s);
     return *this;
   }
+  [[nodiscard]] Utf8String human_readable() const;
 };
 
 Q_DECLARE_METATYPE(Utf8StringList)
