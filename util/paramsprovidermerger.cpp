@@ -227,7 +227,7 @@ Utf8String ParamsProviderMerger::human_readable() const {
         provider->paramKeys().toSortedList().human_readable()+
         " scope: "+provider->paramScope()+",";
   }
-  s = s+" overridingParams: "+overridingParams().toString()+",";
+  s = s+" overridingParams: "+overridingParams().toString()+" }";
   return s;
 }
 
