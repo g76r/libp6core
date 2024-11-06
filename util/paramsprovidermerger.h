@@ -37,28 +37,11 @@ class LIBP6CORESHARED_EXPORT ParamsProviderMerger : public ParamsProvider {
       QDebug dbg, const ParamsProviderMerger *params);
   friend LogHelper LIBP6CORESHARED_EXPORT operator<<(
       LogHelper lh, const ParamsProviderMerger *merger);
-  QSharedPointer<ParamsProviderMergerData> _data;
+  QSharedDataPointer<ParamsProviderMergerData> _data;
 
 public:
-  class ProviderData : public QSharedData {
-  public:
-    const ParamsProvider *_wild;
-    ParamSet _owned;
-    ProviderData(const ParamsProvider *wild = 0)
-      : _wild(wild) { }
-    ProviderData(const ParamSet &owned)
-      : _wild(0), _owned(owned) { }
-  };
-
-  class Provider {
-  public:
-    QSharedDataPointer<ProviderData> d;
-    Provider(const ParamsProvider *wild = 0)
-      : d(new ProviderData(wild)) { }
-    Provider(const ParamSet &owned) : d(new ProviderData(owned)) { }
-  };
-
   ParamsProviderMerger();
+  ~ParamsProviderMerger();
   ParamsProviderMerger(const ParamsProviderMerger &other);
   explicit ParamsProviderMerger(
       const ParamsProvider *provider, const Utf8String &scope = {});
@@ -67,11 +50,7 @@ public:
       const Utf8String &scope = {});
   ParamsProviderMerger(const ParamSet &provider, const Utf8String &scope)
     : ParamsProviderMerger(provider, true, scope) { }
-  inline ParamsProviderMerger &operator=(const ParamsProviderMerger &other) {
-    if (this != &other)
-      _data = other._data;
-    return *this;
-  }
+  ParamsProviderMerger &operator=(const ParamsProviderMerger &other);
   /** Add a ParamsProvider that will be evaluated after those already added. */
   ParamsProviderMerger &append(const ParamsProvider *provider);
   /** Add a ParamsProvider that will be evaluated after those already added. */
@@ -101,10 +80,6 @@ public:
   ParamsProviderMerger &unoverrideParamValue(const Utf8String &key);
   /** Remove all ParamsProvider and overriding params. */
   ParamsProviderMerger &clear();
-  //  /** Saves the current state (pushes the state onto a stack). */
-  // void save();
-  // /** Restores the current state (pops a saved state off the stack). */
-  // void restore();
   using ParamsProvider::paramRawValue;
   [[nodiscard]] QVariant paramRawValue(
       const Utf8String &key, const QVariant &def = {},
@@ -114,7 +89,9 @@ public:
   [[nodiscard]] Utf8String paramScope() const override;
   ParamsProviderMerger &setScope(Utf8String scope);
   /** Give access to currently overriding params. */
-  [[nodiscard]] const ParamSet overridingParams() const;
+  [[nodiscard]] ParamSet overridingParams() const;
+  [[nodiscard]] size_t providers_count() const;
+  [[nodiscard]] Utf8String human_readable() const;
 };
 
 /** RAII helper for ParamsProviderMerger save/restore.

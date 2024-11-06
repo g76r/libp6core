@@ -1,4 +1,4 @@
-/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,7 +14,26 @@
 #include "paramsprovidermerger.h"
 #include "log/log.h"
 
-using Provider = ParamsProviderMerger::Provider;
+namespace {
+
+class Provider {
+public:
+  const ParamsProvider *_wild;
+  ParamSet _owned;
+
+  Provider(const ParamsProvider *wild = 0) : _wild(wild) { }
+  Provider(const ParamSet &owned) : _wild(0), _owned(owned) { }
+  [[nodiscard]] inline bool is_wild() const { return _wild; }
+  [[nodiscard]] inline const ParamsProvider *provider() const {
+    return _wild ? _wild : &_owned; }
+  [[nodiscard]] inline const ParamsProvider *wild() const { return _wild; }
+  [[nodiscard]] inline const ParamsProvider& operator*() const {
+    return *provider(); }
+  [[nodiscard]] inline const ParamsProvider* operator->() const {
+    return provider(); }
+};
+
+} // anonymous namespace
 
 class ParamsProviderMergerData : public QSharedData {
 public:
@@ -47,11 +66,20 @@ ParamsProviderMerger::ParamsProviderMerger(
   append(provider, inherit);
 }
 
+ParamsProviderMerger::~ParamsProviderMerger() {
+}
+
+ParamsProviderMerger &ParamsProviderMerger::operator=(
+    const ParamsProviderMerger &other) {
+  if (this != &other)
+    _data = other._data;
+  return *this;
+}
+
 ParamsProviderMerger &ParamsProviderMerger::append(
     const ParamsProvider *provider) {
-  auto d = _data.data();
   if (provider)
-    d->_providers.append(provider);
+    _data->_providers.append(provider);
   return *this;
 }
 
@@ -59,22 +87,20 @@ ParamsProviderMerger &ParamsProviderMerger::append(
     const ParamSet &provider, bool inherit) {
   if (!provider)
     return *this;
-  auto d = _data.data();
   if (!inherit) {
     auto orphan = provider;
     orphan.setParent({});
-    d->_providers.append(orphan);
+    _data->_providers.append(orphan);
   } else {
-    d->_providers.append(provider);
+    _data->_providers.append(provider);
   }
   return *this;
 }
 
 ParamsProviderMerger &ParamsProviderMerger::prepend(
     const ParamsProvider *provider) {
-  auto d = _data.data();
   if (provider)
-    d->_providers.prepend(provider);
+    _data->_providers.prepend(provider);
   return *this;
 }
 
@@ -82,13 +108,12 @@ ParamsProviderMerger &ParamsProviderMerger::prepend(
     const ParamSet &provider, bool inherit) {
   if (!provider)
     return *this;
-  auto d = _data.data();
   if (!inherit) {
     auto orphan = provider;
     orphan.setParent({});
-    d->_providers.prepend(orphan);
+    _data->_providers.prepend(orphan);
   } else {
-    d->_providers.prepend(provider);
+    _data->_providers.prepend(provider);
   }
   return *this;
 }
@@ -109,15 +134,13 @@ ParamsProviderMerger &ParamsProviderMerger::pop_back() {
 
 ParamsProviderMerger &ParamsProviderMerger::overrideParamValue(
     const Utf8String &key, const QVariant &value) {
-  auto d = _data.data();
-  d->_overridingParams.insert(key, value);
+  _data->_overridingParams.insert(key, value);
   return *this;
 }
 
 ParamsProviderMerger &ParamsProviderMerger::unoverrideParamValue(
     const Utf8String &key) {
-  auto d = _data.data();
-  d->_overridingParams.erase(key);
+  _data->_overridingParams.erase(key);
   return *this;
 }
 
@@ -154,11 +177,8 @@ QVariant ParamsProviderMerger::paramRawValue(
   v = d->_overridingParams.paramRawValue(key, {}, context);
   if (v.isValid())
     return v;
-  for (auto provider: d->_providers) {
-    const ParamsProvider *pp = provider.d->_wild;
-    if (!pp)
-      pp = &provider.d->_owned;
-    auto v = pp->paramRawValue(key, {}, context);
+  for (auto &provider: d->_providers) {
+    auto v = provider->paramRawValue(key, {}, context);
     if (v.isValid())
       return v;
   }
@@ -177,68 +197,48 @@ Utf8StringSet ParamsProviderMerger::paramKeys(
     context.setScopeFilter({});
   } // otherwise let merged providers filter themselves
   Utf8StringSet keys { d->_overridingParams.paramKeys() };
-  for (auto provider: d->_providers) {
-    if (provider.d->_wild) {
-      //keys += "["_u8+provider.d->_wild->paramScope()+"]";
-      keys += provider.d->_wild->paramKeys(context);
-    }else {
-      //keys += "["_u8+provider.d->_owned.paramScope()+"]";
-      keys += provider.d->_owned.paramKeys(context);
-    }
+  for (auto &provider: d->_providers) {
+    keys += provider->paramKeys(context);
   }
   return keys;
 }
 
-const ParamSet ParamsProviderMerger::overridingParams() const {
-  return _data.data()->_overridingParams;
+ParamSet ParamsProviderMerger::overridingParams() const {
+  return _data->_overridingParams;
 }
 
 ParamsProviderMerger &ParamsProviderMerger::setScope(Utf8String scope) {
-  _data.data()->_scope = scope;
+  _data->_scope = scope;
   return *this;
 }
 
 Utf8String ParamsProviderMerger::paramScope() const {
-  return _data.data()->_scope;
+  return _data->_scope;
+}
+
+size_t ParamsProviderMerger::providers_count() const {
+  return _data->_providers.count();
+}
+
+Utf8String ParamsProviderMerger::human_readable() const {
+  Utf8String s = "{"_u8;
+  for (auto &provider: _data->_providers) {
+    s = s+" provider: "+Utf8String::number((qsizetype)provider.wild())+" "+
+        provider->paramKeys().toSortedList().human_readable()+
+        " scope: "+provider->paramScope()+",";
+  }
+  s = s+" overridingParams: "+overridingParams().toString()+",";
+  return s;
 }
 
 QDebug operator<<(QDebug dbg, const ParamsProviderMerger *merger) {
-  if (!merger) {
-    dbg.nospace() << "nullptr";
-    return dbg.space();
-  }
-  auto d = merger->_data.data();
-  dbg.nospace() << "{";
-  for (auto provider: d->_providers) {
-    dbg.space()
-        << "provider: " << provider.d->_wild << " "
-        << (provider.d->_wild ? provider.d->_wild->paramKeys().toSortedList()
-                              : Utf8StringList{})
-        << provider.d->_owned << " scope: "
-        << (provider.d->_wild ? provider.d->_wild->paramScope()
-                              : provider.d->_owned.paramScope())
-        << ",";
-  }
-  dbg.space() << "overridingParams: " << d->_overridingParams << ",";
-  //dbg.space() << "stack size: " << d->_providersStack.size() << " }";
-  return dbg.space();
+  if (merger)
+    dbg.nospace() << merger->human_readable();
+  return dbg;
 }
 
 LogHelper operator<<(LogHelper lh, const ParamsProviderMerger *merger) {
-  if (!merger)
-    return lh << "nullptr";
-  auto d = merger->_data.data();
-  lh << "{ ";
-  for (auto provider: d->_providers) {
-    lh << " provider: " << provider.d->_wild << " "
-       << (provider.d->_wild ? provider.d->_wild->paramKeys().toSortedList()
-                             : Utf8StringList{})
-       << provider.d->_owned << " scope: "
-       << (provider.d->_wild ? provider.d->_wild->paramScope()
-                             : provider.d->_owned.paramScope())
-       << ",";
-  }
-  return lh << " overridingParams: " << d->_overridingParams << " }";
-  // lh << " overridingParams: " << d->_overridingParams << ",";
-  // return lh << " stack size: " << d->_providersStack.size() << " }";
+  if (merger)
+    lh << merger->human_readable();
+  return lh;
 }
