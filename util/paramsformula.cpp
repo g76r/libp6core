@@ -577,23 +577,34 @@ ParamsFormula::ParamsFormula(
   }
 }
 
-ParamsFormula::ParamsFormula(const ParamsFormula &other) : d{other.d} {
+ParamsFormula::ParamsFormula(const ParamsFormula &other) noexcept
+  : d{other.d} {
 }
 
-ParamsFormula &ParamsFormula::operator=(const ParamsFormula &other) {
+ParamsFormula::ParamsFormula(ParamsFormula &&other) noexcept
+  : d{std::move(other.d)} {
+}
+
+ParamsFormula &ParamsFormula::operator=(const ParamsFormula &other) noexcept {
   if (this != &other)
-    d.operator=(other.d);
+    d = other.d;
   return *this;
 }
 
-ParamsFormula::~ParamsFormula() {
+ParamsFormula &ParamsFormula::operator=(ParamsFormula &&other) noexcept {
+  if (this != &other)
+    d = std::move(other.d);
+  return *this;
 }
 
-Utf8String ParamsFormula::expr() const {
+ParamsFormula::~ParamsFormula() noexcept {
+}
+
+Utf8String ParamsFormula::expr() const noexcept {
   return d->_expr;
 }
 
-FormulaDialect ParamsFormula::dialect() const {
+FormulaDialect ParamsFormula::dialect() const noexcept {
   return d->_dialect;
 }
 

@@ -52,13 +52,15 @@ public:
   ParamsFormula(const Utf8StringList &list, const Utf8String &expr,
                 FormulaDialect dialect);
   ParamsFormula() : ParamsFormula(Utf8String{}, InvalidFormula) {}
-  ParamsFormula(const ParamsFormula &other);
-  ParamsFormula &operator=(const ParamsFormula &other);
-  ~ParamsFormula();
-  [[nodiscard]] inline bool isValid() const { return !d; }
-  [[nodiscard]] inline bool operator!() const { return !isValid(); }
-  [[nodiscard]] Utf8String expr() const;
-  [[nodiscard]] FormulaDialect dialect() const;
+  ParamsFormula(const ParamsFormula &other) noexcept;
+  ParamsFormula(ParamsFormula &&other) noexcept;
+  ParamsFormula &operator=(const ParamsFormula &other) noexcept;
+  ParamsFormula &operator=(ParamsFormula &&other) noexcept;
+  ~ParamsFormula() noexcept;
+  [[nodiscard]] inline bool isValid() const noexcept { return !d; }
+  [[nodiscard]] inline bool operator!() const noexcept { return !isValid(); }
+  [[nodiscard]] Utf8String expr() const noexcept;
+  [[nodiscard]] FormulaDialect dialect() const noexcept;
   [[nodiscard]] QVariant eval(
       const EvalContext &context = {}, const QVariant &def = {}) const;
   [[nodiscard]] inline Utf8String eval_utf8(
