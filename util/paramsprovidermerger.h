@@ -40,9 +40,10 @@ class LIBP6CORESHARED_EXPORT ParamsProviderMerger : public ParamsProvider {
   QSharedDataPointer<ParamsProviderMergerData> _data;
 
 public:
-  ParamsProviderMerger();
-  ~ParamsProviderMerger();
-  ParamsProviderMerger(const ParamsProviderMerger &other);
+  ParamsProviderMerger() noexcept;
+  ~ParamsProviderMerger() noexcept;
+  ParamsProviderMerger(const ParamsProviderMerger &other) noexcept;
+  ParamsProviderMerger(ParamsProviderMerger &&other) noexcept;
   explicit ParamsProviderMerger(
       const ParamsProvider *provider, const Utf8String &scope = {});
   explicit ParamsProviderMerger(
@@ -50,7 +51,8 @@ public:
       const Utf8String &scope = {});
   ParamsProviderMerger(const ParamSet &provider, const Utf8String &scope)
     : ParamsProviderMerger(provider, true, scope) { }
-  ParamsProviderMerger &operator=(const ParamsProviderMerger &other);
+  ParamsProviderMerger &operator=(const ParamsProviderMerger &other) noexcept;
+  ParamsProviderMerger &operator=(ParamsProviderMerger &&other) noexcept;
   /** Add a ParamsProvider that will be evaluated after those already added. */
   ParamsProviderMerger &append(const ParamsProvider *provider);
   /** Add a ParamsProvider that will be evaluated after those already added. */

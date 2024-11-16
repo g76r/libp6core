@@ -46,12 +46,18 @@ public:
   ParamsProviderMergerData(const ParamsProviderMergerData &other) = default;
 };
 
-ParamsProviderMerger::ParamsProviderMerger()
+ParamsProviderMerger::ParamsProviderMerger() noexcept
   : _data(new ParamsProviderMergerData()) {
 }
 
-ParamsProviderMerger::ParamsProviderMerger(const ParamsProviderMerger &other)
+ParamsProviderMerger::ParamsProviderMerger(
+    const ParamsProviderMerger &other) noexcept
   : _data(other._data) {
+}
+
+ParamsProviderMerger::ParamsProviderMerger(
+    ParamsProviderMerger &&other) noexcept
+  : _data(std::move(other._data)) {
 }
 
 ParamsProviderMerger::ParamsProviderMerger(
@@ -66,13 +72,20 @@ ParamsProviderMerger::ParamsProviderMerger(
   append(provider, inherit);
 }
 
-ParamsProviderMerger::~ParamsProviderMerger() {
+ParamsProviderMerger::~ParamsProviderMerger() noexcept {
 }
 
 ParamsProviderMerger &ParamsProviderMerger::operator=(
-    const ParamsProviderMerger &other) {
+    const ParamsProviderMerger &other) noexcept {
   if (this != &other)
     _data = other._data;
+  return *this;
+}
+
+ParamsProviderMerger &ParamsProviderMerger::operator=(
+    ParamsProviderMerger &&other) noexcept {
+  if (this != &other)
+    _data = std::move(other._data);
   return *this;
 }
 
