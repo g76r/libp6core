@@ -84,6 +84,36 @@ protected:
 struct S1 {
   size_t _id;
   QList<QString> _strings;
+  S1() = default;
+  S1(size_t id, const QList<QString> &strings)
+    : _id(id), _strings(strings) {}
+  S1(const S1 &that)
+    : _id(std::move(that._id)), _strings(std::move(that._strings)) {}
+  S1(S1 &&that)
+    : _id(std::move(that._id)), _strings(std::move(that._strings)) {
+    //qDebug() << "S1 move cstr";
+  }
+  ~S1() {
+    //qDebug() << "~S1";
+  }
+  S1 &operator=(S1 &&that) {
+    if (this != &that) {
+      _id = std::move(that._id);
+      _strings = std::move(that._strings);
+    }
+    //qDebug() << "S1 move op=";
+    return *this;
+  }
+  S1 &operator=(const S1 &that) {
+    if (this != &that) {
+      _id = that._id;
+      _strings = that._strings;
+    }
+    return *this;
+  }
+  bool isNull() const noexcept {
+    return _strings.isEmpty();
+  }
 };
 
 QDebug operator<<(QDebug dbg, const S1 &s) {

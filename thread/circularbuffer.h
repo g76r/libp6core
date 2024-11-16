@@ -150,8 +150,7 @@ private:
       }
     }
     // since size is a power of 2, % size === &(size-1)
-    *data = _buffer[_getCounter & (_sizeMinusOne)];
-    _buffer[_getCounter & (_sizeMinusOne)] = T();
+    *data = std::move(_buffer[_getCounter & (_sizeMinusOne)]);
     ++_getCounter;
     --_used;
     ++_free;
