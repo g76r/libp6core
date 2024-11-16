@@ -14,14 +14,9 @@
 #ifndef PERCENTEVALUATOR_H
 #define PERCENTEVALUATOR_H
 
-#include "utf8string.h"
 #include "utf8stringset.h"
-#include <set>
 
 class ParamsProvider;
-class Utf8StringSet;
-class QDebug;
-class LogHelper;
 
 /** Evaluate a %-expression.
  *

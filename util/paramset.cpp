@@ -52,48 +52,6 @@ static int staticInit() {
 }
 Q_CONSTRUCTOR_FUNCTION(staticInit)
 
-class ParamSetData : public QSharedData {
-public:
-  ParamSet _parent;
-  QMap<Utf8String,QVariant> _params;
-  Utf8String _scope;
-  ParamSetData() = default;
-  ParamSetData(const ParamSetData &that) = default;
-  ParamSetData(QMap<Utf8String,QVariant> params) : _params(params) { }
-  ParamSetData(ParamSet parent) : _parent(parent) { }
-  void clear() { _parent = {}; _params.clear(); _scope = {}; }
-};
-
-ParamSet::ParamSet() {
-}
-
-ParamSet::ParamSet(ParamSetData *data) : d(data){
-}
-
-ParamSet::ParamSet(std::initializer_list<Utf8String> list) {
-  for (auto it = std::begin(list); it != std::end(list); ++it) {
-    auto key = *it;
-    ++it;
-    if (it != std::end(list)) {
-      insert(key, *it);
-    } else {
-      insert(key, ""_u8);
-      break;
-    }
-  }
-}
-
-ParamSet::ParamSet(
-    std::initializer_list<std::pair<Utf8String, QVariant> > list,
-    const Utf8String &scope) : d(new ParamSetData) {
-  for (auto p: list)
-    d->_params.insert(p.first, p.second);
-  d->_scope = scope;
-}
-
-ParamSet::ParamSet(const ParamSet &other) : d(other.d) {
-}
-
 ParamSet::ParamSet(const QMap<Utf8String,QVariant> &params)
   : d(new ParamSetData(params)) {
 }
@@ -241,26 +199,6 @@ ParamSet::ParamSet(
   : d(fromQIODevice(input, format, options, escape_percent, parent)) {
 }
 
-ParamSet::~ParamSet() {
-}
-
-ParamSet &ParamSet::operator=(const ParamSet &other) {
-  if (this != &other)
-    d = other.d;
-  return *this;
-}
-
-ParamSet ParamSet::parent() const {
-  return d ? d->_parent : ParamSet();
-}
-
-void ParamSet::setParent(const ParamSet &parent) {
-  if (!d) [[unlikely]]
-    d = new ParamSetData;
-  if (d.constData() != parent.d.constData())
-    d->_parent = parent;
-}
-
 ParamSet &ParamSet::insert(const Utf8String &key, const QVariant &value) {
   if (key.isEmpty()) [[unlikely]]
     return *this;
@@ -363,14 +301,6 @@ bool ParamSet::paramContains(
   return parent().paramContains(key, context);
 }
 
-int ParamSet::size() const {
-  return d ? d->_params.size() : 0;
-}
-
-bool ParamSet::isEmpty() const {
-  return d ? d->_params.isEmpty() : true;
-}
-
 Utf8StringSet ParamSet::unscopedParamKeys(bool inherit) const {
   Utf8StringSet keys;
   if (!d)
@@ -441,6 +371,10 @@ const QMap<QString,QString> ParamSet::toUtf16Map(bool inherit) const {
   return map;
 }
 
+Utf8String ParamSet::paramScope() const {
+  return d ? d->_scope : Utf8String{};
+}
+
 QDebug operator<<(QDebug dbg, const ParamSet &params) {
   dbg.nospace() << "{";
   bool first = true;
@@ -489,10 +423,6 @@ LogHelper operator<<(LogHelper lh, const ParamSet &params) {
       break;
   }
   return lh << "}";
-}
-
-void ParamSet::detach() {
-  d.detach();
 }
 
 void ParamSet::insertFromSqlDb(
@@ -637,14 +567,4 @@ Utf8StringList ParamSet::externalParamsNames() {
   auto list = _externals.keys();
   list.detach();
   return list;
-}
-
-void ParamSet::setScope(const Utf8String &scope) {
-  if (!d) [[unlikely]]
-    d = new ParamSetData;
-  d->_scope = scope;
-}
-
-Utf8String ParamSet::paramScope() const {
-  return d ? d->_scope : Utf8String{};
 }

@@ -58,13 +58,14 @@ public:
   const static EvalContext DontInherit; // TODO remove
 #endif
 
-  ParamSet();
+  inline ParamSet() noexcept;
   /** First item processed as a key, second one as the matching value and so on.
    * If list size is odd the last key will be inserted with "" value. */
-  ParamSet(std::initializer_list<Utf8String> list);
-  ParamSet(std::initializer_list<std::pair<Utf8String,QVariant>> list,
-           const Utf8String &scope = {});
-  ParamSet(const ParamSet &other);
+  inline ParamSet(std::initializer_list<Utf8String> list);
+  inline ParamSet(std::initializer_list<std::pair<Utf8String,QVariant>> list,
+                  const Utf8String &scope = {});
+  inline ParamSet(const ParamSet &other) noexcept;
+  inline ParamSet(ParamSet &&other) noexcept;
   explicit ParamSet(const QHash<QString,QString> &params);
   explicit ParamSet(const QMap<QString,QString> &params);
   explicit ParamSet(const QHash<Utf8String,Utf8String> &params);
@@ -136,10 +137,11 @@ public:
       const QStringList &cmdline, const Utf8String &format = "csv",
       const QMap<Utf8String,Utf8String> options = { { "separator", "," } },
       const bool escape_percent = false, const ParamSet &parent = {} );
-  ~ParamSet();
-  ParamSet &operator=(const ParamSet &other);
-  [[nodiscard]] ParamSet parent() const;
-  void setParent(const ParamSet &parent);
+  inline ~ParamSet() noexcept;
+  inline ParamSet &operator=(const ParamSet &other) noexcept;
+  inline ParamSet &operator=(ParamSet &&other) noexcept;
+  [[nodiscard]] inline ParamSet parent() const noexcept;
+  inline void setParent(const ParamSet &parent);
   [[nodiscard]] inline ParamSet withParent(const ParamSet &new_parent) const {
     ParamSet params = *this;
     params.setParent(new_parent);
@@ -226,12 +228,12 @@ public:
   }
 #endif
 
-  [[nodiscard]] inline bool isNull() const { return !d; }
-  [[nodiscard]] inline bool operator!() const { return isNull(); }
-  [[nodiscard]] int size() const;
-  [[nodiscard]] bool isEmpty() const;
-  void detach();
-  ParamSet &detached() { detach(); return *this; }
+  [[nodiscard]] inline bool isNull() const noexcept { return !d; }
+  [[nodiscard]] inline bool operator!() const noexcept { return isNull(); }
+  [[nodiscard]] inline int size() const noexcept;
+  [[nodiscard]] inline bool isEmpty() const noexcept;
+  inline void detach();
+  inline ParamSet &detached() { detach(); return *this; }
   /** Turn the paramset into a human readable string showing its content.
    * @param inherit include params inherited from parents
    * @param decorate surround with curly braces */
@@ -254,7 +256,7 @@ public:
 
   // scope
   [[nodiscard]] Utf8String paramScope() const override;
-  void setScope(const Utf8String &scope);
+  inline void setScope(const Utf8String &scope);
   [[nodiscard]] inline ParamSet withScope(const Utf8String &new_scope) const {
     ParamSet params = *this;
     params.setScope(new_scope);
@@ -262,7 +264,7 @@ public:
   }
 
 private:
-  ParamSet(ParamSetData *data);
+  inline ParamSet(ParamSetData *data) noexcept;
   static ParamSetData *fromQIODevice(
       QIODevice *input, const Utf8String &format,
       const QMap<Utf8String,Utf8String> options,
@@ -344,8 +346,102 @@ public:
 #endif
 };
 
-Q_DECLARE_METATYPE(ParamSet)
+Q_DECLARE_METATYPE(ParamSet);
 Q_DECLARE_TYPEINFO(ParamSet, Q_RELOCATABLE_TYPE);
+
+class ParamSetData : public QSharedData {
+  friend class ParamSet;
+  ParamSet _parent;
+  QMap<Utf8String,QVariant> _params;
+  Utf8String _scope;
+
+public:
+  ParamSetData() = default;
+  ParamSetData(const ParamSetData &that) = default;
+  ParamSetData(ParamSetData &&that) = default;
+
+private:
+  inline ParamSetData(QMap<Utf8String,QVariant> params) : _params(params) { }
+  inline ParamSetData(ParamSet parent) : _parent(parent) { }
+  inline void clear() { _parent = {}; _params.clear(); _scope = {}; }
+};
+
+ParamSet::ParamSet() noexcept {
+}
+
+ParamSet::ParamSet(ParamSetData *data) noexcept : d(data){
+}
+
+ParamSet::ParamSet(std::initializer_list<Utf8String> list) {
+  for (auto it = std::begin(list); it != std::end(list); ++it) {
+    auto key = *it;
+    ++it;
+    if (it != std::end(list)) {
+      insert(key, *it);
+    } else {
+      insert(key, ""_u8);
+      break;
+    }
+  }
+}
+
+ParamSet::ParamSet(
+    std::initializer_list<std::pair<Utf8String, QVariant> > list,
+    const Utf8String &scope) : d(new ParamSetData) {
+  for (auto p: list)
+    d->_params.insert(p.first, p.second);
+  d->_scope = scope;
+}
+
+ParamSet::ParamSet(const ParamSet &other) noexcept : d(other.d) {
+}
+
+ParamSet::ParamSet(ParamSet &&other) noexcept : d(std::move(other.d)) {
+}
+
+ParamSet::~ParamSet() noexcept {
+}
+
+ParamSet &ParamSet::operator=(const ParamSet &other) noexcept {
+  if (this != &other)
+    d = other.d;
+  return *this;
+}
+
+ParamSet &ParamSet::operator=(ParamSet &&other) noexcept {
+  if (this != &other)
+    d = std::move(other.d);
+  return *this;
+}
+
+void ParamSet::detach() {
+  d.detach();
+}
+
+int ParamSet::size() const noexcept {
+  return d ? d->_params.size() : 0;
+}
+
+bool ParamSet::isEmpty() const noexcept {
+  return d ? d->_params.isEmpty() : true;
+}
+
+ParamSet ParamSet::parent() const noexcept {
+  return d ? d->_parent : ParamSet();
+}
+
+void ParamSet::setParent(const ParamSet &parent) {
+  if (!d) [[unlikely]]
+    d = new ParamSetData;
+  if (d.constData() != parent.d.constData())
+    d->_parent = parent;
+}
+
+void ParamSet::setScope(const Utf8String &scope) {
+  if (!d) [[unlikely]]
+    d = new ParamSetData;
+  d->_scope = scope;
+}
 
 QDebug LIBP6CORESHARED_EXPORT operator<<(QDebug dbg, const ParamSet &params);
 
