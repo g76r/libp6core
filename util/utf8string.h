@@ -297,6 +297,14 @@ public:
   /** like right() but crashes if out of bound. */
   [[nodiscard]] inline Utf8String last(qsizetype n) const {
     return QByteArray::last(n); }
+#if QT_VERSION >= 0x060800
+  /** like mid() but crashes if out of bound. */
+  [[nodiscard]] inline Utf8String &slice(qsizetype pos) {
+    QByteArray::slice(pos); return *this; }
+  /** like mid() but crashes if out of bound. */
+  [[nodiscard]] inline Utf8String &slice(qsizetype pos, qsizetype n) {
+    QByteArray::slice(pos, n); return *this; }
+#endif
   /** like mid() but crashes if out of bound. */
   [[nodiscard]] inline Utf8String sliced(qsizetype pos) const {
     return QByteArray::sliced(pos); }
