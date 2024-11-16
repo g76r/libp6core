@@ -18,7 +18,6 @@
 #include "utf8string.h"
 #include <set>
 
-class Utf8StringList;
 class LogHelper;
 
 class LIBP6CORESHARED_EXPORT Utf8StringSet : public QSet<Utf8String> {

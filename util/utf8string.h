@@ -22,6 +22,7 @@ using namespace Qt::Literals::StringLiterals;
 
 class Utf8StringList;
 class Utf8StringSet;
+class QDebug;
 
 /** Enhanced QByteArray with string methods, always assuming 8 bits content is a
  * UTF-8 encoded string (QByteArray, char *, etc.). */
@@ -36,12 +37,13 @@ public:
   const static Utf8String DefaultEllipsis; // "..."_u8
   const static Utf8String DefaultPadding; // " "_u8
 
-  inline Utf8String(const QByteArray &ba = {}) : QByteArray(ba) {}
-  inline Utf8String(const QByteArray &&ba) : QByteArray(ba) {}
-  inline Utf8String(const QByteArrayData ba) : QByteArray(ba) {}
-  inline Utf8String(const QString &s) : QByteArray(s.toUtf8()) {}
+  inline constexpr Utf8String() noexcept {}
+  inline Utf8String(const QByteArray &ba) noexcept : QByteArray(ba) {}
+  inline Utf8String(QByteArray &&ba) noexcept : QByteArray(ba) {}
+  inline Utf8String(const QByteArrayData ba) noexcept : QByteArray(ba) {}
+  inline Utf8String(const QString &s) noexcept : QByteArray(s.toUtf8()) {}
   inline Utf8String(const Utf8String &other) : QByteArray(other) {}
-  inline Utf8String(const Utf8String &&other) : QByteArray(other) {}
+  inline Utf8String(Utf8String &&other) noexcept : QByteArray(other) {}
   inline Utf8String(const QLatin1StringView v)
     : QByteArray(v.toString().toUtf8()) {}
   inline Utf8String(const QByteArrayView v) : QByteArray(v.toByteArray()) {}
@@ -61,9 +63,7 @@ public:
   explicit inline Utf8String(const char c) : QByteArray(&c, 1) { }
   explicit inline Utf8String(const char8_t c) : QByteArray((char*)&c, 1) { }
   explicit inline Utf8String(char32_t u) : QByteArray(encode_utf8(u)) { }
-  QT_MOVE_ASSIGNMENT_OPERATOR_IMPL_VIA_PURE_SWAP(Utf8String)
-  inline void swap(Utf8String &other) noexcept { QByteArray::swap(other); }
-  inline ~Utf8String() = default;
+  inline ~Utf8String() noexcept {}
   //template <typename Char,if_compatible_char<Char>>
   //Utf8String(const Char *s, qsizetype size = -1) : QByteArray(s, size) { }
   /** convert arithmetic types using QByteArray::number() */
@@ -826,10 +826,12 @@ public:
     QByteArray::operator+=(Utf8String{s}); return *this; }
 
   inline Utf8String &operator=(const Utf8String &other) {
-    QByteArray::operator =(other); return *this; }
-  inline Utf8String &operator=(const Utf8String &&other) {
-    QByteArray::operator =(other); return *this; }
+    QByteArray::operator=(other); return *this; }
+  QT_MOVE_ASSIGNMENT_OPERATOR_IMPL_VIA_PURE_SWAP(Utf8String)
+  inline void swap(Utf8String &other) noexcept { QByteArray::swap(other); }
   inline Utf8String &operator=(const QByteArray &ba) {
+    QByteArray::operator=(ba); return *this; }
+  inline Utf8String &operator=(QByteArray &&ba) {
     QByteArray::operator=(ba); return *this; }
   inline Utf8String &operator=(const QString &s) {
     return operator=(s.toUtf8()); }
