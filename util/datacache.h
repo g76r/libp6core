@@ -23,6 +23,10 @@
  *  usage:
  *  DataCache<int,MyData> cache;
  *  auto data = cache.get_or_create(key, [&](){ return MyData(whatever); });
+ *
+ *  For thread-safe cache, use either MultiThreadDataCache or DataCache with
+ *  thread_local storage class which is lock-free but takes more memory and/or
+ *  more compilation time depending of the kind of cached data types.
  */
 template <typename K, typename T>
 class LIBP6CORESHARED_EXPORT DataCache {
