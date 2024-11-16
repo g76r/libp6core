@@ -1,4 +1,4 @@
-/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,6 +13,8 @@
  */
 #include "loggerthread.h"
 #include <QCoreApplication>
+
+using namespace std::chrono_literals;
 
 LoggerThread::LoggerThread(Logger *logger)
   : QThread(0), _logger(logger) {
@@ -31,7 +33,7 @@ LoggerThread::~LoggerThread() {
 void LoggerThread::run() {
   while (!isInterruptionRequested()) {
     Logger::LogEntry le;
-    if (_logger->_buffer->tryGet(&le, 500)) {
+    if (_logger->_buffer->tryGet(&le, 500ms)) {
       if (le.isNull()) {
         _logger->doShutdown();
         break;

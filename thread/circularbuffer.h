@@ -68,109 +68,32 @@ public:
   }
   /** Put data. If needed, wait until there are enough room in the buffer. */
   inline void put(T data) {
-    _mutex.lock();
-    while (_free == 0)
-      _notFull.wait(&_mutex);
-    // since size is a power of 2, % size === &(size-1)
-    _buffer[_putCounter & (_sizeMinusOne)] = data;
-    ++_putCounter;
-    --_free;
-    ++_used;
-    _mutex.unlock();
-    _notEmpty.wakeOne();
+    do_put<true>(data, QDeadlineTimer(QDeadlineTimer::Forever));
   }
   /** Put data only if there are enough room for it.
    * @return true on success */
   inline bool tryPut(T data) {
-    _mutex.lock();
-    if (_free == 0) {
-      _mutex.unlock();
-      return false;
-    }
-    // since size is a power of 2, % size === &(size-1)
-    _buffer[_putCounter & (_sizeMinusOne)] = data;
-    ++_putCounter;
-    --_free;
-    ++_used;
-    _mutex.unlock();
-    _notEmpty.wakeOne();
-    return true;
+    return do_put<false>(data, {});
   }
   /** Put data only if there are enough room for it within timeout milliseconds.
    * @return true on success */
-  inline bool tryPut(T data, int timeout) {
-    _mutex.lock();
-    while (_free == 0 ) {
-      if (!_notFull.wait(&_mutex, timeout)) { // QDeadlineTimer(timeout, Qt::PreciseTimer)
-        _mutex.unlock();
-        return false;
-      }
-    }
-    // since size is a power of 2, % size === &(size-1)
-    _buffer[_putCounter & (_sizeMinusOne)] = data;
-    ++_putCounter;
-    --_free;
-    ++_used;
-    _mutex.unlock();
-    _notEmpty.wakeOne();
-    return true;
+  inline bool tryPut(T data, const QDeadlineTimer &deadline) {
+    return do_put<true>(data, deadline);
   }
   /** Get data. If needed, wait until it become available. */
   inline T get() {
-    _mutex.lock();
-    while (_used == 0)
-      _notEmpty.wait(&_mutex);
-    // since size is a power of 2, % size === &(size-1)
-    T t = _buffer[_getCounter & (_sizeMinusOne)];
-    _buffer[_getCounter & (_sizeMinusOne)] = T();
-    ++_getCounter;
-    --_used;
-    ++_free;
-    _mutex.unlock();
-    _notFull.wakeOne();
-    return t;
+    T t;
+    return do_get<true>(&t, QDeadlineTimer(QDeadlineTimer::Forever)) ? t : T();
   }
   /** Get data only if it is available.
    * @return true on success */
   inline bool tryGet(T *data) {
-    if (!data)
-      return false;
-    _mutex.lock();
-    if (_used == 0) {
-      _mutex.unlock();
-      return false;
-    }
-    // since size is a power of 2, % size === &(size-1)
-    *data = _buffer[_getCounter & (_sizeMinusOne)];
-    _buffer[_getCounter & (_sizeMinusOne)] = T();
-    ++_getCounter;
-    --_used;
-    ++_free;
-    _mutex.unlock();
-    _notFull.wakeOne();
-    return true;
+    return do_get<false>(data, {});
   }
   /** Get data only if it is available within timeout milliseconds.
    * @return true on success */
-  inline bool tryGet(T *data, int timeout) {
-    if (!data)
-      return false;
-    _mutex.lock();
-    while (_used == 0) {
-      if (!_notEmpty.wait(&_mutex, timeout)) {
-        _mutex.unlock();
-        return false;
-      }
-    }
-    // since size is a power of 2, % size === &(size-1)
-    *data = _buffer[_getCounter & (_sizeMinusOne)];
-    _buffer[_getCounter & (_sizeMinusOne)] = T();
-    ++_getCounter;
-    --_used;
-    ++_free;
-    _mutex.unlock();
-    _notFull.wakeOne();
-    return true;
+  inline bool tryGet(T *data, const QDeadlineTimer &deadline) {
+    return do_get<true>(data, deadline);
   }
   /** Discard all data. If needed, wait until it become available. */
   void clear() {
@@ -195,6 +118,47 @@ public:
   /** Number of successful get so far.
    * This method is only usefull for testing or benchmarking this class. */
   inline size_t getCounter() const { return _getCounter; }
+
+private:
+  template<bool SHOULD_WAIT>
+  inline bool do_put(T data, const QDeadlineTimer &deadline) {
+    _mutex.lock();
+    while (_free == 0 ) {
+      if (!SHOULD_WAIT || !_notFull.wait(&_mutex, deadline)) {
+        _mutex.unlock();
+        return false;
+      }
+    }
+    // since size is a power of 2, % size === &(size-1)
+    _buffer[_putCounter & (_sizeMinusOne)] = data;
+    ++_putCounter;
+    --_free;
+    ++_used;
+    _mutex.unlock();
+    _notEmpty.wakeOne();
+    return true;
+  }
+  template<bool SHOULD_WAIT>
+  inline bool do_get(T *data, const QDeadlineTimer &deadline) {
+    if (!data)
+      return false;
+    _mutex.lock();
+    while (_used == 0) {
+      if (!SHOULD_WAIT || !_notEmpty.wait(&_mutex, deadline)) {
+        _mutex.unlock();
+        return false;
+      }
+    }
+    // since size is a power of 2, % size === &(size-1)
+    *data = _buffer[_getCounter & (_sizeMinusOne)];
+    _buffer[_getCounter & (_sizeMinusOne)] = T();
+    ++_getCounter;
+    --_used;
+    ++_free;
+    _mutex.unlock();
+    _notFull.wakeOne();
+    return true;
+  }
 };
 
 #endif // CIRCULARBUFFER_H
