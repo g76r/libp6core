@@ -73,6 +73,7 @@ protected:
                  << "latency:"
                  << 1000.0*(QDateTime::currentMSecsSinceEpoch()-start)
                     /_buffer->getCounter() << "us/exchange"
+                 << "free:" << _buffer->free()
                  << "value:" << value;
       }
     }
@@ -80,8 +81,21 @@ protected:
   }
 };
 
+struct S1 {
+  size_t _id;
+  QList<QString> _strings;
+};
+
+QDebug operator<<(QDebug dbg, const S1 &s) {
+  dbg << "{" << s._id << s._strings << "}";
+  return dbg;
+}
+
 int main(int argc, char **argv) {
   QCoreApplication app(argc, argv);
+  auto timer = new QTimer;
+  timer->setSingleShot(true);
+#if 1
   auto stringBuffer = new CircularBuffer<QString>(10);
   auto t11 = new PutterThread<QString>("This is a utf16 test string", stringBuffer);
   //auto t11 = new PutterThread<QString>("u16", stringBuffer);
@@ -96,8 +110,6 @@ int main(int argc, char **argv) {
   auto sizeBuffer = new CircularBuffer<size_t>(10);
   auto t41 = new PutterThread<size_t>(8087, sizeBuffer);
   auto t42 = new GetterThread<size_t>(sizeBuffer);
-  auto timer = new QTimer;
-  timer->setSingleShot(true);
   QObject::connect(timer, &QTimer::timeout, t11, &QThread::terminate);
   QObject::connect(timer, &QTimer::timeout, t12, &QThread::terminate);
   QObject::connect(timer, &QTimer::timeout, [&]() {
@@ -128,5 +140,30 @@ int main(int argc, char **argv) {
   t12->start();
   t11->start();
   timer->start(5000);
+  app.exec();
+  timer->disconnect();
+  QThread::sleep(1);
+#endif
+  auto structBuffer = new CircularBuffer<S1>(10);
+  QList<QThread*> threads;
+  for (size_t i: {1,2,3,4}) {
+    if (true) {
+      QList<QString> strings = { "foo", "bar", "baz" };
+      auto p = new PutterThread<S1>(S1{i, strings}, structBuffer);
+      threads += p;
+      p->setObjectName("p"+QString::number(i));
+      QObject::connect(timer, &QTimer::timeout, p, &QThread::terminate);
+    }
+    if (true) {
+      auto c = new GetterThread<S1>(structBuffer);
+      threads += c;
+      c->setObjectName("c"+QString::number(i));
+      QObject::connect(timer, &QTimer::timeout, c, &QThread::terminate);
+    }
+  }
+  QObject::connect(timer, &QTimer::timeout, &app, &QCoreApplication::quit);
+  for (auto t: threads)
+    t->start();
+  timer->start(30'000);
   app.exec();
 }

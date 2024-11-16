@@ -34,12 +34,14 @@
  *
  * Usable as a multithreading queue communication mechanism.
  *
- * Can hold any data with operator=().
+ * Can hold any data with operator=():
+ * - fundamental types: int, char_8t...
+ * - stucts and pocos with operator=() (implicit or explicit)
+ * - Qt's implicitly shared data classes exactly as then can be sent through
+ *   a queued signal/slot connection or a queued QMetaObject::invokeMethod()
+ *   call.
  *
- * The datatype is not required to be thread-safe, even its operator=().
- * Therefore Qt's implicitly shared data classes can be sent through a
- * CircularBuffer exactly as then can through an queued signal/slot connection
- * or a queued QMetaObject::invokeMethod() call.
+ * T is not required to be thread-safe, even its operator=().
  */
 template <class T>
 class LIBP6CORESHARED_EXPORT CircularBuffer {
@@ -74,8 +76,8 @@ public:
     ++_putCounter;
     --_free;
     ++_used;
-    _notEmpty.wakeAll();
     _mutex.unlock();
+    _notEmpty.wakeOne();
   }
   /** Put data only if there are enough room for it.
    * @return true on success */
@@ -90,8 +92,8 @@ public:
     ++_putCounter;
     --_free;
     ++_used;
-    _notEmpty.wakeAll();
     _mutex.unlock();
+    _notEmpty.wakeOne();
     return true;
   }
   /** Put data only if there are enough room for it within timeout milliseconds.
@@ -109,8 +111,8 @@ public:
     ++_putCounter;
     --_free;
     ++_used;
-    _notEmpty.wakeAll();
     _mutex.unlock();
+    _notEmpty.wakeOne();
     return true;
   }
   /** Get data. If needed, wait until it become available. */
@@ -124,8 +126,8 @@ public:
     ++_getCounter;
     --_used;
     ++_free;
-    _notFull.wakeAll();
     _mutex.unlock();
+    _notFull.wakeOne();
     return t;
   }
   /** Get data only if it is available.
@@ -144,8 +146,8 @@ public:
     ++_getCounter;
     --_used;
     ++_free;
-    _notFull.wakeAll();
     _mutex.unlock();
+    _notFull.wakeOne();
     return true;
   }
   /** Get data only if it is available within timeout milliseconds.
@@ -166,8 +168,8 @@ public:
     ++_getCounter;
     --_used;
     ++_free;
-    _notFull.wakeAll();
     _mutex.unlock();
+    _notFull.wakeOne();
     return true;
   }
   /** Discard all data. If needed, wait until it become available. */
@@ -176,8 +178,8 @@ public:
     _getCounter = _putCounter;
     _used = 0;
     _free = _sizeMinusOne+1;
-    _notFull.wakeAll();
     _mutex.unlock();
+    _notFull.wakeOne();
   }
   /** Total size of buffer. */
   inline size_t size() const { return _sizeMinusOne+1; }
