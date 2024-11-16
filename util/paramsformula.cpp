@@ -476,6 +476,10 @@ const RadixTree<OperatorDefinition> _operatorDefinitions {
         stack->push(x); // duplicating x
         return x;
       } }, true },
+  { "<metatypeid>", { 1, -1, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) -> QVariant {
+        auto x = stack->popeval(stack, context, false);
+        return x.metaType().id();
+      } }, true },
 };
 
 QMap<Utf8String, OperatorDefinition> _operatorDefinitionsMap { _operatorDefinitions.toUtf8Map() };
