@@ -78,13 +78,6 @@ Logger::LogEntry::LogEntry(QDateTime timestamp, Utf8String message,
   : SharedUiItem(new LogEntryData(timestamp, message, severity, context)) {
 }
 
-Logger::LogEntry::LogEntry() {
-}
-
-Logger::LogEntry::LogEntry(const Logger::LogEntry &other)
-  : SharedUiItem(other) {
-}
-
 QDateTime Logger::LogEntry::timestamp() const {
   return isNull() ? QDateTime() : data()->_timestamp;
 }

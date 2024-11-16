@@ -189,8 +189,11 @@ protected:
   // because such methods would be buggy since SharedUiItem must not detach
   // directly since it's up to real data subclass to detach and copy the real
   // data class (a SharedUiItemData subclass)
-  SharedUiItemData() : QSharedData() { }
-  SharedUiItemData(const SharedUiItemData &other) : QSharedData(other) { }
+  SharedUiItemData() noexcept : QSharedData() { }
+  SharedUiItemData(const SharedUiItemData &other) noexcept
+    : QSharedData(other) { }
+  SharedUiItemData(SharedUiItemData &&other) noexcept
+    : QSharedData(std::move(other)) { }
 };
 
 /** Parent class for implicitely shared data classes to be queried as a user
@@ -311,12 +314,18 @@ public:
     ExternalDataRole // for file/database storage or network transfer
   };
 
-  SharedUiItem() = default;
-  ~SharedUiItem() = default;
-  SharedUiItem(const SharedUiItem &other) : _data(other._data) { }
-  SharedUiItem &operator=(const SharedUiItem &other) {
+  SharedUiItem() noexcept {}
+  ~SharedUiItem() noexcept {}
+  SharedUiItem(const SharedUiItem &other) noexcept : _data(other._data) { }
+  SharedUiItem(SharedUiItem &&other) noexcept
+    : _data(std::move(other._data)) { }
+  SharedUiItem &operator=(const SharedUiItem &other) noexcept {
     if (this != &other)
       _data = other._data;
+    return *this; }
+  SharedUiItem &operator=(SharedUiItem &&other) noexcept {
+    if (this != &other)
+      _data = std::move(other._data);
     return *this; }
 #if __cpp_impl_three_way_comparison >= 201711
   inline std::strong_ordering operator<=>(const SharedUiItem &that) const {

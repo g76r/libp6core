@@ -40,12 +40,15 @@ public:
   class LogEntryData;
   class LogEntry : public SharedUiItem {
   public:
-    LogEntry();
+    LogEntry() noexcept {}
     LogEntry(QDateTime timestamp, Utf8String message, Log::Severity severity,
              LogContext context);
-    LogEntry(const LogEntry &other);
+    LogEntry(const LogEntry &other) noexcept : SharedUiItem(other) {}
+    LogEntry(LogEntry &&other) noexcept : SharedUiItem(std::move(other)) {}
     LogEntry &operator=(const LogEntry &other) {
       SharedUiItem::operator=(other); return *this; }
+    LogEntry &operator=(LogEntry &&other) {
+      SharedUiItem::operator=(std::move(other)); return *this; }
     QDateTime timestamp() const;
     Utf8String message() const;
     Log::Severity severity() const;

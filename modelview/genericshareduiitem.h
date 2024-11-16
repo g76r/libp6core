@@ -23,8 +23,11 @@ class CsvFile;
  */
 class LIBP6CORESHARED_EXPORT GenericSharedUiItem : public SharedUiItem {
 public:
-  GenericSharedUiItem();
-  GenericSharedUiItem(const GenericSharedUiItem &other);
+  GenericSharedUiItem() noexcept {}
+  GenericSharedUiItem(const GenericSharedUiItem &other) noexcept
+    : SharedUiItem(other) {}
+  GenericSharedUiItem(GenericSharedUiItem &&other) noexcept
+    : SharedUiItem(std::move(other)) {}
   GenericSharedUiItem(Utf8String qualifier, Utf8String id,
                       Utf8StringList section_names, QVariantList values);
   /** Convenience constructor, with qualifier="generic" */
@@ -42,6 +45,8 @@ public:
   explicit GenericSharedUiItem(Utf8String qualifiedId);
   GenericSharedUiItem &operator=(const GenericSharedUiItem &other) {
     SharedUiItem::operator=(other); return *this; }
+  GenericSharedUiItem &operator=(GenericSharedUiItem &&other) {
+    SharedUiItem::operator=(std::move(other)); return *this; }
   static QList<GenericSharedUiItem> fromCsv(CsvFile *csvFile, int idColumn = 0,
       Utf8String qualifier = "generic"_u8);
   // LATER another fromCsv(), with qualifierColumn

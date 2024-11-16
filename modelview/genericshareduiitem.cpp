@@ -69,13 +69,6 @@ public:
       SharedUiItemDocumentTransaction *transaction, int role) override;
 };
 
-GenericSharedUiItem::GenericSharedUiItem() {
-}
-
-GenericSharedUiItem::GenericSharedUiItem(const GenericSharedUiItem &other)
-  : SharedUiItem(other) {
-}
-
 GenericSharedUiItem::GenericSharedUiItem(
     Utf8String qualifier, Utf8String id, Utf8StringList section_names,
     QVariantList values)
