@@ -1,4 +1,4 @@
-/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2024 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -31,7 +31,6 @@ int	CoreUndoCommand::id() const {
   return -1;
 }
 
-bool CoreUndoCommand::mergeWith(const CoreUndoCommand *command) {
-  Q_UNUSED(command)
+bool CoreUndoCommand::mergeWith(const CoreUndoCommand *) {
   return false;
 }
