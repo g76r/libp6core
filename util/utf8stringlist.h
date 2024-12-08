@@ -108,7 +108,7 @@ public:
   Utf8StringIndexedConstList(InputIterator i1, InputIterator i2)
     : Utf8StringList(i1, i2) { build_index(); }
 #endif
-  [[gnu::const]] [[nodiscard]] inline QMap<Utf8String,int> toIndex() const {
+  [[nodiscard]] inline QMap<Utf8String,int> toIndex() const {
     return _index; }
 
   // make only const methods availlable (otherwise index would be inconsistent)
@@ -122,23 +122,23 @@ public:
   QList::const_reverse_iterator rbegin() const {
     return Utf8StringList::rbegin(); }
   QList::const_reverse_iterator rend() const { return Utf8StringList::rend(); }
-  [[gnu::const]] [[nodiscard]] inline QList::const_reference operator[](
+  [[nodiscard]] inline QList::const_reference operator[](
       qsizetype i) const {
     return Utf8StringList::operator[](i); }
-  [[gnu::const]] [[nodiscard]] inline QList::const_reference at(
+  [[nodiscard]] inline QList::const_reference at(
       qsizetype i) const {
     return Utf8StringList::at(i); }
-  [[gnu::const]] [[nodiscard]] inline auto size() const {
+  [[nodiscard]] inline auto size() const {
     return Utf8StringList::size(); }
-  [[gnu::const]] [[nodiscard]] inline auto count() const {
+  [[nodiscard]] inline auto count() const {
     return Utf8StringList::count(); }
-  [[gnu::const]] [[nodiscard]] inline auto length() const {
+  [[nodiscard]] inline auto length() const {
     return Utf8StringList::length(); }
-  [[gnu::const]] [[nodiscard]] inline auto empty() const {
+  [[nodiscard]] inline auto empty() const {
     return Utf8StringList::empty(); }
-  [[gnu::const]] [[nodiscard]] inline auto isEmpty() const {
+  [[nodiscard]] inline auto isEmpty() const {
     return Utf8StringList::isEmpty(); }
-  [[gnu::const]] [[nodiscard]] inline Utf8String value(
+  [[nodiscard]] inline Utf8String value(
       qsizetype i, const Utf8String &def = {}) const {
     return Utf8StringList::value(i, def); }
   [[nodiscard]] inline operator QVariant() const {
