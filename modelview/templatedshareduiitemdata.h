@@ -28,13 +28,13 @@ template<class T>
 class SharedUiItemDynamicData : public SharedUiItemData {
 public:
   // SharedUiItemData interface
-  [[gnu::const]] int uiSectionCount() const final {
+  [[nodiscard]] int uiSectionCount() const final {
     return T::_sectionNames.size(); }
-  [[gnu::const]] Utf8String uiSectionName(int section) const final {
+  [[nodiscard]] Utf8String uiSectionName(int section) const final {
     return T::_sectionNames.value(section); }
-  [[gnu::const]] int uiSectionByName(Utf8String sectionName) const final {
+  [[nodiscard]] int uiSectionByName(Utf8String sectionName) const final {
     return T::_sectionNames.toIndex().value(sectionName, -1); }
-  [[gnu::const]] QVariant uiHeaderData(int section, int role) const final {
+  [[nodiscard]] QVariant uiHeaderData(int section, int role) const final {
     switch (role) {
       case Qt::DisplayRole:
       case Qt::EditRole:
