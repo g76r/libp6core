@@ -86,39 +86,41 @@ public:
   /** Return a string identifying the object among all other SharedUiItems
    * sharing the same qualifier().
    * Default: return uiData(0, Qt::DisplayRole) */
-  virtual Utf8String id() const;
+  [[nodiscard]] virtual Utf8String id() const;
   /** Return a string identifiying the data type represented within the
    * application, e.g. "student", "calendar", "quote". */
-  virtual Utf8String qualifier() const = 0;
+  [[nodiscard]] virtual Utf8String qualifier() const = 0;
 
   // ui read
   /** Return UI sections count, like QAbstractItemModel::columnCount() does for
    * columns. */
-  virtual int uiSectionCount() const = 0;
+  [[nodiscard]] virtual int uiSectionCount() const = 0;
   /** Return UI name for the section, in the sense of
    * QAbstractItemsModel::roleNames() (so it's what is mapped to sections if
    * the SharedUiItem is accessed from within QML/JS).
    * Name must be unique to this section (it's an identifier).
    * It's also used as the key when accessed through ParamsSet interface. */
-  virtual Utf8String uiSectionName(int section) const = 0;
+  [[nodiscard]] virtual Utf8String uiSectionName(int section) const = 0;
   /** Return UI section number given the section name or -1 if not found. */
-  virtual int uiSectionByName(Utf8String sectionName) const = 0;
+  [[nodiscard]] virtual int uiSectionByName(Utf8String sectionName) const = 0;
   /** Return UI data, like QAbstractItemModel::data().
    *
    * Note that IdRole, QualifierRole, QualifiedIdRole and won't be queried
    * from SharedUiItemData::uiData() but are directly handled in
    * SharedUiItem::uiData() as calls to SharedUiItemData::id() and
    * SharedUiItemData::qualifier() instead, regardless the section. */
-  virtual QVariant uiData(int section, int role = Qt::DisplayRole) const = 0;
+  [[nodiscard]] virtual QVariant uiData(
+      int section, int role = Qt::DisplayRole) const = 0;
   /** Return UI header data, like QAbstractItemModel::headerData().
    * Default: uiSectionName(section) for DisplayRole, EditRole and
    * ExternalDataRole, otherwise {} */
-  virtual QVariant uiHeaderData(int section, int role = Qt::DisplayRole) const;
+  [[nodiscard]] virtual QVariant uiHeaderData(
+      int section, int role = Qt::DisplayRole) const;
 
   // ui write
   /** Return UI item flags, like QAbstractItemModel::flags().
    * Default: return Qt::ItemIsEnabled | Qt::ItemIsSelectable */
-  virtual Qt::ItemFlags uiFlags(int section) const;
+  [[nodiscard]] virtual Qt::ItemFlags uiFlags(int section) const;
   /** Set data from a UI point of view, i.e. called by a QAbstractItemModel
    * after user edition.
    * Default: return false, setting the errorString to something explicit
@@ -158,7 +160,7 @@ public:
   inline bool operator>=(const SharedUiItemData &that) const {
     return !(*this<that); }
 #endif // C++ 20: spaceship op
-  virtual QVariantHash toVariantHash(int role) const;
+  [[nodiscard]] virtual QVariantHash toVariantHash(int role) const;
   virtual bool setFromVariantHash(
       const QVariantHash &hash, QString *errorString,
       SharedUiItemDocumentTransaction *transaction,
@@ -356,35 +358,37 @@ public:
   /** Item identifier.
    * The identifier MUST be unique for the same type of item within the same
    * document. It can be any non empty utf8 string. */
-  inline Utf8String id() const { return _data ? _data->id() : Utf8String{}; }
+  [[nodiscard]] inline Utf8String id() const {
+    return _data ? _data->id() : Utf8String{}; }
   /** Item identifier qualifier, e.g. item type such as "invoice" for an
    * invoice data ui object. */
-  inline Utf8String qualifier() const {
+  [[nodiscard]] inline Utf8String qualifier() const {
     return _data ? _data->qualifier() : Utf8String{}; }
   /** Qualified item identifier.
    * The qualified identifier MUST be unique for any type of item within the
    * same document.
    * @return qualifier+':'+id if qualifier is not empty, id otherwise. */
-  inline static Utf8String qualifiedId(
+  [[nodiscard]] inline static Utf8String qualifiedId(
       const Utf8String &qualifier, const Utf8String &id) {
     Utf8String s{qualifier}; s += ':'; s += id; return s; }
   /** Qualified item identifier.
    * The qualified identifier MUST be unique for any type of item within the
    * same document.
    * @return qualifier+':'+id if qualifier is not empty, id otherwise. */
-  inline Utf8String qualifiedId() const {
+  [[nodiscard]] inline Utf8String qualifiedId() const {
     return _data ? qualifiedId(_data->qualifier(), _data->id()) : Utf8String{};}
   /** Return UI sections count, like QAbstractItemModel::columnCount() does for
    * columns (anyway SharedUiItem sections are likely to be presented as
    * columns by a Model and displayed aas columns by a View). */
-  inline int uiSectionCount() const {
+  [[nodiscard]] inline int uiSectionCount() const {
     return _data ? _data->uiSectionCount() : 0; }
   /** Return UI data, like QAbstractItemModel::data().
    *
    * Using IdRole, QualifierRole and QualifiedIdRole query
    * SharedUiItemData::id() and/or SharedUiItemData::qualifier() instead of
    * SharedUiItem::uiData(), regardless the section. */
-  inline QVariant uiData(int section, int role = Qt::DisplayRole) const {
+  [[nodiscard]] inline QVariant uiData(
+      int section, int role = Qt::DisplayRole) const {
     if (!_data)
       return {};
     switch (role) {
@@ -401,7 +405,7 @@ public:
     }
   }
   /** @return section number knowing its name, or -1 */
-  inline int uiSectionByName(Utf8String sectionName) const {
+  [[nodiscard]] inline int uiSectionByName(Utf8String sectionName) const {
     return _data ? _data->uiSectionByName(sectionName) : -1;
   }
   /** Return UI data, like QAbstractItemModel::data().
@@ -413,7 +417,7 @@ public:
    * "id", "qualifier" and "qualified_id" section names query
    * SharedUiItemData::id() and/or SharedUiItemData::qualifier()
    * instead of SharedUiItem::uiSectionByName() and SharedUiItem::uiData(). */
-  QVariant uiDataBySectionName(
+  [[nodiscard]] QVariant uiDataBySectionName(
       Utf8String sectionName, int role = Qt::DisplayRole) const {
     if (!_data)
       return {};
@@ -435,23 +439,27 @@ public:
     return uiData(section, role);
   }
   /** Convenience method for uiData(...).toString(). */
-  inline QString uiString(int section, int role = Qt::DisplayRole) const {
+  [[nodiscard]] inline QString uiString(
+      int section, int role = Qt::DisplayRole) const {
     return uiData(section, role).toString(); }
   /** Convenience method for uiData(...).toString().toUtf8(). */
-  inline Utf8String uiUtf8(int section, int role = Qt::DisplayRole) const {
+  [[nodiscard]] inline Utf8String uiUtf8(
+      int section, int role = Qt::DisplayRole) const {
     return Utf8String(uiData(section, role)); }
   /** Return UI header data, like QAbstractItemModel::headerData(). */
-  inline QVariant uiHeaderData(int section, int role) const {
+  [[nodiscard]] inline QVariant uiHeaderData(int section, int role) const {
     return _data ? _data->uiHeaderData(section, role) : QVariant() ; }
   /** Convenience method for uiHeaderData(...).toString(). */
-  inline QString uiHeaderString(int section, int role = Qt::DisplayRole) const {
+  [[nodiscard]] inline QString uiHeaderString(
+      int section, int role = Qt::DisplayRole) const {
     return uiHeaderData(section, role).toString(); }
   /** Convenience method for uiHeaderData(...).toString().toUtf8(). */
-  inline Utf8String uiHeaderUtf8(int section, int role = Qt::DisplayRole) const{
+  [[nodiscard]] inline Utf8String uiHeaderUtf8(
+      int section, int role = Qt::DisplayRole) const{
     return Utf8String(uiHeaderData(section, role)); }
   /** Return UI name (id) for the section, in the sense of
    * QAbstractItemsModel::roleNames() */
-  inline Utf8String uiSectionName(int section) const {
+  [[nodiscard]] inline Utf8String uiSectionName(int section) const {
     return _data ? _data->uiSectionName(section) : Utf8String{}; }
   /** Return UI item flags, like QAbstractItemModel::flags().
    *
@@ -466,14 +474,16 @@ public:
    * Qt::ItemIsDragEnabled, Qt::ItemIsDropEnabled.
    *
    * Default: return Qt::ItemIsEnabled */
-  Qt::ItemFlags uiFlags(int section) const {
+  [[nodiscard]] Qt::ItemFlags uiFlags(int section) const {
     return _data ? _data->uiFlags(section) : Qt::NoItemFlags; }
   /** Convert to QVariantHash. */
-  inline QVariantHash toVariantHash(int role = Qt::DisplayRole) const  {
+  [[nodiscard]] inline QVariantHash toVariantHash(
+      int role = Qt::DisplayRole) const  {
     return _data ? _data->toVariantHash(role) : QVariantHash();
   }
   /** Convert to JSON object. */
-  inline QJsonObject toJsonObject(int role = Qt::DisplayRole) const {
+  [[nodiscard]] inline QJsonObject toJsonObject(
+      int role = Qt::DisplayRole) const {
     return _data ? QJsonObject::fromVariantHash(_data->toVariantHash(role))
                  : QJsonObject();
   }
@@ -542,13 +552,13 @@ public:
   /** Downcast blindly trusting caller that qualifier implies T */
   template<class T,
            std::enable_if_t<std::is_base_of_v<SharedUiItem,T>,bool> = true>
-  const T &casted() const {
+  [[nodiscard]] const T &casted() const {
     return static_cast<const T&>(*this);
   }
   /** Downcast blindly trusting caller that qualifier implies T */
   template<class T,
            std::enable_if_t<std::is_base_of_v<SharedUiItem,T>,bool> = true>
-  T &casted() {
+  [[nodiscard]] T &casted() {
     return static_cast<T&>(*this);
   }
 
