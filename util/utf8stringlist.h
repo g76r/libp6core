@@ -43,17 +43,18 @@ public:
   Utf8StringList(InputIterator i1, InputIterator i2)
     : QList<Utf8String>(i1, i2) { }
 #endif
-  Utf8String join(const Utf8String &separator) const;
-  Utf8String join(const char separator) const;
-  Utf8String headed_join(const Utf8String &separator) const;
-  Utf8String headed_join(const char separator) const;
-  QStringList toStringList() const {
+  [[nodiscard, gnu::pure]] Utf8String join(const Utf8String &separator) const;
+  [[nodiscard, gnu::pure]] Utf8String join(const char separator) const;
+  [[nodiscard, gnu::pure]] Utf8String headed_join(
+      const Utf8String &separator) const;
+  [[nodiscard, gnu::pure]] Utf8String headed_join(const char separator) const;
+  [[nodiscard]] inline QStringList toStringList() const {
     return QStringList(cbegin(), cend()); }
-  QByteArrayList toByteArrayList() const {
+  [[nodiscard]] inline QByteArrayList toByteArrayList() const {
     return QByteArrayList(cbegin(), cend()); }
-  Utf8StringSet toSet() const;
-  Utf8StringList toSortedDeduplicatedList() const;
-  std::set<Utf8String> toStdSet() const {
+  [[nodiscard, gnu::pure]] Utf8StringSet toSet() const;
+  [[nodiscard, gnu::pure]] Utf8StringList toSortedDeduplicatedList() const;
+  [[nodiscard]] inline std::set<Utf8String> toStdSet() const {
     return std::set<Utf8String>(cbegin(), cend()); }
   /** Return first string as value 1 and so on. Return join(' ') as value 0. */
   [[nodiscard]] QVariant paramRawValue(
@@ -66,12 +67,12 @@ public:
   [[nodiscard]] inline operator QVariant() const {
     return QVariant::fromValue(*this); }
   /** Append if not already in the list. */
-  Utf8StringList &operator*=(const Utf8String& s) {
+  inline Utf8StringList &operator*=(const Utf8String& s) {
     if (!contains(s))
       append(s);
     return *this;
   }
-  [[nodiscard]] Utf8String human_readable() const;
+  [[nodiscard, gnu::pure]] Utf8String human_readable() const;
 };
 
 Q_DECLARE_METATYPE(Utf8StringList)
@@ -112,16 +113,24 @@ public:
     return _index; }
 
   // make only const methods availlable (otherwise index would be inconsistent)
-  QList::const_reference back() const { return Utf8StringList::back(); }
-  QList::const_iterator begin() const { return Utf8StringList::begin(); }
-  QList::const_pointer data() const { return Utf8StringList::data(); }
-  QList::const_iterator end() const { return Utf8StringList::end(); }
-  const Utf8String &first() const { return Utf8StringList::first(); }
-  QList::const_reference front() const { return Utf8StringList::front(); }
-  const Utf8String &last() const { return Utf8StringList::last(); }
-  QList::const_reverse_iterator rbegin() const {
+  [[nodiscard]] QList::const_reference back() const {
+    return Utf8StringList::back(); }
+  [[nodiscard]] QList::const_iterator begin() const {
+    return Utf8StringList::begin(); }
+  [[nodiscard]] QList::const_pointer data() const {
+    return Utf8StringList::data(); }
+  [[nodiscard]] QList::const_iterator end() const {
+    return Utf8StringList::end(); }
+  [[nodiscard]] const Utf8String &first() const {
+    return Utf8StringList::first(); }
+  [[nodiscard]] QList::const_reference front() const {
+    return Utf8StringList::front(); }
+  [[nodiscard]] const Utf8String &last() const {
+    return Utf8StringList::last(); }
+  [[nodiscard]] QList::const_reverse_iterator rbegin() const {
     return Utf8StringList::rbegin(); }
-  QList::const_reverse_iterator rend() const { return Utf8StringList::rend(); }
+  [[nodiscard]] QList::const_reverse_iterator rend() const {
+    return Utf8StringList::rend(); }
   [[nodiscard]] inline QList::const_reference operator[](
       qsizetype i) const {
     return Utf8StringList::operator[](i); }
