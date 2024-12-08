@@ -12,8 +12,8 @@
 # along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
 
 QT -= gui
-QT += network sql
-CONFIG += largefile c++17 c++20 precompile_header force_debug_info
+QT *= network sql
+CONFIG *= largefile c++17 c++20 precompile_header force_debug_info
 
 TARGET = p6core
 TEMPLATE = lib
