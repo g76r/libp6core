@@ -171,7 +171,7 @@ class LIBP6CORESHARED_EXPORT RadixTree {
      * @return true if found
      * @param value receive a copy of the value if found and value!=0
      */
-    [[gnu::hot]] bool inline lookup(
+    bool inline lookup(
         const char *key, T *value, int *matchedLength) const {
       Q_ASSERT(key);
       Q_ASSERT(_fragment);
@@ -276,7 +276,7 @@ class LIBP6CORESHARED_EXPORT RadixTree {
       //qDebug() << "/addChild" << this << _children << _childrenCount;
     }
     /// binary search among children and recurse lookup
-    [[gnu::hot]] static inline bool lookupAmongChildren(
+    static inline bool lookupAmongChildren(
         const char *key, T *value, const Node * const *children,
         int childrenCount, int *matchedLength) {
       if (childrenCount <= 0)
@@ -368,7 +368,7 @@ public:
           d->_root->visit(visitor, &key_prefix);
   }
   /** assumes that key is UTF-8 (or of course ASCII) */
-  [[gnu::hot]] const T value(const char *key, T defaultValue = T(),
+  const T value(const char *key, T defaultValue = T(),
                              int *matchedLength = 0) const {
     T value = defaultValue;
     int ignored_length;
@@ -379,34 +379,34 @@ public:
     return value;
   }
   /** assumes that key is UTF-8 (or of course ASCII) */
-  [[gnu::hot]] const T value(const char *key, int *matchedLength) const {
+  const T value(const char *key, int *matchedLength) const {
     return value(key, T(), matchedLength); }
-  [[gnu::hot]] const T value(const QString &key, T defaultValue = T(),
+  const T value(const QString &key, T defaultValue = T(),
                              int *matchedLength = 0) const {
     return value(key.toUtf8().constData(), defaultValue, matchedLength); }
-  [[gnu::hot]] const T value(const QString &key, int *matchedLength) const {
+  const T value(const QString &key, int *matchedLength) const {
     return value(key.toUtf8().constData(), T(), matchedLength); }
   /** assumes that key is UTF-8 (or of course ASCII) */
-  [[gnu::hot]] const T value(const QByteArray &key, T defaultValue = T(),
+  const T value(const QByteArray &key, T defaultValue = T(),
                              int *matchedLength = 0) const {
     return value(key.constData(), defaultValue, matchedLength); }
   /** assumes that key is UTF-8 (or of course ASCII) */
-  [[gnu::hot]] const T value(const QByteArray &key, int *matchedLength) const {
+  const T value(const QByteArray &key, int *matchedLength) const {
     return value(key.constData(), T(), matchedLength); }
   /** assumes that key is UTF-8 (or of course ASCII) */
-  [[gnu::hot]] const T operator[](const char *key) const { return value(key); }
-  [[gnu::hot]] const T operator[](const QString &key) const {
+  const T operator[](const char *key) const { return value(key); }
+  const T operator[](const QString &key) const {
     return value(key.toUtf8().constData()); }
   /** assumes that key is UTF-8 (or of course ASCII) */
-  [[gnu::hot]] const T operator[](const QByteArray &key) const {
+  const T operator[](const QByteArray &key) const {
     return value(key.constData()); }
-  [[gnu::hot]] bool contains(const char *key) const {
+  bool contains(const char *key) const {
     return (d && d->_root) ? d->_root->lookup(key) : false;
   }
-  [[gnu::hot]] bool contains(const QString &key) const {
+  bool contains(const QString &key) const {
     return contains(key.toUtf8().constData()); }
   /** assumes that key is UTF-8 (or of course ASCII) */
-  [[gnu::hot]] bool contains(const QByteArray &key) const {
+  bool contains(const QByteArray &key) const {
     return contains(key.constData()); }
   Utf8StringSet keys() const {
     return d ? d->_keys : Utf8StringSet();
