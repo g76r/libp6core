@@ -24,7 +24,7 @@ class ParamsFormulaData;
  *  ",%{myprefix.%k.mysuffix},0,>=" -> returns true or false
  *
  * See %=rpn function in percent_evaluation.md for detailed syntax and full list
- * of operators (this class is the implementation of %=rpn function).
+ * of operators (this class is the engine behind %=rpn function).
  *
  * This class replaces and enhances older MathExpr class.
  */
@@ -44,11 +44,14 @@ public:
    *  e.g.:
    *  ParamsFormula(",%foo,bar,@", ParamsFormula::RpnWithPercents)
    *  ParamsFormula("%{=uppercase:%foo}", ParamsFormula::PercentExpression)
+   *  ParamsFormula("", ParamsFormula::PercentExpression) -> always return ""
+   *  ParamsFormula({}, ParamsFormula::PercentExpression) -> always return {}
    */
   ParamsFormula(const Utf8String &expr, FormulaDialect dialect);
   /** Optimized constructor if expr has already been parsed and splitted as a
    *  list.
-   */
+   *  Warning: it trusts you and makes no check that list is consistent with
+   *  expr. */
   ParamsFormula(const Utf8StringList &list, const Utf8String &expr,
                 FormulaDialect dialect);
   ParamsFormula() : ParamsFormula(Utf8String{}, InvalidFormula) {}

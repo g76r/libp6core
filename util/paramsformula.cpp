@@ -551,6 +551,8 @@ void ParamsFormula::init_percent(
 ParamsFormula::ParamsFormula(const Utf8String &expr, FormulaDialect dialect) {
   auto data = new ParamsFormulaData;
   d = data;
+  if (expr.isNull())
+    return;
   switch(dialect) {
     case PercentExpression:
       init_percent(data, expr);
@@ -568,6 +570,8 @@ ParamsFormula::ParamsFormula(
     const Utf8StringList &list, const Utf8String &expr, FormulaDialect dialect){
   auto data = new ParamsFormulaData;
   d = data;
+  if (expr.isNull())
+    return;
   switch(dialect) {
     case PercentExpression:
       init_percent(data, expr);
