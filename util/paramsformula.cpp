@@ -126,6 +126,8 @@ struct OperatorDefinition {
   bool operator!() const { return _arity == -1; }
 };
 
+} // unnamed namespace
+
 // static inline Utf8String tostr(QPartialOrdering o) {
 //   if (o == QPartialOrdering::Equivalent) return "equivalent";
 //   if (o == QPartialOrdering::Less) return "less";
@@ -154,11 +156,11 @@ static inline QPartialOrdering compareTwoOperands(
   return po;
 }
 
-const static StackItemOperator _percentOperator = [](Stack *stack, const EvalContext &context, const QVariant &def) -> QVariant {
+static const StackItemOperator _percentOperator = [](Stack *stack, const EvalContext &context, const QVariant &def) -> QVariant {
   return stack->popeval_utf8(stack, context, def) % context;
 };
 
-const RadixTree<OperatorDefinition> _operatorDefinitions {
+static const RadixTree<OperatorDefinition> _operatorDefinitions {
   { "<%>", { 1, 1, false, false, _percentOperator }, true },
   { "??*", { 2, 2, true, false, [](Stack *stack, const EvalContext &context, const QVariant &def) -> QVariant {
         auto y = stack->popeval(stack, context, def);
@@ -482,11 +484,12 @@ const RadixTree<OperatorDefinition> _operatorDefinitions {
       } }, true },
 };
 
-QMap<Utf8String, OperatorDefinition> _operatorDefinitionsMap { _operatorDefinitions.toUtf8Map() };
+static const QMap<Utf8String, OperatorDefinition> _operatorDefinitionsMap {
+  _operatorDefinitions.toUtf8Map()
+};
 
-} // unnamed namespace
-
-struct ParamsFormulaData : public QSharedData {
+class ParamsFormulaData : public QSharedData {
+public:
   Utf8String _expr;
   FormulaDialect _dialect;
   Stack _stack = {};
