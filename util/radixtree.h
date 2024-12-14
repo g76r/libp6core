@@ -67,7 +67,7 @@ struct RadixTreeInitializerHelper {
  * This class implements Qt's implicit sharing pattern.
  */
 template<class T>
-class LIBP6CORESHARED_EXPORT RadixTree {
+class RadixTree {
   enum NodeType : signed char { Empty = 0, Exact, Prefix };
   using Visitor = std::function<void(const QByteArray *, NodeType, T)>;
   using AbortableVisitor = std::function<bool(const QByteArray *, NodeType, T)>;
