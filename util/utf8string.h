@@ -386,10 +386,10 @@ public:
       const int direction, const bool binary, const Utf8String &s,
       const qsizetype size, const Utf8String &padding) {
     auto ss = binary ? s.size() : s.utf8size();
-    if (ss >= size) [[unlikely]] // nothing to do
+    if (ss >= size) // nothing to do
       return s;
     auto ps = binary ? padding.size() : padding.utf8size();
-    if (ps == 0) [[unlikely]] // don't pad with empty padding pattern
+    if (ps == 0) [[unlikely]] // can't pad with empty padding pattern
       return s;
     Utf8String real_padding = padding;
     if (ps < size-ss) { // not enough padding, must repeat it
