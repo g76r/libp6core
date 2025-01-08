@@ -412,19 +412,19 @@ public:
   [[nodiscard]] static inline Utf8String pad_left(
       const Utf8String &s, const qsizetype size,
       const Utf8String &padding = DefaultPadding, const bool binary = false) {
-    return pad(1, binary, s, size, padding); }
+    return pad(-1, binary, s, size, padding); }
   [[nodiscard]] inline Utf8String &pad_left(
       const qsizetype size, const Utf8String &padding = DefaultPadding,
       const bool binary = false) {
-    return *this = pad(1, binary, *this, size, padding); }
+    return *this = pad(-1, binary, *this, size, padding); }
   [[nodiscard]] static inline Utf8String pad_right(
       const Utf8String &s, const qsizetype size,
       const Utf8String &padding = DefaultPadding, const bool binary = false) {
-    return pad(-1, binary, s, size, padding); }
+    return pad(1, binary, s, size, padding); }
   [[nodiscard]] inline Utf8String &pad_right(
       const qsizetype size, const Utf8String &padding = DefaultPadding,
       const bool binary = false) {
-    return *this = pad(-1, binary, *this, size, padding); }
+    return *this = pad(1, binary, *this, size, padding); }
   [[nodiscard]] static inline Utf8String pad_center(
       const Utf8String &s, const qsizetype size,
       const Utf8String &padding = DefaultPadding, const bool binary = false) {
