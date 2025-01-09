@@ -72,7 +72,7 @@ inline void stable_topological_sort(
         ++current;
         //qDebug() << "stsai:" << *current;
       }
-      cycle_detected:;
+cycle_detected:;
     }
     if (first != current) {
       //qDebug() << "stswr:" << *first << *std::prev(last);
@@ -100,86 +100,67 @@ inline void stable_topological_sort(
   // see e.g. https://www.reddit.com/r/cpp_questions/comments/ecrbg4/stdrotate_on_lists_still_on/
 }
 
-} // namespace p6
-
-/** Container utilities.
+/** Build inverse mapping QHash.
+ * If original container had duplicate values, only one of its keys will be
+ * associated as value in the reverted container. No mean to know which one.
  */
-class LIBP6CORESHARED_EXPORT ContainerUtils {
-  ContainerUtils() = delete;
+template<class K,class T>
+static QHash<K,T> reversed_hash(QHash<T,K> source) {
+  QHash<K,T> dest;
+  for (auto [k,v]: source.asKeyValueRange())
+    dest.insert(v, k);
+  return dest;
+}
 
-public:
-  /** Build inverse mapping QHash.
-   * If original container had duplicate values, only one of its keys will be
-   * associated as value in the reverted container. No mean to know which one.
-   */
-  template<class K,class T>
-  static QHash<K,T> reversed_hash(QHash<T,K> source) {
-    QHash<K,T> dest;
-    for (auto [k,v]: source.asKeyValueRange())
-      dest.insert(v, k);
-    return dest;
-  }
+/** Build inverse mapping QMap.
+ * If original container had duplicate values, only one of its keys will be
+ * associated as value in the reverted container. No mean to know which one.
+ */
+template<class K,class T>
+static QMap<K,T> reversed_map(QHash<T,K> source) {
+  QMap<K,T> dest;
+  for (auto [k,v]: source.asKeyValueRange())
+    dest.insert(v, k);
+  return dest;
+}
 
-  /** Build inverse mapping QMap.
-   * If original container had duplicate values, only one of its keys will be
-   * associated as value in the reverted container. No mean to know which one.
-   */
-  template<class K,class T>
-  static QMap<K,T> reversed_map(QHash<T,K> source) {
-    QMap<K,T> dest;
-    for (auto [k,v]: source.asKeyValueRange())
-      dest.insert(v, k);
-    return dest;
-  }
+/** Build inverse mapping QMap.
+ * If original container had duplicate values, only one of its keys will be
+ * associated as value in the reverted container. The last one in the original
+ * keys order.
+ */
+template<class K,class T>
+static QMap<K,T> reversed_map(QMap<T,K> source) {
+  QMap<K,T> dest;
+  for (auto [k,v]: source.asKeyValueRange())
+    dest.insert(v, k);
+  return dest;
+}
 
-  /** Build inverse mapping QMap.
-   * If original container had duplicate values, only one of its keys will be
-   * associated as value in the reverted container. The last one in the original
-   * keys order.
-   */
-  template<class K,class T>
-  static QMap<K,T> reversed_map(QMap<T,K> source) {
-    QMap<K,T> dest;
-    for (auto [k,v]: source.asKeyValueRange())
-      dest.insert(v, k);
-    return dest;
-  }
+/** Build inverse mapping QHash.
+ * If original container had duplicate values, only one of its keys will be
+ * associated as value in the reverted container. The last one in the original
+ * keys order.
+ */
+template<class K,class T>
+static QHash<K,T> reversed_hash(QMap<T,K> source) {
+  QHash<K,T> dest;
+  for (auto [k,v]: source.asKeyValueRange())
+    dest.insert(v, k);
+  return dest;
+}
 
-  /** Build inverse mapping QHash.
-   * If original container had duplicate values, only one of its keys will be
-   * associated as value in the reverted container. The last one in the original
-   * keys order.
-   */
-  template<class K,class T>
-  static QHash<K,T> reversed_hash(QMap<T,K> source) {
-    QHash<K,T> dest;
-    for (auto [k,v]: source.asKeyValueRange())
-      dest.insert(v, k);
-    return dest;
-  }
-
-  /** Build index of QList, i.e. maps every item to its index in the list.
-   *  If there are duplicated items, the last index will prevail.
-   */
-  template<class T>
-  static QMap<T,int> index(QList<T> source) {
-    QMap<T,int> dest;
-    qsizetype n = source.size();
-    for (qsizetype i = 0; i < n; ++i)
-      dest.insert(source[i], i);
-    return dest;
-  }
-};
-
-//template<typename T>
-//class kv_range {
-//  T data;
-//public:
-//  kv_range(T data) : data{data} { }
-//  //kv_range(T &&data) : data{data} { }
-//  auto begin() { return data.keyValueBegin(); }
-//  auto end() { return data.keyValueEnd(); }
-//};
+/** Build index of QList, i.e. maps every item to its index in the list.
+ *  If there are duplicated items, the last index will prevail.
+ */
+template<class T>
+static QMap<T,int> index(QList<T> source) {
+  QMap<T,int> dest;
+  qsizetype n = source.size();
+  for (qsizetype i = 0; i < n; ++i)
+    dest.insert(source[i], i);
+  return dest;
+}
 
 /** Object hiding a QList behind a range loop expression.
  *  Usefull as an API return value waiting for C++23 and temporary
@@ -195,5 +176,16 @@ public:
   auto begin() const { return _list.constBegin(); }
   auto end() const { return _list.constEnd(); }
 };
+
+} // namespace p6
+
+namespace ContainerUtils {
+
+// backward compatibility with former ContainerUtils class used as a ns
+using p6::reversed_hash;
+using p6::reversed_map;
+using p6::index;
+
+} // namespace ContainerUtils
 
 #endif // CONTAINERUTILS_H

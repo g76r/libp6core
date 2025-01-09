@@ -1,4 +1,4 @@
-/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -218,7 +218,7 @@ public:
    *  (will be std::ranges::view when C++23 will be supported). */
   [[nodiscard]] inline auto children() const {
     auto list = d ? d->_children : QList<PfNode>{};
-    return QListRange<PfNode>(list);
+    return p6::QListRange<PfNode>(list);
   }
   /** Children filtered by their name, as range loop expression.
    *  (will be std::ranges::view when C++23 will be supported). */
@@ -227,7 +227,7 @@ public:
     for (auto child: children())
       if (child^name)
         list += child;
-    return QListRange<PfNode>(list);
+    return p6::QListRange<PfNode>(list);
   }
   /** Children filtered by their name, as range loop expression.
    *  (will be std::ranges::view when C++23 will be supported). */
@@ -236,7 +236,7 @@ public:
     for (auto child: children())
       if (child^names)
         list += child;
-    return QListRange<PfNode>(list);
+    return p6::QListRange<PfNode>(list);
   }
   /** Syntaxic sugar: node/"foo" === node.children("foo") */
   [[nodiscard]] inline auto operator/(const Utf8String &name) const {
@@ -276,7 +276,7 @@ public:
     for (auto child: children())
       if (child^child_name)
         list += child.children_as_list();
-    return QListRange<PfNode>(list);
+    return p6::QListRange<PfNode>(list);
   }
   /** Grandchildren as QList<PfNode>. Rather use grandchildren() if possible. */
   [[nodiscard]] inline QList<PfNode> grandchildren_list(
