@@ -105,7 +105,11 @@ datetime).
 `%{=date!format!relativedatetime!timezone}`
 
 formats a timestamp or a relative time reference
-* format defaults to pseudo-iso-8601 "yyyy-MM-dd hh:mm:ss,zzz"
+* format defaults to pseudo-iso-8601 "yyyy-MM-dd hh:mm:ss,zzz" and uses Qt time
+  and date format specifications, see:
+  * https://doc.qt.io/qt/qdatetime.html#toString
+  * https://doc.qt.io/qt/qdate.html#toString
+  * https://doc.qt.io/qt/qtime.html#toString
 * relativedatetime defaults to current date time
 * timezone defaults to local time, if specified it must follow IANA's timezone
 format, see http://www.iana.org/time-zones
