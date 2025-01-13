@@ -286,7 +286,8 @@ HEADERS *=\
     modelview/stringhashmodel.h \  \
     format/jsonformats.h \
     modelview/paramsetmodel.h \
-    modelview/stringlistdiffmodel.h
+    modelview/stringlistdiffmodel.h \
+    util/utf8utils.h
 
 unix {
     target.path = /usr/lib
