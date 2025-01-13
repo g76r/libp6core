@@ -1,4 +1,4 @@
-/* Copyright 2023-2024 Gregoire Barbier and others.
+/* Copyright 2023-2025 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -382,7 +382,7 @@ Utf8String Utf8String::toUpper() const {
 Utf8String Utf8String::toIdentifier(bool allow_non_ascii) const {
   auto s = constData();
   auto end = s + size();
-  auto f = [&allow_non_ascii](char32_t c) {
+  auto f = [&allow_non_ascii](char32_t c) -> char32_t {
     if (::isalnum(c))
       return c;
     if (allow_non_ascii && c > 0x7f)
@@ -400,7 +400,7 @@ Utf8String Utf8String::toInternetHeaderName(bool ignore_trailing_colon) const {
   auto end = s + size();
   if (ignore_trailing_colon && s < end && end[-1] == ':')
     --end;
-  auto f = [](char32_t u) {
+  auto f = [](char32_t u) -> char32_t {
     // rfc5322 states that a header may contain any ascii printable char but ':'
     if (u >= 0x21 && u <= 0x7f && u != ':')
       return u;
@@ -696,13 +696,13 @@ Utf8String Utf8String::fromCEscaped(const char *s, qsizetype len) {
           // LATER handle o{} C++23
           // LATER handle N{} C++23
           if ((taken = decode_oct_char(s, end, &u)))
-            result += u < 0x80 ? u : ReplacementCharacter;
+            result += u < 0x80 ? u : (char32_t)ReplacementCharacter;
           s += taken-1;
           break;
         case 'x':
           // LATER handle x{} C++23
           if ((taken = decode_hex_char(++s, end, 0, &u)))
-            result += u < 0x80 ? u : ReplacementCharacter;
+            result += u < 0x80 ? u : (char32_t)ReplacementCharacter;
           s += taken-1;
           break;
         case 'u':

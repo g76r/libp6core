@@ -1,4 +1,4 @@
-/* Copyright 2023-2024 Gregoire Barbier and others.
+/* Copyright 2023-2025 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -30,8 +30,23 @@ class LIBP6CORESHARED_EXPORT Utf8String : public QByteArray {
 public:
   const static QList<char> AsciiWhitespace; // ' ', '\t', '\n'...
   const static QList<char32_t> UnicodeWhitespace; // same plus \u0084, \u2000...
-  const static char32_t ReplacementCharacter = U'\ufffd';
-  const static char32_t ByteOrderMark = U'\ufeff';
+  enum WellKnownUnicodeCharacters : char32_t {
+    ReplacementCharacter = U'\ufffd',
+    ByteOrderMark = U'\ufeff',
+    NextLine = U'\u0085',
+    NoBreakSpace = U'\u00a0',
+    EnQuad = U'\u2000',
+    EmQuad = U'\u2001',
+    EnSpace = U'\u2002',
+    EmSpace = U'\u2003',
+    FigureSpace = U'\u2007',
+    PunctuationSpace = U'\u2008',
+    ThinSpace = U'\u2009',
+    HairSpace = U'\u200a',
+    LineSeparator = U'\u2028',
+    ParagraphSeparator = U'\u2029',
+    NarrowNonBreakSpace = U'\u202f',
+  };
   const static Utf8String ReplacementCharacterUtf8; // "\xef\xbf\xbd"_u8
   const static Utf8String Empty; // ""_u8
   const static Utf8String DefaultEllipsis; // "..."_u8
@@ -1033,6 +1048,28 @@ public:
   [[nodiscard]] inline static Utf8String fromCEscaped(
       const QByteArrayView &escaped) {
     return fromCEscaped(escaped.constData(), escaped.size()); }
+
+  /** Test if u is an ascii whitespace char: ' ', '\t', '\n'... */
+  [[nodiscard]] inline static bool is_ascii_whitespace(char32_t u) {
+    switch (u) {
+      case ' ': case '\t': case '\n': case '\r': case '\v': case '\f':
+        return true;
+    }
+    return false;
+  }
+  /** Test if u is a unicode whitespace char: ascii plus \u0084, \u2000... */
+  [[nodiscard]] inline static bool is_unicode_whitespace(char32_t u) {
+    switch (u) {
+      case ' ': case '\t': case '\n': case '\r': case '\v': case '\f':
+      case 0x85: case 0xa0: case 0x1680:
+      case 0x2000: case 0x2001: case 0x2002: case 0x2003: case 0x2004:
+      case 0x2005: case 0x2006: case 0x2007: case 0x2008: case 0x2009:
+      case 0x200a: case 0x2028: case 0x2029: case 0x202f: case 0x205f:
+      case 0x3000:
+        return true;
+    }
+    return false;
+  }
 
 private:
   struct UnicodeCaseMapping {
