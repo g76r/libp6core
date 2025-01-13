@@ -654,6 +654,8 @@ inline qsizetype decode_hex_char(
 Utf8String Utf8String::fromCEscaped(const char *s, qsizetype len) {
   if (!s) [[unlikely]]
     return {};
+  if (len < 0)
+    len = ::strlen(s);
   Utf8String result;
   auto end = s + len;
   char32_t u;
@@ -718,8 +720,9 @@ Utf8String Utf8String::fromCEscaped(const char *s, qsizetype len) {
           s += 7;
           break;
         default:
-          // \ ? ' " are standard; anything else is implementation defined, we
-          // decided to handle this way too
+          // "\\" is \, "\?" is ?, "\'" is ' and '\"' is " are standard
+          // any other sequence, such as "\;", is implementation defined, we
+          // decided to handle this way too: "\;" is ; and "\Z" is Z
           goto as_is;
       }
       continue;

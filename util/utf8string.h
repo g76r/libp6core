@@ -53,6 +53,7 @@ public:
   const static Utf8String DefaultPadding; // " "_u8
 
   inline constexpr Utf8String() noexcept {}
+  inline constexpr Utf8String(std::nullptr_t) noexcept {}
   inline Utf8String(const QByteArray &ba) noexcept : QByteArray(ba) {}
   inline Utf8String(QByteArray &&ba) noexcept : QByteArray(ba) {}
   inline Utf8String(const QByteArrayData ba) noexcept : QByteArray(ba) {}
@@ -79,13 +80,11 @@ public:
   explicit inline Utf8String(const char8_t c) : QByteArray((char*)&c, 1) { }
   explicit inline Utf8String(char32_t u) : QByteArray(encode_utf8(u)) { }
   inline ~Utf8String() noexcept {}
-  //template <typename Char,if_compatible_char<Char>>
-  //Utf8String(const Char *s, qsizetype size = -1) : QByteArray(s, size) { }
-  /** convert arithmetic types using QByteArray::number() */
-  template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
-  explicit inline Utf8String(T o) : QByteArray(QByteArray::number(o)) {}
-  /** convert bool to "true" or "false" */
-  explicit inline Utf8String(bool o) : QByteArray(o ? "true"_ba : "false"_ba) {}
+  // std::integral includes bool, which will be converted to "true" or "false"
+  explicit inline Utf8String(std::integral auto i)
+    : QByteArray(Utf8String::number(i)) {}
+  explicit inline Utf8String(std::floating_point auto f)
+    : QByteArray(Utf8String::number(f)) {}
   /** Build Utf8String from QVariant.
    *  Take:
    *  - QByteArray if v.canConvert<QByteArray>() (assuming UTF-8), which
@@ -630,21 +629,19 @@ public:
     return toNumber<T>(nullptr, def, suffixes_enabled, floating_point_enabled);}
 
   // conversions from numbers
-  [[nodiscard]] static inline Utf8String number(int i, int base = 10) {
-    return QByteArray::number(i, base); }
-  [[nodiscard]] static inline Utf8String number(uint i, int base = 10) {
-    return QByteArray::number(i, base); }
-  [[nodiscard]] static inline Utf8String number(long i, int base = 10) {
-    return QByteArray::number(i, base); }
-  [[nodiscard]] static inline Utf8String number(ulong i, int base = 10) {
-    return QByteArray::number(i, base); }
-  [[nodiscard]] static inline Utf8String number(qlonglong i, int base = 10) {
-    return QByteArray::number(i, base); }
-  [[nodiscard]] static inline Utf8String number(qulonglong i, int base = 10) {
+  [[nodiscard]] static inline Utf8String number(
+      std::integral auto i, int base = 10) {
     return QByteArray::number(i, base); }
   [[nodiscard]] static inline Utf8String number(
       double d, char format = 'g', int precision = 6) {
     return QByteArray::number(d, format, precision); }
+  // we need a converter for float even though QByteArray doesn't have one,
+  // because for instance QVariant(float) is defined and so operator=() or
+  // constructor would otherwise have ambiguities when called on a float
+  [[nodiscard]] static inline Utf8String number(
+      float f, char format = 'g', int precision = 6) {
+    return QByteArray::number((double)f, format, precision); }
+  /** convert to "true" or "false". */
   [[nodiscard]] static inline Utf8String number(bool b);
   /** Write a number using a given arbitrary bijective base.
    *  0 is always "", 1 is the first char of the base etc.
@@ -698,48 +695,23 @@ public:
     QByteArray::replace(before, after); return *this; }
   Utf8String &replace(const QRegularExpression &re, const Utf8String &after);
 
-  inline Utf8String &append(char c) {
-    QByteArray::append(c); return *this; }
-  inline Utf8String &append(qsizetype count, char c) {
-    QByteArray::append(count, c); return *this; }
-  inline Utf8String &append(const char *s) {
-    QByteArray::append(s); return *this; }
-  inline Utf8String &append(const char *s, qsizetype len) {
-    QByteArray::append(s, len); return *this; }
-  inline Utf8String &append(const QByteArray &a) {
-    QByteArray::append(a); return *this; }
-  inline Utf8String &append(QByteArrayView a) {
-    QByteArray::append(a); return *this; }
-  inline Utf8String &append(char32_t u) {
-    QByteArray::append(encode_utf8(u)); return *this; }
+  inline Utf8String &append(auto t) { return operator+=(t); }
+  inline Utf8String &append(auto t, auto u) {
+    QByteArray::append(t, u); return *this; }
 
-  inline Utf8String &prepend(char c) {
-    QByteArray::prepend(c); return *this; }
-  inline Utf8String &prepend(qsizetype count, char c) {
-    QByteArray::prepend(count, c); return *this; }
-  inline Utf8String &prepend(const char *s) {
-    QByteArray::prepend(s); return *this; }
-  inline Utf8String &prepend(const char *s, qsizetype len) {
-    QByteArray::prepend(s, len); return *this; }
-  inline Utf8String &prepend(const QByteArray &a) {
-    QByteArray::prepend(a); return *this; }
-  inline Utf8String &prepend(QByteArrayView a) {
-    QByteArray::prepend(a); return *this; }
+  inline Utf8String &prepend(auto t) {
+    QByteArray::prepend(t); return *this; }
+  inline Utf8String &prepend(auto t, auto u) {
+    QByteArray::prepend(t, u); return *this; }
   inline Utf8String &prepend(char32_t u) {
     QByteArray::prepend(encode_utf8(u)); return *this; }
+  inline Utf8String &prepend(char8_t c) {
+    QByteArray::prepend((char)c); return *this; }
 
-  inline Utf8String &insert(qsizetype i, QByteArrayView data) {
-    QByteArray::insert(i, data); return *this; }
-  inline Utf8String &insert(qsizetype i, const char *s) {
-    QByteArray::insert(i, s); return *this; }
-  inline Utf8String &insert(qsizetype i, const QByteArray &data) {
-    QByteArray::insert(i, data); return *this; }
-  inline Utf8String &insert(qsizetype i, qsizetype count, char c) {
-    QByteArray::insert(i, count, c); return *this; }
-  inline Utf8String &insert(qsizetype i, char c) {
-    QByteArray::insert(i, c); return *this; }
-  inline Utf8String &insert(qsizetype i, const char *s, qsizetype len) {
-    QByteArray::insert(i, s, len); return *this; }
+  inline Utf8String &insert(auto t, auto u) {
+    QByteArray::insert(t, u); return *this; }
+  inline Utf8String &insert(auto t, auto u, auto v) {
+    QByteArray::insert(t, u, v); return *this; }
 
   inline Utf8String &remove(qsizetype index, qsizetype len) {
     QByteArray::remove(index, len); return *this;}
@@ -761,114 +733,73 @@ public:
   inline Utf8String &removeLast() { QByteArray::removeLast(); return *this;}
 
   /** Empty coalesce: replace with that if this is empty. */
-  inline Utf8String &coalesce(const Utf8String &that) {
-    if (isEmpty()) *this = that;
-    return *this; }
-  /** Empty coalesce: replace with that if this is empty. */
-  inline Utf8String &coalesce(const QString &that) {
-    if (isEmpty()) *this = that;
-    return *this; }
-  /** Empty coalesce: replace with that if this is empty.
-   *  Assume UTF-8. */
-  inline Utf8String &coalesce(const QByteArray &that) {
-    if (isEmpty()) *this = that;
-    return *this; }
-  /** Empty coalesce: replace with that if this is empty.
-   *  Assume UTF-8, len = -1 means zero-terminated string. */
-  inline Utf8String &coalesce(const char *s, qsizetype len = -1) {
-    if (isEmpty()) *this = QByteArray(s, len);
-    return *this; }
-  /** Empty coalesce: replace with that if this is empty. */
-  inline Utf8String &coalesce(const QVariant &that) {
-    if (isEmpty()) *this = that;
-    return *this; }
+  inline Utf8String &coalesce(auto that) {
+    return isEmpty() ? operator=(that) : *this; }
+  /** Empty coalesce: replace with Utf8String(t, u) if this is empty.
+   *  e.g. coalesce("foobar", 2) */
+  inline Utf8String &coalesce(auto t, auto u) {
+    return isEmpty() ? operator=(Utf8String(t, u)) : *this; }
   /** Empty coalesce operator */
-  inline Utf8String &operator|=(const Utf8String &that) {
-    return coalesce(that); }
-  /** Empty coalesce operator */
-  inline Utf8String &operator|=(const QString &that) {
-    return coalesce(that); }
-  /** Empty coalesce operator
-   *  Assume UTF-8. */
-  inline Utf8String &operator|=(const QByteArray &that) {
-    return coalesce(that); }
-  /** Empty coalesce operator */
-  inline Utf8String &operator|=(const QVariant &that) {
-    return coalesce(that); }
+  inline Utf8String &operator|=(auto that) { return coalesce(that); }
 
-  /** Null coalesce: replace with that if this is null. */
-  inline Utf8String &null_coalesce(const Utf8String &that) {
+  /** Null coalesce: replace with Utf8String(that) if this is null. */
+  inline Utf8String &null_coalesce(auto that) {
     if (isNull()) *this = that;
     return *this; }
   /** Null coalesce: replace with ""_u8 if this is null. */
   inline Utf8String &null_coalesce();
-  /** Null coalesce: replace with that if this is null. */
-  inline Utf8String &null_coalesce(const QString &that) {
-    if (isNull()) *this = that;
+  /** Null coalesce: replace with Utf8String(t, u) if this is null.
+   *  e.g. null_coalesce("foobar", 2) */
+  inline Utf8String &null_coalesce(auto t, auto u) {
+    if (isNull()) *this = Utf8String(t, u);
     return *this; }
-  /** Null coalesce: replace with that if this is null.
-   *  Assume UTF-8. */
-  inline Utf8String &null_coalesce(const QByteArray &that) {
-    if (isNull()) *this = that;
-    return *this; }
-  /** Null coalesce: replace with that if this is null.
-   *  Assume UTF-8, len = -1 means zero-terminated string. */
-  inline Utf8String &null_coalesce(const char *s, qsizetype len = -1) {
-    if (isNull()) *this = QByteArray(s, len);
-    return *this; }
-  /** Null coalesce: replace with that if this is null. */
-  inline Utf8String &null_coalesce(const QVariant &that) {
-    if (isNull()) *this = that;
-    return *this; }
-  /** Null coalesced: return that if this is null. */
-  [[nodiscard]] inline Utf8String null_coalesced(const Utf8String &that) const {
-    return isNull() ? that : *this; }
+  /** Null coalesced: return Utf8String(that) if this is null. */
+  [[nodiscard]] inline Utf8String null_coalesced(auto that) const {
+    return isNull() ? Utf8String(that) : *this; }
   /** Null coalesced: return ""_u8 if this is null. */
   [[nodiscard]] inline Utf8String null_coalesced() const;
-  /** Null coalesced: return that if this is null. */
-  [[nodiscard]] inline Utf8String null_coalesced(const QString &that) const {
-    return isNull() ? Utf8String(that) : *this; }
-  /** Null coalesced: return that if this is null. */
-  [[nodiscard]] inline Utf8String null_coalesced(const QByteArray &that) const {
-    return isNull() ? Utf8String(that) : *this; }
-  /** Null coalesced: return that if this is null. */
-  [[nodiscard]] inline Utf8String null_coalesced(const char *s, qsizetype len = -1) const {
-    return isNull() ? Utf8String(s, len) : *this; }
-  /** Null coalesced: return that if this is null. */
-  [[nodiscard]] inline Utf8String null_coalesced(const QVariant &that) const {
-    return isNull() ? Utf8String(that) : *this; }
+  /** Null coalesced: return Utf8String(t, u) if this is null.
+   *  e.g. null_coalesced("foobar", 2) */
+  [[nodiscard]] inline Utf8String null_coalesced(auto t, auto u) const {
+    return isNull() ? Utf8String(t, u) : *this; }
 
   inline Utf8String &operator+=(const Utf8String &s) {
     QByteArray::operator+=(s); return *this; }
+  // accept types for which QByteArray::operator+= is defined
   inline Utf8String &operator+=(const QByteArray &ba) {
     QByteArray::operator+=(ba); return *this; }
-  inline Utf8String &operator+=(char ch) {
-    QByteArray::operator+=(ch); return *this; }
   inline Utf8String &operator+=(const char *s) {
     QByteArray::operator+=(s); return *this; }
-  inline Utf8String &operator+=(char32_t u) {
-    QByteArray::operator+=(encode_utf8(u)); return *this; }
-  inline Utf8String &operator+=(const QVariant &v) {
-    QByteArray::operator+=(Utf8String{v}); return *this; }
-  inline Utf8String &operator+=(const QString &s) {
-    QByteArray::operator+=(Utf8String{s}); return *this; }
+  inline Utf8String &operator+=(char ch) {
+    QByteArray::operator+=(ch); return *this; }
+  // accept whatever is accepted by constructor, e.g. QLatin1StringView,
+  // char32_t, const QString &, unsigned, double or const char8_t *
+  // same: this is needed because since operator+=(QString) and
+  // operator+=(QVariant) are defined
+  inline Utf8String &operator+=(auto that) {
+    QByteArray::operator+=(Utf8String(that)); return *this; }
 
   inline Utf8String &operator=(const Utf8String &other) {
     QByteArray::operator=(other); return *this; }
   QT_MOVE_ASSIGNMENT_OPERATOR_IMPL_VIA_PURE_SWAP(Utf8String)
   inline void swap(Utf8String &other) noexcept { QByteArray::swap(other); }
+  // accept types for which QByteArray::operator= is defined
   inline Utf8String &operator=(const QByteArray &ba) {
     QByteArray::operator=(ba); return *this; }
   inline Utf8String &operator=(QByteArray &&ba) {
     QByteArray::operator=(ba); return *this; }
-  inline Utf8String &operator=(const QString &s) {
-    return operator=(s.toUtf8()); }
-//  inline Utf8String &operator=(char ch) {
-//    QByteArray::operator=(ch); return *this; }
   inline Utf8String &operator=(const char *s) {
     QByteArray::operator=(s); return *this; }
-  inline Utf8String &operator=(const QVariant &v) {
-    return operator=(Utf8String(v)); }
+  // accept whatever is accepted by constructor, e.g. QLatin1StringView,
+  // char32_t, const QString &, unsigned, double or const char8_t *
+  // same: this is needed because since operator=(QString) and
+  // operator=(QVariant) are defined
+  inline Utf8String &operator=(auto that) {
+    QByteArray::operator=(Utf8String(that)); return *this; }
+  // defining operator=(std::initializer_list) avoids ambiguity on expressions
+  // like: "Utf8String s; s = {};"
+  inline Utf8String &operator=(const std::initializer_list<char> list) {
+    return list.size() ? operator=(QByteArray(list)) : operator=(Utf8String{});}
 
 #if __cpp_impl_three_way_comparison >= 201711
   [[nodiscard]] static inline std::strong_ordering cmp(
@@ -1041,13 +972,10 @@ public:
 #endif
 
   [[nodiscard, gnu::pure]] static Utf8String fromCEscaped(
-      const char *escaped, qsizetype len);
-  [[nodiscard]] inline static Utf8String fromCEscaped(
-      const Utf8String &escaped) {
-    return fromCEscaped(escaped.constData(), escaped.size()); }
-  [[nodiscard]] inline static Utf8String fromCEscaped(
-      const QByteArrayView &escaped) {
-    return fromCEscaped(escaped.constData(), escaped.size()); }
+      const char *escaped, qsizetype len = -1);
+  [[nodiscard]] inline static Utf8String fromCEscaped(auto escaped) {
+    Utf8String s(escaped);
+    return fromCEscaped(s.constData(), s.size()); }
 
   /** Test if u is an ascii whitespace char: ' ', '\t', '\n'... */
   [[nodiscard]] inline static bool is_ascii_whitespace(char32_t u) {
@@ -1152,13 +1080,6 @@ inline Utf8String operator+(Utf8String &&lhs, const char *rhs) {
   return std::move(lhs += rhs); }
 inline Utf8String operator+(const char *a1, const Utf8String &a2) {
   return Utf8String(a1) += a2; }
-
-//inline Utf8String operator+(const Utf8String &a1, char a2) {
-//  return Utf8String(a1) += a2; }
-//inline Utf8String operator+(Utf8String &&lhs, char rhs) {
-//  return std::move(lhs += rhs); }
-//inline Utf8String operator+(char a1, const Utf8String &a2) {
-//  return Utf8String(&a1, 1) += a2; }
 
 QDebug LIBP6CORESHARED_EXPORT operator<<(QDebug dbg, const Utf8String &s);
 
