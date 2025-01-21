@@ -1,4 +1,4 @@
-/* Copyright 2014-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,6 +24,13 @@
 
 class QDebug;
 class SharedUiItemDocumentTransaction;
+class SharedUiItem;
+class SharedUiItemData;
+
+template <typename T>
+concept shareduiitemdata_subclass = std::is_base_of_v<SharedUiItemData, T>;
+template <typename T>
+concept shareduiitem_subclass = std::is_base_of_v<SharedUiItem, T>;
 
 /** Parent class for SharedUiItem implementation data classes.
  *
@@ -490,7 +497,11 @@ public:
   /** Copy a SharedUiItem using uiData() and setUiData() for every section but
    * the one that are specified to be ignored.
    * @param ignoredSections sections not to be copied, e.g. { 0 } */
+#ifdef __cpp_concepts
+  template <shareduiitem_subclass T>
+#else
   template<class T, std::enable_if_t<std::is_base_of_v<SharedUiItem,T>,bool> = true>
+#endif
   static inline bool copy(
       T *dest, const T &source,
       QString *errorString, SharedUiItemDocumentTransaction *transaction,
@@ -508,7 +519,11 @@ public:
   /** Copy a SharedUiItem using uiData() and setUiData() for every section but
    * the one that are specified to be ignored.
    * @param ignoredSections sections not to be copied, e.g. { "id" } */
+#ifdef __cpp_concepts
+  template <shareduiitem_subclass T>
+#else
   template<class T, std::enable_if_t<std::is_base_of_v<SharedUiItem,T>,bool> = true>
+#endif
   static inline bool copyBySectionName(
       T *dest, const T &source,
       QString *errorString, SharedUiItemDocumentTransaction *transaction,
@@ -529,9 +544,13 @@ public:
    * the one that are specified to be ignored, supporting different kind of
    * item, mapping their section names.
    * @param ignoredSections sections not to be copied, e.g. { "id" } */
+#ifdef __cpp_concepts
+  template <shareduiitem_subclass D, shareduiitem_subclass S>
+#else
   template<class D, class S,
            std::enable_if_t<std::is_base_of_v<SharedUiItem,D>,bool> = true,
            std::enable_if_t<std::is_base_of_v<SharedUiItem,S>,bool> = true>
+#endif
   static inline bool copyBySectionName(
       D *dest, const S &source,
       QString *errorString, SharedUiItemDocumentTransaction *transaction,
@@ -550,14 +569,22 @@ public:
     return true;
   }
   /** Downcast blindly trusting caller that qualifier implies T */
+#ifdef __cpp_concepts
+  template <shareduiitem_subclass T>
+#else
   template<class T,
            std::enable_if_t<std::is_base_of_v<SharedUiItem,T>,bool> = true>
+#endif
   [[nodiscard]] const T &casted() const {
     return static_cast<const T&>(*this);
   }
   /** Downcast blindly trusting caller that qualifier implies T */
+#ifdef __cpp_concepts
+  template <shareduiitem_subclass T>
+#else
   template<class T,
            std::enable_if_t<std::is_base_of_v<SharedUiItem,T>,bool> = true>
+#endif
   [[nodiscard]] T &casted() {
     return static_cast<T&>(*this);
   }
@@ -591,8 +618,12 @@ protected:
    * e.g. const FooBarData *data = foobar.specializedData<FooBarData>();
    * useful to declare a const FooBarData *data() const method in FooBar class,
    * see subclassing guidelines above */
+#ifdef __cpp_concepts
+  template <shareduiitemdata_subclass T>
+#else
   template <class T,
             std::enable_if_t<std::is_base_of_v<SharedUiItemData,T>,bool> = true>
+#endif
   inline const T *specializedData() const {
     return static_cast<const T*>(_data.constData());
   }
@@ -602,8 +633,12 @@ protected:
    * e.g. FooBarData *data = foobar.detachedData<FooBarData>();
    * useful to declare a "FooBarData *data()" non const method in FooBar class,
    * see subclassing guidelines above */
+#ifdef __cpp_concepts
+  template <shareduiitemdata_subclass T>
+#else
   template <class T,
             std::enable_if_t<std::is_base_of_v<SharedUiItemData,T>,bool> = true>
+#endif
   T *detachedData() {
     auto ptr = reinterpret_cast<QSharedDataPointer<T>*>(&_data);
     // data() must be called after type conversion in order to detach() to be

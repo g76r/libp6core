@@ -1,4 +1,4 @@
-/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,5 +21,14 @@
 #else
 #  define LIBP6CORESHARED_EXPORT Q_DECL_IMPORT
 #endif
+
+namespace p6 {
+
+#ifdef __cpp_concepts
+template <typename T> concept arithmetic =
+    std::integral<T> || std::floating_point<T>;
+#endif
+
+}
 
 #endif // LIBP6CORE_GLOBAL_H

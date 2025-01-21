@@ -1,4 +1,4 @@
-/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -199,7 +199,11 @@ public:
    *  @see Utf8String::toNumber<>
    *  @param context is an evaluation context, can be empty (only contextless
    *         function like %=date will be available for evaluation) */
+#ifdef __cpp_concepts
+  template <p6::arithmetic T>
+#else
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+#endif
   [[nodiscard]] inline static T eval_number(
       const Utf8String &expr, const T &def = {},
       const EvalContext &context = {}, bool *ok = nullptr)  {
@@ -218,7 +222,11 @@ public:
       *ok = true;
     return v.value<T>();
   }
+#ifdef __cpp_concepts
+  template <p6::arithmetic T>
+#else
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+#endif
   [[nodiscard]] inline static T eval_number(
       const Utf8String &expr, const EvalContext &context, bool *ok = nullptr) {
     return eval_number<T>(expr, {}, context, ok); }

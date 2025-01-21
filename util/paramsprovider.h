@@ -1,4 +1,4 @@
-/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -153,7 +153,11 @@ public:
    *  @see Utf8String::toNumber<>
    *  @param context is an evaluation context, uses this if null
    *  @param alreadyEvaluated used for loop detections, must not be null */
+#ifdef __cpp_concepts
+  template <p6::arithmetic T>
+#else
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+#endif
   [[nodiscard]] T paramNumber(
       const Utf8String &key, const T &def = {},
       const EvalContext &context = {}) const {
@@ -168,7 +172,11 @@ public:
     return v.value<T>();
   }
   /** Convenience methods */
+#ifdef __cpp_concepts
+  template <p6::arithmetic T>
+#else
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+#endif
   [[nodiscard]] T paramNumber(
       const Utf8String &key, const EvalContext &context) const {
     return paramNumber<T>(key, {}, context); }

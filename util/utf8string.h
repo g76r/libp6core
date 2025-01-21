@@ -617,12 +617,20 @@ public:
     return toBool(nullptr, def); }
   /** Converts to any number format, calling toXXX() methods above (and
    *  concerning integers, with base = 0 auto detection of base). */
+#ifdef __cpp_concepts
+  template <p6::arithmetic T>
+#else
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+#endif
   [[nodiscard]] inline T toNumber(
       bool *ok = nullptr, const T &def = {},
       bool suffixes_enabled = true, bool floating_point_enabled = true) const;
   /** Convenience methods witout bool *ok. */
+#ifdef __cpp_concepts
+  template <p6::arithmetic T>
+#else
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+#endif
   [[nodiscard]] inline T toNumber(
       const T &def, bool suffixes_enabled = true,
       bool floating_point_enabled = true) const {

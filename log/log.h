@@ -1,4 +1,4 @@
-/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -53,35 +53,35 @@ public:
     : _taskid(field(taskid.isEmpty() ? current_thread_name() : taskid, "?"_u8)),
       _execid(field(execid, "0"_u8)),
 #if LOG_LOCATION_WITH_FUNCTION_ENABLED
-      _location(location.file_name()+":"_u8+QByteArray::number(location.line())
+      _location(location.file_name()+":"_u8+Utf8String::number(location.line())
                   +":"_u8+location.function_name()) { }
 #else
-      _location(location.file_name()+":"_u8+QByteArray::number(
+      _location(location.file_name()+":"_u8+Utf8String::number(
                   location.line())) { }
 #endif
   LogContext(Utf8String taskid, quint64 execid,
              source_location location = {})
-    : LogContext(taskid, QByteArray::number(execid), location) {}
+    : LogContext(taskid, Utf8String::number(execid), location) {}
   LogContext(quint64 execid, source_location location = {})
-    : LogContext({}, QByteArray::number(execid), location) {}
+    : LogContext({}, Utf8String::number(execid), location) {}
   LogContext(Utf8String taskid, qint64 execid,
              source_location location = {})
-    : LogContext(taskid, QByteArray::number(execid), location) {}
+    : LogContext(taskid, Utf8String::number(execid), location) {}
   LogContext(qint64 execid, source_location location = {})
-    : LogContext({}, QByteArray::number(execid), location) {}
+    : LogContext({}, Utf8String::number(execid), location) {}
 #else
   LogContext(Utf8String taskid = {}, Utf8String execid = {})
     : _taskid(field(taskid.isEmpty() ? current_thread_name() : taskid, "?"_u8)),
       _execid(field(execid, "0"_u8)),
       _location(":"_u8) { }
   LogContext(Utf8String taskid, quint64 execid)
-    : LogContext(taskid, QByteArray::number(execid)) {}
+    : LogContext(taskid, Utf8String::number(execid)) {}
   LogContext(quint64 execid)
-    : LogContext({}, QByteArray::number(execid)) {}
+    : LogContext({}, Utf8String::number(execid)) {}
   LogContext(Utf8String taskid, qint64 execid)
-    : LogContext(taskid, QByteArray::number(execid)) {}
+    : LogContext(taskid, Utf8String::number(execid)) {}
   LogContext(qint64 execid)
-    : LogContext({}, QByteArray::number(execid)) {}
+    : LogContext({}, Utf8String::number(execid)) {}
 #endif
   LogContext(Utf8String taskid, Utf8String execid, Utf8String location)
     : _taskid(field(taskid.isEmpty() ? current_thread_name() : taskid, "?"_ba)),
@@ -325,7 +325,11 @@ public:
     _message += QString(o); return *this; }
   inline LogHelper &operator<<(const char *o) { // disambiguation
     _message += o; return *this; }
+#ifdef __cpp_concepts
+  template <p6::arithmetic T>
+#else
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+#endif
   inline LogHelper &operator<<(T o) { // making cstr explicit
     _message += Utf8String(o); return *this; }
   inline LogHelper &operator<<(bool o) { // making cstr explicit
@@ -352,11 +356,15 @@ public:
       _message += b ? "true "_ba : "false "_ba;
     _message += "}"_ba;
     return *this; }
+#ifdef __cpp_concepts
+  template <p6::arithmetic T>
+#else
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+#endif
   inline LogHelper &operator<<(const QList<T> &o) {
     _message += "{ "_ba;
     for (auto i: o)
-      _message += QByteArray::number(i) + ' ';
+      _message += Utf8String::number(i) + ' ';
     _message += "}"_ba;
     return *this; }
   inline LogHelper &operator<<(const QSet<QByteArray> &o) {
@@ -379,18 +387,22 @@ public:
       _message += b ? "true "_ba : "false "_ba;
     _message += "}"_ba;
     return *this; }
+#ifdef __cpp_concepts
+  template <p6::arithmetic T>
+#else
   template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+#endif
   inline LogHelper &operator<<(const QSet<T> &o) {
     _message += "{ "_ba;
     for (auto i: o)
-      _message += QByteArray::number(i) + ' ';
+      _message += Utf8String::number(i) + ' ';
     _message += "}"_ba;
     return *this; }
   inline LogHelper &operator<<(const QObject *o) {
     const QMetaObject *mo = o ? o->metaObject() : 0;
     if (mo)
-      _message += mo->className() + "(0x"_ba
-          + QByteArray::number(reinterpret_cast<qintptr>(o), 16) + ", \""_ba
+      _message += mo->className() + "(0x"_u8
+          + Utf8String::number(reinterpret_cast<qintptr>(o), 16) + ", \""_ba
           + o->objectName().toUtf8() + "\")"_ba;
     else
       _message += "QObject(0x0)"_ba;
@@ -398,7 +410,7 @@ public:
   inline LogHelper &operator<<(const QObject &o) {
     return operator<<(&o); }
   inline LogHelper &operator<<(const void *o) {
-    _message += "0x"_ba + QByteArray::number((qintptr)o, 16);
+    _message += "0x"_u8 + Utf8String::number((qintptr)o, 16);
     return *this; }
 };
 
