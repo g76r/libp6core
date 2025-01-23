@@ -139,9 +139,9 @@ void HttpWorker::handleConnection(int socketDescriptor) {
     uri.insert(0, '/');
   // LATER is utf8 the right choice ? should encoding depend on headers ?
   url = QUrl::fromEncoded("http://host"_u8+uri);
-  req.overrideUrl(url);
+  req.setUrl(url.toString(QUrl::RemoveUserInfo));
+  req.setPath(url.path());
   // load post params
-  // LATER should probably also remove query items
   if (method == HttpRequest::POST
       && req.header("Content-Type"_u8)
       == "application/x-www-form-urlencoded"_u8) {
@@ -170,13 +170,15 @@ void HttpWorker::handleConnection(int socketDescriptor) {
       // replacing + with space in URI since this cannot be done in HttpRequest
       // see above
       line.replace('+', ' ');
-      for (auto p: QUrlQuery(line).queryItems(QUrl::FullyDecoded))
-        req.overrideParam(p.first.toUtf8(), p.second.toUtf8());
+      // set body (POST) parameters
+      for (auto [key, value]: QUrlQuery(line).queryItems(QUrl::FullyDecoded))
+        req.setHttpParam(key, value);
     }
-    // override body parameters with query string parameters
-    for (auto p: QUrlQuery(url).queryItems(QUrl::FullyDecoded))
-      req.overrideParam(p.first.toUtf8(), p.second.toUtf8());
   }
+  // set query string (GET) parameters
+  // they will override body (POST) parameters if any
+  for (auto [key, value]: QUrlQuery(url).queryItems(QUrl::FullyDecoded))
+    req.setHttpParam(key, value);
   handler = _server->chooseHandler(req);
   if (req.header("Expect"_u8) == "100-continue"_u8) {
     // LATER only send 100 Continue if the URI is actually accepted by the handler

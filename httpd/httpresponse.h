@@ -201,7 +201,7 @@ public:
               QDateTime::currentDateTime().addSecs(seconds),
               path, domain, secure, httponly); }
   /** Remove a cookie. */
-  inline void clearCookie(
+  inline void unsetCookie(
       const Utf8String &name, const Utf8String &path = {},
       const Utf8String &domain = {}) {
     setCookie(name, {}, QDateTime::fromMSecsSinceEpoch(0),

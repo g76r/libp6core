@@ -1,4 +1,4 @@
-/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -54,7 +54,7 @@ bool BasicAuthHttpHandler::handleRequest(
   }
   if (_authIsMandatory
       || (_authorizer && !_authorizer->authorize(
-            {}, req.methodName(), req.url().path(),
+            {}, req.methodName(), req.path(),
             QDateTime::currentDateTime()))) {
     res.setStatus(401);
     res.setHeader("WWW-Authenticate", // LATER sanitize realm

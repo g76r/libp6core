@@ -28,6 +28,7 @@ class HttpWorker;
  * several threads at a time.
  */
 class LIBP6CORESHARED_EXPORT HttpRequest : public ParamsProvider {
+
 public:
   enum HttpMethod : signed char {
     NONE = 0,
@@ -82,25 +83,23 @@ public:
   [[nodiscard]] QByteArray base64Cookie(
       const Utf8String &name, const QByteArray &defaultValue = {}) const;
   [[nodiscard]] QMap<Utf8String,Utf8String> cookies() const;
-  /** Replace url. If params have already been queried and new url has
-   * different query items than former one, one should also call
-   * discardParamsCache(). */ // LATER this behaviour is optimisable since Qt5
-  void overrideUrl(QUrl url);
   [[nodiscard]] Utf8String path() const;
-  [[nodiscard]] QUrl url() const;
-  [[nodiscard]] QUrlQuery urlQuery() const;
-  /** Return an url param (query item) value.
-   * Only first value of multi-valued items is kept. */
-  // LATER manage to keep last value instead
-  [[nodiscard]] Utf8String param(const Utf8String &key,
-                                 const Utf8String &def = {}) const;
-  void overrideParam(Utf8String key, Utf8String value);
-  void overrideUnsetParam(Utf8String key);
-  /** Retrieve url params (query items) as a ParamSet.
-   * Only first value of multi-valued items is kept. */
-  // LATER manage to keep last value instead
-  [[nodiscard]] ParamSet paramsAsParamSet() const;
-  [[nodiscard]] QMap<Utf8String,Utf8String> paramsAsMap() const;
+  void setPath(const Utf8String &path);
+  /** URL as a string, without user info (user+password) */
+  [[nodiscard]] Utf8String url() const;
+  void setUrl(const Utf8String &url);
+  /** Return a HTTP param (post form httpParam or query httpParam) value.
+   * Only first value of multi-valued items is kept.
+   * If both are set, query httpParam (GET) are prefered to payload (POST) ones. */
+  [[nodiscard]] Utf8String httpParam(const Utf8String &key,
+                                     const Utf8String &def = {}) const;
+  void setHttpParam(const Utf8String &key, const Utf8String &value);
+  void unsetHttpParam(const Utf8String &key);
+  /** HTTP params as a ParamSet. */
+  [[nodiscard]] ParamSet httpParamset() const;
+  /** HTTP params as a Map. */
+  [[nodiscard]] QMap<Utf8String,Utf8String> httpParams() const;
+  /** human-readable/debug representation. */
   [[nodiscard]] Utf8String toUtf8() const;
   /** Client addresses.
    * Contains only one address for direct connection, or several when acceeded
@@ -139,7 +138,6 @@ public:
 
 private:
   inline void parseAndAddCookie(Utf8String rawHeaderValue);
-  inline void cacheAllParams() const;
 };
 
 Q_DECLARE_METATYPE(HttpRequest)

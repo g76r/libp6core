@@ -1,4 +1,4 @@
-/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -41,7 +41,7 @@ void UploadHttpHandler::setMaxBytesPerUpload(quint64 maxBytesPerUpload) {
 bool UploadHttpHandler::acceptRequest(HttpRequest req) {
   // LATER parametrize accepted methods
   return (_urlPathPrefix.isEmpty()
-      || req.url().path().startsWith(_urlPathPrefix))
+      || req.path().startsWith(_urlPathPrefix.toUtf8()))
       && (req.method() == HttpRequest::POST
           || req.method() == HttpRequest::PUT);
 }
@@ -54,8 +54,7 @@ bool UploadHttpHandler::handleRequest(
     return true;
   if (req.header("Content-Length"_u8).toULongLong() > _maxBytesPerUpload) {
     Log::warning() << "data too large when uploading data at "
-                   << req.url().toString(QUrl::RemovePassword)
-                   << " maximum is " << _maxBytesPerUpload;
+                   << req.url() << " maximum is " << _maxBytesPerUpload;
     res.setStatus(413); // Request entity too large
     return true;
   }
@@ -72,13 +71,13 @@ bool UploadHttpHandler::handleRequest(
                                 65536, 1000, 100);
   if (result < 0) {
     Log::warning() << "failed uploading data at "
-                   << req.url().toString(QUrl::RemovePassword)
+                   << req.url()
                    << " - socket error : " << req.input()->errorString()
                    << " - temporary file error : " << file->errorString();
     res.setStatus(500);
   } else if (req.input()->waitForBytesWritten(100)) {
     Log::warning() << "data too large when uploading data at "
-                   << req.url().toString(QUrl::RemovePassword)
+                   << req.url()
                    << " maximum is " << _maxBytesPerUpload;
     res.setStatus(413); // Request entity too large
   } else {

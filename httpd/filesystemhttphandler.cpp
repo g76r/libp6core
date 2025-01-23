@@ -1,4 +1,4 @@
-/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -44,7 +44,7 @@ FilesystemHttpHandler::FilesystemHttpHandler(
 
 bool FilesystemHttpHandler::acceptRequest(HttpRequest req) {
   return _urlPathPrefix.isEmpty()
-      || req.url().path().startsWith(_urlPathPrefix);
+      || req.path().startsWith(_urlPathPrefix);
 }
 
 bool FilesystemHttpHandler::handleRequest(
@@ -57,7 +57,7 @@ bool FilesystemHttpHandler::handleRequest(
   }
   if (handleCORS(req, res))
     return true;
-  QByteArray path = req.url().path().toUtf8().mid(_urlPathPrefix.length());
+  QByteArray path = req.path().mid(_urlPathPrefix.length());
   if (path.endsWith('/'))
     path.chop(1);
   if (path.startsWith('/'))
@@ -72,7 +72,7 @@ bool FilesystemHttpHandler::handleRequest(
       file.setFileName(_documentRoot+path+"/"+index);
       //qDebug() << "try file" << file.fileName();
       if (file.exists() && file.open(QIODevice::ReadOnly)) {
-        QByteArray location, reqPath = req.url().path().toUtf8();
+        QByteArray location, reqPath = req.path();
         if (!reqPath.endsWith('/')) {
           int i = reqPath.lastIndexOf('/');
           location.append(reqPath.mid(i == -1 ? 0 : i+1));

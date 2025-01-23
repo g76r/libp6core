@@ -46,12 +46,9 @@ public:
   QAbstractSocket *_input;
   HttpRequest::HttpMethod _method;
   QMultiMap<Utf8String,Utf8String> _headers;
-  QMap<Utf8String,Utf8String> _cookies, _paramsCache;
-  bool _paramsCached = false;
-  QUrl _url;
-  QUrlQuery _query;
+  QMap<Utf8String,Utf8String> _cookies, _params;
   Utf8StringList _clientAdresses;
-  Utf8String _scope = "http"_u8, _path;
+  Utf8String _url, _scope = "http"_u8, _path;
   QPointer<HttpWorker> _worker;
   HttpRequestData(QAbstractSocket *input, HttpWorker *worker)
     : _input(input), _method(HttpRequest::NONE), _worker(worker) {}
@@ -145,63 +142,42 @@ void HttpRequest::parseAndAddCookie(Utf8String rawHeaderValue) {
   }
 }
 
-Utf8String HttpRequest::param(const Utf8String &key,
+Utf8String HttpRequest::httpParam(const Utf8String &key,
                               const Utf8String &def) const {
   if (!d)
     return def;
-  cacheAllParams();
-  return d->_paramsCache.value(key, def);
+  return d->_params.value(key, def);
 }
 
-void HttpRequest::overrideParam(Utf8String key, Utf8String value) {
+void HttpRequest::setHttpParam(const Utf8String &key, const Utf8String &value) {
   if (!d)
     return;
-  cacheAllParams();
-  d->_paramsCache.insert(key, value);
+  d->_params.insert(key, value);
 }
 
-void HttpRequest::overrideUnsetParam(Utf8String key) {
+void HttpRequest::unsetHttpParam(const Utf8String &key) {
   if (!d)
     return;
-  cacheAllParams();
-  d->_paramsCache.insert(key, {});
+  d->_params.insert(key, {});
 }
 
-ParamSet HttpRequest::paramsAsParamSet() const {
+ParamSet HttpRequest::httpParamset() const {
   if (!d)
     return {};
-  cacheAllParams();
-  return ParamSet(d->_paramsCache);
+  return ParamSet(d->_params);
 }
 
-QMap<Utf8String,Utf8String> HttpRequest::paramsAsMap() const {
+QMap<Utf8String,Utf8String> HttpRequest::httpParams() const {
   if (!d)
     return {};
-  cacheAllParams();
-  return d->_paramsCache;
-}
-
-void HttpRequest::cacheAllParams() const {
-  if (!d || d->_paramsCached)
-    return;
-  // notes:
-  // - '+' in values is replaced with space in HttpWorker::handleConnection()
-  //   so even if QUrl::FullyDecoded does not decode + it will be decoded anyway
-  // - POST x-www-form-urlencoded params are added to query items by
-  //   HttpWorker::handleConnection() so they are implicitly already here
-  for (auto p: d->_query.queryItems(QUrl::FullyDecoded)) {
-    auto key = p.first.toUtf8();
-    if (!d->_paramsCache.contains(key))
-      d->_paramsCache.insert(key, p.second.toUtf8());
-  }
-  d->_paramsCached = true;
+  return d->_params;
 }
 
 Utf8String HttpRequest::toUtf8() const {
   if (!d)
     return "HttpRequest{}"_u8;
   Utf8String s;
-  s += "HttpRequest{ " + methodName() + ", " + url().toString().toUtf8()
+  s += "HttpRequest{ " + methodName() + ", " + url()
       + ", { ";
   for (auto key: d->_headers.keys()) {
     s += key + ":{ ";
@@ -214,24 +190,22 @@ Utf8String HttpRequest::toUtf8() const {
   return s;
 }
 
-void HttpRequest::overrideUrl(QUrl url) {
-  if (d) {
+void HttpRequest::setUrl(const Utf8String &url) {
+  if (d)
     d->_url = url;
-    d->_query = QUrlQuery(url);
-    d->_path = url.path().toUtf8();
-  }
 }
 
 Utf8String HttpRequest::path() const {
   return d ? d->_path : Utf8String{};
 }
 
-QUrl HttpRequest::url() const {
-  return d ? d->_url : QUrl();
+void HttpRequest::setPath(const Utf8String &path) {
+  if (d)
+    d->_path = path;
 }
 
-QUrlQuery HttpRequest::urlQuery() const {
-  return d ? d->_query : QUrlQuery();
+Utf8String HttpRequest::url() const {
+  return d ? d->_url : Utf8String{};
 }
 
 QAbstractSocket *HttpRequest::input() {
@@ -308,7 +282,7 @@ Utf8StringList HttpRequest::clientAdresses() const {
 
 static RadixTree <std::function<QVariant(const HttpRequest *req, const Utf8String &key, const EvalContext &context, int ml)>> _functions {
 { "url", [](const HttpRequest *req, const Utf8String &, const EvalContext&, int) -> QVariant {
-  return "http://"_u8+req->header("Host"_u8)+req->url().toString(QUrl::RemoveScheme|QUrl::RemoveAuthority).toUtf8();
+  return "http://"_u8+req->header("Host"_u8)+req->url();
 }},
 { "path", [](const HttpRequest *req, const Utf8String &, const EvalContext&, int) -> QVariant {
   return req->path();
@@ -326,10 +300,10 @@ static RadixTree <std::function<QVariant(const HttpRequest *req, const Utf8Strin
   return req->base64Cookie(key.mid(ml));
 }, true},
 { "param:", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
-  return req->param(key.mid(ml));
+  return req->httpParam(key.mid(ml));
 }, true},
 { "value:", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
-  auto v = req->param(key.mid(ml));
+  auto v = req->httpParam(key.mid(ml));
   if (!v.isNull())
     return v;
   return req->base64Cookie(key.mid(ml));
@@ -348,7 +322,7 @@ QVariant HttpRequest::paramRawValue(
   auto f = _functions.value(key, &ml);
   if (f)
     return f(this, key, context, ml);
-  auto v = param(key);
+  auto v = httpParam(key);
   if (!v.isNull())
     return v;
   v = base64Cookie(key);
@@ -371,7 +345,7 @@ Utf8StringSet HttpRequest::paramKeys(
     keys << "cookie:"_u8+s;
     keys << s;
   }
-  for (auto [s,_]: paramsAsMap().asKeyValueRange()) {
+  for (auto [s,_]: httpParams().asKeyValueRange()) {
     keys << "param:"_u8+s;
     keys << s;
   }

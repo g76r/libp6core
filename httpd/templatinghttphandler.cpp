@@ -1,4 +1,4 @@
-/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -65,7 +65,7 @@ void TemplatingHttpHandler::computePathToRoot(
   if (processingContext->overridingParams().paramContains("!pathtoroot"))
     return;
   auto prefix = urlPathPrefix();
-  auto path = req.url().path().mid(urlPathPrefix().length());
+  auto path = req.path().mid(urlPathPrefix().length());
   bool ignoreOneSlash = prefix.isEmpty() ? path.startsWith('/')
                                          : !prefix.endsWith('/');
   int depth = path.count('/') - (ignoreOneSlash ? 1 : 0);
@@ -114,8 +114,7 @@ void TemplatingHttpHandler::applyTemplateFile(
         auto markupData = markupContent.mid(separatorPos+1);
         TextView *view = _views.value(markupData);
         if (view) {
-          output->append(view->text(processingContext,
-                                    req.url().toString()).toUtf8());
+          output->append(view->text(processingContext, req.url()));
         } else [[unlikely]] {
           Log::warning() << "TemplatingHttpHandler did not find view '"
                          << markupData << "' among " << _views.keys();
