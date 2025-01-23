@@ -1,4 +1,4 @@
-/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -30,10 +30,17 @@ Q_CONSTRUCTOR_FUNCTION(staticInit)
 
 class HttpResponseData : public QSharedData {
 public:
+  struct CookieData {
+    Utf8String value;
+    QDateTime expires;
+    Utf8String path, domain;
+    bool secure, httponly;
+  };
   QAbstractSocket *_output;
   int _status;
   bool _headersSent, _disableBodyOutput;
   QMultiMap<Utf8String,Utf8String> _headers;
+  QMap<Utf8String,CookieData> _cookies;
   QDateTime _received, _handled, _flushed;
   Utf8String _scope;
   explicit HttpResponseData(QAbstractSocket *output)
@@ -73,6 +80,20 @@ QAbstractSocket *HttpResponse::output() {
     Utf8String ba;
     ba = "HTTP/1.1 "_u8 + Utf8String::number(d->_status) + " "_u8
         + statusAsString(d->_status) + "\r\n"_u8;
+    for (auto [name, data]: d->_cookies.asKeyValueRange()) {
+      auto s = name+"="_u8+data.value;
+      if (!data.expires.isNull())
+        s += "; Expires="_u8 + TimeFormats::toRfc2822DateTime(data.expires).toUtf8();
+      if (!data.path.isEmpty())
+        s.append("; Path=").append(data.path);
+      if (!data.domain.isEmpty())
+          s.append("; Domain=").append(data.domain);
+      if (data.secure)
+        s.append("; Secure");
+      if (data.httponly)
+        s.append("; HttpOnly");
+      addHeader("Set-Cookie", s);
+    }
     // LATER sanitize well-known headers (Content-Type...) values
     // LATER handle multi-line headers and special chars
     for (auto name: Utf8StringList(d->_headers.keys())
@@ -146,26 +167,25 @@ void HttpResponse::appendValueToHeader(
 void HttpResponse::redirect(Utf8String location, int status) {
   if (!d)
     return;
+  location.replace("\""_u8,"%22"_u8); // LATER better url encode
   setStatus(status);
   setHeader("Location"_u8, location);
   setContentType("text/html;charset=UTF-8"_u8);
-  // LATER url encode
   output()->write("<html><body>Moved. Please click on <a href=\""
                   +location+"\">this link</a>");
 }
 
-static const QRegularExpression _nameRegexp {
-  "\\A" RFC2616_TOKEN_OCTET_RE "+\\z" };
-static const QRegularExpression _valueRegexp {
-  "\\A" RFC6265_COOKIE_OCTET_RE "*\\z" };
-static const QRegularExpression _pathRegexp {
-  "\\A" RFC6265_PATH_VALUE_RE "\\z" };
-static const QRegularExpression _domainRegexp {
-  "\\A" INTERNET_DOMAIN_RE "\\z" };
-
 void HttpResponse::setCookie(const Utf8String &name, const Utf8String &value,
     QDateTime expires, const Utf8String &path,
     const Utf8String &domain, bool secure, bool httponly) {
+  static const QRegularExpression _nameRegexp {
+    "\\A" RFC2616_TOKEN_OCTET_RE "+\\z" };
+  static const QRegularExpression _valueRegexp {
+    "\\A" RFC6265_COOKIE_OCTET_RE "*\\z" };
+  static const QRegularExpression _pathRegexp {
+    "\\A" RFC6265_PATH_VALUE_RE "\\z" };
+  static const QRegularExpression _domainRegexp {
+    "\\A" INTERNET_DOMAIN_RE "\\z" };
   if (!_nameRegexp.match(name).hasMatch()) {
     Log::warning() << "HttpResponse: incorrect name when setting cookie: "
                    << name;
@@ -176,35 +196,22 @@ void HttpResponse::setCookie(const Utf8String &name, const Utf8String &value,
                    << value;
     return;
   }
-  auto s = name+"="_u8+value;
-  if (!expires.isNull())
-    s += "; Expires="_u8 + TimeFormats::toRfc2822DateTime(expires).toUtf8();
-  if (!path.isEmpty()) {
-    if (_pathRegexp.match(path).hasMatch())
-      s.append("; Path=").append(path);
-    else {
-      Log::warning() << "HttpResponse: incorrect path when setting cookie: "
-                     << path;
-      return;
-    }
+  if (d->_headersSent) {
+    Log::warning() << "HttpResponse: cannot set cookie after writing data: "
+                   << name << ": " << value;
+    return;
   }
-  if (!domain.isEmpty()) {
-    if (_domainRegexp.match(domain).hasMatch())
-      s.append("; Domain=").append(domain);
-    else {
-      Log::warning() << "HttpResponse: incorrect domain when setting cookie: "
-                     << domain;
-      return;
-    }
+  if (!path.isEmpty() && !_pathRegexp.match(path).hasMatch()) {
+    Log::warning() << "HttpResponse: incorrect path when setting cookie: "
+                   << path;
+    return;
   }
-  if (secure)
-    s.append("; Secure");
-  if (httponly)
-    s.append("; HttpOnly");
-  // LATER maintain a memory map of set cookies and write them only when starting the response write
-  // this would enable to write only the last same cookie value
-  // LATER update qron's webconsole to use such a feature to clearCookie("message") at start, knowning that a later setCookie("message") will prevent the clearCookie to output a Set-Cookie header
-  addHeader("Set-Cookie", s);
+  if (!domain.isEmpty() && !_domainRegexp.match(domain).hasMatch()) {
+    Log::warning() << "HttpResponse: incorrect domain when setting cookie: "
+                   << domain;
+    return;
+  }
+  d->_cookies.insert(name, {value, expires, path, domain, secure, httponly});
 }
 
 Utf8String HttpResponse::header(

@@ -1,4 +1,4 @@
-/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -156,13 +156,6 @@ public:
     setCookie(name, value, QDateTime(), path, domain, secure, httponly); }
   /** Set a session cookie, encoding its value using base64. */
   inline void setBase64SessionCookie(
-      const Utf8String &name, const QByteArray &value,
-      const Utf8String &path = {}, const Utf8String &domain = {},
-      bool secure = false, bool httponly = false) {
-    setCookie(name, value.toBase64(), QDateTime(), path,
-              domain, secure, httponly); }
-  /** Set a session cookie, encoding its value using base64. */
-  inline void setBase64SessionCookie(
       const Utf8String &name, const Utf8String &value,
       const Utf8String &path = {}, const Utf8String &domain = {},
       bool secure = false, bool httponly = false) {
@@ -192,7 +185,7 @@ public:
   /** Set a persistent cookie, encoding its value using base64.
    * @param expires defaults to now + 1 day */
   inline void setBase64PersistentCookie(
-      const Utf8String &name, const QByteArray &value, QDateTime expires = {},
+      const Utf8String &name, const Utf8String &value, QDateTime expires = {},
       const Utf8String &path = {}, const Utf8String &domain = {},
       bool secure = false, bool httponly = false) {
     setCookie(name, value.toBase64(),
@@ -201,7 +194,7 @@ public:
               path, domain, secure, httponly); }
   /** Set a persistent cookie, encoding its value using base64. */
   inline void setBase64PersistentCookie(
-      const Utf8String &name, const QByteArray &value, int seconds,
+      const Utf8String &name, const Utf8String &value, int seconds,
       const Utf8String &path = {}, const Utf8String &domain = {},
       bool secure = false, bool httponly = false) {
     setCookie(name, value.toBase64(),
