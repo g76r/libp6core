@@ -1,4 +1,4 @@
-/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,6 +18,7 @@
 #include "format/stringutils.h"
 #include <QHostAddress>
 #include <QRegularExpression>
+#include <QPointer>
 
 using EvalContext = ParamsProvider::EvalContext;
 
@@ -46,6 +47,7 @@ public:
   HttpRequest::HttpMethod _method;
   QMultiMap<Utf8String,Utf8String> _headers;
   QMap<Utf8String,Utf8String> _cookies, _paramsCache;
+  bool _paramsCached = false;
   QUrl _url;
   QUrlQuery _query;
   Utf8StringList _clientAdresses;
@@ -143,28 +145,26 @@ void HttpRequest::parseAndAddCookie(Utf8String rawHeaderValue) {
   }
 }
 
-Utf8String HttpRequest::param(Utf8String key) const {
-  // TODO better handle parameters, including POST and multi-valued params
-  Utf8String value;
-  if (d) {
-    if (d->_paramsCache.contains(key))
-      return d->_paramsCache.value(key);
-    // note: + in values is replaced with space in HttpWorker::handleConnection()
-    // so even if QUrl::FullyDecoded does not decode + it will be decoded anyway
-    value = d->_query.queryItemValue(key, QUrl::FullyDecoded).toUtf8();
-    d->_paramsCache.insert(key, value);
-  }
-  return value;
+Utf8String HttpRequest::param(const Utf8String &key,
+                              const Utf8String &def) const {
+  if (!d)
+    return def;
+  cacheAllParams();
+  return d->_paramsCache.value(key, def);
 }
 
 void HttpRequest::overrideParam(Utf8String key, Utf8String value) {
-  if (d)
-    d->_paramsCache.insert(key, value);
+  if (!d)
+    return;
+  cacheAllParams();
+  d->_paramsCache.insert(key, value);
 }
 
 void HttpRequest::overrideUnsetParam(Utf8String key) {
-  if (d)
-    d->_paramsCache.insert(key, {});
+  if (!d)
+    return;
+  cacheAllParams();
+  d->_paramsCache.insert(key, {});
 }
 
 ParamSet HttpRequest::paramsAsParamSet() const {
@@ -175,23 +175,26 @@ ParamSet HttpRequest::paramsAsParamSet() const {
 }
 
 QMap<Utf8String,Utf8String> HttpRequest::paramsAsMap() const {
-  if (d) {
-    cacheAllParams();
-    return d->_paramsCache;
-  }
-  return {};
+  if (!d)
+    return {};
+  cacheAllParams();
+  return d->_paramsCache;
 }
 
 void HttpRequest::cacheAllParams() const {
-  if (!d)
+  if (!d || d->_paramsCached)
     return;
-  // note: + in values is replaced with space in HttpWorker::handleConnection()
-  // so even if QUrl::FullyDecoded does not decode + it will be decoded anyway
+  // notes:
+  // - '+' in values is replaced with space in HttpWorker::handleConnection()
+  //   so even if QUrl::FullyDecoded does not decode + it will be decoded anyway
+  // - POST x-www-form-urlencoded params are added to query items by
+  //   HttpWorker::handleConnection() so they are implicitly already here
   for (auto p: d->_query.queryItems(QUrl::FullyDecoded)) {
     auto key = p.first.toUtf8();
     if (!d->_paramsCache.contains(key))
       d->_paramsCache.insert(key, p.second.toUtf8());
   }
+  d->_paramsCached = true;
 }
 
 Utf8String HttpRequest::toUtf8() const {

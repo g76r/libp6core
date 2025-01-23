@@ -1,4 +1,4 @@
-/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -92,7 +92,8 @@ public:
   /** Return an url param (query item) value.
    * Only first value of multi-valued items is kept. */
   // LATER manage to keep last value instead
-  [[nodiscard]] Utf8String param(Utf8String key) const;
+  [[nodiscard]] Utf8String param(const Utf8String &key,
+                                 const Utf8String &def = {}) const;
   void overrideParam(Utf8String key, Utf8String value);
   void overrideUnsetParam(Utf8String key);
   /** Retrieve url params (query items) as a ParamSet.
@@ -115,7 +116,7 @@ public:
    *  - url URL without password e.g. "http://foobar.io/baz?a=b"
    *  - method e.g. "GET"
    *  - clientaddresses e.g. "127.0.0.1 1.2.3.4"
-   *  - param:xxx e.g. param:a -> "b" (works also with POST params)
+   *  - param:xxx e.g. param:a -> "b" (both POST and GET params)
    *  - header:xxx e.g. header:Host -> "foobar.io"
    *  - requestheader:xxx e.g. requestheader:Host -> "foobar.io"
    *  - cookie:xxx content of xxx cookie
