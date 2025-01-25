@@ -1,4 +1,4 @@
-/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,7 +20,7 @@ static int _defaultSmtpTimeoutMs = 5000;
 
 static int staticInit() {
   bool ok;
-  int i = QString::fromLocal8Bit(qgetenv("MAILSENDER_SMTP_TIMEOUT")).toInt(&ok);
+  int i = qEnvironmentVariable("MAILSENDER_SMTP_TIMEOUT").toInt(&ok);
   if (ok)
     _defaultSmtpTimeoutMs = i;
   return 0;

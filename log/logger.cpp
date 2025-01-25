@@ -1,4 +1,4 @@
-/* Copyright 2013-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -138,7 +138,7 @@ Logger::Logger(Log::Severity minSeverity, ThreadModel threadModel)
   //         << " " << threadModel << " " << QThread::currentThread();
   //qDebug() << "Logger" << QString::number((qlonglong)this, 16);
   int logBufferSizeLog2 =
-    QString::fromLocal8Bit(qgetenv("LOG_BUFFER_SIZE_LOG2")).toInt(0, 0);
+    Utf8String(qEnvironmentVariable("LOG_BUFFER_SIZE_LOG2")).toInt();
   if (logBufferSizeLog2 < 6)
     logBufferSizeLog2 = 12;
   if (logBufferSizeLog2 > 27)

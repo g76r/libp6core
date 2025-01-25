@@ -1,4 +1,4 @@
-/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -31,8 +31,9 @@
 static bool _variableNotFoundLoggingEnabled = false;
 
 static int staticInit() {
-  if (qgetenv("ENABLE_PERCENT_VARIABLE_NOT_FOUND_LOGGING") == "true")
-    _variableNotFoundLoggingEnabled = true;
+  _variableNotFoundLoggingEnabled =
+      Utf8String{qEnvironmentVariable(
+        "ENABLE_PERCENT_VARIABLE_NOT_FOUND_LOGGING")}.toBool();
   return 0;
 }
 Q_CONSTRUCTOR_FUNCTION(staticInit)

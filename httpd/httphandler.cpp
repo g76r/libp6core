@@ -17,12 +17,8 @@ static const QRegularExpression _multipleSlashRE("//+");
 
 HttpHandler::HttpHandler(QString name, QObject *parent)
   : QObject(parent), _name(name) {
-  QByteArray origins = qgetenv("HTTP_ALLOWED_CORS_ORIGINS");
-#if QT_VERSION >= 0x050f00
-  for (const QString &origin : QString::fromUtf8(origins).split(';', Qt::SkipEmptyParts)) {
-#else
-  for (const QString &origin : QString::fromUtf8(origins).split(';', QString::SkipEmptyParts)) {
-#endif
+  auto origins = qEnvironmentVariable("HTTP_ALLOWED_CORS_ORIGINS");
+  for (auto origin : origins.split(';', Qt::SkipEmptyParts)) {
     if (origin == "*") {
       _corsOrigins.clear();
       return;

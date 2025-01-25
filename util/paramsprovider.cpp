@@ -1,4 +1,4 @@
-/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -27,9 +27,9 @@ struct Environment : public ParamsProvider {
     const Utf8String &key, const QVariant &def,
       const EvalContext &context) const override {
     if (context.hasScopeOrNone(_scope)) {
-      auto v = qgetenv(key);
+      auto v = qEnvironmentVariable(key);
       if (!v.isNull())
-        return QString::fromLocal8Bit(v);
+        return v;
     }
     return def;
   }
