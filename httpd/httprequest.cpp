@@ -33,7 +33,7 @@ Q_CONSTRUCTOR_FUNCTION(staticInit)
 namespace {
 struct XffHeaderInitializer {
   XffHeaderInitializer() {
-    Utf8String header = qEnvironmentVariable("P6_X_FORWARDED_FOR_HEADER");
+    Utf8String header = qEnvironmentVariable("X_FORWARDED_FOR_HEADER");
     if (header.isEmpty())
       header = "X-Forwarded-For";
     _xffHeader = header.toInternetHeaderCase();
