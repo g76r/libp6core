@@ -601,8 +601,8 @@ see https://en.wikipedia.org/wiki/Reverse_Polish_notation
 
 following operators are supported with their usual (C, C++, Java, JS, bash,
 OCaml...) meaning:
-binary operators: `+ - * / % @ <=> <= >= < > == != ==* !=* =~ !=~ && ^^ ||`
-`?? ??* <? >? <?* >?*`
+binary operators: `+ - * / % @ <=> <= >= < > == != ==* !=* =~ !=~ & ^ | && ^^`
+`|| ?? ??* <? >? <?* >?*`
 unary operators: `! !! ~ ~~ ?- !- ?* !* # ##`
 ternary operator: `?:`
 stack operators: `:=: <swap> <dup>`
@@ -630,21 +630,19 @@ please note that:
 - `==` and `!=` consider non set variable or any invalid QVariant or valid
   QVariant not convertible to a number or string as if it were an empty string,
   and thus always return either true or false
-- `==*` and `!=*` consider invalid QVariant or QVariant not convertible to a
-  number or string as impossible to compare and return null (invalid QVariant,
-  will be evaluated to an empty string if it reaches the outside of =rpn)
+- `==* !=* <=> <= >= < >` consider invalid QVariant (null) or QVariant not
+  convertible to a number or string as impossible to compare and return null
   whatever the value of the other operand is
-- `<=> <= >= < >` will return null instead of true or false if they cannot
-  their operator, that is if one is not set, invalid or impossible to convert
-  to a number or a string
 - `+ - *` will return null if one of their operand is not convertible to a
   number or if an integer operation overflows e.g.
   `%{=rpn,0xffffffffffffffff,1,+}` and `%{=rpn,1,foo,+}` both return
   null
-- `/ % && ^^ ||` will return null if one of their operand is not convertible
+- `/ % && ^^ ||` will return null if one of their operands is not convertible
   to a number
+- `& ^ |` will return null if one of their operands is not convertible
+  to an integer
 - `<?` and `>?` are min and max operators (`%{=rpn,abc,ABC,<?}` -> ABC
-  and `%{=rpn,100,~~,20,~~,>?}` -> 100), they pretend an null, invalid or
+  and `%{=rpn,100,~~,20,~~,>?}` -> 100), they pretend a null, invalid or
   unconvertible operand to be an empty string
 - `<?*` and `>?*` do the same but will return null as soon as one of their
   operand is null, invalid or unconvertible
@@ -679,7 +677,7 @@ examples:
 * `%{=rpn,foo}` -> "foo"
 * `%{=rpn,%%foo}` -> "%foo"
 * `%{=rpn,dt: ,%=date,@}` -> "dt: " followed by current datetime
-* `%{=rpn,%{=rpn;42;!!},z,@}` -> "truez" but please don't do that
+* `%{=rpn,%{=rpn;42;!!},z,@}` -> "truez"
 
 %=integer
 ---------

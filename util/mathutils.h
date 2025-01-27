@@ -1,4 +1,4 @@
-/* Copyright 2022-2024 Gregoire Barbier and others.
+/* Copyright 2022-2025 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,7 +21,16 @@ class LIBP6CORESHARED_EXPORT MathUtils {
   MathUtils() = delete;
 
 public:
-  static bool promoteToBestNumericType(QVariant *a);
+  /** Try to convert to largest compatible arithmetic type:
+   *  - double if floating type
+   *  - otherwise qlonglong / std::int64_t if possible (small enough integer)
+   *  - otherwise qulonglong / std::uint64_t if possible (small enough and > 0)
+   *  String types (QString,QByteArray,Utf8String) are converted to numbers as
+   *  above if possible, "true" to 1, "false" to 0.
+   *  QDateTime,QDate,QTime are converted to msecs since 1970.
+   *  @return true on success false on failure
+   */
+  static bool promoteToBestArithmeticType(QVariant *a);
   /** Try to convert to largest matching compatible numeric types.
    * If both are any signed integer types both become qlonglong
    * If both are any unsigned integer types both become qulonglong
@@ -31,9 +40,9 @@ public:
    * QDateTime,QDate,QTime are converted to msecs since 1970.
    * @return true on success false on failure
    */
-  static bool promoteToBestNumericType(QVariant *a, QVariant *b);
+  static bool promoteToBestArithmeticType(QVariant *a, QVariant *b);
   /** same as QVariant::compare() but:
-   *  - first try to promote numbers to best integer or decimal representation
+   *  - first try to promote numbers to best arithmetic type
    *  and to convert strings if they are valid representations of numbers
    *  (such as: "1" "8e-10" "0x20" "true"), to convert dates and
    *  datetimes to msecs since 1970, times to msecs since midnight, booleans to
@@ -51,14 +60,39 @@ public:
    */
   static QPartialOrdering compareQVariantAsNumberOrString(
       QVariant a, QVariant b, bool pretends_invalid_is_empty = false);
+  /** Add numbers after promoting them to best arithmetic type.
+   *  For integers, use __builtin_{s,u}addll_overflow instead of + if supported
+   *  by compiler */
   static QVariant addQVariantAsNumber(QVariant a, QVariant b);
+  /** Substract numbers after promoting them to best arithmetic type.
+   *  For integers, use __builtin_{s,u}subll_overflow instead of + if supported
+   *  by compiler */
   static QVariant subQVariantAsNumber(QVariant a, QVariant b);
+  /** Multiply numbers after promoting them to best arithmetic type.
+   *  For integers, use __builtin_{s,u}mulll_overflow instead of + if supported
+   *  by compiler */
   static QVariant mulQVariantAsNumber(QVariant a, QVariant b);
+  /** Divide numbers after promoting them to best arithmetic type. */
   static QVariant divQVariantAsNumber(QVariant a, QVariant b);
+  /** Take reminder of division after promoting numbers to best arithmetic
+   *  type.
+   *  For doubles, use std::fmod(). */
   static QVariant modQVariantAsNumber(QVariant a, QVariant b);
-  static QVariant andQVariantAsNumber(QVariant a, QVariant b);
-  static QVariant xorQVariantAsNumber(QVariant a, QVariant b);
-  static QVariant orQVariantAsNumber(QVariant a, QVariant b);
+  /** Boolean and after best arithmethic type conversion then bool
+   *  conversion. */
+  static QVariant boolAndQVariantAsNumber(QVariant a, QVariant b);
+  /** Boolean exclusive or after best arithmethic type conversion then bool
+   *  conversion. */
+  static QVariant boolXorQVariantAsNumber(QVariant a, QVariant b);
+  /** Boolean inclusive or after best arithmethic type conversion then bool
+   *  conversion. */
+  static QVariant boolOrQVariantAsNumber(QVariant a, QVariant b);
+  /** Bitwise and integers after promoting them to best integral type. */
+  static QVariant bitwiseAndQVariantAsIntegral(QVariant a, QVariant b);
+  /** Bitwise xor integers after promoting them to best integral type. */
+  static QVariant bitwiseXorQVariantAsIntegral(QVariant a, QVariant b);
+  /** Bitwise or integers after promoting them to best integral type. */
+  static QVariant bitwiseOrQVariantAsIntegral(QVariant a, QVariant b);
   /** convert QVariant to QString */
   static bool convertToUtf16(QVariant *a);
 };

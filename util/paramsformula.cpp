@@ -1,4 +1,4 @@
-/* Copyright 2024 Gregoire Barbier and others.
+/* Copyright 2024-2025 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -430,23 +430,41 @@ static const RadixTree<OperatorDefinition> _operatorDefinitions {
         auto x = stack->popeval_utf8(stack, context, {});
         return !re.match(x).hasMatch();
       } }, true },
+  { "&", { 2, 11, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) -> QVariant  {
+        auto y = stack->popeval(stack, context, {});
+        auto x = stack->popeval(stack, context, {});
+        auto r = MathUtils::bitwiseAndQVariantAsIntegral(x, y);
+        return r.isValid() ? r : def;
+      } }, true },
+  { "^", { 2, 12, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) -> QVariant  {
+        auto y = stack->popeval(stack, context, {});
+        auto x = stack->popeval(stack, context, {});
+        auto r = MathUtils::bitwiseXorQVariantAsIntegral(x, y);
+        return r.isValid() ? r : def;
+      } }, true },
+  { "|", { 2, 13, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) -> QVariant  {
+        auto y = stack->popeval(stack, context, {});
+        auto x = stack->popeval(stack, context, {});
+        auto r = MathUtils::bitwiseOrQVariantAsIntegral(x, y);
+        return r.isValid() ? r : def;
+      } }, true },
   { "&&", { 2, 14, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) -> QVariant  {
         auto y = stack->popeval(stack, context, {});
         // LATER get rid of andQVariantAsNumber and do lazy evaluation here if y is false
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::andQVariantAsNumber(x, y);
+        auto r = MathUtils::boolAndQVariantAsNumber(x, y);
         return r.isValid() ? r : def;
       } }, true },
   { "^^", { 2, 15, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) -> QVariant  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::xorQVariantAsNumber(x, y);
+        auto r = MathUtils::boolXorQVariantAsNumber(x, y);
         return r.isValid() ? r : def;
       } }, true },
   { "||", { 2, 16, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) -> QVariant  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::orQVariantAsNumber(x, y);
+        auto r = MathUtils::boolOrQVariantAsNumber(x, y);
         return r.isValid() ? r : def;
       } }, true },
   { "?:", { 3, 17, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) -> QVariant  {

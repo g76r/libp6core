@@ -1,4 +1,4 @@
-/* Copyright 2022-2023 Gregoire Barbier and others.
+/* Copyright 2022-2025 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,9 +16,9 @@
 #include <QDateTime>
 #include <cstdint>
 
-/** following constants are not compliant to C++ standard since they assume that
- * integers are implemented with 2's complement
- * however this is compliant with real world
+/* following constants are only compliant to C++ standard since C++20 since they
+ * assume that integers are implemented with 2's complement
+ * moreover this is also compliant with real world compilers for a long time
  * see proposal P0907R4
  * https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0907r4.html
  */
@@ -28,7 +28,7 @@
 #define UINT_MAX_AS_LL  ((std::int64_t)UINT_MAX)
 #define UINT_MAX_AS_ULL ((std::uint64_t)UINT_MAX)
 
-static int numericsPromotion(int typeId) {
+static int arithmeticsPromotion(int typeId) {
   switch(typeId) {
     case QMetaType::Bool:
     case QMetaType::Int:
@@ -54,7 +54,7 @@ static int numericsPromotion(int typeId) {
   return QMetaType::UnknownType;
 }
 
-static bool convertOtherTypesToBestNumericTypeIfPossible(
+static bool convertOtherTypesToBestArithmeticTypeIfPossible(
     QVariant *a, int *ta, int *tta) {
   Utf8String s;
   switch(*ta) {
@@ -137,10 +137,10 @@ static bool convertOtherTypesToBestNumericTypeIfPossible(
   return false;
 }
 
-bool MathUtils::promoteToBestNumericType(QVariant *a) {
+bool MathUtils::promoteToBestArithmeticType(QVariant *a) {
   int ta = a->metaType().id();
-  int tta = numericsPromotion(ta);
-  convertOtherTypesToBestNumericTypeIfPossible(a, &ta, &tta);
+  int tta = arithmeticsPromotion(ta);
+  convertOtherTypesToBestArithmeticTypeIfPossible(a, &ta, &tta);
   switch (tta) {
     case QMetaType::ULongLong:
     case QMetaType::LongLong:
@@ -168,15 +168,15 @@ bool MathUtils::convertToUtf16(QVariant *a) {
   return false;
 }
 
-bool MathUtils::promoteToBestNumericType(QVariant *a, QVariant *b) {
+bool MathUtils::promoteToBestArithmeticType(QVariant *a, QVariant *b) {
   if (!a || !b)
     return false;
   int ta = a->metaType().id();
   int tb = b->metaType().id();
-  int tta = numericsPromotion(ta);
-  int ttb = numericsPromotion(tb);
-  convertOtherTypesToBestNumericTypeIfPossible(a, &ta, &tta);
-  convertOtherTypesToBestNumericTypeIfPossible(b, &tb, &ttb);
+  int tta = arithmeticsPromotion(ta);
+  int ttb = arithmeticsPromotion(tb);
+  convertOtherTypesToBestArithmeticTypeIfPossible(a, &ta, &tta);
+  convertOtherTypesToBestArithmeticTypeIfPossible(b, &tb, &ttb);
   //qDebug() << "promoteToBestNumericType " << ta << " " << tb << " " << tta
   //         << " " << ttb;
   if (tta == QMetaType::UnknownType || ttb == QMetaType::UnknownType)
@@ -228,7 +228,7 @@ QPartialOrdering MathUtils::compareQVariantAsNumberOrString(
   QVariant a, QVariant b, bool pretends_invalid_is_empty) {
   auto a0 = a, b0 = b;
   //qDebug() << "compareQVariantAsNumber" << a << b;
-  if (promoteToBestNumericType(&a, &b)) {
+  if (promoteToBestArithmeticType(&a, &b)) {
     //qDebug() << "  promoted" << a << b;
     return QVariant::compare(a, b);
   }
@@ -250,7 +250,7 @@ QPartialOrdering MathUtils::compareQVariantAsNumberOrString(
 }
 
 QVariant MathUtils::addQVariantAsNumber(QVariant a, QVariant b) {
-  if (!promoteToBestNumericType(&a, &b))
+  if (!promoteToBestArithmeticType(&a, &b))
     return QVariant();
   //qDebug() << "addQVariantAsNumber " << a.metaType().id();
 #if __has_builtin(__builtin_add_overflow)
@@ -282,7 +282,7 @@ QVariant MathUtils::addQVariantAsNumber(QVariant a, QVariant b) {
 }
 
 QVariant MathUtils::subQVariantAsNumber(QVariant a, QVariant b) {
-  if (!promoteToBestNumericType(&a, &b))
+  if (!promoteToBestArithmeticType(&a, &b))
     return QVariant();
 #if __has_builtin(__builtin_sub_overflow)
   qlonglong i;
@@ -313,7 +313,7 @@ QVariant MathUtils::subQVariantAsNumber(QVariant a, QVariant b) {
 }
 
 QVariant MathUtils::mulQVariantAsNumber(QVariant a, QVariant b) {
-  if (!promoteToBestNumericType(&a, &b))
+  if (!promoteToBestArithmeticType(&a, &b))
     return QVariant();
 #if __has_builtin(__builtin_mul_overflow)
   qlonglong i;
@@ -344,7 +344,7 @@ QVariant MathUtils::mulQVariantAsNumber(QVariant a, QVariant b) {
 }
 
 QVariant MathUtils::divQVariantAsNumber(QVariant a, QVariant b) {
-  if (!promoteToBestNumericType(&a, &b))
+  if (!promoteToBestArithmeticType(&a, &b))
     return QVariant();
   switch (a.metaType().id()) {
     case QMetaType::Double:
@@ -358,7 +358,7 @@ QVariant MathUtils::divQVariantAsNumber(QVariant a, QVariant b) {
 }
 
 QVariant MathUtils::modQVariantAsNumber(QVariant a, QVariant b) {
-  if (!promoteToBestNumericType(&a, &b))
+  if (!promoteToBestArithmeticType(&a, &b))
     return QVariant();
   switch (a.metaType().id()) {
     case QMetaType::Double:
@@ -375,10 +375,10 @@ static inline QVariant bool_operation(
     QVariant a, QVariant b, std::function<QVariant(bool,bool)> op) {
   int ta = a.metaType().id();
   int tb = b.metaType().id();
-  int tta = numericsPromotion(ta);
-  int ttb = numericsPromotion(tb);
-  convertOtherTypesToBestNumericTypeIfPossible(&a, &ta, &tta);
-  convertOtherTypesToBestNumericTypeIfPossible(&b, &tb, &ttb);
+  int tta = arithmeticsPromotion(ta);
+  int ttb = arithmeticsPromotion(tb);
+  convertOtherTypesToBestArithmeticTypeIfPossible(&a, &ta, &tta);
+  convertOtherTypesToBestArithmeticTypeIfPossible(&b, &tb, &ttb);
   bool x = false;
   switch (tta) {
     case QMetaType::Double:
@@ -398,14 +398,53 @@ static inline QVariant bool_operation(
   return QVariant{};
 }
 
-QVariant MathUtils::andQVariantAsNumber(QVariant a, QVariant b) {
+QVariant MathUtils::boolAndQVariantAsNumber(QVariant a, QVariant b) {
   return bool_operation(a, b, [](bool x, bool y) { return x && y; });
 }
 
-QVariant MathUtils::xorQVariantAsNumber(QVariant a, QVariant b) {
+QVariant MathUtils::boolXorQVariantAsNumber(QVariant a, QVariant b) {
   return bool_operation(a, b, [](bool x, bool y) { return x != y; });
 }
 
-QVariant MathUtils::orQVariantAsNumber(QVariant a, QVariant b) {
+QVariant MathUtils::boolOrQVariantAsNumber(QVariant a, QVariant b) {
   return bool_operation(a, b, [](bool x, bool y) { return x || y; });
+}
+
+QVariant MathUtils::bitwiseAndQVariantAsIntegral(QVariant a, QVariant b) {
+  if (!promoteToBestArithmeticType(&a, &b))
+    return {};
+  //qDebug() << "bitAndQVariantAsNumber " << a.metaType().id();
+  switch (a.metaType().id()) {
+    case QMetaType::LongLong:
+      return QVariant(a.toLongLong() & b.toLongLong());
+    case QMetaType::ULongLong:
+      return QVariant(a.toULongLong() & b.toULongLong());
+  };
+  return {};
+}
+
+QVariant MathUtils::bitwiseXorQVariantAsIntegral(QVariant a, QVariant b) {
+  if (!promoteToBestArithmeticType(&a, &b))
+    return {};
+  //qDebug() << "bitAndQVariantAsNumber " << a.metaType().id();
+  switch (a.metaType().id()) {
+    case QMetaType::LongLong:
+      return QVariant(a.toLongLong() ^ b.toLongLong());
+    case QMetaType::ULongLong:
+      return QVariant(a.toULongLong() ^ b.toULongLong());
+  };
+  return {};
+}
+
+QVariant MathUtils::bitwiseOrQVariantAsIntegral(QVariant a, QVariant b) {
+  if (!promoteToBestArithmeticType(&a, &b))
+    return {};
+  //qDebug() << "bitAndQVariantAsNumber " << a.metaType().id();
+  switch (a.metaType().id()) {
+    case QMetaType::LongLong:
+      return QVariant(a.toLongLong() | b.toLongLong());
+    case QMetaType::ULongLong:
+      return QVariant(a.toULongLong() | b.toULongLong());
+  };
+  return {};
 }
