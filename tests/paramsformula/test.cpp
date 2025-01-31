@@ -11,7 +11,7 @@ int main(void) {
   ParamSet x5 { "x", "5" };
   ParamSet xa_d { "x", "a$" };
   qDebug() << x.metaType().name() << y.metaType().name()
-           << MathUtils::promoteToBestNumericType(&x, &y)
+           << MathUtils::promoteToBestArithmeticType(&x, &y)
            << x.metaType().name() << y.metaType().name()
            << x.toLongLong() << y.toLongLong()
            << x.toDouble() << y.toDouble()
