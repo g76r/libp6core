@@ -1,4 +1,4 @@
-/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -31,14 +31,15 @@ static int staticInit() {
 }
 Q_CONSTRUCTOR_FUNCTION(staticInit)
 
-qint64 PfNodeData::writePf(QIODevice *target, const PfOptions &options) const {
+qint64 PfNode::PfNodeData::writePf(
+    QIODevice *target, const PfOptions &options) const {
   if (options.shouldIndent())
     return internalWritePf(target, "", options);
   return internalWritePf(target, QString(), options);
 }
 
-qint64 PfNodeData::writeFlatXml(QIODevice *target,
-                                const PfOptions &options) const  {
+qint64 PfNode::PfNodeData::writeFlatXml(
+    QIODevice *target, const PfOptions &options) const  {
   // may indent one day (however xmllint does that well)
   qint64 total = 0, r;
   // opening tag
@@ -157,7 +158,7 @@ qint64 PfNodeData::writeFlatXml(QIODevice *target,
   return total;
 }*/
 
-qint64 PfNodeData::internalWritePf(
+qint64 PfNode::PfNodeData::internalWritePf(
     QIODevice *target, QString indent, const PfOptions &options) const {
   qint64 total = 0, r;
   if (isComment()) {
@@ -237,7 +238,7 @@ qint64 PfNodeData::internalWritePf(
   return total;
 }
 
-qint64 PfNodeData::internalWritePfSubNodes(
+qint64 PfNode::PfNodeData::internalWritePfSubNodes(
     QIODevice *target, QString indent, const PfOptions &options) const {
   qint64 total = 0, r;
   if(!_children.isEmpty()) {
@@ -262,7 +263,7 @@ qint64 PfNodeData::internalWritePfSubNodes(
   return total;
 }
 
-qint64 PfNodeData::internalWritePfContent(
+qint64 PfNode::PfNodeData::internalWritePfContent(
     QIODevice *target, const QString &indent, const PfOptions &options) const {
   qint64 total = 0, r;
   if (isArray()) {
@@ -415,7 +416,7 @@ PfNode PfNode::fromPf(const QByteArray &source, const PfOptions &options) {
   return PfNode();
 }
 
-qint64 PfNodeData::writePfContent(
+qint64 PfNode::PfNodeData::writePfContent(
     QIODevice *target, const PfOptions &options) const {
   if (isArray()) {
     if (options.shouldTranslateArrayIntoTree()) {
@@ -442,7 +443,7 @@ qint64 PfNodeData::writePfContent(
   return total;
 }
 
-qint64 PfNodeData::writeRawContent(
+qint64 PfNode::PfNodeData::writeRawContent(
     QIODevice *target, const PfOptions &options) const {
   if (isArray())
     return _array.writePf(target, options);
@@ -456,7 +457,7 @@ qint64 PfNodeData::writeRawContent(
   return total;
 }
 
-qint64 PfNodeData::writeXmlUsingBase64Content(
+qint64 PfNode::PfNodeData::writeXmlUsingBase64Content(
     QIODevice *target, const PfOptions &options) const {
   if (isArray()) {
     if (options.shouldTranslateArrayIntoTree()) {
@@ -483,7 +484,7 @@ qint64 PfNodeData::writeXmlUsingBase64Content(
   return total;
 }
 
-QByteArray PfNodeData::contentAsByteArray() const {
+QByteArray PfNode::PfNodeData::contentAsByteArray() const {
   QBuffer buf;
   buf.open(QIODevice::WriteOnly);
   writeRawContent(&buf, PfOptions());

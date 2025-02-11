@@ -1,4 +1,4 @@
-/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,16 +21,16 @@
 class QIODevice;
 class PfNode;
 
-class LIBP6CORESHARED_EXPORT PfArrayData : public QSharedData {
-  friend class PfArray;
-  QStringList _headers;
-  QList<QStringList> _rows;
-
-public:
-  PfArrayData() { }
-};
-
 class LIBP6CORESHARED_EXPORT PfArray {
+  class LIBP6CORESHARED_EXPORT PfArrayData : public QSharedData {
+    friend class PfArray;
+    QStringList _headers;
+    QList<QStringList> _rows;
+
+  public:
+    PfArrayData() { }
+  };
+
   QSharedDataPointer<PfArrayData> d;
 
 public:

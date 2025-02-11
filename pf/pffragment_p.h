@@ -1,4 +1,4 @@
-/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,79 +17,6 @@
 #include "pfoptions.h"
 #include <QIODevice>
 
-/** Internal class for Qt's implicit sharing idiom.
-  * @see PfFragment */
-class LIBP6CORESHARED_EXPORT PfFragmentData : public QSharedData {
-  friend class PfFragment;
-protected:
-  enum Format {Raw, Pf, XmlBase64 };
-public:
-  virtual ~PfFragmentData();
-  virtual qint64 write(
-      QIODevice *target, Format format, const PfOptions &options) const = 0;
-  virtual bool isText() const;
-  virtual QString text() const;
-  virtual bool isEmpty() const;
-  virtual bool isBinary() const;
-  virtual bool isLazyBinary() const;
-};
-
-class LIBP6CORESHARED_EXPORT PfTextFragmentData : public PfFragmentData {
-  friend class PfFragment;
-  QString _text;
-  explicit PfTextFragmentData(const QString &text) : _text(text) { }
-  qint64 write(QIODevice *target, Format format,
-               const PfOptions &options) const override;
-  bool isText() const override;
-  QString text() const override;
-};
-
-class LIBP6CORESHARED_EXPORT PfAbstractBinaryFragmentData
-    : public PfFragmentData {
-  friend class PfFragment;
-protected:
-  Utf8String _surface;
-  qint64 _size; // real data size, surface removed
-  bool isBinary() const override;
-
-  PfAbstractBinaryFragmentData() : _size(0) { }
-  inline qint64 writeDataApplyingSurface(
-      QIODevice *target, Format format, const PfOptions &options,
-      QByteArray data) const;
-  inline static Utf8String takeFirstLayer(Utf8String &surface);
-  inline bool removeSurface(QByteArray &data, Utf8String surface) const;
-  inline bool applySurface(QByteArray &data, Utf8String surface) const;
-  inline qint64 measureSurface(const QByteArray &data, Utf8String surface) const;
-};
-
-class LIBP6CORESHARED_EXPORT PfBinaryFragmentData
-    : public PfAbstractBinaryFragmentData {
-  friend class PfFragment;
-  QByteArray _data;
-  PfBinaryFragmentData(const QByteArray &data, const Utf8String &surface)
-    : _data(data) { setSurface(surface, true); }
-  void setSurface(const Utf8String &surface, bool shouldAdjustSize);
-  qint64 write(QIODevice *target, Format format,
-               const PfOptions &options) const override;
-};
-
-class LIBP6CORESHARED_EXPORT PfLazyBinaryFragmentData
-    : public PfAbstractBinaryFragmentData {
-  friend class PfFragment;
-  mutable QIODevice *_device; // TODO manage ownership of the device
-  qint64 _length; // raw data length on device, surface applyied
-  qint64 _offset;
-  PfLazyBinaryFragmentData(
-      QIODevice *device, qint64 length, qint64 offset,
-      const Utf8String &surface)
-    : _device(device), _length(length), _offset(offset) {
-    setSurface(surface, true); }
-  void setSurface(const Utf8String &surface, bool shouldAdjustSize);
-  qint64 write(QIODevice *target, Format format,
-               const PfOptions &options) const override;
-  bool isLazyBinary() const override;
-};
-
 /** Fragment of PF node content, this class is only for internal use of
   * implementation. It should not be used directly by application code.
   *
@@ -99,8 +26,79 @@ class LIBP6CORESHARED_EXPORT PfLazyBinaryFragmentData
   * An empty fragment is a text fragment.
   */
 class LIBP6CORESHARED_EXPORT PfFragment {
-  friend class PfNodeData;
   friend class PfNode;
+
+  class LIBP6CORESHARED_EXPORT PfFragmentData : public QSharedData {
+    friend class PfFragment;
+  protected:
+    enum Format {Raw, Pf, XmlBase64 };
+  public:
+    virtual ~PfFragmentData();
+    virtual qint64 write(
+        QIODevice *target, Format format, const PfOptions &options) const = 0;
+    virtual bool isText() const;
+    virtual QString text() const;
+    virtual bool isEmpty() const;
+    virtual bool isBinary() const;
+    virtual bool isLazyBinary() const;
+  };
+
+  class LIBP6CORESHARED_EXPORT PfTextFragmentData : public PfFragmentData {
+    friend class PfFragment;
+    QString _text;
+    explicit PfTextFragmentData(const QString &text) : _text(text) { }
+    qint64 write(QIODevice *target, Format format,
+                 const PfOptions &options) const override;
+    bool isText() const override;
+    QString text() const override;
+  };
+
+  class LIBP6CORESHARED_EXPORT PfAbstractBinaryFragmentData
+      : public PfFragmentData {
+    friend class PfFragment;
+  protected:
+    Utf8String _surface;
+    qint64 _size; // real data size, surface removed
+    bool isBinary() const override;
+
+    PfAbstractBinaryFragmentData() : _size(0) { }
+    inline qint64 writeDataApplyingSurface(
+        QIODevice *target, Format format, const PfOptions &options,
+        QByteArray data) const;
+    inline static Utf8String takeFirstLayer(Utf8String &surface);
+    inline bool removeSurface(QByteArray &data, Utf8String surface) const;
+    inline bool applySurface(QByteArray &data, Utf8String surface) const;
+    inline qint64 measureSurface(const QByteArray &data, Utf8String surface) const;
+  };
+
+  class LIBP6CORESHARED_EXPORT PfBinaryFragmentData
+      : public PfAbstractBinaryFragmentData {
+    friend class PfFragment;
+    QByteArray _data;
+    PfBinaryFragmentData(const QByteArray &data, const Utf8String &surface)
+      : _data(data) { setSurface(surface, true); }
+    void setSurface(const Utf8String &surface, bool shouldAdjustSize);
+    qint64 write(QIODevice *target, Format format,
+                 const PfOptions &options) const override;
+  };
+
+  class LIBP6CORESHARED_EXPORT PfLazyBinaryFragmentData
+      : public PfAbstractBinaryFragmentData {
+    friend class PfFragment;
+    mutable QIODevice *_device; // TODO manage ownership of the device
+    qint64 _length; // raw data length on device, surface applyied
+    qint64 _offset;
+    PfLazyBinaryFragmentData(
+        QIODevice *device, qint64 length, qint64 offset,
+        const Utf8String &surface)
+      : _device(device), _length(length), _offset(offset) {
+      setSurface(surface, true); }
+    void setSurface(const Utf8String &surface, bool shouldAdjustSize);
+    qint64 write(QIODevice *target, Format format,
+                 const PfOptions &options) const override;
+    bool isLazyBinary() const override;
+  };
+
   QSharedDataPointer<PfFragmentData> d;
 
 public:

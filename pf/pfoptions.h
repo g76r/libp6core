@@ -1,4 +1,4 @@
-/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -26,31 +26,31 @@ enum PfRootNodesParsingPolicy {
   ParseEveryRootNode, StopAfterFirstRootNode, FailAtSecondRootNode
 };
 
-class LIBP6CORESHARED_EXPORT PfOptionsData : public QSharedData {
-  friend class PfOptions;
-  bool _shouldLazyLoadBinaryFragments;
-  bool _shouldTranslateArrayIntoTree;
-  bool _shouldIndent;
-  bool _shouldIgnoreComment;
-  bool _shouldWriteContentBeforeSubnodes;
-  // LATER maxBinaryFragmentSize (then split them into several fragments)
-  Utf8String _outputSurface;
-  PfPreferedCharactersProtection _preferedCharactersProtection;
-  PfRootNodesParsingPolicy _rootNodesParsingPolicy;
-  int _readTimeout; // ms
-
-public:
-  PfOptionsData() : _shouldLazyLoadBinaryFragments(false),
-    _shouldTranslateArrayIntoTree(false), _shouldIndent(false),
-    _shouldIgnoreComment(true), _shouldWriteContentBeforeSubnodes(false),
-    _preferedCharactersProtection(PfDoubleQuoteProtection),
-    _rootNodesParsingPolicy(ParseEveryRootNode),
-    _readTimeout(30000) {
-  }
-};
-
 class LIBP6CORESHARED_EXPORT PfOptions {
+  class LIBP6CORESHARED_EXPORT PfOptionsData : public QSharedData {
+    friend class PfOptions;
+    bool _shouldLazyLoadBinaryFragments;
+    bool _shouldTranslateArrayIntoTree;
+    bool _shouldIndent;
+    bool _shouldIgnoreComment;
+    bool _shouldWriteContentBeforeSubnodes;
+    // LATER maxBinaryFragmentSize (then split them into several fragments)
+    Utf8String _outputSurface;
+    PfPreferedCharactersProtection _preferedCharactersProtection;
+    PfRootNodesParsingPolicy _rootNodesParsingPolicy;
+    int _readTimeout; // ms
+
+  public:
+    PfOptionsData() : _shouldLazyLoadBinaryFragments(false),
+      _shouldTranslateArrayIntoTree(false), _shouldIndent(false),
+      _shouldIgnoreComment(true), _shouldWriteContentBeforeSubnodes(false),
+      _preferedCharactersProtection(PfDoubleQuoteProtection),
+      _rootNodesParsingPolicy(ParseEveryRootNode),
+      _readTimeout(30000) {
+    }
+  };
   QSharedDataPointer<PfOptionsData> d;
+
 public:
   PfOptions() : d(new PfOptionsData) { }
   PfOptions(const PfOptions &other) : d(other.d) { }

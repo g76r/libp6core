@@ -1,4 +1,4 @@
-/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,7 +19,8 @@
 
 static QRegularExpression _surfaceHeadRE { "\\A([^:]*)(:|$)" };
 
-Utf8String PfAbstractBinaryFragmentData::takeFirstLayer(Utf8String &surface) {
+Utf8String PfFragment::PfAbstractBinaryFragmentData::takeFirstLayer(
+    Utf8String &surface) {
   QRegularExpressionMatch match = _surfaceHeadRE.match(surface);
   if (!match.hasMatch())
     return surface = {};
@@ -28,7 +29,7 @@ Utf8String PfAbstractBinaryFragmentData::takeFirstLayer(Utf8String &surface) {
   return first;
 }
 
-bool PfAbstractBinaryFragmentData::removeSurface(
+bool PfFragment::PfAbstractBinaryFragmentData::removeSurface(
     QByteArray &data, Utf8String surface) const {
   auto layer = takeFirstLayer(surface);
   if (layer.isEmpty() || layer == "null") {
@@ -64,7 +65,7 @@ bool PfAbstractBinaryFragmentData::removeSurface(
   return true;
 }
 
-bool PfAbstractBinaryFragmentData::applySurface(
+bool PfFragment::PfAbstractBinaryFragmentData::applySurface(
     QByteArray &data, Utf8String surface) const {
   auto layer = takeFirstLayer(surface);
   if (!surface.isEmpty())
@@ -90,7 +91,7 @@ bool PfAbstractBinaryFragmentData::applySurface(
   return true;
 }
 
-qint64 PfAbstractBinaryFragmentData::measureSurface(
+qint64 PfFragment::PfAbstractBinaryFragmentData::measureSurface(
     const QByteArray &data, Utf8String surface) const {
   auto layer = takeFirstLayer(surface);
   if (layer.isEmpty() || layer == "null") {
@@ -135,7 +136,7 @@ qint64 PfAbstractBinaryFragmentData::measureSurface(
   return true;
 }
 
-void PfBinaryFragmentData::setSurface(
+void PfFragment::PfFragment::PfBinaryFragmentData::setSurface(
     const Utf8String &surface, bool shouldAdjustSize) {
   _surface = PfOptions::normalizeSurface(surface);
   if (shouldAdjustSize && !!_surface) {
@@ -144,7 +145,7 @@ void PfBinaryFragmentData::setSurface(
   }
 }
 
-void PfLazyBinaryFragmentData::setSurface(
+void PfFragment::PfLazyBinaryFragmentData::setSurface(
     const Utf8String &surface, bool shouldAdjustSize) {
   _surface = PfOptions::normalizeSurface(surface);
   if (shouldAdjustSize && !_surface.isNull()) {
@@ -167,34 +168,35 @@ error:
   }
 }
 
-PfFragmentData::~PfFragmentData() {
+PfFragment::PfFragmentData::~PfFragmentData() {
 }
 
-qint64 PfFragmentData::write(QIODevice *, Format, const PfOptions &) const {
+qint64 PfFragment::PfFragmentData::write(
+    QIODevice *, Format, const PfOptions &) const {
   return -1;
 }
 
-bool PfFragmentData::isText() const {
+bool PfFragment::PfFragmentData::isText() const {
   return false;
 }
 
-QString PfFragmentData::text() const {
+QString PfFragment::PfFragmentData::text() const {
   return QString();
 }
 
-bool PfFragmentData::isEmpty() const {
+bool PfFragment::PfFragmentData::isEmpty() const {
   return false;
 }
 
-bool PfFragmentData::isBinary() const {
+bool PfFragment::PfFragmentData::isBinary() const {
   return false;
 }
 
-bool PfFragmentData::isLazyBinary() const {
+bool PfFragment::PfFragmentData::isLazyBinary() const {
   return false;
 }
 
-qint64 PfTextFragmentData::write(
+qint64 PfFragment::PfTextFragmentData::write(
     QIODevice *target, Format format, const PfOptions &options) const {
   switch (format) {
   case Raw:
@@ -207,24 +209,24 @@ qint64 PfTextFragmentData::write(
   return -1;
 }
 
-bool PfTextFragmentData::isText() const {
+bool PfFragment::PfTextFragmentData::isText() const {
   return true;
 }
 
-QString PfTextFragmentData::text() const {
+QString PfFragment::PfTextFragmentData::text() const {
   return _text;
 }
 
-bool PfAbstractBinaryFragmentData::isBinary() const {
+bool PfFragment::PfAbstractBinaryFragmentData::isBinary() const {
   return true;
 }
 
-qint64 PfBinaryFragmentData::write(
+qint64 PfFragment::PfBinaryFragmentData::write(
     QIODevice *target, Format format, const PfOptions &options) const {
   return writeDataApplyingSurface(target, format, options, _data);
 }
 
-qint64 PfLazyBinaryFragmentData::write(
+qint64 PfFragment::PfLazyBinaryFragmentData::write(
     QIODevice *target, Format format, const PfOptions &options) const {
   qint64 total = 0, pos = 0;
   if (!_device || !target)
@@ -284,11 +286,11 @@ error:
   return -1;
 }
 
-bool PfLazyBinaryFragmentData::isLazyBinary() const {
+bool PfFragment::PfLazyBinaryFragmentData::isLazyBinary() const {
   return true;
 }
 
-qint64 PfAbstractBinaryFragmentData::writeDataApplyingSurface(
+qint64 PfFragment::PfAbstractBinaryFragmentData::writeDataApplyingSurface(
     QIODevice *target, Format format, const PfOptions &options,
     QByteArray data) const {
   auto outputSurface = options.outputSurface();

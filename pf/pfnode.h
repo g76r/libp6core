@@ -23,84 +23,82 @@
 
 class PfNode;
 
-class LIBP6CORESHARED_EXPORT PfNodeData : public QSharedData {
-  friend class PfNode;
-
-  QString _name;
-  QList<PfNode> _children;
-  bool _isComment;
-  QList<PfFragment> _fragments;
-  PfArray _array;
-
-public:
-  explicit PfNodeData(const QString &name = QString())
-    : _name(name), _isComment(false) { }
-
-private:
-  PfNodeData(const QString &name, const QString &content, bool isComment)
-    : _name(name), _isComment(isComment) {
-    if (!content.isEmpty())
-      _fragments.append(PfFragment(content));
-  }
-  PfNodeData(const QString &name, const PfArray &array)
-    : _name(name), _isComment(false) {
-    _array = array;
-  }
-  bool isComment() const { return _isComment; }
-  bool isEmpty() const {
-    return !_fragments.size() && _array.isNull(); }
-  bool isArray() const { return !_array.isNull(); }
-  bool isText() const {
-    return !isArray() && !isBinary() && !isComment(); }
-  bool isBinary() const {
-    for (auto f: _fragments)
-      if (f.isBinary())
-        return true;
-    return false;
-  }
-  QString contentAsString() const {
-    if (isArray())
-      return QString();
-    QString s = u""_s;
-    for (auto f: _fragments) {
-      if (f.isBinary())
-        return {};
-      s.append(f.text());
-    }
-    return s;
-  }
-  qint64 writePf(QIODevice *target, const PfOptions &options) const;
-  qint64 writeFlatXml(QIODevice *target, const PfOptions &options) const;
-  //qint64 writeCompatibleXml(QIODevice &target) const;
-  //inline void buildChildrenFromArray() const;
-  inline qint64 internalWritePf(
-      QIODevice *target, QString indent, const PfOptions &options) const;
-  inline qint64 internalWritePfSubNodes(
-      QIODevice *target, QString indent, const PfOptions &options) const;
-  inline qint64 internalWritePfContent(
-      QIODevice *target, const QString &indent, const PfOptions &options) const;
-  /** Provide the content as a byte array.
-    * If there are lazy-loaded binary fragments, they are loaded into memory,
-    * in the returned QByteArray but do not keep them cached inside PfContent
-    * structures, therefore the memory will be freed when the QByteArray is
-    * discarded and if toByteArray() is called again, the data will be
-    * loaded again. */
-  QByteArray contentAsByteArray() const;
-  /** Write content to target device in PF format (with escape sequences and
-    * binary headers). */
-  qint64 writePfContent(QIODevice *target, const PfOptions &options) const;
-  /** Write content to target device in raw data format (no PF escape sequences
-    * but actual content). */
-  qint64 writeRawContent(QIODevice *target, const PfOptions &options) const;
-  /** Write content to target device in XML format, embeding binary fragments
-    * using base64 encoding. */
-  qint64 writeXmlUsingBase64Content(
-      QIODevice *target, const PfOptions &options) const;
-
-};
-
 class LIBP6CORESHARED_EXPORT PfNode {
-  friend class PfNodeData;
+  class LIBP6CORESHARED_EXPORT PfNodeData : public QSharedData {
+    friend class PfNode;
+    QString _name;
+    QList<PfNode> _children;
+    bool _isComment;
+    QList<PfFragment> _fragments;
+    PfArray _array;
+
+  public:
+    explicit PfNodeData(const QString &name = QString())
+      : _name(name), _isComment(false) { }
+
+  private:
+    PfNodeData(const QString &name, const QString &content, bool isComment)
+      : _name(name), _isComment(isComment) {
+      if (!content.isEmpty())
+        _fragments.append(PfFragment(content));
+    }
+    PfNodeData(const QString &name, const PfArray &array)
+      : _name(name), _isComment(false) {
+      _array = array;
+    }
+    bool isComment() const { return _isComment; }
+    bool isEmpty() const {
+      return !_fragments.size() && _array.isNull(); }
+    bool isArray() const { return !_array.isNull(); }
+    bool isText() const {
+      return !isArray() && !isBinary() && !isComment(); }
+    bool isBinary() const {
+      for (auto f: _fragments)
+        if (f.isBinary())
+          return true;
+      return false;
+    }
+    QString contentAsString() const {
+      if (isArray())
+        return QString();
+      QString s = u""_s;
+      for (auto f: _fragments) {
+        if (f.isBinary())
+          return {};
+        s.append(f.text());
+      }
+      return s;
+    }
+    qint64 writePf(QIODevice *target, const PfOptions &options) const;
+    qint64 writeFlatXml(QIODevice *target, const PfOptions &options) const;
+    //qint64 writeCompatibleXml(QIODevice &target) const;
+    //inline void buildChildrenFromArray() const;
+    inline qint64 internalWritePf(
+        QIODevice *target, QString indent, const PfOptions &options) const;
+    inline qint64 internalWritePfSubNodes(
+        QIODevice *target, QString indent, const PfOptions &options) const;
+    inline qint64 internalWritePfContent(
+        QIODevice *target, const QString &indent, const PfOptions &options) const;
+    /** Provide the content as a byte array.
+      * If there are lazy-loaded binary fragments, they are loaded into memory,
+      * in the returned QByteArray but do not keep them cached inside PfContent
+      * structures, therefore the memory will be freed when the QByteArray is
+      * discarded and if toByteArray() is called again, the data will be
+      * loaded again. */
+    QByteArray contentAsByteArray() const;
+    /** Write content to target device in PF format (with escape sequences and
+      * binary headers). */
+    qint64 writePfContent(QIODevice *target, const PfOptions &options) const;
+    /** Write content to target device in raw data format (no PF escape sequences
+      * but actual content). */
+    qint64 writeRawContent(QIODevice *target, const PfOptions &options) const;
+    /** Write content to target device in XML format, embeding binary fragments
+      * using base64 encoding. */
+    qint64 writeXmlUsingBase64Content(
+        QIODevice *target, const PfOptions &options) const;
+
+  };
+
   QSharedDataPointer<PfNodeData> d;
 
   PfNode(PfNodeData *data) : d(data) { }
