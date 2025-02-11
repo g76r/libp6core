@@ -23,7 +23,7 @@ namespace p6 {
 
 /** Arrange items in a container to move dependencies before dependants.
  *  Dependencies are recursively searched.
- *  This is a stable sorting algorithm using a directed graph neighborhood
+ *  This is a stable sort algorithm using a directed graph neighborhood
  *  (given by DependsOn predicate) as a partial order.
  *  The graph does not need to be connected (DependsOn may even always return
  *  false).
@@ -39,8 +39,15 @@ namespace p6 {
 template<typename RandomAccessIterator, typename DependsOn>
 inline void stable_topological_sort(
     RandomAccessIterator first, RandomAccessIterator last, DependsOn depends_on) {
-  //using T = std::iterator_traits<RandomAccessIterator>::value_type;
-  // recursive function, with cycle detection parameter
+  // do_sort is the recursive function
+  // The main loop searches for direct dependencies (A->B) in reverse order as
+  // compared to current container order and reorder items according to it.
+  // There are 2 recursion branches, called high branch and low branch.
+  // The high branch recursion processes indirect dependencies (A->B->C) it only
+  // occurs when items have been reordered at this recurstion level. It searches
+  // for cycles (to avoid infinite recursion).
+  // The low branch recursion sorts the remaining of the container (it's the
+  // main branch and even the only one if the container is already sorted).
   std::function<void(RandomAccessIterator, RandomAccessIterator, DependsOn, bool)> do_sort
       = [&do_sort](RandomAccessIterator first, RandomAccessIterator last, DependsOn depends_on, bool high_branch) {
     if (first == last)
@@ -49,41 +56,36 @@ inline void stable_topological_sort(
     auto next = std::next(current);
     if (next == last)
       return;
-    //qDebug() << "stsrc:" << *first << *current << *std::prev(last);
     for (auto i = next; i != last; ++i) {
       if (depends_on(*current, *i)) {
-        //qDebug() << "stsdo:" << *current << *i << *std::prev(i);
         if (high_branch) {
+          // search for circular dependencies
           for (auto j = std::prev(i); ; --j) {
             if (depends_on(*i, *j)) {
               // cycle detected, ignore i
-              //qDebug() << "sts: cycle detected" << *i << *j;
               goto cycle_detected;
             }
-            //qDebug() << "stsnc:" << *i << *j << depends_on(*i, *j) << *current << *i;
             if (j == first)
               break;
           }
         }
         // move *i before *current and shift everything else to the right
-        //qDebug() << "stsbm:" << *current << *i;
         std::rotate(current, i, std::next(i));
-        //qDebug() << "stsam:" << *current << *i;
         ++current;
-        //qDebug() << "stsai:" << *current;
       }
 cycle_detected:;
     }
     if (first != current) {
-      //qDebug() << "stswr:" << *first << *std::prev(last);
-      // sort direct dependencies, letting them recursively take other following
-      // items excepted those which have already been sorted
+      // some direct dependency items have just been reorderd, so:
+      // sort indirect dependencies, letting them recursively take other
+      // following items excepted those which have already been sorted
       do_sort(first, last, depends_on, true);
+      // skip current item in low branch recursion because it has been moved and
+      // so it's already at its final place
       next = std::next(current);
     }
     if (!high_branch) {
       // sort remaining items
-      //qDebug() << "stsrr:" << *next << *std::prev(last) << *first;
       do_sort(next, last, depends_on, false);
     }
   };
