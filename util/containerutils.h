@@ -36,9 +36,14 @@ namespace p6 {
  *  @param depends_on(a,b) must return true iff a depends on b.
  *  @see https://en.wikipedia.org/wiki/Topological_sorting
  */
-template<typename RandomAccessIterator, typename DependsOn>
+#ifdef __cpp_concepts
+template<std::random_access_iterator Iterator,
+         std::indirect_binary_predicate<Iterator,Iterator> DependsOn>
+#else
+template<typename Iterator, typename DependsOn>
+#endif
 inline void stable_topological_sort(
-    RandomAccessIterator first, RandomAccessIterator last, DependsOn depends_on) {
+    Iterator first, Iterator last, DependsOn depends_on) {
   // do_sort is the recursive function
   // The main loop searches for direct dependencies (A->B) in reverse order as
   // compared to current container order and reorder items according to it.
@@ -48,8 +53,8 @@ inline void stable_topological_sort(
   // for cycles (to avoid infinite recursion).
   // The low branch recursion sorts the remaining of the container (it's the
   // main branch and even the only one if the container is already sorted).
-  std::function<void(RandomAccessIterator, RandomAccessIterator, DependsOn, bool)> do_sort
-      = [&do_sort](RandomAccessIterator first, RandomAccessIterator last, DependsOn depends_on, bool high_branch) {
+  std::function<void(Iterator, Iterator, DependsOn, bool)> do_sort
+      = [&do_sort](Iterator first, Iterator last, DependsOn depends_on, bool high_branch) {
     if (first == last)
       return;
     auto current = first;
