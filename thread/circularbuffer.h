@@ -1,4 +1,4 @@
-/* Copyright 2014-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -34,16 +34,25 @@
  *
  * Usable as a multithreading queue communication mechanism.
  *
- * Can hold any data with operator=():
- * - fundamental types: int, char_8t...
- * - stucts and pocos with operator=() (implicit or explicit)
+ * Can hold any move constructible or copy constructible type:
+ * - fundamental types: int, char8_t...
+ * - stucts and pocos with copy/move constructor and operator=()
  * - Qt's implicitly shared data classes exactly as then can be sent through
  *   a queued signal/slot connection or a queued QMetaObject::invokeMethod()
  *   call.
  *
  * T is not required to be thread-safe, even its operator=().
+ *
+ * if T has move constructor and operator= move semantics optimization are done
+ * automatically in get methods, and will work for put methods if the compiler
+ * can guess that the put data is an xvalue or with explicit std::move in the
+ * caller code.
  */
+#ifdef __cpp_concepts
+template <std::move_constructible T>
+#else
 template <class T>
+#endif
 class LIBP6CORESHARED_EXPORT CircularBuffer {
 public:
   const size_t _sizeMinusOne;
