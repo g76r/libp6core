@@ -184,6 +184,20 @@ public:
   auto end() const { return _list.constEnd(); }
 };
 
+template<typename C, typename T>
+concept readable_set = requires(const C &c, const T &t) {
+  { c.contains(t) } -> std::same_as<bool>;
+};
+
+template<typename T>
+class single_set {
+  T t;
+public:
+  inline single_set(const T&t) : t(t) {};
+  inline single_set(const T&&t) : t(std::move(t)) {};
+  inline bool contains(const T&t) const { return t == this->t; }
+};
+
 } // namespace p6
 
 namespace ContainerUtils {
