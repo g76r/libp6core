@@ -755,3 +755,30 @@ examples:
 * `%{=apply:func2:a:B}` -> `Ab` if func2 is `%{=uppercase:%1}%{=lowercase:%2}`
 * `%{=apply:tosqlin:foo bar baz}` -> `('foo','bar','baz')`
                                      if tosqlin is `('%{=sub:%1:/ +/','/g}')`
+
+%=color
+-------
+`%{=color:spec[:spec2[...]]}`
+
+(this function is defined by libp6gui, not libp6core)
+create a QColor object with given color spec, calling QColor::fromString() with
+first non-empty spec
+
+examples:
+* `%{=color:red}` -> red QColor
+* `%{=color:#f00}` -> red QColor
+* `%{=color:%color:black}` -> red QColor if color = "red", black QColor if
+                              color is empty
+
+%=icon
+------
+`%{=icon!normal[!disable[!active[!selected]]]}`
+
+(this function is defined by libp6gui, not libp6core)
+create a QIcon object with given icon files paths, such QIcon object is e.g.
+suitable as Qt::DecorationRole returned data from QAbstractItemModel::data()
+
+examples:
+* `%{=icon!:fas/circle-plus.svg}` -> create a QIcon object for circle-plus font
+     awesome solid icon, given its embeded in a .qrc in fas/circle-plus.svg path
+     (which is the case when using libsvgicons4qt's fas.qrc)
