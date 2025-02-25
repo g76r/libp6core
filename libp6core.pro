@@ -175,7 +175,6 @@ HEADERS *=\
     io/opensshcommand.h \
     modelview/templatedshareduiitemdata.h \
     util/datacache.h \
-    util/objectutils.h \
     util/paramsformula.h \
     util/percentevaluator.h \
     util/utf8string.h \
