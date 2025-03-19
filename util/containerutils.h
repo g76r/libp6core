@@ -21,80 +21,179 @@
 
 namespace p6 {
 
-/** Arrange items in a container to move dependencies before dependants.
- *  Dependencies are recursively searched.
+/** Arrange items in [first,end) to move dependencies before their dependants.
+ *
  *  This is a stable sort algorithm using a directed graph neighborhood
  *  (given by DependsOn predicate) as a partial order.
  *  The graph does not need to be connected (DependsOn may even always return
  *  false).
+ *
+ *  Dependencies are recursively searched.
  *  If there are circular dependencies the sort will no longer be stable (some
- *  "forward" dependencies will be arbitrarily choosen and used to sort items)
- *  and obviously the result won't be a fully satisfying topological sort since
- *  no one exists.
+ *  dependencies will be arbitrarily choosen and used to sort items) and
+ *  obviously the result won't be a fully satisfying topological sort since no
+ *  one exists.
+ *
  *  Time complexity: best case O(n²), worst case O(n³).
  *  Space complexity: O(n).
+ *
+ *  Parameters assume_acyclic and assume_injective provides some optimizations.
+ *  If it is known that there are no cyclic dependencies (the dependency graph
+ *  is a DAG), assume_acyclic can be set to true. However it can leads to
+ *  infinite recursion if there are unexpected cycles.
+ *  If it is known that no item has more than 1 dependency, assume_injective can
+ *  be set to true. However it can lead to not fully sorted sets if an item has
+ *  unexpected additionnal dependencies.
+ *  If it is known that the dependency graph is a tree, both flag can be set to
+ *  true.
+ *
+ *  @param first iterator on first item
+ *  @param end sentinel (upper bound) beyond last item
  *  @param depends_on(a,b) must return true iff a depends on b.
+ *  @param cyclic_dependency_found target is set if != null and !assume_acyclic
+ *  @param assume_acyclic don't look for cyclic dependencies
+ *  @param assume_injective don't look for more than 1 dependency per item
  *  @see https://en.wikipedia.org/wiki/Topological_sorting
  */
 #ifdef __cpp_concepts
-template<std::random_access_iterator Iterator,
+template<std::forward_iterator Iterator,
          std::indirect_binary_predicate<Iterator,Iterator> DependsOn>
 #else
 template<typename Iterator, typename DependsOn>
 #endif
 inline void stable_topological_sort(
-    Iterator first, Iterator last, DependsOn depends_on) {
-  // do_sort is the recursive function
-  // The main loop searches for direct dependencies (A->B) in reverse order as
-  // compared to current container order and reorder items according to it.
-  // There are 2 recursion branches, called high branch and low branch.
-  // The high branch recursion processes indirect dependencies (A->B->C) it only
-  // occurs when items have been reordered at this recurstion level. It searches
-  // for cycles (to avoid infinite recursion).
-  // The low branch recursion sorts the remaining of the container (it's the
-  // main branch and even the only one if the container is already sorted).
-  std::function<void(Iterator, Iterator, DependsOn, bool)> do_sort
-      = [&do_sort](Iterator first, Iterator last, DependsOn depends_on, bool high_branch) {
-    if (first == last)
-      return;
-    auto current = first;
-    auto next = std::next(current);
-    if (next == last)
-      return;
-    for (auto i = next; i != last; ++i) {
-      if (depends_on(*current, *i)) {
-        if (high_branch) {
-          // search for circular dependencies
-          for (auto j = std::prev(i); ; --j) {
-            if (depends_on(*i, *j)) {
+    const Iterator first, const Iterator end, const DependsOn depends_on,
+    bool *cyclic_dependency_found = 0, const bool assume_acyclic = false,
+    const bool assume_injective = false) {
+  /** The algorithm searches for direct dependencies (A->B) in reverse order as
+   *  compared to current container order, that is, items in (first,end) on
+   *  which *first depends on, and reorders items according to this.
+   *
+   *  There are 2 iteration branches types, called high branch and low branch:
+   *
+   *  Both branches search for items on which first item depends on, to move
+   *  it "before" first (actually to move its value on first element and shift
+   *  every other values to the right).
+   *  An item directly depends on another when depends_on(*item, *another) is
+   *  true. Indirect dependencies are searched by the algorithm (depends_on
+   *  function returns false if the dependency is indirect).
+   *  When a move occurs both branches create a high branch iteration (which is
+   *  implemented as a recursive call).
+   *
+   *  Low branch:
+   *  After searching an item to move, the low branch iterates (which is also
+   *  implemented as a recursive call) on [next,end), with next being the next
+   *  item after first (if the set was already sorted for this iteration) or
+   *  after last moved item.
+   *  It's the main branch and even the only one if the container is already
+   *  toatally sorted at the beginning (best case).
+   *
+   *  High branch:
+   *  As seen above, high branch is only called when an item has been moved.
+   *  After having moved an item, a high branch iteration is created on
+   *  [current0,end), with *current having been replaced with the moved item
+   *  value, although low branch iterations are created on [next,end).
+   *  This is the way we look for indirect dependencies (A->B->C) because
+   *  indirect dependecies are dependencies of [current0,next) items
+   *  which are the B's of A->B->C.
+   *  Before moving the item, it searches for cycles and will neither move the
+   *  item (stable sort) nor do the recursive call if a cycle is found (avoiding
+   *  infinite recursion).
+   *  Cycles are detected by looking for dependencies from already moved items
+   *  in [current0,after_last_moved) to remaining items in (current,end).
+   *  Note: `current0` is the current item iterator as it is at the begining of
+   *  a given iteration, whereas `current` is incremented everytime an item is
+   *  moved before it.
+   *  High branch iterations don't create low branch iterations.
+   *
+   *  Example:
+   *  initial (low branch) iteration [0,9)     {0,1,2,3,4,5,6,7,8}
+   *   | moving 2 because 0 depends on 2       {2,0,1,3,4,5,6,7,8}
+   *   +--high branch iteration [2,9)
+   *   |  \ nothing depends on 2
+   *   | we know now that nothing else depends on 2 or 0
+   *   | low branch iteration [1,9)                {1,3,4,5,6,7,8}
+   *   | moving 4 and 5 b/c 1 depends on them      {4,5,1,3,6,7,8}
+   *   +--high branch iteration [4,9)
+   *      \ moving 5 and 3 b/c 4 depends on them   {5,3,4,1,6,7,8}
+   *       \ high branch iteration [5,9)
+   *        \ nothing depends on 5
+   *   | we know now that nothing else depends on 5..1
+   *   | low branch iteration [6,9)                        {6,7,8}
+   *   | nothing depends on 6
+   *   | low branch iteration [7,9)                          {7,8}
+   *   | nothing depends on 7
+   *   | low branch iteration [8,9)                            {8}
+   *   | nothing can depend on set with less than 2 items
+   *   .
+   *  final sorted state:                      {2,0,5,3,4,1,6,7,8}
+   *
+   *  @param current begin iterator for iteration set [current,end)
+   *  @param after_last_moved interator on element after last moved item
+   *  @param depends_on depends_on(a,b) == true iff *a depends on *b
+   *  @param in_high_branch true iff current iteration is part of a high branch
+   *  @return count of items that can be skipped in next iterations b/c their
+   *    dependencies have already been searched for by recursive calls
+   */
+  std::function<size_t(Iterator, Iterator, const bool)> do_sort
+      = [&do_sort,&first,&end,&depends_on,cyclic_dependency_found,assume_acyclic,assume_injective](
+        Iterator current, Iterator after_last_moved, const bool in_high_branch) -> size_t {
+    const auto current0 = current; // current at begining of this iteration
+    if (current == end) [[unlikely]]
+      return 0; // empty set is already sorted
+    auto next = std::next(current); // will be current in next low branch iteration
+    if (next == end) [[unlikely]]
+      return 0; // 1 item set is already sorted
+    size_t skippable_items_count = 0; // counting how many times we ++after_last_moved
+    auto after_first_moved = current; // first interval value for cycles detection
+    bool i_is_beyond_last_moved = (after_last_moved == current);
+    // search for current dependencies within i items beyond current
+    for (auto i = next; i != end; ++i) [[likely]] {
+      if (i == after_last_moved) [[unlikely]]
+        i_is_beyond_last_moved = true;
+      if (depends_on(*current, *i) && i != current) [[unlikely]] {
+        if (!assume_acyclic && in_high_branch) {
+          // search for circular dependencies: j items on which i depends
+          // with j in [after_first_moved,after_last_moved)
+          for (auto j = after_first_moved; j != after_last_moved; ++j) {
+            if (depends_on(*i, *j)) [[unlikely]] {
               // cycle detected, ignore i
+              if (!assume_acyclic && cyclic_dependency_found)
+                *cyclic_dependency_found = true;
               goto cycle_detected;
             }
-            if (j == first)
-              break;
           }
         }
-        // move *i before *current and shift everything else to the right
+        // *i = *current and shift [current,i) values to the right
         std::rotate(current, i, std::next(i));
+        if (i_is_beyond_last_moved) {
+          ++after_last_moved;
+          ++after_first_moved;
+          ++skippable_items_count;
+        }
         ++current;
+        if (assume_injective)
+          break;
       }
 cycle_detected:;
     }
-    if (first != current) {
-      // some direct dependency items have just been reorderd, so:
-      // sort indirect dependencies, letting them recursively take other
-      // following items excepted those which have already been sorted
-      do_sort(first, last, depends_on, true);
-      // skip current item in low branch recursion because it has been moved and
-      // so it's already at its final place
-      next = std::next(current);
+    if (current != current0) {
+      // one or more items where moved, create high branch iteration
+      auto recursive_skippable_items_count =
+          do_sort(current0, after_last_moved, true);
+      skippable_items_count += recursive_skippable_items_count;
+      // skip items that have already been moved because their dependencies have
+      // already been looked for in this or previous low or high iterations
+      for (auto i = skippable_items_count; i > 0; --i)
+        ++next;
     }
-    if (!high_branch) {
-      // sort remaining items
-      do_sort(next, last, depends_on, false);
+    if (!in_high_branch) {
+      // sort remaining items by carrying on low branch recursion
+      do_sort(next, next, false);
     }
+    return skippable_items_count;
   };
-  do_sort(first, last, depends_on, false);
+  do_sort(first, first, false);
   // MAYDO provide a linked list implementation that rather uses splice() or
   // insert() instead of rotate()
   // it will be less generic (we need the container instead of 2 iterators)
