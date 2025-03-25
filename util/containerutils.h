@@ -56,15 +56,16 @@ namespace p6 {
  *  @see https://en.wikipedia.org/wiki/Topological_sorting
  */
 #ifdef __cpp_concepts
-template<std::forward_iterator Iterator,
+template<bool AssumeAcyclic = false, bool AssumeInjective = false,
+         std::forward_iterator Iterator,
          std::indirect_binary_predicate<Iterator,Iterator> DependsOn>
 #else
-template<typename Iterator, typename DependsOn>
+template<bool AssumeAcyclic = false, bool AssumeInjective = false,
+         typename Iterator, typename DependsOn>
 #endif
 inline void stable_topological_sort(
     const Iterator first, const Iterator end, const DependsOn depends_on,
-    bool *cyclic_dependency_found = 0, const bool assume_acyclic = false,
-    const bool assume_injective = false) {
+    bool *cyclic_dependency_found = 0) {
   /** The algorithm searches for direct dependencies (A->B) in reverse order as
    *  compared to current container order, that is, items in (first,end) on
    *  which *first depends on, and reorders items according to this.
@@ -136,7 +137,7 @@ inline void stable_topological_sort(
    *    dependencies have already been searched for by recursive calls
    */
   std::function<size_t(Iterator, Iterator, const bool)> do_sort
-      = [&do_sort,&first,&end,&depends_on,cyclic_dependency_found,assume_acyclic,assume_injective](
+      = [&do_sort,&first,&end,&depends_on,cyclic_dependency_found](
         Iterator current, Iterator after_last_moved, const bool in_high_branch) -> size_t {
     const auto current0 = current; // current at begining of this iteration
     if (current == end) [[unlikely]]
@@ -152,13 +153,13 @@ inline void stable_topological_sort(
       if (i == after_last_moved) [[unlikely]]
         i_is_beyond_last_moved = true;
       if (depends_on(*current, *i) && i != current) [[unlikely]] {
-        if (!assume_acyclic && in_high_branch) {
+        if (!AssumeAcyclic && in_high_branch) {
           // search for circular dependencies: j items on which i depends
           // with j in [after_first_moved,after_last_moved)
           for (auto j = after_first_moved; j != after_last_moved; ++j) {
             if (depends_on(*i, *j)) [[unlikely]] {
               // cycle detected, ignore i
-              if (!assume_acyclic && cyclic_dependency_found)
+              if (!AssumeAcyclic && cyclic_dependency_found)
                 *cyclic_dependency_found = true;
               goto cycle_detected;
             }
@@ -172,7 +173,7 @@ inline void stable_topological_sort(
           ++skippable_items_count;
         }
         ++current;
-        if (assume_injective)
+        if (AssumeInjective)
           break;
       }
 cycle_detected:;
