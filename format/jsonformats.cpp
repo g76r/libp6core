@@ -1,4 +1,4 @@
-/* Copyright 2017-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -41,21 +41,22 @@ T string2dict(const QString &string) {
   for (const QString &key: json.keys()) {
     QJsonValue v = json.value(key);
     switch (v.type()) {
-    case QJsonValue::String:
-      dict.insert(key, v.toString());
-      break;
-    case QJsonValue::Bool:
-      dict.insert(key, v.toBool() ? u"true"_s : u"false"_s);
-      break;
-    case QJsonValue::Double:
-      dict.insert(key, QString::number(v.toDouble()));
-      break;
-    case QJsonValue::Null:
-    case QJsonValue::Array:
-    case QJsonValue::Object:
-    case QJsonValue::Undefined:
-      // ignore
-      break;
+      using enum QJsonValue::Type;
+      case String:
+        dict.insert(key, v.toString());
+        break;
+      case Bool:
+        dict.insert(key, v.toBool() ? u"true"_s : u"false"_s);
+        break;
+      case Double:
+        dict.insert(key, QString::number(v.toDouble()));
+        break;
+      case Null:
+      case Array:
+      case Object:
+      case Undefined:
+        // ignore
+        break;
     }
   }
   return dict;
@@ -95,21 +96,22 @@ QStringList JsonFormats::string2list(const QString &string) {
   QJsonArray json = doc.array();
   for (const QJsonValue &v : json) {
     switch (v.type()) {
-    case QJsonValue::String:
-      list.append(v.toString());
-      break;
-    case QJsonValue::Bool:
-      list.append(v.toBool() ? u"true"_s : u"false"_s);
-      break;
-    case QJsonValue::Double:
-      list.append(QString::number(v.toDouble()));
-      break;
-    case QJsonValue::Null:
-    case QJsonValue::Array:
-    case QJsonValue::Object:
-    case QJsonValue::Undefined:
-      // ignore
-      break;
+      using enum QJsonValue::Type;
+      case String:
+        list.append(v.toString());
+        break;
+      case Bool:
+        list.append(v.toBool() ? u"true"_s : u"false"_s);
+        break;
+      case Double:
+        list.append(QString::number(v.toDouble()));
+        break;
+      case Null:
+      case Array:
+      case Object:
+      case Undefined:
+        // ignore
+        break;
     }
   }
   return list;

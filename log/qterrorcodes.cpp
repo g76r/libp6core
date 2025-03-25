@@ -1,4 +1,4 @@
-/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,75 +15,75 @@
 
 QString networkErrorAsString(QNetworkReply::NetworkError code) {
   switch(code) {
-  case QNetworkReply::NoError:
-    return QObject::tr("no error");
-  case QNetworkReply::ConnectionRefusedError:
-    return QObject::tr("connection refused");
-  case QNetworkReply::RemoteHostClosedError:
-    return QObject::tr("remote host closed");
-  case QNetworkReply::HostNotFoundError:
-    return QObject::tr("host not found");
-  case QNetworkReply::TimeoutError:
-    return QObject::tr("timeout");
-  case QNetworkReply::OperationCanceledError:
-    return QObject::tr("operation canceled");
-  case QNetworkReply::SslHandshakeFailedError:
-    return QObject::tr("SSL handshake failed");
-  case QNetworkReply::TemporaryNetworkFailureError:
-    return QObject::tr("temporary network failure");
-  case QNetworkReply::NetworkSessionFailedError:
-    return QObject::tr("network session failed");
-  case QNetworkReply::BackgroundRequestNotAllowedError:
-    return QObject::tr("background request not allowed");
-  case QNetworkReply::TooManyRedirectsError:
-    return QObject::tr("too many redirects");
-  case QNetworkReply::InsecureRedirectError:
-    return QObject::tr("insecure redirect");
-  case QNetworkReply::ProxyConnectionRefusedError:
-    return QObject::tr("proxy connection refused");
-  case QNetworkReply::ProxyConnectionClosedError:
-    return QObject::tr("proxy connection closed");
-  case QNetworkReply::ProxyNotFoundError:
-    return QObject::tr("proxy not found");
-  case QNetworkReply::ProxyTimeoutError:
-    return QObject::tr("proxy timeout");
-  case QNetworkReply::ProxyAuthenticationRequiredError:
-    return QObject::tr("proxy authentication required");
-  case QNetworkReply::ContentAccessDenied:
-    return QObject::tr("content access denied");
-  case QNetworkReply::ContentOperationNotPermittedError:
-    return QObject::tr("content operation not permitted");
-  case QNetworkReply::ContentNotFoundError:
-    return QObject::tr("content not found");
-  case QNetworkReply::AuthenticationRequiredError:
-    return QObject::tr("authentication required");
-  case QNetworkReply::ContentReSendError:
+    using enum QNetworkReply::NetworkError;
+    case NoError:
+      return QObject::tr("no error");
+    case ConnectionRefusedError:
+      return QObject::tr("connection refused");
+    case RemoteHostClosedError:
+      return QObject::tr("remote host closed");
+    case HostNotFoundError:
+      return QObject::tr("host not found");
+    case TimeoutError:
+      return QObject::tr("timeout");
+    case OperationCanceledError:
+      return QObject::tr("operation canceled");
+    case SslHandshakeFailedError:
+      return QObject::tr("SSL handshake failed");
+    case TemporaryNetworkFailureError:
+      return QObject::tr("temporary network failure");
+    case NetworkSessionFailedError:
+      return QObject::tr("network session failed");
+    case BackgroundRequestNotAllowedError:
+      return QObject::tr("background request not allowed");
+    case TooManyRedirectsError:
+      return QObject::tr("too many redirects");
+    case InsecureRedirectError:
+      return QObject::tr("insecure redirect");
+    case ProxyConnectionRefusedError:
+      return QObject::tr("proxy connection refused");
+    case ProxyConnectionClosedError:
+      return QObject::tr("proxy connection closed");
+    case ProxyNotFoundError:
+      return QObject::tr("proxy not found");
+    case ProxyTimeoutError:
+      return QObject::tr("proxy timeout");
+    case ProxyAuthenticationRequiredError:
+      return QObject::tr("proxy authentication required");
+    case ContentAccessDenied:
+      return QObject::tr("content access denied");
+    case ContentOperationNotPermittedError:
+      return QObject::tr("content operation not permitted");
+    case ContentNotFoundError:
+      return QObject::tr("content not found");
+    case AuthenticationRequiredError:
+      return QObject::tr("authentication required");
+    case ContentReSendError:
       return QObject::tr("content resend");
-  case QNetworkReply::ContentConflictError:
+    case ContentConflictError:
       return QObject::tr("content conflict");
-  case QNetworkReply::ContentGoneError:
+    case ContentGoneError:
       return QObject::tr("content gone");
-  case QNetworkReply::InternalServerError:
+    case InternalServerError:
       return QObject::tr("internal server error");
-  case QNetworkReply::OperationNotImplementedError:
+    case OperationNotImplementedError:
       return QObject::tr("operation not implemented");
-  case QNetworkReply::ServiceUnavailableError:
+    case ServiceUnavailableError:
       return QObject::tr("service unavailable");
-  case QNetworkReply::ProtocolUnknownError:
+    case ProtocolUnknownError:
       return QObject::tr("protocol unknown");
-  case QNetworkReply::ProtocolInvalidOperationError:
-    return QObject::tr("protocol invalid operation");
-  case QNetworkReply::UnknownNetworkError:
-    return QObject::tr("unknown network error");
-  case QNetworkReply::UnknownProxyError:
-    return QObject::tr("unknown proxy error");
-  case QNetworkReply::UnknownContentError:
-    return QObject::tr("unknown content error");
-  case QNetworkReply::ProtocolFailure:
-    return QObject::tr("protocol failure");
-  case QNetworkReply::UnknownServerError:
+    case ProtocolInvalidOperationError:
+      return QObject::tr("protocol invalid operation");
+    case UnknownNetworkError:
+      return QObject::tr("unknown network error");
+    case UnknownProxyError:
+      return QObject::tr("unknown proxy error");
+    case UnknownContentError:
+      return QObject::tr("unknown content error");
+    case ProtocolFailure:
+      return QObject::tr("protocol failure");
+    case UnknownServerError:
       return QObject::tr("unknown server error");
-
   }
   return QObject::tr("unknown error %d").arg(code);
 }

@@ -1,4 +1,4 @@
-/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -166,15 +166,16 @@ void MultiplexerLogger::doLog(const LogEntry &entry) {
     logger->log(entry);
   if (_threadModel == RootLogger && _loggers.isEmpty() && !!entry) {
     switch(entry.severity()) {
-      case Log::Debug:
+      using enum Log::Severity;
+      case Debug:
         qDebug() << entry.message() << "(no logger configured)";
         break;
-      case Log::Info:
+      case Info:
         qInfo() << entry.message() << "(no logger configured)";
         break;
-      case Log::Warning:
-      case Log::Error:
-      case Log::Fatal:
+      case Warning:
+      case Error:
+      case Fatal:
         qWarning() << entry.message() << "(no logger configured)";
     }
   }
