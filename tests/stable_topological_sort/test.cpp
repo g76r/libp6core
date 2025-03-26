@@ -44,7 +44,7 @@ int main(void) {
 
   // test 1 assuming injective: same result but one more iteration
   list = {2008,2006,2003,2001,2007,2002,2005,2000,2004};
-  p6::stable_topological_sort(list.begin(), list.end(), dag, 0, false, true);
+  p6::stable_topological_sort<false,true>(list.begin(), list.end(), dag);
   qDebug() << list;
   if (list != QList<int>{2000,2001,2002,2003,2004,2008,2006,2007,2005})
     return 1;
@@ -81,7 +81,7 @@ int main(void) {
   list = {2008,2004,2007,2006,2000,2005,2002,2003,2001};
   bool cycle_detected = false;
   p6::stable_topological_sort(list.begin(), list.end(), cycle, &cycle_detected);
-  // would crash with infinie recursive with (list.begin(), list.end(), cycle ,0, true);
+  // would crash with infinie recursive with <true>(list.begin(), list.end(), cycle);
   qDebug() << list;
   if (list != QList<int>{2004,2008,2000,2002,2007,2006,2005,2003,2001})
     return 1;
