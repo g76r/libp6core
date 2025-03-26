@@ -81,7 +81,7 @@ public:
   Utf8StringList toList() const;
   Utf8StringList toSortedList() const;
   std::set<Utf8String> toStdSet() const;
-  [[nodiscard]] inline operator QVariant() const {
+  inline operator QVariant() const {
     return QVariant::fromValue(*this); }
 };
 

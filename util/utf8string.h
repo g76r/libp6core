@@ -136,8 +136,7 @@ public:
     return QString::fromUtf8(*this); }
   [[nodiscard]] inline QString toUtf16() const {
     return QString::fromUtf8(*this); }
-  [[nodiscard]] inline operator QVariant() const {
-    return QVariant::fromValue(*this); }
+  inline operator QVariant() const { return QVariant::fromValue(*this); }
 
   [[nodiscard, gnu::const]] static inline Utf8String encode_utf8(char32_t u);
   /** Decode first unicode character in utf8 bytes.

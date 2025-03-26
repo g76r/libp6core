@@ -64,7 +64,7 @@ public:
   [[nodiscard]] Utf8StringSet paramKeys(
       const ParamsProvider::EvalContext &context = {}) const override;
   using QList<Utf8String>::empty; // hides ParamsProvider::empty
-  [[nodiscard]] inline operator QVariant() const {
+  inline operator QVariant() const {
     return QVariant::fromValue(*this); }
   /** Append if not already in the list. */
   inline Utf8StringList &operator*=(const Utf8String& s) {
@@ -150,7 +150,7 @@ public:
   [[nodiscard]] inline Utf8String value(
       qsizetype i, const Utf8String &def = {}) const {
     return Utf8StringList::value(i, def); }
-  [[nodiscard]] inline operator QVariant() const {
+  inline operator QVariant() const {
     return QVariant::fromValue(*this); }
   using Utf8StringList::join;
   using Utf8StringList::headed_join;
