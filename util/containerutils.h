@@ -159,7 +159,7 @@ inline void stable_topological_sort(
           for (auto j = after_first_moved; j != after_last_moved; ++j) {
             if (depends_on(*i, *j)) [[unlikely]] {
               // cycle detected, ignore i
-              if (!AssumeAcyclic && cyclic_dependency_found)
+              if (cyclic_dependency_found)
                 *cyclic_dependency_found = true;
               goto cycle_detected;
             }
