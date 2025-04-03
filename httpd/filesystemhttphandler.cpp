@@ -51,7 +51,7 @@ bool FilesystemHttpHandler::handleRequest(
     HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext) {
   if (_documentRoot.isEmpty()) { // should never happen (at less == "/")
-    res.setStatus(500);
+    res.set_status(HttpResponse::HTTP_Internal_Server_Error);
     res.output()->write("No document root.");
     return true;
   }
@@ -83,7 +83,7 @@ bool FilesystemHttpHandler::handleRequest(
         return true;
       }
     }
-    res.setStatus(403);
+    res.set_status(HttpResponse::HTTP_Forbidden);
     res.output()->write("Directory list denied.");
   }
   sendFile(req, res, file.fileName().toUtf8(), processingContext);
@@ -99,10 +99,10 @@ bool FilesystemHttpHandler::sendFile(
     return true;
   }
   if (file.error() == QFile::PermissionsError) {
-    res.setStatus(403);
+    res.set_status(HttpResponse::HTTP_Forbidden);
     res.output()->write("Permission denied.");
   } else {
-    res.setStatus(404);
+    res.set_status(HttpResponse::HTTP_Not_Found);
     res.output()->write("Document not found.");
   }
   return false;
@@ -117,7 +117,7 @@ void FilesystemHttpHandler::sendLocalResource(
   QByteArray filename = file->fileName().toUtf8();
   if (!handleCacheHeadersAndSend304(file, req, res)) {
     setMimeTypeByName(filename, res);
-    res.setContentLength(file->size());
+    res.set_content_length(file->size());
     if (req.method() != HttpRequest::HEAD)
       IOUtils::copy(res.output(), file);
   }
@@ -128,7 +128,7 @@ void FilesystemHttpHandler::setMimeTypeByName(
   // LATER check if performance can be enhanced (regexp)
   for (auto pair : _mimeTypes) {
     if (pair.first.match(name).hasMatch()) {
-      res.setContentType(pair.second);
+      res.set_content_type(pair.second);
       return;
     }
   }
@@ -148,7 +148,7 @@ bool FilesystemHttpHandler::handleCacheHeadersAndSend304(
     else
       lastModified = info.lastModified().toUTC();
     if (lastModified.isValid())
-      res.setHeader("Last-Modified",
+      res.set_header("Last-Modified",
                     TimeFormats::toRfc2822DateTime(lastModified).toUtf8());
     auto ifModifiedSinceString = req.header("If-Modified-Since");
     if (!ifModifiedSinceString.isEmpty() && lastModified.isValid()) {
@@ -159,7 +159,7 @@ bool FilesystemHttpHandler::handleCacheHeadersAndSend304(
       if (ifModifiedSince.isValid()) {
         // compare to If-Modified-Since +1" against rounding issues
         if (lastModified <= ifModifiedSince.addSecs(1)) {
-          res.setStatus(304);
+          res.set_status(HttpResponse::HTTP_Not_Modified);
           return true;
         }
       } else {

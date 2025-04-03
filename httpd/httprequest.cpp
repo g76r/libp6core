@@ -22,24 +22,17 @@
 
 using EvalContext = ParamsProvider::EvalContext;
 
-static Utf8String _xffHeader;
+static Utf8String _xff_header;
 
 static int staticInit() {
   qRegisterMetaType<HttpRequest>();
+  Utf8String header = qEnvironmentVariable("X_FORWARDED_FOR_HEADER");
+  if (header.isEmpty())
+    header = "X-Forwarded-For";
+  _xff_header = header.toInternetHeaderCase();
   return 0;
 }
 Q_CONSTRUCTOR_FUNCTION(staticInit)
-
-namespace {
-struct XffHeaderInitializer {
-  XffHeaderInitializer() {
-    Utf8String header = qEnvironmentVariable("X_FORWARDED_FOR_HEADER");
-    if (header.isEmpty())
-      header = "X-Forwarded-For";
-    _xffHeader = header.toInternetHeaderCase();
-  }
-} xffHeaderInitializer;
-}
 
 class HttpRequestData : public QSharedData {
 public:
@@ -47,7 +40,7 @@ public:
   HttpRequest::HttpMethod _method;
   QMultiMap<Utf8String,Utf8String> _headers;
   QMap<Utf8String,Utf8String> _cookies, _params;
-  Utf8StringList _clientAdresses;
+  Utf8StringList _client_addresses;
   Utf8String _url, _scope = "http"_u8, _path;
   QPointer<HttpWorker> _worker;
   HttpRequestData(QAbstractSocket *input, HttpWorker *worker)
@@ -73,7 +66,7 @@ HttpRequest &HttpRequest::operator=(const HttpRequest &other) {
   return *this;
 }
 
-static QMap<HttpRequest::HttpMethod,Utf8String> _methodToText {
+static QMap<HttpRequest::HttpMethod,Utf8String> _method_to_text {
   { HttpRequest::NONE, "NONE" },
   { HttpRequest::HEAD, "HEAD" },
   { HttpRequest::GET, "GET" },
@@ -84,30 +77,30 @@ static QMap<HttpRequest::HttpMethod,Utf8String> _methodToText {
   { HttpRequest::ANY, "ANY" },
 };
 
-static RadixTree<HttpRequest::HttpMethod> _methodFromText =
-    RadixTree<HttpRequest::HttpMethod>::reversed(_methodToText);
+static RadixTree<HttpRequest::HttpMethod> _method_from_text =
+    RadixTree<HttpRequest::HttpMethod>::reversed(_method_to_text);
 
-QSet<HttpRequest::HttpMethod> HttpRequest::_wellKnownMethods {
+QSet<HttpRequest::HttpMethod> HttpRequest::_well_known_methods {
   HttpRequest::HEAD, HttpRequest::GET, HttpRequest::POST, HttpRequest::PUT,
       HttpRequest::DELETE, HttpRequest::OPTIONS,
 };
 
-Utf8StringSet HttpRequest::_wellKnownMethodNames = []() {
+Utf8StringSet HttpRequest::_well_known_method_names = []() {
   Utf8StringSet set;
-  for (HttpRequest::HttpMethod m : HttpRequest::_wellKnownMethods)
-    set.insert(HttpRequest::methodName(m));
+  for (HttpRequest::HttpMethod m : HttpRequest::_well_known_methods)
+    set.insert(HttpRequest::method_name(m));
   return set;
 }();
 
-Utf8String HttpRequest::methodName(HttpMethod method) {
-  return _methodToText.value(method, "UNKNOWN"_u8);
+Utf8String HttpRequest::method_name(HttpMethod method) {
+  return _method_to_text.value(method, "UNKNOWN"_u8);
 }
 
-HttpRequest::HttpMethod HttpRequest::methodFromText(const Utf8String &name) {
-  return _methodFromText.value(name, NONE);
+HttpRequest::HttpMethod HttpRequest::method_from_text(const Utf8String &name) {
+  return _method_from_text.value(name, NONE);
 }
 
-bool HttpRequest::parseAndAddHeader(Utf8String rawHeader) {
+bool HttpRequest::parse_and_add_header(Utf8String rawHeader) {
   if (!d)
     return false;
   int i = rawHeader.indexOf(':');
@@ -119,7 +112,7 @@ bool HttpRequest::parseAndAddHeader(Utf8String rawHeader) {
   //qDebug() << "header:" << rawHeader << key << value;
   d->_headers.insert(key, value);
   if (key == "Cookie"_u8)
-    parseAndAddCookie(value);
+    parse_and_add_cookie(value);
   return true;
 }
 
@@ -129,7 +122,7 @@ static const QRegularExpression _cookieHeaderValue(
       RFC6265_COOKIE_OCTET_RE "*|\"" RFC6265_COOKIE_OCTET_RE
       "+\"))\\s*;?\\s*");
 
-void HttpRequest::parseAndAddCookie(Utf8String rawHeaderValue) {
+void HttpRequest::parse_and_add_cookie(Utf8String rawHeaderValue) {
   // LATER use QNetworkCookie::parseCookies
   // LATER ensure that utf8 is supported as specified in RFC6265
   if (!d)
@@ -142,42 +135,43 @@ void HttpRequest::parseAndAddCookie(Utf8String rawHeaderValue) {
   }
 }
 
-Utf8String HttpRequest::httpParam(const Utf8String &key,
-                              const Utf8String &def) const {
+Utf8String HttpRequest::query_param(
+    const Utf8String &key, const Utf8String &def) const {
   if (!d)
     return def;
   return d->_params.value(key, def);
 }
 
-void HttpRequest::setHttpParam(const Utf8String &key, const Utf8String &value) {
+void HttpRequest::set_query_param(
+    const Utf8String &key, const Utf8String &value) {
   if (!d)
     return;
   d->_params.insert(key, value);
 }
 
-void HttpRequest::unsetHttpParam(const Utf8String &key) {
+void HttpRequest::unset_query_param(const Utf8String &key) {
   if (!d)
     return;
   d->_params.insert(key, {});
 }
 
-ParamSet HttpRequest::httpParamset() const {
+ParamSet HttpRequest::query_as_paramset() const {
   if (!d)
     return {};
   return ParamSet(d->_params);
 }
 
-QMap<Utf8String,Utf8String> HttpRequest::httpParams() const {
+QMap<Utf8String,Utf8String> HttpRequest::query_params() const {
   if (!d)
     return {};
   return d->_params;
 }
 
-Utf8String HttpRequest::toUtf8() const {
+Utf8String HttpRequest::human_readable() const {
   if (!d)
     return "HttpRequest{}"_u8;
   Utf8String s;
-  s += "HttpRequest{ " + methodName() + ", " + url()
+  s += "HttpRequest{ " + method_name() + ", " + url()
       + ", { ";
   for (auto key: d->_headers.keys()) {
     s += key + ":{ ";
@@ -190,7 +184,7 @@ Utf8String HttpRequest::toUtf8() const {
   return s;
 }
 
-void HttpRequest::setUrl(const Utf8String &url) {
+void HttpRequest::set_url(const Utf8String &url) {
   if (d)
     d->_url = url;
 }
@@ -199,7 +193,7 @@ Utf8String HttpRequest::path() const {
   return d ? d->_path : Utf8String{};
 }
 
-void HttpRequest::setPath(const Utf8String &path) {
+void HttpRequest::set_path(const Utf8String &path) {
   if (d)
     d->_path = path;
 }
@@ -212,7 +206,7 @@ QAbstractSocket *HttpRequest::input() {
   return d ? d->_input : 0;
 }
 
-void HttpRequest::setMethod(HttpMethod method) {
+void HttpRequest::set_method(HttpMethod method) {
   if (d)
     d->_method = method;
 }
@@ -247,7 +241,7 @@ Utf8String HttpRequest::cookie(
   return v.isNull() ? defaultValue : v;
 }
 
-QByteArray HttpRequest::base64Cookie(
+QByteArray HttpRequest::base64_cookie(
     const Utf8String &name, const QByteArray &defaultValue) const {
   if (!d)
     return defaultValue;
@@ -259,25 +253,25 @@ QMap<Utf8String,Utf8String> HttpRequest::cookies() const {
   return d ? d->_cookies : QMap<Utf8String,Utf8String>{};
 }
 
-Utf8StringList HttpRequest::clientAdresses() const {
+Utf8StringList HttpRequest::client_addresses() const {
   if (!d)
     return {};
-  if (d->_clientAdresses.isEmpty()) {
-    auto xff = headers(_xffHeader);
+  if (d->_client_addresses.isEmpty()) {
+    auto xff = headers(_xff_header);
     for (int i = xff.size()-1; i >= 0; --i) {
       auto addresses = xff[i].split(',');
       for (auto a: addresses)
-        d->_clientAdresses += a.trimmed();
+        d->_client_addresses += a.trimmed();
     }
     QHostAddress peerAddress = d->_input->peerAddress();
     if (peerAddress.isNull()) {
       Log::debug() << "HttpRequest::clientAdresses() cannot find socket peer "
                       "address";
-      d->_clientAdresses.append("0.0.0.0");
+      d->_client_addresses.append("0.0.0.0");
     } else
-      d->_clientAdresses.append(peerAddress.toString().toUtf8());
+      d->_client_addresses.append(peerAddress.toString().toUtf8());
   }
-  return d->_clientAdresses;
+  return d->_client_addresses;
 }
 
 static RadixTree <std::function<QVariant(const HttpRequest *req, const Utf8String &key, const EvalContext &context, int ml)>> _functions {
@@ -288,25 +282,25 @@ static RadixTree <std::function<QVariant(const HttpRequest *req, const Utf8Strin
   return req->path();
 }},
 { "method", [](const HttpRequest *req, const Utf8String &, const EvalContext&, int) -> QVariant {
-  return req->methodName();
+  return req->method_name();
 }},
 { "clientaddresses", [](const HttpRequest *req, const Utf8String &, const EvalContext&, int) -> QVariant {
-  return req->clientAdresses().join(' ');
+  return req->client_addresses().join(' ');
 }},
 { "cookie:", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
   return req->cookie(key.mid(ml));
 }, true},
 { "base64cookie:", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
-  return req->base64Cookie(key.mid(ml));
+  return req->base64_cookie(key.mid(ml));
 }, true},
 { "param:", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
-  return req->httpParam(key.mid(ml));
+  return req->query_param(key.mid(ml));
 }, true},
 { "value:", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
-  auto v = req->httpParam(key.mid(ml));
+  auto v = req->query_param(key.mid(ml));
   if (!v.isNull())
     return v;
-  return req->base64Cookie(key.mid(ml));
+  return req->base64_cookie(key.mid(ml));
 }, true},
 { { "header:", "requestheader:" }, [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
   return req->header(key.mid(ml).toInternetHeaderCase());
@@ -322,10 +316,10 @@ QVariant HttpRequest::paramRawValue(
   auto f = _functions.value(key, &ml);
   if (f)
     return f(this, key, context, ml);
-  auto v = httpParam(key);
+  auto v = query_param(key);
   if (!v.isNull())
     return v;
-  v = base64Cookie(key);
+  v = base64_cookie(key);
   if (!v.isNull())
     return v;
   v = header(key);
@@ -345,7 +339,7 @@ Utf8StringSet HttpRequest::paramKeys(
     keys << "cookie:"_u8+s;
     keys << s;
   }
-  for (auto [s,_]: httpParams().asKeyValueRange()) {
+  for (auto [s,_]: query_params().asKeyValueRange()) {
     keys << "param:"_u8+s;
     keys << s;
   }

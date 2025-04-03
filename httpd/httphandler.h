@@ -73,7 +73,7 @@ public:
    * @return true iff the method is OPTIONS
    */
   bool handleCORS(HttpRequest req, HttpResponse res,
-      Utf8StringSet methods = HttpRequest::wellKnownMethodNames());
+      Utf8StringSet methods = HttpRequest::well_known_method_names());
 };
 
 #endif // HTTPHANDLER_H

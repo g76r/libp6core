@@ -68,7 +68,7 @@ HttpResponse &HttpResponse::operator=(const HttpResponse &other) {
   return *this;
 }
 
-void HttpResponse::disableBodyOutput() {
+void HttpResponse::disable_body_output() {
   if (d)
     d->_disableBodyOutput = true;
 }
@@ -79,7 +79,7 @@ QAbstractSocket *HttpResponse::output() {
   if (!d->_headersSent) {
     Utf8String ba;
     ba = "HTTP/1.1 "_u8 + Utf8String::number(d->_status) + " "_u8
-        + statusAsString(d->_status) + "\r\n"_u8;
+        + status_as_text(d->_status) + "\r\n"_u8;
     for (auto [name, data]: d->_cookies.asKeyValueRange()) {
       auto s = name+"="_u8+data.value;
       if (!data.expires.isNull())
@@ -92,7 +92,7 @@ QAbstractSocket *HttpResponse::output() {
         s.append("; Secure");
       if (data.httponly)
         s.append("; HttpOnly");
-      addHeader("Set-Cookie", s);
+      add_header("Set-Cookie", s);
     }
     // LATER sanitize well-known headers (Content-Type...) values
     // LATER handle multi-line headers and special chars
@@ -109,7 +109,7 @@ QAbstractSocket *HttpResponse::output() {
   return d->_disableBodyOutput ? DummySocket::singletonInstance() : d->_output;
 }
 
-void HttpResponse::setStatus(int status) {
+void HttpResponse::set_status(int status) {
   if (!d)
     return;
   if (d->_headersSent) {
@@ -124,7 +124,7 @@ int HttpResponse::status() const {
   return d ? d->_status : 0;
 }
 
-void HttpResponse::setHeader(const Utf8String &name, const Utf8String &value) {
+void HttpResponse::set_header(const Utf8String &name, const Utf8String &value) {
   // LATER handle case insensitivity in header names
   if (!d)
     return;
@@ -136,7 +136,7 @@ void HttpResponse::setHeader(const Utf8String &name, const Utf8String &value) {
   d->_headers.replace(name, value);
 }
 
-void HttpResponse::addHeader(const Utf8String &name, const Utf8String &value) {
+void HttpResponse::add_header(const Utf8String &name, const Utf8String &value) {
   // LATER handle case insensitivity in header names
   if (!d)
     return;
@@ -148,7 +148,7 @@ void HttpResponse::addHeader(const Utf8String &name, const Utf8String &value) {
   d->_headers.insert(name, value);
 }
 
-void HttpResponse::appendValueToHeader(
+void HttpResponse::append_value_to_header(
     const Utf8String &name, const Utf8String &value,
     const Utf8String &separator) {
   // LATER handle case insensitivity in header names
@@ -168,14 +168,14 @@ void HttpResponse::redirect(Utf8String location, int status) {
   if (!d)
     return;
   location.replace("\""_u8,"%22"_u8); // LATER better url encode
-  setStatus(status);
-  setHeader("Location"_u8, location);
-  setContentType("text/html;charset=UTF-8"_u8);
+  set_status(status);
+  set_header("Location"_u8, location);
+  set_content_type("text/html;charset=UTF-8"_u8);
   output()->write("<html><body>Moved. Please click on <a href=\""
                   +location+"\">this link</a>");
 }
 
-void HttpResponse::setCookie(const Utf8String &name, const Utf8String &value,
+void HttpResponse::set_cookie(const Utf8String &name, const Utf8String &value,
     QDateTime expires, const Utf8String &path,
     const Utf8String &domain, bool secure, bool httponly) {
   static const QRegularExpression _nameRegexp {
@@ -232,7 +232,7 @@ QMultiMap<Utf8String, Utf8String> HttpResponse::headers() const {
   return d ? d->_headers : QMultiMap<Utf8String,Utf8String>();
 }
 
-Utf8String HttpResponse::statusAsString(int status) {
+Utf8String HttpResponse::status_as_text(int status) {
   switch(status) {
   case 200:
     return "Ok"_u8;
@@ -289,25 +289,25 @@ Utf8String HttpResponse::statusAsString(int status) {
   }
 }
 
-QDateTime HttpResponse::receivedDate() const {
+QDateTime HttpResponse::received_date() const {
   return d ? d->_received : QDateTime{};
 }
 
-void HttpResponse::setHandledDate(const QDateTime &ts) {
+void HttpResponse::set_handled_date(const QDateTime &ts) {
   if (d)
     d->_handled = ts;
 }
 
-QDateTime HttpResponse::handledDate() const {
+QDateTime HttpResponse::handled_date() const {
   return d ? d->_handled : QDateTime{};
 }
 
-void HttpResponse::setFlushedDate(const QDateTime &ts) {
+void HttpResponse::set_flushed_date(const QDateTime &ts) {
   if (d)
     d->_flushed = ts;
 }
 
-QDateTime HttpResponse::flushedDate() const {
+QDateTime HttpResponse::flushed_date() const {
   return d ? d->_flushed : QDateTime{};
 }
 
@@ -332,13 +332,13 @@ static RadixTree <std::function<QVariant(const HttpResponse *res, const Utf8Stri
   return res->status();
 }},
 { "receiveddate", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) -> QVariant {
-  return res->receivedDate();
+  return res->received_date();
 }},
 { "handleddate", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) -> QVariant {
-  return res->handledDate();
+  return res->handled_date();
 }},
 { "flusheddate", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) -> QVariant {
-  return res->flushedDate();
+  return res->flushed_date();
 }},
 { "servicems", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) -> QVariant {
   return res->servicems();

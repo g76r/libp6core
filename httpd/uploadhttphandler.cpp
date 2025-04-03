@@ -55,7 +55,7 @@ bool UploadHttpHandler::handleRequest(
   if (req.header("Content-Length"_u8).toULongLong() > _maxBytesPerUpload) {
     Log::warning() << "data too large when uploading data at "
                    << req.url() << " maximum is " << _maxBytesPerUpload;
-    res.setStatus(413); // Request entity too large
+    res.set_status(HttpResponse::HTTP_Request_Entity_Too_Large);
     return true;
   }
   QTemporaryFile *file = _tempFileTemplate.isEmpty()
@@ -63,7 +63,7 @@ bool UploadHttpHandler::handleRequest(
   if (!file->open()) {
     Log::warning() << "failed to create temporary file "
                    << file->fileTemplate() << " : " << file->errorString();
-    res.setStatus(500);
+    res.set_status(HttpResponse::HTTP_Internal_Server_Error);
   }
   // LATER avoid DoS by setting a maximum *total* read time out
   // LATER also stop copying or waiting when Content-Length is reached
@@ -74,12 +74,12 @@ bool UploadHttpHandler::handleRequest(
                    << req.url()
                    << " - socket error : " << req.input()->errorString()
                    << " - temporary file error : " << file->errorString();
-    res.setStatus(500);
+    res.set_status(HttpResponse::HTTP_Internal_Server_Error);
   } else if (req.input()->waitForBytesWritten(100)) {
     Log::warning() << "data too large when uploading data at "
                    << req.url()
                    << " maximum is " << _maxBytesPerUpload;
-    res.setStatus(413); // Request entity too large
+    res.set_status(HttpResponse::HTTP_Request_Entity_Too_Large);
   } else {
     file->seek(0);
     processUploadedFile(req, res, processingContext, file);

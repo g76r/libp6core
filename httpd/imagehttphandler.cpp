@@ -33,12 +33,12 @@ bool ImageHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
   // LATER pass params from request
   if (handleCORS(req, res))
     return true;
-  res.setContentType(contentType(req, processingContext));
+  res.set_content_type(contentType(req, processingContext));
   auto contentEncoding = this->contentEncoding(req, processingContext);
   if (!contentEncoding.isEmpty())
-    res.setHeader("Content-Encoding"_u8, contentEncoding);
+    res.set_header("Content-Encoding"_u8, contentEncoding);
   QByteArray data = imageData(req, processingContext);
-  res.setContentLength(data.size());
+  res.set_content_length(data.size());
   if (req.method() != HttpRequest::HEAD)
     res.output()->write(data);
   return true;

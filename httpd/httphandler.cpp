@@ -63,7 +63,7 @@ bool HttpHandler::handleCORS(
   if (!methods.contains("OPTIONS"_u8))
     qWarning() << "HttpHandler::handleCORS(): OPTIONS method should be included"
                   " in methods set whereas it was not: " << methods;
-  res.appendValueToHeader("Vary", "Origin");
+  res.append_value_to_header("Vary", "Origin");
   auto origin = req.header("Origin");
   if (origin.isEmpty())
     goto ignored;
@@ -74,12 +74,12 @@ bool HttpHandler::handleCORS(
       goto granted;
   goto denied;
 granted:
-  res.setHeader("Access-Control-Allow-Origin", origin);
+  res.set_header("Access-Control-Allow-Origin", origin);
   if (req.method() == HttpRequest::OPTIONS) {
-    res.setHeader("Access-Control-Allow-Methods", methods.sorted_join(", "));
-    res.setHeader("Access-Control-Allow-Headers", "X-Requested-With, Content-Type"); // Origin, Accept, Authorization ?
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Max-Age", "86400");
+    res.set_header("Access-Control-Allow-Methods", methods.sorted_join(", "));
+    res.set_header("Access-Control-Allow-Headers", "X-Requested-With, Content-Type"); // Origin, Accept, Authorization ?
+    res.set_header("Access-Control-Allow-Credentials", "true");
+    res.set_header("Access-Control-Max-Age", "86400");
   }
 ignored:
 denied:

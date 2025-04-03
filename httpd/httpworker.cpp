@@ -85,10 +85,10 @@ void HttpWorker::handleConnection(int socketDescriptor) {
               "starting with: "+line.left(200));
     goto finally;
   }
-  method = HttpRequest::methodFromText(args[0]);
-  req.setMethod(method);
+  method = HttpRequest::method_from_text(args[0]);
+  req.set_method(method);
   if (method == HttpRequest::HEAD) {
-    res.disableBodyOutput();
+    res.disable_body_output();
   } else if (method == HttpRequest::NONE
              || method == HttpRequest::ANY) [[unlikely]] {
     sendError(out, "405 Method not allowed",
@@ -121,7 +121,7 @@ void HttpWorker::handleConnection(int socketDescriptor) {
       break;
     }
     // LATER: handle multi line headers
-    if (!req.parseAndAddHeader(line)) [[unlikely]] {
+    if (!req.parse_and_add_header(line)) [[unlikely]] {
       sendError(out, "400 Bad request header line",
                 "starting with: "+line.left(200));
       goto finally;
@@ -139,8 +139,8 @@ void HttpWorker::handleConnection(int socketDescriptor) {
     uri.insert(0, '/');
   // LATER is utf8 the right choice ? should encoding depend on headers ?
   url = QUrl::fromEncoded("http://host"_u8+uri);
-  req.setUrl(url.toString(QUrl::RemoveUserInfo));
-  req.setPath(url.path());
+  req.set_url(url.toString(QUrl::RemoveUserInfo));
+  req.set_path(url.path());
   // load post params
   if (method == HttpRequest::POST
       && req.header("Content-Type"_u8)
@@ -172,13 +172,13 @@ void HttpWorker::handleConnection(int socketDescriptor) {
       line.replace('+', ' ');
       // set body (POST) parameters
       for (auto [key, value]: QUrlQuery(line).queryItems(QUrl::FullyDecoded))
-        req.setHttpParam(key, value);
+        req.set_query_param(key, value);
     }
   }
   // set query string (GET) parameters
   // they will override body (POST) parameters if any
   for (auto [key, value]: QUrlQuery(url).queryItems(QUrl::FullyDecoded))
-    req.setHttpParam(key, value);
+    req.set_query_param(key, value);
   handler = _server->chooseHandler(req);
   if (req.header("Expect"_u8) == "100-continue"_u8) {
     // LATER only send 100 Continue if the URI is actually accepted by the handler
@@ -186,15 +186,15 @@ void HttpWorker::handleConnection(int socketDescriptor) {
     out.flush();
   }
   if (!_defaultCacheControlHeader.isEmpty()) [[likely]]
-    res.setHeader("Cache-Control", _defaultCacheControlHeader);
+    res.set_header("Cache-Control", _defaultCacheControlHeader);
   processingContext(&req)(&res);
   handler->handleRequest(req, res, &processingContext);
   if (auto logPolicy = _server->logPolicy();
       logPolicy == HttpServer::LogAllHits ||
       (logPolicy == HttpServer::LogErrorHits && !res.success())) {
-    res.setHandledDate();
+    res.set_handled_date();
     res.output()->flush(); // calling output() ensures that header was sent
-    res.setFlushedDate();
+    res.set_flushed_date();
     Log::info() << PercentEvaluator::eval_utf8(
                      _server->logFormat(), &processingContext);
   } else {

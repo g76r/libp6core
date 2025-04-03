@@ -43,8 +43,8 @@ public:
 
 private:
   QExplicitlySharedDataPointer<HttpRequestData> d;
-  static QSet<HttpMethod> _wellKnownMethods;
-  static Utf8StringSet _wellKnownMethodNames;
+  static QSet<HttpMethod> _well_known_methods;
+  static Utf8StringSet _well_known_method_names;
 
 public:
   HttpRequest(QAbstractSocket *input, HttpWorker *worker);
@@ -53,20 +53,20 @@ public:
   ~HttpRequest();
   HttpRequest &operator=(const HttpRequest &other);
   [[nodiscard]] QAbstractSocket *input();
-  void setMethod(HttpMethod method);
+  void set_method(HttpMethod method);
   [[nodiscard]] HttpRequest::HttpMethod method() const;
   /** @return protocol and human readable string, e.g. "GET" */
-  [[nodiscard]] Utf8String methodName() const { return methodName(method()); }
+  [[nodiscard]] Utf8String method_name() const { return method_name(method()); }
   /** @return protocol and human readable string, e.g. "GET" */
-  [[nodiscard]] static Utf8String methodName(HttpMethod method);
+  [[nodiscard]] static Utf8String method_name(HttpMethod method);
   /** @return enum from protocol and human readable string, e.g. "GET"
    * @param name case sensitive, must be upper case */
-  [[nodiscard]] static HttpMethod methodFromText(const Utf8String &name);
-  [[nodiscard]] static QSet<HttpMethod> wellKnownMethods() {
-    return _wellKnownMethods; }
-  [[nodiscard]] static Utf8StringSet wellKnownMethodNames() {
-    return _wellKnownMethodNames; }
-  [[nodiscard]] bool parseAndAddHeader(Utf8String rawHeader);
+  [[nodiscard]] static HttpMethod method_from_text(const Utf8String &name);
+  [[nodiscard]] static QSet<HttpMethod> well_known_methods() {
+    return _well_known_methods; }
+  [[nodiscard]] static Utf8StringSet well_known_method_names() {
+    return _well_known_method_names; }
+  [[nodiscard]] bool parse_and_add_header(Utf8String rawHeader);
   /** Value associated to a request header.
    * If the header is found several time, last value is returned. */
   [[nodiscard]] Utf8String header(
@@ -80,33 +80,33 @@ public:
       const Utf8String &name, const Utf8String &defaultValue = {}) const;
   /* Value of a given cookie, decoded from base64 (implies that the cookie
    * content was encoded using base64). */
-  [[nodiscard]] QByteArray base64Cookie(
+  [[nodiscard]] QByteArray base64_cookie(
       const Utf8String &name, const QByteArray &defaultValue = {}) const;
   [[nodiscard]] QMap<Utf8String,Utf8String> cookies() const;
   [[nodiscard]] Utf8String path() const;
-  void setPath(const Utf8String &path);
+  void set_path(const Utf8String &path);
   /** URL as a string, without user info (user+password) */
   [[nodiscard]] Utf8String url() const;
-  void setUrl(const Utf8String &url);
-  /** Return a HTTP param (post form httpParam or query httpParam) value.
+  void set_url(const Utf8String &url);
+  /** Return a HTTP param (post form query_param or query query_param) value.
    * Only first value of multi-valued items is kept.
-   * If both are set, query httpParam (GET) are prefered to payload (POST) ones. */
-  [[nodiscard]] Utf8String httpParam(const Utf8String &key,
+   * If both are set, query query_param (GET) are prefered to payload (POST) ones. */
+  [[nodiscard]] Utf8String query_param(const Utf8String &key,
                                      const Utf8String &def = {}) const;
-  void setHttpParam(const Utf8String &key, const Utf8String &value);
-  void unsetHttpParam(const Utf8String &key);
+  void set_query_param(const Utf8String &key, const Utf8String &value);
+  void unset_query_param(const Utf8String &key);
   /** HTTP params as a ParamSet. */
-  [[nodiscard]] ParamSet httpParamset() const;
+  [[nodiscard]] ParamSet query_as_paramset() const;
   /** HTTP params as a Map. */
-  [[nodiscard]] QMap<Utf8String,Utf8String> httpParams() const;
+  [[nodiscard]] QMap<Utf8String,Utf8String> query_params() const;
   /** human-readable/debug representation. */
-  [[nodiscard]] Utf8String toUtf8() const;
+  [[nodiscard]] Utf8String human_readable() const;
   /** Client addresses.
    * Contains only one address for direct connection, or several when acceeded
    * through (reverse) proxies.
    * Same as X-Forwarded-For content, plus socket peer address at the end of
    * the list. */
-  [[nodiscard]] Utf8StringList clientAdresses() const;
+  [[nodiscard]] Utf8StringList client_addresses() const;
   /** Create a ParamsProvider wrapper object to give access to ! pseudo params,
    * url params (query items) and base64 cookies, in this order (url params hide
    * cookies). */
@@ -137,7 +137,7 @@ public:
   // LATER handle sessions
 
 private:
-  inline void parseAndAddCookie(Utf8String rawHeaderValue);
+  inline void parse_and_add_cookie(Utf8String rawHeaderValue);
 };
 
 Q_DECLARE_METATYPE(HttpRequest)

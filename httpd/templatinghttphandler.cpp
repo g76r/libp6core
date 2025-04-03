@@ -41,7 +41,7 @@ void TemplatingHttpHandler::sendLocalResource(
       Utf8String output;
       computePathToRoot(req, processingContext);
       applyTemplateFile(req, res, file, processingContext, &output);
-      res.setContentLength(output.size());
+      res.set_content_length(output.size());
       if (req.method() != HttpRequest::HEAD) {
         QBuffer buf(&output);
         buf.open(QIODevice::ReadOnly);
@@ -51,7 +51,7 @@ void TemplatingHttpHandler::sendLocalResource(
     }
   }
   if (!handleCacheHeadersAndSend304(file, req, res)) {
-    res.setContentLength(file->size());
+    res.set_content_length(file->size());
     IOUtils::copy(res.output(), file);
   }
 

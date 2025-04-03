@@ -54,10 +54,10 @@ bool BasicAuthHttpHandler::handleRequest(
   }
   if (_authIsMandatory
       || (_authorizer && !_authorizer->authorize(
-            {}, req.methodName(), req.path(),
+            {}, req.method_name(), req.path(),
             QDateTime::currentDateTime()))) {
-    res.setStatus(401);
-    res.setHeader("WWW-Authenticate", // LATER sanitize realm
+    res.set_status(HttpResponse::HTTP_Authentication_Required);
+    res.set_header("WWW-Authenticate", // LATER sanitize realm
                   "Basic realm=\""+_realm+"\"");
     return false;
   }

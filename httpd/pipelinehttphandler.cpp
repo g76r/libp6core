@@ -22,7 +22,7 @@ bool PipelineHttpHandler::acceptRequest(HttpRequest req) {
 bool PipelineHttpHandler::handleRequest(
     HttpRequest req, HttpResponse res, ParamsProviderMerger *processingContext) {
   if (_handlers.isEmpty()) [[unlikely]] {
-    res.setStatus(404);
+    res.set_status(HttpResponse::HTTP_Not_Found);
     res.output()->write("Error 404 - Not found");
     return true;
   }
