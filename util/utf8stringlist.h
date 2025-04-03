@@ -1,4 +1,4 @@
-/* Copyright 2023-2024 Gregoire Barbier and others.
+/* Copyright 2023-2025 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -43,17 +43,17 @@ public:
   Utf8StringList(InputIterator i1, InputIterator i2)
     : QList<Utf8String>(i1, i2) { }
 #endif
-  [[nodiscard, gnu::pure]] Utf8String join(const Utf8String &separator) const;
-  [[nodiscard, gnu::pure]] Utf8String join(const char separator) const;
-  [[nodiscard, gnu::pure]] Utf8String headed_join(
+  [[nodiscard]] Utf8String join(const Utf8String &separator) const;
+  [[nodiscard]] Utf8String join(const char separator) const;
+  [[nodiscard]] Utf8String headed_join(
       const Utf8String &separator) const;
-  [[nodiscard, gnu::pure]] Utf8String headed_join(const char separator) const;
+  [[nodiscard]] Utf8String headed_join(const char separator) const;
   [[nodiscard]] inline QStringList toStringList() const {
     return QStringList(cbegin(), cend()); }
   [[nodiscard]] inline QByteArrayList toByteArrayList() const {
     return QByteArrayList(cbegin(), cend()); }
-  [[nodiscard, gnu::pure]] Utf8StringSet toSet() const;
-  [[nodiscard, gnu::pure]] Utf8StringList toSortedDeduplicatedList() const;
+  [[nodiscard]] Utf8StringSet toSet() const;
+  [[nodiscard]] Utf8StringList toSortedDeduplicatedList() const;
   [[nodiscard]] inline std::set<Utf8String> toStdSet() const {
     return std::set<Utf8String>(cbegin(), cend()); }
   /** Return first string as value 1 and so on. Return join(' ') as value 0. */
@@ -72,7 +72,7 @@ public:
       append(s);
     return *this;
   }
-  [[nodiscard, gnu::pure]] Utf8String human_readable() const;
+  [[nodiscard]] Utf8String human_readable() const;
 };
 
 Q_DECLARE_METATYPE(Utf8StringList)

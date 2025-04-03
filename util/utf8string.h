@@ -143,17 +143,17 @@ public:
    *  Return replacement character (\ufffd) if an invalid sequence is found.
    *  Return a BOM character (\ufeff) if first bytes sequence is a BOM (\xef
    *  \xbb \xbf). */
-  [[nodiscard, gnu::pure]] static inline char32_t decode_utf8(
+  [[nodiscard]] static inline char32_t decode_utf8(
       const char *s, const char *end) {
     return decode_utf8_and_step_forward(&s, end, true); }
-  [[nodiscard, gnu::pure]] static inline char32_t decode_utf8(
+  [[nodiscard]] static inline char32_t decode_utf8(
       const char *s, qsizetype len) {
     return decode_utf8_and_step_forward(&s, s+len, true); }
-  [[nodiscard, gnu::pure]] static inline char32_t decode_utf8(
+  [[nodiscard]] static inline char32_t decode_utf8(
       const QByteArray &s) {
     auto s2 = s.constData();
     return decode_utf8_and_step_forward(&s2, s2+s.size(), true); }
-  [[nodiscard, gnu::pure]] static inline char32_t decode_utf8(const char *s) {
+  [[nodiscard]] static inline char32_t decode_utf8(const char *s) {
     return decode_utf8_and_step_forward(&s, s+::strlen(s), true); }
   /** Low-level one utf8 character decoder.
    *  Decode utf8 character at *s and set *s after the character's byte
@@ -207,35 +207,35 @@ public:
    *  Return the input character itself if no change is needed e.g. E É #
    */
   [[nodiscard, gnu::const]] static inline char32_t toTitle(char32_t u);
-  [[nodiscard, gnu::pure]] Utf8String toUpper() const;
-  [[nodiscard, gnu::pure]] Utf8String toLower() const;
-  [[nodiscard, gnu::pure]] Utf8String toTitle() const;
-  [[nodiscard, gnu::pure]] bool isLower() const;
-  [[nodiscard, gnu::pure]] bool isUpper() const;
-  [[nodiscard, gnu::pure]] bool isTitle() const;
+  [[nodiscard]] Utf8String toUpper() const;
+  [[nodiscard]] Utf8String toLower() const;
+  [[nodiscard]] Utf8String toTitle() const;
+  [[nodiscard]] bool isLower() const;
+  [[nodiscard]] bool isUpper() const;
+  [[nodiscard]] bool isTitle() const;
   /** Convert to C-identifier: allow only letters, digits and underscores, by
    *  replacing unallowed chars with '_' and prefixing with '_' if it begins
    *  with a digit.
    *  e.g. "::foo" -> "__foo", "42" -> "_42", "foo*bar" -> "foo_bar"
    *  @param allow_non_ascii also allow >= 0x80 chars (but not as first char)
    */
-  [[nodiscard, gnu::pure]] Utf8String toIdentifier(
+  [[nodiscard]] Utf8String toIdentifier(
       bool allow_non_ascii = false) const;
   /** Convert to valid Internet header (RFC 5322): allow only ascii printable
    *  characters different from ':', by replacing unallowed chars with '_'.
    *  @param ignore_trailing_colon remove trailing ':' rather than adding '_'
    *  @see toInternetHeaderCase
    */
-  [[nodiscard, gnu::pure]] Utf8String toInternetHeaderName(
+  [[nodiscard]] Utf8String toInternetHeaderName(
       bool ignore_trailing_colon = true) const;
   /** Convert to Kebab-Upper-Camel-Case, which is a common convention for
-   *  Internet header (event though RFC 5322 allows any case and some large
+   *  Internet header (even though RFC 5322 allows any case and some large
    *  scale vendors such as AWS just ignore it).
    *  e.g. "host" -> "Host", "x-forwarded-for" -> "X-Forwarded-For",
    *  "_FOO" -> "-Foo", "foo_bar" -> "Foo-Bar", "2É" -> "2é"
    *  @see toInternetHeaderName
    */
-  [[nodiscard, gnu::pure]] Utf8String toInternetHeaderCase() const;
+  [[nodiscard]] Utf8String toInternetHeaderCase() const;
 
   // FIXME inline int compare(QByteArrayView a, Qt::CaseSensitivity cs) const noexcept;
 
@@ -266,7 +266,7 @@ public:
       bool keep_replacement_chars = false, bool keep_bom = false) {
     return cleaned(s, s+len, strict, keep_replacement_chars, keep_bom); }
   /** Return valid utf8 without invalid sequences. */
-  [[nodiscard, gnu::pure]] inline static Utf8String cleaned(
+  [[nodiscard]] inline static Utf8String cleaned(
       const char *s, const char *end, bool strict = true,
       bool keep_replacement_chars = false, bool keep_bom = false);
   /** Reencode valid utf8 in-place without invalid sequences. */
@@ -290,12 +290,12 @@ public:
   [[nodiscard]] inline Utf8String mid(qsizetype pos, qsizetype len = -1) const {
     return QByteArray::mid(pos, len); }
   /** Return leftmost len unicode characters. */
-  [[nodiscard, gnu::pure]] inline Utf8String utf8left(qsizetype len) const;
+  [[nodiscard]] inline Utf8String utf8left(qsizetype len) const;
   /** Return rightmost len unicode characters. */
-  [[nodiscard, gnu::pure]] inline Utf8String utf8right(qsizetype len) const;
+  [[nodiscard]] inline Utf8String utf8right(qsizetype len) const;
   /** Return len unicode characters starting at pos.
    *  Everything after pos if len < 0 or pos+len > size(). */
-  [[nodiscard, gnu::pure]] inline Utf8String utf8mid(
+  [[nodiscard]] inline Utf8String utf8mid(
       qsizetype pos, qsizetype len = -1) const;
   [[nodiscard]] inline Utf8String trimmed() const {
     return QByteArray::trimmed(); }
@@ -305,7 +305,7 @@ public:
   /** remove last len unicode characters */
   inline void utf8chop(qsizetype len);
   /** return a string without last len unicode characters */
-  [[nodiscard, gnu::pure]] inline Utf8String utf8chopped(qsizetype len) const;
+  [[nodiscard]] inline Utf8String utf8chopped(qsizetype len) const;
   /** like left() but crashes if out of bound. */
   [[nodiscard]] inline Utf8String first(qsizetype n) const {
     return QByteArray::first(n); }
@@ -336,7 +336,7 @@ public:
    * @param direction: -1 left 0 middle +1 right
    * @param binary true to count bytes, false to count unicode chars
    */
-  [[nodiscard, gnu::pure]] static inline Utf8String elide(
+  [[nodiscard]] static inline Utf8String elide(
       const int direction, const bool binary, const Utf8String &s,
       const qsizetype maxsize, const Utf8String &ellipsis) {
     auto ss = binary ? s.size() : s.utf8size();
@@ -395,7 +395,7 @@ public:
    * @param direction: -1 left 0 center +1 right
    * @param binary true to count bytes, false to count unicode chars
    */
-  [[nodiscard, gnu::pure]] static inline Utf8String pad(
+  [[nodiscard]] static inline Utf8String pad(
       const int direction, const bool binary, const Utf8String &s,
       const qsizetype size, const Utf8String &padding) {
     auto ss = binary ? s.size() : s.utf8size();
@@ -450,28 +450,28 @@ public:
   // splitting
   /** Splitting utf8 string on ascii 7 separators, e.g. {',',';'}
     * @see Utf8String::AsciiWhitespace */
-  [[nodiscard, gnu::pure]] Utf8StringList split_after(
+  [[nodiscard]] Utf8StringList split_after(
       QList<char> seps, qsizetype offset = 0,
       Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
   /** Splitting utf8 string on ascii 7 separator, e.g. ' ' */
-  [[nodiscard, gnu::pure]] Utf8StringList split_after(
+  [[nodiscard]] Utf8StringList split_after(
       const char sep, const qsizetype offset = 0,
       Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
   /** Splitting utf8 string on multi-byte (utf8) or multi-char separator,
    *  e.g. "-->", "🥨"_u8, U'🥨', "<≠>"_u8 */
-  [[nodiscard, gnu::pure]] Utf8StringList split_after(
+  [[nodiscard]] Utf8StringList split_after(
       Utf8String sep, qsizetype offset = 0,
       Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
   /** Splitting utf8 string on ascii 7 separators, e.g. {',',';'}
     * @see Utf8String::AsciiWhitespace */
-  [[nodiscard, gnu::pure]] Utf8StringList split(
+  [[nodiscard]] Utf8StringList split(
       QList<char> seps, Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
   /** Splitting utf8 string on ascii 7 separator, e.g. ' ' */
-  [[nodiscard, gnu::pure]] Utf8StringList split(
+  [[nodiscard]] Utf8StringList split(
       const char sep, Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
   /** Splitting utf8 string on multi-byte (utf8) or multi-char separator,
    *  e.g. "-->", "🥨"_u8, U'🥨', "<≠>"_u8 */
-  [[nodiscard, gnu::pure]] Utf8StringList split(
+  [[nodiscard]] Utf8StringList split(
       Utf8String sep, Qt::SplitBehavior behavior = Qt::KeepEmptyParts) const;
   /** Split the string using its first utf8 char as a delimiter.
    *  e.g. "/foo/bar/g" -> { "foo", "bar", "g" }
@@ -480,10 +480,10 @@ public:
    *  e.g. "越foo越bar越g" -> { "foo", "bar", "g" }
    *  e.g. "🥨foo🥨bar🥨g" -> { "foo", "bar", "g" }
    */
-  [[nodiscard, gnu::pure]] Utf8StringList split_headed_list(
+  [[nodiscard]] Utf8StringList split_headed_list(
       qsizetype offset = 0) const;
   [[deprecated("use split_headed_list instead")]]
-  [[nodiscard, gnu::pure]] Utf8StringList splitByLeadingChar(
+  [[nodiscard]] Utf8StringList splitByLeadingChar(
       qsizetype offset = 0) const;
 
   // conversions to numbers
@@ -680,7 +680,7 @@ public:
 
   // misc conversions
   /** Return list of contained bytes, sorted and deduplicated. */
-  [[nodiscard, gnu::pure]] QList<char> toBytesSortedList() const;
+  [[nodiscard]] QList<char> toBytesSortedList() const;
 
   // replace
   inline Utf8String &replace(
@@ -978,7 +978,7 @@ public:
   ushort convToUShort(bool *ok) const { return toUShort(ok, 0.0); }
 #endif
 
-  [[nodiscard, gnu::pure]] static Utf8String fromCEscaped(
+  [[nodiscard]] static Utf8String fromCEscaped(
       const char *escaped, qsizetype len = -1);
   [[nodiscard]] inline static Utf8String fromCEscaped(auto escaped) {
     Utf8String s(escaped);
