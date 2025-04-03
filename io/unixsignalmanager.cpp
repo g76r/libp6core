@@ -73,7 +73,7 @@ public:
 static UnixSignalManagerImpl *_instance = nullptr;
 static QMutex *_instance_mutex = new QMutex;
 
-[[gnu::unused]] void UnixSignalManagerImpl::signal_handler(int signal_number) {
+[[maybe_unused]] void UnixSignalManagerImpl::signal_handler(int signal_number) {
   signed char a = signal_number;
   ::write(_instance->_pipe[1], &a, sizeof(a));
 }
