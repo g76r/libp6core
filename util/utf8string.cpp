@@ -97,6 +97,7 @@ static int staticInit() {
 }
 Q_CONSTRUCTOR_FUNCTION(staticInit)
 
+// TODO turn wrapped into template arg
 template<typename F>
 static inline F toFloating(
     QByteArray ba, bool *ok, F def, bool suffixes_enabled,
@@ -180,6 +181,7 @@ inline bool double_fits_integer(double d) {
       d <= std::numeric_limits<I>::max();
 }
 
+// TODO turn wrapped into template arg
 template<typename I>
 static inline I toInteger(
     QByteArray s, bool *ok, int base, I def, bool suffixes_enabled,
@@ -335,6 +337,7 @@ found:
   return b;
 }
 
+// TODO turn into template
 static inline Utf8String foldCase(
     const char *s, const char *end, std::function<char32_t(char32_t)> fold) {
   Utf8String folded;
@@ -344,6 +347,7 @@ static inline Utf8String foldCase(
   return folded;
 }
 
+// TODO turn into template
 static inline Utf8String foldCaseWithHoles(
     const char *s, const char *end, std::function<char32_t(char32_t)> fold,
     char32_t replacement) {
@@ -361,6 +365,7 @@ static inline Utf8String foldCaseWithHoles(
   return folded;
 }
 
+// TODO turn into template
 static inline bool testCase(
     const char *s, const char *end, std::function<char32_t(char32_t)> fold) {
   Q_ASSERT(s);
@@ -416,7 +421,11 @@ Utf8String Utf8String::toInternetHeaderCase() const {
   auto f = [&leading](char32_t u) -> char32_t {
     // TODO also (conditionaly) support lowerUpper as a separator
     // TODO include in a more general case conversion scheme
-    // with snake, camel, pascal, allcaps, alllower
+    // with snake_case, camelCase, PascalCase, kebab-case, flatcase,
+    // CONSTANT_CASE, Internet-Header-Case, TRAIN-CASE UPPERFLATCASE,
+    // CAMEL_SNAKE_CASE, space case, Title Case, namespace::case, dot.case
+    // plus prefix_if_invalid (like _ in C identifiers), merge_invalids
+    // may also provide a split function: {"splited","parts"}
     if (u == '-' || u == '_' || u == '.' || u == ':' || ::isspace(u)) {
       leading = true;
       return '-';
