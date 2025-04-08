@@ -1,4 +1,4 @@
-/* Copyright 2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2024-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,6 +18,8 @@
 #include <QMutexLocker>
 #include <QProcess>
 
+class QTimer;
+
 /** QProcess subclass for rendering graphviz graph using localy installed
  *  binaries (dot, neato, etc.).
  */
@@ -26,56 +28,65 @@ class LIBP6CORESHARED_EXPORT GraphvizRenderer : public QProcess {
   Q_DISABLE_COPY(GraphvizRenderer)
 
 public:
-  enum Layout { Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage };
-  enum Format { Png, Svg, Svgz, Plain, Gv, Xdot };
+  enum Layout { UnknownLayout, Dot, Neato, TwoPi, Circo, Fdp, Sfdp, Osage };
+  enum Format { UnknownFormat, Png, Svg, Svgz, Plain, Gv, Xdot };
 
 private:
   Utf8String _source, _tmp, _stderr, _output;
-  Layout _layout;
-  Format _format;
+  Layout _layout = Dot;
+  Format _format = Plain;
   ParamSet _params;
   QMutex _mutex;
+  int _timeoutms = 0;
+  QTimer *_timout_timer = 0;
 
 public:
   GraphvizRenderer(
-      QObject *parent, const Utf8String &source,
-      Layout layout = Dot, Format format = Plain, const ParamSet &params = {});
-  GraphvizRenderer(
+      QObject *parent, const Utf8String &source, Layout layout = Dot,
+      Format format = Plain, int timeoutms = 0, const ParamSet &params = {});
+  inline GraphvizRenderer(
       QObject *parent, const Utf8String &source, Format format,
+      int timeoutms = 0, const ParamSet &params = {})
+    : GraphvizRenderer(parent, source, Dot, format, timeoutms, params) {}
+  inline GraphvizRenderer(
+      QObject *parent, Layout layout, Format format = Plain, int timeoutms = 0,
       const ParamSet &params = {})
-    : GraphvizRenderer(parent, source, Dot, format, params) {}
-  GraphvizRenderer(
-      QObject *parent, Layout layout, Format format = Plain,
+    : GraphvizRenderer(parent, {}, layout, format, timeoutms, params) {}
+  inline GraphvizRenderer(
+      QObject *parent, Format format, int timeoutms = 0,
       const ParamSet &params = {})
-    : GraphvizRenderer(parent, {}, layout, format, params) {}
-  GraphvizRenderer(QObject *parent, Format format, const ParamSet &params = {})
-    : GraphvizRenderer(parent, {}, Dot, format, params) {}
-  GraphvizRenderer(QObject *parent, const Utf8String &source,
-                   const ParamSet &params)
-    : GraphvizRenderer(parent, source, Dot, Plain, params) {}
-  GraphvizRenderer(QObject *parent, const ParamSet &params)
-    : GraphvizRenderer(parent, {}, Dot, Plain, params) {}
-  explicit GraphvizRenderer(QObject *parent, const Utf8String &source = ""_u8)
-    : GraphvizRenderer(parent, source, Dot, Plain, {}) {}
-  GraphvizRenderer()
-    : GraphvizRenderer(nullptr, ""_u8, Dot, Plain, {}) {}
-  GraphvizRenderer(
-      const Utf8String &source, Format format, const ParamSet &params = {})
-    : GraphvizRenderer(nullptr, source, Dot, format, params) {}
-  explicit GraphvizRenderer(
-      Layout layout, Format format = Plain, const ParamSet &params = {})
-    : GraphvizRenderer(nullptr, {}, layout, format, params) {}
-  explicit GraphvizRenderer(Format format, const ParamSet &params = {})
-    : GraphvizRenderer(nullptr, {}, Dot, format, params) {}
-  GraphvizRenderer(const Utf8String &source, const ParamSet &params)
-    : GraphvizRenderer(nullptr, source, Dot, Plain, params) {}
-  explicit GraphvizRenderer(const ParamSet &params)
-    : GraphvizRenderer(nullptr, {}, Dot, Plain, params) {}
+    : GraphvizRenderer(parent, {}, Dot, format, timeoutms, params) {}
+  inline GraphvizRenderer(
+      QObject *parent, const Utf8String &source, const ParamSet &params)
+    : GraphvizRenderer(parent, source, Dot, Plain, 0, params) {}
+  inline GraphvizRenderer(
+      QObject *parent, const ParamSet &params)
+    : GraphvizRenderer(parent, {}, Dot, Plain, 0, params) {}
+  inline explicit GraphvizRenderer(QObject *parent, const Utf8String &source = ""_u8)
+    : GraphvizRenderer(parent, source, Dot, Plain, 0, {}) {}
+  inline GraphvizRenderer()
+    : GraphvizRenderer(nullptr, ""_u8, Dot, Plain, 0, {}) {}
+  inline GraphvizRenderer(
+      const Utf8String &source, Format format, int timeoutms = 0, const ParamSet &params = {})
+    : GraphvizRenderer(nullptr, source, Dot, format, timeoutms, params) {}
+  inline explicit GraphvizRenderer(
+      Layout layout, Format format = Plain, int timeoutms = 0,
+      const ParamSet &params = {})
+    : GraphvizRenderer(nullptr, {}, layout, format, timeoutms, params) {}
+  inline explicit GraphvizRenderer(
+      Format format, int timeoutms = 0, const ParamSet &params = {})
+    : GraphvizRenderer(nullptr, {}, Dot, format, timeoutms, params) {}
+  inline GraphvizRenderer(
+      const Utf8String &source, const ParamSet &params)
+    : GraphvizRenderer(nullptr, source, Dot, Plain, 0, params) {}
+  inline explicit GraphvizRenderer(const ParamSet &params)
+    : GraphvizRenderer(nullptr, {}, Dot, Plain, 0, params) {}
   /** Synchronously start and wait for process finished, then return output
    *  Thread-safe (by blocking and allowing only one rendering at a time).
    */
   Utf8String run(ParamsProvider *params_evaluation_context = 0,
                  const Utf8String &source = {});
+  inline Utf8String run(const Utf8String &source) { return run(0, source); }
   static Utf8String mime_type(Format format);
   static Format formatFromString(const Utf8String &s, Format def = Gv);
   static Utf8String formatAsString(Format format);

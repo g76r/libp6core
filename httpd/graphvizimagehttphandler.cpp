@@ -1,4 +1,4 @@
-/* Copyright 2013-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,7 +14,6 @@
 #include "graphvizimagehttphandler.h"
 #include "httpd/httpworker.h"
 #include "log/log.h"
-#include <QTimer>
 
 GraphvizImageHttpHandler::GraphvizImageHttpHandler(
     QObject *parent, Layout layout, Format format)
@@ -32,15 +31,8 @@ QByteArray GraphvizImageHttpHandler::imageData(
     _renderingNeeded = false;
     return _data;
   }
-  auto gvr = new GraphvizRenderer(req.worker(), _format);
-  auto timer = new QTimer(gvr);
-  if (timeoutMillis > 0) {
-    connect(timer, &QTimer::timeout, gvr, &GraphvizRenderer::kill);
-    timer->setSingleShot(true);
-    timer->start(timeoutMillis);
-  }
+  auto gvr = new GraphvizRenderer(req.worker(), _format, timeoutMillis);
   _data = gvr->run(context, _source);
-  timer->stop();
   gvr->deleteLater();
   _renderingNeeded = false;
   return _data;

@@ -1,4 +1,4 @@
-/* Copyright 2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2024-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,12 +17,13 @@
 #include <QMap>
 #include <QCoreApplication>
 #include <QThread>
+#include <QTimer>
 
 GraphvizRenderer::GraphvizRenderer(QObject *parent,
-    const Utf8String &source, Layout layout, Format format,
+    const Utf8String &source, Layout layout, Format format, int timeoutms,
     const ParamSet &params)
   : QProcess(parent), _source(source), _layout(layout), _format(format),
-    _params(params) {
+    _params(params), _timeoutms(timeoutms) {
   connect(this, &QProcess::finished,
           this, &GraphvizRenderer::process_finished);
   connect(this, &QProcess::errorOccurred,
@@ -54,9 +55,16 @@ void GraphvizRenderer::do_start(
   auto source = start_source | ppm.paramRawUtf8("source") | _source;
   Format format = formatFromString(ppm.paramRawUtf8("format"), _format);
   Layout layout = layoutFromString(ppm.paramRawUtf8("layout"), _layout);
+  int timeoutms = ppm.paramNumber<double>("timeout", _timeoutms/1e3)*1e3;
   // Log::debug() << "starting graphviz rendering with this data: " << source;
   // Log::debug() << "graphviz command line: " << layoutAsString(layout)
   //              << " -T"_u8 << formatAsString(format);
+  if (timeoutms > 0) {
+    _timout_timer = new QTimer(this);
+    connect(_timout_timer, &QTimer::timeout, this, &GraphvizRenderer::kill);
+    _timout_timer->setSingleShot(true);
+    _timout_timer->start(timeoutms);
+  }
   QProcess::start(layoutAsString(layout), {{"-T"_u8 + formatAsString(format)}});
   waitForStarted();
   qint64 written = write(source);
@@ -69,6 +77,11 @@ void GraphvizRenderer::do_start(
 
 void GraphvizRenderer::process_finished(
     int exitCode, QProcess::ExitStatus exitStatus) {
+  if (_timout_timer) {
+    _timout_timer->stop();
+    _timout_timer->deleteLater();
+    _timout_timer = 0;
+  }
   read_stderr();
   read_stdout();
   bool success = (exitStatus == QProcess::NormalExit && exitCode == 0);
@@ -114,6 +127,7 @@ void GraphvizRenderer::read_stderr() {
 }
 
 static QMap<Utf8String,GraphvizRenderer::Format> _formatFromString {
+  { "unknown", GraphvizRenderer::UnknownFormat },
   { "png", GraphvizRenderer::Png },
   { "svg", GraphvizRenderer::Svg },
   { "svgz", GraphvizRenderer::Svgz },
@@ -136,6 +150,7 @@ Utf8String GraphvizRenderer::formatAsString(
 }
 
 static QMap<Utf8String,GraphvizRenderer::Layout> _layoutFromString {
+  { "unknown", GraphvizRenderer::UnknownLayout },
   { "dot", GraphvizRenderer::Dot },
   { "neato", GraphvizRenderer::Neato },
   { "twopi", GraphvizRenderer::TwoPi },
@@ -167,6 +182,8 @@ Utf8String GraphvizRenderer::mime_type(Format format) {
   case Gv:
   case Xdot:
     return "text/plain;charset=UTF-8"_u8;
+  case UnknownFormat:
+    ;
   }
   return "application/octet-stream"_u8;
 }
