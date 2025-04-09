@@ -118,8 +118,8 @@ public:
    *  Utf8String(v).isNull() when !v.isValid(), so if you use QVariant{}
    *  semanticaly as a null value it will be consistent with Utf8String{}. */
   explicit inline Utf8String(QVariant v)
-    : QByteArray(v.canConvert<QByteArray>()
-                 ? v.toByteArray()
+    : QByteArray(v.canConvert<Utf8String>()
+                 ? v.value<Utf8String>()
                  : v.canConvert<QString>()
                    ? v.toString().toUtf8()
                    : QByteArray{}) { }
