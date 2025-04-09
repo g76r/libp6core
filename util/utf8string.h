@@ -23,6 +23,14 @@ using namespace Qt::Literals::StringLiterals;
 class Utf8StringList;
 class Utf8StringSet;
 class QDebug;
+class QLine;
+class QLineF;
+class QPoint;
+class QPointF;
+class QRect;
+class QRectF;
+class QSize;
+class QSizeF;
 
 /** Enhanced QByteArray with string methods, always assuming 8 bits content is a
  * UTF-8 encoded string (QByteArray, char *, etc.). */
@@ -85,6 +93,21 @@ public:
     : QByteArray(Utf8String::number(i)) {}
   explicit inline Utf8String(std::floating_point auto f)
     : QByteArray(Utf8String::number(f)) {}
+  explicit Utf8String(QPointF point);
+  explicit Utf8String(QSizeF size);
+  explicit Utf8String(QRectF rect);
+  explicit Utf8String(QLineF line);
+  explicit Utf8String(QList<QPointF> list);
+  template <p6::arithmetic T>
+  inline explicit Utf8String(QList<T> list) {
+    for (bool begin = true; auto number: list) {
+      if (begin)
+        begin = false;
+      else
+        append(',');
+      append(Utf8String::number(number));
+    }
+  }
   /** Build Utf8String from QVariant.
    *  Take:
    *  - QByteArray if v.canConvert<QByteArray>() (assuming UTF-8), which
@@ -677,6 +700,30 @@ public:
     return QByteArray::toPercentEncoding(exclude, include, percent); }
   [[nodiscard]] inline Utf8String percentDecoded(char percent = '%') const {
     return QByteArray::percentDecoded(percent); }
+
+  // geometrics conversions
+  [[nodiscard]] QPointF toPointF() const;
+  [[nodiscard]] QSizeF toSizeF() const;
+  [[nodiscard]] QRectF toRectF() const;
+  [[nodiscard]] QLineF toLineF() const;
+  [[nodiscard]] QList<QPointF> toPointFList() const;
+  template <p6::arithmetic T>
+  [[nodiscard]] inline QList<T> toNumberList() const {
+    QList<T> numbers;
+    for (qsizetype i = 0, j; ; i = j+1) {
+      bool ok;
+      j = indexOf(',', i);
+      if (j == i)
+        return {};
+      if (j < 0)
+        numbers += sliced(i).toNumber<T>(&ok);
+      numbers += sliced(i, j-i-1).toNumber<T>(&ok);
+      if (!ok)
+        return {};
+      if (j < 0)
+        return numbers;
+    }
+  }
 
   // misc conversions
   /** Return list of contained bytes, sorted and deduplicated. */

@@ -17,6 +17,10 @@
 #include <set>
 #include <QDateTime>
 #include <cfloat>
+#include <QPointF>
+#include <QSizeF>
+#include <QRectF>
+#include <QLineF>
 
 const QList<char> Utf8String::AsciiWhitespace = {
   ' ', '\t', '\n', '\r', '\v', '\f',
@@ -90,12 +94,73 @@ static int staticInit() {
     return QDate::fromString(s, Qt::ISODateWithMs); });
   QMetaType::registerConverter<Utf8String,QTime>([](const Utf8String &s) {
     return QTime::fromString(s, Qt::ISODateWithMs); });
+  QMetaType::registerConverter<QPointF,Utf8String>([](const QPointF &p) {
+    return Utf8String(p); });
+  QMetaType::registerConverter<Utf8String,QPointF>(&Utf8String::toPointF);
+  QMetaType::registerConverter<QSizeF,Utf8String>([](const QSizeF &p) {
+    return Utf8String(p); });
+  QMetaType::registerConverter<Utf8String,QSizeF>(&Utf8String::toSizeF);
+  QMetaType::registerConverter<QRectF,Utf8String>([](const QRectF &p) {
+    return Utf8String(p); });
+  QMetaType::registerConverter<Utf8String,QRectF>(&Utf8String::toRectF);
+  QMetaType::registerConverter<QLineF,Utf8String>([](const QLineF &p) {
+    return Utf8String(p); });
+  QMetaType::registerConverter<Utf8String,QLineF>(&Utf8String::toLineF);
+  QMetaType::registerConverter<QList<QPointF>,Utf8String>([](const QList<QPointF> &p) {
+    return Utf8String(p); });
+  QMetaType::registerConverter<Utf8String,QList<QPointF>>(&Utf8String::toPointFList);
+  QMetaType::registerConverter<QList<double>,Utf8String>([](const QList<double> &p) {
+    return Utf8String(p); });
+  QMetaType::registerConverter<Utf8String,QList<double>>(&Utf8String::toNumberList);
+  QMetaType::registerConverter<QList<qint64>,Utf8String>([](const QList<qint64> &p) {
+    return Utf8String(p); });
+  QMetaType::registerConverter<Utf8String,QList<qint64>>(&Utf8String::toNumberList);
+  QMetaType::registerConverter<QList<quint64>,Utf8String>([](const QList<quint64> &p) {
+    return Utf8String(p); });
+  QMetaType::registerConverter<Utf8String,QList<quint64>>(&Utf8String::toNumberList);
+
   // TODO there are more to map in QT_FOR_EACH_STATIC_CORE_CLASS
   // QT_FOR_EACH_STATIC_ALIAS_TYPE QT_FOR_EACH_STATIC_CORE_TEMPLATE
   // etc. (qmetatype.h)
   return 0;
 }
 Q_CONSTRUCTOR_FUNCTION(staticInit)
+
+Utf8String::Utf8String(QPointF point) {
+  *this = Utf8String::number(point.x())+","_u8
+      +Utf8String::number(point.y());
+}
+
+Utf8String::Utf8String(QSizeF size) {
+  *this = Utf8String::number(size.width())+","_u8
+      +Utf8String::number(size.height());
+}
+
+Utf8String::Utf8String(QRectF rect) {
+  *this = Utf8String::number(rect.x())+","_u8
+      +Utf8String::number(rect.y())+","_u8
+      +Utf8String::number(rect.width())+","_u8
+      +Utf8String::number(rect.height());
+}
+
+Utf8String::Utf8String(QLineF line) {
+  *this = Utf8String::number(line.x1())+","_u8
+      +Utf8String::number(line.y2())+","_u8
+      +Utf8String::number(line.x2())+","_u8
+      +Utf8String::number(line.y2());
+}
+
+Utf8String::Utf8String(QList<QPointF> list) {
+  for (bool begin = true; auto point: list) {
+    if (begin)
+      begin = false;
+    else
+      append(' ');
+    append(Utf8String::number(point.x()));
+    append(',');
+    append(Utf8String::number(point.y()));
+  }
+}
 
 // TODO turn wrapped into template arg
 template<typename F>
@@ -745,4 +810,62 @@ as_is:
 Utf8String &Utf8String::replace(
     const QRegularExpression &re, const Utf8String &after) {
   return *this = toUtf16().replace(re, after);
+}
+
+inline std::pair<qreal,qreal> utf8_to_coords_2(const Utf8String &xy) {
+  auto coords = xy.split(',');
+  bool ok;
+  auto x = coords.value(0).toNumber<qreal>(&ok);
+  if (!ok)
+    return {};
+  auto y = coords.value(1).toNumber<qreal>(&ok);
+  if (!ok)
+    return {};
+  return {x, y};
+}
+
+inline std::tuple<qreal,qreal,qreal,qreal> utf8_to_coords_4(
+    const Utf8String &xyza) {
+  auto coords = xyza.split(',');
+  bool ok;
+  auto x = coords.value(0).toNumber<qreal>(&ok);
+  if (!ok)
+    return {};
+  auto y = coords.value(1).toNumber<qreal>(&ok);
+  if (!ok)
+    return {};
+  auto z = coords.value(2).toNumber<qreal>(&ok);
+  if (!ok)
+    return {};
+  auto a = coords.value(3).toNumber<qreal>(&ok);
+  if (!ok)
+    return {};
+  return {x, y, z, a};
+}
+
+QPointF Utf8String::toPointF() const {
+  auto [x,y] = utf8_to_coords_2(*this);
+  return QPointF(x, y);
+}
+
+QSizeF Utf8String::toSizeF() const {
+  auto [x,y] = utf8_to_coords_2(*this);
+  return QSizeF(x, y);
+}
+
+QRectF Utf8String::toRectF() const {
+  auto [x,y,w,h] = utf8_to_coords_4(*this);
+  return QRectF(x, y, w, h);
+}
+
+QLineF Utf8String::toLineF() const {
+  auto [x1,y1,x2,y2] = utf8_to_coords_4(*this);
+  return QLineF(x1, y1, x2, y2);
+}
+
+QList<QPointF> Utf8String::toPointFList() const {
+  QList<QPointF> points;
+  for (auto coords: split(' '))
+    points += coords.toPointF();
+  return points;
 }
