@@ -1034,7 +1034,18 @@ public:
   /** Test if u is an ascii whitespace char: ' ', '\t', '\n'... */
   [[nodiscard]] inline static bool is_ascii_whitespace(char32_t u) {
     switch (u) {
-      case ' ': case '\t': case '\n': case '\r': case '\v': case '\f':
+      // horizontal whitespace
+      case ' ': case '\t':
+      // line, page and section separators
+      case '\n': case '\r': case '\v': case '\f':
+        return true;
+    }
+    return false;
+  }
+  /** Test if u is an ascii horizontal whitespace: ' ', '\t' */
+  [[nodiscard]] inline static bool is_ascii_horizontal_whitespace(char32_t u) {
+    switch (u) {
+      case ' ': case '\t':
         return true;
     }
     return false;
@@ -1042,12 +1053,26 @@ public:
   /** Test if u is a unicode whitespace char: ascii plus \u0084, \u2000... */
   [[nodiscard]] inline static bool is_unicode_whitespace(char32_t u) {
     switch (u) {
-      case ' ': case '\t': case '\n': case '\r': case '\v': case '\f':
-      case 0x85: case 0xa0: case 0x1680:
+      // horizontal whitespace
+      case ' ': case '\t': case 0xa0: case 0x1680:
       case 0x2000: case 0x2001: case 0x2002: case 0x2003: case 0x2004:
       case 0x2005: case 0x2006: case 0x2007: case 0x2008: case 0x2009:
-      case 0x200a: case 0x2028: case 0x2029: case 0x202f: case 0x205f:
-      case 0x3000:
+      case 0x200a: case 0x202f: case 0x205f: case 0x3000:
+      // line, page and section separators
+      case '\n': case '\r': case '\v': case '\f':
+      case 0x85: case 0x2028: case 0x2029:
+        return true;
+    }
+    return false;
+  }
+  /** Test if u is a unicode whitespace char: ascii plus \u0084, \u2000... */
+  [[nodiscard]] inline static bool is_unicode_horizontal_whitespace(char32_t u){
+    switch (u) {
+      case ' ': case '\t':
+      case 0xa0: case 0x1680:
+      case 0x2000: case 0x2001: case 0x2002: case 0x2003: case 0x2004:
+      case 0x2005: case 0x2006: case 0x2007: case 0x2008: case 0x2009:
+      case 0x200a: case 0x202f: case 0x205f: case 0x3000:
         return true;
     }
     return false;
