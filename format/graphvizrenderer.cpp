@@ -68,6 +68,8 @@ void GraphvizRenderer::do_start(
   auto command = layout == UnknownLayout ? "false"_u8 : layoutAsString(layout);
   QStringList options = _options;
   options << "-T"+formatAsString(format);
+  Log::debug() << "graphviz rendering process starting " << command << " "
+               << options;
   QProcess::start(command, _options);
   waitForStarted();
   qint64 written = write(source);
@@ -91,7 +93,7 @@ void GraphvizRenderer::process_finished(
   if (success) {
     Log::debug() << "graphviz rendering process successful with return code "
                  << exitCode << " and QProcess::ExitStatus " << (int)exitStatus
-                 << " having produced a " << _tmp.size() << " bytes output";
+                 << " having produced a " << _tmp.size() << " bytes output: ";
     _output = _tmp | "empty"_u8;
   } else {
     Log::error() << "graphviz rendering process failed with return code "

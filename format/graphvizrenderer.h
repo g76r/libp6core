@@ -91,6 +91,7 @@ public:
   inline QStringList options() const { return _options; }
   /** Set custom command line options, such as "-Gsplines=spline" or "-n2" */
   inline void set_options(const QStringList &options) { _options = options; }
+  inline void set_layout(Layout layout) { _layout = layout; }
   static Utf8String mime_type(Format format);
   static Format formatFromString(const Utf8String &s, Format def = Gv);
   static Utf8String formatAsString(Format format);
