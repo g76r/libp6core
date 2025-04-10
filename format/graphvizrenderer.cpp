@@ -65,7 +65,10 @@ void GraphvizRenderer::do_start(
     _timout_timer->setSingleShot(true);
     _timout_timer->start(timeoutms);
   }
-  QProcess::start(layoutAsString(layout), {{"-T"_u8 + formatAsString(format)}});
+  auto command = layout == UnknownLayout ? "false"_u8 : layoutAsString(layout);
+  QStringList options = _options;
+  options << "-T"+formatAsString(format);
+  QProcess::start(command, _options);
   waitForStarted();
   qint64 written = write(source);
   if (written != source.size())

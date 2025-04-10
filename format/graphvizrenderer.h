@@ -39,6 +39,7 @@ private:
   QMutex _mutex;
   int _timeoutms = 0;
   QTimer *_timout_timer = 0;
+  QStringList _options;
 
 public:
   GraphvizRenderer(
@@ -87,6 +88,9 @@ public:
   Utf8String run(ParamsProvider *params_evaluation_context = 0,
                  const Utf8String &source = {});
   inline Utf8String run(const Utf8String &source) { return run(0, source); }
+  inline QStringList options() const { return _options; }
+  /** Set custom command line options, such as "-Gsplines=spline" or "-n2" */
+  inline void set_options(const QStringList &options) { _options = options; }
   static Utf8String mime_type(Format format);
   static Format formatFromString(const Utf8String &s, Format def = Gv);
   static Utf8String formatAsString(Format format);
