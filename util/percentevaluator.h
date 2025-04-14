@@ -54,7 +54,7 @@ public:
     Utf8StringSet _already_evaluated_variables; // loop detection
     int _role;
     struct {
-      unsigned int _functions_evaluated : 1 = 0;
+      unsigned char _functions_evaluated : 1 = 0;
     } _flags;
 
   public:
