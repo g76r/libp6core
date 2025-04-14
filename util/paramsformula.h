@@ -60,7 +60,7 @@ public:
   ParamsFormula &operator=(const ParamsFormula &other) noexcept;
   ParamsFormula &operator=(ParamsFormula &&other) noexcept;
   ~ParamsFormula() noexcept;
-  [[nodiscard]] inline bool isValid() const noexcept { return !d; }
+  [[nodiscard]] inline bool isValid() const noexcept { return !!d; }
   [[nodiscard]] inline bool operator!() const noexcept { return !isValid(); }
   [[nodiscard]] Utf8String expr() const noexcept;
   [[nodiscard]] FormulaDialect dialect() const noexcept;
