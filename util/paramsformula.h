@@ -33,6 +33,13 @@ class LIBP6CORESHARED_EXPORT ParamsFormula final {
 
 public:
   using EvalContext = PercentEvaluator::EvalContext;
+  using UnaryOperator = std::function<QVariant(const EvalContext &context,
+  const QVariant &def, const QVariant &x)>;
+  using BinaryOperator = std::function<QVariant(const EvalContext &context,
+  const QVariant &def, const QVariant &x, const QVariant &y)>;
+  using TernaryOperator = std::function<QVariant(const EvalContext &context,
+  const QVariant &def, const QVariant &x, const QVariant &y,
+  const QVariant &z)>;
   enum FormulaDialect {
     InvalidFormula = 0,
     PercentExpression, // e.g. "%{=uppercase:%foo}" -> "HELLO" if foo="hello"
@@ -70,6 +77,9 @@ public:
       const EvalContext &context = {}, const QVariant &def = {}) const {
     return Utf8String{eval(context, def)};
   }
+  static void register_operator(const Utf8String &symbol, UnaryOperator op);
+  static void register_operator(const Utf8String &symbol, BinaryOperator op);
+  static void register_operator(const Utf8String &symbol, TernaryOperator op);
 
 private:
   inline void init_rpn(ParamsFormulaData *data, const Utf8StringList &list, const Utf8String &expr);

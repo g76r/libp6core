@@ -160,7 +160,7 @@ static const StackItemOperator _percentOperator = [](Stack *stack, const EvalCon
   return stack->popeval_utf8(stack, context, def) % context;
 };
 
-static const RadixTree<OperatorDefinition> _operatorDefinitions {
+static RadixTree<OperatorDefinition> _operatorDefinitions {
   { "<%>", { 1, 1, false, false, _percentOperator }, true },
   { "??*", { 2, 2, true, false, [](Stack *stack, const EvalContext &context, const QVariant &def) -> QVariant {
         auto y = stack->popeval(stack, context, def);
@@ -502,9 +502,45 @@ static const RadixTree<OperatorDefinition> _operatorDefinitions {
       } }, true },
 };
 
-static const QMap<Utf8String, OperatorDefinition> _operatorDefinitionsMap {
+static QMap<Utf8String, OperatorDefinition> _operatorDefinitionsMap {
   _operatorDefinitions.toUtf8Map()
 };
+
+void ParamsFormula::register_operator(
+    const Utf8String &symbol, ParamsFormula::UnaryOperator op) {
+  OperatorDefinition opdef =
+  {1, 7, false, false, [op](Stack *stack, const EvalContext &context, const QVariant &def) -> QVariant {
+     auto x = stack->popeval_utf8(stack, context, def);
+     return op(context, def, x);
+   }};
+  _operatorDefinitions.insert(symbol, opdef, false);
+  _operatorDefinitionsMap.insert(symbol, opdef);
+}
+
+void ParamsFormula::register_operator(
+    const Utf8String &symbol, ParamsFormula::BinaryOperator op) {
+  OperatorDefinition opdef =
+  {1, 7, false, false, [op](Stack *stack, const EvalContext &context, const QVariant &def) -> QVariant {
+     auto y = stack->popeval_utf8(stack, context, def);
+     auto x = stack->popeval_utf8(stack, context, def);
+     return op(context, def, x, y);
+   }};
+  _operatorDefinitions.insert(symbol, opdef, false);
+  _operatorDefinitionsMap.insert(symbol, opdef);
+}
+
+void ParamsFormula::register_operator(
+    const Utf8String &symbol, ParamsFormula::TernaryOperator op) {
+  OperatorDefinition opdef =
+  {1, 7, false, false, [op](Stack *stack, const EvalContext &context, const QVariant &def) -> QVariant {
+     auto z = stack->popeval_utf8(stack, context, def);
+     auto y = stack->popeval_utf8(stack, context, def);
+     auto x = stack->popeval_utf8(stack, context, def);
+     return op(context, def, x, y, z);
+   }};
+  _operatorDefinitions.insert(symbol, opdef, false);
+  _operatorDefinitionsMap.insert(symbol, opdef);
+}
 
 class ParamsFormulaData : public QSharedData {
 public:
