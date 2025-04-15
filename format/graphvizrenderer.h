@@ -40,6 +40,7 @@ private:
   int _timeoutms = 0;
   QTimer *_timout_timer = 0;
   QStringList _options;
+  qint64 _startms;
 
 public:
   GraphvizRenderer(

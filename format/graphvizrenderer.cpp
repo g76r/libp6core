@@ -18,6 +18,7 @@
 #include <QCoreApplication>
 #include <QThread>
 #include <QTimer>
+#include <QtDebug>
 
 GraphvizRenderer::GraphvizRenderer(QObject *parent,
     const Utf8String &source, Layout layout, Format format, int timeoutms,
@@ -48,7 +49,7 @@ Utf8String GraphvizRenderer::run(
   }
   return _output;
 }
-
+#include <QDateTime>
 void GraphvizRenderer::do_start(
     ParamsProvider *context, const Utf8String &start_source) {
   auto ppm = ParamsProviderMerger(context)(_params);
@@ -56,9 +57,6 @@ void GraphvizRenderer::do_start(
   Format format = formatFromString(ppm.paramRawUtf8("format"), _format);
   Layout layout = layoutFromString(ppm.paramRawUtf8("layout"), _layout);
   int timeoutms = ppm.paramNumber<double>("timeout", _timeoutms/1e3)*1e3;
-  // Log::debug() << "starting graphviz rendering with this data: " << source;
-  // Log::debug() << "graphviz command line: " << layoutAsString(layout)
-  //              << " -T"_u8 << formatAsString(format);
   if (timeoutms > 0) {
     _timout_timer = new QTimer(this);
     connect(_timout_timer, &QTimer::timeout, this, &GraphvizRenderer::kill);
@@ -68,20 +66,20 @@ void GraphvizRenderer::do_start(
   auto command = layout == UnknownLayout ? "false"_u8 : layoutAsString(layout);
   QStringList options = _options;
   options << "-T"+formatAsString(format);
-  Log::debug() << "graphviz rendering process starting " << command << " "
-               << options;
+  qDebug() << "graphviz rendering process starting" << command << options;
+  _startms = QDateTime::currentMSecsSinceEpoch();
   QProcess::start(command, _options);
   waitForStarted();
   qint64 written = write(source);
   if (written != source.size())
-    Log::debug() << "cannot write to graphviz processor " << written << " "
-                 << source.size() << " " << (int)error() << " "
-                 << errorString();
+    qDebug() << "cannot write to graphviz processor" << written << source.size()
+             << (int)error() << errorString();
   closeWriteChannel();
 }
 
 void GraphvizRenderer::process_finished(
     int exitCode, QProcess::ExitStatus exitStatus) {
+  auto elapsed = QDateTime::currentMSecsSinceEpoch() - _startms;
   if (_timout_timer) {
     _timout_timer->stop();
     _timout_timer->deleteLater();
@@ -91,15 +89,16 @@ void GraphvizRenderer::process_finished(
   read_stdout();
   bool success = (exitStatus == QProcess::NormalExit && exitCode == 0);
   if (success) {
-    Log::debug() << "graphviz rendering process successful with return code "
-                 << exitCode << " and QProcess::ExitStatus " << (int)exitStatus
-                 << " having produced a " << _tmp.size() << " bytes output: ";
+    qDebug() << "graphviz rendering process successful with return code"
+             << exitCode << "and QProcess::ExitStatus" << (int)exitStatus
+             << "having produced a" << _tmp.size() << "bytes output in"
+             << elapsed/1e3 << "seconds";
     _output = _tmp | "empty"_u8;
   } else {
-    Log::error() << "graphviz rendering process failed with return code "
-                 << exitCode << ", QProcess::ExitStatus " << (int)exitStatus
-                 << " error: " << errorString()
-                 << " and stderr content: " << _stderr;
+    qWarning() << "graphviz rendering process failed with return code"
+               << exitCode << ", QProcess::ExitStatus" << (int)exitStatus
+               << "after" << elapsed/1e3 << "seconds" << "with error:"
+               << errorString() << "and stderr content:" << _stderr;
     _output = _stderr | "error"_u8; // LATER placeholder image
   }
   _tmp.clear();
@@ -109,9 +108,9 @@ void GraphvizRenderer::process_finished(
 void GraphvizRenderer::process_error(QProcess::ProcessError error) {
   read_stderr();
   read_stdout();
-  Log::warning() << "graphviz rendering process crashed with "
-                    "QProcess::ProcessError code " << (int)error << " ("
-                 << errorString() << ") and stderr content: " << _stderr;
+  qWarning() << "graphviz rendering process crashed with QProcess::ProcessError"
+                " code" << (int)error << "(" << errorString()
+             << ") and stderr content:" << _stderr;
   kill();
   // calling this would create race condition on _output:
   // process_finished(-1, QProcess::CrashExit);
