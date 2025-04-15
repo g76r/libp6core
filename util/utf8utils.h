@@ -21,16 +21,27 @@ namespace p6 {
 
 /** Read one or several bytes from input until they constitute a valid utf8
  *  character or an invalid utf8 bytes sequence.
- *  @return {bytes_read, unicode_char}
- *    or {-1, Utf8String::ReplacementCharacter} */
-template <bool wait = false, bool strict = true, bool skip_bom = true>
-inline std::pair<qint64,char32_t> get_utf8(
+ *  @param wait for incomming bytes (@see QIODevice::waitForReadyRead())
+ *  @param strict be strict on utf8 validation e.g. reject overlong sequences
+ *  @param skip_bom ignore byte order marks i.e. U'\ufeff' == "\xef\xbb\xff"
+ *  @param input input device, must be !null and open
+ *  @param error will receive i/o error messages if !null
+ *  @return {char width (1 to 4), unicode_char} or {-1, U'\ufffd'} on error or
+ *          {0, 0} at eof.
+ *  @see Utf8String
+ *
+ *  note that U'\ufffd' == Utf8String::ReplacementCharacter and
+ *  U'\ufeff' == Utf8String::ByteOrderMark
+ */
+template <bool wait = true, bool strict = true, bool skip_bom = true>
+inline std::pair<qsizetype,char32_t> get_utf8(
     QIODevice *input, Utf8String *error = nullptr) {
   char buf[4];
   unsigned char *c = reinterpret_cast<unsigned char *>(buf);
 first_byte:
-  if (wait && !input->bytesAvailable() && !input->waitForReadyRead(-1))
-    return {-1, Utf8String::ReplacementCharacter};
+  if (wait && !input->bytesAvailable()
+      && !input->waitForReadyRead(-1)) [[unlikely]]
+    return {0, 0};
   if (auto r = input->read(buf, 1); r < 0) [[unlikely]] {
     if (error)
       *error = input->errorString();
@@ -42,12 +53,13 @@ first_byte:
     return {1, c[0]}; // ascii, 1 byte
   if (c[0] < 0b1100'0000) [[unlikely]] {
     if (error)
-      *error = "invalid first byte "_u8+c[0];
+      *error = "invalid first byte 0x"_u8+Utf8String::number(c[0], 16);
     return {-1, Utf8String::ReplacementCharacter}; // out of sequence continuation byte
   }
   if (c[0] < 0b1110'0000) {
-    if (wait && !input->bytesAvailable() && !input->waitForReadyRead(-1))
-      return {-1, Utf8String::ReplacementCharacter};
+    if (wait && !input->bytesAvailable()
+        && !input->waitForReadyRead(-1)) [[unlikely]]
+      return {0, 0};
     if (input->read(buf+1, 1) != 1) [[unlikely]] {
       if (error)
         *error = input->errorString();
@@ -61,8 +73,9 @@ first_byte:
     return {2, u};
   }
   if (c[0] < 0b1111'0000) {
-    if (wait && !input->bytesAvailable() && !input->waitForReadyRead(-1))
-      return {-1, Utf8String::ReplacementCharacter};
+    if (wait && !input->bytesAvailable()
+        && !input->waitForReadyRead(-1)) [[unlikely]]
+      return {0, 0};
     if (input->read(buf+1, 2) != 2) [[unlikely]]
       return {-1, Utf8String::ReplacementCharacter};
     char32_t u = ((c[0] & 0b0000'1111) << 12) | ((c[1] & 0b0011'1111) << 6)
@@ -78,16 +91,17 @@ first_byte:
       goto first_byte; // byte order mark found -> read next character instead
     return {3, u};
   }
-  if (wait && !input->bytesAvailable() && !input->waitForReadyRead(-1))
-    return {-1, Utf8String::ReplacementCharacter};
+  if (wait && !input->bytesAvailable()
+      && !input->waitForReadyRead(-1)) [[unlikely]]
+    return {0, 0};
   if (input->read(buf+1, 3) != 3) [[unlikely]]
     return {-1, Utf8String::ReplacementCharacter};
-  // note: first byte mask intentionnaly keeps 0b0000'1000 bit so that a 5+ bytes
-  // sequence will be >= 0x10'ffff and discarded without specific test
+  // note: first byte mask intentionnaly keeps 0b0000'1000 bit so that 5+ bytes
+  // sequences will be >= 0x10'ffff and discarded without specific test
   char32_t u = ((c[0] & 0b0000'1111) << 18) | ((c[1] & 0b0011'1111) << 12)
       | ((c[2] & 0b0011'1111) << 6) | (c[3] & 0b0011'1111);
   if (u >= 0x10'ffff) [[unlikely]]
-    return {-1, Utf8String::ReplacementCharacter};  // RFC 3629: > 0x10ffff are invalid
+    return {-1, Utf8String::ReplacementCharacter}; // RFC 3629: > 0x10ffff are invalid
   if (strict && u < 0x10000) [[unlikely]]
     return {-1, Utf8String::ReplacementCharacter}; // overlong sequence
   if (strict && ((c[1] & 0b1100'0000) != 0b1000'0000
@@ -99,24 +113,35 @@ first_byte:
 
 /** Read one or several bytes from input until they constitute a valid utf8
  *  character or an invalid utf8 bytes sequence.
- *  @param buf will be set to 1 char string or to {}
- *  @return bytes_read or -1 */
-template <bool wait = false, bool strict = true, bool skip_bom = true>
-inline qint64 read_utf8(QIODevice *input, Utf8String *buf) {
-  auto [r, u] = get_utf8<wait, strict, skip_bom>(input, nullptr);
-  *buf = r >= 0 ? Utf8String{u} : Utf8String{};
-  return r;
+ *  Syntaxic sugar on get_utf8().
+ *  @param buf will be set to 1 char string or to {} when returning <= 0
+ *  @return char width (1 to 4) or -1 on error or 0 at eof
+ *  @see get_utf8
+ *  @see Utf8String
+ */
+template <bool wait = true, bool strict = true, bool skip_bom = true>
+inline qsizetype read_utf8(QIODevice *input, Utf8String *buf) {
+  auto [width, u] = get_utf8<wait, strict, skip_bom>(input, nullptr);
+  if (width > 0)
+    *buf = Utf8String{u};
+  else [[unlikely]]
+    buf->clear();
+  return width;
 }
 
 /** Read one or several bytes from input until they constitute a valid utf8
  *  character or an invalid utf8 bytes sequence.
+ *  Syntaxic sugar on get_utf8().
  *  @param c unicode character read or Utf8String::ReplacementCharacter
- *  @return bytes_read or -1 */
-template <bool wait = false, bool strict = true, bool skip_bom = true>
-inline qint64 read_utf8(QIODevice *input, char32_t *c) {
-  auto [r, u] = get_utf8<wait, strict, skip_bom>(input, nullptr);
+ *  @return char width (1 to 4) or -1 on error or 0 at eof
+ *  @see get_utf8
+ *  @see Utf8String
+ */
+template <bool wait = true, bool strict = true, bool skip_bom = true>
+inline qsizetype read_utf8(QIODevice *input, char32_t *c) {
+  auto [width, u] = get_utf8<wait, strict, skip_bom>(input, nullptr);
   *c = u;
-  return r;
+  return width;
 }
 
 } // namespace p6

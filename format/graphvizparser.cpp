@@ -59,7 +59,7 @@ enum State {
 
 Utf8String GraphvizParser::parse(QIODevice *input) {
   // qDebug() << "GraphvizParser::parse" << input;
-  if (!expect_char(input, '{')) //  everything before first { is a graph header
+  if (!expect_char(input, '{')) [[unlikely]] // skip graph header before {
     return "can't find starting {";
   if (_on_beg_g)
     _on_beg_g({}, &_rootcontext);
@@ -70,11 +70,11 @@ Utf8String GraphvizParser::parse(QIODevice *input) {
   while (true) {
     bool escaped = false;
 read_escaped_char:
-    if (auto r = p6::read_utf8<true>(input, &c); r <= 0 || c == 0) {
+    if (auto width = p6::read_utf8(input, &c); width <= 0 || c == 0) {
       if (state == Toplevel || name1.isEmpty()) {
-        if (r >= 0)
+        if (c == 0) // c == 0 at eof and on regular '\0', stop on both
           goto end_of_graph;
-        return input->errorString();
+        [[unlikely]] return input->errorString() | "read error"_u8;
       }
       goto end_of_node_or_edge; // will set state to Toplevel
     }
@@ -120,9 +120,9 @@ read_escaped_char:
             continue;
           if (!escaped && c == '-') {
 waitfordash_dash:
-              if (!p6::read_utf8<true>(input, &c))
-                return input->errorString();
-              if (c != '-' && c != '>')
+              if (!p6::read_utf8(input, &c)) [[unlikely]]
+                return input->errorString() | "read error"_u8;
+              if (c != '-' && c != '>') [[unlikely]]
                 return "-- or -> expected between node names of an edge";
               state = WaitForName2;
               continue;
@@ -169,7 +169,7 @@ waitfordash_dash:
             state = WaitForKey;
             continue;
           }
-          return "garbage character before [: "_u8+c;
+          [[unlikely]] return "garbage character before [: "_u8+c;
         }
       case WaitForKey: {
           if (!escaped && (c == ' ' || c == '\t' || c == ',' || c == '\r'
@@ -179,7 +179,7 @@ waitfordash_dash:
 end_of_node_or_edge:
               // qDebug() << "GraphvizParser::end_of_node_or_edge" << name1
               //          << name2 << params;
-              if (name1.isEmpty()) // should never happen
+              if (name1.isEmpty()) [[unlikely]] // should never happen
                 return "internal parser error at end_of_node_or_edge";
               if (name1 == "node"_u8) {
                 _nodedefault.insert(params);
@@ -235,7 +235,7 @@ end_of_node_or_edge:
               state = WaitForValue;
               continue;
           }
-          return "garbage character before =: "_u8+c;
+          [[unlikely]] return "garbage character before =: "_u8+c;
         }
       case WaitForValue: {
           if (!escaped && (c == ' ' || c == '\t'))
@@ -275,7 +275,7 @@ end_of_graph:
 
 Utf8String GraphvizParser::parse(Utf8String input) {
   QBuffer buf(&input);
-  if (!buf.open(QBuffer::ReadOnly))
-    return "cannot open QBuffer for reading :-/"; // unlikely to occur
+  if (!buf.open(QBuffer::ReadOnly)) [[unlikely]]
+    return "cannot open QBuffer for reading :-/"; // very unlikely to occur
   return parse(&buf);
 }
