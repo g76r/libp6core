@@ -68,6 +68,8 @@ Utf8String GraphvizParser::parse(QIODevice *input) {
   Utf8String name1, name2, key, value;
   ParamSet params;
   while (true) {
+    bool escaped = false;
+read_escaped_char:
     if (auto r = p6::read_utf8<true>(input, &c); r <= 0 || c == 0) {
       if (state == Toplevel || name1.isEmpty()) {
         if (r >= 0)
@@ -76,32 +78,36 @@ Utf8String GraphvizParser::parse(QIODevice *input) {
       }
       goto end_of_node_or_edge; // will set state to Toplevel
     }
+    if (!escaped && c == '\\') {
+      escaped = true;
+      goto read_escaped_char;
+    }
     // qDebug() << "  iteration" << Utf8String::encode_utf8(c) << state << (int)quote;
     switch (state) {
       case Toplevel: {
-          if (Utf8String::is_unicode_whitespace(c) || c == ';')
+          if (!escaped && (Utf8String::is_unicode_whitespace(c) || c == ';'))
             continue;
-          if (c == '}')
+          if (!escaped && c == '}')
             goto end_of_graph; // ignore any garbage after }
           state = Name1;
           [[fallthrough]]; // keep c and pass it to next state
         }
       case Name1: {
-          if (!quote && (c == '"' || c == '\'')) {
+          if (!escaped && !quote && (c == '"' || c == '\'')) {
             quote = c;
             continue;
           }
-          if (!quote && c == '[') {
+          if (!escaped && !quote && c == '[') {
             quote = 0;
             state = WaitForKey;
             continue;
           }
-          if (c == quote || (!quote && (c == ' ' || c == '\t'))) {
+          if (!escaped && (c == quote || (!quote && (c == ' ' || c == '\t')))) {
             quote = 0;
             state = WaitForDash;
             continue;
           }
-          if (!quote && c == '-') {
+          if (!escaped && !quote && c == '-') {
             quote = 0;
             state = WaitForDash;
             goto waitfordash_dash;
@@ -110,11 +116,9 @@ Utf8String GraphvizParser::parse(QIODevice *input) {
           continue;
         }
       case WaitForDash: {
-          switch(c) {
-            case ' ':
-            case '\t':
-              continue;
-            case '-':
+          if (!escaped && (c == ' ' || c == '\t'))
+            continue;
+          if (!escaped && c == '-') {
 waitfordash_dash:
               if (!p6::read_utf8<true>(input, &c))
                 return input->errorString();
@@ -122,11 +126,10 @@ waitfordash_dash:
                 return "-- or -> expected between node names of an edge";
               state = WaitForName2;
               continue;
-            case ';':
-            case '\n':
-            case '\r':
-              goto end_of_node_or_edge;
-            case '[':
+          }
+          if (!escaped && (c == '-' || c == ';' || c == '\n' || c == '\r'))
+            goto end_of_node_or_edge;
+          if (!escaped && c == '[') {
               state = WaitForKey;
               continue;
           }
@@ -134,53 +137,45 @@ waitfordash_dash:
           [[fallthrough]]; // keep c and pass it to next state
         }
       case WaitForName2: {
-          if (c == ' ' || c == '\t')
+          if (!escaped && (c == ' ' || c == '\t'))
             continue;
           state = Name2;
           [[fallthrough]]; // keep c and pass it to next state
         }
       case Name2: {
-          if (!quote &&(c == '"' || c == '\'')) {
+          if (!escaped && !quote && (c == '"' || c == '\'')) {
             quote = c;
             continue;
           }
-          if (c == quote || (!quote && (c == ' ' || c == '\t'))) {
+          if (!escaped && (c == quote || (!quote && (c == ' ' || c == '\t')))) {
             quote = 0;
             state = WaitForList;
             continue;
           }
-          if (quote || c != '[') {
-            name2 += c;
+          if (!escaped && !quote && c == '[') {
+            quote = 0;
+            state = WaitForKey;
             continue;
           }
-          quote = 0;
-          state = WaitForKey;
+          name2 += c;
           continue;
         }
       case WaitForList: {
-          switch(c) {
-            case ' ':
-            case '\t':
-              continue;
-            case ';':
-            case '\n':
-            case '\r':
-              goto end_of_node_or_edge;
-            case '[':
-              state = WaitForKey;
-              continue;
+          if (!escaped && (c == ' ' || c == '\t'))
+            continue;
+          if (!escaped && (c == ';' || c == '\r' || c == '\n'))
+            goto end_of_node_or_edge;
+          if (!escaped && c == '[') {
+            state = WaitForKey;
+            continue;
           }
           return "garbage character before [: "_u8+c;
         }
       case WaitForKey: {
-          switch(c) {
-            case ' ':
-            case '\t':
-            case ',':
-            case '\n':
-            case '\r':
-              continue;
-            case ']':
+          if (!escaped && (c == ' ' || c == '\t' || c == ',' || c == '\r'
+                           || c == '\n'))
+            continue;
+          if (!escaped && c == ']') {
 end_of_node_or_edge:
               // qDebug() << "GraphvizParser::end_of_node_or_edge" << name1
               //          << name2 << params;
@@ -215,17 +210,17 @@ end_of_node_or_edge:
           [[fallthrough]]; // keep c and pass it to next state
         }
       case Key: {
-          if (!quote && (c == '"' || c == '\'')) {
+          if (!escaped && !quote && (c == '"' || c == '\'')) {
             // actually graphivz disallow simple quotes for keys (but allows
             // them for values and names)
             quote = c;
             continue;
           }
-          if (!quote && c == '=') {
+          if (!escaped && !quote && c == '=') {
             state = WaitForValue;
             continue;
           }
-          if (c == quote || (!quote && (c == ' ' || c == '\t'))) {
+          if (!escaped && (c == quote || (!quote && (c == ' ' || c == '\t')))) {
             quote = 0;
             state = WaitForEqual;
             continue;
@@ -234,29 +229,28 @@ end_of_node_or_edge:
           continue;
         }
       case WaitForEqual: {
-          switch(c) {
-            case ' ':
-            case '\t':
-              continue;
-            case '=':
+          if (!escaped && (c == ' ' || c == '\t'))
+            continue;
+          if (!escaped && c == '=') {
               state = WaitForValue;
               continue;
           }
           return "garbage character before =: "_u8+c;
         }
       case WaitForValue: {
-          if (c == ' ' || c == '\t')
+          if (!escaped && (c == ' ' || c == '\t'))
             continue;
           state = Value;
           [[fallthrough]]; // keep c and pass it to next state
         }
       case Value: {
-          if (!quote && (c == '"' || c == '\'')) {
+          if (!escaped && !quote && (c == '"' || c == '\'')) {
             quote = c;
             continue;
           }
-          if (c == quote
-              || (!quote && (c == ',' || c == ' ' || c == '\t' || c == ']'))) {
+          if (!escaped && (c == quote
+                           || (!quote && (c == ',' || c == ' ' || c == '\t'
+                                          || c == ']')))) {
             params.insert(key, value);
             key.clear();
             value.clear();
