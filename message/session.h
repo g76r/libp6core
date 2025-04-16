@@ -1,4 +1,4 @@
-/* Copyright 2016-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -55,7 +55,7 @@ inline uint qHash(const Session &session) { return qHash(session.id()); }
 
 QDebug LIBP6CORESHARED_EXPORT operator<<(QDebug dbg, const Session &session);
 
-LogHelper LIBP6CORESHARED_EXPORT operator<<(LogHelper lh,
-                                             const Session &session);
+p6::log::LogHelper LIBP6CORESHARED_EXPORT operator<<(
+    p6::log::LogHelper lh, const Session &session);
 
 #endif // SESSION_H

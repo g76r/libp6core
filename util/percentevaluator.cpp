@@ -788,7 +788,8 @@ QDebug operator<<(QDebug dbg, const PercentEvaluator::EvalContext &c) {
   return dbg.space() << c.toUtf8();
 }
 
-LogHelper operator<<(LogHelper lh, const PercentEvaluator::EvalContext &c) {
+p6::log::LogHelper operator<<(
+    p6::log::LogHelper lh, const PercentEvaluator::EvalContext &c) {
   return lh << c.toUtf8();
 }
 

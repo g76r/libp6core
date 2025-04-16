@@ -13,7 +13,9 @@
  */
 #include "qterrorcodes.h"
 
-QString networkErrorAsString(QNetworkReply::NetworkError code) {
+namespace p6 {
+
+QString network_error_as_text(QNetworkReply::NetworkError code) {
   switch(code) {
     using enum QNetworkReply::NetworkError;
     case NoError:
@@ -87,3 +89,5 @@ QString networkErrorAsString(QNetworkReply::NetworkError code) {
   }
   return QObject::tr("unknown error %d").arg(code);
 }
+
+} // ns p6

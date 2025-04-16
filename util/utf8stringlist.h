@@ -15,10 +15,10 @@
 #define UTF8STRINGLIST_H
 
 #include "util/paramsprovider.h"
-#include <set>
 
-class Utf8StringSet;
+namespace p6::log {
 class LogHelper;
+}
 
 class LIBP6CORESHARED_EXPORT Utf8StringList
     : public QList<Utf8String>, public ParamsProvider {
@@ -80,8 +80,8 @@ Q_DECLARE_METATYPE(Utf8StringList)
 QDebug LIBP6CORESHARED_EXPORT operator<<(QDebug dbg, const Utf8StringList &l);
 
 
-LogHelper LIBP6CORESHARED_EXPORT operator<<(LogHelper lh,
-                                             const Utf8StringList &list);
+p6::log::LogHelper LIBP6CORESHARED_EXPORT operator<<(
+    p6::log::LogHelper lh, const Utf8StringList &list);
 
 /** Const Utf8String list with reverse-mapping index.
  *  e.g. Utf8StringIndexedConstList({ "id", "parent", "name", "color"})

@@ -1,4 +1,4 @@
-/* Copyright 2016-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,7 +22,8 @@ class MessageData;
 /** Data object representing a message, regardless the network transport. */
 class LIBP6CORESHARED_EXPORT Message {
   friend QDebug operator<<(QDebug dbg, const Message &message);
-  friend LogHelper operator<<(LogHelper lh, const Message &message);
+  friend p6::log::LogHelper operator<<(
+      p6::log::LogHelper lh, const Message &message);
   QSharedDataPointer<MessageData> d;
 
 public:
@@ -45,7 +46,7 @@ Q_DECLARE_TYPEINFO(Message, Q_RELOCATABLE_TYPE);
 
 QDebug LIBP6CORESHARED_EXPORT operator<<(QDebug dbg, const Message &message);
 
-LogHelper LIBP6CORESHARED_EXPORT operator<<(LogHelper lh,
-                                             const Message &message);
+p6::log::LogHelper LIBP6CORESHARED_EXPORT operator<<(
+    p6::log::LogHelper lh, const Message &message);
 
 #endif // MESSAGE_H

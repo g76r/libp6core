@@ -1,4 +1,4 @@
-/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,7 +15,7 @@
 #include "multiplexerlogger.h"
 #include <QThread>
 
-#define ISO8601 u"yyyy-MM-ddThh:mm:ss,zzz"_s
+namespace p6::log {
 
 static MultiplexerLogger *_rootLogger = nullptr;
 static QMutex *_qtHandlerMutex = nullptr;
@@ -23,90 +23,109 @@ static QtMessageHandler _qtOriginalHandler = nullptr;
 
 /******************************************************************
   /!\ there must be no global variables with a destructor here /!\
-  /!\ because Log::log() must not crash when called during the /!\
-  /!\ program shutdown                                         /!\
+  /!\ because p6::log::log() must not crash when called during /!\
+  /!\ the program shutdown                                     /!\
  ******************************************************************/
 
-static inline void sanitizeField(QByteArray *ba) {
-  if (ba->isNull()) [[unlikely]]
-    return;
-  for (char *s = ba->data(); *s; ++s)
-    if (::isspace(*s)) [[unlikely]]
-      *s = '_';
-}
-
-static inline void sanitizeMessage(QByteArray *ba) {
-  ba->replace("\n","\n ");
-}
-
-void Log::addLogger(Logger *logger, bool autoRemovable) {
+void addLogger(Logger *logger, bool autoRemovable) {
   if (!_rootLogger)
     return;
-  if (logger->threadModel() == Logger::DirectCall)
+  if (logger->thread_model() == Logger::DirectCall)
     logger->moveToThread(_rootLogger->thread());
   _rootLogger->addLogger(logger, autoRemovable);
 }
 
-void Log::removeLogger(Logger *logger) {
+void removeLogger(Logger *logger) {
   if (!_rootLogger)
     return;
   _rootLogger->removeLogger(logger);
 }
 
-void Log::addConsoleLogger(Severity severity, bool autoRemovable) {
+void addConsoleLogger(
+    Severity severity, bool autoRemovable, FILE *stream) {
   if (!_rootLogger)
     return;
-  _rootLogger->addConsoleLogger(severity, autoRemovable);
+  _rootLogger->addConsoleLogger(severity, autoRemovable, stream);
 }
 
-void Log::replaceLoggers(Logger *newLogger) {
+void replaceLoggers(Logger *newLogger) {
   if (!_rootLogger)
     return;
   _rootLogger->replaceLoggers(newLogger);
 }
 
-void Log::replaceLoggers(QList<Logger*> newLoggers) {
+void replaceLoggers(QList<Logger*> newLoggers) {
   if (!_rootLogger)
     return;
   _rootLogger->replaceLoggers(newLoggers);
 }
 
-void Log::replaceLoggersPlusConsole(Log::Severity consoleLoggerSeverity,
-                                    QList<Logger*> newLoggers) {
+void replaceLoggersPlusConsole(
+    Severity consoleLoggerSeverity, QList<Logger*> newLoggers) {
   if (!_rootLogger)
     return;
   _rootLogger->replaceLoggersPlusConsole(
         consoleLoggerSeverity, newLoggers);
 }
 
-Utf8String LogContext::current_thread_name() {
-  QThread *t = QThread::currentThread();
-  return t ? Utf8String{t->objectName()} : Utf8String{};
+Utf8String Record::current_thread_name() {
+  if (QThread *t = QThread::currentThread(); t)
+    return t->objectName();
+  return {};
 }
 
-void Log::log(Utf8String message, Severity severity, LogContext context) {
+qint64 Record::now() {
+  return QDateTime::currentMSecsSinceEpoch();
+}
+
+inline static Utf8String sanitized_message(const Utf8String &input) {
+  const char *begin = input.constData(), *s = begin;
+  for (; *s; ++s)
+    if (*s == '\n') [[unlikely]]
+      goto eol_found;
+  return input; // short path: copy nothing because there was no \n
+eol_found:;
+  Utf8String output = input.sliced(0, s-begin);
+  for (; *s; ++s)
+    if (*s == '\n' && s[1])
+      output += "\n "_u8;
+    else
+      output += *s;
+  return output;
+}
+
+Utf8String Record::formated_message() const {
+  const static QString _timestamp_format = "yyyy-MM-ddThh:mm:ss,zzz ";
+  Utf8String ts{QDateTime::fromMSecsSinceEpoch(_timestamp)
+        .toString(_timestamp_format)};
+  if (ts.isEmpty()) [[unlikely]] // on late shutdown QDateTime ceases to work
+    ts = Utf8String::number(_timestamp/1e3, 'f', 3)+" "_u8;
+  return ts+_taskid+"/"_u8+_execid+" "_u8+_location+" "_u8
+      +severity_as_text(_severity)+" "_u8+sanitized_message(_message)+"\n"_u8;
+}
+
+void log(const Record &record) {
   if (!_rootLogger)
     return;
-  QDateTime now = QDateTime::currentDateTime();
-  sanitizeMessage(&message);
-  _rootLogger->log(Logger::LogEntry(now, message, severity, context));
+  _rootLogger->log(record);
 }
 
-void Log::init() {
+void init() {
   if (_rootLogger)
     return;
-  _rootLogger = new MultiplexerLogger(Log::Debug, true);
+  _rootLogger = new MultiplexerLogger(Debug, true);
   _qtHandlerMutex = new QMutex;
 }
 
-void Log::shutdown() {
+void shutdown() {
   if (!_rootLogger)
     return;
-  _rootLogger->shutdown();
+  auto rl = _rootLogger;
   _rootLogger = nullptr;
+  rl->shutdown();
 }
 
-Utf8String Log::severityToString(Severity severity) {
+Utf8String severity_as_text(Severity severity) {
   switch (severity) {
   case Debug:
     return "DEBUG"_u8;
@@ -122,81 +141,53 @@ Utf8String Log::severityToString(Severity severity) {
   return "UNKNOWN"_u8;
 }
 
-Log::Severity Log::severityFromString(Utf8String string) {
-  switch (string.value(0)) {
-    case 'I':
-    case 'i':
+inline static Severity severity_from_qttype(QtMsgType type) {
+  switch (type) {
+    case QtInfoMsg:
       return Info;
-    case 'W':
-    case 'w':
+    case QtWarningMsg:
       return Warning;
-    case 'E':
-    case 'e':
+    case QtCriticalMsg:
       return Error;
-    case 'F':
-    case 'f':
+    case QtFatalMsg:
       return Fatal;
+    case QtDebugMsg:
+      ;
   }
   return Debug;
 }
 
-QString Log::pathToLastFullestLog() {
+QString pathToLastFullestLog() {
   if (!_rootLogger)
     return {};
   return _rootLogger->pathToLastFullestLog();
 }
 
-QStringList Log::pathsToFullestLogs() {
+QStringList pathsToFullestLogs() {
   if (!_rootLogger)
     return {};
   return _rootLogger->pathsToFullestLogs();
 }
 
-QStringList Log::pathsToAllLogs() {
+QStringList pathsToAllLogs() {
   if (!_rootLogger)
     return {};
   return _rootLogger->pathsToAllLogs();
 }
 
 static void qtLogSamePatternWrapper(
-    QtMsgType type, const QMessageLogContext &context, const QString &msg) {
-  Utf8String severity = "UNKNOWN"_u8;
-  switch (type) {
-    case QtDebugMsg:
-      severity = Log::severityToString(Log::Debug);
-      break;
-    case QtInfoMsg:
-      severity = Log::severityToString(Log::Info);
-      break;
-    case QtWarningMsg:
-      severity = Log::severityToString(Log::Warning);
-      break;
-    case QtCriticalMsg:
-      severity = Log::severityToString(Log::Error);
-      break;
-    case QtFatalMsg:
-      severity = Log::severityToString(Log::Fatal);
-      break;
-  }
-  Utf8String taskid = QThread::currentThread()->objectName();
-  sanitizeField(&taskid);
-  if (taskid.isEmpty())
-    taskid = "?"_u8;
-  Utf8String realMsg = msg;
-  sanitizeMessage(&realMsg);
-  Utf8String location =
-      context.file
-      ? context.file+":"_u8+Utf8String::number(context.line) : ":"_u8;
-  Utf8String localMsg =
-    Utf8String(QDateTime::currentDateTime().toString(ISO8601))
-      +" "_u8+taskid+"/0 "_u8+location+" "_u8+severity+" qtdebug: "_u8+realMsg
-      +"\n"_u8;
-  fputs(localMsg, stderr);
-  if (type == QtFatalMsg)
+    QtMsgType type, const QMessageLogContext &qtcontext, const QString &msg) {
+  auto severity = severity_from_qttype(type);
+  Utf8String location;
+  if (qtcontext.file) [[likely]]
+    location = qtcontext.file+":"_u8+Utf8String::number(qtcontext.line);
+  fputs(Record(severity, {}, {}, location).set_message(msg)
+        .formated_message(), stderr);
+  if (type == QtFatalMsg) [[unlikely]]
     abort();
 }
 
-void Log::wrapQtLogToSamePattern(bool enable) {
+void wrapQtLogToSamePattern(bool enable) {
   if (!_rootLogger)
     return;
   QMutexLocker ml(_qtHandlerMutex);
@@ -209,3 +200,5 @@ void Log::wrapQtLogToSamePattern(bool enable) {
     _qtOriginalHandler = 0;
   }
 }
+
+} // ns p6::log

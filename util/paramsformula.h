@@ -94,7 +94,7 @@ inline uint qHash(const ParamsFormula &f) { return qHash(f.expr()); }
 QDebug LIBP6CORESHARED_EXPORT operator<<(
     QDebug dbg, const ParamsFormula &expr);
 
-LogHelper LIBP6CORESHARED_EXPORT operator<<(
-    LogHelper lh, const ParamsFormula &expr);
+p6::log::LogHelper LIBP6CORESHARED_EXPORT operator<<(
+    p6::log::LogHelper lh, const ParamsFormula &expr);
 
 #endif // PARAMSFORMULA_H

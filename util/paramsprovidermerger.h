@@ -1,4 +1,4 @@
-/* Copyright 2013-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -35,8 +35,8 @@ class ParamsProviderMergerData;
 class LIBP6CORESHARED_EXPORT ParamsProviderMerger : public ParamsProvider {
   friend QDebug LIBP6CORESHARED_EXPORT operator<<(
       QDebug dbg, const ParamsProviderMerger *params);
-  friend LogHelper LIBP6CORESHARED_EXPORT operator<<(
-      LogHelper lh, const ParamsProviderMerger *merger);
+  friend p6::log::LogHelper LIBP6CORESHARED_EXPORT operator<<(
+      p6::log::LogHelper lh, const ParamsProviderMerger *merger);
   QSharedDataPointer<ParamsProviderMergerData> _data;
 
 public:
@@ -125,7 +125,7 @@ public:
 QDebug LIBP6CORESHARED_EXPORT operator<<(
     QDebug dbg, const ParamsProviderMerger *params);
 
-LogHelper LIBP6CORESHARED_EXPORT operator<<(
-    LogHelper lh, const ParamsProviderMerger *merger);
+p6::log::LogHelper LIBP6CORESHARED_EXPORT operator<<(
+    p6::log::LogHelper lh, const ParamsProviderMerger *merger);
 
 #endif // PARAMSPROVIDERMERGER_H

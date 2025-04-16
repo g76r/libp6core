@@ -1,4 +1,4 @@
-/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,19 +11,23 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "memorylogger.h"
-#include "logmodel.h"
+#include "logrecorditemmodel.h"
+#include "logrecorditemlogger.h"
 
-MemoryLogger::MemoryLogger(
-    Log::Severity minSeverity, Utf8String prefixFilter, LogModel *logmodel)
-  : Logger(minSeverity, Logger::DirectCall), _prefixFilter(prefixFilter),
-    _model(logmodel) {
+namespace p6::log {
+
+LogRecordItemModel::LogRecordItemModel(
+    QObject *parent, Severity min_severity, int maxrows,
+    const Utf8String &prefix_filter)
+  : SharedUiItemsTableModel(parent) {
+  setMaxrows(maxrows);
+  setDefaultInsertionPoint(SharedUiItemsTableModel::FirstItem);
+  setHeaderDataFromTemplate(LogRecordItem(Record{}));
+  auto logger = new LogRecordItemLogger(min_severity, prefix_filter);
+  connect(logger, &LogRecordItemLogger::item_changed,
+          this, &SharedUiItemsModel::changeItem);
+  connect(this, &QObject::destroyed,
+          logger, &QObject::deleteLater);
 }
 
-void MemoryLogger::doLog(const LogEntry &entry) {
-  if (!_prefixFilter.isNull() && !entry.message().startsWith(_prefixFilter))
-    return;
-  QMetaObject::invokeMethod(_model, [entry,this](){
-    _model->changeItem(entry, SharedUiItem(), entry.qualifier());
-  });
-}
+} // ns p6::log

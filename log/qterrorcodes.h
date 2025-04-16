@@ -1,4 +1,4 @@
-/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,8 +17,12 @@
 #include "libp6core_global.h"
 #include <QNetworkReply>
 
+namespace p6 {
+
 /** Decoding QNetworkReply error codes. */
-QString LIBP6CORESHARED_EXPORT networkErrorAsString(
+QString LIBP6CORESHARED_EXPORT network_error_as_text(
     QNetworkReply::NetworkError code);
+
+} // ns p6
 
 #endif // QTERRORCODES_H

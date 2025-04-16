@@ -300,8 +300,8 @@ public:
 QDebug LIBP6CORESHARED_EXPORT operator<<(
     QDebug dbg, const PercentEvaluator::EvalContext &c);
 
-LogHelper LIBP6CORESHARED_EXPORT operator<<(
-    LogHelper lh, const PercentEvaluator::EvalContext &c);
+p6::log::LogHelper LIBP6CORESHARED_EXPORT operator<<(
+    p6::log::LogHelper lh, const PercentEvaluator::EvalContext &c);
 
 /** Syntaxic sugar to shorten PercentEvaluator::eval
  *  Utf8String foo = "%foo"_u8 % params;

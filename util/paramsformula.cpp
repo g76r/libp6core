@@ -692,7 +692,8 @@ QDebug operator<<(QDebug dbg, const ParamsFormula &formula) {
   return dbg.space();
 }
 
-LogHelper operator<<(LogHelper lh, const ParamsFormula &formula) {
+p6::log::LogHelper operator<<(
+    p6::log::LogHelper lh, const ParamsFormula &formula) {
   lh << "{ ";
   return lh << formula.expr() << " }";
 }

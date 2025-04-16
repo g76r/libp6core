@@ -67,6 +67,8 @@ SOURCES *= \
     format/graphvizrenderer.cpp \
     format/svgwriter.cpp \
     io/opensshcommand.cpp \
+    log/logrecorditemlogger.cpp \
+    log/logrecorditemmodel.cpp \
     util/paramsformula.cpp \
     util/percentevaluator.cpp \
     util/utf8string.cpp \
@@ -82,8 +84,6 @@ SOURCES *= \
     pf/pfdomhandler.cpp \
     pf/pfarray.cpp \
     pf/pffragment.cpp \
-    log/memorylogger.cpp \
-    log/logmodel.cpp \
     log/logger.cpp \
     log/log.cpp \
     log/filelogger.cpp \
@@ -175,6 +175,8 @@ HEADERS *=\
     format/graphvizrenderer.h \
     format/svgwriter.h \
     io/opensshcommand.h \
+    log/logrecorditemlogger.h \
+    log/logrecorditemmodel.h \
     modelview/templatedshareduiitemdata.h \
     util/datacache.h \
     util/paramsformula.h \
@@ -196,8 +198,6 @@ HEADERS *=\
     pf/pfarray.h \
     pf/pffragment_p.h \
     pf/pfinternals_p.h \
-    log/memorylogger.h \
-    log/logmodel.h \
     log/logger.h \
     log/log.h \
     log/filelogger.h \

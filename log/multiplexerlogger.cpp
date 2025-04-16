@@ -17,6 +17,8 @@
 #include <QFile>
 #include <QThread>
 
+namespace p6::log {
+
 MultiplexerLogger::MultiplexerLogger(
     Log::Severity minSeverity, bool isRootLogger)
   : Logger(minSeverity, isRootLogger ? Logger::RootLogger
@@ -35,13 +37,13 @@ void MultiplexerLogger::addLogger(Logger *logger, bool autoRemovable) {
     // LATER provide an option to enable Qt's standard log interception
     // drawbacks:
     // - Qt's log is synchronous (no writer thread) and thus intercepting it
-    //   would change the behavior (log order, even missing log entries on
+    //   would change the behavior (log order, even missing log records on
     //   crash)
     // - qFatal() expect the program to write a log and shutdown, which is not
     //   easy to reproduce here
     //if (_loggers.isEmpty())
     //  qInstallMsgHandler(Log::logMessageHandler);
-    logger->_autoRemovable = autoRemovable;
+    logger->_auto_removable = autoRemovable;
     _loggers.append(logger);
   }
 }
@@ -59,14 +61,14 @@ void MultiplexerLogger::removeLogger(Logger *logger) {
 }
 
 void MultiplexerLogger::addConsoleLogger(
-  Log::Severity severity, bool autoRemovable) {
+  Log::Severity severity, bool autoRemovable, FILE *stream) {
   QFile *console = new QFile;
-  console->open(1, QIODevice::WriteOnly|QIODevice::Unbuffered);
-  FileLogger *logger = new FileLogger(console, severity);
+  console->open(stream, QIODevice::WriteOnly|QIODevice::Unbuffered);
+  FileLogger *logger = new FileLogger(console, severity, false);
   auto name = "Console"+logger->objectName();
   logger->setObjectName(name);
-  if (logger->thread())
-    logger->thread()->setObjectName(name);
+  if (auto t = logger->thread(); t) // should always be true
+    t->setObjectName(name);
   addLogger(logger, autoRemovable);
 }
 
@@ -96,7 +98,7 @@ void MultiplexerLogger::doReplaceLoggers(QList<Logger*> newLoggers) {
   QList<Logger*> old_loggers(_loggers);
   old_loggers.detach();
   for (auto logger: old_loggers)
-    if (logger->_autoRemovable) {
+    if (logger->_auto_removable) {
       if (!newLoggers.contains(logger))
         logger->shutdown();
       _loggers.removeAll(logger);
@@ -109,16 +111,16 @@ void MultiplexerLogger::doReplaceLoggers(QList<Logger*> newLoggers) {
 QString MultiplexerLogger::pathToLastFullestLog() {
   // LATER avoid locking here whereas right logger won't change often
   QMutexLocker locker(&_loggersMutex);
-  int severity = Log::Fatal+1;
+  int severity = Fatal+1;
   QString path;
   for (auto logger: _loggers) {
-    if (logger->minSeverity() < severity) {
-      QString p = logger->currentPath();
+    if (logger->min_severity() < severity) {
+      QString p = logger->current_path();
       if (!p.isEmpty()) {
-        if (severity == Log::Debug)
+        if (severity == Debug)
           return p;
         path = p;
-        severity = logger->minSeverity();
+        severity = logger->min_severity();
       }
     }
   }
@@ -128,18 +130,18 @@ QString MultiplexerLogger::pathToLastFullestLog() {
 QStringList MultiplexerLogger::pathsToFullestLogs() {
   // LATER avoid locking here whereas right logger won't change often
   QMutexLocker locker(&_loggersMutex);
-  int severity = Log::Fatal+1;
+  int severity = Fatal+1;
   QString path;
   for (auto logger: _loggers) {
-    if (logger->minSeverity() < severity) {
-      QString p = logger->pathMatchingRegexp();
+    if (logger->min_severity() < severity) {
+      QString p = logger->path_matching_regexp();
       if (!p.isEmpty()) {
-        if (severity == Log::Debug) {
+        if (severity == Debug) {
           locker.unlock();
           return IOUtils::findFiles(p);
         }
         path = p;
-        severity = logger->minSeverity();
+        severity = logger->min_severity();
       }
     }
   }
@@ -152,7 +154,7 @@ QStringList MultiplexerLogger::pathsToAllLogs() {
   QMutexLocker locker(&_loggersMutex);
   QStringList paths;
   for (auto logger: _loggers) {
-    QString p = logger->pathMatchingRegexp();
+    QString p = logger->path_matching_regexp();
     if (!p.isEmpty())
       paths.append(p);
   }
@@ -160,30 +162,31 @@ QStringList MultiplexerLogger::pathsToAllLogs() {
   return IOUtils::findFiles(paths);
 }
 
-void MultiplexerLogger::doLog(const LogEntry &entry) {
+void MultiplexerLogger::do_log(const Record &record) {
   QMutexLocker locker(&_loggersMutex);
   for (auto logger : _loggers)
-    logger->log(entry);
-  if (_threadModel == RootLogger && _loggers.isEmpty() && !!entry) {
-    switch(entry.severity()) {
-      using enum Log::Severity;
+    logger->log(record);
+  if (_thread_model & RootLogger && _loggers.isEmpty() && !!record) {
+    switch(record.severity()) {
       case Debug:
-        qDebug() << entry.message() << "(no logger configured)";
+        qDebug() << record.formated_message() << "(no logger configured)";
         break;
       case Info:
-        qInfo() << entry.message() << "(no logger configured)";
+        qInfo() << record.formated_message() << "(no logger configured)";
         break;
       case Warning:
       case Error:
       case Fatal:
-        qWarning() << entry.message() << "(no logger configured)";
+        qWarning() << record.formated_message() << "(no logger configured)";
     }
   }
 }
 
-void MultiplexerLogger::doShutdown() {
+void MultiplexerLogger::do_shutdown() {
   QMutexLocker locker(&_loggersMutex);
   for (auto logger : _loggers)
     logger->shutdown();
   _loggers.clear();
 }
+
+} // ns p6::log

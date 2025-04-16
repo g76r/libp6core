@@ -1,4 +1,4 @@
-/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,6 +16,8 @@
 
 #include "logger.h"
 
+namespace p6::log {
+
 /** Logger for multiplexing to log writing to several loggers.
  * Mainly intended to be used internaly as a singleton by Log.
  * @see Log */
@@ -26,7 +28,7 @@ class LIBP6CORESHARED_EXPORT MultiplexerLogger : public Logger {
   QMutex _loggersMutex;
 
 public:
-  explicit MultiplexerLogger(Log::Severity minSeverity = Log::Debug,
+  explicit MultiplexerLogger(Severity minSeverity = Debug,
                              bool isRootLogger = false);
   ~MultiplexerLogger();
   /** Add logger to loggers list and take ownership of it, i.e. will
@@ -35,8 +37,9 @@ public:
   /** Remove and delete a logger. Will only delete the object if it is currently
    * registred in the logger list, otherwise the method does nothing. */
   void removeLogger(Logger *logger);
-  void addConsoleLogger(Log::Severity severity, bool autoRemovable);
-  void addQtLogger(Log::Severity severity, bool autoRemovable);
+  void addConsoleLogger(Severity severity, bool autoRemovable,
+                        FILE *stream);
+  void addQtLogger(Severity severity, bool autoRemovable);
   /** Replace current auto-removable loggers with a new one.
    * This method is thread-safe and switches loggers in an atomic way. */
   void replaceLoggers(Logger *newLogger);
@@ -46,18 +49,20 @@ public:
   /** Replace current auto-removable loggers with new ones plus a new
    * console logger with given logger severity.
    * This method is thread-safe and switches loggers in an atomic way. */
-  void replaceLoggersPlusConsole(Log::Severity consoleLoggerSeverity,
+  void replaceLoggersPlusConsole(Severity consoleLoggerSeverity,
                                  QList<Logger*> newLoggers);
   QString pathToLastFullestLog();
   QStringList pathsToFullestLogs();
   QStringList pathsToAllLogs();
 
 protected:
-  void doLog(const LogEntry &entry) override;
-  void doShutdown() override;
+  void do_log(const Record &record) override;
+  void do_shutdown() override;
 
 private:
   inline void doReplaceLoggers(QList<Logger*> newLoggers);
 };
+
+} // ns p6::log
 
 #endif // MULTIPLEXERLOGGER_H

@@ -1,4 +1,4 @@
-/* Copyright 2023-2024 Gregoire Barbier and others.
+/* Copyright 2023-2025 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,7 +18,9 @@
 #include "utf8string.h"
 #include <set>
 
+namespace p6::log {
 class LogHelper;
+}
 
 class LIBP6CORESHARED_EXPORT Utf8StringSet : public QSet<Utf8String> {
 public:
@@ -89,7 +91,7 @@ Q_DECLARE_METATYPE(Utf8StringSet)
 
 QDebug LIBP6CORESHARED_EXPORT operator<<(QDebug dbg, const Utf8StringSet &s);
 
-LogHelper LIBP6CORESHARED_EXPORT operator<<(LogHelper lh,
-                                             const Utf8StringSet &set);
+p6::log::LogHelper LIBP6CORESHARED_EXPORT operator<<(
+    p6::log::LogHelper lh, const Utf8StringSet &set);
 
 #endif // UTF8STRINGSET_H

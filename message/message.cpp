@@ -1,4 +1,4 @@
-/* Copyright 2016-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -67,6 +67,6 @@ QDebug operator<<(QDebug dbg, const Message &message) {
   return dbg.space();
 }
 
-LogHelper operator<<(LogHelper lh, const Message &message) {
+p6::log::LogHelper operator<<(p6::log::LogHelper lh, const Message &message) {
   return lh << message.debugString();
 }

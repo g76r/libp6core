@@ -1,4 +1,4 @@
-/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,12 +17,13 @@
 
 #define ISO8601 u"yyyy-MM-ddThh:mm:ss,zzz"_s
 
-FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity,
+namespace p6::log {
+
+FileLogger::FileLogger(QIODevice *device, Severity minSeverity,
                        bool buffered)
-  : Logger(minSeverity, Logger::DedicatedThread), _device(0),
+  : Logger(minSeverity, Logger::DedicatedThread), _device(device),
     _buffered(buffered) {
   //qDebug() << "creating FileLogger from device" << device;
-  _device = device;
   /*qDebug() << "FileLogger::FileLoger" << this->thread() << _device->thread()
            << QThread::currentThread();
   qDebug() << "/FileLogger::setParent";*/
@@ -32,13 +33,13 @@ FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity,
                        |QIODevice::Unbuffered)) [[unlikely]] {
       qWarning() << "cannot open log device" << _device << ":"
                  << _device->errorString();
-      delete _device;
+      _device->deleteLater();
       _device = 0;
     }
   }
 }
 
-FileLogger::FileLogger(QString pathPattern, Log::Severity minSeverity,
+FileLogger::FileLogger(QString pathPattern, Severity minSeverity,
                        int secondsReopenInterval, bool buffered)
   : Logger(minSeverity, Logger::DedicatedThread), _device(0),
     _pathPattern(pathPattern), _lastOpen(QDateTime::currentDateTime()),
@@ -48,18 +49,18 @@ FileLogger::FileLogger(QString pathPattern, Log::Severity minSeverity,
 
 FileLogger::~FileLogger() {
   if (_device)
-    delete _device;
+    _device->deleteLater();
 }
 
-Utf8String FileLogger::currentPath() const {
+Utf8String FileLogger::current_path() const {
   return _currentPath;
 }
 
-Utf8String FileLogger::pathPattern() const {
+Utf8String FileLogger::path_pattern() const {
   return _pathPattern;
 }
 
-void FileLogger::doLog(const LogEntry &entry) {
+void FileLogger::do_log(const Record &record) {
   QDateTime now = QDateTime::currentDateTime();
   if (!_pathPattern.isEmpty()
       && (_device == 0
@@ -68,7 +69,7 @@ void FileLogger::doLog(const LogEntry &entry) {
     //qDebug() << "*******************************************************"
     //         << _pathPattern << _lastOpen << now << _secondsReopenInterval;
     if (_device)
-      delete _device;
+      _device->deleteLater();
     _currentPath = Utf8String(PercentEvaluator::eval(_pathPattern));
     _device = new QFile(_currentPath);
     if (!_device->open(_buffered ? QIODevice::WriteOnly|QIODevice::Append
@@ -77,7 +78,7 @@ void FileLogger::doLog(const LogEntry &entry) {
       // TODO warn, but only once
       //qWarning() << "cannot open log file" << _currentPath << ":"
       //           << _device->errorString();
-      delete _device;
+      _device->deleteLater();
       _device = 0;
     } else {
       _lastOpen = QDateTime::currentDateTime();
@@ -85,14 +86,7 @@ void FileLogger::doLog(const LogEntry &entry) {
     }
   }
   if (_device) [[likely]] {
-    // TODO move this to LogEntry::asLogLine()
-    Utf8String line =
-        Utf8String(entry.timestamp().toString(ISO8601))+" "_u8
-        +entry.taskid()+"/"_u8+entry.execid()+" "_u8+entry.location()+" "_u8
-        +entry.severityToString()+" "_u8+entry.message()+"\n"_u8;
-    //qDebug() << "***log" << line;
-    //if (_pathPattern.endsWith(".slow") && (QTime::currentTime().second()/10)%2)
-    //  ::usleep(1000000);
+    auto line = record.formated_message();
     if (_device->write(line) != line.size()) {
       // TODO warn, but only once
       //qWarning() << "error while writing log:" << _device
@@ -106,10 +100,13 @@ void FileLogger::doLog(const LogEntry &entry) {
   }
 }
 
-void FileLogger::doShutdown() {
+void FileLogger::do_shutdown() {
+  // TODO only if buffered ?
   _buffered = false;
   if (_device && !_pathPattern.isEmpty()) {
     _device->close();
     _device->open(QIODevice::WriteOnly|QIODevice::Append|QIODevice::Unbuffered);
   }
 }
+
+} // ns p6::log

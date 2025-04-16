@@ -1,4 +1,4 @@
-/* Copyright 2014-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,14 +16,16 @@
 
 using namespace std::chrono_literals;
 
+namespace p6::log {
+
 LoggerThread::LoggerThread(Logger *logger)
   : QThread(0), _logger(logger) {
-  connect(this, &QThread::finished, [this](){
-    auto app = QCoreApplication::instance();
-    _logger->moveToThread(app ? app->thread() : thread());
-    deleteLater();
+  connect(this, &QThread::finished, logger, [this](){
+    _logger->moveToThread(this->thread()); // most often == main thread
+    // _logger->moveToThread(QCoreApplication::instance()->thread());
     _logger->deleteLater();
   });
+  connect(_logger, &QObject::destroyed, this, &QObject::deleteLater);
 }
 
 LoggerThread::~LoggerThread() {
@@ -32,13 +34,15 @@ LoggerThread::~LoggerThread() {
 
 void LoggerThread::run() {
   while (!isInterruptionRequested()) {
-    Logger::LogEntry le;
-    if (_logger->_buffer->tryGet(&le, 500ms)) {
-      if (le.isNull()) {
-        _logger->doShutdown();
+    Record record;
+    if (_logger->_buffer->tryGet(&record, 500ms)) {
+      if (!record) {
+        _logger->do_shutdown();
         break;
       }
-      _logger->doLog(le);
+      _logger->do_log(record);
     }
   }
 }
+
+} // ns p6

@@ -1,4 +1,4 @@
-/* Copyright 2023-2024 Gregoire Barbier and others.
+/* Copyright 2023-2025 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -133,11 +133,12 @@ Utf8String Utf8StringList::human_readable() const {
   return s;
 }
 
-QDebug operator<<(QDebug dbg, const Utf8StringList &list) {
+QDebug operator <<(QDebug dbg, const Utf8StringList &list) {
   return dbg.noquote() << list.human_readable().toUtf16();
 }
 
-LogHelper operator<<(LogHelper lh, const Utf8StringList &list) {
+p6::log::LogHelper operator<<(
+    p6::log::LogHelper lh, const Utf8StringList &list) {
   lh << list.human_readable();
   return lh;
 }
@@ -146,7 +147,7 @@ QDebug operator<<(QDebug dbg, const Utf8StringSet &set) {
   return dbg << set.toList();
 }
 
-LogHelper operator<<(LogHelper lh, const Utf8StringSet &set) {
+p6::log::LogHelper operator<<(p6::log::LogHelper lh, const Utf8StringSet &set) {
   return lh << set.toList();
 }
 

@@ -1,4 +1,4 @@
-/* Copyright 2013-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,11 +16,13 @@
 
 #include "log/log.h"
 #include "thread/circularbuffer.h"
-#include "modelview/shareduiitem.h"
+
+class QMutex;
+
+namespace p6::log {
 
 class MultiplexerLogger;
 class LoggerThread;
-class QMutex;
 
 /** Base class to be extended by logger implementations.
  * Handle common behavior to all loggers, including optionnaly a
@@ -37,87 +39,63 @@ class LIBP6CORESHARED_EXPORT Logger : public QObject {
   friend class LoggerThread;
 
 public:
-  class LogEntryData;
-  class LogEntry : public SharedUiItem {
-  public:
-    LogEntry() noexcept {}
-    LogEntry(QDateTime timestamp, Utf8String message, Log::Severity severity,
-             LogContext context);
-    LogEntry(const LogEntry &other) noexcept : SharedUiItem(other) {}
-    LogEntry(LogEntry &&other) noexcept : SharedUiItem(std::move(other)) {}
-    LogEntry &operator=(const LogEntry &other) {
-      SharedUiItem::operator=(other); return *this; }
-    LogEntry &operator=(LogEntry &&other) {
-      SharedUiItem::operator=(std::move(other)); return *this; }
-    QDateTime timestamp() const;
-    Utf8String message() const;
-    Log::Severity severity() const;
-    Utf8String severityToString() const;
-    Utf8String taskid() const;
-    Utf8String execid() const;
-    Utf8String location() const;
-
-  private:
-    inline const LogEntryData *data() const;
-  };
   enum ThreadModel {
-    DirectCall, // the logger is already thread-safe and cannot block
-    DedicatedThread, // the logger needs a dedicated thread in case it blocks
-    RootLogger // root logger needs a dedicated thread and an input mutex
+    DirectCall = 0, // the logger is already thread-safe and cannot block
+    DedicatedThread = 1, // the logger needs a dedicated thread in case it blocks
+    // TODO next comment seems out of date (every multiplexer earned a mutex)
+    RootLogger = 3 // root logger needs a dedicated thread and an input mutex
   };
 
 private:
   Q_OBJECT
   Q_DISABLE_COPY(Logger)
-  QThread *_thread;
-  Log::Severity _minSeverity;
-  bool _autoRemovable;
+  Severity _min_severity;
+  bool _auto_removable;
   QMutex _bufferOverflownMutex;
   qint64 _lastBufferOverflownWarning;
   // LATER make _bufferOverflownWarningIntervalMs configurable
   qint64 _bufferOverflownWarningIntervalMs = 10*60*1000; // 10'
-  CircularBuffer<LogEntry> *_buffer;
-  ThreadModel _threadModel;
+  CircularBuffer<Record> *_buffer;
+  ThreadModel _thread_model;
 
 protected:
   // Loggers never have a parent (since they are owned and destroyed by Log
   // static methods)
-  Logger(Log::Severity minSeverity, ThreadModel threadModel);
+  Logger(Severity minSeverity, ThreadModel threadModel);
 
 public:
   /** This method is thread-safe. */
-  void log(const LogEntry &entry);
+  void log(const Record &record);
   /** This method is thread-safe. */
   void shutdown();
   ~Logger();
   /** Return current logging path, e.g. "/var/log/qron-20181231.log"
    * To be used by implementation only when relevant.
-   * Default: QString() */
-  virtual Utf8String currentPath() const;
+   * Default: {} */
+  virtual Utf8String current_path() const;
   /** Return the path pattern, e.g. "/var/log/qron-%!yyyy%!mm%!dd.log"
    * To be used by implementation only when relevant.
    * Default: same as currentPath() */
-  virtual Utf8String pathPattern() const;
+  virtual Utf8String path_pattern() const;
   /** Return the path regexp pattern, e.g. "/var/log/qron-.*\\.log" */
-  QString pathMatchingRegexp() const;
-  Log::Severity minSeverity() const { return _minSeverity; }
-  ThreadModel threadModel() const { return _threadModel; }
+  QString path_matching_regexp() const;
+  Severity min_severity() const { return _min_severity; }
+  ThreadModel thread_model() const { return _thread_model; }
 
 protected:
   /** Method to be implemented by the actual logger.
    * Either the Logger must be created with dedicatedThread = true or this
    * method must be threadsafe (= able to handle calls from any thread at any
    * time). */
-  virtual void doLog(const LogEntry &entry) = 0;
+  virtual void do_log(const Record &record) = 0;
   /** Perform shutdown tasks, such as flushing. */
-  virtual void doShutdown();
+  virtual void do_shutdown();
 
 private:
   /** Should not call deleteLater() from elsewhere, rather call shutdown(). */
   using QObject::deleteLater;
 };
 
-Q_DECLARE_METATYPE(Logger::LogEntry)
-Q_DECLARE_TYPEINFO(Logger::LogEntry, Q_RELOCATABLE_TYPE);
+} // ns p6::log
 
 #endif // LOGGER_H
