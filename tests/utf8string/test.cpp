@@ -7,8 +7,8 @@
 #include <cfloat>
 
 int main(void) {
-  Log::init();
-  Log::addConsoleLogger(Log::Debug);
+  p6::log::init();
+  p6::log::addConsoleLogger(Log::Debug, false, stdout);
   Utf8String s("§foo§bar§baz§§§");
   qDebug() << s.size() << s.utf8size();
   qDebug() << s << s.split('o') << s.split("§"_u8);
@@ -28,7 +28,7 @@ int main(void) {
            << Utf8String(42) << "-" << Utf8String(p) << "-"
            << Utf8String{} << "-" << Utf8String(0);
   qDebug() << Utf8String{}.isNull() << ""_u8.isNull();
-  Log::debug() << s << " - " << s.split('o') << " - " << s.split("§"_u8);
+  p6::log::debug() << s << " - " << s.split('o') << " - " << s.split("§"_u8);
   Utf8StringList l = { "foo", "bar", "baz" };
   qDebug() << PercentEvaluator::eval_utf8("%0,%{-1},%2,%8=foo bar baz,,bar,", &l);
   qDebug() << l << '|' << l.join(' ') << '|' << QVariant(l).toString() << '|'

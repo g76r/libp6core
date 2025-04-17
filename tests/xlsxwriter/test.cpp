@@ -21,9 +21,9 @@
 #include <QDate>
 
 int main(int, char **) {
-  Log::init();
-  Log::addConsoleLogger(Log::Debug, true);
-  Log::debug() << "test";
+  p6::log::init();
+  p6::log::addConsoleLogger(p6::log::Debug, true, stdout);
+  p6::log::debug() << "test";
   qDebug() << "foo";
   QDate date(2023,1,1);
   QTime time(20,25,38);
