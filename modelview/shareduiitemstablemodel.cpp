@@ -48,25 +48,21 @@ QModelIndex SharedUiItemsTableModel::parent(const QModelIndex &child) const {
 }
 
 void SharedUiItemsTableModel::setItems(const SharedUiItemList &original_items) {
-  SharedUiItemList items = original_items;
-  int size = items.size(); // overflows if > 2G
-  //qDebug() << "SharedUiItemsTableModel::setItems" << size << _maxrows
-  //         << typeid(this).name() << objectName() << this;
-  if (size > _maxrows) {
-    //qDebug() << "SharedUiItemsTableModel::setItems size > _maxrows:"
-    //         << size << _maxrows << typeid(this).name() << objectName();
-    items.remove(size, original_items.size()-size);
-    items.squeeze();
-    size = _maxrows;
+  SharedUiItemList limited_items = original_items;
+  qsizetype new_size = limited_items.size(), old_size = _items.size();
+  if (new_size > _maxrows) {
+    limited_items.remove(new_size, new_size-_maxrows);
+    limited_items.squeeze();
+    new_size = _maxrows;
   }
-  if (size) {
-    beginRemoveRows(QModelIndex(), 0, size-1);
+  if (old_size) {
+    beginRemoveRows({}, 0, old_size-1);
     _items.clear();
     endRemoveRows();
   }
-  if (!items.isEmpty()) {
-    beginInsertRows(QModelIndex(), 0, size-1);
-    _items = items;
+  if (new_size) {
+    beginInsertRows({}, 0, new_size-1);
+    _items = limited_items;
     endInsertRows();
   }
 }
