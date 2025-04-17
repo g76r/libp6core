@@ -28,6 +28,8 @@ namespace p6 {
 
 template<typename T>
 concept arithmetic = std::integral<T> || std::floating_point<T>;
+template<typename T>
+concept enumeration = std::is_enum_v<T>;
 
 #endif
 
