@@ -500,6 +500,23 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
         auto x = stack->popeval(stack, context, false);
         return x.metaType().id();
       } }, true },
+  { "<metatypes>", { 1, -1, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) -> QVariant {
+        Utf8StringList list;
+        while (!stack->is_empty()) {
+          auto v = stack->popeval(stack, context, {});
+          list.prepend(Utf8String::number(v.typeId())+"/"_u8
+                       +(v.typeName() | "invalid"_u8));
+        }
+        return list;
+      } }, true },
+  { "<metatypenames>", { 1, -1, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) -> QVariant {
+        Utf8StringList list;
+        while (!stack->is_empty()) {
+          auto v = stack->popeval(stack, context, {});
+          list.prepend(v.typeName() | "invalid"_u8);
+        }
+        return list;
+      } }, true },
 };
 
 static QMap<Utf8String, OperatorDefinition> _operatorDefinitionsMap {
