@@ -30,10 +30,14 @@ int main(void) {
   qDebug() << PercentEvaluator::eval_utf8(
                 "%{=htmlencode|%{=rawvalue:h1}|un}", &p);
   qDebug() << PercentEvaluator::eval_utf8(
-                "%{=integer:-3.14}=-3 %{=integer:blurp:%baz}=42 "
-                "%{=integer:1e3}=1000 %{=integer:1k}=1000", &p);
+                "%{=int64:-3.14}=-3 %{=int64:blurp:%baz}=42 "
+                "%{=uint64:3.14:2.71}=3 %{=uint64:-3.14:2.72}=2 "
+                "%{=int64:1e3}=1000 %{=int64:1k}=1000", &p);
+  qDebug() << PercentEvaluator::eval_utf8(
+                "%{=rpn,%{=int64:-3.14},%{=uint64:3.14},%{=double:3.14},%{=bool:3.14},3.14,%s2,%does_not_exists,<metatypenames>}"
+                "=qlonglong qulonglong double bool Utf8String Utf8String invalid", &p);
   qDebug() << PercentEvaluator::eval_utf8( // overflows
-                "%{=integer:1e50}= %{=integer:10000P}= %{=rpn,4G,4G,*}= "
+                "%{=int64:1e50}= %{=int64:10000P}= %{=rpn,4G,4G,*}= "
                 "%{=rpn,4.0G,4G,*}=1.6e+19");
   qDebug() << PercentEvaluator::eval_utf8("%{=uppercase:fooǆ}|%{=lowercase:fooǆ}|%{=titlecase:fooǆ}");
   qDebug() << PercentEvaluator::eval_utf8("%{=sub;Foo_Barǆ;/_/-/g↑}|%{=sub;Foo_Barǆ;/_/-/g↓}");

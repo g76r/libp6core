@@ -66,15 +66,6 @@ _functions {
   auto v = "%{"_u8+PercentEvaluator::eval_utf8(key.mid(ml+1), context)+'}';
   return v % context;
 }, true},
-{ "=default", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
-  auto params = key.split_headed_list(ml);
-  for (int i = 0; i < params.size(); ++i) {
-    auto v = PercentEvaluator::eval(params.value(i), context);
-    if (!Utf8String(v).isEmpty())
-      return v;
-  }
-  return {};
-}, true},
 { "=rawvalue", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
   auto params = key.split_headed_list(ml);
   if (params.size() < 1 || !context)
@@ -431,13 +422,70 @@ _functions {
   });
   return formula.eval(context, {});
 }, true},
-{ "=integer", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
+{ "=int64", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
   auto params = key.split_headed_list(ml);
   for (auto param: params) {
     bool ok;
-    auto i = PercentEvaluator::eval_number<qlonglong>(param, context, &ok);
+    auto i = PercentEvaluator::eval_number<qint64>(param, context, &ok);
     if (ok)
       return i;
+  }
+  return {};
+}, true},
+{ "=uint64", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
+  auto params = key.split_headed_list(ml);
+  for (auto param: params) {
+    bool ok;
+    auto i = PercentEvaluator::eval_number<quint64>(param, context, &ok);
+    if (ok)
+      return i;
+  }
+  return {};
+}, true},
+{ "=double", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
+  auto params = key.split_headed_list(ml);
+  for (auto param: params) {
+    bool ok;
+    auto i = PercentEvaluator::eval_number<double>(param, context, &ok);
+    if (ok)
+      return i;
+  }
+  return {};
+}, true},
+{ "=bool", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
+  auto params = key.split_headed_list(ml);
+  for (auto param: params) {
+    bool ok;
+    auto i = PercentEvaluator::eval_number<bool>(param, context, &ok);
+    if (ok)
+      return i;
+  }
+  return {};
+}, true},
+{ "=default", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
+  auto params = key.split_headed_list(ml);
+  for (auto param: params) {
+    auto v = param % context;
+    if (auto s = Utf8String(v); !s.isEmpty())
+      return v; // =utf8 would return s
+  }
+  return {};
+}, true},
+{ "=utf8", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
+  auto params = key.split_headed_list(ml);
+  for (auto param: params) {
+    auto v = param % context;
+    if (auto s = Utf8String(v); !s.isEmpty())
+      return s; // =default would return v
+  }
+  return {};
+}, true},
+{ "=utf16", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
+  auto params = key.split_headed_list(ml);
+  for (auto param: params) {
+    auto v = param % context;
+    if (auto s = v.toString(); !s.isEmpty())
+      return s; // =default would return v
   }
   return {};
 }, true},

@@ -152,6 +152,9 @@ and almost like ${variable:-value_if_not_set} in shell scripts
 
 expr1..n are evaluated (%foo is replaced by foo's value)
 
+see also %=utf8 and %=utf16 which does the same eval+coalesce thing but also
+convert the result to a string
+
 examples:
 * `%{=default!%foo!null}` -> foo's value or "null" instead if it's empty
 * `%{=default!%foo!foo not set}`
@@ -159,6 +162,9 @@ examples:
 * `%{=default:%foo:%bar:neither foo nor bar are set!!!}`
 * `%{=default!%foo!%bar}`
 * `%{=default!%foo}` -> always return %foo, but won't warn if foo is not defined
+* `%{=utf8:%foo}` -> "3.14" if foo holds a double == 3.14
+* `%{=utf16:%foo}` -> "3.14" if foo holds a double == 3.14
+* `%{=default:%foo}` -> 3.14 if foo holds a double == 3.14
 
 %=rawvalue
 ----------
@@ -679,24 +685,45 @@ examples:
 * `%{=rpn,dt: ,%=date,@}` -> "dt: " followed by current datetime
 * `%{=rpn,%{=rpn;42;!!},z,@}` -> "truez"
 
-%=integer
----------
-`%{=integer:input[:input2[:...]]}`
+%=utf8,=utf16
+-------------
+`%{=utf8:input[:input2[:...]]}`
+`%{=utf16:input[:input2[:...]]}`
 
-cast input to a 64 bits signed integer (if possible)
-in case input is a floating point value it will be truncated toward 0
+cast input to a string (if valid)
+internaly, Utf8String and QString are used, respecitvely
+if unsure, use %=utf8
 
 examples:
-* `%{=integer:2}` -> 2
-* `%{=integer:-3.14}` -> -3
-* `%{=integer:blurp}` -> invalid
-* `%{=integer:blurp:0}` -> 0
-* `%{=integer:blurp:zero}` -> invalid
-* `%{=integer:blurp:%foo:2k}` -> 2000 if foo's value cannot be converted to int
+* `%{=utf8:%foo}` -> "3.14" if foo holds a double == 3.14
+* `%{=utf16:%foo}` -> "3.14" if foo holds a double == 3.14
+* `%{=default:%foo}` -> 3.14 if foo holds a double == 3.14
+
+%=int64,=uint64,=double,=bool
+-----------------------------
+`%{=int64:input[:input2[:...]]}`
+`%{=uint64:input[:input2[:...]]}`
+`%{=double:input[:input2[:...]]}`
+
+cast input to a number (if possible: valid and in compatible format)
+for =int64 and =uint64 in case input is a floating point value it will be
+truncated toward 0
+for =bool "true" "false" and numbers (anything not 0 is true) are supported
+
+examples:
+* `%{=int64:2}` -> 2
+* `%{=int64:-3.14}` -> -3
+* `%{=uint64:-3.14:2.71}` -> 2
+* `%{=double:-3.14}` -> -3.14
+* `%{=int64:blurp}` -> invalid
+* `%{=int64:blurp:0}` -> 0
+* `%{=int64:blurp:zero}` -> invalid
+* `%{=int64:blurp:%foo:2k}` -> 2000 if foo's value cannot be converted to int
 
 %=formatint64,=formatuint64
 ---------------------------
 `%{=formatint64:input[:base[:padding[:default]]]}`
+`%{=formatuint64:input[:base[:padding[:default]]]}`
 
 * input: casted to a 64 bits signed (int64) or unsigned (uint64) integer
 * base: default: 10
