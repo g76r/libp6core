@@ -237,10 +237,14 @@ float Utf8String::toFloat(bool *ok, float def, bool suffixes_enabled) const {
 template<typename I>
 inline bool double_fits_integer(double d) {
   if (std::numeric_limits<I>::digits >= DBL_MANT_DIG) {
+    // integral types with more digits than double's mantissa:
     // use double value only if it's within DBL_MANT_DIG bits integer range
     // (if double is IEE754 double precision, DBL_MANT_DIG == 53)
-    return d >= -(1LL<<DBL_MANT_DIG) && d <= (1LL<<DBL_MANT_DIG);
+    if (std::numeric_limits<I>::is_signed)
+      return d >= -(1LL<<DBL_MANT_DIG) && d <= (1LL<<DBL_MANT_DIG);
+    return d >= 0 && d <= (1LL<<DBL_MANT_DIG);
   }
+  // integral types with less digits than double's mantissa:
   // use double value only if it fits in the integer type
   return d >= std::numeric_limits<I>::min() &&
       d <= std::numeric_limits<I>::max();
