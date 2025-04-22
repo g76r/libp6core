@@ -69,6 +69,8 @@ SOURCES *= \
     io/opensshcommand.cpp \
     log/logrecorditemlogger.cpp \
     log/logrecorditemmodel.cpp \
+    pf/pfnode.cpp \
+    pf/pfparser.cpp \
     util/paramsformula.cpp \
     util/percentevaluator.cpp \
     util/utf8string.cpp \
@@ -76,14 +78,6 @@ SOURCES *= \
     util/paramsprovider.cpp \
     util/paramset.cpp \
     format/xlsxwriter.cpp \
-    pf/pfutils.cpp \
-    pf/pfparser.cpp \
-    pf/pfoptions.cpp \
-    pf/pfnode.cpp \
-    pf/pfhandler.cpp \
-    pf/pfdomhandler.cpp \
-    pf/pfarray.cpp \
-    pf/pffragment.cpp \
     log/logger.cpp \
     log/log.cpp \
     log/filelogger.cpp \
@@ -178,6 +172,9 @@ HEADERS *=\
     log/logrecorditemlogger.h \
     log/logrecorditemmodel.h \
     modelview/templatedshareduiitemdata.h \
+    pf/pfnode.h \
+    pf/pfoptions.h \
+    pf/pfparser.h \
     util/datacache.h \
     util/paramsformula.h \
     util/percentevaluator.h \
@@ -189,15 +186,6 @@ HEADERS *=\
     util/paramsprovidermerger.h \
     util/regexpparamsprovider.h \
     format/xlsxwriter.h \
-    pf/pfutils.h \
-    pf/pfparser.h \
-    pf/pfoptions.h \
-    pf/pfnode.h \
-    pf/pfhandler.h \
-    pf/pfdomhandler.h \
-    pf/pfarray.h \
-    pf/pffragment_p.h \
-    pf/pfinternals_p.h \
     log/logger.h \
     log/log.h \
     log/filelogger.h \

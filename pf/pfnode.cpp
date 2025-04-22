@@ -11,482 +11,339 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include "pfnode.h"
-#include "pfinternals_p.h"
-#include "pfparser.h"
-#include "pfdomhandler.h"
-#include <QRegularExpression>
 #include <QBuffer>
+#include <QPointer>
 
-#define INDENTATION_EOL_STRING "\n"
-#define INDENTATION_STRING "  "
+PfNode PfNode::_empty;
 
-static QRegularExpression _whitespace("\\s");
-static QRegularExpression _leadingwhitespace("\\A\\s+");
+struct PfNode::Fragment::DeferredBinaryPayload {
+  QPointer<QIODevice> _file;
+  qsizetype _pos = 0, _len = 0;
+  quint8 _should_cache:1 = 0;
+  QByteArray _cache = {};
+};
 
-static int staticInit() {
-  qRegisterMetaType<PfNode>();
-  return 0;
-}
-Q_CONSTRUCTOR_FUNCTION(staticInit)
+struct PfNode::PfWriter : public QIODevice {
+  QIODevice *_device;
+  char _last = 0;
+  qint64 _written = 0;
 
-qint64 PfNode::PfNodeData::writePf(
-    QIODevice *target, const PfOptions &options) const {
-  if (options.shouldIndent())
-    return internalWritePf(target, "", options);
-  return internalWritePf(target, QString(), options);
-}
-
-qint64 PfNode::PfNodeData::writeFlatXml(
-    QIODevice *target, const PfOptions &options) const  {
-  // may indent one day (however xmllint does that well)
-  qint64 total = 0, r;
-  // opening tag
-  if (isComment()) {
-    if (options.shouldIgnoreComment())
-      return 0;
-    if ((r = target->write("<!--")) < 0)
-      return -1;
-    total += r;
-  } else {
-    if ((r = target->write("<")) < 0)
-      return -1;
-    total += r;
-    if ((r = target->write(pftoxmlname(_name).toUtf8())) < 0)
-      return -1;
-    total += r;
-    if ((r = target->write(">")) < 0)
-      return -1;
-    total += r;
+  inline PfWriter(QIODevice *device) : QIODevice(0), _device(device) {
+    setOpenMode(device->openMode());
   }
-  // subnodes
-  //buildChildrenFromArray();
-  for (auto child: _children) {
-    if ((r = child.writeFlatXml(target, options)) < 0)
-      return -1;
-    total += r;
+  inline auto errString() const { return _device->errorString(); }
+  inline char last() const { return _last; }
+  inline qint64 written() const { return _written; }
+  qint64 readData(char*, qint64) override {
+    qWarning() << "PfWriter::readData called";
+    return -1;// should never happen
   }
-  // content
-  if ((r = writeXmlUsingBase64Content(target, options)) < 0)
-    return -1;
-  total += r;
-  // closing tag
-  if (isComment()) {
-    if ((r = target->write("-->")) < 0)
+  qint64 writeData(const char *data, qint64 len) override {
+    auto r = _device->write(data, len);
+    if (r != len)
       return -1;
-    total += r;
-  } else {
-    if ((r = target->write("</")) < 0)
-      return -1;
-    total += r;
-    if ((r = target->write(pftoxmlname(_name).toUtf8())) < 0)
-      return -1;
-    total += r;
-    if ((r = target->write(">")) < 0)
-      return -1;
-    total += r;
+    if (r > 0) {
+      _last = data[r-1];
+      _written += r;
+    }
+    return r;
   }
-  return total;
+  using QIODevice::write;
+  inline qint64 write(char c) {
+    return write(&c, 1);
+  }
+};
+
+namespace {
+
+using Enwrapper = std::function<void(QByteArray *data, const PfOptions &options)>;
+using Unwrapper = std::function<void(QByteArray *data, const PfOptions &options)>;
+struct Wrapper {
+  Enwrapper enwrap;
+  Unwrapper unwrap;
+};
+
+template<int n = 80>
+static inline QByteArray split_every_n_chars(const QByteArray &input) {
+  auto s = input.constData(), end = s+input.size(), end1 = s+input.size()/n*n;
+  QByteArray output;
+  for (; s < end1; s += n)
+    output.append(s, n).append('\n');
+  if (end == end1)
+    output.chop(1);
+  else
+    output.append(s, end-end1);
+  return output;
 }
 
-/*qint64 PfNodeData::writeCompatibleXml(QIODevice &target) const  {
-  // LATER indent
-  qint64 total = 0, r;
-  // opening tag
-  if ((r = target.write("<")) < 0)
-    return -1;
-  total += r;
-  if ((r = target.write(pftoxmlname(_name).toUtf8())) < 0) // fixme xmlnameescape
-    return -1;
-  total += r;
-  // attributes
-  // LATER maybe create an "attributes" method
-  foreach (PfNode *child, _children) {
-    int n = 0;
-    if (child->children().size() != 0 ||
-        child->content().containsBinaryData() ||
-        child->content().size() >= 256)
-      goto not_an_attribute;
-    foreach (PfNode *other, _children) {
-      if(child->name() == other->name()) {
-        ++n;
-        if (n > 1)
-          goto not_an_attribute;
-      }
-    }
-    if ((r = target.write(" ")) < 0)
-      return -1;
-    total += r;
-    if ((r = target.write(pftoxmlname(child->name()).toUtf8()) < 0))
-      return -1;
-    total += r;
-    if ((r = target.write("=\"")) < 0)
-      return -1;
-    total += r;
-    if ((r = target.write(pftoxmltext(child->name()).toUtf8())) < 0)
-      return -1;
-    total += r;
-    if ((r = target.write("\"")) < 0)
-      return -1;
-    total += r;
-    not_an_attribute:;
-  }
-  if ((r = target.write(">")) < 0)
-    return -1;
-  total += r;
-  // subnodes
-  for (int i = 0; i < _children.size(); ++i) {
-    if ((r = _children.at(i)->writeCompatibleXml(target)) < 0)
-      return -1;
-    total += r;
-  }
-  // content
-  if ((r = _content.writeXmlUsingBase64(target)) < 0)
-    return -1;
-  total += r;
-  // closing tag
-  if ((r = target.write("</")) < 0)
-    return -1;
-  total += r;
-  if ((r = target.write(pftoxmlname(_name).toUtf8())) < 0)
-    return -1;
-  total += r;
-  if ((r = target.write(">")) < 0)
-    return -1;
-  total += r;
-  return total;
-}*/
-
-qint64 PfNode::PfNodeData::internalWritePf(
-    QIODevice *target, QString indent, const PfOptions &options) const {
-  qint64 total = 0, r;
-  if (isComment()) {
-    // comment node
-    if (options.shouldIgnoreComment())
-      return 0;
-    // must split content on \n because whereas it is not allowed in the on-disk
-    // format, it can be added through the API
-    QStringList lines = contentAsString().split("\n");
-    for (auto line: lines) {
-      if (!indent.isNull()) {
-        if ((r = target->write(indent.toUtf8())) < 0)
-          return -1;
-        total += r;
-      }
-      if ((r = target->write("#")) < 0)
-        return -1;
-      total += r;
-      if ((r = target->write(line.toUtf8().constData())) < 0)
-        return -1;
-      total += r;
-      if ((r = target->write("\n")) < 0)
-        return -1;
-      total += r;
-    }
-  } else {
-    // regular node
-    // opening parenthesis and node name
-    if (!indent.isNull()) {
-      if ((r = target->write(indent.toUtf8())) < 0)
-        return -1;
-      total += r;
-    }
-    if ((r = target->write("(")) < 0)
-      return -1;
-    total += r;
-    if ((r = target->write(PfUtils::escape(_name, options, true).toUtf8())) < 0)
-      return -1;
-    total += r;
-    // subnodes & content
-    if (options.shouldWriteContentBeforeSubnodes() && !isArray()) {
-      if ((r = internalWritePfContent(target, indent, options)) < 0)
-        return -1;
-      total += r;
-      if ((r = internalWritePfSubNodes(target, indent, options)) < 0)
-        return -1;
-      total += r;
-    } else {
-      if ((r = internalWritePfSubNodes(target, indent, options)) < 0)
-        return -1;
-      total += r;
-      if ((r = internalWritePfContent(target, indent, options)) < 0)
-        return -1;
-      total += r;
-    }
-    // closing parenthesis
-    if (!indent.isNull() && !_children.isEmpty()) {
-      if (!_children.last().isComment()) {
-        if ((r = target->write(INDENTATION_EOL_STRING)) < 0)
-          return -1;
-        total += r;
-      }
-      if ((r = target->write(indent.toUtf8())) < 0)
-        return -1;
-      total += r;
-    }
-    if ((r = target->write(")")) < 0)
-      return -1;
-    total += r;
-    // end of line at end of toplevel node
-    if (!indent.isNull() && indent.isEmpty()) {
-      if ((r = target->write(INDENTATION_EOL_STRING)) < 0)
-        return -1;
-      total += r;
-    }
-  }
-  return total;
-}
-
-qint64 PfNode::PfNodeData::internalWritePfSubNodes(
-    QIODevice *target, QString indent, const PfOptions &options) const {
-  qint64 total = 0, r;
-  if(!_children.isEmpty()) {
-    if (!indent.isNull())
-      indent.append(INDENTATION_STRING);
-    for (int i = 0; i < _children.size(); ++i) {
-      if (!indent.isNull() && (i == 0 || !_children[i-1].isComment())) {
-        if ((r = target->write(INDENTATION_EOL_STRING)) < 0)
-          return -1;
-        total += r;
-      }
-      const PfNode &child = _children[i];
-      if (!child.isNull()) {
-        if ((r = child.d->internalWritePf(target, indent, options)) < 0)
-          return -1;
-        total += r;
-      }
-    }
-    if (!indent.isNull())
-      indent.chop(sizeof INDENTATION_STRING - 1);
-  }
-  return total;
-}
-
-qint64 PfNode::PfNodeData::internalWritePfContent(
-    QIODevice *target, const QString &indent, const PfOptions &options) const {
-  qint64 total = 0, r;
-  if (isArray()) {
-    if ((r = target->write("\n")) < 0)
-      return -1;
-    total += r;
-    // array content
-    if ((r = writePfContent(target, options)) < 0)
-      return -1;
-    total += r;
-    if (!indent.isNull()) {
-      if ((r = target->write(indent.toUtf8())) < 0)
-        return -1;
-      total += r;
-    }
-  } else if (!isEmpty()){
-    // text or binary content
-    if (options.shouldWriteContentBeforeSubnodes() || _children.isEmpty()) {
-      if ((r = target->write(" ")) < 0)
-        return -1;
-      total += r;
-    } else if (!indent.isNull()) {
-      if ((r = target->write(INDENTATION_EOL_STRING)) < 0)
-        return -1;
-      total += r;
-      if ((r = target->write(indent.toUtf8())) < 0)
-        return -1;
-      total += r;
-      if ((r = target->write(INDENTATION_STRING)) < 0)
-        return -1;
-      total += r;
-    }
-    if ((r = writePfContent(target, options)) < 0)
-      return -1;
-    total += r;
-  }
-  return total;
-}
-
-Utf8StringList PfNode::utf8ChildrenByName(const Utf8String &name) const {
-  Utf8StringList sl;
-  if (!name.isEmpty())
-    for (auto child: children())
-      if (!child.isNull() && child.d->_name == name.toUtf16()
-          && child.isText())
-        sl.append(child.contentAsUtf8());
-  return sl;
-}
-
-QList<QPair<Utf8String,Utf8String> > PfNode::utf8PairChildrenByName(
-    const Utf8String &name) const {
-  QList<QPair<Utf8String,Utf8String> > l;
-  if (!name.isEmpty())
-    for (auto child: children())
-      if (!child.isNull() && child.d->_name == name.toUtf16()
-          && child.isText()) {
-        QString s = child.contentAsUtf16().remove(_leadingwhitespace);
-        qsizetype i = s.indexOf(_whitespace);
-        if (i >= 0)
-          l.append(QPair<Utf8String,Utf8String>(s.left(i), s.mid(i+1)));
+static QMap<Utf8String,Wrapper> _wrappers {
+  {"", { {}, {}, } },
+  {"null", { {}, {}, } },
+  {"hex", {
+      [](QByteArray *data, const PfOptions &options) STATIC_LAMBDA {
+        if (options._indent_size)
+          *data = split_every_n_chars(data->toHex());
         else
-          l.append(QPair<Utf8String,Utf8String>(s, {}));
-      }
-  return l;
-}
-
-QList<QPair<Utf8String, qint64> > PfNode::utf8LongPairChildrenByName(
-    const Utf8String &name) const {
-  QList<QPair<Utf8String,qint64>> l;
-  if (!name.isEmpty())
-    for (auto child: children())
-      if (!child.isNull() && child.d->_name == name.toUtf16()
-          && child.isText()) {
-        QString s = child.contentAsUtf16().remove(_leadingwhitespace);
-        qsizetype i = s.indexOf(_whitespace);
-        if (i >= 0)
-          l.append(QPair<Utf8String,qint64>(
-                     s.left(i), s.mid(i).trimmed().toLongLong(0, 0)));
+          *data = data->toHex();
+      },
+      [](QByteArray *data, const PfOptions &) STATIC_LAMBDA {
+        *data = QByteArray::fromHex(*data);
+      },
+    } },
+  {"base64", {
+      [](QByteArray *data, const PfOptions &options) STATIC_LAMBDA {
+        if (options._indent_size)
+          *data = split_every_n_chars(data->toBase64());
         else
-          l.append(QPair<Utf8String,qint64>(s, 0));
-      }
-  return l;
-}
+          *data = data->toBase64();
+      },
+      [](QByteArray *data, const PfOptions &) STATIC_LAMBDA {
+        *data = QByteArray::fromBase64(*data);
+      },
+    } },
+  {"zlib", {
+      [](QByteArray *data, const PfOptions &) STATIC_LAMBDA {
+        *data = qCompress(*data).mid(4);
+      },
+      [](QByteArray *data, const PfOptions &) STATIC_LAMBDA {
+        *data = qUncompress("\0\0\0\0"_ba+*data);
+      },
+    } },
+};
 
-QStringList PfNode::contentAsStringList() const {
-  return contentAsUtf16().split(_whitespace, Qt::SkipEmptyParts);
-}
+} // anonymous ns
 
-Utf8StringList PfNode::contentAsUtf8List() const {
-  return contentAsUtf8().split(Utf8String::AsciiWhitespace, Qt::SkipEmptyParts);
-}
-
-QStringList PfNode::contentAsTwoStringsList() const {
-  return PfUtils::stringSplittedOnFirstWhitespace(contentAsUtf16());
-}
-
-PfNode &PfNode::setAttribute(const QString &name, const QString &content) {
-  removeChildrenByName(name);
-  appendChild(PfNode(name, content));
-  return *this;
-}
-
-PfNode &PfNode::setAttribute(const QString &name, const QStringList &content) {
-  removeChildrenByName(name);
-  PfNode child(name);
-  child.setContent(content);
-  appendChild(child);
-  return *this;
-}
-
-PfNode &PfNode::setContent(const QStringList &strings) {
-  QString v;
-  for (auto s: strings) {
-    s.replace('\\', "\\\\").replace(' ', "\\ ").replace('\t', "\\\t")
-        .replace('\r', "\\\r").replace('\n', "\\\n");
-    v.append(s).append(' ');
+void PfNode::unwrap_binary(QByteArray *wrapped_data, Utf8String &wrappings,
+                           const PfOptions &options) {
+  for (auto wrapping: wrappings.split(':', Qt::SkipEmptyParts)) {
+    auto wrapper = _wrappers.value(wrapping);
+    if (wrapper.unwrap)
+      wrapper.unwrap(wrapped_data, options);
   }
-  if (!v.isEmpty())
-    v.chop(1);
-  return setContent(v);
 }
 
-QByteArray PfNode::toPf(PfOptions options) const {
-  QByteArray ba;
-  QBuffer b(&ba);
-  b.open(QIODevice::WriteOnly);
-  writePf(&b, options);
-  return ba;
+void PfNode::enwrap_binary(QByteArray *unwrapped_data, Utf8String &wrappings,
+                           const PfOptions &options) {
+  for (auto wrapping: wrappings.split(':', Qt::SkipEmptyParts)
+       | std::views::reverse) {
+    auto wrapper = _wrappers.value(wrapping);
+    if (wrapper.enwrap)
+      wrapper.enwrap(unwrapped_data, options);
+  }
 }
 
-PfNode &PfNode::removeChildrenByName(const QString &name) {
-  if (d)
-    for (int i = 0; i < d->_children.size(); ) {
-      PfNode child = d->_children.at(i);
-      if (child ^ name)
-        d->_children.removeAt(i);
-      else
-        ++i;
+bool PfNode::is_registered_wrapping(const Utf8String &wrapping) {
+  return _wrappers.contains(wrapping);
+}
+
+Utf8String PfNode::normalized_wrappings(const Utf8String &wrappings) {
+  auto list = wrappings.split(':', Qt::KeepEmptyParts);
+  list.removeIf([](const QByteArray &wrapping) STATIC_LAMBDA {
+    if (wrapping.isEmpty() || wrapping == "null"_ba)
+      return true;
+    if (!is_registered_wrapping(wrapping)) {
+      qWarning() << "unknown wrapping" << wrapping;
+      return true;
     }
-  return *this;
+    return false;
+  });
+  return list.join(':');
 }
 
-PfNode PfNode::fromPf(const QByteArray &source, const PfOptions &options) {
-  PfDomHandler h;
-  PfParser p(&h);
-  if (p.parse(source, options)) {
-    if (!h.roots().isEmpty())
-      return h.roots().at(0);
-  }
-  return PfNode();
-}
-
-qint64 PfNode::PfNodeData::writePfContent(
-    QIODevice *target, const PfOptions &options) const {
-  if (isArray()) {
-    if (options.shouldTranslateArrayIntoTree()) {
-      PfNode tmp;
-      _array.convertToChildrenTree(&tmp);
-      qint64 total = 0, r;
-      for (auto child: tmp.children()) {
-        r = child.writePf(target, options);
-        if (r == -1)
-          return -1;
-        total += r;
-      }
-      return total;
-    }
-    return _array.writePf(target, options);
-  }
-  qint64 total = 0, r;
-  for (auto f: _fragments) {
-    r = f.writePf(target, options);
-    if (r < 0)
-      return -1;
-    total += r;
-  }
-  return total;
-}
-
-qint64 PfNode::PfNodeData::writeRawContent(
-    QIODevice *target, const PfOptions &options) const {
-  if (isArray())
-    return _array.writePf(target, options);
-  qint64 total = 0, r;
-  for (auto f: _fragments) {
-    r = f.writeRaw(target, options);
-    if (r < 0)
-      return -1;
-    total += r;
-  }
-  return total;
-}
-
-qint64 PfNode::PfNodeData::writeXmlUsingBase64Content(
-    QIODevice *target, const PfOptions &options) const {
-  if (isArray()) {
-    if (options.shouldTranslateArrayIntoTree()) {
-      PfNode tmp;
-      _array.convertToChildrenTree(&tmp);
-      qint64 total = 0, r;
-      for (auto child: tmp.children()) {
-        r = child.writeFlatXml(target, options);
-        if (r == -1)
-          return -1;
-        total += r;
-      }
-      return total;
-    }
-    return _array.writeTrTd(target, true, options);
-  }
-  qint64 total = 0, r;
-  for (auto f: _fragments) {
-    r = f.writeXmlUsingBase64(target, options);
-    if (r < 0)
-      return -1;
-    total += r;
-  }
-  return total;
-}
-
-QByteArray PfNode::PfNodeData::contentAsByteArray() const {
+Utf8String PfNode::as_pf(const PfOptions &options) const {
   QBuffer buf;
   buf.open(QIODevice::WriteOnly);
-  writeRawContent(&buf, PfOptions());
+  auto w = write_pf(&buf, options);
+  if (w < 0)
+    return {};
   return buf.data();
+}
+
+qint64 PfNode::write_pf(QIODevice *target, const PfOptions &options) const {
+  PfWriter writer(target);
+  auto r = write_pf(0, &writer, options);
+  return r >= 0 ? writer.written() : -1;
+}
+
+#define WRITE(data) { if (writer->write(data) == -1) { return -1; } }
+
+static inline Utf8String find_availlable_endmarker(const Utf8String &text) {
+  static Utf8String tmpl = "EOF";
+  Utf8String endmarker = tmpl;
+  for (int i = 0; text.contains(endmarker); ++i)
+    endmarker = tmpl+Utf8String::number(i, 36);
+  return endmarker;
+}
+
+qint64 PfNode::write_pf(size_t depth, PfNode::PfWriter *writer,
+                        const PfOptions &options) const {
+  Utf8String indent_this = indentation_string(depth, options),
+      indent_next = indentation_string(depth+1, options);
+  bool inline_node = true;
+  WRITE(indent_this);
+  WRITE('(');
+  WRITE(_name);
+  auto list = fragments_as_list();
+  switch (options._fragments_reordering) {
+    using enum PfOptions::FragmentsReordering;
+    case PayloadFirst:
+      std::stable_sort(list.begin(), list.end(),
+                       [](const Fragment *x, const Fragment *y){
+        return x->has_payload() && !y->has_payload();
+      });
+      break;
+    case ChildrenFirst:
+      std::stable_sort(list.begin(), list.end(),
+                       [](const Fragment *x, const Fragment *y){
+        return x->type() == Child && y->type() != Child;
+      });
+      break;
+    case NoReordering:
+      ;
+  }
+  for (const Fragment *last_written = 0; auto f: list) {
+    switch (f->type()) {
+      using enum Fragment::FragmentType;
+      case Text: {
+          if (options._indent_size && writer->last() == '\n') {
+            WRITE(indent_next);
+          } else if (!last_written || last_written->type() == Text)
+            WRITE(' ');
+          auto text = f->text();
+          if (options._heretext_trigger_size >= 0 &&
+              text.size() >= options._heretext_trigger_size) {
+            auto endmarker = find_availlable_endmarker(text);
+            WRITE('|');
+            WRITE('|');
+            WRITE(endmarker);
+            WRITE('\n');
+            WRITE(text);
+            WRITE(endmarker);
+            if (options._indent_size)
+              WRITE('\n');
+          } else
+            WRITE(PfNode::escaped_text(text));
+          break;
+        }
+      case Child: {
+          auto child = f->child();
+          Q_ASSERT(child);
+          if (options._indent_size && writer->last() != '\n')
+            WRITE('\n');
+          auto r = child->write_pf(depth+1, writer, options);
+          if (r < 0)
+            return -1;
+          inline_node = false; // LATER but if it's inline itself
+          break;
+        }
+      case Comment: {
+          if (!options._with_comments)
+            goto fragment_skipped;
+          if (options._indent_size) {
+            if (writer->last() != '\n') // always \n before comment
+              WRITE('\n');
+            WRITE(indent_next);
+          }
+          WRITE('#');
+          WRITE(f->comment());
+          WRITE('\n');
+          inline_node = false;
+          break;
+        }
+      case DeferredBinary:
+      case LoadedBinary: {
+          auto data = f->unwrapped_data();
+          auto wrappings = PfNode::normalized_wrappings(f->wrappings());
+          if (!options._allow_bare_binary && wrappings.isEmpty())
+            wrappings = "base64"_u8;
+          PfNode::enwrap_binary(&data, wrappings, options);
+          if (options._indent_size && writer->last() == '\n')
+            WRITE(indent_next);
+          WRITE('|');
+          WRITE(wrappings);
+          WRITE('|');
+          WRITE(Utf8String::number(data.size()));
+          WRITE('\n');
+          WRITE(data);
+          if (options._indent_size && writer->last() == '\n')
+            WRITE('\n');
+          inline_node = false;
+          break;
+        }
+    }
+    last_written = f;
+fragment_skipped:;
+  }
+  if (options._indent_size && !inline_node) {
+    // closes parenthesis on next line excepted for inline nodes
+    if (writer->last() != '\n')
+      WRITE('\n');
+    WRITE(indent_this);
+  }
+  WRITE(')');
+  if (options._indent_size)
+    WRITE('\n');
+  return 0;
+}
+
+void PfNode::Fragment::create_deferred_binary(
+    const PfNode::Fragment::DeferredBinaryPayload &other) {
+  Q_ASSERT(_type == DeferredBinary);
+  _nontext._deferredbinary = new PfNode::Fragment::DeferredBinaryPayload(other);
+}
+
+void PfNode::Fragment::create_deferred_binary(
+    QIODevice *file, qsizetype pos, qsizetype len, bool should_cache) {
+  Q_ASSERT(_type == DeferredBinary);
+  _nontext._deferredbinary =
+      new PfNode::Fragment::DeferredBinaryPayload{file, pos, len, should_cache};
+}
+
+void PfNode::Fragment::destroy_deferred_binary() {
+  Q_ASSERT(_type == DeferredBinary);
+  Q_ASSERT(_nontext._deferredbinary);
+  delete _nontext._deferredbinary;
+  _nontext._deferredbinary = 0;
+}
+
+QByteArray PfNode::Fragment::retrieve_deferred_binary() const {
+  static_assert(sizeof(DeferredBinaryPayload) == 64);
+  if (_type != DeferredBinary || !_nontext._deferredbinary) {
+    qWarning() << "PfNode::Fragment::retrieve_deferred_binary_content() "
+                  "called on bad object" << this;
+    return {};
+  }
+  if (_nontext._deferredbinary->_len == 0
+      || !_nontext._deferredbinary->_cache.isEmpty())
+    return _nontext._deferredbinary->_cache;
+  QIODevice *file = _nontext._deferredbinary->_file.data();
+  if (!file) {
+    qDebug() << "PF deferred binary fragment can't be read because file is no "
+                "longer open" << this;
+    return {};
+  }
+  if (!file->seek(_nontext._deferredbinary->_pos)) {
+    qDebug() << "PF deferred binary fragment can't seek" << this << "error:"
+             << file->errorString();
+    return {};
+  }
+  auto payload = file->read(_nontext._deferredbinary->_len);
+  if (payload.size() != _nontext._deferredbinary->_len)
+    qDebug() << "PF deferred binary fragment can't read full payload" << this
+             << ": read" << payload.size() << "instead of"
+             << _nontext._deferredbinary->_len
+             << "error:" << file->errorString();
+  else if (_nontext._deferredbinary->_should_cache)
+    _nontext._deferredbinary->_cache = payload;
+  return payload;
+}
+
+qsizetype PfNode::Fragment::size_of_deferred_binary() const {
+  if (_type != DeferredBinary || !_nontext._deferredbinary) {
+    qWarning() << "PfNode::Fragment::size_of_deferred_binary_content() "
+                  "called on bad object" << this;
+    return 0;
+  }
+  return _nontext._deferredbinary->_len;
 }

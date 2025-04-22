@@ -11,334 +11,664 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #ifndef PFNODE_H
 #define PFNODE_H
 
-#include "pffragment_p.h"
-#include "pfarray.h"
 #include "util/utf8stringlist.h"
-#include <ranges>
 #include "util/containerutils.h"
+#include "pf/pfoptions.h"
+#include <ranges>
 
-class PfNode;
+class QIODevice;
 
+/** Class representing any level of Parenthesis Format (PF) tree node.
+ *  Holds methods reading and modifying data in the node and its children,
+ *  and for writing to PF external format.
+ *  For reading one should have a look to PfParser. */
 class LIBP6CORESHARED_EXPORT PfNode {
-  class LIBP6CORESHARED_EXPORT PfNodeData : public QSharedData {
-    friend class PfNode;
-    QString _name;
-    QList<PfNode> _children;
-    bool _isComment;
-    QList<PfFragment> _fragments;
-    PfArray _array;
+private:
+  struct LIBP6CORESHARED_EXPORT Fragment {
+  private:
+    struct DeferredBinaryPayload;
+    void create_deferred_binary(const DeferredBinaryPayload &other);
+    void create_deferred_binary(QIODevice *file, qsizetype pos, qsizetype len,
+                                bool should_cache);
+    void destroy_deferred_binary();
+    QByteArray retrieve_deferred_binary() const;
+    qsizetype size_of_deferred_binary() const;
 
   public:
-    explicit PfNodeData(const QString &name = QString())
-      : _name(name), _isComment(false) { }
+    enum FragmentType : quint64 {
+      Text = 0, Comment, LoadedBinary, DeferredBinary, Child,
+    };
+    template <typename T>
+    struct FragmentsForwardIterator {
+      using difference_type = std::ptrdiff_t;
+      using value_type = T *;
+      value_type f;
+      value_type operator*() const { return f; }
+      FragmentsForwardIterator &operator++() {
+        f = f ? f->_next : 0;
+        return *this;
+      };
+      void operator++(int) { ++*this; }
+      bool operator==(const FragmentsForwardIterator &that) const {
+        return f == that.f;
+      }
+    };
+    template <typename T>
+    struct FragmentForwardRange {
+      T *f;
+      FragmentsForwardIterator<T> begin() const { return {f}; }
+      FragmentsForwardIterator<T> end() const { return {0}; }
+    };
 
-  private:
-    PfNodeData(const QString &name, const QString &content, bool isComment)
-      : _name(name), _isComment(isComment) {
-      if (!content.isEmpty())
-        _fragments.append(PfFragment(content));
+    Fragment *_next = 0;
+    FragmentType _type = Text;
+    Utf8String _text; // also used as wrappings spec for binary payloads
+    union {
+      QByteArray *_unwrapped_data = 0;
+      DeferredBinaryPayload *_deferredbinary;
+      PfNode *_child;
+    } _nontext;
+    static_assert(sizeof(_nontext) == sizeof(void*));
+
+    inline ~Fragment() {
+      // qDebug() << "~Fragment" << Utf8String::number(this) << type()
+      //          << (type() == Text ? text() : Utf8String::number(child()))
+      //          << Utf8String::number(_next);
+      switch (_type) {
+        case LoadedBinary:
+          delete _nontext._unwrapped_data;
+          break;
+        case DeferredBinary:
+          destroy_deferred_binary();
+          break;
+        case Child:
+          delete _nontext._child;
+          break;
+        case Text:
+        case Comment:
+          ;
+      }
+      if (_next)
+        delete _next;
     }
-    PfNodeData(const QString &name, const PfArray &array)
-      : _name(name), _isComment(false) {
-      _array = array;
+    inline Fragment(const Utf8String &utf8, bool is_comment)
+      : _type(is_comment ? Comment : Text), _text(utf8) { }
+    inline Fragment(const QByteArray &unwrapped_data,
+                    const Utf8String &wrappings)
+      : _type(LoadedBinary), _text(wrappings) {
+      _nontext._unwrapped_data = new QByteArray(unwrapped_data);
     }
-    bool isComment() const { return _isComment; }
-    bool isEmpty() const {
-      return !_fragments.size() && _array.isNull(); }
-    bool isArray() const { return !_array.isNull(); }
-    bool isText() const {
-      return !isArray() && !isBinary() && !isComment(); }
-    bool isBinary() const {
-      for (auto f: _fragments)
-        if (f.isBinary())
+    inline Fragment(QIODevice *file, qsizetype pos, qsizetype len,
+                    bool should_cache)
+      : _type(DeferredBinary) {
+      create_deferred_binary(file, pos, len, should_cache);
+    }
+    inline Fragment(const PfNode &child) : _type(Child) {
+      _nontext._child = new PfNode(child);
+    }
+    inline Fragment(PfNode &&child) : _type(Child) {
+      _nontext._child = new PfNode(child);
+    }
+    /** takes ownership */
+    inline Fragment(PfNode *child) : _type(Child) {
+      _nontext._child = child;
+    }
+    inline Fragment(const Fragment &other) : _type(other._type) {
+      // qDebug() << "=Fragment" << Utf8String::number(this)
+      //          << Utf8String::number(&other);
+      _next = other._next ? new Fragment(*other._next) : 0;
+      switch (_type) {
+        case LoadedBinary:
+          _nontext._unwrapped_data =
+              new QByteArray(*other._nontext._unwrapped_data);
+          _text = other._text;
+          break;
+        case DeferredBinary:
+          create_deferred_binary(*other._nontext._deferredbinary);
+          _text = other._text;
+          break;
+        case Text:
+        case Comment:
+          _text = other._text;
+          break;
+        case Child:
+          _nontext._child = new PfNode(*other._nontext._child);
+          break;
+      }
+    }
+    inline Fragment(Fragment &&other) // take ownership of pointed data
+      : _next(std::exchange(other._next, nullptr)), // prevents double delete
+        _type(std::exchange(other._type, Text)), // prevents double delete
+        _text(std::exchange(other._text, {})),
+        _nontext(std::exchange(other._nontext, {})) { // prevents double delete
+      // not sure Fragment move constructor is useful (probably everything
+      // goes through Fragment(Fragment*) instead
+      // qDebug() << "&&Fragment" << Utf8String::number(this)
+      //          << Utf8String::number(&other);
+    }
+    inline FragmentType type() const { return _type; }
+    /** @return true if type is a payload type (text or binary) */
+    inline bool has_payload() const {
+      switch (_type) {
+        case Text:
+        case LoadedBinary:
+        case DeferredBinary:
           return true;
+        case Comment:
+        case Child:
+          ;
+      }
       return false;
     }
-    QString contentAsString() const {
-      if (isArray())
-        return QString();
-      QString s = u""_s;
-      for (auto f: _fragments) {
-        if (f.isBinary())
-          return {};
-        s.append(f.text());
-      }
-      return s;
+    inline Utf8String wrappings() const {
+      if (_type == LoadedBinary)
+        return _text;
+      return {};
     }
-    qint64 writePf(QIODevice *target, const PfOptions &options) const;
-    qint64 writeFlatXml(QIODevice *target, const PfOptions &options) const;
-    //qint64 writeCompatibleXml(QIODevice &target) const;
-    //inline void buildChildrenFromArray() const;
-    inline qint64 internalWritePf(
-        QIODevice *target, QString indent, const PfOptions &options) const;
-    inline qint64 internalWritePfSubNodes(
-        QIODevice *target, QString indent, const PfOptions &options) const;
-    inline qint64 internalWritePfContent(
-        QIODevice *target, const QString &indent, const PfOptions &options) const;
-    /** Provide the content as a byte array.
-      * If there are lazy-loaded binary fragments, they are loaded into memory,
-      * in the returned QByteArray but do not keep them cached inside PfContent
-      * structures, therefore the memory will be freed when the QByteArray is
-      * discarded and if toByteArray() is called again, the data will be
-      * loaded again. */
-    QByteArray contentAsByteArray() const;
-    /** Write content to target device in PF format (with escape sequences and
-      * binary headers). */
-    qint64 writePfContent(QIODevice *target, const PfOptions &options) const;
-    /** Write content to target device in raw data format (no PF escape sequences
-      * but actual content). */
-    qint64 writeRawContent(QIODevice *target, const PfOptions &options) const;
-    /** Write content to target device in XML format, embeding binary fragments
-      * using base64 encoding. */
-    qint64 writeXmlUsingBase64Content(
-        QIODevice *target, const PfOptions &options) const;
-
+    /** change wrappings of LoadedBinary fragment, can turn a Text fragment
+     *  into LoadedBinary if applyed with non empty wrappings.
+     *  do nothing to other fragment types, including DeferredBinary. */
+    inline void set_wrappings(const Utf8String &wrappings) {
+      // qDebug() << "Fragment::set_wrappings" << this << _type << wrappings;
+      if (_type == LoadedBinary)
+        _text = wrappings;
+      else if (_type == Text && !wrappings.isEmpty()) {
+        _nontext._unwrapped_data = new QByteArray(_text);
+        _type = LoadedBinary;
+        _text = wrappings;
+      }
+    }
+    inline Utf8String text() const {
+      if (_type == Text)
+        return _text;
+      return {};
+    }
+    inline Utf8String escaped_text() const {
+      if (_type == Text)
+        return PfNode::escaped_text(_text);
+      return {};
+    }
+    inline Utf8String comment() const {
+      if (_type == Comment)
+        return _text;
+      return {};
+    }
+    //inline QString utf16() const { return utf8(); }
+    inline QByteArray unwrapped_data() const {
+      if (_type == Text)
+        return _text;
+      if (_type == LoadedBinary)
+        return *_nontext._unwrapped_data;
+      if (_type == DeferredBinary)
+        return retrieve_deferred_binary();
+      return {};
+    }
+    inline qsizetype size() const {
+      if (_type == Text)
+        return _text.size();
+      if (_type == LoadedBinary)
+        return _nontext._unwrapped_data->size();
+      if (_type == DeferredBinary)
+        return size_of_deferred_binary();
+      return 0;
+    }
+    inline PfNode *child() const {
+      return _type == Child ? _nontext._child : 0;
+    }
+    /** append text to fragments list: merge on last text fragment if any or
+     *  append a new text fragment at end if no text fragment was found.
+     *  @return true if merged, false if appended a new text fragment */
+    template <FragmentType text_type = Text,
+              bool add_space_before_text = true,
+              bool even_with_other_fragments_in_between = false>
+    inline bool merge_text_on_last_fragment(const Utf8String &text) {
+      Fragment *last = this, *last_text = type() == text_type ? this : 0;
+      while (last->_next) {
+        last = last->_next;
+        if (last->type() == text_type)
+          last_text = last;
+      }
+      if (last_text
+          && (last_text == last || even_with_other_fragments_in_between)) {
+        if (add_space_before_text)
+          last_text->_text += ' ';
+        last_text->_text += text;
+        return true;
+      }
+      last->_next = new Fragment(text, false);
+      return false;
+    }
+    static void push_back(Fragment **pthis, Fragment *f) {
+      Q_ASSERT(pthis != 0);
+      while (*pthis)
+        pthis = &((*pthis)->_next);
+      *pthis = f;
+    }
+    static void push_front(Fragment **pthis, Fragment *f) {
+      Q_ASSERT(pthis != 0);
+      f->_next = *pthis;
+      *pthis = f;
+    }
+    template <std::predicate<Fragment*> Pred>
+    static inline size_t delete_if(Fragment **pthis, Pred pred) {
+      Q_ASSERT(pthis != 0);
+      size_t count = 0;
+      while (*pthis) {
+        // qDebug() << "deleting?" << Utf8String::number(*pthis)
+        //          << (*pthis)->type() << Utf8String::number((*pthis)->_next)
+        //          << pred(*pthis) << count;
+        if (pred(*pthis)) {
+          auto doomed = *pthis;
+          *pthis = (*pthis)->_next;
+          doomed->_next = 0; // disable delete of new *pthis
+          delete doomed;
+          ++count;
+        } else {
+          pthis = &((*pthis)->_next);
+        }
+      }
+      return count;
+    }
+    static inline void set_attribute(
+        Fragment **pthis, const Utf8String &name, const Utf8String &value) {
+      Q_ASSERT(pthis != 0);
+      for (;*pthis; pthis = &((*pthis)->_next)) {
+        auto child = (*pthis)->child();
+        if (!!child && *child^name) {
+          child->set_text(value);
+          goto found_so_delete_others;
+        }
+      }
+      *pthis = new Fragment(PfNode(name, value));
+      return;
+found_so_delete_others:
+      pthis = &((*pthis)->_next);
+      while (*pthis) {
+        auto child = (*pthis)->child();
+        if (child && *child^name)
+          delete take_first(pthis);
+        else
+          pthis = &((*pthis)->_next);
+      }
+    }
+    /** take first fragment if any, removing it from the list and
+     *  giving ownership */
+    static inline Fragment *take_first(Fragment **pthis) {
+      Q_ASSERT(pthis != 0);
+      auto taken = *pthis;
+      if (taken) {
+        *pthis = (*pthis)->_next;
+        taken->_next = 0; // disable delete of new *pthis
+      }
+      return taken;
+    }
+    inline qsizetype count() const {
+      qsizetype count = 0;
+      for (auto f = this; f; f = f->_next)
+        ++count;
+      return count;
+    }
+    inline qsizetype count_of_type(FragmentType type) const {
+      qsizetype count = 0;
+      for (auto f = this; f; f = f->_next)
+        if (f->type() == type)
+          ++count;
+      return count;
+    }
   };
+  using enum Fragment::FragmentType;
 
-  QSharedDataPointer<PfNodeData> d;
-
-  PfNode(PfNodeData *data) : d(data) { }
+  Utf8String _name;
+  Fragment *_fragments = 0;
+  static PfNode _empty;
 
 public:
-  /** Create a null node. */
-  PfNode() { }
-  PfNode(const PfNode &other) : d(other.d) { }
-  /** If name is empty, the node will be null. */
-  explicit PfNode(const QString &name)
-      : d(name.isEmpty() ? 0 : new PfNodeData(name)) { }
-  /** If name is empty, the node will be null. */
-  PfNode(const QString &name, const QString &content)
-    : d(name.isEmpty() ? 0 : new PfNodeData(name, content, false)) { }
-  /** If name is empty, the node will be null. */
-  PfNode(const QString &name, qint64 content)
-    : d(name.isEmpty()
-        ? 0 : new PfNodeData(name, QString::number(content), false)) { }
-  /** If name is empty, the node will be null. */
-  PfNode(const QString &name, quint64 content)
-    : d(name.isEmpty()
-        ? 0 : new PfNodeData(name, QString::number(content), false)) { }
-  /** If name is empty, the node will be null. */
-  PfNode(const QString &name, qint32 content)
-    : d(name.isEmpty()
-        ? 0 : new PfNodeData(name, QString::number(content), false)) { }
-  /** If name is empty, the node will be null. */
-  PfNode(const QString &name, quint32 content)
-    : d(name.isEmpty()
-        ? 0 : new PfNodeData(name, QString::number(content), false)) { }
-  /** If name is empty, the node will be null. */
-  PfNode(const QString &name, qint16 content)
-    : d(name.isEmpty()
-        ? 0 : new PfNodeData(name, QString::number(content), false)) { }
-  /** If name is empty, the node will be null. */
-  PfNode(const QString &name, quint16 content)
-    : d(name.isEmpty()
-        ? 0 : new PfNodeData(name, QString::number(content), false)) { }
-  /** If name is empty, the node will be null. */
-  PfNode(const QString &name, double content)
-    : d(name.isEmpty()
-        ? 0 : new PfNodeData(name, QString::number(content), false)) { }
-  /** If name is empty, the node will be null. */
-  PfNode(const QString &name, float content)
-    : d(name.isEmpty()
-        ? 0 : new PfNodeData(name, QString::number((double)content), false)) { }
-  /** If name is empty, the node will be null. */
-  PfNode(const QString &name, const PfArray &array)
-    : d(name.isEmpty() ? 0 : new PfNodeData(name, array)) { }
+  inline PfNode() {}
+  /** If name is empty the node will be null. */
+  inline PfNode(const Utf8String &name, const Utf8String &text = {})
+    : _name(name) {
+    if (!text.isEmpty())
+      _fragments = new Fragment(text, false);
+  }
+  inline PfNode(const PfNode &other) : _name(other._name),
+    _fragments(other._fragments ? new Fragment(*other._fragments) : 0) { }
+  inline PfNode(PfNode &&other) // takes ownership of fragments
+    : _name(std::exchange(other._name, {})),
+      _fragments(std::exchange(other._fragments, nullptr)) { // prevents double delete
+    // qDebug() << "&&PfNode" << Utf8String::number(this)
+    //             << Utf8String::number(&other);
+  }
+  inline ~PfNode() {
+    // qDebug() << "~PfNode" << Utf8String::number(this)
+    //          << Utf8String::number(_fragments) << _name;
+    if (_fragments)
+      delete _fragments;
+  }
+  /** Convert number into utf8 text.
+   *  Includes bool, which will be converted to "true" or "false" */
+  inline PfNode(const Utf8String &name, p6::arithmetic auto number)
+    : PfNode(name, Utf8String::number(number)) { }
   /** If name is empty, the node will be null (and children ignored). */
-  PfNode(const QString &name, std::initializer_list<PfNode> children)
-      : d(name.isEmpty() ? 0 : new PfNodeData(name)) {
+  inline PfNode(
+      const Utf8String &name, const Utf8String &content,
+      std::initializer_list<PfNode> children) : PfNode(name, content) {
     if (!name.isEmpty())
-      appendChildren(children);
+      append_children(children);
   }
   /** If name is empty, the node will be null (and children ignored). */
-  PfNode(const QString &name, const QString &content,
-         std::initializer_list<PfNode> children)
-    : d(name.isEmpty() ? 0 : new PfNodeData(name, content, false)) {
-    if (!name.isEmpty())
-      appendChildren(children);
-  }
-  /** If name is empty, the node will be null (and children ignored). */
-  PfNode(const QString &name, const PfArray &array,
-         std::initializer_list<PfNode> children)
-    : d(name.isEmpty() ? 0 : new PfNodeData(name, array)) {
-    if (!name.isEmpty())
-      appendChildren(children);
-  }
-  /** Create a comment node. */
-  static PfNode createCommentNode(const QString &comment) {
-    return PfNode(new PfNodeData(QStringLiteral("comment"), comment, true)); }
-  PfNode &operator=(const PfNode &other) { d = other.d; return *this; }
-  /** Build a PfNode from PF external format.
-   * @return first encountered root node or PfNode() */
-  static PfNode fromPf(const QByteArray &source, const PfOptions &options = {});
-
-  // Node related methods /////////////////////////////////////////////////////
-
-  /** A node has an empty string name if and only if the node is null. */
-  [[nodiscard]] inline QString name() const { return d ? d->_name : QString{}; }
-  [[nodiscard]] inline Utf8String utf8Name() const {
-    return d ? Utf8String(d->_name) : Utf8String{}; }
-  /** Syntaxic sugar: node ^ "foo" === !!node && node.name() == "foo" */
-  [[nodiscard]] inline bool operator^(const Utf8String &name) const {
-    return !!d && d->_name == name; }
-  /** Syntaxic sugar: node ^ "foo" === !!node && node.name() == "foo" */
-  [[nodiscard]] inline bool operator^(const QString &name) const {
-    return !!d && d->_name == name; }
-  /** Syntaxic sugar:
-   *  node ^ node2 === !!node && !!node2 && node.name() == node2.name() */
-  [[nodiscard]] inline bool operator^(const PfNode &that) const {
-    return !!d && !!that.d && d->_name == that.d->_name; }
-  /** Syntaxic sugar: node ^ list === !!node && list.contains(node.name()) */
-  [[nodiscard]] inline bool operator^(const Utf8StringList &names) const {
-    return !!d && names.contains(d->_name); }
-  /** Replace node name. If name is empty, the node will become null. */
-  PfNode &setName(const Utf8String &name) {
-    if (name.isEmpty())
-      d = 0;
-    else {
-      if (!d)
-        d = new PfNodeData();
-      d->_name = name;
-    }
+  inline PfNode(const Utf8String &name, std::initializer_list<PfNode> children)
+    :  PfNode(name, Utf8String{}, children ) { }
+  PfNode &operator=(const PfNode &other) {
+    _name = other._name;
+    _fragments = other._fragments ? new Fragment(*other._fragments) : 0;
     return *this;
   }
-  [[nodiscard]] inline bool isNull() const { return !d; }
-  [[nodiscard]] inline bool operator!() const { return isNull(); }
-  bool isComment() const { return d && d->isComment(); }
+  PfNode &operator=(PfNode &&other) {
+    _name = std::exchange(other._name, {});
+    _fragments = std::exchange(other._fragments, nullptr); // prevents double delete
+    return *this;
+  }
+  inline bool operator!() const { return _name.isEmpty(); }
+  inline bool is_null() const { return !*this; }
+  inline bool operator<(const PfNode &other) const {
+    return _name < other._name; }
+  inline qsizetype fragments_count() const {
+    return _fragments ? _fragments->count() : 0;
+  }
+  inline qsizetype children_count() const {
+    return _fragments ? _fragments->count_of_type(Child) : 0;
+  }
 
-  // Children related methods /////////////////////////////////////////////////
+  ////// name /////////////////////////////////////////////////////////////////
 
-  /** Children as range loop expression.
-   *  (will be std::ranges::view when C++23 will be supported). */
+  /** A node has an empty string name if and only if the node is null. */
+  [[nodiscard]] inline Utf8String name() const { return _name; }
+  /** Syntaxic sugar: node ^ "foo" === !!node && node.name() == "foo" */
+  inline bool operator^(const Utf8String &name) const {
+    return _name == name; }
+  /** Syntaxic sugar:
+   *  node ^ node2 === !!node && !!node2 && node.name() == node2.name() */
+  inline bool operator^(const PfNode &that) const {
+    return _name == that._name; }
+  /** Syntaxic sugar: node ^ list === !!node && names.contains(node.name()) */
+  [[nodiscard]] inline bool operator^(
+      const p6::readable_set<Utf8String> auto &names) const {
+    return names.contains(_name); }
+  /** Children as range loop expression (currently: as copy). */
+
+  ///// children //////////////////////////////////////////////////////////////
+
+  /** Children as range loop expression. */
   [[nodiscard]] inline auto children() const {
-    auto list = d ? d->_children : QList<PfNode>{};
-    return p6::QListRange<PfNode>(list);
+    return std::views::all(Fragment::FragmentForwardRange(_fragments))
+        | std::views::filter([](const Fragment *f) STATIC_LAMBDA { return f->type() == Child; })
+        | std::views::transform([](const Fragment *f) STATIC_LAMBDA -> const PfNode & { return *f->child(); });
   }
-  /** Children filtered by their name, as range loop expression.
-   *  (will be std::ranges::view when C++23 will be supported). */
+  /** Children as range loop expression. */
+  [[nodiscard]] inline auto children() {
+    return std::views::all(Fragment::FragmentForwardRange(_fragments))
+        | std::views::filter([](struct Fragment *f) STATIC_LAMBDA { return f->type() == Child; })
+        | std::views::transform([](struct Fragment *f) STATIC_LAMBDA -> PfNode & { return *f->child(); });
+  }
+  /** Children filtered by their name, as range loop expression. */
   [[nodiscard]] inline auto children(const Utf8String &name) const {
-    QList<PfNode> list;
-    for (auto child: children())
-      if (child^name)
-        list += child;
-    return p6::QListRange<PfNode>(list);
+    return std::views::all(Fragment::FragmentForwardRange(_fragments))
+        | std::views::filter([name](const Fragment *f) { auto child = f->child(); return child && *child^name; })
+        | std::views::transform([](const Fragment *f) STATIC_LAMBDA -> const PfNode & { return *f->child(); });
   }
-  /** Children filtered by their name, as range loop expression.
-   *  (will be std::ranges::view when C++23 will be supported). */
-  [[nodiscard]] inline auto children(const Utf8StringList &names) const {
-    QList<PfNode> list;
-    for (auto child: children())
-      if (child^names)
-        list += child;
-    return p6::QListRange<PfNode>(list);
+  /** Children filtered by their name, as range loop expression. */
+  [[nodiscard]] inline auto children(const Utf8String &name) {
+    return std::views::all(Fragment::FragmentForwardRange(_fragments))
+        | std::views::filter([name](struct Fragment *f) { auto child = f->child(); return child && *child^name; })
+        | std::views::transform([](struct Fragment *f) STATIC_LAMBDA -> PfNode & { return *f->child(); });
+  }
+  /** Children filtered by their name, as range loop expression. */
+  [[nodiscard]] inline auto children(
+      const p6::readable_set<Utf8String> auto &names) const {
+    return std::views::all(Fragment::FragmentForwardRange(_fragments))
+        | std::views::filter([names](const Fragment *f) { auto child = f->child(); return child && *child^names; })
+        | std::views::transform([](const Fragment *f) STATIC_LAMBDA -> const PfNode & { return *f->child(); });
+  }
+  /** Children filtered by their name, as range loop expression. */
+  [[nodiscard]] inline auto children(
+      const p6::readable_set<Utf8String> auto &names) {
+    return std::views::all(Fragment::FragmentForwardRange(_fragments))
+        | std::views::filter([names](struct Fragment *f) { auto child = f->child(); return child && *child^names; })
+        | std::views::transform([](struct Fragment *f) STATIC_LAMBDA -> PfNode & { return *f->child(); });
   }
   /** Syntaxic sugar: node/"foo" === node.children("foo") */
   [[nodiscard]] inline auto operator/(const Utf8String &name) const {
     return children(name); }
   /** Syntaxic sugar: node/{"foo","bar"} === node.children({"foo","bar"}) */
-  [[nodiscard]] inline auto operator/(const Utf8StringList &names) const {
+  [[nodiscard]] inline auto operator/(
+      const p6::readable_set<Utf8String> auto &names) const {
     return children(names); }
-  /** Children as QList<PfNode>.
-   *  Rather use children() or operator/ if possible. */
-  [[nodiscard]] inline QList<PfNode> children_as_list() const {
-    return d ? d->_children : QList<PfNode>{};
-  }
-  /** Children as QList<PfNode>.
-   *  Rather use children() or operator/ if possible. */
-  [[nodiscard]] inline QList<PfNode> children_as_list(
-      const Utf8String &name) const {
+  /** Children as QList copy */
+  [[nodiscard]] inline QList<PfNode> children_copy() const {
+    // C++23: return children() | std::ranges::to<QList<PfNode>>();
+    // maybe rather let the caller do it (to whatever container he wants)
     QList<PfNode> list;
     for (auto child: children())
-      if (child^name)
-        list += child;
+      list += child;
     return list;
   }
-  /** Children as QList<PfNode>.
-   *  Rather use children() or operator/ if possible. */
-  [[nodiscard]] inline QList<PfNode> children_as_list(
-      const Utf8StringList &names) const {
+  /** Children as QList copy */
+  template <typename T>
+  [[nodiscard]] inline QList<PfNode> children_copy(const T &name) const {
+    // C++23: return children() | std::ranges::to<QList<PfNode>>();
+    // maybe rather let the caller do it (to whatever container he wants)
     QList<PfNode> list;
-    for (auto child: children())
-      if (child^names)
-        list += child;
+    for (auto child: children(name))
+      list += child;
     return list;
   }
-  /** Grandchildren filtered by child name, as range loop expression.
-   *  (will be std::ranges::view when C++23 will be supported). */
-  [[nodiscard]] inline auto grandchildren(const Utf8String &child_name) const {
-    QList<PfNode> list;
-    for (auto child: children())
-      if (child^child_name)
-        list += child.children_as_list();
-    return p6::QListRange<PfNode>(list);
+  inline PfNode &append_child(const PfNode &child) {
+    Fragment::push_back(&_fragments, new Fragment(child));
+    return *this;
   }
-  /** Grandchildren as QList<PfNode>. Rather use grandchildren() if possible. */
-  [[nodiscard]] inline QList<PfNode> grandchildren_list(
-      const Utf8String &child_name) const {
-    QList<PfNode> list;
-    for (auto child: children())
-      if (child^child_name)
-        list += child.children_as_list();
-    return list;
+  inline PfNode &append_child(PfNode &&child) {
+    Fragment::push_back(&_fragments, new Fragment(child));
+    return *this;
   }
-
-  /** prepend a child to existing children (do nothing if child.isNull()) */
-  inline PfNode &prependChild(const PfNode &child);
-  /** append a child to existing children (do nothing if child.isNull()) */
-  inline PfNode &appendChild(const PfNode &child);
-  PfNode &appendChildren(std::initializer_list<PfNode> children) {
-    for (const PfNode &child : children)
-      appendChild(child);
-    return *this; }
-  PfNode &appendChildren(QList<PfNode> children) {
-    for (const PfNode &child : children)
-      appendChild(child);
-    return *this; }
-  PfNode &prependCommentChild(const QString &comment) {
-    return prependChild(createCommentNode(comment)); }
-  PfNode &appendCommentChild(const QString &comment) {
-    return appendChild(createCommentNode(comment)); }
-  /** @return First child matching name
+  /** takes ownership */
+  inline PfNode &append_child(PfNode *child) {
+    Fragment::push_back(&_fragments, new Fragment(child));
+    return *this;
+  }
+  [[deprecated("use append_child() instead")]]
+  inline PfNode &appendChild(const PfNode &child) {
+    return append_child(child);
+  }
+  template <typename T>
+  requires std::ranges::input_range<T>
+  && (std::same_as<std::ranges::range_reference_t<T>,const PfNode&>
+      || std::same_as<std::ranges::range_reference_t<T>,PfNode&>
+      || std::same_as<std::ranges::range_reference_t<T>,PfNode&&>
+      || std::same_as<std::ranges::range_reference_t<T>,PfNode*>
+      || std::same_as<std::ranges::range_reference_t<T>,PfNode*&>)
+  inline PfNode &append_children(T children) {
+    for (auto child: children)
+      append_child(child); // LATER optimize against following list n times
+    return *this;
+  }
+  inline PfNode &prepend_child(const PfNode &child) {
+    Fragment::push_front(&_fragments, new Fragment(child));
+    return *this;
+  }
+  inline PfNode &prepend_child(PfNode &&child) {
+    Fragment::push_front(&_fragments, new Fragment(child));
+    return *this;
+  }
+  inline PfNode &remove_children_by_name(const Utf8String &name) {
+    Fragment::delete_if(&_fragments, [name](Fragment *f) {
+      auto node = f->child();
+      return node && *node^name;
+    });
+    return *this;
+  }
+  /** @return First child matching name, null when not found
    * If you want its text content rather call attribute() or operator[]. */
-  [[nodiscard]] inline PfNode first_child(const Utf8String &name) const {
-    for (auto child: children())
-      if (child^name)
-        return child;
-    return {};
+  [[nodiscard]] inline const PfNode &first_child(const Utf8String &name) const {
+    for (auto f: Fragment::FragmentForwardRange(_fragments))
+      if (auto child = f->child(); child && *child^name)
+        return *child;
+    return _empty;
+  }
+  [[nodiscard]] inline const PfNode &first_child() const {
+    for (auto f: Fragment::FragmentForwardRange(_fragments))
+      if (auto child = f->child(); child)
+        return *child;
+    return _empty;
   }
   /** Return a pair of first two children with a given name.
-   *  Never fails (the children can be null).
-   *  Usefull e.g. to display an error message if a child is duplicated:
+   *  Never fail (the children can be null).
+   *  Convenient e.g. to display an error message if a child is duplicated:
    *  auto [child,child2] = node.first_two_children("foo")
-   *  if (!!child) { perform_action(); }
-   *  if (!!child2) { warn_duplicate(); } */
-  [[nodiscard]] inline std::pair<PfNode,PfNode> first_two_children(
-      const Utf8String &name) const {
-    PfNode first,second;
-    for (auto child: children())
-      if (child^name) {
+   *  if (!!child2) { warn_ignoring_duplicate_child(); }
+   *  if (!!child) { perform_regular_action(); }
+   *  else { warn_lacking_child(); } */
+  [[nodiscard]] inline std::pair<const PfNode&, const PfNode&>
+  first_two_children(const Utf8String &name) const {
+    const PfNode *first = 0;
+    for (auto f: Fragment::FragmentForwardRange(_fragments))
+      if (auto child = f->child(); child && *child^name) {
         if (!first)
           first = child;
-        else if (!second) {
-          second = child;
-          break;
-        }
+        else
+          return { *first, *child };
       }
-    return {first, second};
+    return { first ? *first : _empty, _empty };
   }
-  /** Return a child content knowing the child name.
-    * def if no such child exists.
-    * "" if child exists but has no text content.
-    * If several children have the same name the first one is choosen.
-    * The intent is to emulate XML attributes, hence the name. */
-  [[nodiscard]] inline QString utf16attribute(
-      const Utf8String &name, const QString &def = {}) const {
-    PfNode child = first_child(name);
-    return child.isNull() ? def : child.contentAsUtf16(); }
+  [[nodiscard]] inline bool has_child(const Utf8String &name) const {
+    for (auto f: Fragment::FragmentForwardRange(_fragments))
+      if (auto child = f->child(); child && *child^name)
+        return true;
+    return false;
+  }
+  [[nodiscard]] inline bool has_child() const {
+    for (auto f: Fragment::FragmentForwardRange(_fragments))
+      if (f->type() == Child)
+        return true;
+    return false;
+  }
+  [[deprecated("use has_child() instead")]]
+  inline bool hasChild(const Utf8String &name) const {
+    return has_child(name); }
+
+  // content: as low level types //////////////////////////////////////////////
+
+  /** Return content as text.
+   *  Merge all text fragments (which have been partially trimmed when parsing
+   *  external PF data).
+   *  Return "" when there is no text data.
+   */
+  [[nodiscard]] inline Utf8String content_as_text() const {
+    Utf8String s = ""_u8;
+    bool first = true;
+    for (auto f: Fragment::FragmentForwardRange(_fragments))
+      if (auto text = f->text(); !text.isEmpty()) {
+        if (first)
+          first = false;
+        else
+          s += ' ';
+        s += text;
+      }
+    return s;
+  }
+  [[nodiscard]] inline Utf8String content_as_binary() const {
+    QByteArray content;
+    bool previous_was_text = false;
+    for (auto f: Fragment::FragmentForwardRange(_fragments)) {
+      auto type = f->type();
+      if (previous_was_text && type == Text)
+        content += ' ';
+      if (auto data = f->unwrapped_data(); !data.isEmpty()) {
+        content += data;
+        previous_was_text = type == Text;
+      }
+    }
+    return content;
+  }
+  /** syntaxic sugar for content_as_text().toNumber() */
+  template <p6::arithmetic T>
+  inline T content_as_number(bool *ok, T def = {}) const {
+    return content_as_text().toNumber<T>(ok, def); }
+  /** syntaxic sugar for content_as_text().toNumber() */
+  template <p6::arithmetic T>
+  inline T content_as_number(T def = {}) const {
+    return content_as_text().toNumber<T>(def); }
+  /** set the whole content to text, removing any other payload fragment (text,
+   *  and binary) or comment fragment. */
+  inline PfNode &set_text(const Utf8String &text) {
+    return set_content(text, false); }
+  /** append text i.e. either add a new text fragment or if possible append text
+   *  (without separating space) at the end of last fragment
+   *  (last fragment must be a text fragment for the merge to occur) */
+  inline PfNode &append_text(const Utf8String &text) {
+    return append_text_fragment<false>(text); }
+  /** append text fragment, i.e. either add a new text fragment or if possible
+   *  append " "+text (with separating space) at the end of last fragment
+   *  (last fragment must be a text fragment for the merge to occur), but if
+   *  add_space_before_text is set to false */
+  template <bool add_space_before_text = true>
+  inline PfNode &append_text_fragment(const Utf8String &text) {
+    if (_fragments) {
+      //bool merged =
+      _fragments->merge_text_on_last_fragment<
+          Fragment::Text, add_space_before_text>(text);
+      // qDebug() << "merged text on last fragment:" << content << merged;
+    } else
+      _fragments = new Fragment(text, false);
+    return *this;
+  }
+  inline PfNode &append_comment_fragment(const Utf8String &comment) {
+    if (_fragments)
+      Fragment::push_back(&_fragments, new Fragment(comment, true));
+    else
+      _fragments = new Fragment(comment, true);
+    return *this;
+  }
+  inline PfNode &append_loaded_binary_fragment(
+      const QByteArray &unwrapped_data, const Utf8String &wrappings = {}) {
+    if (_fragments)
+      Fragment::push_back(&_fragments,new Fragment(unwrapped_data, wrappings));
+    else
+      _fragments = new Fragment(unwrapped_data, wrappings);
+    return *this;
+  }
+  inline PfNode &append_deferred_binary_fragment(
+      QIODevice *file, qsizetype pos, qsizetype len, bool should_cache) {
+    if (_fragments)
+      Fragment::push_back(
+            &_fragments, new Fragment(file, pos, len, should_cache));
+    else
+      _fragments = new Fragment(file, pos, len, should_cache);
+    return *this;
+  }
+  template <bool even_on_text_fragments = false, bool recursive = true>
+  inline PfNode &set_wrappings(const Utf8String &wrappings) {
+    for (auto f = _fragments; f; f = f->_next) {
+      if (even_on_text_fragments || f->type() != Fragment::Text)
+        f->set_wrappings(wrappings);
+      if (recursive)
+        if (auto child = f->child(); !!child)
+          child->set_wrappings<even_on_text_fragments>(wrappings);
+    }
+    return *this;
+  }
+  [[nodiscard]] static bool is_registered_wrapping(const Utf8String &wrapping);
+  [[nodiscard]] static Utf8String normalized_wrappings(
+      const Utf8String &wrappings);
+  static void unwrap_binary(QByteArray *wrapped_data, Utf8String &wrappings,
+                            const PfOptions &options);
+  static void enwrap_binary(QByteArray *unwrapped_data, Utf8String &wrappings,
+                            const PfOptions &options);
+
+  // content: as attributes ///////////////////////////////////////////////////
+
   /** Return a child content knowing the child name.
     * def if no such child exists.
     * "" if child exists but has no text content.
@@ -346,297 +676,171 @@ public:
     * The intent is to emulate XML attributes, hence the name. */
   [[nodiscard]] inline Utf8String attribute(
       const Utf8String &name, const Utf8String &def = {}) const {
-    PfNode child = first_child(name);
-    return child.isNull() ? def : child.contentAsUtf8(); }
+    auto child = first_child(name);
+    return !!child ? child.content_as_text() : def; }
   /** Syntaxic sugar: node["foo"] === node.attribute("foo") */
   [[nodiscard]] inline Utf8String operator[](const Utf8String &name) const {
-    return attribute(name); }
-  /** Return the content (as string) of every child with a given name.
-   * This is the same as attribute() with multi-valued semantics.
-   * Skip children with non-text content.
-   * If no text child matches the name, the list is empty. */
-  Utf8StringList utf8ChildrenByName(const Utf8String &name) const;
-  /** Return the string content of children, splited into string pairs at the
-   * first whitespace, one list item per child.
-   * Child whole content and both strings of the pair are trimmed.
-   * Skip children with non-text content.
-   * Chilren without whitespace will have the first pair item set to the whole
-   * node content (which may be empty) and the second one to QString().
-   * If no text child matches the name, the list is empty. */
-  QList<QPair<Utf8String, Utf8String> > utf8PairChildrenByName(
-      const Utf8String &name) const;
-  /** Return the integer content of children, splited into pairs at the
-   * first whitespace, one list item per child.
-   * @see stringsPairChildrenByName() */
-  QList<QPair<Utf8String, qint64>> utf8LongPairChildrenByName(
-      const Utf8String &name) const;
-  [[deprecated("Use Utf8String.toLongLong() instead")]]
-  qlonglong longAttribute(const QString &name, qint64 def = 0,
-                       bool *ok = 0) const {
-    return first_child(name).contentAsUtf8().toLongLong(ok, def); }
-  [[deprecated("Use Utf8String.toDouble() instead")]]
-  double doubleAttribute(const QString &name, double def, bool *ok = 0) const {
-    return first_child(name).contentAsUtf8().toDouble(ok, def); }
-  [[deprecated("Use Utf8String.toBool() instead")]]
-  bool boolAttribute(const QString &name, bool def = false,
-                     bool *ok = 0) const {
-    return first_child(name).contentAsUtf8().toBool(ok, def); }
-  /** @see contentAsStringList() */
-  QStringList stringListAttribute(const QString &name) const {
-    return first_child(name).contentAsStringList(); }
-  /** Set a child named 'name' with 'content' content and remove any other
-    * child named 'name'. */
-  PfNode &setAttribute(const QString &name, const QString &content);
-  /** Convenience method */
-  PfNode &setAttribute(const QString &name, const QVariant &content) {
-    return setAttribute(name, content.toString()); }
-  /** Convenience method (assume content is UTF-8 encoded) */
-  PfNode &setAttribute(const QString &name, const char *content) {
-    return setAttribute(name, QString::fromUtf8(content)); }
-  /** Convenience method (assume content is UTF-8 encoded) */
-  PfNode &setAttribute(const QString &name, const Utf8String &utf8) {
-    return setAttribute(name, utf8.toUtf16()); }
-  // LATER setAttribute() for QDateTime, QDate, QTime and QStringList/QSet<QString>
-  /** Set a child named 'name' with 'content' content and remove any other child
-   * named 'name'. The QStringList is formated as a space separated value list
-   * in a way that it can be parsed back by contentAsStringList() (i.e. using
-   * backslash escapement for whitespace and backslashes).
-   * @see contentAsStringList()
-   */
-  PfNode &setAttribute(const QString &name, const QStringList &content);
-  [[nodiscard]] inline bool hasChild(const Utf8String &name) const {
-    for (auto child: children())
-      if (child^name)
-        return true;
-    return false;
+    return attribute(name);
   }
-  /** This PfNode has no children. Null nodes are leaves */
-  [[nodiscard]] inline bool isLeaf() const;
-  [[nodiscard]] inline PfNode &removeAllChildren();
-  PfNode &removeChildrenByName(const QString &name);
-
-  // Content related methods //////////////////////////////////////////////////
-
-  /** @return true when there is no content (neither text or binary fragment or
-   * array content) */
-  [[nodiscard]] inline bool isEmpty() const { return !d || d->isEmpty(); }
-  /** @return true if the content is an array */
-  [[nodiscard]] inline bool isArray() const { return d && d->isArray(); }
-  /** @return true if the content consist only of text data (no binary no array)
-   * or is empty or the node is null, false for comment nodes */
-  [[nodiscard]] inline bool isText() const { return !d || d->isText(); }
-  /** @return true if the content is (fully or partly) binary data, therefore
-   * false when empty */
-  [[nodiscard]] inline bool isBinary() const { return d && d->isBinary(); }
-  /** @return QString() if isBinary() or isArray() or isNull(), and QString("")
-   * if isText() even if isEmpty() */
-  [[nodiscard]] inline QString contentAsUtf16() const {
-    return d ? d->contentAsString() : QString(); }
-  [[nodiscard]] inline Utf8String contentAsUtf8() const {
-    return contentAsUtf16(); }
-  /** @return integer value if the string content is a valid integer
-   * C-like prefixes are supported and both kmb and kMGTP suffixes are supported
-   * surrounding whitespace is trimmed
-   * e.g. 0x1f means 15, 12k means 12000, 12b and 12G mean 12000000000.
-   * however mixing them is not supported e.g. 0x1fG isn't. */
-  [[deprecated("Use Utf8String.toLongLong() instead")]]
-  inline qlonglong contentAsLong(qint64 def = 0, bool *ok = 0) const {
-    return contentAsUtf8().toLongLong(ok, def);
+#if __cpp_multidimensional_subscript >= 202110L
+  // C++23 gcc 12 (13 w/ default arg)
+  /** Syntaxic sugar: node["foo","bar"] === node.attribute("foo","bar") */
+  [[nodiscard]] inline Utf8String operator[](const Utf8String &name,
+                                             const Utf8String &def) const {
+    return attribute(name, def);
   }
-  /** @return decimal value if the string content is a valid E notation number
-   * the implementation does not fully support the PF specications since it
-   * uses QString::toDouble() which relies on the default locale
-   * (QLocale::setDefault()) to define the separators (especially comma versus
-   * period) */
-  [[deprecated("Use Utf8String.toDouble() instead")]]
-  inline double contentAsDouble(double def = 0.0, bool *ok = 0) const {
-    return contentAsUtf8().toDouble(ok, def);
+#endif
+  [[deprecated("use attribute() or operator[] instead")]]
+  inline QString utf16attribute(
+      const Utf8String &name, const Utf8String &def = {}) const {
+    return attribute(name, def);
   }
-  /** @return bool value if the child string content is a valid boolean
-   * "true" regardless of case and any non null integer are regarded as true
-   * "false" regardless of case and 0 are regarded as false
-   * any other text is regarded as invalid */
-  [[deprecated("Use Utf8String.toBool() instead")]]
-  inline bool contentAsBool(bool def = false, bool *ok = 0) const {
-    return contentAsUtf8().toBool(ok, def);
-  }
-  /** Split text content into strings on whitespace (e.g. "foo bar baz" and
-   * "    foo  bar\nbaz" are both interpreted as the same 3 items list).
-   * Whitespace can be escaped with backspaces. Actually backspace must be
-   * doubled since it's already an escape character in PF syntax (e.g.
-   * "foo\\ 1 bar baz" first element is "foo 1"). */
-  QStringList contentAsStringList() const;
-  Utf8StringList contentAsUtf8List() const;
-  /** Split text content into two strings on first non-leading whitespace.
-   * e.g. "foo bar baz" and "    foo  bar baz" are both interpreted as the same
-   * 2 items list: { "foo", "bar baz" }.
-   * List may contain only 1 or 0 element, depending on node content.
-   * Whitespace cannot be escaped. */
-  QStringList contentAsTwoStringsList() const;
-  /** @return QByteArray() if isEmpty() otherwise raw content (no escape
-   * for PF special characters) */
-  QByteArray contentAsByteArray() const {
-    return d ? d->contentAsByteArray() : QByteArray(); }
-  /** @return PfArray() if not isArray() */
-  PfArray contentAsArray() const { return d ? d->_array : PfArray(); }
-  /** Append text fragment to context (and remove array if any). */
-  PfNode &appendContent(const QString &text) {
-    if (!d)
-      d = new PfNodeData();
-    d->_array.clear();
-    if (!text.isEmpty()) {
-      // merge fragments if previous one exists and is text
-      if (!d->_fragments.isEmpty()) {
-        PfFragment &last = d->_fragments.last();
-        if (last.isText()) {
-          last = PfFragment(last.text()+' '+text);
-          return *this;
-        }
-      }
-      // otherwise append new fragment
-      d->_fragments.append(PfFragment(text));
-    }
+  /** Set a first child named 'name' content to 'value' and remove any other
+    * child named 'name'. If no child is named 'name' append it. */
+  inline PfNode &set_attribute(const Utf8String &name, const Utf8String &value) {
+    Fragment::set_attribute(&_fragments, name, value);
     return *this;
   }
-  /** Append text fragment to context (and remove array if any). */
-  PfNode &appendContent(const Utf8String &text) {
-    return appendContent(text.toUtf16()); }
-  /** Append text fragment to context (and remove array if any). */
-  PfNode &appendContent(const char *utf8text) {
-    return appendContent(QString::fromUtf8(utf8text)); }
-  /** Append in-memory binary fragment to context (and remove array if any). */
-  PfNode &appendBinary(QByteArray data, const Utf8String &surface = {}) {
-    if (!d)
-      d = new PfNodeData();
-    d->_array.clear();
-    // Merging fragments if previous is in-memory binary is probably a bad idea
-    // because it would prevent Qt's implicit sharing to work.
-    if (!data.isEmpty())
-      d->_fragments.append(PfFragment(data, surface));
+  inline PfNode &set_attribute(
+      const Utf8String &name, p6::arithmetic auto number) {
+    Fragment::set_attribute(&_fragments, name, Utf8String::number(number));
     return *this;
   }
-  /** Append lazy-loaded binary fragment to context (and remove array if any) */
-  PfNode &appendContent(QIODevice *device, qint64 length, qint64 offset,
-                        const Utf8String &surface = {}) {
-    if (!d)
-      d = new PfNodeData();
-    d->_array.clear();
-    if (device && length > 0)
-      d->_fragments
-          .append(PfFragment(device, length, offset, surface));
-    return *this;
+  [[deprecated("use set_attribute() instead")]]
+  inline PfNode &setAttribute(const Utf8String &name, const Utf8String &value) {
+    return set_attribute(name, value);
   }
-  /** Replace current content with text fragment. */
-  PfNode &setContent(const QString &text) {
-    clearContent(); appendContent(text); return *this; }
-  /** Replace current content with text fragment. */
-  PfNode &setContent(const Utf8String &text) {
-    clearContent(); appendContent(text.toUtf16()); return *this; }
-  /** Replace current content with text fragment. */
-  PfNode &setContent(const char *utf8text) {
-    setContent(QString::fromUtf8(utf8text)); return *this; }
-  /** Replace current content with in-memory binary fragment. */
-  PfNode &setBinary(const QByteArray &data) {
-    clearContent(); appendBinary(data); return *this; }
-  /** Replace current content with lazy-loaded binary fragment. */
-  PfNode &setContent(QIODevice *device, qint64 length, qint64 offset) {
-    clearContent(); appendContent(device, length, offset); return *this; }
-  /** Replace current content with an array. */
-  PfNode &setContent(const PfArray &array) {
-    if (!d)
-      d = new PfNodeData();
-    d->_fragments.clear();
-    d->_array = array;
-    return *this;
-  }
-  /** Replace current content with a text content containing a space separated
-   * strings list. Backspaces and spaces inside strings are escaped with
-   * backslash */
-  PfNode &setContent(const QStringList &strings);
-  /** Remove current content and make the node content empty (and thus text). */
-  PfNode &clearContent() {
-    if (d) {
-      d->_array.clear();
-      d->_fragments.clear();
-    }
-    return *this;
-  }
-  /** Compares contentAsString() */
-  bool operator<(const PfNode &other) const {
-    return contentAsUtf16() < other.contentAsUtf16();
+  [[deprecated("use set_attribute() instead")]]
+  inline PfNode &setAttribute(
+      const Utf8String &name, p6::arithmetic auto number) {
+    return set_attribute(name, number);
   }
 
-  // Output methods ///////////////////////////////////////////////////////////
+  // content: as high level types /////////////////////////////////////////////
 
-  /** Write the whole PfNode tree in PF file format. */
-  qint64 writePf(QIODevice *target, PfOptions options = PfOptions()) const {
-    return d ? d->writePf(target, options) : 0; }
-  /** Convert the whole PfNode tree to PF in a byte array. */
-  QByteArray toPf(PfOptions options = PfOptions()) const;
-  /** Convert the whole PfNode tree to PF in a characters string.
-    * Note that the string will be truncated to the first \0 encountered,
-    * which may happen inside binary segments, if any, therefore this
-    * method is only for debuging or human-readable display, not for
-    * data output (which should use writePf() instead).
-    */
-  QString toString() const {
-    return QString::fromUtf8(toPf(PfOptions().setShouldIndent()));
+  /** Text content splited into std::pair<Utf8String,Utf8String> at the first
+   *  whitespace.
+   *  @see Utf8String::split_as_pair() */
+  inline auto content_as_text_pair() const {
+    return content_as_text().split_as_pair(); }
+  /** Range of children content splited into std::pair<Utf8String,Utf8String>
+   *  at the first whitespace, one pair per matching child.
+   *  @see Utf8String::split_as_pair() */
+  inline auto children_as_text_pairs_range(const Utf8String &name) const {
+    return std::views::all(Fragment::FragmentForwardRange(_fragments))
+        | std::views::filter([name](const Fragment *f) { auto child = f->child(); return child && *child^name; })
+        | std::views::transform([](const Fragment *f) STATIC_LAMBDA { return f->child()->content_as_text().split_as_pair(); });
   }
-  /** Write node and whole tree (children recursively) in flat XML format.
-    * Flat XML format is a format without any attribute (every PF node is
-    * written as an XML element) and with binary content converted into
-    * Base64 text. Encoding is always UTF-8. */
-  qint64 writeFlatXml(QIODevice *target,
-                      const PfOptions &options = PfOptions()) const {
-    return d ? d->writeFlatXml(target, options) : 0; }
-  // LATER test, debug and uncomment method
-  /* Write node and whole tree (children recursively) in compatible XML format.
-    * Compatible XML format is a format where every subnode with no subnode
-    * and with a unique name among its siblings and with a small, non binary,
-    * content is written twice: once as an attribute and once as a subelement.
-    * Small means < 256 characters (not bytes).
-    * Binary fragments are lost. Maybe later they will be written with an XML
-    * escape mean such as entities or cdata, or with a non-XML mean such as
-    * base64 content.
-    * Encoding is always UTF-8.
-    */
-  //qint64 writeCompatibleXml(QIODevice *target) const;
+  /** Syntaxic sugar for content_as_text().spit() using ascii whitespace and
+   *  keeping empty parts. */
+  [[nodiscard]] inline Utf8StringList content_as_strings() const {
+    return content_as_text()
+        .split(Utf8String::AsciiWhitespace, Qt::KeepEmptyParts); }
+  [[nodiscard]] inline QStringList content_as_utf16strings() const {
+    return content_as_strings().toUtf16StringList(); }
+  [[deprecated("use content_as_text() instead")]]
+  inline Utf8String contentAsUtf8() const {
+    return content_as_text(); }
+  [[deprecated("use content_as_text() instead")]]
+  inline QString contentAsUtf16() const {
+    return content_as_text(); }
+  [[deprecated("use content_as_strings() or content_as_utf16list() instead")]]
+  inline QStringList contentAsStringList() const {
+    return content_as_strings().toUtf16StringList(); }
+  [[deprecated("use content_as_strings() instead")]]
+  inline Utf8StringList contentAsUtf8List() const {
+    return content_as_strings(); }
+  [[deprecated("use content_as_text_pair() instead")]]
+  inline QStringList contentAsTwoStringsList() const {
+    auto pair = content_as_text_pair();
+    return {pair.first, pair.second};
+  }
+
+  // formating ////////////////////////////////////////////////////////////////
+
+  /** Write the whole PfNode tree in PF format. */
+  qint64 write_pf(QIODevice *target, const PfOptions &options = {}) const;
+  /** Convert the whole PfNode tree to PF format.
+   *  Internaly uses write_pf(). */
+  Utf8String as_pf(const PfOptions &options = {}) const;
+  [[deprecated("use as_pf instead")]]
+  inline Utf8String toPf(const PfOptions &options = {}) const {
+    return as_pf(options); }
+  /** Convert the whole PfNode tree to PF format.
+   *  Using human readable options (indentation + comments).
+   *  Internaly uses write_pf(). */
+  Utf8String as_text() const {
+    return as_pf(PfOptions().with_indent(2).with_comments()); }
+  [[deprecated("use as_text instead")]]
+  Utf8String toString() const { return as_text(); }
+  /** Is c a PF whitespace char? i.e. among: space \t \r \n */
+  static inline bool is_pf_whitespace(char c) {
+    return c == ' ' || c == '\t' || c == '\r' || c == '\n';
+  }
+  /** Is c a PF reserved char? i.e. among: whitesppace ( ) # | \ ' " */
+  static inline bool is_pf_reserved_char(char c) {
+    return c == '(' || c == ')' || c == '#' || c == '|' || c == '\\'
+        || c == '\'' || c == '"' || is_pf_whitespace(c);
+  }
+  /** protect with a backslash any character in input that is reserved (has a
+   *  special meanging) in PF so that the returned string can be written as is
+   *  as a text fragment in a PF file. */
+  static inline Utf8String escaped_text(const Utf8String &input) {
+    const char *begin = input.constData(), *s = begin;
+    for (; *s; ++s)
+      if (must_escape_char_within_text(*s, s[1]))
+        [[unlikely]] goto reserved_char_found;
+    return input; // short path: copy nothing because there was nothing to do
+  reserved_char_found:;
+    Utf8String output = input.sliced(0, s-begin);
+    for (; *s; ++s)
+      if (must_escape_char_within_text(*s, s[1]))
+        output = output + '\\' + *s;
+      else
+        output += *s;
+    return output;
+  }
+
+private:
+  struct PfWriter;
+  qint64 write_pf(size_t depth, PfWriter *writer,
+                  const PfOptions &options) const;
+  template <typename T, typename U>
+  inline PfNode &set_content(T content, U auxiliary) {
+    Fragment::delete_if(&_fragments, [](Fragment *f) STATIC_LAMBDA {
+      return f->type() != Fragment::Child; });
+    Fragment::push_back(&_fragments, new Fragment(content, auxiliary));
+    return *this;
+  }
+  /** Escaping a char within text fragment depends on the char but also the
+   *  next one because space should only be escaped when followed by other
+   *  whitespace chars. The first one is free ;-) */
+  static inline bool must_escape_char_within_text(char c, char next) {
+    if (c == ' ') // special case: escape space only when not alone or at end
+      return Utf8String::is_ascii_whitespace(next) || next == '\0';
+    return is_pf_reserved_char(c); // general case: escape reserved chars
+  }
+  /** Build an indentation string depending on the depth in the tree and
+   *  indentation options. */
+  static inline Utf8String indentation_string(
+      int depth, const PfOptions &options) {
+   if (options._indent_size == 0)
+     return {};
+   if (options._indent_with_tabs)
+     return "\t"_ba.repeated(options._indent_size*depth);
+   return " "_ba.repeated(options._indent_size*depth);
+  }
+  [[nodiscard]] inline QList<const Fragment*> fragments_as_list() const {
+    QList<const Fragment*> list;
+    for (auto f: Fragment::FragmentForwardRange(_fragments))
+      list += f;
+    return list;
+  }
+  static_assert(sizeof(Utf8String) == 24); // _text
+  static_assert(sizeof(Fragment) == 48);
 };
 
-Q_DECLARE_METATYPE(PfNode)
-Q_DECLARE_TYPEINFO(PfNode, Q_RELOCATABLE_TYPE);
-
-// following methods are those that should be declared after
-// Q_DECLARE_TYPEINFO(PfNode, Q_RELOCATABLE_TYPE) because they call QList methods
-// that depends on its internal memory layout, and 'inline' declaration does not
-// guarantee that the method will be inlined by the compiler
-
-inline bool PfNode::isLeaf() const {
-  return !d || d->_children.size() == 0;
-}
-
-inline PfNode &PfNode::removeAllChildren() {
-  if (d)
-    d->_children.clear();
-  return *this;
-}
-
-inline PfNode &PfNode::prependChild(const PfNode &child) {
-  if (!child.isNull()) {
-    if (!d)
-      d = new PfNodeData();
-    d->_children.prepend(child);
-  }
-  return *this;
-}
-
-inline PfNode &PfNode::appendChild(const PfNode &child) {
-  if (!child.isNull()) {
-    if (!d)
-      d = new PfNodeData();
-    d->_children.append(child);
-  }
-  return *this;
-}
+static_assert(sizeof(Utf8String) == 24); // _name
+static_assert(sizeof(PfNode) == 32);
 
 #endif // PFNODE_H

@@ -1,4 +1,4 @@
-/* Copyright 2022-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2022-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -31,7 +31,7 @@ void SqlUtils::configureSqlDatabasesFromChildren(
     const PfNode &config, const Utf8String &childname,
     const ParamsProvider *context) {
   for (auto sqldb: config/childname) {
-    auto spec = PercentEvaluator::eval_utf16(sqldb.contentAsUtf16(), context);
+    auto spec = PercentEvaluator::eval_utf16(sqldb.content_as_text(), context);
     auto m = _sqldbspec.match(spec);
     if (!m.hasMatch()) {
       Log::warning() << "cannot parse SQL database specification: " << spec;

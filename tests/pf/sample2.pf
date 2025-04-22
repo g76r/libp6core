@@ -1,0 +1,21 @@
+(root
+  (backslash1 '\')
+  (backslash2 "\\")
+  (backslash3 \\)
+  (not_reserved ;[]{}$~)
+  (reserved \\\''"()#|
+')
+  (arraychild1 ||EOA
+name;birth_place
+Frodo;The Shire
+Gandalf;who\\
+knows
+EOA
+  )
+  (arraychild2
+name;birth_place\
+Frodo;The Shire\
+Gandalf;who\\\
+knows
+  )
+)

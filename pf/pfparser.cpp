@@ -1,4 +1,4 @@
-/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,721 +11,484 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include "pfparser.h"
-#include "pfinternals_p.h"
-#include "pfarray.h"
-#include "pfhandler.h"
+#include "util/utf8utils.h"
+#include<forward_list>
 #include <QBuffer>
-#include <QFile>
-#include <QObject>
-#include <QtDebug>
 
-#define tr(x) QObject::tr(x)
+using enum PfOptions::RootParsingPolicy;
+
+PfAbstractParser::~PfAbstractParser() {
+}
 
 namespace {
 
-struct Node {
-  QString _name;
-  bool _hasContent;
-  Node(QString name = QString()) : _name(name), _hasContent(false) { }
+enum State {
+  Toplevel, Comment, WaitForName, Name, WaitForFragment, Text, Wrappings,
+  EndMarker, HereText, HereBinary,
 };
 
-// LATER would be nice but conflicts w/ unnamed namespace:
-// Q_DECLARE_TYPEINFO(Node, Q_RELOCATABLE_TYPE);
+} // anonynous ns
 
-enum State { TopLevel, Name, Content, SpaceInContent, Comment, Quote,
-             BinarySurfaceOrLength, BinaryLength, ArrayHeader, ArrayBody,
-             Escape, EscapeHex };
+#define SKIP_WHITESPACE \
+  if (!escaped && !quoted && PfNode::is_pf_whitespace(c)) \
+  continue;
+#define HANDLE_QUOTES \
+  if (!escaped && !quoted && (c == '"' || c == '\'')) { \
+  quoted = c; \
+  continue; \
+  } \
+  if (!escaped && quoted && c == quoted) { \
+  quoted = 0; \
+  continue; \
+  }
+#define ERROR(err) \
+  [[unlikely]] return (err)+" on line "_u8+Utf8String::number(line) \
+    +" column "_u8+Utf8String::number(column)+" byte "_u8 \
+    +Utf8String::number(pos)
+#define ON_TEXT \
+  content.clean(); \
+  if (!content.isEmpty()) \
+  if (auto err = on_text(content); !!err) \
+  ERROR(err);
 
-} // unnamed namespace
-
-static const qint8 hexdigits[] = {
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1,
-  -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
-
-static inline QStringList names(QList<Node> nodes) {
-  QStringList names(nodes.size());
-  for (const Node &node : nodes)
-    names.append(node._name);
-  return names;
+Utf8String PfAbstractParser::parse(
+    const Utf8String &input, const PfOptions &options) {
+  auto copy{input};
+  QBuffer buf(&copy);
+  buf.open(QIODevice::ReadOnly);
+  return parse(&buf, options.with_io_timeout(0)
+               .with_defer_binary_loading(false));
 }
 
-static inline bool finishArray(PfHandler *handler, PfArray *array,
-                               QList<Node> *nodes) {
-  if (!(handler->array(*array))) {
-    array->clear();
-    handler->setErrorString(tr("cannot handle array fragment"));
-    return false;
-  }
-  if (!handler->endNode(names(*nodes))) {
-    handler->setErrorString(tr("cannot handle end of node"));
-    return false;
-  }
-  nodes->removeLast();
-  return true;
-}
-
-// LATER make read and write timeout parameters
-bool PfParser::parse(QIODevice *source, const PfOptions &options) {
-  bool lazyBinaryFragments = options.shouldLazyLoadBinaryFragments();
-  if (!_handler) {
-    qWarning() << "PfParser::parse called before setting a handler";
-    return false;
-  }
-  _handler->setErrorString(tr("unknown handler error"));
-  int line = 1, column = 0, arrayColumn = 0;
-  char c = 0, quote = 0, escapeshift = 0;
-  quint16 escaped = 0;
-  qint8 digit;
-  State state = TopLevel; // current state
-  State quotedState = TopLevel; // saved state for quotes and comments
-  State escapedState = TopLevel; // saved state for escapes
-  QByteArray content, comment, surface;
-  QList<Node> nodes;
-  bool firstNode = true;
-  PfArray array;
-  if (!source->isOpen() && !source->open(QIODevice::ReadOnly)) {
-    _handler->setErrorString(tr("cannot open document : %1")
-                             .arg(source->errorString()));
-    goto error;
-  }
-  if (!_handler->startDocument(options)) {
-    _handler->setErrorString(tr("cannot handle start of document"));
-    goto error;
-  }
-  while (source->bytesAvailable()
-         || source->waitForReadyRead(options.readTimeout()),
-         source->getChar(&c)) {
-    ++column;
-    switch(state) {
-    case TopLevel:
-      if (c == '(') {
-        state = Name;
-      } else if (c == '\n') {
-        ++line;
-        column = 0;
-      } else if (pfisspace(c)) {
-      } else if (c == '#') {
-        state = Comment;
-        quotedState = TopLevel;
-      } else {
-        _handler->setErrorString(tr("unexpected character '%1' "
-                                    "(in TopLevel state)")
-                                 .arg(pfquotechar(c)));
-        goto error;
-      }
-      break;
-    case Name:
-      if (pfisendofname(c) && content.isEmpty()) {
-        _handler->setErrorString(tr("anonymous node"));
-        goto error;
-      } else if (c == '(') {
-        nodes.append(QString::fromUtf8(content));
-        content.clear();
-        if (!_handler->startNode(names(nodes))) {
-          _handler->setErrorString(tr("cannot handle start of node"));
-          goto error;
-        }
-      } else if (c == ')') {
-        nodes.append(QString::fromUtf8(content));
-        content.clear();
-        auto names = ::names(nodes);
-        if (!_handler->startNode(names) || !_handler->endNode(names)) {
-          _handler->setErrorString(tr("cannot handle end of node"));
-          goto error;
-        }
-        nodes.removeLast();
-        state = nodes.isEmpty() ? TopLevel : Content;
-        if (nodes.isEmpty()) {
-          switch (options.rootNodesParsingPolicy()) {
-          case StopAfterFirstRootNode:
-            if (firstNode)
-              goto stop_parsing;
-            break;
-          case FailAtSecondRootNode:
-            if (!firstNode) {
-              _handler->setErrorString(tr("only one root node is allowed "
-                                          "(by option)"));
-              goto error;
-            }
-            break;
-          case ParseEveryRootNode:
-            ;
-          }
-        }
-      } else if (pfisspace(c)) {
-        if (c == '\n') {
-          ++line;
-          column = 0;
-        }
-        nodes.append(QString::fromUtf8(content));
-        content.clear();
-        if (!_handler->startNode(names(nodes))) {
-          _handler->setErrorString(tr("cannot handle start of node"));
-          goto error;
-        }
-        state = Content;
-      } else if (c == '#') {
-        nodes.append(QString::fromUtf8(content));
-        content.clear();
-        if (!_handler->startNode(names(nodes))) {
-          _handler->setErrorString(tr("cannot handle start of node"));
-          goto error;
-        }
-        state = Comment;
-        quotedState = Content;
-      } else if (c == '|') {
-        nodes.append(QString::fromUtf8(content));
-        content.clear();
-        if (!_handler->startNode(names(nodes))) {
-          _handler->setErrorString(tr("cannot handle start of node"));
-          goto error;
-        }
-        state = BinarySurfaceOrLength;
-      } else if (c == ';') {
-        nodes.append(QString::fromUtf8(content));
-        array.clear();
-        content.clear();
-        if (!_handler->startNode(names(nodes))) {
-          _handler->setErrorString(tr("cannot handle start of node"));
-          goto error;
-        }
-        array.appendHeader("0");
-        arrayColumn = 1;
-        state = ArrayHeader;
-      } else if (pfisquote(c)) {
-        quote = c;
-        state = Quote;
-        quotedState = Name;
-      } else if (c == '\\') {
-        state = Escape;
-        escapedState = Name;
-      } else if (pfisspecial(c)) {
-        _handler->setErrorString(tr("unexpected character '%1' (in Name state)")
-                                 .arg(pfquotechar(c)));
-        goto error;
-      } else {
-        content.append(c);
-      }
-      break;
-    case SpaceInContent:
-      if (pfisspace(c)) {
-        if (c == '\n') {
-          ++line;
-          column = 0;
-        } else {
-          ++column;
-        }
-        break;
-      }
-      // otherwise process as Content by falling into Content: label
-    Q_FALLTHROUGH();
-    case Content:
-      if (c == ';') {
-        // LATER warn if an array node has text or binary content
-        array.clear();
-        if (!content.isEmpty()) {
-          array.appendHeader(content);
-          content.clear();
-        } else
-          array.appendHeader("0");
-        arrayColumn = 1;
-        state = ArrayHeader;
-      } else if (c == '(') {
-        if (content.size()) {
-          if (!_handler->text(QString::fromUtf8(content))) {
-            _handler->setErrorString(tr("cannot handle text fragment"));
-            goto error;
-          }
-          content.clear();
-          nodes.last()._hasContent = true;
-        }
-        state = Name;
-      } else if (c == ')') {
-        if (content.size()) {
-          if (!_handler->text(QString::fromUtf8(content))) {
-            _handler->setErrorString(tr("cannot handle text fragment"));
-            goto error;
-          }
-          content.clear();
-          nodes.last()._hasContent = true;
-        }
-        if (!_handler->endNode(names(nodes))) {
-          _handler->setErrorString(tr("cannot handle end of node"));
-          goto error;
-        }
-        nodes.removeLast();
-        state = nodes.isEmpty() ? TopLevel : Content;
-        if (nodes.isEmpty()) {
-          switch (options.rootNodesParsingPolicy()) {
-          case StopAfterFirstRootNode:
-            if (firstNode)
-              goto stop_parsing;
-            break;
-          case FailAtSecondRootNode:
-            if (!firstNode) {
-              _handler->setErrorString(tr("only one root node is allowed "
-                                          "(by option)"));
-              goto error;
-            }
-            break;
-          case ParseEveryRootNode:
-            ;
-          }
-        }
-      } else if (pfisspace(c)) {
-        if (c == '\n') {
-          ++line;
-          column = 0;
-        } else {
-          ++column;
-        }
-        state = SpaceInContent;
-      } else if (c == '#') {
-        if (content.size()) {
-          if (!_handler->text(QString::fromUtf8(content))) {
-            _handler->setErrorString(tr("cannot handle text fragment"));
-            goto error;
-          }
-          content.clear();
-          nodes.last()._hasContent = true;
-        }
-        state = Comment;
-        quotedState = Content;
-      } else if (c == '|') {
-        if (content.size()) {
-          if (!_handler->text(QString::fromUtf8(content))) {
-            _handler->setErrorString(tr("cannot handle text fragment"));
-            goto error;
-          }
-          content.clear();
-          nodes.last()._hasContent = true;
-        }
-        state = BinarySurfaceOrLength;
-      } else if (pfisquote(c)) {
-        if (state == SpaceInContent)
-          content.append(' ');
-        quote = c;
-        state = Quote;
-        quotedState = Content;
-      } else if (c == '\\') {
-        if (state == SpaceInContent)
-          content.append(' ');
-        state = Escape;
-        escapedState = Content;
-      } else if (pfisspecial(c)) {
-        _handler->setErrorString(tr("unexpected character '%1' "
-                                    "(in Content state)")
-                                 .arg(pfquotechar(c)));
-        goto error;
-      } else {
-        if (state == SpaceInContent) {
-          if (!content.isEmpty() || nodes.last()._hasContent)
-            content.append(' ');
-          state = Content;
-        }
-        content.append(c);
-      }
-      break;
-    case Comment:
-      if (c == '\n') {
-        if (!options.shouldIgnoreComment()) {
-          if (!_handler->comment(comment)) {
-            _handler->setErrorString(tr("cannot handle comment"));
-            goto error;
-          }
-        }
-        comment.clear();
-        ++line;
-        column = 0;
-        state = quotedState;
-      } else {
-        if (!options.shouldIgnoreComment())
-          comment.append(c);
-        ++column;
-      }
-      break;
-    case Quote:
-      if (c == quote) {
-        state = quotedState;
-        ++column;
-      } else if (c == '\\' && quote == '"') {
-        state = Escape;
-        escapedState = Quote;
-        ++column;
-      } else {
-        if (c == '\n') {
-          ++line;
-          column = 0;
-        } else
-          ++column;
-        content.append(c);
-      }
-      break;
-    case BinarySurfaceOrLength:
-      if (c == '\n') {
-        if (content.size() == 0) {
-          _handler->setErrorString(tr("binary fragment without length"));
-          goto error;
-        }
-        bool ok;
-        qint64 l = content.toLongLong(&ok);
-        if (!ok) {
-          _handler->setErrorString(tr("binary fragment with incorrect length"));
-          goto error;
-        }
-        if (!readAndFinishBinaryFragment(source, &lazyBinaryFragments, "", l,
-                                         options))
-          goto error;
-        content.clear();
-        nodes.last()._hasContent = true;
-        line = 10000000; // LATER hide line numbers after first binary fragment
-        column = 0;
-        state = Content;
-      } else {
-        if (std::isspace(c)) {
-          // ignore whitespace, incl. \r
-        } else if (c == '|') {
-          surface = content;
-          content.clear();
-          state = BinaryLength;
-        } else if (std::isdigit(c) || std::islower(c) || std::isupper(c)
-                   || c == ':') {
-          content.append(c);
-        } else {
-          _handler->setErrorString(tr("unexpected character '%1' "
-                                      "(in BinarySurfaceOrLength state)")
-                                   .arg(pfquotechar(c)));
-          goto error;
-        }
-        ++column;
-      }
-      break;
-    case BinaryLength:
-      if (c == '\n') {
-        if (content.size() == 0) {
-          _handler->setErrorString(tr("binary fragment without length"));
-          goto error;
-        }
-        bool ok;
-        qint64 l = content.toLongLong(&ok);
-        if (!ok) {
-          _handler->setErrorString(tr("binary fragment with incorrect length"));
-          goto error;
-        }
-        if (!readAndFinishBinaryFragment(source, &lazyBinaryFragments, surface,
-                                         l, options))
-          goto error;
-        content.clear();
-        nodes.last()._hasContent = true;
-        line = 10000000; // LATER hide line numbers after first binary fragment
-        column = 0;
-        state = Content;
-      } else {
-        if (std::isspace(c)) {
-          // ignore whitespace, incl. \r
-        } else if (std::isdigit(c)) {
-          content.append(c);
-        } else {
-          _handler->setErrorString(tr("unexpected character '%1' "
-                                      "(in BinaryLength state)")
-                                   .arg(pfquotechar(c)));
-          goto error;
-        }
-        ++column;
-      }
-      break;
-    case ArrayHeader:
-      if (c == '\n') {
-        if (!content.isEmpty()) {
-          array.appendHeader(QString::fromUtf8(content));
-          content.clear();
-        } else
-          array.appendHeader(QString::number(arrayColumn));
-        ++line;
-        column = 0;
-        state = ArrayBody;
-      } else {
-        if (c == ';') {
-          if (!content.isEmpty()) {
-            array.appendHeader(QString::fromUtf8(content));
-            content.clear();
-          } else
-            array.appendHeader(QString::number(arrayColumn));
-          ++arrayColumn;
-        } else if (c == ')') {
-          content.clear();
-          if (!finishArray(_handler, &array, &nodes))
-            goto error;
-          state = nodes.isEmpty() ? TopLevel : Content;
-          if (nodes.isEmpty()) {
-            switch (options.rootNodesParsingPolicy()) {
-            case StopAfterFirstRootNode:
-              if (firstNode)
-                goto stop_parsing;
-              break;
-            case FailAtSecondRootNode:
-              if (!firstNode) {
-                _handler->setErrorString(tr("only one root node is allowed "
-                                            "(by option)"));
-                goto error;
-              }
-              break;
-            case ParseEveryRootNode:
-              ;
-            }
-          }
-        } else if (c == '#') {
-          if (!content.isEmpty()) {
-            array.appendHeader(QString::fromUtf8(content));
-            content.clear();
-          } else
-            array.appendHeader(QString::number(arrayColumn));
-          ++column;
-          state = Comment;
-          quotedState = ArrayBody;
-        } else if (pfisspace(c)) {
-          // ignore
-        } else if (pfisquote(c)) {
-          quote = c;
-          state = Quote;
-          quotedState = ArrayHeader;
-        } else if (c == '\\') {
-          state = Escape;
-          escapedState = ArrayHeader;
-        } else if (pfisspecial(c)) {
-          _handler->setErrorString(tr("unexpected character '%1'"
-                                      " (in ArrayHeader state)")
-                                   .arg(pfquotechar(c)));
-          goto error;
-        } else {
-          content.append(c);
-        }
-        ++column;
-      }
-      break;
-    case ArrayBody:
-      if (c == '\n') {
-        array.appendCell(QString::fromUtf8(content));
-        content.clear();
-        array.appendRow();
-        ++line;
-        column = 0;
-      } else {
-        if (c == ';') {
-          array.appendCell(QString::fromUtf8(content));
-          content.clear();
-        } else if (c == ')') {
-          if (content.size())
-            array.appendCell((QString::fromUtf8(content)));
-          array.removeLastRowIfEmpty();
-          content.clear();
-          if (!finishArray(_handler, &array, &nodes))
-            goto error;
-          state = nodes.isEmpty() ? TopLevel : Content;
-          if (nodes.isEmpty()) {
-            switch (options.rootNodesParsingPolicy()) {
-            case StopAfterFirstRootNode:
-              if (firstNode)
-                goto stop_parsing;
-              break;
-            case FailAtSecondRootNode:
-              if (!firstNode) {
-                _handler->setErrorString(tr("only one root node is allowed "
-                                            "(by option)"));
-                goto error;
-              }
-              break;
-            case ParseEveryRootNode:
-              ;
-            }
-          }
-        } else if (c == '#') {
-          if (content.size())
-            array.appendCell((QString::fromUtf8(content)));
-          content.clear();
-          ++column;
-          state = Comment;
-          quotedState = ArrayBody;
-        } else if (pfisspace(c)) {
-          // ignore
-        } else if (pfisquote(c)) {
-          quote = c;
-          state = Quote;
-          quotedState = ArrayBody;
-        } else if (c == '\\') {
-          state = Escape;
-          escapedState = ArrayBody;
-        } else if (pfisspecial(c)) {
-          _handler->setErrorString(tr("unexpected character '%1'"
-                                      " (in ArrayBody state)")
-                                   .arg(pfquotechar(c)));
-          goto error;
-        } else {
-          content.append(c);
-        }
-        ++column;
-      }
-      break;
-    case Escape:
-      if (c == '\n') {
-        column = 0;
-        ++line;
-      } else {
-        if (c == 'n')
-          c = '\n';
-        else if (c == 'r')
-          c = '\r';
-        else if (c == 't')
-          c = '\t';
-        else if (c == '0')
-          c = 0;
-        else if (c == 'x') {
-          state = EscapeHex;
-          escapeshift = 4;
-          escaped = 0;
-          break;
-        } else if (c == 'u') {
-          state = EscapeHex;
-          escapeshift = 12;
-          escaped = 0;
-          break;
-        }
-        ++column;
-      }
-      content.append(c);
-      state = escapedState;
-      break;
-    case EscapeHex:
-      digit = hexdigits[static_cast<unsigned char>(c)];
-      if (digit < 0) {
-        _handler->setErrorString("bad hexadecimal digit in escape sequence");
-        goto error;
-      }
-      if (escapeshift) {
-        escaped |= digit << escapeshift;
-        escapeshift -= 4;
-      } else {
-        content.append(QString(QChar(escaped|digit)).toUtf8());
-        state = escapedState;
-      }
-      ++column;
-      break;
-    }
-  }
-stop_parsing:
-  if (state != TopLevel) {
-    _handler->setErrorString(tr("unexpected end of document"));
-    goto error;
-  }
-  if (!_handler->endDocument()) {
-    _handler->setErrorString(tr("cannot handle end of document"));
-    goto error;
-  }
-  return true;
-error:
-  _handler->error(line, column);
-  return false;
-}
-
-bool PfParser::parse(QByteArray source, const PfOptions &options) {
-  QBuffer buf(&source);
-  if (!buf.open(QBuffer::ReadOnly))
-    return false; // unlikely to occur
-  return parse(&buf, options);
-}
-
-static qint64 copy(QIODevice *dest, QIODevice *src, qint64 max,
-                   qint64 bufsize, int readTimeout,
-                   int writeTimeout) {
-  if (!dest || !src)
-    return -1;
-  char buf[bufsize];
-  qint64 total = 0;
-  while (total < max) {
-    qint64 n, m;
-    if (src->bytesAvailable() < 1)
-      src->waitForReadyRead(readTimeout);
-    n = src->read(buf, std::min(bufsize, max-total));
-    if (n < 0)
-      return -1;
-    if (n == 0)
-      break;
-    m = dest->write(buf, n);
-    if (m != n)
-      return -1;
-    if (dest->bytesToWrite() > bufsize)
-      while (dest->waitForBytesWritten(writeTimeout) > bufsize);
-    total += n;
-  }
-  return total;
-}
-
-bool PfParser::readAndFinishBinaryFragment(
-    QIODevice *source, bool *lazyBinaryFragments, const QString &surface,
-    qint64 l, const PfOptions &options) {
-  //qDebug() << "readAndFinishBinaryFragment" << lazyBinaryFragments
-  //         << surface << l;
-  if (l <= 0)
-    return true;
-  if (*lazyBinaryFragments && source->isSequential()) {
-    qDebug() << "lazyBinaryFragments ignored because source is "
-                "sequential (= not seekable)";
-    *lazyBinaryFragments = false;
-  }
-  if (*lazyBinaryFragments) {
-    qint64 p = source->pos();
-    if (!source->seek(p+l)) {
-      _handler->setErrorString(tr("binary fragment beyond end of document"));
-      return false;
-    }
-    if (!_handler->binary(source, l, p, surface)) {
-      _handler->setErrorString(tr("cannot handle binary fragment"));
-      return false;
-    }
+Utf8String PfAbstractParser::parse(
+    QIODevice *input, const PfOptions &original_options) {
+  PfOptions options = original_options;
+  if (input->isSequential()) {
+    // can't use deferred loading on e.g. network sockets
+    options._defer_binary_loading = false;
   } else {
-    QByteArray data; //(source.read(l));
-    QBuffer buf(&data);
-    buf.open(QIODevice::WriteOnly);
-    copy(&buf, source, l, 65536, options.readTimeout(), 0);
-    if (data.size() != l) {
-      _handler->setErrorString(tr("binary fragment beyond end of "
-                                  "document (%1 bytes instead of %2)")
-                               .arg(data.size()).arg(l));
-      return false;
+    // waiting for bytes is useless on seekable devices
+    options._io_timeout_ms = 0;
+  }
+  qsizetype pos = 0, line = 1, column = 1;
+  if (auto err = on_document_begin(options); !!err)
+    ERROR(err);
+  State state = Toplevel, next_state = Toplevel;
+  char c = 0, quoted = 0;
+  Utf8String content, wrappings, endmarker;
+  std::forward_list<Utf8String> names;
+  bool had_already_seen_a_root_node = false;
+  while (true) {
+    int escaped = 0;
+    bool on_newline = (c == '\n'); // previous char was a \n
+read_escaped_char:
+    if (auto width = p6::read_byte(input, &c, options._io_timeout_ms);
+        width <= 0 || c == 0) {
+      if (state == Toplevel || names.empty()) {
+        if (c == 0) { // c == 0 at eof and on regular '\0', stop on both
+          if (pos == 0)
+            ERROR("unexpected empty file"_u8);
+          goto end_of_document;
+        }
+        ERROR(input->errorString() | "read error"_u8);
+      }
+      ERROR("unexpected end of file"_u8);
     }
-    if (!_handler->binary(data, surface)) {
-      _handler->setErrorString(tr("cannot handle binary fragment"));
-      return false;
+    ++pos;
+    if (on_newline) {
+      column = 1;
+      ++line;
+    } else {
+      ++column;
+    }
+    if (!escaped && c == '\\' && quoted != '\'' && state != Comment) {
+      escaped = 1;
+      goto read_escaped_char;
+    }
+    if (escaped == 1) {
+      switch (c) {
+        case 'a':
+          c = '\a';
+          break;
+        case 'b':
+          c = '\b';
+          break;
+        case 'e':
+          c = '\x1b';
+          break;
+        case 'f':
+          c = '\f';
+          break;
+        case 'n':
+          c = '\n';
+          break;
+        case 'r':
+          c = '\r';
+          break;
+        case 't':
+          c = '\t';
+          break;
+        case 'v':
+          c = '\v';
+          break;
+        case '0':
+          c = '\0';
+          break;
+        case 'x':
+        case 'u':
+        case 'U':
+          // LATER support "\xnn" "\unnnn" "\Unnnnnnnn"
+          qWarning() << "PfParser encountered a \\"_u8+c
+                        +" escape sequence, which is not yet supported";
+          break;
+        default: // everything else (including backslash) is left escaped as is
+          break;
+      }
+    }
+    switch (state) {
+      case Toplevel: {
+          SKIP_WHITESPACE;
+          HANDLE_QUOTES;
+          if (!escaped && !quoted && c == '#') {
+begin_of_bumping_comment:
+            next_state = state;
+begin_of_comment:
+            state = Comment;
+            content.clear();
+            continue;
+          }
+          if (!escaped && !quoted && c == '(') {
+            state = WaitForName;
+            continue;
+          }
+          ERROR("unexpected char at toplevel: '"
+                +Utf8String::cEscaped(c)+"'");
+        }
+      case Comment: {
+          if (c == '\n') {
+            if (options._with_comments) {
+              content.clean();
+              if (auto err = on_comment(content); !!err)
+                ERROR(err);
+            }
+            state = next_state;
+            content.clear();
+            continue;
+          }
+          content += c;
+          continue;
+        }
+      case WaitForName: {
+          SKIP_WHITESPACE;
+          HANDLE_QUOTES;
+          if (!escaped && !quoted && c == '#')
+            goto begin_of_bumping_comment;
+          content.clear();
+          state = Name;
+          [[fallthrough]]; // keep c and pass it to next state
+        }
+      case Name: {
+          HANDLE_QUOTES;
+          if (!escaped && !quoted
+              && (PfNode::is_pf_whitespace(c) || c == '#' || c == '('
+                  || c == ')' || c == '|')) {
+            if (names.empty()) {
+              if (had_already_seen_a_root_node) {
+                if (options._root_parsing_policy == FailAtSecondRootNode)
+                  ERROR("forbidden second root node"_u8);
+              } else
+                had_already_seen_a_root_node = true;
+            }
+            content.clean();
+            names.push_front(content);
+            if (auto err = on_node_begin(names); !!err)
+              ERROR(err);
+            state = WaitForFragment; // for whitespace
+          }
+          if (!escaped && !quoted && c == '#') {
+            next_state = WaitForFragment;
+            goto begin_of_comment;
+          }
+          if (!escaped && !quoted && c == '(') {
+begin_of_subnode:
+            content.clear();
+            state = Name;
+            continue;
+          }
+          if (!escaped && !quoted && c == ')') {
+end_of_node:
+            if (auto err = on_node_end(names); !!err)
+              ERROR(err);
+            names.pop_front();
+            if (options._root_parsing_policy == StopAfterFirstRootNode
+                && names.empty())
+              goto end_of_document;
+            state = names.empty() ? Toplevel : WaitForFragment;
+            continue;
+          }
+          if (!escaped && !quoted && c == '|') {
+begin_of_wrappings:
+            wrappings.clear();
+            state = Wrappings;
+            continue;
+          }
+          content += c;
+          continue;
+        }
+      case WaitForFragment: {
+          SKIP_WHITESPACE;
+          HANDLE_QUOTES;
+          content.clear();
+          state = Text;
+          [[fallthrough]]; // keep c and pass it to next state
+        }
+      case Text: {
+          HANDLE_QUOTES;
+          if (!escaped && !quoted && PfNode::is_pf_whitespace(c)) {
+            ON_TEXT;
+            state = WaitForFragment;
+            continue;
+          }
+          if (!escaped && !quoted && c == '#') {
+            ON_TEXT;
+            goto begin_of_bumping_comment;
+          }
+          if (!escaped && !quoted && c == '(') {
+            ON_TEXT;
+            goto begin_of_subnode;
+          }
+          if (!escaped && !quoted && c == ')') {
+            ON_TEXT;
+            goto end_of_node;
+          }
+          if (!escaped && !quoted && c == '|')
+            goto begin_of_wrappings;
+          content += c;
+          continue;
+        }
+      case Wrappings: {
+          if (escaped)
+            ERROR("backslash not allowed in wrappings");
+          if (PfNode::is_pf_reserved_char(c) && c != '|')
+            ERROR("character not allowed in wrappings: '"
+                  +Utf8String::cEscaped(c)+"'");
+          if (c == '|') {
+            endmarker.clear();
+            state = EndMarker;
+            continue;
+          }
+          wrappings += c;
+          continue;
+        }
+      case EndMarker: {
+          if (escaped)
+            ERROR("escape not allowed in end marker");
+          if (PfNode::is_pf_reserved_char(c) && c != '\n')
+            ERROR("character not allowed in end marker: '"
+                  +Utf8String::cEscaped(c)+"'");
+          if (c == '\n') {
+            wrappings.clean();
+            endmarker.clean();
+            if (endmarker.isEmpty())
+              ERROR("invalid empty end marker");
+            bool ok;
+            auto len = endmarker.toLongLong<false,false>(&ok, 10, 0);
+            if (ok) { // end marker is a valid base 10 integer
+              wrappings = PfNode::normalized_wrappings(wrappings);
+              if (wrappings.isEmpty() && options._defer_binary_loading
+                  && options._deferred_loading_min_size <= len) {
+                if (!input->seek(input->pos()+len))
+                  // in many cases seek won't return false and the error will
+                  // only occur at next read so a unexpected end of file will
+                  // be issued instead of teh following error
+                  ERROR("not enough bytes for binary fragment: expected "_u8
+                        +Utf8String::number(len));
+                pos += len;
+                if (auto err = on_deferred_binary(
+                      input, input->pos()-len, len,
+                      options._should_cache_deferred_loading); !!err)
+                  ERROR(err);
+              } else {
+                content.clear();
+                while (input->bytesAvailable() < len) {
+                  // LATER manage _io_timeout_ms on total wait time
+                  // now it's applied on each iteration, which is wrong
+                  if (options._io_timeout_ms
+                      && !input->waitForReadyRead(options._io_timeout_ms))
+                    break;
+                }
+                content = input->read(len);
+                if (content.size() != len)
+                  ERROR("i/o timed out or not enough bytes, expected "_u8
+                        +Utf8String::number(len)+" got "_u8
+                        +Utf8String::number(content.size()));
+                PfNode::unwrap_binary(&content, wrappings, options);
+                if (content.size() > 0)
+                  if (auto err = on_loaded_binary(content, wrappings); !!err)
+                    ERROR(err);
+              }
+              state = WaitForFragment;
+              continue;
+            } else {
+              if (wrappings.isEmpty()) {
+                state = HereText;
+                content.clear();
+                continue;
+              } else {
+                state = HereBinary;
+                content.clear();
+                continue;
+              }
+            }
+          }
+          endmarker += c;
+          continue;
+        }
+      case HereBinary: {
+          content += c;
+          if (content.endsWith(endmarker)) {
+            content.chop(endmarker.size());
+            wrappings = PfNode::normalized_wrappings(wrappings);
+            if (wrappings.isEmpty() && options._defer_binary_loading
+                && options._deferred_loading_min_size <= content.size()) {
+              if (auto err = on_deferred_binary(
+                    input, input->pos()-content.size(), content.size(),
+                    options._should_cache_deferred_loading); !!err)
+                ERROR(err);
+            } else {
+              PfNode::unwrap_binary(&content, wrappings, options);
+              if (auto err = on_loaded_binary(content, wrappings); !!err)
+                ERROR(err);
+            }
+            state = WaitForFragment;
+          }
+          continue;
+        }
+      case HereText: {
+          content += c;
+          if (content.endsWith(endmarker)) {
+            content.chop(endmarker.size());
+            ON_TEXT;
+            state = WaitForFragment;
+          }
+          continue;
+        }
     }
   }
-  return true;
+end_of_document:
+  if (auto err = on_document_end(options); !!err)
+    ERROR(err);
+  return {};
 }
 
-bool PfParser::parse(const QString &pathOrUrl, const PfOptions &options) {
-  QFile file(pathOrUrl);
-  if (!_handler) {
-    qWarning() << "PfParser::parse called before setting a handler";
-    return false;
-  }
-  if (!file.open(QIODevice::ReadOnly)) {
-    _handler->setErrorString(tr("cannot open file: %1").arg(pathOrUrl));
-    return false;
-  }
-  return parse(&file, options);
+Utf8String PfAbstractParser::on_document_begin(const PfOptions &) {
+  return {};
+}
+
+Utf8String PfAbstractParser::on_node_begin(std::forward_list<Utf8String> &) {
+  return {};
+}
+
+Utf8String PfAbstractParser::on_text(const Utf8String &) {
+  return {};
+}
+
+Utf8String PfAbstractParser::on_loaded_binary(
+    const QByteArray &, const Utf8String &) {
+  return {};
+}
+
+Utf8String PfAbstractParser::on_deferred_binary(
+    QIODevice*, qsizetype, qsizetype, bool) {
+  return {};
+}
+
+Utf8String PfAbstractParser::on_comment(const Utf8String &) {
+  return {};
+}
+
+Utf8String PfAbstractParser::on_node_end(std::forward_list<Utf8String> &) {
+  return {};
+}
+
+Utf8String PfAbstractParser::on_document_end(const PfOptions &) {
+  return {};
+}
+
+PfParser::~PfParser() {
+  qDeleteAll(_items);
+}
+
+void PfParser::clear() {
+  _root = {"$root"};
+  qDeleteAll(_items);
+  _items.clear();
+}
+
+Utf8String PfParser::on_document_begin(const PfOptions &) {
+  clear();
+  return {};
+}
+
+Utf8String PfParser::on_node_begin(std::forward_list<Utf8String> &names) {
+  _items.push_front(new PfNode(names.front()));
+  return {};
+}
+
+Utf8String PfParser::on_text(const Utf8String &text) {
+  auto item = _items.front();
+  if (!item) // should never happen
+    [[unlikely]] return "PfItemBuilder::on_text() called without "
+                        "PfItemBuilder::on_node_begin()";
+  item->append_text_fragment(text);
+  return {};
+}
+
+Utf8String PfParser::on_loaded_binary(
+    const QByteArray &unwrapped_payload, const Utf8String &wrappings) {
+  auto item = _items.front();
+  if (!item) // should never happen
+    [[unlikely]] return "PfItemBuilder::on_loaded_binary() called without "
+                        "PfItemBuilder::on_node_begin()";
+  item->append_loaded_binary_fragment(unwrapped_payload, wrappings);
+  return {};
+}
+
+Utf8String PfParser::on_deferred_binary(
+    QIODevice *file, qsizetype pos, qsizetype len, bool should_cache) {
+  auto item = _items.front();
+  if (!item) // should never happen
+    [[unlikely]] return "PfItemBuilder::on_deferred_binary() called without "
+                        "PfItemBuilder::on_node_begin()";
+  item->append_deferred_binary_fragment(file, pos, len, should_cache);
+  return {};
+}
+
+Utf8String PfParser::on_comment(const Utf8String &comment) {
+  auto item = _items.front();
+  if (item)
+    item->append_comment_fragment(comment);
+  else
+    _root.append_comment_fragment(comment);
+  return {};
+}
+
+Utf8String PfParser::on_node_end(std::forward_list<Utf8String> &) {
+  auto item = _items.front();
+  if (!item)
+    [[unlikely]] return "PfItemBuilder::on_node_end() called without "
+                        "PfItemBuilder::on_node_begin()";
+  _items.pop_front();
+  if (_items.empty())
+    _root.append_child(item);
+  else
+    _items.front()->append_child(item);
+  return {};
+}
+
+Utf8String PfParser::on_document_end(const PfOptions &) {
+  if (!_items.empty()) // should never happen
+    [[unlikely]] return "PfItemBuilder::on_document_end with unterminated node";
+  return {};
 }

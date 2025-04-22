@@ -18,7 +18,6 @@
 #include "format/stringutils.h"
 #include "radixtree.h"
 #include "pf/pfnode.h"
-#include "pf/pfutils.h"
 #include "csv/csvfile.h"
 #include "util/utf8string.h"
 #include <QRegularExpression>
@@ -126,14 +125,10 @@ ParamSet::ParamSet(
   const PfNode &parentnode, const Utf8String &attrname,
   const Utf8String &constattrname, const ParamSet &parent)
   : d(new ParamSetData(parent)) {
-  if (!attrname.isEmpty()) {
-    for (auto p: parentnode.utf8PairChildrenByName(attrname)) {
-      if (p.first.isEmpty())
-        continue;
-      Utf8String value = p.second;
-      d->_params.insert(p.first, value.isNull() ? ""_u8 : value);
-    }
-  }
+  if (!attrname.isEmpty())
+    for (auto [key, value]: parentnode.children_as_text_pairs_range(attrname))
+      if (!key.isEmpty())
+        d->_params.insert(key, value.isNull() ? ""_u8 : value);
   if (!constattrname.isEmpty()) {
     ParamSet constparams(parentnode, constattrname, Utf8String(), ParamSet());
     for (auto k: constparams.paramKeys()) {
@@ -154,7 +149,7 @@ ParamSet::ParamSet(const PfNode &parentnode, const Utf8StringSet &attrnames,
   const ParamSet &parent) : d(new ParamSetData(parent)) {
   for (const PfNode &child : parentnode.children())
     if (attrnames.contains(child.name())) {
-      Utf8String value = child.contentAsUtf8();
+      Utf8String value = child.content_as_text();
       d->_params.insert(child.name(), value.isNull() ? ""_u8 : value);
     }
   if (d->_params.isEmpty() && !parent)

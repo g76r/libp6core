@@ -11,122 +11,134 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #ifndef PFOPTIONS_H
 #define PFOPTIONS_H
 
-#include "util/utf8string.h"
-#include <QSharedData>
+#include "libp6core_global.h"
 
-enum PfPreferedCharactersProtection {
-  PfBackslashProtection, PfDoubleQuoteProtection, PfSimpleQuoteProtection
-};
-
-enum PfRootNodesParsingPolicy {
-  ParseEveryRootNode, StopAfterFirstRootNode, FailAtSecondRootNode
-};
-
-class LIBP6CORESHARED_EXPORT PfOptions {
-  class LIBP6CORESHARED_EXPORT PfOptionsData : public QSharedData {
-    friend class PfOptions;
-    bool _shouldLazyLoadBinaryFragments;
-    bool _shouldTranslateArrayIntoTree;
-    bool _shouldIndent;
-    bool _shouldIgnoreComment;
-    bool _shouldWriteContentBeforeSubnodes;
-    // LATER maxBinaryFragmentSize (then split them into several fragments)
-    Utf8String _outputSurface;
-    PfPreferedCharactersProtection _preferedCharactersProtection;
-    PfRootNodesParsingPolicy _rootNodesParsingPolicy;
-    int _readTimeout; // ms
-
-  public:
-    PfOptionsData() : _shouldLazyLoadBinaryFragments(false),
-      _shouldTranslateArrayIntoTree(false), _shouldIndent(false),
-      _shouldIgnoreComment(true), _shouldWriteContentBeforeSubnodes(false),
-      _preferedCharactersProtection(PfDoubleQuoteProtection),
-      _rootNodesParsingPolicy(ParseEveryRootNode),
-      _readTimeout(30000) {
-    }
+struct PfOptions {
+  enum RootParsingPolicy : quint8 {
+    ParseEveryRootNode = 0, StopAfterFirstRootNode, FailAtSecondRootNode,
   };
-  QSharedDataPointer<PfOptionsData> d;
 
-public:
-  PfOptions() : d(new PfOptionsData) { }
-  PfOptions(const PfOptions &other) : d(other.d) { }
-  PfOptions &operator=(const PfOptions &other) {
-    d = other.d; return *this; }
-  /** Parser should enable lazy loading for binary fragments. This option will
-    * be ignored when parsing non-seekable sources (e.g. network sockets).
-    * Default: false. */
-  bool shouldLazyLoadBinaryFragments() const {
-    return d->_shouldLazyLoadBinaryFragments; }
-  PfOptions &setShouldLazyLoadBinaryFragments(bool value = true) {
-    d->_shouldLazyLoadBinaryFragments = value; return *this; }
-  /** Parser should load array contents as children tree rather than as arrays.
-    * Writing methods should write arrays as children tree rahter than as
-    * arrays. Default: false. */
-  bool shouldTranslateArrayIntoTree() const {
-    return d->_shouldTranslateArrayIntoTree; }
-  PfOptions &setShouldTranslateArrayIntoTree(bool value = true) {
-    d->_shouldTranslateArrayIntoTree = value; return *this; }
-  /** Writing methods should indent output to make it easier to read by human
-    * beings even though it use more space and take (slightly) more time to
-    * parse. Default: false. */
-  bool shouldIndent() const { return d->_shouldIndent; }
-  PfOptions &setShouldIndent(bool value = true) {
-    d->_shouldIndent = value; return *this; }
-  /** Parser should not create comment nodes. Writing methods should not write
-    * comments. Default: true. */
-  bool shouldIgnoreComment() const { return d->_shouldIgnoreComment; }
-  PfOptions &setShouldIgnoreComment(bool value = true) {
-    d->_shouldIgnoreComment = value; return *this; }
-  /** Writing methods should write node content before subnodes, which is not
-   * done by default because parsing such a document consumes more memory if
-   * nodes have large content. */
-  bool shouldWriteContentBeforeSubnodes() const {
-    return d->_shouldWriteContentBeforeSubnodes; }
-  PfOptions &setShouldWriteContentBeforeSubnodes(bool value = true) {
-    d->_shouldWriteContentBeforeSubnodes = value; return *this; }
-  /** Surface used by writing methods to write for binary fragments. If
-    * isNull() then the surface found when parsing will be used when writing
-    * back (or no surface if the binary fragment wasn't parsed but created
-    * by API. Otherwise force a new surface. If isEmpty() but not isNull()
-    * then no surface will be used when writing, whatever surface has been
-    * defined when parsing or creating the fragment through API.
-    * Default: QString(). */
-  inline Utf8String outputSurface() const { return d->_outputSurface; }
-  inline PfOptions &setOutputSurface(const Utf8String &value) {
-    d->_outputSurface = normalizeSurface(value); return *this; }
-  /** Normalize a surface string description, e.g. transform ":::null:zlib:hex:"
-    * into "zlib:hex".
-    * This method is rather intended for internal use by the PF library but it
-    * is part of the public API and can be used by any user code. */
-  static Utf8String normalizeSurface(const Utf8String &surface);
-  /** Prefered method to protect special characters.
-    * default: PfDoubleQuoteProtection. */
-  PfPreferedCharactersProtection preferedCharactersProtection() const {
-    return d->_preferedCharactersProtection; }
-  PfOptions &preferBackslashCharactersProtection() {
-    d->_preferedCharactersProtection = PfBackslashProtection; return *this; }
-  PfOptions &preferDoubleQuoteCharactersProtection() {
-    d->_preferedCharactersProtection = PfDoubleQuoteProtection; return *this; }
-  PfOptions &preferSimpleQuoteCharactersProtection() {
-    d->_preferedCharactersProtection = PfSimpleQuoteProtection; return *this; }
-  /** Root nodes parsing policy.
-   * default: ParseEveryRootNode */
-  PfRootNodesParsingPolicy rootNodesParsingPolicy() const {
-    return d->_rootNodesParsingPolicy; }
-  PfOptions &parseEveryRootNode() {
-    d->_rootNodesParsingPolicy = ParseEveryRootNode; return *this; }
-  PfOptions &stopAfterFirstRootNode() {
-    d->_rootNodesParsingPolicy = StopAfterFirstRootNode; return *this; }
-  PfOptions &failAtSecondRootNode() {
-    d->_rootNodesParsingPolicy = FailAtSecondRootNode; return *this; }
-  /** Read timeout used e.g. when parsing a network stream, in milliseconds.
-   * default: 30000 (30") */
-  int readTimeout() const { return d->_readTimeout; }
-  PfOptions &setReadTimeout(int ms) { d->_readTimeout = ms; return *this; }
+  enum FragmentsReordering : quint8 {
+    NoReordering = 0,
+    /// text and binary fragments should be written before children
+    PayloadFirst,
+    /// children should be written before payload
+    ChildrenFirst,
+  };
+
+  qint32 _io_timeout_ms:32 = 10'000;
+  qint32 _heretext_trigger_size:32 = 1024;
+  quint32 _deferred_loading_min_size:32 = 4096;
+  quint8 _indent_size:4 = 0; // also implies newlines when > 0
+  quint8 _indent_with_tabs:1 = 0;
+  quint8 _defer_binary_loading:1 = 0;
+  quint8 _allow_bare_binary:1 = 0;
+  quint8 _with_comments:1 = 0;
+  quint8 _should_cache_deferred_loading:1 = 1;
+  RootParsingPolicy _root_parsing_policy:2 = ParseEveryRootNode;
+  FragmentsReordering _fragments_reordering: 2 = NoReordering;
+
+  /** 0 = don't wait for bytes when parsing, -1 wait infinitely, > 0 wait that
+   *  milliseconds.
+   *  is ignored (as if it was 0) when the input IODevice is not sequential.
+   *  default: 30'000 ms */
+  inline PfOptions with_io_timeout(qint32 io_timeout_ms) const {
+    PfOptions options = *this;
+    options._io_timeout_ms = io_timeout_ms;
+    return options;
+  }
+  /** decide whether a text fragment should be written as here text depending on
+   *  its size or as escaped text (see PfNode::escaped_text()).
+   *  -1 never write text as heretext, 0 always. default: 1024 bytes */
+  inline PfOptions with_heretext_trigger_size(qint32 size = 1024) const {
+    PfOptions options = *this;
+    options._heretext_trigger_size = size;
+    return options;
+  }
+  /** min size to defer loading when defer_binary_loading is set to true
+   *  default: 4096 */
+  inline PfOptions with_deferred_loading_min_size(quint32 size = 4096) const {
+    PfOptions options = *this;
+    options._deferred_loading_min_size = size;
+    return options;
+  }
+  /** short for with_heretext_trigger_size(-1) */
+  inline PfOptions without_heretext_trigger_size() const {
+    return with_heretext_trigger_size(-1);
+  }
+  /** 0 means none, max: 15, default: none
+   *  suggested values: with_indent(4) with_indent(2) with_ident(1, true) */
+  inline PfOptions with_indent(unsigned size, bool use_tabs = false) const {
+    PfOptions options = *this;
+    options._indent_size = std::min(size, 15U);
+    options._indent_with_tabs = use_tabs;
+    return options;
+  }
+  /** default: false i.e. on parsing every binary fragment will be immediatly
+   *  loaded
+   *  if true, loading will be defered when possible (for binary fragments with
+   *  a bytes count as end marker and no wrappings, if the input is seekable
+   *  (i.e. QIODevice::isSequential() == false) size is above
+   *  deferred_loading_min_size)
+   *  it's probably a good idea to set defer_binary_loading along with
+   *  allow_bare_binary if you want to re-read with defered loading a file that
+   *  you wrote (because without allow_bare_binary every binary fragment will be
+   *  written with wrappings). */
+  inline PfOptions with_defer_binary_loading(
+      bool defer_binary_loading = true) const {
+    PfOptions options = *this;
+    options._defer_binary_loading = defer_binary_loading;
+    return options;
+  }
+  /** should deferred loading binary be kept in memory cache after their first
+   *  load
+   *  otherwise they are discarded and re-read each time the node binary content
+   *  is requested
+   *  default: true */
+  inline PfOptions with_should_cache_deferred_loading(
+      bool should_cache = true) const {
+    PfOptions options = *this;
+    options._should_cache_deferred_loading = should_cache;
+    return options;
+  }
+  /** default: false, force a default wrapping (e.g. base64) when writing a
+   *  binary fragment with empty or null wrappings */
+  inline PfOptions with_allow_bare_binary(bool allow_bare_binary = true) const {
+    PfOptions options = *this;
+    options._allow_bare_binary = allow_bare_binary;
+    return options;
+  }
+  /** default: false, ignore them (on parsing and on writing) */
+  inline PfOptions with_comments(bool comments = true) const {
+    PfOptions options = *this;
+    options._with_comments = comments;
+    return options;
+  }
+  /** default: ParseEveryRootNode */
+  inline PfOptions with_root_parsing_policy(RootParsingPolicy policy) const {
+    PfOptions options = *this;
+    options._root_parsing_policy = policy;
+    return options;
+  }
+  /** default: NoReordering */
+  inline PfOptions with_fragments_reordering(
+      FragmentsReordering reordering) const {
+    PfOptions options = *this;
+    options._fragments_reordering = reordering;
+    return options;
+  }
+  /** short for with_fragments_reordering(ChildrenFirst) */
+  inline PfOptions with_children_first() const {
+    return with_fragments_reordering(ChildrenFirst);
+  }
+  /** short for with_fragments_reordering(PayloadFirst) */
+  inline PfOptions with_payload_first() const {
+    return with_fragments_reordering(PayloadFirst);
+  }
 };
+static_assert(sizeof(PfOptions) == 16);
 
 #endif // PFOPTIONS_H

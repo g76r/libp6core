@@ -450,7 +450,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
       } }, true },
   { "&&", { 2, 14, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant  {
         auto y = stack->popeval(stack, context, {});
-        // LATER get rid of andQVariantAsNumber and do lazy evaluation here if y is false
+        // LATER get rid of andQVariantAsNumber and do deferred evaluation here if y is false
         auto x = stack->popeval(stack, context, {});
         auto r = MathUtils::boolAndQVariantAsNumber(x, y);
         return r.isValid() ? r : def;

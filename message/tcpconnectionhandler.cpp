@@ -1,4 +1,4 @@
-/* Copyright 2016-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  */
 #include "tcpconnectionhandler.h"
 #include "log/log.h"
-#include "pf/pfdomhandler.h"
+#include "pf/pfparser.h"
 #include "outgoingmessagedispatcher.h"
 #include "sessionmanager.h"
 #include <QTcpSocket>
@@ -49,35 +49,35 @@ void TcpConnectionHandler::processConnection(
     QString clientaddr = _session.string("clientaddr");
     Log::debug(_session.id()) << "processing new connection " << clientaddr
                               << _socket << _session;
-    PfDomHandler handler;
-    PfParser parser(&handler);
-    PfOptions options = PfOptions().stopAfterFirstRootNode()
-        .setReadTimeout(ACTIVITY_TIMEOUT);
+    PfParser parser;
+    auto options = PfOptions().with_io_timeout(ACTIVITY_TIMEOUT)
+                   .with_root_parsing_policy(PfOptions::StopAfterFirstRootNode);
     forever {
-      if (!parser.parse(_socket, options)) {
-        Log::warning(_session.id()) << "cannot parse pf document: " << clientaddr
-                                    << " : " << handler.errorString();
+      auto err = parser.parse(_socket, options);
+      if (!!err) {
+        Log::warning(_session.id()) << "cannot parse pf document: "
+                                    << clientaddr << " : " << err;
         releaseHandler();
         break;
       }
-      if (handler.roots().isEmpty()) {
+      auto node = parser.root().first_child();
+      if (!node) {
         Log::debug(_session.id()) << "peer disconnected or timed out: "
                                   << clientaddr;
         releaseHandler();
         break;
       }
-      Message message(_session, handler.roots().first());
-      Log::debug(_session.id()) << "<<< "
-                                << QString::fromUtf8(message.node().toPf());
+      Message message(_session, node);
+      Log::debug(_session.id()) << "<<< " << node.as_pf();
       _dispatcher->dispatch(message);
-      handler.clear();
+      parser.clear();
       QCoreApplication::processEvents();
     }
   });
 }
 
 void TcpConnectionHandler::sendOutgoingMessage(Message message) {
-  QByteArray ba = message.node().toPf();
+  QByteArray ba = message.node().as_pf();
   QMutexLocker ml(&_mutex);
   if (_socket) {
     if (_socket->write(ba) == -1) {
