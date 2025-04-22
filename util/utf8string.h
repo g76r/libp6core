@@ -508,6 +508,27 @@ public:
   [[deprecated("use split_headed_list instead")]]
   [[nodiscard]] Utf8StringList splitByLeadingChar(
       qsizetype offset = 0) const;
+  /** Analyze text content as ^(whitespace*)key(whitespace+)value$
+   *  e.g. "   name \t John Doe" -> { "name", "John Doe" }
+   *  e.g. "name    " -> { "name", {} }
+   *  e.g. "   name \t John Doe " -> { "name", "John Doe " }
+   *  Key is trimmed on both sides, value is only trimmed on left. */
+  [[nodiscard]] inline std::pair<Utf8String,Utf8String> split_as_pair() const {
+    qsizetype len = size(), k, w, v;
+    auto bytes = data();
+    if (len == 0) // must be tested because (*this)[0] would segfault
+      return {};
+    for (k = 0; is_ascii_whitespace(bytes[k]); ++k) // key index
+      if (k == len)
+        return {};
+    for (w = k+1; !is_ascii_whitespace(bytes[w]); ++w) // whitespace index
+      if (w == len)
+        return {mid(k), {}};
+    for (v = w+1; is_ascii_whitespace(bytes[v]); ++v) // value index
+      if (v == len)
+        return {mid(k, w-k), {}};
+    [[likely]] return {mid(k, w-k), mid(v)};
+  }
 
   // conversions to numbers
   /** Converts to floating point, supporting e notation and SI suffixes from 'f'
