@@ -345,10 +345,10 @@ public:
     return QByteArray::last(n); }
 #if QT_VERSION >= 0x060800
   /** like mid() but crashes if out of bound. */
-  [[nodiscard]] inline Utf8String &slice(qsizetype pos) {
+  inline Utf8String &slice(qsizetype pos) {
     QByteArray::slice(pos); return *this; }
   /** like mid() but crashes if out of bound. */
-  [[nodiscard]] inline Utf8String &slice(qsizetype pos, qsizetype n) {
+  inline Utf8String &slice(qsizetype pos, qsizetype n) {
     QByteArray::slice(pos, n); return *this; }
 #endif
   /** like mid() but crashes if out of bound. */
