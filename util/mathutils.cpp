@@ -105,13 +105,13 @@ static bool convertOtherTypesToBestArithmeticTypeIfPossible(
   }
   if (!s.isEmpty()) {
     bool ok;
-    auto ll = s.toLongLong(&ok, 0, 0, true, false);
+    auto ll = s.toLongLong<true,false>(&ok, 0, 0);
     if (ok) {
       a->setValue(ll);
       *tta = QMetaType::LongLong;
       return true;
     }
-    auto ull = s.toULongLong(&ok, 0, 0, true, false);
+    auto ull = s.toULongLong<true,false>(&ok, 0, 0);
     if (ok) {
       a->setValue(ull);
       *tta = QMetaType::ULongLong;

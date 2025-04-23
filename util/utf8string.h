@@ -17,6 +17,7 @@
 
 #include "libp6core_global.h"
 #include <QVariant>
+#include <cfloat>
 
 using namespace Qt::Literals::StringLiterals;
 
@@ -540,124 +541,182 @@ public:
   // conversions to numbers
   /** Converts to floating point, supporting e notation and SI suffixes from 'f'
    *  to 'P', 'u' is used as 1e-6 suffix e.g. ".1k" -> 100.0. */
-  [[nodiscard]] double toDouble(
-      bool *ok = nullptr, double def = 0.0, bool suffixes_enabled = true) const;
+  template<bool suffixes_enabled = true>
+  [[nodiscard]] inline double toDouble(
+      bool *ok = nullptr, double def = 0.0) const {
+    return toFloating<double, suffixes_enabled>(
+          *this, ok, def, &QByteArray::toDouble);
+  }
   /** Syntaxic sugar */
+  template<bool suffixes_enabled = true>
   [[nodiscard]] inline double toDouble(double def) const{
-    return toDouble(nullptr, def, true); }
+    return toDouble<suffixes_enabled>(nullptr, def); }
   /** Converts to floating point, supporting e notation and SI suffixes from 'f'
    *  to 'P', 'u' is used as 1e-6 suffix e.g. ".1k" -> 100.0. */
-  [[nodiscard]] float toFloat(
-      bool *ok = nullptr, float def = 0.0, bool suffixes_enabled = true) const;
+  template<bool suffixes_enabled = true>
+  [[nodiscard]] inline float toFloat(
+      bool *ok = nullptr, float def = 0.0) const {
+    return toFloating<float, suffixes_enabled>(
+          *this, ok, def, &QByteArray::toFloat);
+  }
   /** Syntaxic sugar */
+  template<bool suffixes_enabled = true>
   [[nodiscard]] inline float toFloat(float def) const{
-    return toFloat(nullptr, def, true); }
+    return toFloat<suffixes_enabled>(nullptr, def); }
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
    *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
    *  If the string content matches a floating point value, return its
    *  integer part (if it fits the integer type) e.g. "1e3" -> 1000. */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] qlonglong toLongLong(
-      bool *ok = nullptr, int base = 0, qlonglong def = 0,
-      bool suffixes_enabled = true, bool floating_point_enabled = true) const;
+      bool *ok = nullptr, int base = 0, qlonglong def = 0) const {
+    return toIntegral<qlonglong, suffixes_enabled, floating_point_enabled>(
+          *this, ok, base, def, &QByteArray::toLongLong);
+  }
   /** Syntaxic sugar */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] inline qlonglong toLongLong(qlonglong def) const {
-    return toLongLong(nullptr, 0, def, true); }
+    return toLongLong<suffixes_enabled, floating_point_enabled>(
+          nullptr, 0, def, true); }
   /** Syntaxic sugar */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] inline qlonglong toLongLong(long def) const {
-    return toLongLong(nullptr, 0, def, true); }
+    return toLongLong<suffixes_enabled, floating_point_enabled>(
+          nullptr, 0, def, true); }
   /** Syntaxic sugar */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] inline qlonglong toLongLong(int def) const {
-    return toLongLong(nullptr, 0, def, true); }
+    return toLongLong<suffixes_enabled, floating_point_enabled>(
+          nullptr, 0, def, true); }
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
    *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
    *  If the string content matches a floating point value, return its
    *  integer part (if it fits the integer type) e.g. "1e3" -> 1000. */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] qulonglong toULongLong(
-      bool *ok = nullptr, int base = 0, qulonglong def = 0,
-      bool suffixes_enabled = true, bool floating_point_enabled = true) const;
+      bool *ok = nullptr, int base = 0, qulonglong def = 0) const {
+    return toIntegral<qulonglong, suffixes_enabled, floating_point_enabled>(
+          *this, ok, base, def, &QByteArray::toULongLong);
+  }
   /** Syntaxic sugar */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] inline qulonglong toULongLong(qulonglong def) const {
-    return toULongLong(nullptr, 0, def, true); }
+    return toULongLong<suffixes_enabled, floating_point_enabled>(
+          nullptr, 0, def, true); }
   /** Syntaxic sugar */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] inline qulonglong toULongLong(ulong def) const {
-    return toULongLong(nullptr, 0, def, true); }
+    return toULongLong<suffixes_enabled, floating_point_enabled>(
+          nullptr, 0, def, true); }
   /** Syntaxic sugar */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] inline qulonglong toULongLong(uint def) const {
-    return toULongLong(nullptr, 0, def, true); }
+    return toULongLong<suffixes_enabled, floating_point_enabled>(
+          nullptr, 0, def, true); }
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
    *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
    *  If the string content matches a floating point value, return its
    *  integer part (if it fits the integer type) e.g. "1e3" -> 1000. */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] long toLong(
-      bool *ok = nullptr, int base = 0, long def = 0,
-      bool suffixes_enabled = true, bool floating_point_enabled = true) const;
+      bool *ok = nullptr, int base = 0, long def = 0) const {
+    return toIntegral<long, suffixes_enabled, floating_point_enabled>(
+          *this, ok, base, def, &QByteArray::toLong);
+  }
   /** Syntaxic sugar */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] inline long toLong(long def) const {
-    return toLong(nullptr, 0, def, true); }
+    return toLong<suffixes_enabled, floating_point_enabled>(nullptr, 0, def, true); }
   /** Syntaxic sugar */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] inline long toLong(int def) const {
-    return toLong(nullptr, 0, def, true); }
+    return toLong<suffixes_enabled, floating_point_enabled>(nullptr, 0, def, true); }
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
    *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
    *  If the string content matches a floating point value, return its
    *  integer part (if it fits the integer type) e.g. "1e3" -> 1000. */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] ulong toULong(
-      bool *ok = nullptr, int base = 0, ulong def = 0,
-      bool suffixes_enabled = true, bool floating_point_enabled = true) const;
+      bool *ok = nullptr, int base = 0, ulong def = 0) const {
+    return toIntegral<ulong, suffixes_enabled, floating_point_enabled>(
+          *this, ok, base, def, &QByteArray::toULong);
+  }
   /** Syntaxic sugar */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] inline ulong toULong(ulong def) const {
-    return toULong(nullptr, 0, def, true); }
+    return toULong<suffixes_enabled, floating_point_enabled>(nullptr, 0, def, true); }
   /** Syntaxic sugar */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] inline ulong toULong(uint def) const {
-    return toULong(nullptr, 0, def, true); }
+    return toULong<suffixes_enabled, floating_point_enabled>(nullptr, 0, def, true); }
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
    *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
    *  If the string content matches a floating point value, return its
    *  integer part (if it fits the integer type) e.g. "1e3" -> 1000. */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] int toInt(
-      bool *ok = nullptr, int base = 0, int def = 0,
-      bool suffixes_enabled = true, bool floating_point_enabled = true) const;
+      bool *ok = nullptr, int base = 0, int def = 0) const {
+    return toIntegral<int, suffixes_enabled, floating_point_enabled>(
+          *this, ok, base, def, &QByteArray::toInt);
+  }
   /** Syntaxic sugar */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] inline int toInt(int def) const {
-    return toInt(nullptr, 0, def, true); }
+    return toInt<suffixes_enabled, floating_point_enabled>(
+          nullptr, 0, def, true); }
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
    *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
    *  If the string content matches a floating point value, return its
    *  integer part (if it fits the integer type) e.g. "1e3" -> 1000. */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] uint toUInt(
-      bool *ok = nullptr, int base = 0, uint def = 0,
-      bool suffixes_enabled = true, bool floating_point_enabled = true) const;
+      bool *ok = nullptr, int base = 0, uint def = 0) const {
+    return toIntegral<uint, suffixes_enabled, floating_point_enabled>(
+          *this, ok, base, def, &QByteArray::toUInt);
+  }
   /** Syntaxic sugar */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] inline uint toUInt(uint def) const {
-    return toUInt(nullptr, 0, def, true); }
+    return toUInt<suffixes_enabled, floating_point_enabled>(
+          nullptr, 0, def, true); }
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
    *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
    *  If the string content matches a floating point value, return its
    *  integer part (if it fits the integer type) e.g. "1e3" -> 1000. */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] short toShort(
-      bool *ok = nullptr, int base = 0, short def = 0,
-      bool suffixes_enabled = true, bool floating_point_enabled = true) const;
+      bool *ok = nullptr, int base = 0, short def = 0) const {
+    return toIntegral<short, suffixes_enabled, floating_point_enabled>(
+          *this, ok, base, def, &QByteArray::toShort);
+  }
   /** Syntaxic sugar */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] inline short toShort(short def) const {
-    return toShort(nullptr, 0, def, true); }
+    return toShort<suffixes_enabled, floating_point_enabled>(
+          nullptr, 0, def, true); }
   /** Converts to integer, supporting both SI suffixes (from 'k' to 'P') and
    *  casual suffixes ('k', 'm', 'b') e.g. "1k" -> 1000.
    *  If base == 0 C prefixes are supported "0x" "0" and "0b" e.g "0xf" -> 15.
    *  If the string content matches a floating point value, return its
    *  integer part (if it fits the integer type) e.g. "1e3" -> 1000. */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] ushort toUShort(
-      bool *ok = nullptr, int base = 0, ushort def = 0,
-      bool suffixes_enabled = true, bool floating_point_enabled = true) const;
+      bool *ok = nullptr, int base = 0, ushort def = 0) const {
+    return toIntegral<ushort, suffixes_enabled, floating_point_enabled>(
+          *this, ok, base, def, &QByteArray::toUShort);
+  }
   /** Syntaxic sugar */
+  template<bool suffixes_enabled = true, bool floating_point_enabled = true>
   [[nodiscard]] inline ushort toUShort(ushort def) const {
-    return toUShort(nullptr, 0, def, true); }
+    return toUShort<suffixes_enabled, floating_point_enabled>(
+          nullptr, 0, def, true); }
   /** Converts to bool, supporting case insensitive "true" and "false", and any
    *  integer number, 0 being false and everything else true. */
   [[nodiscard]] bool toBool(
@@ -668,23 +727,32 @@ public:
   /** Converts to any number format, calling toXXX() methods above (and
    *  concerning integers, with base = 0 auto detection of base). */
 #ifdef __cpp_concepts
-  template <p6::arithmetic T>
+  template <p6::arithmetic T, bool suffixes_enabled = true,
+            bool floating_point_enabled = true>
 #else
-  template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+  template <typename T, bool suffixes_enabled = true,
+            bool floating_point_enabled = true,
+            typename = std::enable_if_t<std::is_arithmetic<T>::value>>
 #endif
   [[nodiscard]] inline T toNumber(
-      bool *ok = nullptr, const T &def = {},
-      bool suffixes_enabled = true, bool floating_point_enabled = true) const;
+      bool *ok = nullptr, const T &def = {}) const {
+    return NumberConverter<T, suffixes_enabled, floating_point_enabled>()(
+          *this, ok, def);
+  }
   /** Convenience methods witout bool *ok. */
 #ifdef __cpp_concepts
-  template <p6::arithmetic T>
+  template <p6::arithmetic T, bool suffixes_enabled = true,
+            bool floating_point_enabled = true>
 #else
-  template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+  template <typename T, bool suffixes_enabled = true,
+            bool floating_point_enabled = true,
+            typename = std::enable_if_t<std::is_arithmetic<T>::value>>
 #endif
   [[nodiscard]] inline T toNumber(
-      const T &def, bool suffixes_enabled = true,
-      bool floating_point_enabled = true) const {
-    return toNumber<T>(nullptr, def, suffixes_enabled, floating_point_enabled);}
+      const T &def) const {
+    return NumberConverter<T, suffixes_enabled, floating_point_enabled>()(
+          *this, nullptr, def);
+  }
 
   // conversions from numbers
   [[nodiscard]] static inline Utf8String number(
@@ -1114,6 +1182,31 @@ private:
     operator char32_t() const { return utf32; }
   };
   const static std::vector<UnicodeCaseMapping> _case_mapping;
+  template<typename I>
+  [[nodiscard]] static inline bool double_fits_integer(double d);
+  template<typename F, bool suffixes_enabled>
+  [[nodiscard]] static inline F toFloating(
+      QByteArray ba, bool *ok, F def,
+      std::function<F(const QByteArray &,bool*)> wrapped);
+  template<std::integral I, bool suffixes_enabled, bool floating_point_enabled>
+  [[nodiscard]] static inline I toIntegral(
+      QByteArray s, bool *ok, int base, I def,
+      std::function<I(const QByteArray &,bool*,int)> wrapped);
+#ifdef __cpp_concepts
+  template <p6::arithmetic T, bool suffixes_enabled = true,
+            bool floating_point_enabled = true>
+#else
+  template <typename T, bool suffixes_enabled = true,
+            bool floating_point_enabled = true,
+            typename = std::enable_if_t<std::is_arithmetic<T>::value>>
+#endif
+  struct NumberConverter {
+    // this struct is needed because non-class non-variable partial
+    // specialization is not allowed in C++ (at less until C++20)
+    // see for instance https://stackoverflow.com/questions/8061456/why-can-i-seemingly-define-a-partial-specialization-for-function-templates
+    [[nodiscard]] inline T operator()(
+        const Utf8String &s, bool *ok = nullptr, const T &def = {}) const;
+  };
 };
 
 Q_DECLARE_METATYPE(Utf8String)
@@ -1487,78 +1580,215 @@ inline Utf8String &Utf8String::null_coalesce() {
   return null_coalesced(""_u8);
 }
 
-template<>
-[[nodiscard]] inline double Utf8String::toNumber<>(
-    bool *ok, const double &def, bool suffixes_enabled, bool) const {
-  return toDouble(ok, def, suffixes_enabled);
+template<bool suffixes_enabled, bool floating_point_enabled>
+struct Utf8String::NumberConverter<double, suffixes_enabled, floating_point_enabled> {
+  double operator()(
+      const Utf8String &s, bool *ok, const double &def) const {
+    return s.toDouble<suffixes_enabled>(ok, def);
+  }
+};
+
+template<bool suffixes_enabled, bool floating_point_enabled>
+struct Utf8String::NumberConverter<float, suffixes_enabled, floating_point_enabled> {
+  float operator()(
+      const Utf8String &s, bool *ok, const float &def) const {
+    return s.toFloat<suffixes_enabled>(ok, def);
+  }
+};
+
+template<bool suffixes_enabled, bool floating_point_enabled>
+struct Utf8String::NumberConverter<qlonglong, suffixes_enabled, floating_point_enabled> {
+  qlonglong operator()(
+      const Utf8String &s, bool *ok, const qlonglong &def) const {
+    return s.toLongLong<suffixes_enabled, floating_point_enabled>(ok, 0, def);
+  }
+};
+
+template<bool suffixes_enabled, bool floating_point_enabled>
+struct Utf8String::NumberConverter<qulonglong, suffixes_enabled, floating_point_enabled> {
+  qulonglong operator()(
+      const Utf8String &s, bool *ok, const qulonglong &def) const {
+    return s.toULongLong<suffixes_enabled, floating_point_enabled>(ok, 0, def);
+  }
+};
+
+template<bool suffixes_enabled, bool floating_point_enabled>
+struct Utf8String::NumberConverter<long, suffixes_enabled, floating_point_enabled> {
+  long operator()(
+      const Utf8String &s, bool *ok, const long &def) const {
+    return s.toLong<suffixes_enabled, floating_point_enabled>(ok, 0, def);
+  }
+};
+
+template<bool suffixes_enabled, bool floating_point_enabled>
+struct Utf8String::NumberConverter<ulong, suffixes_enabled, floating_point_enabled> {
+  ulong operator()(
+      const Utf8String &s, bool *ok, const ulong &def) const {
+    return s.toULong<suffixes_enabled, floating_point_enabled>(ok, 0, def);
+  }
+};
+
+template<bool suffixes_enabled, bool floating_point_enabled>
+struct Utf8String::NumberConverter<int, suffixes_enabled, floating_point_enabled> {
+  int operator()(
+      const Utf8String &s, bool *ok, const int &def) const {
+    return s.toInt<suffixes_enabled, floating_point_enabled>(ok, 0, def);
+  }
+};
+
+template<bool suffixes_enabled, bool floating_point_enabled>
+struct Utf8String::NumberConverter<uint, suffixes_enabled, floating_point_enabled> {
+  uint operator()(
+      const Utf8String &s, bool *ok, const uint &def) const {
+    return s.toUInt<suffixes_enabled, floating_point_enabled>(ok, 0, def);
+  }
+};
+
+
+template<bool suffixes_enabled, bool floating_point_enabled>
+struct Utf8String::NumberConverter<short, suffixes_enabled, floating_point_enabled> {
+  short operator()(
+      const Utf8String &s, bool *ok, const short &def) const {
+    return s.toShort<suffixes_enabled, floating_point_enabled>(ok, 0, def);
+  }
+};
+
+template<bool suffixes_enabled, bool floating_point_enabled>
+struct Utf8String::NumberConverter<ushort, suffixes_enabled, floating_point_enabled> {
+  ushort operator()(
+      const Utf8String &s, bool *ok, const ushort &def) const {
+    return s.toUShort<suffixes_enabled, floating_point_enabled>(ok, 0, def);
+  }
+};
+
+template<bool suffixes_enabled, bool floating_point_enabled>
+struct Utf8String::NumberConverter<bool, suffixes_enabled, floating_point_enabled> {
+  bool operator()(
+      const Utf8String &s, bool *ok, const bool &def) const {
+    return s.toBool(ok, def);
+  }
+};
+
+template<typename I>
+inline bool Utf8String::double_fits_integer(double d) {
+  if (std::numeric_limits<I>::digits >= DBL_MANT_DIG) {
+    // integral types with more digits than double's mantissa:
+    // use double value only if it's within DBL_MANT_DIG bits integer range
+    // (if double is IEE754 double precision, DBL_MANT_DIG == 53)
+    if (std::numeric_limits<I>::is_signed)
+      return d >= -(1LL<<DBL_MANT_DIG) && d <= (1LL<<DBL_MANT_DIG);
+    return d >= 0 && d <= (1LL<<DBL_MANT_DIG);
+  }
+  // integral types with less digits than double's mantissa:
+  // use double value only if it fits in the integer type
+  return d >= std::numeric_limits<I>::min() &&
+      d <= std::numeric_limits<I>::max();
 }
 
-template<>
-[[nodiscard]] inline float Utf8String::toNumber<>(
-    bool *ok, const float &def, bool suffixes_enabled, bool) const {
-  return toFloat(ok, def, suffixes_enabled);
+// TODO turn wrapped into template arg
+template<typename F, bool suffixes_enabled>
+inline F Utf8String::toFloating(
+    QByteArray ba, bool *ok, F def,
+    std::function<F(const QByteArray &,bool*)> wrapped) {
+  Utf8String s = ba.trimmed();
+  F mul = 1.0;
+  if (auto len = s.utf8size(); suffixes_enabled && len >= 2) {
+    switch (s.utf32value(len-1)) {
+      case 'k':
+        mul = 1e3;
+        break;
+      case 'M':
+        mul = 1e6;
+        break;
+      case 'G':
+        mul = 1e9;
+        break;
+      case 'T':
+        mul = 1e12;
+        break;
+      case 'P':
+        mul = 1e15;
+        break;
+        // cannot go further 'P' because 'E' means exponent
+      case 'm':
+        mul = 1e-3;
+        break;
+      case 'u':
+      case 0xb5: // µ (micro symbol)
+      case 0x3bc: // μ (mu greek letter)
+        mul = 1e-6;
+        break;
+      case 'n':
+        mul = 1e-9;
+        break;
+      case 'p':
+        mul = 1e-12;
+        break;
+      case 'f':
+        mul = 1e-15;
+        break;
+        // won't go further 'f' by consistency with 'P': 1e15~1e-15 range
+      default:
+        goto no_suffix;
+    }
+    s.utf8chop(1);
+  }
+no_suffix:
+  bool _ok;
+  F f = wrapped(s, &_ok);
+  if (ok)
+    *ok = _ok;
+  if (!_ok)
+    return def;
+  return suffixes_enabled ? f*mul : f;
 }
 
-template<>
-[[nodiscard]] inline qlonglong Utf8String::toNumber<>(
-    bool *ok, const qlonglong &def, bool suffixes_enabled,
-    bool floating_point_enabled) const {
-  return toLongLong(ok, 0, def, suffixes_enabled, floating_point_enabled);
-}
-
-template<>
-[[nodiscard]] inline qulonglong Utf8String::toNumber<>(
-    bool *ok, const qulonglong &def, bool suffixes_enabled,
-    bool floating_point_enabled) const {
-  return toULongLong(ok, 0, def, suffixes_enabled, floating_point_enabled);
-}
-
-template<>
-[[nodiscard]] inline long Utf8String::toNumber<>(
-    bool *ok, const long &def, bool suffixes_enabled,
-    bool floating_point_enabled) const {
-  return toLong(ok, 0, def, suffixes_enabled, floating_point_enabled);
-}
-
-template<>
-[[nodiscard]] inline ulong Utf8String::toNumber<>(
-    bool *ok, const ulong &def, bool suffixes_enabled,
-    bool floating_point_enabled) const {
-  return toULong(ok, 0, def, suffixes_enabled, floating_point_enabled);
-}
-
-template<>
-[[nodiscard]] inline int Utf8String::toNumber<>(
-    bool *ok, const int &def, bool suffixes_enabled,
-    bool floating_point_enabled) const {
-  return toInt(ok, 0, def, suffixes_enabled, floating_point_enabled);
-}
-
-template<>
-[[nodiscard]] inline uint Utf8String::toNumber<>(
-    bool *ok, const uint &def, bool suffixes_enabled,
-    bool floating_point_enabled) const {
-  return toUInt(ok, 0, def, suffixes_enabled, floating_point_enabled);
-}
-
-template<>
-[[nodiscard]] inline short Utf8String::toNumber<>(
-    bool *ok, const short &def, bool suffixes_enabled,
-    bool floating_point_enabled) const {
-  return toShort(ok, 0, def, suffixes_enabled, floating_point_enabled);
-}
-
-template<>
-[[nodiscard]] inline ushort Utf8String::toNumber<>(
-    bool *ok, const ushort &def, bool suffixes_enabled,
-    bool floating_point_enabled) const {
-  return toUShort(ok, 0, def, suffixes_enabled, floating_point_enabled);
-}
-
-template<>
-[[nodiscard]] inline bool Utf8String::toNumber<>(
-    bool *ok, const bool &def, bool, bool) const {
-  return toBool(ok, def);
+// TODO turn wrapped into template arg
+template<std::integral I, bool suffixes_enabled, bool floating_point_enabled>
+inline I Utf8String::toIntegral(
+    QByteArray s, bool *ok, int base, I def,
+    std::function<I(const QByteArray &,bool*,int)> wrapped) {
+  s = s.trimmed();
+  // accept suffixes only in base 10 (otherwise 0x1b would be 1 billion)
+  if (auto len = s.size(); suffixes_enabled && len >= 2
+      && (base == 10 || (base == 0 && (s.at(0) != '0'||len == 2)))) {
+    switch(s.at(len-1)) {
+      case 'k':
+        s = s.left(len-1)+"000";
+        break;
+      case 'm':
+      case 'M':
+        s = s.left(len-1)+"000000";
+        break;
+      case 'b':
+      case 'G':
+        s = s.left(len-1)+"000000000";
+        break;
+      case 'T':
+        s = s.left(len-1)+"000000000000";
+        break;
+      case 'P':
+        s = s.left(len-1)+"000000000000000";
+        break;
+        // won't go further 'P' because 'E' means exponent
+    }
+  }
+  bool _ok;
+  I i = wrapped(s, &_ok, base);
+  if (!_ok && floating_point_enabled) {
+    // try to convert to double and then truncate to integer part
+    double d = toFloating<double, suffixes_enabled>(
+          s, &_ok, (double)NAN, &QByteArray::toDouble);
+    if(_ok && double_fits_integer<I>(d))
+      i = d;
+    else
+      _ok = false;
+  }
+  if (ok)
+    *ok = _ok;
+  if (!_ok)
+    return def;
+  return i;
 }
 
 #endif // UTF8STRING_H
