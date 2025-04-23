@@ -108,6 +108,28 @@ first_byte:
   return {4, u};
 }
 
+/** Read one byte with same signature than get_utf8().
+ *  @param wait for incomming bytes (@see QIODevice::waitForReadyRead())
+ *  @param input input device, must be !null and open
+ *  @param error will receive i/o error messages if !null
+ *  @param wait_ms wait time if wait == true (-1 = infinite)
+ *  @return {1, byte} or {-1, 0} on error or {0, 0} at eof.
+ *  @see get_utf8()
+ */
+template <bool wait = true>
+inline std::pair<qsizetype,char> get_byte(
+    QIODevice *input, Utf8String *error = nullptr, int wait_ms = -1) {
+  char c;
+  if (wait && !input->bytesAvailable() && !input->waitForReadyRead(wait_ms))
+    [[unlikely]] return {0, 0};
+  if (auto r = input->read(&c, 1); r < 0) {
+    if (error)
+      *error = input->errorString();
+    [[unlikely]] return {-1, 0};
+  }
+  return {1, c};
+}
+
 /** Read one or several bytes from input until they constitute a valid utf8
  *  character or an invalid utf8 bytes sequence.
  *  Syntaxic sugar on get_utf8().
@@ -139,6 +161,21 @@ template <bool wait = true, bool strict = true, bool skip_bom = true>
 inline qsizetype read_utf8(
     QIODevice *input, char32_t *c, int wait_ms = -1) {
   auto [width, u] = get_utf8<wait, strict, skip_bom>(input, nullptr, wait_ms);
+  *c = u;
+  return width;
+}
+
+/** Read one or several bytes from input until they constitute a valid utf8
+ *  character or an invalid utf8 bytes sequence.
+ *  Syntaxic sugar on get_utf8().
+ *  @param c byte read or 0
+ *  @return char width 1 or -1 on error or 0 at eof
+ *  @see get_byte
+ */
+template <bool wait = true>
+inline qsizetype read_byte(
+    QIODevice *input, char *c, int wait_ms = -1) {
+  auto [width, u] = get_byte<wait>(input, nullptr, wait_ms);
   *c = u;
   return width;
 }
