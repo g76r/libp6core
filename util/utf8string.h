@@ -166,18 +166,22 @@ public:
    *  Return replacement character (\ufffd) if an invalid sequence is found.
    *  Return a BOM character (\ufeff) if first bytes sequence is a BOM (\xef
    *  \xbb \xbf). */
+  template <bool strict = true>
   [[nodiscard]] static inline char32_t decode_utf8(
       const char *s, const char *end) {
-    return decode_utf8_and_step_forward(&s, end, true); }
+    return decode_utf8_and_step_forward<strict>(&s, end); }
+  template <bool strict = true>
   [[nodiscard]] static inline char32_t decode_utf8(
       const char *s, qsizetype len) {
-    return decode_utf8_and_step_forward(&s, s+len, true); }
+    return decode_utf8_and_step_forward<strict>(&s, s+len); }
+  template <bool strict = true>
   [[nodiscard]] static inline char32_t decode_utf8(
       const QByteArray &s) {
     auto s2 = s.constData();
-    return decode_utf8_and_step_forward(&s2, s2+s.size(), true); }
+    return decode_utf8_and_step_forward<strict>(&s2, s2+s.size()); }
+  template <bool strict = true>
   [[nodiscard]] static inline char32_t decode_utf8(const char *s) {
-    return decode_utf8_and_step_forward(&s, s+::strlen(s), true); }
+    return decode_utf8_and_step_forward<strict>(&s, s+::strlen(s)); }
   /** Low-level one utf8 character decoder.
    *  Decode utf8 character at *s and set *s after the character's byte
    *  sequence, never reading *end and beyond.
@@ -188,8 +192,9 @@ public:
    *  \0), ignore 2 most significant bits of continuation bytes (0xc3 0x09 will
    *  form a É as 0xc3 0x89) because with valid utf8 it makes the code faster.
    */
+  template <bool strict = true>
   [[nodiscard]] static inline char32_t decode_utf8_and_step_forward(
-      const char **s, const char *end, bool strict);
+      const char **s, const char *end);
   /** Low-level one utf8 character encoder.
    *  Encode utf8 character at *d and set *d after the character's byte
    *  sequence, there must be enough room in *d for that.
@@ -278,28 +283,30 @@ public:
    *    or where there was an invalid sequence
    *  @param keep_bom keep byte order marks if any
    */
-  [[nodiscard]] inline Utf8String cleaned(
-      bool strict = true, bool keep_replacement_chars = false,
-      bool keep_bom = false) const {
-    return cleaned(constData(), size(), strict, keep_replacement_chars,
-                   keep_bom); }
+  template <bool strict = true, bool keep_replacement_chars = false,
+            bool keep_bom = false>
+  [[nodiscard]] inline Utf8String cleaned() const {
+    return cleaned<strict, keep_replacement_chars, keep_bom>(
+          constData(), size()); }
   /** Return valid utf8 without invalid sequences. */
+  template <bool strict = true, bool keep_replacement_chars = false,
+            bool keep_bom = false>
   [[nodiscard]] inline static Utf8String cleaned(
-      const char *s, qsizetype len, bool strict = true,
-      bool keep_replacement_chars = false, bool keep_bom = false) {
-    return cleaned(s, s+len, strict, keep_replacement_chars, keep_bom); }
+      const char *s, qsizetype len) {
+    return cleaned<strict, keep_replacement_chars, keep_bom>(s, s+len); }
   /** Return valid utf8 without invalid sequences. */
+  template <bool strict = true, bool keep_replacement_chars = false,
+            bool keep_bom = false>
   [[nodiscard]] inline static Utf8String cleaned(
-      const char *s, const char *end, bool strict = true,
-      bool keep_replacement_chars = false, bool keep_bom = false);
+      const char *s, const char *end);
   /** Reencode valid utf8 in-place without invalid sequences. */
-  inline Utf8String &clean(
-      bool strict = true, bool keep_replacement_chars = false,
-      bool keep_bom = false);
+  template <bool strict = true, bool keep_replacement_chars = false,
+            bool keep_bom = false>
+  inline Utf8String &clean();
   /** Reencode valid utf8 in-place without invalid sequences. */
-  inline static void clean(
-      char *s, const char *end, bool strict = true,
-      bool keep_replacement_chars = false, bool keep_bom = false);
+  template <bool strict = true, bool keep_replacement_chars = false,
+            bool keep_bom = false>
+  inline static void clean(char *s, const char *end);
 
   // slicing: left right mid trimmed sliced chopped...
   /** Return leftmost len bytes. Empty if len < 0. */
@@ -1221,8 +1228,9 @@ const char *Utf8String::go_backward_to_utf8_char(
   }
 }
 
+template <bool strict>
 char32_t Utf8String::decode_utf8_and_step_forward(
-    const char **s, const char *end, bool strict) {
+    const char **s, const char *end) {
   auto c = reinterpret_cast<const unsigned char *>(*s);
   if (c[0] < 0b1000'0000) [[likely]] {
     *s += 1; // ascii, 1 byte
@@ -1343,12 +1351,12 @@ Utf8String Utf8String::encode_utf8(char32_t u) {
   return Utf8String(s, sizeof s);
 }
 
-void Utf8String::clean(
-    char *s, const char *end, bool strict, bool keep_replacement_chars,
-    bool keep_bom) {
+template <bool strict, bool keep_replacement_chars, bool keep_bom>
+void Utf8String::clean(char *s, const char *end) {
   char *d = s; // destination
   while (s < end) {
-    auto c = decode_utf8_and_step_forward(const_cast<const char**>(&s), end, strict);
+    auto c = decode_utf8_and_step_forward<strict>(
+               const_cast<const char**>(&s), end);
     if (!keep_replacement_chars && c == ReplacementCharacter) [[unlikely]]
       continue;
     if (!keep_bom && c == ByteOrderMark) [[unlikely]]
@@ -1357,11 +1365,12 @@ void Utf8String::clean(
   }
 }
 
-Utf8String &Utf8String::clean(
-    bool strict, bool keep_replacement_chars, bool keep_bom) {
+template <bool strict, bool keep_replacement_chars, bool keep_bom>
+Utf8String &Utf8String::clean() {
   char *s = data(), *d = s, *begin = s, *end = s+size();
   while (s < end) {
-    auto c = decode_utf8_and_step_forward(const_cast<const char**>(&s), end, strict);
+    auto c = decode_utf8_and_step_forward<strict>(
+               const_cast<const char**>(&s), end);
     if (!keep_replacement_chars && c == ReplacementCharacter) [[unlikely]]
       continue;
     if (!keep_bom && c == ByteOrderMark) [[unlikely]]
@@ -1372,13 +1381,12 @@ Utf8String &Utf8String::clean(
   return *this;
 }
 
-Utf8String Utf8String::cleaned(
-    const char *s, const char *end, bool strict, bool keep_replacement_chars,
-    bool keep_bom) {
+template <bool strict, bool keep_replacement_chars, bool keep_bom>
+Utf8String Utf8String::cleaned(const char *s, const char *end) {
   QByteArray cleaned(end-s, Qt::Uninitialized);
   char *d = cleaned.data(), *begin = d; // destination
   while (s < end) {
-    auto c = decode_utf8_and_step_forward(&s, end, strict);
+    auto c = decode_utf8_and_step_forward<strict>(&s, end);
     if (!keep_replacement_chars && c == ReplacementCharacter) [[unlikely]]
       continue;
     if (!keep_bom && c == ByteOrderMark) [[unlikely]]
