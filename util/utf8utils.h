@@ -42,69 +42,69 @@ inline std::pair<qsizetype,char32_t> get_utf8(
 first_byte:
   if (wait && !input->bytesAvailable() && !input->waitForReadyRead(wait_ms))
     [[unlikely]] return {0, 0};
-  if (auto r = input->read(buf, 1); r < 0) [[unlikely]] {
+  if (auto r = input->read(buf, 1); r < 0) {
     if (error)
       *error = input->errorString();
-    return {-1, Utf8String::ReplacementCharacter};
+    [[unlikely]] return {-1, Utf8String::ReplacementCharacter};
   } else if (r == 0) {
     return {0, 0};
   }
-  if (c[0] < 0b1000'0000) [[likely]]
-    return {1, c[0]}; // ascii, 1 byte
-  if (c[0] < 0b1100'0000) [[unlikely]] {
+  if (c[0] < 0b1000'0000)
+    [[likely]] return {1, c[0]}; // ascii, 1 byte
+  if (c[0] < 0b1100'0000) {  // out of sequence continuation byte
     if (error)
       *error = "invalid first byte 0x"_u8+Utf8String::number(c[0], 16);
-    return {-1, Utf8String::ReplacementCharacter}; // out of sequence continuation byte
+    [[unlikely]] return {-1, Utf8String::ReplacementCharacter};
   }
   if (c[0] < 0b1110'0000) {
     if (wait && !input->bytesAvailable() && !input->waitForReadyRead(wait_ms))
        return {0, 0};
-    if (input->read(buf+1, 1) != 1) [[unlikely]] {
+    if (input->read(buf+1, 1) != 1) { // not enough bytes
       if (error)
         *error = input->errorString();
-      return {-1, Utf8String::ReplacementCharacter};
+      [[unlikely]] return {-1, Utf8String::ReplacementCharacter};
     }
     char32_t u = (c[0] & 0b0001'1111) << 6 | (c[1] & 0b0011'1111);
-    if (strict && u < 0x80) [[unlikely]]
-      return {-1, Utf8String::ReplacementCharacter}; // overlong sequence
-    if (strict && (c[1] & 0b1100'0000) != 0b1000'0000) [[unlikely]]
-      return {-1, Utf8String::ReplacementCharacter}; // invalid continuation byte
+    if (strict && u < 0x80) // overlong sequence
+      [[unlikely]] return {-1, Utf8String::ReplacementCharacter};
+    if (strict && (c[1] & 0b1100'0000) != 0b1000'0000) // bad continuation byte
+      [[unlikely]] return {-1, Utf8String::ReplacementCharacter};
     return {2, u};
   }
   if (c[0] < 0b1111'0000) {
     if (wait && !input->bytesAvailable() && !input->waitForReadyRead(wait_ms))
       [[unlikely]] return {0, 0};
-    if (input->read(buf+1, 2) != 2) [[unlikely]]
-      return {-1, Utf8String::ReplacementCharacter};
+    if (input->read(buf+1, 2) != 2) // not enough bytes
+      [[unlikely]] return {-1, Utf8String::ReplacementCharacter};
     char32_t u = ((c[0] & 0b0000'1111) << 12) | ((c[1] & 0b0011'1111) << 6)
         | (c[2] & 0b0011'1111);
-    if (u >= 0xd800 && u <= 0xdfff) [[unlikely]]
-      return {-1, Utf8String::ReplacementCharacter}; // RFC 3629: surrogate halves are invalid
-    if (strict && u < 0x800) [[unlikely]]
-      return {-1, Utf8String::ReplacementCharacter}; // overlong sequence
-    if (strict && ((c[1] & 0b1100'0000) != 0b1000'0000
-                   || (c[2] & 0b1100'0000) != 0b1000'0000)) [[unlikely]]
-      return {-1, Utf8String::ReplacementCharacter}; // invalid continuation byte
-    if (skip_bom && u == Utf8String::ByteOrderMark) [[unlikely]]
-      goto first_byte; // byte order mark found -> read next character instead
+    if (u >= 0xd800 && u <= 0xdfff) // RFC 3629: surrogate halves are invalid
+      [[unlikely]] return {-1, Utf8String::ReplacementCharacter};
+    if (strict && u < 0x800) // overlong sequence
+      [[unlikely]] return {-1, Utf8String::ReplacementCharacter};
+    if (strict && ((c[1] & 0b1100'0000) != 0b1000'0000 // bad continuation byte
+                   || (c[2] & 0b1100'0000) != 0b1000'0000))
+       [[unlikely]] return {-1, Utf8String::ReplacementCharacter};
+    if (skip_bom && u == Utf8String::ByteOrderMark) // byte order mark found
+      [[unlikely]] goto first_byte; // read next character instead
     return {3, u};
   }
   if (wait && !input->bytesAvailable() && !input->waitForReadyRead(wait_ms))
     [[unlikely]] return {0, 0};
-  if (input->read(buf+1, 3) != 3) [[unlikely]]
-    return {-1, Utf8String::ReplacementCharacter};
+  if (input->read(buf+1, 3) != 3)
+    [[unlikely]] return {-1, Utf8String::ReplacementCharacter};
   // note: first byte mask intentionnaly keeps 0b0000'1000 bit so that 5+ bytes
   // sequences will be >= 0x10'ffff and discarded without specific test
   char32_t u = ((c[0] & 0b0000'1111) << 18) | ((c[1] & 0b0011'1111) << 12)
       | ((c[2] & 0b0011'1111) << 6) | (c[3] & 0b0011'1111);
-  if (u >= 0x10'ffff) [[unlikely]]
-    return {-1, Utf8String::ReplacementCharacter}; // RFC 3629: > 0x10ffff are invalid
-  if (strict && u < 0x10000) [[unlikely]]
-    return {-1, Utf8String::ReplacementCharacter}; // overlong sequence
-  if (strict && ((c[1] & 0b1100'0000) != 0b1000'0000
+  if (u >= 0x10'ffff) // RFC 3629: > 0x10ffff are invalid
+    [[unlikely]] return {-1, Utf8String::ReplacementCharacter};
+  if (strict && u < 0x10000) // overlong sequence
+    [[unlikely]] return {-1, Utf8String::ReplacementCharacter};
+  if (strict && ((c[1] & 0b1100'0000) != 0b1000'0000 // bad continuation byte
                  || (c[2] & 0b1100'0000) != 0b1000'0000
-                 || (c[3] & 0b1100'0000) != 0b1000'0000)) [[unlikely]]
-    return {-1, Utf8String::ReplacementCharacter}; // invalid continuation byte
+                 || (c[3] & 0b1100'0000) != 0b1000'0000))
+    [[unlikely]] return {-1, Utf8String::ReplacementCharacter};
   return {4, u};
 }
 

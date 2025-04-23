@@ -200,10 +200,10 @@ ParamSet::ParamSet(
 }
 
 ParamSet &ParamSet::insert(const Utf8String &key, const QVariant &value) {
-  if (key.isEmpty()) [[unlikely]]
-    return *this;
-  if (!d) [[unlikely]]
-    d = new ParamSetData;
+  if (key.isEmpty())
+    [[unlikely]] return *this;
+  if (!d)
+    [[unlikely]] d = new ParamSetData;
   if (value.isValid())
     d->_params.insert(key, value);
   else
@@ -212,16 +212,16 @@ ParamSet &ParamSet::insert(const Utf8String &key, const QVariant &value) {
 }
 
 ParamSet &ParamSet::insert(const ParamSet &params) {
-  if (!d) [[unlikely]]
-    d = new ParamSetData;
+  if (!d)
+    [[unlikely]] d = new ParamSetData;
   for (auto key: params.paramKeys())
     d->_params.insert(key, params.paramRawValue(key));
   return *this;
 }
 
 ParamSet &ParamSet::merge(const ParamSet &params) {
-  if (!d) [[unlikely]]
-    d = new ParamSetData;
+  if (!d)
+    [[unlikely]] d = new ParamSetData;
   for (auto key: params.paramKeys())
     if (!d->_params.contains(key))
       d->_params.insert(key, params.paramRawValue(key));
@@ -251,8 +251,8 @@ QVariant ParamSet::paramRawValue(
       return v;
     context.setFunctionsEvaluated(); // avoid function eval in parents
   }
-  if (!d) [[unlikely]]
-    return def;
+  if (!d)
+    [[unlikely]] return def;
   if (context.hasScopeOrNone(paramScope())
 #if PARAMSET_SUPPORTS_DONTINHERIT
       || context.scopeFilter() == _almost_empty_pretend_it_is
@@ -271,8 +271,8 @@ QVariant ParamSet::paramRawValue(
 }
 
 Utf8StringSet ParamSet::paramKeys(const EvalContext &context) const {
-  if (!d) [[unlikely]]
-    return {};
+  if (!d)
+    [[unlikely]] return {};
   Utf8StringSet set;
   if (context.hasScopeOrNone(paramScope())
 #if PARAMSET_SUPPORTS_DONTINHERIT
@@ -290,8 +290,8 @@ Utf8StringSet ParamSet::paramKeys(const EvalContext &context) const {
 
 bool ParamSet::paramContains(
     const Utf8String &key, const EvalContext &context) const {
-  if (!d) [[unlikely]]
-    return false;
+  if (!d)
+    [[unlikely]] return false;
   if (context.hasScopeOrNone(paramScope()) && d->_params.contains(key))
     return true;
 #if PARAMSET_SUPPORTS_DONTINHERIT

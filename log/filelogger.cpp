@@ -14,6 +14,7 @@
 #include "filelogger.h"
 #include "util/paramset.h"
 #include <QFile>
+#include <QDateTime>
 
 #define ISO8601 u"yyyy-MM-ddThh:mm:ss,zzz"_s
 
@@ -30,7 +31,8 @@ FileLogger::FileLogger(QIODevice *device, Severity minSeverity,
   if (!_device->isOpen()) {
     if (!_device->open(_buffered ? QIODevice::WriteOnly|QIODevice::Append
                        : QIODevice::WriteOnly|QIODevice::Append
-                       |QIODevice::Unbuffered)) [[unlikely]] {
+                       |QIODevice::Unbuffered)) {
+      [[unlikely]];
       qWarning() << "cannot open log device" << _device << ":"
                  << _device->errorString();
       _device->deleteLater();
@@ -65,7 +67,8 @@ void FileLogger::do_log(const Record &record) {
   if (!_pathPattern.isEmpty()
       && (_device == 0
           || (_secondsReopenInterval >= 0
-              && _lastOpen.secsTo(now) > _secondsReopenInterval))) [[unlikely]]{
+              && _lastOpen.secsTo(now) > _secondsReopenInterval))) {
+    [[unlikely]];
     //qDebug() << "*******************************************************"
     //         << _pathPattern << _lastOpen << now << _secondsReopenInterval;
     if (_device)
@@ -85,7 +88,8 @@ void FileLogger::do_log(const Record &record) {
       //qDebug() << "opened log file" << _currentPath;
     }
   }
-  if (_device) [[likely]] {
+  if (_device) {
+    [[likely]];
     auto line = record.formated_message();
     if (_device->write(line) != line.size()) {
       // TODO warn, but only once

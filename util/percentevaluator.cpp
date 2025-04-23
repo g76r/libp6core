@@ -85,8 +85,8 @@ _functions {
 }, true},
 { "=switch", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
   auto params = key.split_headed_list(ml);
-  if (params.size() < 1) [[unlikely]]
-    return {};
+  if (params.size() < 1)
+    [[unlikely]] return {};
   auto input = PercentEvaluator::eval(params.value(0), context);
   // evaluating :case:value params, if any
   int n = (params.size() - 1) / 2;
@@ -104,8 +104,8 @@ _functions {
 }, true},
 { "=match", [](const Utf8String &key, const EvalContext &context, int ml) -> QVariant {
   auto params = key.split_headed_list(ml);
-  if (params.size() < 1) [[unlikely]]
-    return {};
+  if (params.size() < 1)
+    [[unlikely]] return {};
   auto input = PercentEvaluator::eval(params.value(0), context);
   // evaluating :case:value params, if any
   int n = (params.size() - 1) / 2;
@@ -148,10 +148,10 @@ _functions {
       re.optimize(); // not sure
       return re;
     });
-    if (!re.isValid()) [[unlikely]] {
+    if (!re.isValid()) {
       Log::warning() << "%=sub with invalid regular expression: "
                      << sFields.value(0);
-      continue;
+      [[unlikely]] continue;
     }
     bool repeat = optionsString.contains('g');
     int offset = 0;
@@ -563,12 +563,12 @@ static inline QVariant eval_key(
     const Utf8String &new_scope_filter, const Utf8String &key,
     const EvalContext &context) {
   //qDebug() << new_scope_filter << new_scope_filter.isNull() << "eval_key:" << key << context;
-  if (key.isEmpty()) [[unlikely]]
-    return {};
-  if (context.containsVariable(key)) [[unlikely]] {
+  if (key.isEmpty())
+    [[unlikely]] return {};
+  if (context.containsVariable(key)) {
     Log::warning() << "unsupported variable substitution: loop detected with "
                       "variable \"" << key << "\"";
-    return {};
+    [[unlikely]] return {};
   }
   EvalContext new_context = context;
   new_context.addVariable(key);
@@ -591,11 +591,11 @@ static inline QVariant eval_key(
   //qDebug() << "/eval_key by param" << v;
   if (v.isValid())
     return v;
-  if (_variableNotFoundLoggingEnabled) [[unlikely]]
+  if (_variableNotFoundLoggingEnabled)
     Log::debug()
         << "Unsupported variable substitution: variable not found: "
            "%{" << key << "} with context: " << context;
-  return {};
+  [[unlikely]] return {};
 }
 
 /** key can have a scope filter specification e.g. "[bar]foo" */

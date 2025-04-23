@@ -510,8 +510,8 @@ inline qsizetype decode_hex_char(
 }
 
 Utf8String Utf8String::fromCEscaped(const char *s, qsizetype len) {
-  if (!s) [[unlikely]]
-    return {};
+  if (!s)
+    [[unlikely]] return {};
   if (len < 0)
     len = ::strlen(s);
   Utf8String result;

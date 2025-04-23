@@ -1,4 +1,4 @@
-/* Copyright 2012-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -50,7 +50,8 @@ void HttpWorker::handleConnection(int socketDescriptor) {
       // LATER replace by QDateTime when Qt >= 4.7
   //QTime before= QTime::currentTime();
   QTcpSocket *socket = new QTcpSocket(this);
-  if (!socket->setSocketDescriptor(socketDescriptor)) [[unlikely]] {
+  if (!socket->setSocketDescriptor(socketDescriptor)) {
+    [[unlikely]];
     // LATER
     // emit error(_socket->error());
   }
@@ -68,15 +69,15 @@ void HttpWorker::handleConnection(int socketDescriptor) {
   qint64 contentLength = 0;
   HttpRequest::HttpMethod method = HttpRequest::NONE;
   if (!socket->canReadLine()
-      && !socket->waitForReadyRead(MAXIMUM_READ_WAIT)) [[unlikely]] {
+      && !socket->waitForReadyRead(MAXIMUM_READ_WAIT)) {
     sendError(out, "408 Request timeout");
-    goto finally;
+    [[unlikely]] goto finally;
   }
   line = socket->readLine(MAXIMUM_LINE_SIZE+2);
-  if (line.size() > MAXIMUM_LINE_SIZE) [[unlikely]] {
+  if (line.size() > MAXIMUM_LINE_SIZE) {
     sendError(out, "414 Request URI too long",
               "starting with: "+line.left(200));
-    goto finally;
+    [[unlikely]] goto finally;
   }
   line = line.trimmed();
   args = line.split(' ');
@@ -90,41 +91,41 @@ void HttpWorker::handleConnection(int socketDescriptor) {
   if (method == HttpRequest::HEAD) {
     res.disable_body_output();
   } else if (method == HttpRequest::NONE
-             || method == HttpRequest::ANY) [[unlikely]] {
+             || method == HttpRequest::ANY) {
     sendError(out, "405 Method not allowed",
               "starting with: "+args[0].left(200));
-    goto finally;
+    [[unlikely]] goto finally;
   }
-  if (!args[2].startsWith("HTTP/")) [[unlikely]] {
+  if (!args[2].startsWith("HTTP/")) {
     sendError(out, "400 Bad request protocol",
               "starting with: "+args[2].left(200));
-    goto finally;
+    [[unlikely]] goto finally;
   }
   for (;;) {
-    if (!socket->isOpen()) [[unlikely]] {
+    if (!socket->isOpen()) {
       //qDebug() << "socket is not open";
-      break;
+      [[unlikely]] break;
     }
     if (!socket->canReadLine()
-        && !socket->waitForReadyRead(MAXIMUM_READ_WAIT)) [[unlikely]] {
+        && !socket->waitForReadyRead(MAXIMUM_READ_WAIT)) {
       sendError(out, "408 Request timeout");
-      goto finally;
+      [[unlikely]] goto finally;
     }
     line = socket->readLine(MAXIMUM_LINE_SIZE+2).trimmed();
-    if (line.size() > MAXIMUM_LINE_SIZE) [[unlikely]] {
+    if (line.size() > MAXIMUM_LINE_SIZE) {
       sendError(out, "413 Header line too long",
                 "starting with: "+line.left(200));
-      goto finally;
+      [[unlikely]] goto finally;
     }
     if (line.isEmpty()) {
       //qDebug() << "line is empty";
       break;
     }
     // LATER: handle multi line headers
-    if (!req.parse_and_add_header(line)) [[unlikely]] {
+    if (!req.parse_and_add_header(line)) {
       sendError(out, "400 Bad request header line",
                 "starting with: "+line.left(200));
-      goto finally;
+      [[unlikely]] goto finally;
     }
     //qDebug() << "a7";
   }
@@ -146,25 +147,26 @@ void HttpWorker::handleConnection(int socketDescriptor) {
       && req.header("Content-Type"_u8)
       == "application/x-www-form-urlencoded"_u8) {
     contentLength = req.header("Content-Length"_u8, "-1"_u8).toLongLong();
-    if (contentLength < 0) [[unlikely]] {
+    if (contentLength < 0) {
       sendError(out, "411 Length Required");
-      goto finally;
+      [[unlikely]] goto finally;
     }
-    if (contentLength > MAXIMUM_ENCODED_FORM_POST_SIZE) [[unlikely]] {
+    if (contentLength > MAXIMUM_ENCODED_FORM_POST_SIZE) {
       sendError(out, "413 Encoded form parameters string too long",
                 "starting with: "+line.left(200));
-      goto finally;
+      [[unlikely]] goto finally;
     }
-    if (contentLength > 0) [[likely]] { // avoid enter infinite loop
+    if (contentLength > 0) { // avoid enter infinite loop
+      [[likely]];
       line = {};
       forever {
         line += socket->read(contentLength-line.size());
         if (contentLength && line.size() >= contentLength)
           break;
         // LATER avoid DoS by setting a maximum *total* read time out
-        if (!socket->waitForReadyRead(MAXIMUM_READ_WAIT)) [[unlikely]] {
+        if (!socket->waitForReadyRead(MAXIMUM_READ_WAIT)) {
           sendError(out, "408 Request timeout");
-          goto finally;
+          [[unlikely]] goto finally;
         }
       }
       // replacing + with space in URI since this cannot be done in HttpRequest
@@ -185,8 +187,8 @@ void HttpWorker::handleConnection(int socketDescriptor) {
     out << "HTTP/1.1 100 Continue\r\n\r\n";
     out.flush();
   }
-  if (!_defaultCacheControlHeader.isEmpty()) [[likely]]
-    res.set_header("Cache-Control", _defaultCacheControlHeader);
+  if (!_defaultCacheControlHeader.isEmpty())
+    [[likely]] res.set_header("Cache-Control", _defaultCacheControlHeader);
   processingContext(&req)(&res);
   handler->handleRequest(req, res, &processingContext);
   if (auto logPolicy = _server->logPolicy();

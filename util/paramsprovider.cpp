@@ -85,16 +85,18 @@ QVariant ParamsProvider::paramValue(
   // PercentEvaluator::eval_key() but when calling directly
   // ParamsProvider::paramXXX() it's far more consistent and convenient not to
   // have to call PercentEvaluator::eval_key(key, my_context_plus_this) instead
-  if (key.value(0) == '[') [[unlikely]] {
+  if (key.value(0) == '['){
+    [[unlikely]];
     auto eos = key.indexOf(']');
-    if (eos < 0) [[unlikely]] {// no ] in key
+    if (eos < 0) {// no ] in key
       v = def;
-      goto skip_param_raw_value;
+      [[unlikely]] goto skip_param_raw_value;
     }
     context.setScopeFilter(key.mid(1, eos-1));
     key = key.mid(eos+1);
   }
-  if (!context.functionsEvaluated()) [[likely]] {
+  if (!context.functionsEvaluated()) {
+    [[likely]];
     bool is_function;
     v = PercentEvaluator::eval_function(key, context, &is_function);
     if (is_function)

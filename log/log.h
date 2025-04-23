@@ -104,8 +104,8 @@ private:
       return def;
     auto output = input;
     for (char *s = output.data(); *s; ++s)
-      if (::isspace(*s)) [[unlikely]]
-        *s = '_';
+      if (::isspace(*s))
+        [[unlikely]] *s = '_';
     return output;
   }
   static Utf8String current_thread_name();

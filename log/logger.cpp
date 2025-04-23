@@ -63,7 +63,8 @@ void Logger::log(const Record &record) {
   // write logs over NFS), etc.
   if (record.severity() >= _min_severity) {
     if (_thread_model & DedicatedThread) {
-      if (!_buffer->tryPut(record)) [[unlikely]] {
+      if (!_buffer->tryPut(record)) {
+        [[unlikely]];
         // warn only if not warned recently
         QMutexLocker ml(&_bufferOverflownMutex);
         qint64 now = QDateTime::currentMSecsSinceEpoch();

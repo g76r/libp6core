@@ -78,10 +78,10 @@ void TemplatingHttpHandler::applyTemplateFile(
     HttpRequest req, HttpResponse res, QFile *file,
     ParamsProviderMerger *processingContext,
     Utf8String *output) {
-  if (!output) [[unlikely]] {
+  if (!output) {
     Log::error() << "TemplatingHttpHandler::applyTemplateFile called with null "
                     "output";
-    return;
+    [[unlikely]] return;
   }
   ParamsProviderMergerRestorer restorer(processingContext);
   if (processingContext->paramUtf8("!pathtoroot"_u8).isNull())
@@ -115,10 +115,10 @@ void TemplatingHttpHandler::applyTemplateFile(
         TextView *view = _views.value(markupData);
         if (view) {
           output->append(view->text(processingContext, req.url()));
-        } else [[unlikely]] {
+        } else {
           Log::warning() << "TemplatingHttpHandler did not find view '"
                          << markupData << "' among " << _views.keys();
-          output->append('?');
+          [[unlikely]] output->append('?');
         }
       } else if (markupId == "value" || markupId == "rawvalue") {
         // syntax: <?[raw]value:variablename[:valueifnotdef[:valueifdef]]?>
@@ -130,11 +130,11 @@ void TemplatingHttpHandler::applyTemplateFile(
         if (!value.isNull()) {
           value = markupParams.value(2, value);
         } else {
-          if (markupParams.size() < 2) [[unlikely]] {
+          if (markupParams.size() < 2) {
             Log::debug() << "TemplatingHttpHandler did not find value: '"
                          << markupParams.value(0) << "' in context 0x"
                          << QByteArray::number((long long)processingContext, 16);
-            value = u"?"_s;
+            [[unlikely]] value = u"?"_s;
           } else {
             value = markupParams.value(1);
           }
@@ -151,19 +151,20 @@ void TemplatingHttpHandler::applyTemplateFile(
         // LATER detect include loops
         if (included.open(QIODevice::ReadOnly)) {
           applyTemplateFile(req, res, &included, processingContext, output);
-        } else [[unlikely]] {
+        } else {
           Log::warning() << "TemplatingHttpHandler couldn't include file: '"
                          << markupData << "' as '" << included.fileName()
                          << "' in context 0x"
                          << QByteArray::number((long long)processingContext, 16)
                          << " : " << included.errorString();
-          output->append('?');
+          [[unlikely]] output->append('?');
         }
       } else if (markupId == "override") {
         // syntax: <?override:key:value?>
         auto markupParams = markupContent.split_headed_list(separatorPos);
         auto key = markupParams.value(0);
-        if (key.isEmpty()) [[unlikely]] {
+        if (key.isEmpty()) {
+          [[unlikely]];
           Log::debug() << "TemplatingHttpHandler cannot set parameter with "
                           "null key in file " << file->fileName();
         } else {
@@ -171,10 +172,10 @@ void TemplatingHttpHandler::applyTemplateFile(
                          markupParams.value(1), processingContext);
           processingContext->overrideParamValue(key, value);
         }
-      } else [[unlikely]] {
+      } else {
         Log::warning() << "TemplatingHttpHandler found unsupported markup: <?"
                        << markupContent << "?>";
-        output->append('?');
+        [[unlikely]] output->append('?');
       }
     }
     pos = markupPos+2;

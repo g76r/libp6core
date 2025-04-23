@@ -14,6 +14,7 @@
 #include "log.h"
 #include "multiplexerlogger.h"
 #include <QThread>
+#include <QDateTime>
 
 namespace p6::log {
 
@@ -81,8 +82,8 @@ qint64 Record::now() {
 inline static Utf8String sanitized_message(const Utf8String &input) {
   const char *begin = input.constData(), *s = begin;
   for (; *s; ++s)
-    if (*s == '\n') [[unlikely]]
-      goto eol_found;
+    if (*s == '\n')
+      [[unlikely]] goto eol_found;
   return input; // short path: copy nothing because there was no \n
 eol_found:;
   Utf8String output = input.sliced(0, s-begin);
@@ -98,8 +99,8 @@ Utf8String Record::formated_message() const {
   const static QString _timestamp_format = "yyyy-MM-ddThh:mm:ss,zzz ";
   Utf8String ts{QDateTime::fromMSecsSinceEpoch(_timestamp)
         .toString(_timestamp_format)};
-  if (ts.isEmpty()) [[unlikely]] // on late shutdown QDateTime ceases to work
-    ts = Utf8String::number(_timestamp/1e3, 'f', 3)+" "_u8;
+  if (ts.isEmpty()) // on late shutdown QDateTime ceases to work
+    [[unlikely]] ts = Utf8String::number(_timestamp/1e3, 'f', 3)+" "_u8;
   return ts+_taskid+"/"_u8+_execid+" "_u8+_location+" "_u8
       +severity_as_text(_severity)+" "_u8+sanitized_message(_message)+"\n"_u8;
 }
@@ -179,12 +180,13 @@ static void qtLogSamePatternWrapper(
     QtMsgType type, const QMessageLogContext &qtcontext, const QString &msg) {
   auto severity = severity_from_qttype(type);
   Utf8String location;
-  if (qtcontext.file) [[likely]]
-    location = qtcontext.file+":"_u8+Utf8String::number(qtcontext.line);
+  if (qtcontext.file)
+    [[likely]] location = qtcontext.file+":"_u8
+                          +Utf8String::number(qtcontext.line);
   fputs(Record(severity, {}, {}, location).set_message(msg)
         .formated_message(), stderr);
-  if (type == QtFatalMsg) [[unlikely]]
-    abort();
+  if (type == QtFatalMsg)
+    [[unlikely]] abort();
 }
 
 void wrapQtLogToSamePattern(bool enable) {

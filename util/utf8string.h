@@ -371,10 +371,11 @@ public:
       const int direction, const bool binary, const Utf8String &s,
       const qsizetype maxsize, const Utf8String &ellipsis) {
     auto ss = binary ? s.size() : s.utf8size();
-    if (maxsize < 0 || ss < maxsize) [[likely]] // input string already fits
-      return s;
+    if (maxsize < 0 || ss < maxsize) // input string already fits
+      [[likely]] return s;
     auto es = binary ? ellipsis.size() : ellipsis.utf8size();
-    if (es >= maxsize) [[unlikely]] { // ellipsis is larger than maxsize
+    if (es >= maxsize) { // ellipsis is larger than maxsize
+      [[unlikely]];
       if (direction >= 0) // elide by right or center will elide by right
         return (binary ? ellipsis.left(maxsize) : ellipsis.utf8left(maxsize));
       return (binary ? ellipsis.right(maxsize) : ellipsis.utf8right(maxsize));
@@ -433,8 +434,8 @@ public:
     if (ss >= size) // nothing to do
       return s;
     auto ps = binary ? padding.size() : padding.utf8size();
-    if (ps == 0) [[unlikely]] // can't pad with empty padding pattern
-      return s;
+    if (ps == 0) // can't pad with empty padding pattern
+      [[unlikely]] return s;
     Utf8String real_padding = padding;
     if (ps < size-ss) { // not enough padding, must repeat it
       real_padding = padding.repeated((size-ss)/ps + ((size-ss)%ps ? 1 : 0));
@@ -1289,14 +1290,14 @@ const char *Utf8String::go_forward_to_utf8_char(
     auto c = reinterpret_cast<const unsigned char *>(*s);
     if (*s >= end)
       return 0; // end reached
-    if ((c[0] & 0b1100'0000) == 0b1000'0000) [[unlikely]] {
+    if ((c[0] & 0b1100'0000) == 0b1000'0000) { // skip continuation byte
       ++*s;
-      continue; // skip continuation byte
+      [[unlikely]] continue;
     }
     if (skip_bom && c[0] == 0xef && *s+3 <= end && c[1] == 0xbb
-        && c[2] == 0xbf) [[unlikely]] {
+        && c[2] == 0xbf) { // skip byte order mark
       *s += 3;
-      continue; // skip byte order mark
+      [[unlikely]] continue;
     }
     return *s; // begin of valid sequence found
   }
@@ -1308,14 +1309,14 @@ const char *Utf8String::go_backward_to_utf8_char(
     auto c = reinterpret_cast<const unsigned char *>(*s);
     if (*s < begin)
       return 0; // begin overtaken
-    if ((c[0] & 0b1100'0000) == 0b1000'0000) [[unlikely]] {
+    if ((c[0] & 0b1100'0000) == 0b1000'0000) { // skip continuation byte
       --*s;
-      continue; // skip continuation byte
+      [[unlikely]] continue;
     }
     if (skip_bom && c[0] == 0xbf && *s-3 >= begin && c[-1] == 0xbb
-        && c[-2] == 0xef) [[unlikely]] {
+        && c[-2] == 0xef) { // skip byte order mark
       *s -= 3;
-      continue; // skip byte order mark
+      [[unlikely]] continue;
     }
     return *s; // begin of valid sequence found
   }
@@ -1325,70 +1326,70 @@ template <bool strict>
 char32_t Utf8String::decode_utf8_and_step_forward(
     const char **s, const char *end) {
   auto c = reinterpret_cast<const unsigned char *>(*s);
-  if (c[0] < 0b1000'0000) [[likely]] {
-    *s += 1; // ascii, 1 byte
-    return c[0];
-  }
-  if (c[0] < 0b1100'0000) [[unlikely]] {
+  if (c[0] < 0b1000'0000) { // ascii, 1 byte
     *s += 1;
-    return ReplacementCharacter; // out of sequence continuation byte
+    [[likely]] return c[0];
+  }
+  if (c[0] < 0b1100'0000) { // out of sequence continuation byte
+    *s += 1;
+    [[unlikely]] return ReplacementCharacter;
   }
   if (c[0] < 0b1110'0000) {
     *s += 2; // 2 bytes
-    if (*s > end) [[unlikely]] {
+    if (*s > end) { // incomplete sequence at end
       *s = end;
-      return ReplacementCharacter; // incomplete sequence at end
+      [[unlikely]] return ReplacementCharacter;
     }
     char32_t u = (c[0] & 0b0001'1111) << 6 | (c[1] & 0b0011'1111);
-    if (strict && u < 0x80) [[unlikely]]
-      return ReplacementCharacter; // overlong sequence
-    if (strict && (c[1] & 0b1100'0000) != 0b1000'0000) [[unlikely]]
-      return ReplacementCharacter; // invalid continuation byte
+    if (strict && u < 0x80) // overlong sequence
+       [[unlikely]]return ReplacementCharacter;
+    if (strict && (c[1] & 0b1100'0000) != 0b1000'0000) // bad continuation byte
+      [[unlikely]] return ReplacementCharacter;
     return u;
   }
   if (c[0] < 0b1111'0000) {
     *s += 3; // 3 bytes
-    if (*s > end) [[unlikely]] {
+    if (*s > end) { // incomplete sequence at end
       *s = end;
-      return ReplacementCharacter; // incomplete sequence at end
+      [[unlikely]] return ReplacementCharacter;
     }
     char32_t u = ((c[0] & 0b0000'1111) << 12) | ((c[1] & 0b0011'1111) << 6)
         | (c[2] & 0b0011'1111);
-    if (u >= 0xd800 && u <= 0xdfff) [[unlikely]]
-      return ReplacementCharacter; // RFC 3629: surrogate halves are invalid
-    if (strict && u < 0x800) [[unlikely]]
-      return ReplacementCharacter; // overlong sequence
-    if (strict && ((c[1] & 0b1100'0000) != 0b1000'0000
-                   || (c[2] & 0b1100'0000) != 0b1000'0000)) [[unlikely]]
-      return ReplacementCharacter; // invalid continuation byte
+    if (u >= 0xd800 && u <= 0xdfff) // RFC 3629: surrogate halves are invalid
+      [[unlikely]] return ReplacementCharacter;
+    if (strict && u < 0x800) // overlong sequence
+      [[unlikely]] return ReplacementCharacter;
+    if (strict && ((c[1] & 0b1100'0000) != 0b1000'0000 // bad continuation byte
+                   || (c[2] & 0b1100'0000) != 0b1000'0000))
+      [[unlikely]] return ReplacementCharacter;
     return u;
   }
   *s += 4; // 4 bytes
-  if (*s > end) [[unlikely]] {
+  if (*s > end) { // incomplete sequence at end
     *s = end;
-    return ReplacementCharacter; // incomplete sequence at end
+    [[unlikely]] return ReplacementCharacter;
   }
   // note: first byte mask intentionnaly keeps 0b0000'1000 bit so that a 5+ bytes
   // sequence will be >= 0x10'ffff and discarded without specific test
   char32_t u = ((c[0] & 0b0000'1111) << 18) | ((c[1] & 0b0011'1111) << 12)
       | ((c[2] & 0b0011'1111) << 6) | (c[3] & 0b0011'1111);
-  if (u >= 0x10'ffff) [[unlikely]]
-    return ReplacementCharacter;  // RFC 3629: > 0x10ffff are invalid
-  if (strict && u < 0x10000) [[unlikely]]
-    return ReplacementCharacter; // overlong sequence
-  if (strict && ((c[1] & 0b1100'0000) != 0b1000'0000
+  if (u >= 0x10'ffff) // RFC 3629: > 0x10ffff are invalid
+    [[unlikely]] return ReplacementCharacter;
+  if (strict && u < 0x10000) // overlong sequence
+    [[unlikely]] return ReplacementCharacter;
+  if (strict && ((c[1] & 0b1100'0000) != 0b1000'0000 // bad continuation byte
                  || (c[2] & 0b1100'0000) != 0b1000'0000
-                 || (c[3] & 0b1100'0000) != 0b1000'0000)) [[unlikely]]
-    return ReplacementCharacter; // invalid continuation byte
+                 || (c[3] & 0b1100'0000) != 0b1000'0000))
+    [[unlikely]] return ReplacementCharacter;
   return u;
 }
 
 void Utf8String::encode_utf8_and_step_forward(char **d, char32_t u) {
   auto c = reinterpret_cast<unsigned char *>(*d);
-  if (u < 0x80) [[likely]] { // ascii, 1 byte
+  if (u < 0x80) { // ascii, 1 byte
     c[0] = u;
     *d += 1;
-    return;
+    [[likely]] return;
   }
   if (u < 0x800) {
     c[0] = 0b1100'0000 + (u >> 6);
@@ -1396,8 +1397,8 @@ void Utf8String::encode_utf8_and_step_forward(char **d, char32_t u) {
     *d += 2;
     return;
   }
-  if (u >= 0xd800 && u <= 0xdfff) [[unlikely]]
-    return; // RFC 3629: surrogate halves are invalid
+  if (u >= 0xd800 && u <= 0xdfff) // RFC 3629: surrogate halves are invalid
+    [[unlikely]] return;
   if (u < 0x10000) {
     c[0] = 0b1110'0000 + (u >> 12);
     c[1] = 0b1000'0000 + ((u >> 6) & 0b11'1111);
@@ -1405,8 +1406,8 @@ void Utf8String::encode_utf8_and_step_forward(char **d, char32_t u) {
     *d += 3;
     return;
   }
-  if (u > 0x10'ffff) [[unlikely]]
-    return; // RFC 3629: > 0x10ffff are invalid
+  if (u > 0x10'ffff) // RFC 3629: > 0x10ffff are invalid
+    [[unlikely]] return;
   c[0] = 0b1111'0000 + (u >> 18);
   c[1] = 0b1000'0000 + ((u >> 12) & 0b11'1111);
   c[2] = 0b1000'0000 + ((u >> 6) & 0b11'1111);
@@ -1415,9 +1416,9 @@ void Utf8String::encode_utf8_and_step_forward(char **d, char32_t u) {
 }
 
 Utf8String Utf8String::encode_utf8(char32_t u) {
-  if (u < 0x80) [[likely]] { // ascii, 1 byte
+  if (u < 0x80) { // ascii, 1 byte
     unsigned char c = u;
-    return Utf8String(&c, 1);
+    [[likely]] return Utf8String(&c, 1);
   }
   if (u < 0x800) {
     unsigned char s[2];
@@ -1425,8 +1426,8 @@ Utf8String Utf8String::encode_utf8(char32_t u) {
     s[1] = 0b1000'0000 + (u & 0b11'1111);
     return Utf8String(s, sizeof s);
   }
-  if (u >= 0xd800 && u <= 0xdfff) [[unlikely]]
-    return ReplacementCharacterUtf8; // RFC 3629: surrogate halves are invalid
+  if (u >= 0xd800 && u <= 0xdfff) // RFC 3629: surrogate halves are invalid
+    [[unlikely]] return ReplacementCharacterUtf8;
   if (u < 0x10000) {
     unsigned char s[3];
     s[0] = 0b1110'0000 + (u >> 12);
@@ -1434,8 +1435,8 @@ Utf8String Utf8String::encode_utf8(char32_t u) {
     s[2] = 0b1000'0000 + (u & 0b11'1111);
     return Utf8String(s, sizeof s);
   }
-  if (u > 0x10'ffff) [[unlikely]]
-    return ReplacementCharacterUtf8; // RFC 3629: > 0x10ffff are invalid
+  if (u > 0x10'ffff) // RFC 3629: > 0x10ffff are invalid
+    [[unlikely]] return ReplacementCharacterUtf8;
   unsigned char s[4];
   s[0] = 0b1111'0000 + (u >> 18);
   s[1] = 0b1000'0000 + ((u >> 12) & 0b11'1111);
@@ -1450,10 +1451,10 @@ void Utf8String::clean(char *s, const char *end) {
   while (s < end) {
     auto c = decode_utf8_and_step_forward<strict>(
                const_cast<const char**>(&s), end);
-    if (!keep_replacement_chars && c == ReplacementCharacter) [[unlikely]]
-      continue;
-    if (!keep_bom && c == ByteOrderMark) [[unlikely]]
-      continue;
+    if (!keep_replacement_chars && c == ReplacementCharacter)
+      [[unlikely]] continue;
+    if (!keep_bom && c == ByteOrderMark)
+      [[unlikely]] continue;
     encode_utf8_and_step_forward(&d, c);
   }
 }
@@ -1464,10 +1465,10 @@ Utf8String &Utf8String::clean() {
   while (s < end) {
     auto c = decode_utf8_and_step_forward<strict>(
                const_cast<const char**>(&s), end);
-    if (!keep_replacement_chars && c == ReplacementCharacter) [[unlikely]]
-      continue;
-    if (!keep_bom && c == ByteOrderMark) [[unlikely]]
-      continue;
+    if (!keep_replacement_chars && c == ReplacementCharacter)
+      [[unlikely]] continue;
+    if (!keep_bom && c == ByteOrderMark)
+      [[unlikely]] continue;
     encode_utf8_and_step_forward(&d, c);
   }
   truncate(d-begin);
@@ -1480,10 +1481,10 @@ Utf8String Utf8String::cleaned(const char *s, const char *end) {
   char *d = cleaned.data(), *begin = d; // destination
   while (s < end) {
     auto c = decode_utf8_and_step_forward<strict>(&s, end);
-    if (!keep_replacement_chars && c == ReplacementCharacter) [[unlikely]]
-      continue;
-    if (!keep_bom && c == ByteOrderMark) [[unlikely]]
-      continue;
+    if (!keep_replacement_chars && c == ReplacementCharacter)
+      [[unlikely]] continue;
+    if (!keep_bom && c == ByteOrderMark)
+      [[unlikely]] continue;
     encode_utf8_and_step_forward(&d, c);
   }
   cleaned.truncate(d-begin);

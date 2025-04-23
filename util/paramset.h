@@ -431,15 +431,15 @@ ParamSet ParamSet::parent() const noexcept {
 }
 
 void ParamSet::setParent(const ParamSet &parent) {
-  if (!d) [[unlikely]]
-    d = new ParamSetData;
+  if (!d)
+    [[unlikely]] d = new ParamSetData;
   if (d.constData() != parent.d.constData())
     d->_parent = parent;
 }
 
 void ParamSet::setScope(const Utf8String &scope) {
-  if (!d) [[unlikely]]
-    d = new ParamSetData;
+  if (!d)
+    [[unlikely]] d = new ParamSetData;
   d->_scope = scope;
 }
 
