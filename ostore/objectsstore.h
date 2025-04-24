@@ -70,7 +70,7 @@ public:
     Result(bool success, QString code = { }, QString message = { })
       : d(new ResultData(success, code, message)) { }
     bool success() const { return d ? d->_success : false; }
-    operator bool() const { return success(); }
+    bool operator !() const { return !success(); }
     QString code() const { return d ? d->_code : QString(); }
     QString message() const { return d ? d->_message : QString(); }
     QObject *object() const { return d ? d->_object : nullptr; }

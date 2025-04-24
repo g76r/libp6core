@@ -161,7 +161,7 @@ public:
       _execid(sanitized_field(execid, "0"_u8)),
       _location(sanitized_field(location, ":"_u8)) { }
   Record() {}
-  inline operator bool() const { return !!_timestamp; }
+  inline bool operator !() const { return !_timestamp; }
   inline qint64 timestamp() const { return _timestamp; }
   inline Utf8String taskid() const { return _taskid; }
   inline Utf8String execid() const { return _execid; }
