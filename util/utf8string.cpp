@@ -227,12 +227,6 @@ static inline bool testCase(
   return true;
 }
 
-Utf8String Utf8String::toUpper() const {
-  auto s = constData();
-  auto end = s + size();
-  return foldCase(s, end, [](char32_t u) { return Utf8String::toUpper(u); });
-}
-
 Utf8String Utf8String::toIdentifier(bool allow_non_ascii) const {
   auto s = constData();
   auto end = s + size();
@@ -287,34 +281,46 @@ Utf8String Utf8String::toInternetHeaderCase() const {
   return foldCase(s, end, f);
 }
 
+Utf8String Utf8String::toUpper() const {
+  auto s = constData();
+  auto end = s + size();
+  return foldCase(
+        s, end, static_cast<char32_t(*)(char32_t)>(&Utf8String::toUpper));
+}
+
 Utf8String Utf8String::toLower() const {
   auto s = constData();
   auto end = s + size();
-  return foldCase(s, end, [](char32_t u) { return Utf8String::toLower(u); });
+  return foldCase(
+        s, end, static_cast<char32_t(*)(char32_t)>(&Utf8String::toLower));
 }
 
 Utf8String Utf8String::toTitle() const {
   auto s = constData();
   auto end = s + size();
-  return foldCase(s, end, [](char32_t u) { return Utf8String::toTitle(u); });
+  return foldCase(
+        s, end, static_cast<char32_t(*)(char32_t)>(&Utf8String::toTitle));
 }
 
 bool Utf8String::isUpper() const {
   auto s = constData();
   auto end = s + size();
-  return testCase(s, end, [](char32_t u) { return Utf8String::toUpper(u); });
+  return testCase(
+        s, end, static_cast<char32_t(*)(char32_t)>(&Utf8String::toUpper));
 }
 
 bool Utf8String::isLower() const {
   auto s = constData();
   auto end = s + size();
-  return testCase(s, end, [](char32_t u) { return Utf8String::toLower(u); });
+  return testCase(
+        s, end, static_cast<char32_t(*)(char32_t)>(&Utf8String::toLower));
 }
 
 bool Utf8String::isTitle() const {
   auto s = constData();
   auto end = s + size();
-  return testCase(s, end, [](char32_t u) { return Utf8String::toTitle(u); });
+  return testCase(
+        s, end, static_cast<char32_t(*)(char32_t)>(&Utf8String::toTitle));
 }
 
 Utf8StringList Utf8String::split_after(
