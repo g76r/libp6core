@@ -48,7 +48,7 @@ public:
   [[nodiscard]] Utf8String headed_join(
       const Utf8String &separator) const;
   [[nodiscard]] Utf8String headed_join(const char separator) const;
-  [[nodiscard]] inline QStringList toStringList() const {
+  [[nodiscard]] inline QStringList toUtf16StringList() const {
     return QStringList(cbegin(), cend()); }
   [[nodiscard]] inline QByteArrayList toByteArrayList() const {
     return QByteArrayList(cbegin(), cend()); }
