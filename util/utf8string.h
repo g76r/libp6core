@@ -1132,6 +1132,27 @@ public:
   [[nodiscard]] inline static Utf8String fromCEscaped(auto escaped) {
     Utf8String s(escaped);
     return fromCEscaped(s.constData(), s.size()); }
+  /** C-Escape a string, e.g. replace \ \r \n \x19 " ' with backslashed
+   *  sequences, leaving alone anything > 0x7f because it's likely to be
+   *  part of a valid utf8 sequence.
+   *  note that the behavior > 0x7f is different from cEscaped(char c).
+   *  e.g. a'béz -> a\'béz which is at byte level "a\\'b\xc3\xa9z"
+   */
+  [[nodiscard]] Utf8String cEscaped() const;
+  /** C-Escape a string, e.g. replace \ \r \n \x19 " ' and anything above
+   *  0x7f with backslashed sequences, producing pure 7 bits ascii.
+   *  e.g. a'béz -> a\'b\u00e9z which is at byte level "a\\'b\\u00e9z"
+   */
+  [[nodiscard]] Utf8String asciiCEscaped() const;
+  /** C-Escape a char, e.g. replace \ \r \n \x19 \xa7 " ' with backslashed
+   *  sequences.
+   *  note that the behavior > 0x7f is different from cEscaped(void),
+   *  because a lone byte > 0x7f can't be a valid utf8 sequence.
+   */
+  [[nodiscard]] static Utf8String cEscaped(char c);
+  /** C-Escape a char, e.g. replace \ \r \n \x19 " ' and anything above
+   *  0x7f with backslashed sequences, producing pure 7 bits ascii. */
+  [[nodiscard]] static Utf8String asciiCEscaped(char32_t u);
 
   /** Test if u is an ascii whitespace char: ' ', '\t', '\n'... */
   [[nodiscard]] inline static bool is_ascii_whitespace(char32_t u) {

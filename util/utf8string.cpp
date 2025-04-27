@@ -454,7 +454,7 @@ inline qsizetype decode_oct_char(const char *s, const char *end, char32_t *u) {
   return s-begin;
 }
 
-inline qint8 hex_digit_value(char c) {
+static inline qint8 hex_digit_value(char c) {
   switch(c) {
     case '0':
       return 0;
@@ -498,6 +498,14 @@ inline qint8 hex_digit_value(char c) {
   return -1;
 }
 
+/** convert 4 into '4' and 13 into 'd', assuming i < 16 */
+static inline char hex_digit(quint8 i) {
+  Q_ASSERT(i < 16);
+  if (i < 10)
+    return '0'+i;
+  return 'a'+i-10;
+}
+
 inline qsizetype decode_hex_char(
     const char *s, const char *end, qsizetype digits, char32_t *u) {
   *u = 0;
@@ -513,6 +521,144 @@ inline qsizetype decode_hex_char(
     *u = (*u << 4) + i;
   }
   return digits;
+}
+
+/** return 0 for non escapable chars, their escape char if any or -1 for hex
+ *  sequences.
+ *  e.g. '\n' -> 'n'
+ *       '\x19' '\0' '\1' and '\x7f' -> -1
+ *       'a' 'Z' ' ' and '\x80' -> 0
+ *       '\'' -> '\''
+ *       '"' -> '"'
+ */
+static inline qsizetype c_escape_char(char c) {
+  if (c == '\n')
+    return 'n';
+  if (c == '\r')
+    return 'r';
+  if (c == '\t')
+    return 't';
+  if (c == '\\')
+    return '\\';
+  if (c == '\'')
+    return '\'';
+  if (c == '"')
+    return '"';
+  if ((quint8)c < 32 || c == 127)
+    return -1; // to be escaped with hex sequence
+  [[likely]] return 0; // not to be escaped
+}
+
+Utf8String Utf8String::cEscaped(char c) {
+  auto escape = c_escape_char(c);
+  if (escape < 0 || ((quint8)c) > 0x7f)
+    return "\\x"_u8
+        + hex_digit(((quint8)c) >> 4)
+        + hex_digit(((quint8)c) & 0x0f);
+  if (escape > 0)
+    return "\\"_u8+c;
+  [[likely]] return Utf8String(c);
+}
+
+Utf8String Utf8String::cEscaped() const {
+  const char *begin = constData(), *s = begin;
+  for (; *s; ++s)
+    if (c_escape_char(*s))
+      [[unlikely]] goto need_escaping;
+  return *this; // short path: copy nothing because there was nothing to escape
+need_escaping:;
+  Utf8String output = sliced(0, s-begin);
+  for (; *s; ++s) {
+    qsizetype escape = c_escape_char(*s);
+    if (escape < 0) {
+      output += '\\';
+      output += 'x';
+      output += hex_digit(((quint8)*s) >> 4);
+      output += hex_digit(((quint8)*s) & 0xf);
+      continue;
+    }
+    if (escape > 0) {
+      output += '\\';
+      output += (char)escape;
+      continue;
+    }
+    output += *s;
+  }
+  return output;
+}
+
+Utf8String Utf8String::asciiCEscaped(char32_t u) {
+  if (u > 0xffff)
+    return "\\U"_u8
+        + hex_digit(u >> 28)
+        + hex_digit((u >> 24) & 0xf)
+        + hex_digit((u >> 20) & 0xf)
+        + hex_digit((u >> 16) & 0xf)
+        + hex_digit((u >> 12) & 0xf)
+        + hex_digit((u >> 8) & 0xf)
+        + hex_digit((u >> 4) & 0xf)
+        + hex_digit(u & 0xf);
+  if (u > 0x7f)
+    return "\\u"_u8
+        + hex_digit(u >> 12)
+        + hex_digit((u >> 8) & 0xf)
+        + hex_digit((u >> 4) & 0xf)
+        + hex_digit(u & 0xf);
+  [[likely]] return cEscaped((char)u);
+}
+
+Utf8String Utf8String::asciiCEscaped() const {
+  const char *begin = constData(), *s = begin, *end = s+size();
+  for (; go_forward_to_utf8_char(&s, end); ++s) {
+    char32_t u = decode_utf8(s, end);
+    if (u > 0x7f || c_escape_char(u))
+      [[unlikely]] goto need_escaping;
+  }
+  return *this; // short path: copy nothing because there was nothing to escape
+need_escaping:;
+  Utf8String output = sliced(0, s-begin);
+  // for (; go_forward_to_utf8_char(&s, end); ++s) {
+  //   char32_t u = decode_utf8(s, end);
+  while (s < end) {
+    auto u = decode_utf8_and_step_forward(&s, end);
+    if (u > 0xffff) {
+      output += '\\';
+      output += 'U';
+      output += hex_digit(u >> 28);
+      output += hex_digit((u >> 24) & 0xf);
+      output += hex_digit((u >> 20) & 0xf);
+      output += hex_digit((u >> 16) & 0xf);
+      output += hex_digit((u >> 12) & 0xf);
+      output += hex_digit((u >> 8) & 0xf);
+      output += hex_digit((u >> 4) & 0xf);
+      output += hex_digit(u & 0xf);
+      continue;
+    }
+    if (u > 0x7f) {
+      output += '\\';
+      output += 'u';
+      output += hex_digit(u >> 12);
+      output += hex_digit((u >> 8) & 0xf);
+      output += hex_digit((u >> 4) & 0xf);
+      output += hex_digit(u & 0xf);
+      continue;
+    }
+    qsizetype escape = c_escape_char(u);
+    if (escape < 0) {
+      output += '\\';
+      output += 'x';
+      output += hex_digit(u >> 4);
+      output += hex_digit(u & 0xf);
+      continue;
+    }
+    if (escape > 0) {
+      output += '\\';
+      output += (char)escape;
+      continue;
+    }
+    output += (char)u;
+  }
+  return output;
 }
 
 Utf8String Utf8String::fromCEscaped(const char *s, qsizetype len) {

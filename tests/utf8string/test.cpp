@@ -97,5 +97,22 @@ int main(void) {
            << Utf8String("8G").toLongLong() << "= 8000000000"
            << Utf8String("8b").toLongLong() << "= 8000000000"
               ;
+  qDebug()
+      << Utf8String((char)0xc2)+Utf8String((char)0xa7) // §
+      << "\xc2\xa7"_u8 // §
+      << "a'bc§♯越🥨"_u8.cEscaped()
+      << "a'bc§♯越🥨"_u8.asciiCEscaped()
+      << Utf8String::cEscaped("§"_u8[0]) // \xc2 first byte of §
+      << Utf8String::cEscaped('a')
+      << Utf8String::cEscaped('\a')
+      << Utf8String::cEscaped('\n')
+      << Utf8String::cEscaped(0)
+      << Utf8String::asciiCEscaped(U'a')
+      << Utf8String::asciiCEscaped(U'\a')
+      << Utf8String::asciiCEscaped('\a')
+      << Utf8String::asciiCEscaped('\b')
+      << Utf8String::asciiCEscaped(0)
+      << Utf8String::asciiCEscaped(U'§')
+      << Utf8String::asciiCEscaped(U'🥨');
   return 0;
 }
