@@ -250,7 +250,7 @@ Utf8String Utf8String::toInternetHeaderName(bool ignore_trailing_colon) const {
     --end;
   auto f = [](char32_t u) -> char32_t {
     // rfc5322 states that a header may contain any ascii printable char but ':'
-    if (u >= 0x21 && u <= 0x7f && u != ':')
+    if (u > 0x20 && u < 0x7f && u != ':')
       return u;
     return Utf8String::ReplacementCharacter;
   };
