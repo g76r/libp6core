@@ -328,25 +328,25 @@ qint64 HttpResponse::handlingms() const {
 }
 
 static RadixTree <std::function<QVariant(const HttpResponse *res, const Utf8String &key, const EvalContext &context, int ml)>> _functions {
-{ "status", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) -> QVariant {
+{ "status", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> QVariant {
   return res->status();
 }},
-{ "receiveddate", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) -> QVariant {
+{ "receiveddate", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> QVariant {
   return res->received_date();
 }},
-{ "handleddate", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) -> QVariant {
+{ "handleddate", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> QVariant {
   return res->handled_date();
 }},
-{ "flusheddate", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) -> QVariant {
+{ "flusheddate", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> QVariant {
   return res->flushed_date();
 }},
-{ "servicems", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) -> QVariant {
+{ "servicems", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> QVariant {
   return res->servicems();
 }},
-{ "handlingms", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) -> QVariant {
+{ "handlingms", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> QVariant {
   return res->handlingms();
 }},
-{ { "header", "requestheader" }, [](const HttpResponse *res, const Utf8String &key, const EvalContext&, int ml) -> QVariant {
+{ { "header", "requestheader" }, [](const HttpResponse *res, const Utf8String &key, const EvalContext&, int ml) STATIC_LAMBDA -> QVariant {
   return res->header(key.mid(ml+1).toInternetHeaderCase());
 }, true},
 };

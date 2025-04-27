@@ -1,4 +1,4 @@
-/* Copyright 2016-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,9 +19,9 @@
 /** Helper class to make it possible to initialize a RadixTree with such syntax:
  * RadixTree<int> foo { {"abc", 42, true}, { "xyz", -1 } };
  * RadixTree<std::function<double(double)>> bar {
- *   { "square", [](double d){ return d*d; } },
+ *   { "square", [](double d) static { return d*d; } },
  *   { "round", ::round },
- *   { { "opposite", "-" }, [](double d){ return -d; } }
+ *   { { "opposite", "-" }, [](double d) static { return -d; } }
  * };
  * keys are encoded in utf-8
  */

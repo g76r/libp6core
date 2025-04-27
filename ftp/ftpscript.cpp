@@ -1,4 +1,4 @@
-/* Copyright 2016-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -51,14 +51,14 @@ struct FtpCommand {
                            minExpectedResult, maxExpectedResult)) { }
   FtpCommand(std::function<QString()> command, int minExpectedResult = 200,
              int maxExpectedResult = 299)
-    : FtpCommand([](){}, command, minExpectedResult, maxExpectedResult) { }
+    : FtpCommand([]() STATIC_LAMBDA {}, command, minExpectedResult, maxExpectedResult) { }
   FtpCommand(std::function<QString()> command,
              std::function<bool(bool *success, QString *errorString,
                                 int resultCode, QString result)> isFinished)
-    : FtpCommand([](){}, command, isFinished) { }
+    : FtpCommand([]() STATIC_LAMBDA {}, command, isFinished) { }
   FtpCommand(std::function<void()> actionBefore, int minExpectedResult = 200,
              int maxExpectedResult = 299)
-    : FtpCommand(actionBefore, [](){ return QString(); },
+    : FtpCommand(actionBefore, []() STATIC_LAMBDA { return QString(); },
   std::bind(resultCodeBaseIsFinished, _1, _2, _3, _4, minExpectedResult,
             maxExpectedResult)) { }
   FtpCommand(std::function<void()> actionBefore, QString command,
@@ -72,12 +72,12 @@ struct FtpCommand {
   FtpCommand(QString command,
              std::function<bool(bool *success, QString *errorString,
                                 int resultCode, QString result)> isFinished)
-    : FtpCommand([](){}, [=](){ return command; }, isFinished) { }
+    : FtpCommand([]() STATIC_LAMBDA {}, [=](){ return command; }, isFinished) { }
   FtpCommand(QString command, int minExpectedResult = 200,
              int maxExpectedResult = 299)
-    : FtpCommand([](){}, [=](){ return command; }, minExpectedResult,
+    : FtpCommand([]() STATIC_LAMBDA {}, [=](){ return command; }, minExpectedResult,
   maxExpectedResult) { }
-  FtpCommand() : FtpCommand([](){}, [](){ return QString(); }, alwaysFail) { }
+  FtpCommand() : FtpCommand([]() STATIC_LAMBDA {}, []() STATIC_LAMBDA { return QString(); }, alwaysFail) { }
 
 private:
   static bool resultCodeBaseIsFinished(

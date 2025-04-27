@@ -40,14 +40,14 @@ const Utf8String Utf8String::DefaultPadding = " "_u8;
 static int staticInit() {
   qRegisterMetaType<Utf8String>();
   QMetaType::registerConverter<Utf8String,QVariant>();
-  QMetaType::registerConverter<QVariant,Utf8String>([](const QVariant &v) {
-    return Utf8String(v); });
+  QMetaType::registerConverter<QVariant,Utf8String>(
+        [](const QVariant &v) STATIC_LAMBDA { return Utf8String(v); });
   QMetaType::registerConverter<Utf8String,QString>(&Utf8String::toUtf16);
   QMetaType::registerConverter<Utf8String,QByteArray>();
-  QMetaType::registerConverter<QString,Utf8String>([](const QString &s) {
-    return Utf8String(s); });
-  QMetaType::registerConverter<QByteArray,Utf8String>([](const QByteArray &s) {
-    return Utf8String(s); });
+  QMetaType::registerConverter<QString,Utf8String>(
+        [](const QString &s) STATIC_LAMBDA { return Utf8String(s); });
+  QMetaType::registerConverter<QByteArray,Utf8String>(
+        [](const QByteArray &s) STATIC_LAMBDA { return Utf8String(s); });
   QMetaType::registerConverter<Utf8String,bool>(&Utf8String::convToBool);
   QMetaType::registerConverter<Utf8String,double>(&Utf8String::convToDouble);
   QMetaType::registerConverter<Utf8String,float>(&Utf8String::convToFloat);
@@ -59,63 +59,64 @@ static int staticInit() {
   QMetaType::registerConverter<Utf8String,uint>(&Utf8String::convToUInt);
   QMetaType::registerConverter<Utf8String,short>(&Utf8String::convToShort);
   QMetaType::registerConverter<Utf8String,ushort>(&Utf8String::convToUShort);
-  QMetaType::registerConverter<bool,Utf8String>([](const bool &n) {
+  QMetaType::registerConverter<bool,Utf8String>(
+        [](const bool &n) STATIC_LAMBDA { return Utf8String::number(n); });
+  QMetaType::registerConverter<double,Utf8String>(
+        [](const double &n) STATIC_LAMBDA { return Utf8String::number(n); });
+  QMetaType::registerConverter<float,Utf8String>(
+        [](const float &n) STATIC_LAMBDA { return Utf8String::number((double)n); });
+  QMetaType::registerConverter<qlonglong,Utf8String>(
+        [](const qlonglong &n) STATIC_LAMBDA { return Utf8String::number(n); });
+  QMetaType::registerConverter<qulonglong,Utf8String>(
+        [](const qulonglong &n) STATIC_LAMBDA {
     return Utf8String::number(n); });
-  QMetaType::registerConverter<double,Utf8String>([](const double &n) {
-    return Utf8String::number(n); });
-  QMetaType::registerConverter<float,Utf8String>([](const float &n) {
-    return Utf8String::number((double)n); });
-  QMetaType::registerConverter<qlonglong,Utf8String>([](const qlonglong &n) {
-    return Utf8String::number(n); });
-  QMetaType::registerConverter<qulonglong,Utf8String>([](const qulonglong &n) {
-    return Utf8String::number(n); });
-  QMetaType::registerConverter<long,Utf8String>([](const long &n) {
-    return Utf8String::number(n); });
-  QMetaType::registerConverter<ulong,Utf8String>([](const ulong &n) {
-    return Utf8String::number(n); });
-  QMetaType::registerConverter<int,Utf8String>([](const int &n) {
-    return Utf8String::number(n); });
-  QMetaType::registerConverter<uint,Utf8String>([](const uint &n) {
-    return Utf8String::number(n); });
-  QMetaType::registerConverter<short,Utf8String>([](const short &n) {
-    return Utf8String::number(n); });
-  QMetaType::registerConverter<ushort,Utf8String>([](const ushort &n) {
-    return Utf8String::number(n); });
-  QMetaType::registerConverter<QDateTime,Utf8String>([](const QDateTime &d) {
-    return Utf8String(d.toString(Qt::ISODateWithMs)); });
-  QMetaType::registerConverter<QDate,Utf8String>([](const QDate &d) {
-    return Utf8String(d.toString(Qt::ISODateWithMs)); });
-  QMetaType::registerConverter<QTime,Utf8String>([](const QTime &d) {
-    return Utf8String(d.toString(Qt::ISODateWithMs)); });
-  QMetaType::registerConverter<Utf8String,QDateTime>([](const Utf8String &s) {
-    return QDateTime::fromString(s, Qt::ISODateWithMs); });
-  QMetaType::registerConverter<Utf8String,QDate>([](const Utf8String &s) {
-    return QDate::fromString(s, Qt::ISODateWithMs); });
-  QMetaType::registerConverter<Utf8String,QTime>([](const Utf8String &s) {
-    return QTime::fromString(s, Qt::ISODateWithMs); });
-  QMetaType::registerConverter<QPointF,Utf8String>([](const QPointF &p) {
-    return Utf8String(p); });
+  QMetaType::registerConverter<long,Utf8String>(
+        [](const long &n) STATIC_LAMBDA { return Utf8String::number(n); });
+  QMetaType::registerConverter<ulong,Utf8String>(
+        [](const ulong &n) STATIC_LAMBDA { return Utf8String::number(n); });
+  QMetaType::registerConverter<int,Utf8String>(
+        [](const int &n) STATIC_LAMBDA { return Utf8String::number(n); });
+  QMetaType::registerConverter<uint,Utf8String>(
+        [](const uint &n) STATIC_LAMBDA { return Utf8String::number(n); });
+  QMetaType::registerConverter<short,Utf8String>(
+        [](const short &n) STATIC_LAMBDA { return Utf8String::number(n); });
+  QMetaType::registerConverter<ushort,Utf8String>(
+        [](const ushort &n) STATIC_LAMBDA { return Utf8String::number(n); });
+  QMetaType::registerConverter<QDateTime,Utf8String>(
+        [](const QDateTime &d) STATIC_LAMBDA { return Utf8String(d.toString(Qt::ISODateWithMs)); });
+  QMetaType::registerConverter<QDate,Utf8String>(
+        [](const QDate &d) STATIC_LAMBDA { return Utf8String(d.toString(Qt::ISODateWithMs)); });
+  QMetaType::registerConverter<QTime,Utf8String>(
+        [](const QTime &d) STATIC_LAMBDA { return Utf8String(d.toString(Qt::ISODateWithMs)); });
+  QMetaType::registerConverter<Utf8String,QDateTime>(
+        [](const Utf8String &s) STATIC_LAMBDA { return QDateTime::fromString(s, Qt::ISODateWithMs); });
+  QMetaType::registerConverter<Utf8String,QDate>(
+        [](const Utf8String &s) STATIC_LAMBDA { return QDate::fromString(s, Qt::ISODateWithMs); });
+  QMetaType::registerConverter<Utf8String,QTime>(
+        [](const Utf8String &s) STATIC_LAMBDA { return QTime::fromString(s, Qt::ISODateWithMs); });
+  QMetaType::registerConverter<QPointF,Utf8String>(
+        [](const QPointF &p) STATIC_LAMBDA { return Utf8String(p); });
   QMetaType::registerConverter<Utf8String,QPointF>(&Utf8String::toPointF);
-  QMetaType::registerConverter<QSizeF,Utf8String>([](const QSizeF &p) {
-    return Utf8String(p); });
+  QMetaType::registerConverter<QSizeF,Utf8String>(
+        [](const QSizeF &p) STATIC_LAMBDA { return Utf8String(p); });
   QMetaType::registerConverter<Utf8String,QSizeF>(&Utf8String::toSizeF);
-  QMetaType::registerConverter<QRectF,Utf8String>([](const QRectF &p) {
-    return Utf8String(p); });
+  QMetaType::registerConverter<QRectF,Utf8String>(
+        [](const QRectF &p) STATIC_LAMBDA { return Utf8String(p); });
   QMetaType::registerConverter<Utf8String,QRectF>(&Utf8String::toRectF);
-  QMetaType::registerConverter<QLineF,Utf8String>([](const QLineF &p) {
-    return Utf8String(p); });
+  QMetaType::registerConverter<QLineF,Utf8String>(
+        [](const QLineF &p) STATIC_LAMBDA { return Utf8String(p); });
   QMetaType::registerConverter<Utf8String,QLineF>(&Utf8String::toLineF);
-  QMetaType::registerConverter<QList<QPointF>,Utf8String>([](const QList<QPointF> &p) {
-    return Utf8String(p); });
+  QMetaType::registerConverter<QList<QPointF>,Utf8String>(
+        [](const QList<QPointF> &p) STATIC_LAMBDA { return Utf8String(p); });
   QMetaType::registerConverter<Utf8String,QList<QPointF>>(&Utf8String::toPointFList);
-  QMetaType::registerConverter<QList<double>,Utf8String>([](const QList<double> &p) {
-    return Utf8String(p); });
+  QMetaType::registerConverter<QList<double>,Utf8String>(
+        [](const QList<double> &p) STATIC_LAMBDA { return Utf8String(p); });
   QMetaType::registerConverter<Utf8String,QList<double>>(&Utf8String::toNumberList);
-  QMetaType::registerConverter<QList<qint64>,Utf8String>([](const QList<qint64> &p) {
-    return Utf8String(p); });
+  QMetaType::registerConverter<QList<qint64>,Utf8String>(
+        [](const QList<qint64> &p) STATIC_LAMBDA { return Utf8String(p); });
   QMetaType::registerConverter<Utf8String,QList<qint64>>(&Utf8String::toNumberList);
-  QMetaType::registerConverter<QList<quint64>,Utf8String>([](const QList<quint64> &p) {
-    return Utf8String(p); });
+  QMetaType::registerConverter<QList<quint64>,Utf8String>(
+        [](const QList<quint64> &p) STATIC_LAMBDA { return Utf8String(p); });
   QMetaType::registerConverter<Utf8String,QList<quint64>>(&Utf8String::toNumberList);
 
   // TODO there are more to map in QT_FOR_EACH_STATIC_CORE_CLASS
@@ -248,7 +249,7 @@ Utf8String Utf8String::toInternetHeaderName(bool ignore_trailing_colon) const {
   auto end = s + size();
   if (ignore_trailing_colon && s < end && end[-1] == ':')
     --end;
-  auto f = [](char32_t u) -> char32_t {
+  auto f = [](char32_t u) STATIC_LAMBDA -> char32_t {
     // rfc5322 states that a header may contain any ascii printable char but ':'
     if (u > 0x20 && u < 0x7f && u != ':')
       return u;

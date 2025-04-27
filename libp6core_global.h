@@ -22,6 +22,18 @@
 #  define LIBP6CORESHARED_EXPORT Q_DECL_IMPORT
 #endif
 
+#if __cplusplus <= 201703L
+#error "won't compile with C++ < 17, if you use MSVC please add /Zc:__cplusplus"
+#endif
+
+#if __cpp_static_call_operator >= 202207L && __cplusplus >= 202302
+#define STATIC_LAMBDA static
+#define STATIC_LAMBDA_CONST
+#else
+#define STATIC_LAMBDA
+#define STATIC_LAMBDA_CONST const
+#endif
+
 namespace p6 {
 
 #ifdef __cpp_concepts

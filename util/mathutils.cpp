@@ -399,15 +399,15 @@ static inline QVariant bool_operation(
 }
 
 QVariant MathUtils::boolAndQVariantAsNumber(QVariant a, QVariant b) {
-  return bool_operation(a, b, [](bool x, bool y) { return x && y; });
+  return bool_operation(a, b, [](bool x, bool y) STATIC_LAMBDA { return x && y; });
 }
 
 QVariant MathUtils::boolXorQVariantAsNumber(QVariant a, QVariant b) {
-  return bool_operation(a, b, [](bool x, bool y) { return x != y; });
+  return bool_operation(a, b, [](bool x, bool y) STATIC_LAMBDA { return x != y; });
 }
 
 QVariant MathUtils::boolOrQVariantAsNumber(QVariant a, QVariant b) {
-  return bool_operation(a, b, [](bool x, bool y) { return x || y; });
+  return bool_operation(a, b, [](bool x, bool y) STATIC_LAMBDA { return x || y; });
 }
 
 QVariant MathUtils::bitwiseAndQVariantAsIntegral(QVariant a, QVariant b) {
