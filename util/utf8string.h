@@ -208,16 +208,18 @@ public:
    *  Return nullptr if end is reached.
    *  Skip out of sequence (erroneous) bytes and optionnaly BOMs.
    */
+  template <bool skip_bom = true>
   static inline const char *go_forward_to_utf8_char(
-      const char **s, const char *end, bool skip_bom = true);
+      const char **s, const char *end);
   /** Low-level non-decoding begin of previous utf8 char finder.
    *  Decrement s until at the begin of a valid utf8 bytes sequence.
    *  If s is already at a char begin, do nothing.
    *  Return nullptr if begin is exceeded.
    *  Skip out of sequence (erroneous) bytes and optionnaly BOMs.
    */
+  template <bool skip_bom = true>
   static inline const char *go_backward_to_utf8_char(
-      const char **s, const char *begin, bool skip_bom = true);
+      const char **s, const char *begin);
 
   /** Convert a unicode charater into its upper case character, e.g. é -> É.
    *  Return the input character itself if no change is needed e.g. E É #
@@ -1287,8 +1289,9 @@ inline Utf8String operator+(const char *a1, const Utf8String &a2) {
 
 QDebug LIBP6CORESHARED_EXPORT operator<<(QDebug dbg, const Utf8String &s);
 
+template <bool skip_bom>
 const char *Utf8String::go_forward_to_utf8_char(
-    const char **s, const char *end, bool skip_bom) {
+    const char **s, const char *end) {
   forever {
     auto c = reinterpret_cast<const unsigned char *>(*s);
     if (*s >= end)
@@ -1306,8 +1309,9 @@ const char *Utf8String::go_forward_to_utf8_char(
   }
 }
 
+template <bool skip_bom>
 const char *Utf8String::go_backward_to_utf8_char(
-    const char **s, const char *begin, bool skip_bom) {
+    const char **s, const char *begin) {
   forever {
     auto c = reinterpret_cast<const unsigned char *>(*s);
     if (*s < begin)
