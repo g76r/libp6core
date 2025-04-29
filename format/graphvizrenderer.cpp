@@ -19,6 +19,7 @@
 #include <QThread>
 #include <QTimer>
 #include <QtDebug>
+#include <QDateTime>
 
 GraphvizRenderer::GraphvizRenderer(QObject *parent,
     const Utf8String &source, Layout layout, Format format, int timeoutms,
@@ -68,7 +69,7 @@ void GraphvizRenderer::do_start(
   options << "-T"+formatAsString(format);
   qDebug() << "graphviz rendering process starting" << command << options;
   _startms = QDateTime::currentMSecsSinceEpoch();
-  QProcess::start(command, _options);
+  QProcess::start(command, options);
   waitForStarted();
   qint64 written = write(source);
   if (written != source.size())
