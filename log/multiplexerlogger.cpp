@@ -65,6 +65,7 @@ void MultiplexerLogger::addConsoleLogger(
   QFile *console = new QFile;
   console->open(stream, QIODevice::WriteOnly|QIODevice::Unbuffered);
   FileLogger *logger = new FileLogger(console, severity, false);
+  console->setParent(logger);
   auto name = "Console"+logger->objectName();
   logger->setObjectName(name);
   if (auto t = logger->thread(); t) // should always be true
@@ -72,38 +73,28 @@ void MultiplexerLogger::addConsoleLogger(
   addLogger(logger, autoRemovable);
 }
 
-void MultiplexerLogger::replaceLoggers(Logger *newLogger) {
-  QList<Logger*> newLoggers;
-  if (newLogger)
-    newLoggers.append(newLogger);
-  replaceLoggers(newLoggers);
-}
-
-void MultiplexerLogger::replaceLoggers(QList<Logger*> newLoggers) {
+void MultiplexerLogger::replace_loggers(
+    QList<Logger*> &new_loggers, bool prepend_console,
+    Severity console_min_severity) {
+  if (prepend_console) {
+    QFile *console = new QFile;
+    console->open(1, QIODevice::WriteOnly|QIODevice::Unbuffered);
+    FileLogger *consoleLogger = new FileLogger(console, console_min_severity);
+    console->setParent(consoleLogger);
+    auto name = "Console"+consoleLogger->objectName();
+    consoleLogger->setObjectName(name);
+    new_loggers.prepend(consoleLogger);
+  }
   QMutexLocker locker(&_loggersMutex);
-  doReplaceLoggers(newLoggers);
-}
-
-void MultiplexerLogger::replaceLoggersPlusConsole(
-    Log::Severity consoleLoggerSeverity, QList<Logger*> newLoggers) {
-  QFile *console = new QFile;
-  console->open(1, QIODevice::WriteOnly|QIODevice::Unbuffered);
-  FileLogger *consoleLogger = new FileLogger(console, consoleLoggerSeverity);
-  newLoggers.prepend(consoleLogger);
-  QMutexLocker locker(&_loggersMutex);
-  doReplaceLoggers(newLoggers);
-}
-
-void MultiplexerLogger::doReplaceLoggers(QList<Logger*> newLoggers) {
   QList<Logger*> old_loggers(_loggers);
   old_loggers.detach();
   for (auto logger: old_loggers)
     if (logger->_auto_removable) {
-      if (!newLoggers.contains(logger))
+      if (!new_loggers.contains(logger))
         logger->shutdown();
       _loggers.removeAll(logger);
     }
-  for (auto logger: newLoggers) {
+  for (auto logger: new_loggers) {
     _loggers.append(logger);
   }
 }

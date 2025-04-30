@@ -49,24 +49,13 @@ void addConsoleLogger(
   _rootLogger->addConsoleLogger(severity, autoRemovable, stream);
 }
 
-void replaceLoggers(Logger *newLogger) {
+void replace_loggers(
+    QList<Logger*> &new_loggers, bool prepend_console,
+    Severity console_min_severity) {
   if (!_rootLogger)
     return;
-  _rootLogger->replaceLoggers(newLogger);
-}
-
-void replaceLoggers(QList<Logger*> newLoggers) {
-  if (!_rootLogger)
-    return;
-  _rootLogger->replaceLoggers(newLoggers);
-}
-
-void replaceLoggersPlusConsole(
-    Severity consoleLoggerSeverity, QList<Logger*> newLoggers) {
-  if (!_rootLogger)
-    return;
-  _rootLogger->replaceLoggersPlusConsole(
-        consoleLoggerSeverity, newLoggers);
+  _rootLogger->replace_loggers(new_loggers, prepend_console,
+                               console_min_severity);
 }
 
 Utf8String Record::current_thread_name() {

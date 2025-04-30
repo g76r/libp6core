@@ -40,17 +40,12 @@ public:
   void addConsoleLogger(Severity severity, bool autoRemovable,
                         FILE *stream);
   void addQtLogger(Severity severity, bool autoRemovable);
-  /** Replace current auto-removable loggers with a new one.
-   * This method is thread-safe and switches loggers in an atomic way. */
-  void replaceLoggers(Logger *newLogger);
   /** Replace current auto-removable loggers with new ones.
+   *  Optionaly prepend a console logger.
    * This method is thread-safe and switches loggers in an atomic way. */
-  void replaceLoggers(QList<Logger*> newLoggers);
-  /** Replace current auto-removable loggers with new ones plus a new
-   * console logger with given logger severity.
-   * This method is thread-safe and switches loggers in an atomic way. */
-  void replaceLoggersPlusConsole(Severity consoleLoggerSeverity,
-                                 QList<Logger*> newLoggers);
+  void replace_loggers(
+      QList<Logger*> &new_loggers, bool prepend_console = false,
+      Severity console_min_severity = Fatal);
   QString pathToLastFullestLog();
   QStringList pathsToFullestLogs();
   QStringList pathsToAllLogs();
@@ -58,9 +53,6 @@ public:
 protected:
   void do_log(const Record &record) override;
   void do_shutdown() override;
-
-private:
-  inline void doReplaceLoggers(QList<Logger*> newLoggers);
 };
 
 } // ns p6::log

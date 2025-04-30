@@ -15,6 +15,7 @@
 #include "util/paramset.h"
 #include <QFile>
 #include <QDateTime>
+#include <QCoreApplication>
 
 #define ISO8601 u"yyyy-MM-ddThh:mm:ss,zzz"_s
 
@@ -75,6 +76,8 @@ void FileLogger::do_log(const Record &record) {
       _device->deleteLater();
     _currentPath = Utf8String(PercentEvaluator::eval(_pathPattern));
     _device = new QFile(_currentPath);
+    _device->setObjectName(_device->objectName()+" from "+this->objectName());
+    _device->moveToThread(QCoreApplication::instance()->thread());
     if (!_device->open(_buffered ? QIODevice::WriteOnly|QIODevice::Append
                                  : QIODevice::WriteOnly|QIODevice::Append
                                      |QIODevice::Unbuffered)) [[unlikely]] {

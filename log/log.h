@@ -192,14 +192,29 @@ void LIBP6CORESHARED_EXPORT wrapQtLogToSamePattern(bool enable = true);
 void LIBP6CORESHARED_EXPORT addConsoleLogger(
     Severity severity = Warning, bool autoRemovable = false,
     FILE *stream = stderr);
-/** Remove loggers that are autoremovable and replace them with a new one. */
-void LIBP6CORESHARED_EXPORT replaceLoggers(Logger *newLogger);
-/** Remove loggers that are autoremovable and replace them with new ones. */
-void LIBP6CORESHARED_EXPORT replaceLoggers(QList<Logger*> newLoggers);
-/** Remove loggers that are autoremovable and replace them with new ones
-   * plus a console logger.*/
-void LIBP6CORESHARED_EXPORT replaceLoggersPlusConsole(
-    Severity consoleLoggerSeverity, QList<Logger*> newLoggers);
+/** Remove loggers that are autoremovable and replace them with new ones.
+ *  Optionaly prepend a console logger. */
+void LIBP6CORESHARED_EXPORT replace_loggers(
+    QList<Logger*> &new_loggers, bool prepend_console = false,
+    Severity console_min_severity = Fatal);
+
+[[deprecated("use replace_loggers instead")]]
+inline void replaceLoggers(Logger *newLogger) {
+  QList<Logger*> list{newLogger};
+  replace_loggers(list);
+}
+
+[[deprecated("use replace_loggers instead")]]
+inline void replaceLoggers(QList<Logger*> &newLoggers) {
+  replace_loggers(newLoggers);
+}
+
+[[deprecated("use replace_loggers instead")]]
+inline void replaceLoggersPlusConsole(
+    Severity consoleLoggerSeverity, QList<Logger *> &newLoggers) {
+  return replace_loggers(newLoggers, true, consoleLoggerSeverity);
+}
+
 /** init log engine */
 void LIBP6CORESHARED_EXPORT init();
 /** flush remove any logger */
