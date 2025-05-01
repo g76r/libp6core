@@ -19,7 +19,10 @@
 
 /** Base class for PF parser: parses data but do nothing with it.
  *  @see PfParser */
-class LIBP6CORESHARED_EXPORT PfAbstractParser {
+struct LIBP6CORESHARED_EXPORT PfAbstractParser {
+protected:
+  qsizetype pos = 0, line = 1, column = 1;
+
 public:
   inline PfAbstractParser() {}
   virtual ~PfAbstractParser();
@@ -50,7 +53,7 @@ public:
 };
 
 /** Build a PfNode hierarchy out of PF data. */
-class LIBP6CORESHARED_EXPORT PfParser : public PfAbstractParser {
+struct LIBP6CORESHARED_EXPORT PfParser : PfAbstractParser {
   PfNode _root;
   std::list<PfNode*> _items;
 

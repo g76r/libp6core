@@ -1,2 +1,4 @@
 (root||火
-fire火)
+fire火||木
+wood木(child)||水
+water水)

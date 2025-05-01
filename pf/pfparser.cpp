@@ -43,9 +43,9 @@ enum State {
   continue; \
   }
 #define ERROR(err) \
-  [[unlikely]] return (err)+" on line "_u8+Utf8String::number(line) \
+  [[unlikely]] return (err)+(line ? " on line "_u8+Utf8String::number(line) \
     +" column "_u8+Utf8String::number(column)+" byte "_u8 \
-    +Utf8String::number(pos)
+    +Utf8String::number(pos) : ""_u8)
 #define ON_TEXT \
   content.clean(); \
   if (!content.isEmpty()) \
@@ -71,7 +71,9 @@ Utf8String PfAbstractParser::parse(
     // waiting for bytes is useless on seekable devices
     options._io_timeout_ms = 0;
   }
-  qsizetype pos = 0, line = 1, column = 1;
+  pos = 0;
+  line = 1;
+  column = 0;
   if (auto err = on_document_begin(options); !!err)
     ERROR(err);
   State state = Toplevel, next_state = Toplevel;
@@ -96,11 +98,13 @@ read_escaped_char:
       ERROR("unexpected end of file"_u8);
     }
     ++pos;
-    if (on_newline) {
-      column = 1;
-      ++line;
-    } else {
-      ++column;
+    if (line) { // otherwise we met some data scrambling lines & columns
+      if (on_newline) {
+        column = 1;
+        ++line;
+      } else if (!Utf8String::is_utf8_continuation_byte(c)) {
+        ++column;
+      }
     }
     if (!escaped && c == '\\' && quoted != '\'' && state != Comment) {
       escaped = 1;
@@ -305,6 +309,7 @@ begin_of_wrappings:
                   ERROR("not enough bytes for binary fragment: expected "_u8
                         +Utf8String::number(len));
                 pos += len;
+                line = 0; // any further line & column numbers are wrong
                 if (auto err = on_deferred_binary(
                       input, input->pos()-len, len,
                       options._should_cache_deferred_loading); !!err)
@@ -324,6 +329,8 @@ begin_of_wrappings:
                         +Utf8String::number(len)+" got "_u8
                         +Utf8String::number(content.size()));
                 PfNode::unwrap_binary(&content, wrappings, options);
+                pos += len;
+                line = 0; // any further line & column numbers are wrong
                 if (content.size() > 0)
                   if (auto err = on_loaded_binary(content, wrappings); !!err)
                     ERROR(err);
@@ -432,7 +439,10 @@ Utf8String PfParser::on_document_begin(const PfOptions &) {
 }
 
 Utf8String PfParser::on_node_begin(std::forward_list<Utf8String> &names) {
-  _items.push_front(new PfNode(names.front()));
+  auto node = new PfNode(names.front());
+  if (line)
+    node->set_pos(line, column);
+  _items.push_front(node);
   return {};
 }
 

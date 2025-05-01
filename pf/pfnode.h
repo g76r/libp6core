@@ -25,7 +25,7 @@ class QIODevice;
  *  Holds methods reading and modifying data in the node and its children,
  *  and for writing to PF external format.
  *  For reading one should have a look to PfParser. */
-class LIBP6CORESHARED_EXPORT PfNode {
+struct LIBP6CORESHARED_EXPORT PfNode {
 private:
   struct LIBP6CORESHARED_EXPORT Fragment {
   private:
@@ -38,7 +38,7 @@ private:
     qsizetype size_of_deferred_binary() const;
 
   public:
-    enum FragmentType : quint64 {
+    enum FragmentType : quint8 {
       Text = 0, Comment, LoadedBinary, DeferredBinary, Child,
     };
     template <typename T>
@@ -323,6 +323,7 @@ found_so_delete_others:
 
   Utf8String _name;
   Fragment *_fragments = 0;
+  quint64 _line = 0, _column = 0;
   static PfNode _empty;
 
 public:
@@ -801,6 +802,18 @@ public:
     return output;
   }
 
+  // position ////////////////////////////////////////////////////////////////
+
+  Utf8String position() const;
+  bool has_position() const { return _line; }
+  quint64 line() const { return _line; }
+  quint64 column() const { return _column; }
+  PfNode &set_pos(quint64 line, quint64 column) {
+    _line = line;
+    _column = column;
+    return *this;
+  }
+
 private:
   struct PfWriter;
   qint64 write_pf(size_t depth, PfWriter *writer,
@@ -841,6 +854,8 @@ private:
 };
 
 static_assert(sizeof(Utf8String) == 24); // _name
-static_assert(sizeof(PfNode) == 32);
+static_assert(sizeof(PfNode) == 48);
+
+inline uint qHash(const PfNode &n) { return qHash(n.name()); }
 
 #endif // PFNODE_H

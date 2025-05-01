@@ -165,7 +165,25 @@ int main(void) {
       << parser.root().first_child().fragments_count()
       << parser.root().first_child().content_as_text()
       << parser.root().first_child().content_as_binary()
-      << parser.root().as_pf(options);
+      << parser.root().as_pf(options)
+      << parser.root().first_child().line()
+      << parser.root().first_child().column()
+      << parser.root().first_child().position()
+      << parser.root().first_child().first_child().position();
+
+  file.close();
+  file.setFileName("./sample6.pf");
+  file.open(QIODevice::ReadOnly);
+  options = PfOptions().with_defer_binary_loading()
+            .with_allow_bare_binary()
+            .with_deferred_loading_min_size(0)
+            .with_should_cache_deferred_loading(false)
+            ;
+  qDebug().noquote()
+      << "parsing ./sample6.pf" << (parser.parse(&file, options)|"ok")
+      << parser.root().as_pf(options)
+      << parser.root().first_child().position()
+      << parser.root().first_child().first_child().position();
 
   for (int i = 100; i < 200; ++i) {
     file.close();
@@ -176,8 +194,9 @@ int main(void) {
     qDebug().noquote()
         << "parsing" << file.fileName()
         << (parser.parse(&file, PfOptions().with_comments()
-                        .with_defer_binary_loading()
-                        .with_deferred_loading_min_size(0)) | "ok" )
+                         .with_defer_binary_loading()
+                         .with_deferred_loading_min_size(0)) | "ok" )
+        << parser.root().first_child().position()
         << parser.root().first_child().as_pf(PfOptions().with_comments());
   }
 

@@ -347,3 +347,10 @@ qsizetype PfNode::Fragment::size_of_deferred_binary() const {
   }
   return _nontext._deferredbinary->_len;
 }
+
+Utf8String PfNode::position() const {
+  if (!_line)
+    return "unknown position"_u8;
+  return "line: "_u8 + Utf8String::number(_line)
+      + " column: "_u8 + Utf8String::number(_column);
+}
