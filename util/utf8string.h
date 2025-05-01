@@ -180,6 +180,10 @@ public:
       const QByteArray &s) {
     auto s2 = s.constData();
     return decode_utf8_and_step_forward<strict>(&s2, s2+s.size()); }
+  /** test if c is a continuation byte i.e. 0b10xx'xxxx */
+  [[nodiscard]] static inline bool is_utf8_continuation_byte(char c) {
+    return ((unsigned char)c & 0b1100'0000) == 0b1000'0000;
+  }
   template <bool strict = true>
   [[nodiscard]] static inline char32_t decode_utf8(const char *s) {
     return decode_utf8_and_step_forward<strict>(&s, s+::strlen(s)); }
