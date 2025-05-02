@@ -55,7 +55,7 @@ public:
 /** Build a PfNode hierarchy out of PF data. */
 struct LIBP6CORESHARED_EXPORT PfParser : PfAbstractParser {
   PfNode _root;
-  std::list<PfNode*> _items;
+  std::list<PfNode*> _nodes;
 
 public:
   ~PfParser();

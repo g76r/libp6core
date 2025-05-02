@@ -1,11 +1,15 @@
-j: (a b) 1
+j: (a b(c d)(e f)) 3
 k: (k 2 4\  4\ (l o)8) 3
+/i=
 4 (root abéc€d🥨e(child1 a)(child2 b(grandchild3 d))(child1 c)) a abéc€d🥨e
+i.set_a
+/i.set_a
 3 (root abéc€d🥨e(child1 A)(child2 b(grandchild3 d)))
 3 (root abéc€d🥨e(child1 A)(child2(grandchild3 d)B))
 3 (root abéc€d🥨e(child1 C)(child2(grandchild3 d)B))
 ()
 parsing ""
+iterating on root child "root1"
 9 (root1#comment1
 #comment2
 content1(child11(child111))content2(child12#comment3
@@ -45,6 +49,7 @@ content3)(child13 value13)(child14 key14 value14)(child15 value15#comment 15
     (child15 value15)
 )
 
+iterating on root child "root2"
 0 (root2)
 "" "" "" std::pair("","") "" ""
 0 (root2)
@@ -202,29 +207,31 @@ f09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9e
 )
 
 28726f6f7420746578740a2020286368696c647c7c3234300af09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9ef09f8c9e0a2020290a20207c7c340a000000000a290a
-parsing ./sample5.pf ok 2 text a§§btext ($root(root||6
-a§§btext))
-parsing ./sample100.pf unexpected end of file on line 1 column 7 byte 6 ()
-parsing ./sample101.pf character not allowed in end marker: ')' on line 3 column 13 byte 41 ()
-parsing ./sample102.pf unexpected empty file on line 1 column 1 byte 0 ()
-parsing ./sample103.pf unexpected char at toplevel: 'g' on line 2 column 1 byte 8 (root)
-parsing ./sample104.pf character not allowed in wrappings: '\'' on line 1 column 8 byte 7 ()
-parsing ./sample105.pf unexpected char at toplevel: ')' on line 1 column 8 byte 7 (root)
-parsing ./sample106.pf unexpected char at toplevel: '\xf0' on line 2 column 1 byte 8 (root)
-parsing ./sample107.pf ok (root)
-parsing ./sample108.pf ok (root \
+parsing ./sample5.pf ok 3 text a§§btext ($root(root||6
+a§§btext(child))) 1 6 line: 1 column: 6 unknown position
+parsing ./sample6.pf ok ($root(root a§§btext(child))) line: 1 column: 6 line: 2 column: 15
+parsing ./sample100.pf unexpected end of file on line 1 column 6 byte 6 unknown position ()
+parsing ./sample101.pf character not allowed in end marker: ')' on line 3 column 13 byte 41 unknown position ()
+parsing ./sample102.pf unexpected empty file on line 1 column 0 byte 0 unknown position ()
+parsing ./sample103.pf unexpected char at toplevel: 'g' on line 2 column 1 byte 8 line: 1 column: 6 (root)
+parsing ./sample104.pf character not allowed in wrappings: '\'' on line 1 column 7 byte 7 unknown position ()
+parsing ./sample105.pf unexpected char at toplevel: ')' on line 1 column 7 byte 7 line: 1 column: 6 (root)
+parsing ./sample106.pf unexpected char at toplevel: '\xf0' on line 2 column 1 byte 8 line: 1 column: 6 (root)
+parsing ./sample107.pf ok line: 1 column: 6 (root)
+parsing ./sample108.pf ok line: 1 column: 6 (root \
 )
-parsing ./sample109.pf ok (root a\
+parsing ./sample109.pf ok line: 1 column: 6 (root a\
 )
-parsing ./sample110.pf ok (root fire)
-parsing ./sample111.pf ok (root|hex|4
+parsing ./sample110.pf ok line: 1 column: 6 (root fire wood(child)water)
+parsing ./sample111.pf ok line: 1 column: 6 (root|hex|4
 c2a7)
-parsing ./sample112.pf ok (root|hex|4
+parsing ./sample112.pf ok line: 1 column: 6 (root|hex|4
 c2a7)
-parsing ./sample113.pf ok (root|base64|4
+parsing ./sample113.pf ok line: 1 column: 6 (root|base64|4
 wqcK)
-parsing ./sample114.pf ok (root|hex:base64|8
+parsing ./sample114.pf ok line: 1 column: 6 (root|hex:base64|8
 7771634b)
-parsing ./sample115.pf unexpected end of file on line 1 column 13 byte 4012 ()
-parsing ./sample116.pf ok (root|base64|8
+parsing ./sample115.pf unexpected end of file unknown position ()
+parsing ./sample116.pf ok line: 1 column: 6 (root|base64|8
 wqfCpw==)
+parsing ./sample117.pf unexpected char at toplevel: ')' on line 1 column 1 byte 1 unknown position ()

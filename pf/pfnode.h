@@ -18,6 +18,8 @@
 #include "util/containerutils.h"
 #include "pf/pfoptions.h"
 #include <ranges>
+#include <QPointer>
+#include <QIODevice>
 
 class QIODevice;
 
@@ -28,16 +30,6 @@ class QIODevice;
 struct LIBP6CORESHARED_EXPORT PfNode {
 private:
   struct LIBP6CORESHARED_EXPORT Fragment {
-  private:
-    struct DeferredBinaryPayload;
-    void create_deferred_binary(const DeferredBinaryPayload &other);
-    void create_deferred_binary(QIODevice *file, qsizetype pos, qsizetype len,
-                                bool should_cache);
-    void destroy_deferred_binary();
-    QByteArray retrieve_deferred_binary() const;
-    qsizetype size_of_deferred_binary() const;
-
-  public:
     enum FragmentType : quint8 {
       Text = 0, Comment, LoadedBinary, DeferredBinary, Child,
     };
@@ -64,181 +56,40 @@ private:
     };
 
     Fragment *_next = 0;
-    FragmentType _type = Text;
-    Utf8String _text; // also used as wrappings spec for binary payloads
-    union {
-      QByteArray *_unwrapped_data = 0;
-      DeferredBinaryPayload *_deferredbinary;
-      PfNode *_child;
-    } _nontext;
-    static_assert(sizeof(_nontext) == sizeof(void*));
 
-    inline ~Fragment() {
-      // qDebug() << "~Fragment" << Utf8String::number(this) << type()
-      //          << (type() == Text ? text() : Utf8String::number(child()))
+    inline Fragment() { }
+    Fragment(const Fragment&) = delete;
+    virtual ~Fragment() {
+      // qDebug() << "~Fragment" << Utf8String::number(this)
       //          << Utf8String::number(_next);
-      switch (_type) {
-        case LoadedBinary:
-          delete _nontext._unwrapped_data;
-          break;
-        case DeferredBinary:
-          destroy_deferred_binary();
-          break;
-        case Child:
-          delete _nontext._child;
-          break;
-        case Text:
-        case Comment:
-          ;
-      }
       if (_next)
         delete _next;
     }
-    inline Fragment(const Utf8String &utf8, bool is_comment)
-      : _type(is_comment ? Comment : Text), _text(utf8) { }
-    inline Fragment(const QByteArray &unwrapped_data,
-                    const Utf8String &wrappings)
-      : _type(LoadedBinary), _text(wrappings) {
-      _nontext._unwrapped_data = new QByteArray(unwrapped_data);
-    }
-    inline Fragment(QIODevice *file, qsizetype pos, qsizetype len,
-                    bool should_cache)
-      : _type(DeferredBinary) {
-      create_deferred_binary(file, pos, len, should_cache);
-    }
-    inline Fragment(const PfNode &child) : _type(Child) {
-      _nontext._child = new PfNode(child);
-    }
-    inline Fragment(PfNode &&child) : _type(Child) {
-      _nontext._child = new PfNode(child);
-    }
-    /** takes ownership */
-    inline Fragment(PfNode *child) : _type(Child) {
-      _nontext._child = child;
-    }
-    inline Fragment(const Fragment &other) : _type(other._type) {
-      // qDebug() << "=Fragment" << Utf8String::number(this)
-      //          << Utf8String::number(&other);
-      _next = other._next ? new Fragment(*other._next) : 0;
-      switch (_type) {
-        case LoadedBinary:
-          _nontext._unwrapped_data =
-              new QByteArray(*other._nontext._unwrapped_data);
-          _text = other._text;
-          break;
-        case DeferredBinary:
-          create_deferred_binary(*other._nontext._deferredbinary);
-          _text = other._text;
-          break;
-        case Text:
-        case Comment:
-          _text = other._text;
-          break;
-        case Child:
-          _nontext._child = new PfNode(*other._nontext._child);
-          break;
-      }
-    }
-    inline Fragment(Fragment &&other) // take ownership of pointed data
-      : _next(std::exchange(other._next, nullptr)), // prevents double delete
-        _type(std::exchange(other._type, Text)), // prevents double delete
-        _text(std::exchange(other._text, {})),
-        _nontext(std::exchange(other._nontext, {})) { // prevents double delete
-      // not sure Fragment move constructor is useful (probably everything
-      // goes through Fragment(Fragment*) instead
-      // qDebug() << "&&Fragment" << Utf8String::number(this)
-      //          << Utf8String::number(&other);
-    }
-    inline FragmentType type() const { return _type; }
+    virtual FragmentType type() const = 0;
+    /** method is responsible for performing deep copy of fragment impl.
+     *  it's not responsible for copying/recursively cloning _next fragment */
+    virtual Fragment *deep_copy() const = 0;
     /** @return true if type is a payload type (text or binary) */
-    inline bool has_payload() const {
-      switch (_type) {
-        case Text:
-        case LoadedBinary:
-        case DeferredBinary:
-          return true;
-        case Comment:
-        case Child:
-          ;
-      }
-      return false;
-    }
-    inline Utf8String wrappings() const {
-      if (_type == LoadedBinary)
-        return _text;
-      return {};
-    }
-    /** change wrappings of LoadedBinary fragment, can turn a Text fragment
-     *  into LoadedBinary if applyed with non empty wrappings.
+    virtual bool has_payload() const { return false; }
+    virtual Utf8String wrappings() const { return {}; }
+    /** change wrappings of LoadedBinary fragment.
      *  do nothing to other fragment types, including DeferredBinary. */
-    inline void set_wrappings(const Utf8String &wrappings) {
-      // qDebug() << "Fragment::set_wrappings" << this << _type << wrappings;
-      if (_type == LoadedBinary)
-        _text = wrappings;
-      else if (_type == Text && !wrappings.isEmpty()) {
-        _nontext._unwrapped_data = new QByteArray(_text);
-        _type = LoadedBinary;
-        _text = wrappings;
-      }
-    }
-    inline Utf8String text() const {
-      if (_type == Text)
-        return _text;
-      return {};
-    }
-    inline Utf8String escaped_text() const {
-      if (_type == Text)
-        return PfNode::escaped_text(_text);
-      return {};
-    }
-    inline Utf8String comment() const {
-      if (_type == Comment)
-        return _text;
-      return {};
-    }
-    //inline QString utf16() const { return utf8(); }
-    inline QByteArray unwrapped_data() const {
-      if (_type == Text)
-        return _text;
-      if (_type == LoadedBinary)
-        return *_nontext._unwrapped_data;
-      if (_type == DeferredBinary)
-        return retrieve_deferred_binary();
-      return {};
-    }
-    inline qsizetype size() const {
-      if (_type == Text)
-        return _text.size();
-      if (_type == LoadedBinary)
-        return _nontext._unwrapped_data->size();
-      if (_type == DeferredBinary)
-        return size_of_deferred_binary();
-      return 0;
-    }
-    inline PfNode *child() const {
-      return _type == Child ? _nontext._child : 0;
-    }
+    virtual void set_wrappings(const Utf8String &) { }
+    virtual Utf8String text() const { return {}; }
+    virtual Utf8String escaped_text() const { return {}; }
+    virtual Utf8String comment() const { return {}; }
+    virtual QByteArray unwrapped_data() const { return {}; }
+    virtual qsizetype size() const { return 0; }
+    virtual PfNode *child() { return 0; }
+    const PfNode *child() const { return const_cast<Fragment*>(this)->child(); }
     /** append text to fragments list: merge on last text fragment if any or
-     *  append a new text fragment at end if no text fragment was found.
+     *  append a new text fragment at end if no text fragment was found or if
+     *  last fragment wasn't a text fragment.
      *  @return true if merged, false if appended a new text fragment */
-    template <FragmentType text_type = Text,
-              bool add_space_before_text = true,
-              bool even_with_other_fragments_in_between = false>
-    inline bool merge_text_on_last_fragment(const Utf8String &text) {
-      Fragment *last = this, *last_text = type() == text_type ? this : 0;
-      while (last->_next) {
-        last = last->_next;
-        if (last->type() == text_type)
-          last_text = last;
-      }
-      if (last_text
-          && (last_text == last || even_with_other_fragments_in_between)) {
-        if (add_space_before_text)
-          last_text->_text += ' ';
-        last_text->_text += text;
-        return true;
-      }
-      last->_next = new Fragment(text, false);
+    virtual bool merge_text_on_last_fragment(const Utf8String &text) {
+      if (_next)
+        return _next->merge_text_on_last_fragment(text);
+      _next = new TextFragment(text);
       return false;
     }
     static void push_back(Fragment **pthis, Fragment *f) {
@@ -272,28 +123,8 @@ private:
       }
       return count;
     }
-    static inline void set_attribute(
-        Fragment **pthis, const Utf8String &name, const Utf8String &value) {
-      Q_ASSERT(pthis != 0);
-      for (;*pthis; pthis = &((*pthis)->_next)) {
-        auto child = (*pthis)->child();
-        if (!!child && *child^name) {
-          child->set_text(value);
-          goto found_so_delete_others;
-        }
-      }
-      *pthis = new Fragment(PfNode(name, value));
-      return;
-found_so_delete_others:
-      pthis = &((*pthis)->_next);
-      while (*pthis) {
-        auto child = (*pthis)->child();
-        if (child && *child^name)
-          delete take_first(pthis);
-        else
-          pthis = &((*pthis)->_next);
-      }
-    }
+    static void set_attribute(
+        Fragment **pthis, const Utf8String &name, const Utf8String &value);
     /** take first fragment if any, removing it from the list and
      *  giving ownership */
     static inline Fragment *take_first(Fragment **pthis) {
@@ -318,7 +149,79 @@ found_so_delete_others:
           ++count;
       return count;
     }
+    static inline void deep_copy(Fragment **pthis, const Fragment *original) {
+      // qDebug() << "*** deep_copy" << *pthis << original;
+      for (const Fragment *f = original; f; f = f->_next) {
+        *pthis = f->deep_copy();
+        // qDebug() << "   copied" << f << "as" << *pthis << (*pthis)->_next
+        //          << f->text() << f->type() << f->child();
+        pthis = &((*pthis)->_next);
+      }
+      *pthis = 0;
+    }
   };
+  struct LIBP6CORESHARED_EXPORT TextFragment : public Fragment {
+    Utf8String _text;
+    inline TextFragment(const Utf8String &utf8) : _text(utf8) {}
+    FragmentType type() const override { return Text; }
+    Fragment *deep_copy() const override { return  new TextFragment(_text); }
+    bool has_payload() const override { return true; }
+    Utf8String text() const override { return _text; }
+    Utf8String escaped_text() const override {
+      return PfNode::escaped_text(_text); }
+    QByteArray unwrapped_data() const override { return _text; }
+    qsizetype size() const override { return _text.size(); }
+    bool merge_text_on_last_fragment(const Utf8String &text) override {
+      if (_next)
+        return _next->merge_text_on_last_fragment(text);
+      _text += ' ';
+      _text += text;
+      return true;
+    }
+  };
+  struct LIBP6CORESHARED_EXPORT CommentFragment : public Fragment {
+    Utf8String _comment;
+    inline CommentFragment(const Utf8String &comment) : _comment(comment) {}
+    FragmentType type() const override { return Comment; }
+    Fragment *deep_copy() const override { return  new CommentFragment(_comment); }
+    Utf8String comment() const override { return _comment; }
+  };
+  struct LIBP6CORESHARED_EXPORT LoadedBinaryFragment : public Fragment {
+    QByteArray _data;
+    Utf8String _wrappings;
+    inline LoadedBinaryFragment(const QByteArray &unwrapped_data,
+                                const Utf8String &wrappings)
+      : _data(unwrapped_data), _wrappings(wrappings) {}
+    FragmentType type() const override { return LoadedBinary; }
+    Fragment *deep_copy() const override {
+      return new LoadedBinaryFragment(_data, _wrappings); }
+    bool has_payload() const override { return true; }
+    QByteArray unwrapped_data() const override { return _data; }
+    qsizetype size() const override { return _data.size(); }
+    Utf8String wrappings() const override { return _wrappings; }
+    void set_wrappings(const Utf8String &wrappings) override {
+      _wrappings = wrappings; }
+  };
+  struct LIBP6CORESHARED_EXPORT DeferredBinaryFragment : public Fragment {
+    QPointer<QIODevice> _file;
+    qsizetype _pos = 0, _len = 0;
+    quint8 _should_cache:1 = 0;
+    mutable QByteArray _cache = {};
+    inline DeferredBinaryFragment(QIODevice *file, qsizetype pos,
+                                  qsizetype len, bool should_cache)
+      : _file(file), _pos(pos), _len(len), _should_cache(should_cache) { }
+    FragmentType type() const override { return DeferredBinary; }
+    Fragment *deep_copy() const override {
+      auto f = new DeferredBinaryFragment(_file, _pos, _len, _should_cache);
+      f->_cache = _cache;
+      return f;
+    }
+    bool has_payload() const override { return true; }
+    QByteArray unwrapped_data() const override;
+    qsizetype size() const override;
+  };
+  struct ChildFragment;
+
   using enum Fragment::FragmentType;
 
   Utf8String _name;
@@ -332,15 +235,20 @@ public:
   inline PfNode(const Utf8String &name, const Utf8String &text = {})
     : _name(name) {
     if (!text.isEmpty())
-      _fragments = new Fragment(text, false);
+      _fragments = new TextFragment(text);
   }
-  inline PfNode(const PfNode &other) : _name(other._name),
-    _fragments(other._fragments ? new Fragment(*other._fragments) : 0) { }
+  inline PfNode(const PfNode &other)
+    : _name(other._name), _line(other._line), _column(other._column) {
+    Fragment::deep_copy(&_fragments, other._fragments);
+    // qDebug() << "&PfNode" << Utf8String::number(this)
+    //          << Utf8String::number(&other);
+  }
   inline PfNode(PfNode &&other) // takes ownership of fragments
-    : _name(std::exchange(other._name, {})),
-      _fragments(std::exchange(other._fragments, nullptr)) { // prevents double delete
+    : _name(std::move(other._name)),
+      _fragments(std::exchange(other._fragments, nullptr)), // prevents double delete
+      _line(other._line), _column(other._column) {
     // qDebug() << "&&PfNode" << Utf8String::number(this)
-    //             << Utf8String::number(&other);
+    //          << Utf8String::number(&other);
   }
   inline ~PfNode() {
     // qDebug() << "~PfNode" << Utf8String::number(this)
@@ -352,24 +260,70 @@ public:
    *  Includes bool, which will be converted to "true" or "false" */
   inline PfNode(const Utf8String &name, p6::arithmetic auto number)
     : PfNode(name, Utf8String::number(number)) { }
-  /** If name is empty, the node will be null (and children ignored). */
-  inline PfNode(
-      const Utf8String &name, const Utf8String &content,
-      std::initializer_list<PfNode> children) : PfNode(name, content) {
+  /** Create node with children (take their content with std::move).
+   *
+   *  Usefull for instance to write this without deep copy:
+   *  PfNode n;
+   *  n = { "name", "content", PfNode{"child1", "content1"} };
+   *
+   *  If name is empty, the node will be null (and children ignored). */
+  template <typename... Ts>
+  requires (std::same_as<Ts, PfNode> && ...)
+  inline PfNode(const Utf8String &name, const Utf8String &content,
+                Ts&&... children) : PfNode(name, content) {
     if (!name.isEmpty())
-      append_children(children);
+      (append_child(std::move(children)), ...);
   }
-  /** If name is empty, the node will be null (and children ignored). */
-  inline PfNode(const Utf8String &name, std::initializer_list<PfNode> children)
-    :  PfNode(name, Utf8String{}, children ) { }
+  /** Create node with children (deep copy).
+   *  If name is empty, the node will be null (and children ignored). */
+  template <typename... Ts>
+  requires (std::same_as<Ts, PfNode> && ...)
+  inline PfNode(const Utf8String &name, const Utf8String &content,
+                const Ts&... children) : PfNode(name, content) {
+    if (!name.isEmpty())
+      (append_child(children), ...);
+  }
+  /** Create node with children (take their content with std::move).
+   *
+   *  Usefull for instance to write this without deep copy:
+   *  PfNode n;
+   *  n = { "name", PfNode{"child1", "content1"} };
+   *
+   *  If name is empty, the node will be null (and children ignored). */
+  template <typename... Ts>
+  requires (std::same_as<Ts, PfNode> && ...)
+  inline PfNode(const Utf8String &name, Ts&&... children) : PfNode(name) {
+    if (!name.isEmpty())
+      (append_child(std::move(children)), ...);
+  }
+  /** Create node with children (deep copy).
+   *  If name is empty, the node will be null (and children ignored). */
+  template <typename... Ts>
+  requires (std::same_as<Ts, PfNode> && ...)
+  inline PfNode(const Utf8String &name, const Ts&... children) : PfNode(name) {
+    if (!name.isEmpty())
+      (append_child(children), ...);
+  }
   PfNode &operator=(const PfNode &other) {
     _name = other._name;
-    _fragments = other._fragments ? new Fragment(*other._fragments) : 0;
+    _line = other._line;
+    _column = other._column;
+    if (_fragments)
+      delete _fragments;
+    Fragment::deep_copy(&_fragments, other._fragments);
+    // qDebug() << "=&Node" << Utf8String::number(this)
+    //          << Utf8String::number(&other);
     return *this;
   }
   PfNode &operator=(PfNode &&other) {
-    _name = std::exchange(other._name, {});
+    _name = std::move(other._name);
+    _line = other._line;
+    _column = other._column;
+    if (_fragments)
+      delete _fragments;
     _fragments = std::exchange(other._fragments, nullptr); // prevents double delete
+    // qDebug() << "=&&Node" << Utf8String::number(this)
+    //          << Utf8String::number(&other);
     return *this;
   }
   inline bool operator!() const { return _name.isEmpty(); }
@@ -452,7 +406,7 @@ public:
     // C++23: return children() | std::ranges::to<QList<PfNode>>();
     // maybe rather let the caller do it (to whatever container he wants)
     QList<PfNode> list;
-    for (auto child: children())
+    for (const auto &child: children())
       list += child;
     return list;
   }
@@ -462,47 +416,49 @@ public:
     // C++23: return children() | std::ranges::to<QList<PfNode>>();
     // maybe rather let the caller do it (to whatever container he wants)
     QList<PfNode> list;
-    for (auto child: children(name))
+    for (const auto &child: children(name))
       list += child;
     return list;
   }
-  inline PfNode &append_child(const PfNode &child) {
-    Fragment::push_back(&_fragments, new Fragment(child));
-    return *this;
-  }
-  inline PfNode &append_child(PfNode &&child) {
-    Fragment::push_back(&_fragments, new Fragment(child));
-    return *this;
-  }
-  /** takes ownership */
-  inline PfNode &append_child(PfNode *child) {
-    Fragment::push_back(&_fragments, new Fragment(child));
-    return *this;
-  }
+  inline PfNode &append_child(const PfNode &child);
+  inline PfNode &append_child(PfNode &&child);
   [[deprecated("use append_child() instead")]]
   inline PfNode &appendChild(const PfNode &child) {
     return append_child(child);
   }
+  /** copy every children (deep copy) */
   template <typename T>
   requires std::ranges::input_range<T>
   && (std::same_as<std::ranges::range_reference_t<T>,const PfNode&>
       || std::same_as<std::ranges::range_reference_t<T>,PfNode&>
-      || std::same_as<std::ranges::range_reference_t<T>,PfNode&&>
-      || std::same_as<std::ranges::range_reference_t<T>,PfNode*>
-      || std::same_as<std::ranges::range_reference_t<T>,PfNode*&>)
+      || std::same_as<std::ranges::range_reference_t<T>,PfNode&&>)
   inline PfNode &append_children(T children) {
-    for (auto child: children)
-      append_child(child); // LATER optimize against following list n times
+    //qDebug() << "*** append_children range";
+     // LATER optimize against following list n times (O(n) rather than O(n²))
+    for (auto &&child: children)
+      append_child(child);
     return *this;
   }
-  inline PfNode &prepend_child(const PfNode &child) {
-    Fragment::push_front(&_fragments, new Fragment(child));
+  /** take every children (std::move) */
+  template <typename... Ts>
+  requires (std::same_as<Ts, PfNode> && ...)
+  inline PfNode &append_children(Ts&&... children) {
+    // LATER optimize against following list n times (O(n) rather than O(n²))
+    //qDebug() << "*** append_children&&";
+    (append_child(std::move(children)), ...);
     return *this;
   }
-  inline PfNode &prepend_child(PfNode &&child) {
-    Fragment::push_front(&_fragments, new Fragment(child));
+  /** copy every children (deep copy) */
+  template <typename... Ts>
+  requires (std::same_as<Ts, PfNode> && ...)
+  inline PfNode &append_children(const Ts&... children) {
+    //qDebug() << "*** append_children&";
+    // LATER optimize against following list n times (O(n) rather than O(n²))
+    (append_child(children), ...);
     return *this;
   }
+  inline PfNode &prepend_child(const PfNode &child);
+  inline PfNode &prepend_child(PfNode &&child);
   inline PfNode &remove_children_by_name(const Utf8String &name) {
     Fragment::delete_if(&_fragments, [name](Fragment *f) {
       auto node = f->child();
@@ -535,7 +491,7 @@ public:
   first_two_children(const Utf8String &name) const {
     const PfNode *first = 0;
     for (auto f: Fragment::FragmentForwardRange(_fragments))
-      if (auto child = f->child(); child && *child^name) {
+      if (const auto &child = f->child(); child && *child^name) {
         if (!first)
           first = child;
         else
@@ -545,7 +501,7 @@ public:
   }
   [[nodiscard]] inline bool has_child(const Utf8String &name) const {
     for (auto f: Fragment::FragmentForwardRange(_fragments))
-      if (auto child = f->child(); child && *child^name)
+      if (const auto &child = f->child(); child && *child^name)
         return true;
     return false;
   }
@@ -570,7 +526,7 @@ public:
     Utf8String s = ""_u8;
     bool first = true;
     for (auto f: Fragment::FragmentForwardRange(_fragments))
-      if (auto text = f->text(); !text.isEmpty()) {
+      if (const auto &text = f->text(); !text.isEmpty()) {
         if (first)
           first = false;
         else
@@ -586,7 +542,7 @@ public:
       auto type = f->type();
       if (previous_was_text && type == Text)
         content += ' ';
-      if (auto data = f->unwrapped_data(); !data.isEmpty()) {
+      if (const auto &data = f->unwrapped_data(); !data.isEmpty()) {
         content += data;
         previous_was_text = type == Text;
       }
@@ -604,49 +560,50 @@ public:
   /** set the whole content to text, removing any other payload fragment (text,
    *  and binary) or comment fragment. */
   inline PfNode &set_text(const Utf8String &text) {
-    return set_content(text, false); }
-  /** append text i.e. either add a new text fragment or if possible append text
-   *  (without separating space) at the end of last fragment
-   *  (last fragment must be a text fragment for the merge to occur) */
-  inline PfNode &append_text(const Utf8String &text) {
-    return append_text_fragment<false>(text); }
+      Fragment::delete_if(&_fragments, [](Fragment *f) STATIC_LAMBDA {
+        return f->type() != Fragment::Child; });
+      Fragment::push_back(&_fragments, new TextFragment(text));
+      return *this;
+  }
   /** append text fragment, i.e. either add a new text fragment or if possible
    *  append " "+text (with separating space) at the end of last fragment
    *  (last fragment must be a text fragment for the merge to occur), but if
    *  add_space_before_text is set to false */
-  template <bool add_space_before_text = true>
   inline PfNode &append_text_fragment(const Utf8String &text) {
     if (_fragments) {
-      //bool merged =
-      _fragments->merge_text_on_last_fragment<
-          Fragment::Text, add_space_before_text>(text);
-      // qDebug() << "merged text on last fragment:" << content << merged;
-    } else
-      _fragments = new Fragment(text, false);
+      // bool merged =
+      _fragments->merge_text_on_last_fragment(text);
+      // qDebug() << "*** merged text on last fragment:" << text << merged;
+    } else {
+      _fragments = new TextFragment(text);
+      // qDebug() << "*** appended as first fragment:" << text;
+    }
     return *this;
   }
   inline PfNode &append_comment_fragment(const Utf8String &comment) {
     if (_fragments)
-      Fragment::push_back(&_fragments, new Fragment(comment, true));
+      Fragment::push_back(&_fragments, new CommentFragment(comment));
     else
-      _fragments = new Fragment(comment, true);
+      _fragments = new CommentFragment(comment);
     return *this;
   }
   inline PfNode &append_loaded_binary_fragment(
       const QByteArray &unwrapped_data, const Utf8String &wrappings = {}) {
     if (_fragments)
-      Fragment::push_back(&_fragments,new Fragment(unwrapped_data, wrappings));
+      Fragment::push_back(
+            &_fragments, new LoadedBinaryFragment(unwrapped_data, wrappings));
     else
-      _fragments = new Fragment(unwrapped_data, wrappings);
+      _fragments = new LoadedBinaryFragment(unwrapped_data, wrappings);
     return *this;
   }
   inline PfNode &append_deferred_binary_fragment(
       QIODevice *file, qsizetype pos, qsizetype len, bool should_cache) {
     if (_fragments)
       Fragment::push_back(
-            &_fragments, new Fragment(file, pos, len, should_cache));
+            &_fragments, new DeferredBinaryFragment(
+              file, pos, len, should_cache));
     else
-      _fragments = new Fragment(file, pos, len, should_cache);
+      _fragments = new DeferredBinaryFragment(file, pos, len, should_cache);
     return *this;
   }
   template <bool even_on_text_fragments = false, bool recursive = true>
@@ -677,7 +634,7 @@ public:
     * The intent is to emulate XML attributes, hence the name. */
   [[nodiscard]] inline Utf8String attribute(
       const Utf8String &name, const Utf8String &def = {}) const {
-    auto child = first_child(name);
+    const auto &child = first_child(name);
     return !!child ? child.content_as_text() : def; }
   /** Syntaxic sugar: node["foo"] === node.attribute("foo") */
   [[nodiscard]] inline Utf8String operator[](const Utf8String &name) const {
@@ -804,6 +761,8 @@ public:
 
   // position ////////////////////////////////////////////////////////////////
 
+  /** return node position in input parsed data, if availlable.
+   *  position returned is the character just after node name. */
   Utf8String position() const;
   bool has_position() const { return _line; }
   quint64 line() const { return _line; }
@@ -818,13 +777,6 @@ private:
   struct PfWriter;
   qint64 write_pf(size_t depth, PfWriter *writer,
                   const PfOptions &options) const;
-  template <typename T, typename U>
-  inline PfNode &set_content(T content, U auxiliary) {
-    Fragment::delete_if(&_fragments, [](Fragment *f) STATIC_LAMBDA {
-      return f->type() != Fragment::Child; });
-    Fragment::push_back(&_fragments, new Fragment(content, auxiliary));
-    return *this;
-  }
   /** Escaping a char within text fragment depends on the char but also the
    *  next one because space should only be escaped when followed by other
    *  whitespace chars. The first one is free ;-) */
@@ -849,12 +801,44 @@ private:
       list += f;
     return list;
   }
+  static_assert(sizeof(Fragment) == 16);
   static_assert(sizeof(Utf8String) == 24); // _text
-  static_assert(sizeof(Fragment) == 48);
+  static_assert(sizeof(TextFragment) == 40); // 16+24
 };
 
 static_assert(sizeof(Utf8String) == 24); // _name
-static_assert(sizeof(PfNode) == 48);
+static_assert(sizeof(PfNode) == 48); // 24+8×3
+
+struct LIBP6CORESHARED_EXPORT PfNode::ChildFragment : public Fragment {
+  PfNode _child;
+  inline ChildFragment(const PfNode &child) : _child(child) { }
+  inline ChildFragment(PfNode &&child) : _child(std::move(child)) { }
+  FragmentType type() const override { return Child; }
+  Fragment *deep_copy() const override { return new ChildFragment(_child); }
+  PfNode *child() override { return &_child; }
+};
+
+PfNode &PfNode ::append_child(const PfNode &child) {
+  // qDebug() << "append_child&";
+  Fragment::push_back(&_fragments, new ChildFragment(child));
+  return *this;
+}
+
+PfNode &PfNode::append_child(PfNode &&child) {
+  // qDebug() << "append_child&&";
+  Fragment::push_back(&_fragments, new ChildFragment(std::move(child)));
+  return *this;
+}
+
+PfNode &PfNode::prepend_child(const PfNode &child) {
+  Fragment::push_front(&_fragments, new ChildFragment(child));
+  return *this;
+}
+
+PfNode &PfNode::prepend_child(PfNode &&child) {
+  Fragment::push_front(&_fragments, new ChildFragment(child));
+  return *this;
+}
 
 inline uint qHash(const PfNode &n) { return qHash(n.name()); }
 

@@ -13,16 +13,8 @@
  */
 #include "pfnode.h"
 #include <QBuffer>
-#include <QPointer>
 
 PfNode PfNode::_empty;
-
-struct PfNode::Fragment::DeferredBinaryPayload {
-  QPointer<QIODevice> _file;
-  qsizetype _pos = 0, _len = 0;
-  quint8 _should_cache:1 = 0;
-  QByteArray _cache = {};
-};
 
 struct PfNode::PfWriter : public QIODevice {
   QIODevice *_device;
@@ -116,7 +108,7 @@ static QMap<Utf8String,Wrapper> _wrappers {
 
 void PfNode::unwrap_binary(QByteArray *wrapped_data, Utf8String &wrappings,
                            const PfOptions &options) {
-  for (auto wrapping: wrappings.split(':', Qt::SkipEmptyParts)) {
+  for (const auto &wrapping: wrappings.split(':', Qt::SkipEmptyParts)) {
     auto wrapper = _wrappers.value(wrapping);
     if (wrapper.unwrap)
       wrapper.unwrap(wrapped_data, options);
@@ -125,7 +117,7 @@ void PfNode::unwrap_binary(QByteArray *wrapped_data, Utf8String &wrappings,
 
 void PfNode::enwrap_binary(QByteArray *unwrapped_data, Utf8String &wrappings,
                            const PfOptions &options) {
-  for (auto wrapping: wrappings.split(':', Qt::SkipEmptyParts)
+  for (const auto &wrapping: wrappings.split(':', Qt::SkipEmptyParts)
        | std::views::reverse) {
     auto wrapper = _wrappers.value(wrapping);
     if (wrapper.enwrap)
@@ -287,65 +279,32 @@ fragment_skipped:;
   return 0;
 }
 
-void PfNode::Fragment::create_deferred_binary(
-    const PfNode::Fragment::DeferredBinaryPayload &other) {
-  Q_ASSERT(_type == DeferredBinary);
-  _nontext._deferredbinary = new PfNode::Fragment::DeferredBinaryPayload(other);
-}
-
-void PfNode::Fragment::create_deferred_binary(
-    QIODevice *file, qsizetype pos, qsizetype len, bool should_cache) {
-  Q_ASSERT(_type == DeferredBinary);
-  _nontext._deferredbinary =
-      new PfNode::Fragment::DeferredBinaryPayload{file, pos, len, should_cache};
-}
-
-void PfNode::Fragment::destroy_deferred_binary() {
-  Q_ASSERT(_type == DeferredBinary);
-  Q_ASSERT(_nontext._deferredbinary);
-  delete _nontext._deferredbinary;
-  _nontext._deferredbinary = 0;
-}
-
-QByteArray PfNode::Fragment::retrieve_deferred_binary() const {
-  static_assert(sizeof(DeferredBinaryPayload) == 64);
-  if (_type != DeferredBinary || !_nontext._deferredbinary) {
-    qWarning() << "PfNode::Fragment::retrieve_deferred_binary_content() "
-                  "called on bad object" << this;
-    return {};
-  }
-  if (_nontext._deferredbinary->_len == 0
-      || !_nontext._deferredbinary->_cache.isEmpty())
-    return _nontext._deferredbinary->_cache;
-  QIODevice *file = _nontext._deferredbinary->_file.data();
+QByteArray PfNode::DeferredBinaryFragment::unwrapped_data() const {
+  if (_len == 0 || !_cache.isEmpty())
+    return _cache;
+  QIODevice *file = _file.data();
   if (!file) {
     qDebug() << "PF deferred binary fragment can't be read because file is no "
                 "longer open" << this;
     return {};
   }
-  if (!file->seek(_nontext._deferredbinary->_pos)) {
+  if (!file->seek(_pos)) {
     qDebug() << "PF deferred binary fragment can't seek" << this << "error:"
              << file->errorString();
     return {};
   }
-  auto payload = file->read(_nontext._deferredbinary->_len);
-  if (payload.size() != _nontext._deferredbinary->_len)
+  auto payload = file->read(_len);
+  if (payload.size() != _len)
     qDebug() << "PF deferred binary fragment can't read full payload" << this
-             << ": read" << payload.size() << "instead of"
-             << _nontext._deferredbinary->_len
+             << ": read" << payload.size() << "instead of" << _len
              << "error:" << file->errorString();
-  else if (_nontext._deferredbinary->_should_cache)
-    _nontext._deferredbinary->_cache = payload;
+  else if (_should_cache)
+    _cache = payload;
   return payload;
 }
 
-qsizetype PfNode::Fragment::size_of_deferred_binary() const {
-  if (_type != DeferredBinary || !_nontext._deferredbinary) {
-    qWarning() << "PfNode::Fragment::size_of_deferred_binary_content() "
-                  "called on bad object" << this;
-    return 0;
-  }
-  return _nontext._deferredbinary->_len;
+qsizetype PfNode::DeferredBinaryFragment::size() const {
+  return _len;
 }
 
 Utf8String PfNode::position() const {
@@ -353,4 +312,37 @@ Utf8String PfNode::position() const {
     return "unknown position"_u8;
   return "line: "_u8 + Utf8String::number(_line)
       + " column: "_u8 + Utf8String::number(_column);
+}
+
+PfNode::Fragment::FragmentType PfNode::Fragment::type() const {
+  qWarning() << "PfNode::Fragment::type() called on base class";
+  return Text;
+}
+
+PfNode::Fragment *PfNode::Fragment::deep_copy() const {
+  qWarning() << "PfNode::Fragment::clone() called on base class";
+  return 0;
+}
+
+void PfNode::Fragment::set_attribute(
+    PfNode::Fragment **pthis, const Utf8String &name, const Utf8String &value) {
+  Q_ASSERT(pthis != 0);
+  for (;*pthis; pthis = &((*pthis)->_next)) {
+    auto child = (*pthis)->child();
+    if (!!child && *child^name) {
+      child->set_text(value);
+      goto found_so_delete_others;
+    }
+  }
+  *pthis = new ChildFragment(PfNode(name, value));
+  return;
+found_so_delete_others:
+  pthis = &((*pthis)->_next);
+  while (*pthis) {
+    auto child = (*pthis)->child();
+    if (child && *child^name)
+      delete take_first(pthis);
+    else
+      pthis = &((*pthis)->_next);
+  }
 }

@@ -424,13 +424,13 @@ Utf8String PfAbstractParser::on_document_end(const PfOptions &) {
 }
 
 PfParser::~PfParser() {
-  qDeleteAll(_items);
+  qDeleteAll(_nodes);
 }
 
 void PfParser::clear() {
   _root = {"$root"};
-  qDeleteAll(_items);
-  _items.clear();
+  qDeleteAll(_nodes);
+  _nodes.clear();
 }
 
 Utf8String PfParser::on_document_begin(const PfOptions &) {
@@ -442,12 +442,12 @@ Utf8String PfParser::on_node_begin(std::forward_list<Utf8String> &names) {
   auto node = new PfNode(names.front());
   if (line)
     node->set_pos(line, column);
-  _items.push_front(node);
+  _nodes.push_front(node);
   return {};
 }
 
 Utf8String PfParser::on_text(const Utf8String &text) {
-  auto item = _items.front();
+  auto item = _nodes.front();
   if (!item) // should never happen
     [[unlikely]] return "PfItemBuilder::on_text() called without "
                         "PfItemBuilder::on_node_begin()";
@@ -457,7 +457,7 @@ Utf8String PfParser::on_text(const Utf8String &text) {
 
 Utf8String PfParser::on_loaded_binary(
     const QByteArray &unwrapped_payload, const Utf8String &wrappings) {
-  auto item = _items.front();
+  auto item = _nodes.front();
   if (!item) // should never happen
     [[unlikely]] return "PfItemBuilder::on_loaded_binary() called without "
                         "PfItemBuilder::on_node_begin()";
@@ -467,7 +467,7 @@ Utf8String PfParser::on_loaded_binary(
 
 Utf8String PfParser::on_deferred_binary(
     QIODevice *file, qsizetype pos, qsizetype len, bool should_cache) {
-  auto item = _items.front();
+  auto item = _nodes.front();
   if (!item) // should never happen
     [[unlikely]] return "PfItemBuilder::on_deferred_binary() called without "
                         "PfItemBuilder::on_node_begin()";
@@ -476,7 +476,7 @@ Utf8String PfParser::on_deferred_binary(
 }
 
 Utf8String PfParser::on_comment(const Utf8String &comment) {
-  auto item = _items.front();
+  auto item = _nodes.front();
   if (item)
     item->append_comment_fragment(comment);
   else
@@ -485,20 +485,21 @@ Utf8String PfParser::on_comment(const Utf8String &comment) {
 }
 
 Utf8String PfParser::on_node_end(std::forward_list<Utf8String> &) {
-  auto item = _items.front();
-  if (!item)
+  auto node = _nodes.front();
+  if (!node)
     [[unlikely]] return "PfItemBuilder::on_node_end() called without "
                         "PfItemBuilder::on_node_begin()";
-  _items.pop_front();
-  if (_items.empty())
-    _root.append_child(item);
+  _nodes.pop_front();
+  if (_nodes.empty())
+    _root.append_child(std::move(*node));
   else
-    _items.front()->append_child(item);
+    _nodes.front()->append_child(std::move(*node));
+  delete node;
   return {};
 }
 
 Utf8String PfParser::on_document_end(const PfOptions &) {
-  if (!_items.empty()) // should never happen
+  if (!_nodes.empty()) // should never happen
     [[unlikely]] return "PfItemBuilder::on_document_end with unterminated node";
   return {};
 }

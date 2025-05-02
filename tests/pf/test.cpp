@@ -6,21 +6,31 @@
 
 int main(void) {
   PfNode j;
-  j = { "a", "b"};
+  //j = { "a", "b", {{ "c", "d" }}};
+  //j = { "a", "b", { "c", "d" }};
+  //PfNode z{ "a", "b", { "c", "d" }};
+  //j = { "a", "b", PfNode{ "c", "d" }};
+  //j = PfNode{ "a", "b", PfNode{ "c", "d" }};
+  //PfNode y{"c","d"};
+  // PfNode z{"a", "b", std::move(y)};
+  //PfNode z{"a", "b", y};
+  //PfNode z{"a", "b", PfNode{"c", "d"}};
+  j = { "a", "b", PfNode{"c", "d"}};
+  j = { "a", "b", PfNode{"c", "d"}, PfNode{"e", "f"}};
   qDebug().noquote() << "j:" << j.as_pf() << j.fragments_count();
   PfNode k("k", "2");
   k.append_text_fragment("4  4 "); // should be merged with "2" as "2 4  4 "
-  k.append_child({"l","o"});
+  k.append_child(PfNode{"l","o"});
   k.append_text_fragment("8"); // should not be merged with "24"
   qDebug().noquote() << "k:" << k.as_pf() << k.fragments_count();
-  PfNode i { "root", "abéc€d🥨e", {
-      { "child1", "a" },
-      { "child2", "b", {
-          { "grandchild3", "d" },
-        }
-      },
-      { "child1", "c" },
-             } };
+  PfNode i { "root", "abéc€d🥨e",
+             PfNode{ "child1", "a" },
+             PfNode{ "child2", "b",
+                     PfNode{ "grandchild3", "d" }
+                   },
+             PfNode{ "child1", "c" }
+           };
+  qDebug() << "/i=";
   // qDebug() << sizeof(PfNode) << sizeof (PfNode::Fragment)
   //          << sizeof (PfNode::Fragment::_flags) << sizeof (PfNode::Fragment::_content)
   //          << sizeof(PfOptions)
@@ -30,7 +40,9 @@ int main(void) {
   qDebug().noquote() << i.fragments_count()
                      << i.as_pf(PfOptions().with_comments()) << i["child1"]
                         << i.content_as_text();
+  qDebug() << "i.set_a";
   i.set_attribute("child1", "A");
+  qDebug() << "/i.set_a";
   qDebug().noquote() << i.fragments_count()
                      << i.as_pf(PfOptions().with_comments());
   i.set_attribute("child2", "B");
@@ -45,27 +57,45 @@ int main(void) {
   file.setFileName("./sample1.pf");
   file.open(QIODevice::ReadOnly);
   qDebug() << "parsing" << parser.parse(&file, PfOptions().with_comments());
-  for (auto i: parser.root().children()) {
+  for (const auto &i: parser.root().children()) {
+    qDebug() << "iterating on root child" << i.name();
     qDebug().noquote() << i.fragments_count()
                        << i.as_pf(PfOptions().with_comments());
-    qDebug() << (i["child11"])
+    qDebug() << i["child11"]
              << i.content_as_text()
-             << (i["child14"])
+             << i["child14"]
              << i.first_child("child14").content_as_text_pair()
              << i.first_child("unknown").content_as_text()
-             << (i["unknown"]);
+             << i["unknown"];
     qDebug().noquote() << i.fragments_count()
                        << i.as_pf();
     qDebug().noquote() << i.as_pf(PfOptions().with_indent(2).with_comments());
     qDebug().noquote() << i.as_pf(PfOptions().with_indent(4));
   }
+  // qDebug() << "in between";
+  // for (auto i: parser.root().children_ptr()) {
+  //   qDebug() << "iterating on root child" << i->name();
+  //   qDebug().noquote() << i->fragments_count()
+  //                      << i->as_pf(PfOptions().with_comments());
+  //   qDebug() << ((*i)["child11"])
+  //            << i->content_as_text()
+  //            << ((*i)["child14"])
+  //            << i->first_child("child14").content_as_text_pair()
+  //            << i->first_child("unknown").content_as_text()
+  //            << ((*i)["unknown"]);
+  //   qDebug().noquote() << i->fragments_count()
+  //                      << i->as_pf();
+  //   qDebug().noquote() << i->as_pf(PfOptions().with_indent(2).with_comments());
+  //   qDebug().noquote() << i->as_pf(PfOptions().with_indent(4));
+  // }
   qDebug().noquote() << parser.root().as_pf(PfOptions().with_indent(2)
                                             .with_comments());
+
   file.close();
   file.setFileName("./sample2.pf");
   file.open(QIODevice::ReadOnly);
   qDebug() << "parsing" << parser.parse(&file, PfOptions().with_comments());
-  for (auto i: parser.root().children()) {
+  for (const auto &i: parser.root().children()) {
     qDebug().noquote() << i.fragments_count()
                        << i.as_pf(PfOptions().with_comments().with_indent(2));
     qDebug().noquote()
@@ -105,24 +135,25 @@ int main(void) {
       << parser.root().first_child().as_pf() << parser.root().children_count();
 
   qDebug().noquote()
-      << PfNode{"root", "text", { {"child", "long text" } } }
+      << PfNode{"root", "text", PfNode{"child", "long text" } }
          .as_pf(PfOptions().with_heretext_trigger_size(5));
   qDebug().noquote()
-      << PfNode{"root", "text", { {"child", "long text" } } }
+      << PfNode{"root", "text", PfNode{"child", "long text" } }
          .as_pf(PfOptions().with_heretext_trigger_size(0));
   qDebug().noquote()
-      << PfNode{"root", "text", { {"child", "long text" } } }
+      << PfNode{"root", "text", PfNode{"child", "long text" } }
          .as_pf(PfOptions().without_heretext_trigger_size());
   qDebug().noquote()
-      << PfNode{"root", "text", { {"child", "long text" } } }
+      << PfNode{"root", "text", PfNode{"child", "long text" } }
          .as_pf(PfOptions().with_heretext_trigger_size(5).with_indent(2));
   qDebug().noquote()
-      << PfNode{"root", "EOF", { {"child", "EOFEOF0EOF1EOF2EOF3EOF4EOF5EOF6EOF7"
-                                           "EOF8EOF9" } } }
+      << PfNode{"root", "EOF", PfNode{"child", "EOFEOF0EOF1EOF2EOF3EOF4EOF5EO"
+                                               "F6EOF7EOF8EOF9" } }
          .as_pf(PfOptions().with_heretext_trigger_size(0));
 
-  auto pf1 = PfNode{"root", "text", {
-             PfNode{"child"}.append_loaded_binary_fragment("§", "hex:zlib") } }
+  auto pf1 = PfNode{"root", "text",
+                    PfNode{"child"}.append_loaded_binary_fragment(
+                       "§", "hex:zlib") }
              .as_pf(PfOptions().with_indent(2));
   qDebug().noquote()
       << pf1 << parser.parse(pf1)
@@ -140,9 +171,9 @@ int main(void) {
   qDebug().noquote() << pf1n.as_pf(PfOptions().with_indent(2)
                                    .with_payload_first());
 
-  auto pf2n = PfNode{"root", "text", {
-             PfNode{"child"}.append_loaded_binary_fragment(
-               "🌞"_u8.repeated(60), "base64") } };
+  auto pf2n = PfNode{"root", "text",
+                     PfNode{"child"}.append_loaded_binary_fragment(
+                        "🌞"_u8.repeated(60), "base64") } ;
   qDebug().noquote() << pf2n.as_pf(PfOptions().with_indent(2));
   pf2n.set_wrappings("hex");
   qDebug().noquote() << pf2n.as_pf(PfOptions().with_indent(2));
