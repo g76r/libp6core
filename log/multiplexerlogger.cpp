@@ -65,7 +65,7 @@ void MultiplexerLogger::addConsoleLogger(
   QFile *console = new QFile;
   console->open(stream, QIODevice::WriteOnly|QIODevice::Unbuffered);
   FileLogger *logger = new FileLogger(console, severity, false);
-  console->setParent(logger);
+  connect(logger, &QObject::destroyed, console, &QObject::deleteLater);
   auto name = "Console"+logger->objectName();
   logger->setObjectName(name);
   if (auto t = logger->thread(); t) // should always be true
@@ -80,7 +80,7 @@ void MultiplexerLogger::replace_loggers(
     QFile *console = new QFile;
     console->open(1, QIODevice::WriteOnly|QIODevice::Unbuffered);
     FileLogger *consoleLogger = new FileLogger(console, console_min_severity);
-    console->setParent(consoleLogger);
+    connect(consoleLogger, &QObject::destroyed, console, &QObject::deleteLater);
     auto name = "Console"+consoleLogger->objectName();
     consoleLogger->setObjectName(name);
     new_loggers.prepend(consoleLogger);
