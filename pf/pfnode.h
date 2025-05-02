@@ -381,15 +381,17 @@ public:
         | std::views::transform([](struct Fragment *f) STATIC_LAMBDA -> PfNode & { return *f->child(); });
   }
   /** Children filtered by their name, as range loop expression. */
-  [[nodiscard]] inline auto children(
-      const p6::readable_set<Utf8String> auto &names) const {
+  template <class S>
+  requires (p6::readable_set<S,Utf8String> && !std::same_as<S,QString>)
+  [[nodiscard]] inline auto children(const S &names) const {
     return std::views::all(Fragment::FragmentForwardRange(_fragments))
         | std::views::filter([names](const Fragment *f) { auto child = f->child(); return child && *child^names; })
         | std::views::transform([](const Fragment *f) STATIC_LAMBDA -> const PfNode & { return *f->child(); });
   }
   /** Children filtered by their name, as range loop expression. */
-  [[nodiscard]] inline auto children(
-      const p6::readable_set<Utf8String> auto &names) {
+  template <class S>
+  requires (p6::readable_set<S,Utf8String> && !std::same_as<S,QString>)
+  [[nodiscard]] inline auto children(const S &names) {
     return std::views::all(Fragment::FragmentForwardRange(_fragments))
         | std::views::filter([names](struct Fragment *f) { auto child = f->child(); return child && *child^names; })
         | std::views::transform([](struct Fragment *f) STATIC_LAMBDA -> PfNode & { return *f->child(); });
@@ -398,8 +400,9 @@ public:
   [[nodiscard]] inline auto operator/(const Utf8String &name) const {
     return children(name); }
   /** Syntaxic sugar: node/{"foo","bar"} === node.children({"foo","bar"}) */
-  [[nodiscard]] inline auto operator/(
-      const p6::readable_set<Utf8String> auto &names) const {
+  template <class S>
+  requires (p6::readable_set<S,Utf8String> && !std::same_as<S,QString>)
+  [[nodiscard]] inline auto operator/(const S &names) const {
     return children(names); }
   /** Children as QList copy */
   [[nodiscard]] inline QList<PfNode> children_copy() const {
