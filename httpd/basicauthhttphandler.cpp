@@ -22,8 +22,7 @@ BasicAuthHttpHandler::BasicAuthHttpHandler(QObject *parent)
 BasicAuthHttpHandler::~BasicAuthHttpHandler() {
 }
 
-bool BasicAuthHttpHandler::acceptRequest(HttpRequest req) {
-  Q_UNUSED(req)
+bool BasicAuthHttpHandler::acceptRequest(HttpRequest &) {
   return true;
 }
 
@@ -31,7 +30,8 @@ static QRegularExpression _headerRe("\\A\\s*Basic\\s+(\\S+)\\s*\\z");
 static QRegularExpression _tokenRe("\\A([^:]+):([^:]+)\\z"); // LATER : in pwd ?
 
 bool BasicAuthHttpHandler::handleRequest(
-    HttpRequest req, HttpResponse res, ParamsProviderMerger *processingContext) {
+    HttpRequest &req, HttpResponse &res,
+    ParamsProviderMerger &request_context) {
   auto header = req.header("Authorization");
   QByteArray token;
   auto m = _headerRe.match(header);
@@ -45,8 +45,8 @@ bool BasicAuthHttpHandler::handleRequest(
                                                    _authContext);
         if (!userId.isEmpty()) {
           if (!_userIdContextParamName.isEmpty())
-            processingContext
-                ->overrideParamValue(_userIdContextParamName, userId);
+            request_context
+                .overrideParamValue(_userIdContextParamName, userId);
           return true;
         }
       }

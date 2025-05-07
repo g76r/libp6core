@@ -22,7 +22,7 @@ GraphvizImageHttpHandler::GraphvizImageHttpHandler(
 }
 
 QByteArray GraphvizImageHttpHandler::imageData(
-    HttpRequest req, ParamsProviderMerger *context, int timeoutMillis) {
+    HttpRequest &req, ParamsProviderMerger &context, int timeoutMillis) {
   QMutexLocker ml(&_mutex);
   if (!_renderingNeeded)
     return _data;
@@ -39,19 +39,19 @@ QByteArray GraphvizImageHttpHandler::imageData(
 }
 
 QByteArray GraphvizImageHttpHandler::contentType(
-  HttpRequest, ParamsProviderMerger *) const {
+    HttpRequest&, ParamsProviderMerger&) const {
   QMutexLocker ml(&_mutex);
   return _contentType;
 }
 
 QByteArray GraphvizImageHttpHandler::contentEncoding(
-    HttpRequest, ParamsProviderMerger *) const {
+    HttpRequest&, ParamsProviderMerger&) const {
   QMutexLocker ml(&_mutex);
   return (_format == Svgz) ? "gzip"_u8 : QByteArray{};
 }
 
 QByteArray GraphvizImageHttpHandler::source(
-  HttpRequest, ParamsProviderMerger *) const {
+    HttpRequest&, ParamsProviderMerger&) const {
   QMutexLocker ml(&_mutex);
   return _source;
 }

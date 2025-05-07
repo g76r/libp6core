@@ -1,4 +1,4 @@
-/* Copyright 2015-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,7 +19,7 @@ QVariant SharedUiItemList::paramRawValue(
   int colon = key.indexOf(':');
   Utf8String qualifier = colon >= 0 ? key.left(colon) : Utf8String{};
   Utf8String sectionName = key.mid(colon+1);// works even with colon=-1
-  for (auto item : *this) {
+  for (const auto &item : *this) {
     // ignore item if keys contains a qualifier and it does not match item
     // e.g. "employee:name" and current item is qualified as "building"
     if (!qualifier.isEmpty() && item.qualifier() != qualifier)
@@ -53,7 +53,7 @@ QVariant SharedUiItemList::paramRawValue(
 Utf8StringSet SharedUiItemList::paramKeys(
     const EvalContext &) const {
   Utf8StringSet keys, qualifiers;
-  for (auto item: *this) {
+  for (const auto &item: *this) {
     auto q = item.qualifier();
     if (qualifiers.contains(q))
       continue;
@@ -79,7 +79,7 @@ inline T generic_join(const SharedUiItemList &list, const S &separator,
                       bool qualified) {
   T s;
   bool first = true;
-  for (auto item : list) {
+  for (const auto &item : list) {
     if (first)
       first = false;
     else
@@ -120,7 +120,7 @@ inline Utf8String generic_join(
     const Utf8String &format, const Utf8StringSet &qualifiers) {
   Utf8String s;
   bool first = true, filtered = !qualifiers.isEmpty();
-  for (auto item : list) {
+  for (const auto &item: list) {
     if (filtered && !qualifiers.contains(item.qualifier()))
       continue;
     if (first)

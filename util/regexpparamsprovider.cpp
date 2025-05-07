@@ -1,4 +1,4 @@
-/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -42,7 +42,7 @@ Utf8StringSet RegexpParamsProvider::paramKeys(
   qsizetype n = _match.capturedTexts().size();
   for (qsizetype i = 0; i < n; ++i)
     keys << Utf8String::number(i);
-  for (auto key: _match.regularExpression().namedCaptureGroups())
+  for (const auto &key: _match.regularExpression().namedCaptureGroups())
     if (!key.isEmpty())
       keys << key;
   return keys;

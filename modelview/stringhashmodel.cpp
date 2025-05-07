@@ -1,4 +1,4 @@
-/* Copyright 2017-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2017-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -56,7 +56,7 @@ void StringHashModel::setValues(const QHash<QString,QString> &values) {
 
 void StringHashModel::setValues(const QMap<QString,QString> &values) {
   QHash<QString,QString> hash;
-  for (auto key: values.keys())
+  for (const auto &key: values.keys())
     hash.insert(key, values.value(key));
   setValues(hash);
 }
@@ -64,7 +64,7 @@ void StringHashModel::setValues(const QMap<QString,QString> &values) {
 QMap<QString,QString> StringHashModel::valuesAsMap() const {
   QHash<QString,QString> hash = values();
   QMap<QString,QString> map;
-  for (auto key: hash.keys())
+  for (const auto &key: hash.keys())
     map.insert(key, hash.value(key));
   return map;
 }

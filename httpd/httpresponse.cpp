@@ -80,10 +80,10 @@ QAbstractSocket *HttpResponse::output() {
     Utf8String ba;
     ba = "HTTP/1.1 "_u8 + Utf8String::number(d->_status) + " "_u8
         + status_as_text(d->_status) + "\r\n"_u8;
-    for (auto [name, data]: d->_cookies.asKeyValueRange()) {
+    for (const auto &[name, data]: d->_cookies.asKeyValueRange()) {
       auto s = name+"="_u8+data.value;
       if (!data.expires.isNull())
-        s += "; Expires="_u8 + TimeFormats::toRfc2822DateTime(data.expires).toUtf8();
+        s += "; Expires="_u8 + TimeFormats::toRfc2822DateTime(data.expires);
       if (!data.path.isEmpty())
         s.append("; Path=").append(data.path);
       if (!data.domain.isEmpty())
@@ -96,9 +96,9 @@ QAbstractSocket *HttpResponse::output() {
     }
     // LATER sanitize well-known headers (Content-Type...) values
     // LATER handle multi-line headers and special chars
-    for (auto name: Utf8StringList(d->_headers.keys())
+    for (const auto &name: Utf8StringList(d->_headers.keys())
          .toSortedDeduplicatedList())
-      for (auto value: d->_headers.values(name))
+      for (const auto &value: d->_headers.values(name))
         ba += name + ": "_u8 + value + "\r\n"_u8;
     if (header("Content-Type"_u8).isEmpty())
       ba += "Content-Type: text/plain;charset=UTF-8\r\n"_u8;
@@ -226,10 +226,6 @@ Utf8String HttpResponse::header(
 Utf8StringList HttpResponse::headers(const Utf8String &name) const {
   // LATER handle case insensitivity in header names
   return d ? d->_headers.values(name) : Utf8StringList{};
-}
-
-QMultiMap<Utf8String, Utf8String> HttpResponse::headers() const {
-  return d ? d->_headers : QMultiMap<Utf8String,Utf8String>();
 }
 
 Utf8String HttpResponse::status_as_text(int status) {
@@ -367,11 +363,11 @@ QVariant HttpResponse::paramRawValue(
 }
 
 Utf8StringSet HttpResponse::paramKeys(const EvalContext &context) const {
-  if (!context.hasScopeOrNone(paramScope()))
+  if (!d || !context.hasScopeOrNone(paramScope()))
     return {};
   Utf8StringSet keys { "status", "receiveddate", "handleddate", "flusheddate",
                        "servicems", "handlingms"};
-  for (auto [s,_]: headers().asKeyValueRange()) {
+  for (const auto &[s,_]: d->_headers.asKeyValueRange()) {
     keys << "header:"+s;
     keys << "responseheader:"+s;
     keys << s;

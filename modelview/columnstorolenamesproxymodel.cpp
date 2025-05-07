@@ -1,4 +1,4 @@
-/* Copyright 2016-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -43,7 +43,7 @@ void ColumnsToRolenamesProxyModel::refreshRolenamesFromColumnHeaders() {
   }
   // keep default rolenames (provided no column header name overrides them)
   _roles = model->roleNames();
-  for (auto [k,v] : _roles.asKeyValueRange())
+  for (const auto &[k,v] : _roles.asKeyValueRange())
     _reverseRoles.insert(QString::fromUtf8(v), k);
   // use column names as QML role names and map them to QtWidgets user roles,
   // force lower case names

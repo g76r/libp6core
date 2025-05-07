@@ -151,7 +151,7 @@ Utf8String::Utf8String(QLineF line) {
 }
 
 Utf8String::Utf8String(QList<QPointF> list) {
-  for (bool begin = true; auto point: list) {
+  for (bool begin = true; const auto &point: list) {
     if (begin)
       begin = false;
     else
@@ -802,7 +802,7 @@ QLineF Utf8String::toLineF() const {
 
 QList<QPointF> Utf8String::toPointFList() const {
   QList<QPointF> points;
-  for (auto coords: split(' '))
+  for (const auto &coords: split(' '))
     points += coords.toPointF();
   return points;
 }

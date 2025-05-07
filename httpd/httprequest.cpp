@@ -173,9 +173,9 @@ Utf8String HttpRequest::human_readable() const {
   Utf8String s;
   s += "HttpRequest{ " + method_name() + ", " + url()
       + ", { ";
-  for (auto key: d->_headers.keys()) {
+  for (const auto &key: d->_headers.keys()) {
     s += key + ":{ ";
-    for (auto value: d->_headers.values(key)) {
+    for (const auto &value: d->_headers.values(key)) {
       s += value + " ";
     }
     s += "} ";
@@ -202,7 +202,7 @@ Utf8String HttpRequest::url() const {
   return d ? d->_url : Utf8String{};
 }
 
-QAbstractSocket *HttpRequest::input() {
+QAbstractSocket *HttpRequest::input() const {
   return d ? d->_input : 0;
 }
 
@@ -260,7 +260,7 @@ Utf8StringList HttpRequest::client_addresses() const {
     auto xff = headers(_xff_header);
     for (int i = xff.size()-1; i >= 0; --i) {
       auto addresses = xff[i].split(',');
-      for (auto a: addresses)
+      for (const auto &a: addresses)
         d->_client_addresses += a.trimmed();
     }
     QHostAddress peerAddress = d->_input->peerAddress();
@@ -335,15 +335,15 @@ Utf8StringSet HttpRequest::paramKeys(
   static const Utf8StringSet _const_keys {
     "url"_u8, "path"_u8, "method"_u8, "clientaddresses"_u8 };
   Utf8StringSet keys = _const_keys;
-  for (auto [s,_]: cookies().asKeyValueRange()) {
+  for (const auto &[s,_]: cookies().asKeyValueRange()) {
     keys << "cookie:"_u8+s;
     keys << s;
   }
-  for (auto [s,_]: query_params().asKeyValueRange()) {
+  for (const auto &[s,_]: query_params().asKeyValueRange()) {
     keys << "param:"_u8+s;
     keys << s;
   }
-  for (auto [s,_]: headers().asKeyValueRange()) {
+  for (const auto &[s,_]: headers().asKeyValueRange()) {
     keys << "header:"_u8+s;
     keys << "requestheader:"_u8+s;
     keys << s;

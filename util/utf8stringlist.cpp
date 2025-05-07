@@ -61,7 +61,7 @@ template<typename C,typename T>
 static inline Utf8String join(const C &container, const T &separator) {
   Utf8String joined;
   bool first = true;
-  for (auto s: container) {
+  for (const auto &s: container) {
     if (first)
       first = false;
     else
@@ -74,7 +74,7 @@ static inline Utf8String join(const C &container, const T &separator) {
 template<typename C,typename T>
 static inline Utf8String headed_join(const C &container, const T &separator) {
   Utf8String joined;
-  for (auto s: container) {
+  for (const auto &s: container) {
     joined += separator;
     joined += s;
   }

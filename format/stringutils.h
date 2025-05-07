@@ -1,4 +1,4 @@
-/* Copyright 2016-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -45,9 +45,9 @@ QString LIBP6CORESHARED_EXPORT elideMiddle(
    * Kind of extracting a vector from a transposed text matrix.
    */
 inline QStringList columnFromRows(
-    QList<QStringList> rows, int column, QString defaultValue = {}) {
+    const QList<QStringList> &rows, int column, QString defaultValue = {}) {
   QStringList list;
-  for (auto row: rows)
+  for (const auto &row: rows)
     list << row.value(column, defaultValue);
   return list;
 }
@@ -59,7 +59,7 @@ inline QStringList columnFromRows(
    * @urlAsLinks if true strings like "http://foo/bar" will be converted into html links
    */
 QString LIBP6CORESHARED_EXPORT htmlEncode(
-    QString text, bool urlAsLinks = true, bool newlineAsBr = true);
+    const QString &text, bool urlAsLinks = true, bool newlineAsBr = true);
 /** Convert an identifier to snake case.
    * E.g. "hello world" -> "hello_world", "HelloWorld" -> "hello_world",
    * "hello_world" -> "hello_world", "hello-World" -> "hello_world".

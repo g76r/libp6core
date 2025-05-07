@@ -148,8 +148,6 @@ public:
       const Utf8String &name, const Utf8String &def = {}) const;
   /** Values associated to a response header, last occurrence first. */
   [[nodiscard]] Utf8StringList headers(const Utf8String &name) const;
-  /** Full header hash */
-  [[nodiscard]] QMultiMap<Utf8String,Utf8String> headers() const;
   /** Redirect to another URL, by default using a temporary redirect (302).
    * Must be called before output(). */
   void redirect(Utf8String location, int status = HTTP_Found);

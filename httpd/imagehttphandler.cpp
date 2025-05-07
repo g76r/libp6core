@@ -21,23 +21,23 @@ ImageHttpHandler::ImageHttpHandler(
   : HttpHandler(parent), _urlPathPrefix(urlPathPrefix) {
 }
 
-bool ImageHttpHandler::acceptRequest(HttpRequest req) {
+bool ImageHttpHandler::acceptRequest(HttpRequest &req) {
   return _urlPathPrefix.isEmpty()
       || req.path().startsWith(_urlPathPrefix);
 }
 
-bool ImageHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
-                                     ParamsProviderMerger *processingContext) {
+bool ImageHttpHandler::handleRequest(HttpRequest &req, HttpResponse &res,
+                                     ParamsProviderMerger &request_context) {
   // TODO handle HTTP/304
   // LATER content type and content should be retrieve at once atomicaly
   // LATER pass params from request
   if (handleCORS(req, res))
     return true;
-  res.set_content_type(contentType(req, processingContext));
-  auto contentEncoding = this->contentEncoding(req, processingContext);
+  res.set_content_type(contentType(req, request_context));
+  auto contentEncoding = this->contentEncoding(req, request_context);
   if (!contentEncoding.isEmpty())
     res.set_header("Content-Encoding"_u8, contentEncoding);
-  QByteArray data = imageData(req, processingContext);
+  QByteArray data = imageData(req, request_context);
   res.set_content_length(data.size());
   if (req.method() != HttpRequest::HEAD)
     res.output()->write(data);
@@ -45,21 +45,21 @@ bool ImageHttpHandler::handleRequest(HttpRequest req, HttpResponse res,
 }
 
 QByteArray ImageHttpHandler::source(
-  HttpRequest, ParamsProviderMerger *) const {
+    HttpRequest &, ParamsProviderMerger &) const {
   return {};
 }
 
 QByteArray ImageHttpHandler::contentEncoding(
-  HttpRequest, ParamsProviderMerger *) const {
+  HttpRequest&, ParamsProviderMerger &) const {
   return {};
 }
 
 QByteArray ImageHttpHandler::imageData(
-  HttpRequest, ParamsProviderMerger *, int) {
+  HttpRequest&, ParamsProviderMerger &, int) {
   return {};
 }
 
 QByteArray ImageHttpHandler::contentType(
-  HttpRequest, ParamsProviderMerger *) const {
+    HttpRequest &, ParamsProviderMerger &) const {
   return {};
 }

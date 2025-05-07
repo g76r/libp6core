@@ -1,4 +1,4 @@
-/* Copyright 2013-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -29,31 +29,32 @@ protected:
       const QByteArray &urlPathPrefix, QObject *parent = 0);
 
 public:
-  bool acceptRequest(HttpRequest req) override;
-  bool handleRequest(HttpRequest req, HttpResponse res,
-                     ParamsProviderMerger *processingContext) override;
+  bool acceptRequest(HttpRequest &req) override;
+  bool handleRequest(HttpRequest &req, HttpResponse &res,
+                     ParamsProviderMerger &request_context) override;
   /** This method must be thread-safe for the same reasons than
    * handleRequest()
    * @param timeoutMillis maximum acceptable time if the image rendering is
    *   performed on demand */
   virtual QByteArray imageData(
-    HttpRequest req, ParamsProviderMerger *processingContext, int timeoutMillis
-    = IMAGEHTTPHANDLER_DEFAULT_ONDEMAND_RENDERING_TIMEOUT) = 0;
+      HttpRequest &req, ParamsProviderMerger &request_context,
+      int timeoutMillis = IMAGEHTTPHANDLER_DEFAULT_ONDEMAND_RENDERING_TIMEOUT)
+  = 0;
   /** This method must be thread-safe for the same reasons than
    * handleRequest() */
   virtual QByteArray contentType(
-    HttpRequest req, ParamsProviderMerger *processingContext = 0) const = 0;
+    HttpRequest &req, ParamsProviderMerger &request_context) const = 0;
   /** This method must be thread-safe for the same reasons than
    * handleRequest()
    * @return {} by default */
   virtual QByteArray contentEncoding(
-    HttpRequest req, ParamsProviderMerger *processingContext = 0) const;
+    HttpRequest &req, ParamsProviderMerger &request_context) const;
   /** Return a source code or text for image, if any.
    * Default: {}
    * This method must be thread-safe for the same reasons than
    * handleRequest() */
   virtual QByteArray source(
-    HttpRequest req, ParamsProviderMerger *processingContext = 0) const;
+    HttpRequest &req, ParamsProviderMerger &request_context) const;
   // LATER sourceMimeType and imageMimeType
 
 signals:

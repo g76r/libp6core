@@ -1,4 +1,4 @@
-/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,7 +21,7 @@ CsvFile::CsvFile(QObject *parent)
     _headersEnabled(true), _columnCount(0) {
 }
 
-CsvFile::CsvFile(QObject *parent, QString filename)
+CsvFile::CsvFile(QObject *parent, const QString &filename)
   : CsvFile(parent) {
   _filename = filename;
 }
@@ -44,7 +44,7 @@ bool CsvFile::open(QIODevice::OpenMode mode) {
   return false;
 }
 
-bool CsvFile::open(QString filename, QIODevice::OpenMode mode) {
+bool CsvFile::open(const QString &filename, QIODevice::OpenMode mode) {
   _filename = filename;
   return open(mode);
 }
@@ -69,7 +69,7 @@ void CsvFile::close() {
   _openMode = QIODevice::NotOpen;
 }
 
-bool CsvFile::setHeaders(QStringList data) {
+bool CsvFile::setHeaders(const QStringList &data) {
   if (_openMode & QIODevice::WriteOnly) {
     _headers = data;
     _columnCount = qMax(_columnCount, data.size());
@@ -78,7 +78,7 @@ bool CsvFile::setHeaders(QStringList data) {
   return false;
 }
 
-bool CsvFile::insertRow(int row, QStringList data) {
+bool CsvFile::insertRow(int row, const QStringList &data) {
   if (row < 0 || row > _rows.size())
     return false;
   if (_openMode & QIODevice::WriteOnly) {
@@ -89,7 +89,7 @@ bool CsvFile::insertRow(int row, QStringList data) {
   return false;
 }
 
-bool CsvFile::updateRow(int row, QStringList data){
+bool CsvFile::updateRow(int row, const QStringList &data){
   if (row < 0 || row >= _rows.size())
     return false;
   if (_openMode & QIODevice::WriteOnly) {
@@ -100,7 +100,7 @@ bool CsvFile::updateRow(int row, QStringList data){
   return false;
 }
 
-bool CsvFile::appendRow(QStringList data) {
+bool CsvFile::appendRow(const QStringList &data) {
   return insertRow(_rows.size(), data);
 }
 
@@ -188,7 +188,7 @@ bool CsvFile::writeAll() {
       if (_headersEnabled)
         if (!writeRow(&file, _headers, specialChars))
           return false;
-      for (auto row: _rows)
+      for (const auto &row: _rows)
         if (!writeRow(&file, row, specialChars))
           return false;
       return file.commit();
@@ -197,10 +197,11 @@ bool CsvFile::writeAll() {
   return false;
 }
 
-bool CsvFile::writeRow(QSaveFile *file, QStringList row, QString specialChars) {
+bool CsvFile::writeRow(QSaveFile *file, const QStringList &row,
+                       const QString &specialChars) {
   QString s;
   bool firstColumn = true;
-  for (auto cell: row) {
+  for (const auto &cell: row) {
     if (firstColumn)
       firstColumn = false;
     else

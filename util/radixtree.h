@@ -309,29 +309,29 @@ public:
         insert(key, helper._value, helper._isPrefix);
   }
   explicit RadixTree(const QHash<QString,T> &hash) : RadixTree() {
-    for (auto [k,v]: hash.asKeyValueRange())
+    for (const auto &[k,v]: hash.asKeyValueRange())
       insert(k, v);
   }
   explicit RadixTree(const QHash<Utf8String,T> &hash) : RadixTree() {
-    for (auto [k,v]: hash.asKeyValueRange())
+    for (const auto &[k,v]: hash.asKeyValueRange())
       insert(k, v);
   }
   /** assumes that key is UTF-8 (or of course ASCII) */
   explicit RadixTree(const QHash<const char *,T> &hash) : RadixTree() {
-    for (auto [k,v]: hash.asKeyValueRange())
+    for (const auto &[k,v]: hash.asKeyValueRange())
       insert(k, v);
   }
   explicit RadixTree(const QMap<QString,T> &map) : RadixTree() {
-    for (auto [k,v]: map.asKeyValueRange())
+    for (const auto &[k,v]: map.asKeyValueRange())
       insert(k, v);
   }
   explicit RadixTree(const QMap<Utf8String,T> &map) : RadixTree() {
-    for (auto [k,v]: map.asKeyValueRange())
+    for (const auto &[k,v]: map.asKeyValueRange())
       insert(k, v);
   }
   /** assumes that key is UTF-8 (or of course ASCII) */
   explicit RadixTree(const QMap<const char *,T> &map) : RadixTree() {
-    for (auto [k,v]: map.asKeyValueRange())
+    for (const auto &[k,v]: map.asKeyValueRange())
       insert(k, v);
   }
   RadixTree(const RadixTree &other) : d(other.d) { }
@@ -413,77 +413,77 @@ public:
   }
   static RadixTree<T> reversed(const QHash<T,QString> &hash) {
     RadixTree<T> that;
-    for (auto [k,v]: hash.asKeyValueRange())
+    for (const auto &[k,v]: hash.asKeyValueRange())
       that.insert(v, k);
     return that;
   }
   static RadixTree<T> reversed(const QHash<T,Utf8String> &hash) {
     RadixTree<T> that;
-    for (auto [k,v]: hash.asKeyValueRange())
+    for (const auto &[k,v]: hash.asKeyValueRange())
       that.insert(v, k);
     return that;
   }
   /** assumes that key is UTF-8 (or of course ASCII) */
   static RadixTree<T> reversed(const QHash<T,const char *> &hash) {
     RadixTree<T> that;
-    for (auto [k,v]: hash.asKeyValueRange())
+    for (const auto &[k,v]: hash.asKeyValueRange())
       that.insert(v, k);
     return that;
   }
   /** assumes that key is UTF-8 (or of course ASCII) */
   static RadixTree<T> reversed(const QHash<T,QByteArray> &hash) {
     RadixTree<T> that;
-    for (auto [k,v]: hash.asKeyValueRange())
+    for (const auto &[k,v]: hash.asKeyValueRange())
       that.insert(v, k);
     return that;
   }
   static RadixTree<T> reversed(const QMap<T,QString> &map) {
     RadixTree<T> that;
-    for (auto [k,v]: map.asKeyValueRange())
+    for (const auto &[k,v]: map.asKeyValueRange())
       that.insert(v, k);
     return that;
   }
   static RadixTree<T> reversed(const QMap<T,Utf8String> &map) {
     RadixTree<T> that;
-    for (auto [k,v]: map.asKeyValueRange())
+    for (const auto &[k,v]: map.asKeyValueRange())
       that.insert(v, k);
     return that;
   }
   /** assumes that key is UTF-8 (or of course ASCII) */
   static RadixTree<T> reversed(const QMap<T,const char *> &map) {
     RadixTree<T> that;
-    for (auto [k,v]: map.asKeyValueRange())
+    for (const auto &[k,v]: map.asKeyValueRange())
       that.insert(v, k);
     return that;
   }
   /** assumes that key is UTF-8 (or of course ASCII) */
   static RadixTree<T> reversed(const QMap<T,QByteArray> &map) {
     RadixTree<T> that;
-    for (auto [k,v]: map.asKeyValueRange())
+    for (const auto &[k,v]: map.asKeyValueRange())
       that.insert(v, k);
     return that;
   }
   QMap<QString,T> toUtf16Map() const {
     QMap<QString,T> map;
-    for (auto key : keys())
+    for (const auto &key : keys())
       map.insert(key, value(key));
     return map;
   }
   QMap<Utf8String,T> toUtf8Map() const {
     QMap<Utf8String,T> map;
-    for (auto key : keys())
+    for (const auto &key : keys())
       map.insert(key, value(key));
     return map;
   }
   QMap<T,QString> toReversedUtf16Map() const {
     QMap<T,QString> map;
-    for (auto key : keys())
+    for (const auto &key : keys())
       map.insert(value(key),key);
     return map;
   }
   QMap<T,Utf8String> toReversedUtf8Map() const {
     QMap<T,Utf8String> map;
-    for (auto key : keys())
+    for (const auto &key : keys())
       map.insert(value(key),key);
     return map;
   }

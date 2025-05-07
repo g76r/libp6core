@@ -1,4 +1,4 @@
-/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -155,7 +155,7 @@ void SharedUiItemsModel::resetData() {
     removeRows(0, rows);
   if (_documentManager) {
     // LATER also populate data if _itemQualifierFilter is empty
-    for (auto qualifier : _itemQualifierFilter) {
+    for (const auto &qualifier : _itemQualifierFilter) {
       for (const SharedUiItem &item
            : _documentManager->itemsByQualifier(qualifier)) {
         createOrUpdateItem(item);

@@ -37,9 +37,9 @@ QDebug operator<<(QDebug dbg, const Session &session) {
   return dbg.space();
 }
 
-p6::log::LogHelper operator<<(p6::log::LogHelper lh, const Session &session) {
-  lh << "{ " << session.id() << ", { ";
-  for (auto [k,v]: SessionManager::params(session.id()).asKeyValueRange())
+p6::log::LogHelper operator<<(p6::log::LogHelper lh, const Session &s) {
+  lh << "{ " << s.id() << ", { ";
+  for (const auto &[k,v]: SessionManager::params(s.id()).asKeyValueRange())
     lh << k << "=" << v << " ";
   return lh << " } }";
 }

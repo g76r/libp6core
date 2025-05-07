@@ -1,4 +1,4 @@
-/* Copyright 2013-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -33,7 +33,7 @@ bool InMemoryRulesAuthorizer::authorizeUserData(
   //Log::fatal() << "authorize: i:" << userData.userId()
   //             << " r:" << userData.roles() << " a:" << actionScope
   //             << " d:" << dataScope << " t:" << timestamp;
-  for (auto rule: _rules) {
+  for (const auto &rule: _rules) {
     //Log::fatal() << "authorize rule: r:" << rule._roles
     //             << " a:" << rule._actionScopePattern.pattern()
     //             << " d:" << rule._dataScopePattern.pattern()
@@ -41,7 +41,7 @@ bool InMemoryRulesAuthorizer::authorizeUserData(
     //             << " allow:" << rule._allow;
     if (rule._roles.isEmpty())
       goto roleok;
-    for  (auto role: userData.roles())
+    for (const auto &role: userData.roles())
       if (rule._roles.contains(role))
         goto roleok;
     //Log::fatal() << "authorize rule: roles not matching";

@@ -1,4 +1,4 @@
-/* Copyright 2013-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -49,9 +49,9 @@ class LIBP6CORESHARED_EXPORT BasicAuthHttpHandler : public HttpHandler {
 public:
   explicit BasicAuthHttpHandler(QObject *parent = 0);
   ~BasicAuthHttpHandler();
-  bool acceptRequest(HttpRequest req) override;
-  bool handleRequest(HttpRequest req, HttpResponse res,
-                     ParamsProviderMerger *processingContext) override;
+  bool acceptRequest(HttpRequest &req) override;
+  bool handleRequest(HttpRequest &req, HttpResponse &res,
+                     ParamsProviderMerger &request_context) override;
   /** Does not take ownership */
   void setAuthenticator(Authenticator *authenticator);
   /** Does not take ownership */

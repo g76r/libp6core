@@ -14,20 +14,21 @@
 #include "pipelinehttphandler.h"
 #include "log/log.h"
 
-bool PipelineHttpHandler::acceptRequest(HttpRequest req) {
+bool PipelineHttpHandler::acceptRequest(HttpRequest &req) {
   return _urlPathPrefix.isEmpty()
       || req.path().startsWith(_urlPathPrefix.toUtf8());
 }
 
 bool PipelineHttpHandler::handleRequest(
-    HttpRequest req, HttpResponse res, ParamsProviderMerger *processingContext) {
+    HttpRequest &req, HttpResponse &res,
+    ParamsProviderMerger &request_context) {
   if (_handlers.isEmpty()) {
     res.set_status(HttpResponse::HTTP_Not_Found);
     res.output()->write("Error 404 - Not found");
     [[unlikely]] return true;
   }
   for (HttpHandler *handler: _handlers)
-    if (!handler->handleRequest(req, res, processingContext))
+    if (!handler->handleRequest(req, res, request_context))
       return false;
   return true;
 }

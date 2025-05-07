@@ -1,4 +1,4 @@
-/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -80,8 +80,8 @@ public:
   enum TextConversion { AsIs, HtmlEscaping, HtmlEscapingWithUrlAsLinks };
 
 private:
-  QMap<QByteArray,QPointer<TextView>> _views;
-  QSet<QByteArray> _filters;
+  QMap<Utf8String,QPointer<TextView>> _views;
+  QSet<QString> _filters;
   TextConversion _textConversion;
   static TextConversion _defaultTextConversion;
   int _maxValueLength;
@@ -91,10 +91,10 @@ public:
   explicit TemplatingHttpHandler(
       QObject *parent = 0, const QByteArray &urlPathPrefix = {},
       const Utf8String &documentRoot = ":docroot/"_u8);
-  TemplatingHttpHandler *addView(const QByteArray &label, TextView *view) {
+  TemplatingHttpHandler *addView(const Utf8String &label, TextView *view) {
     _views.insert(label, view); return this; }
   TemplatingHttpHandler *addView(TextView *view);
-  TemplatingHttpHandler *addFilter(const QByteArray &regexp) {
+  TemplatingHttpHandler *addFilter(const QString &regexp) {
     _filters.insert(regexp);
     return this; }
   void setTextConversion(TemplatingHttpHandler::TextConversion textConversion) {
@@ -111,25 +111,24 @@ public:
   static void setDefaultMaxValueLength(int length = 500) {
     _defaultMaxValueLength = length; }
   /** Compute "!pathtoroot" special parameter according to req.url() and
-   * urlPathPrefix(), and set "!pathtoroot" value in processingContext.
+   * urlPathPrefix(), and set "!pathtoroot" value in context.
    * This method is implicitly called by sendLocalResource() when "!pathtoroot"
    * is not set, but can be called explicitly before to force computing and
    * setting the parameter.
    * It is convenient for instance before the url path is overriden to force
    * using an on-disk resource at a different path than the url.
-   * @param processingContext failsafe if null, but won't set param to context
+   * @param context failsafe if null, but won't set param to context
    */
-  void computePathToRoot(const HttpRequest &req,
-                         ParamsProviderMerger *processingContext) const;
+  void computePathToRoot(HttpRequest &req,
+                         ParamsProviderMerger &context) const;
 
 protected:
-  void sendLocalResource(HttpRequest req, HttpResponse res, QFile *file,
-                         ParamsProviderMerger *processingContext) override;
+  void sendLocalResource(HttpRequest &req, HttpResponse &res, QFile *file,
+                         ParamsProviderMerger &context) override;
 
 private:
-  void applyTemplateFile(HttpRequest req, HttpResponse res, QFile *file,
-                         ParamsProviderMerger *processingContext,
-                         Utf8String *output);
+  void applyTemplateFile(HttpRequest &req, HttpResponse &res, QFile *file,
+                         ParamsProviderMerger &context, Utf8String &output);
   void convertData(QString *data, bool disableTextConversion) const;
 };
 

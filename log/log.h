@@ -290,9 +290,12 @@ public:
           .replace('"', "\\\""_ba) + "\" "_ba;
     _message += "}"_ba;
     return *this; }
+  inline LogHelper &operator<<(const QList<Utf8String> &o) {
+    return operator<<((const QList<QByteArray>&)o);
+  }
   inline LogHelper &operator<<(const QList<QString> &o) {
     _message += "{ "_ba;
-    for (auto s: o)
+    for (const auto &s: o)
       _message += '"' + s.toUtf8().replace('\\', "\\\\"_ba)
           .replace('"', "\\\""_ba) + "\" "_ba;
     _message += "}"_ba;
@@ -323,7 +326,7 @@ public:
     return *this; }
   inline LogHelper &operator<<(const QSet<QString> &o) {
     _message += "{ "_ba;
-    for (auto s: o)
+    for (const auto &s: o)
       _message += '"' + s.toUtf8().replace('\\', "\\\\"_ba)
           .replace('"', "\\\""_ba) + "\" "_ba;
     _message += "}"_ba;

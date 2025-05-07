@@ -1,4 +1,4 @@
-/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -186,7 +186,7 @@ void ParamSetModel::fillRows(
   QString scope = _scopes.value(depth);
   if (scope.isEmpty() && depth)
     scope = _defaultScopeForInheritedParams;
-  for (auto key: localKeys) {
+  for (const auto &key: localKeys) {
     if (allKeys->contains(key)) {
       for (int i = 0; i < rows->size(); ++i)
         if ((*rows)[i]._key == key) {

@@ -1,4 +1,4 @@
-/* Copyright 2016-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -163,24 +163,24 @@ QString ReadOnlyResourcesCache::asDebugString() {
   QMutexLocker ml(&_mutex);
   QString s;
   s += "ReadOnlyResourcesCache {\n  resources: {\n";
-  for (auto key: _resources.keys())
+  for (const auto &key: _resources.keys())
     s += "    " + key + ": " + QString::number(_resources.value(key).size())
         + "\n";
   s += "  }\n  age: {\n";
-  for (auto key: _ageTimestamp.keys())
+  for (const auto &key: _ageTimestamp.keys())
     s += "    " + key + ": "
       + QDateTime::fromMSecsSinceEpoch(_ageTimestamp.value(key)).toString()
       + "\n";
   s += "  }\n  stale: {\n";
-  for (auto key: _staleTimestamp.keys())
+  for (const auto &key: _staleTimestamp.keys())
     s += "    " + key + ": "
       + QDateTime::fromMSecsSinceEpoch(_staleTimestamp.value(key)).toString()
       + "\n";
   s += "  }\n  fetching: {\n";
-  for (auto key: _fetching)
+  for (const auto &key: _fetching)
     s += "    " + key + "\n";
   s += "  }\n  errorstrings: {\n";
-  for (auto key: _errorStrings.keys())
+  for (const auto &key: _errorStrings.keys())
     s += "    " + key + ": " + _errorStrings.value(key) + "\n";
   s += "}\n";
   return s;

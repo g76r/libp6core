@@ -15,39 +15,17 @@
 #include "io/ioutils.h"
 #include <QTemporaryFile>
 
-QString UploadHttpHandler::urlPathPrefix() const {
-  return _urlPathPrefix;
-}
-
-void UploadHttpHandler::setUrlPathPrefix(const QString &urlPathPrefix) {
-  _urlPathPrefix = urlPathPrefix;
-}
-QString UploadHttpHandler::tempFileTemplate() const {
-  return _tempFileTemplate;
-}
-
-void UploadHttpHandler::setTempFileTemplate(const QString &tempFilePrefix) {
-  _tempFileTemplate = tempFilePrefix;
-}
-
-int UploadHttpHandler::maxBytesPerUpload() const {
-  return _maxBytesPerUpload;
-}
-
-void UploadHttpHandler::setMaxBytesPerUpload(quint64 maxBytesPerUpload) {
-  _maxBytesPerUpload = maxBytesPerUpload;
-}
-
-bool UploadHttpHandler::acceptRequest(HttpRequest req) {
+bool UploadHttpHandler::acceptRequest(HttpRequest &req) {
   // LATER parametrize accepted methods
   return (_urlPathPrefix.isEmpty()
-      || req.path().startsWith(_urlPathPrefix.toUtf8()))
+          || req.path().startsWith(_urlPathPrefix))
       && (req.method() == HttpRequest::POST
           || req.method() == HttpRequest::PUT);
 }
 
 bool UploadHttpHandler::handleRequest(
-    HttpRequest req, HttpResponse res, ParamsProviderMerger *processingContext) {
+    HttpRequest &req, HttpResponse &res,
+    ParamsProviderMerger &context) {
   _maxSimultaneousUploads.acquire(1);
   QSemaphoreReleaser releaser(&_maxSimultaneousUploads, 1);
   if (handleCORS(req, res))
@@ -82,12 +60,12 @@ bool UploadHttpHandler::handleRequest(
     res.set_status(HttpResponse::HTTP_Request_Entity_Too_Large);
   } else {
     file->seek(0);
-    processUploadedFile(req, res, processingContext, file);
+    processUploadedFile(req, res, context, file);
   }
   delete file;
   return true;
 }
 
 void UploadHttpHandler::processUploadedFile(
-  HttpRequest, HttpResponse, ParamsProviderMerger *, QFile *) {
+    HttpRequest &, HttpResponse &, ParamsProviderMerger &, QFile *) {
 }

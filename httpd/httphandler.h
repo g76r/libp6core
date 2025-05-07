@@ -34,46 +34,47 @@ class LIBP6CORESHARED_EXPORT HttpHandler : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(HttpHandler)
   // LATER give handlers their own threads and make server and handler threads exchange signals
-  QString _name;
+  Utf8String _name;
   QList<QRegularExpression> _corsOrigins;
 
 protected:
-  explicit HttpHandler(QString name, QObject *parent = 0);
+  explicit HttpHandler(const Utf8String &name, QObject *parent = 0);
   explicit HttpHandler(QObject *parent = 0) : HttpHandler({}, parent) { }
 
 public:
-  virtual QString name() const;
+  virtual Utf8String name() const;
   /** Allowed CORS origins.
    * Default to containt of env variable HTTP_ALLOWED_CORS_ORIGINS which is
    * a semi-colon separated list of regular expressions.
    * An empty list means "any origin".
    */
   QList<QRegularExpression> corsOrigins() const { return _corsOrigins; }
-  void setCorsOrigins(QList<QRegularExpression> corsOrigins) {
+  void setCorsOrigins(const QList<QRegularExpression> &corsOrigins) {
     _corsOrigins = corsOrigins; }
   /** Return true iff the handler accept to handle the request.
    * Thread-safe (called by several HttpWorker threads at the same time). */
-  virtual bool acceptRequest(HttpRequest req) = 0;
+  virtual bool acceptRequest(HttpRequest &req) = 0;
   /** Handle the request.
    * Thread-safe (called by several HttpWorker threads at the same time).
-   * @param processingContext is shared accross the whole processing of the
+   * @param request_context is shared accross the whole processing of the
    *   request (i.e. if the process is a pipeline, each step will be able to
-   *   modify the context for the next one)
+   *   modify the context for the next one), lique req and res
    * @return false if a failure should interrupt the process */
-  virtual bool handleRequest(HttpRequest req, HttpResponse res,
-                             ParamsProviderMerger *processingContext) = 0;
+  virtual bool handleRequest(HttpRequest &req, HttpResponse &res,
+                             ParamsProviderMerger &request_context) = 0;
   /** Perform redirect to clean up url if needed.
    * Currently the only case is when the path contains several adjacent /
    * The redirect is performed with relative path.
    * @return true iff redirect was issued
    */
-  bool redirectForUrlCleanup(HttpRequest req, HttpResponse res,
-                             ParamsProviderMerger *processingContext);
+  bool redirectForUrlCleanup(HttpRequest &req, HttpResponse &res,
+                             ParamsProviderMerger &request_context);
   /** Handle CORS preflight request and CORS headers on non-OPTIONS requests.
    * @return true iff the method is OPTIONS
    */
-  bool handleCORS(HttpRequest req, HttpResponse res,
-      Utf8StringSet methods = HttpRequest::well_known_method_names());
+  bool handleCORS(
+      HttpRequest &req, HttpResponse &res,
+      const Utf8StringSet &methods = HttpRequest::well_known_method_names());
 };
 
 #endif // HTTPHANDLER_H

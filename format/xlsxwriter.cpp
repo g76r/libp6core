@@ -1,4 +1,4 @@
-/* Copyright 2023-2024 Gregoire Barbier and others.
+/* Copyright 2023-2025 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -179,7 +179,7 @@ bool XlsxWriter::appendRow(
                      +"\" spans=\"1:"+Utf8String::number(row.size())
                      +"\">\n";
   size_t colnum = 1;
-  for (auto v: row) {
+  for (const auto &v: row) {
     auto id = v.metaType().id();
     bytes += "<c r=\""+cell_ref(rownum, colnum)+"\"";
     if (id == QMetaType::Double || id == QMetaType::Float
@@ -240,7 +240,7 @@ bool XlsxWriter::write(Utf8String filename) {
     return false;
   // closing sheet files
   Utf8String sheets_in_book, sheets_in_rels, sheets_in_content_types;
-  for (auto [title,_]: _sheets.asKeyValueRange()) {
+  for (const auto &[title,_]: _sheets.asKeyValueRange()) {
     auto sheet = _sheets[title];
     auto id_as_utf8 = Utf8String::number(sheet->_index);
     sheets_in_book += "    <sheet name=\""+html_protect(title)+"\" sheetId=\""

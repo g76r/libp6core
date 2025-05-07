@@ -388,7 +388,7 @@ ParamSet::ParamSet(std::initializer_list<Utf8String> list) {
 ParamSet::ParamSet(
     std::initializer_list<std::pair<Utf8String, QVariant> > list,
     const Utf8String &scope) : d(new ParamSetData) {
-  for (auto p: list)
+  for (auto &&p: list)
     d->_params.insert(p.first, p.second);
   d->_scope = scope;
 }

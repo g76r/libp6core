@@ -15,10 +15,10 @@
 
 static const QRegularExpression _multipleSlashRE("//+");
 
-HttpHandler::HttpHandler(QString name, QObject *parent)
+HttpHandler::HttpHandler(const Utf8String &name, QObject *parent)
   : QObject(parent), _name(name) {
   auto origins = qEnvironmentVariable("HTTP_ALLOWED_CORS_ORIGINS");
-  for (auto origin : origins.split(';', Qt::SkipEmptyParts)) {
+  for (const auto &origin : origins.split(';', Qt::SkipEmptyParts)) {
     if (origin == "*") {
       _corsOrigins.clear();
       return;
@@ -27,7 +27,7 @@ HttpHandler::HttpHandler(QString name, QObject *parent)
   }
 }
 
-QString HttpHandler::name() const {
+Utf8String HttpHandler::name() const {
   if (!_name.isEmpty())
       return _name;
   if (!objectName().isEmpty())
@@ -36,7 +36,7 @@ QString HttpHandler::name() const {
 }
 
 bool HttpHandler::redirectForUrlCleanup(
-    HttpRequest req, HttpResponse res, ParamsProviderMerger *) {
+    HttpRequest &req, HttpResponse &res, ParamsProviderMerger &) {
   QString reqPath = req.path();
   if (reqPath.contains(_multipleSlashRE)) {
     int depth = reqPath.count('/');
@@ -59,7 +59,7 @@ bool HttpHandler::redirectForUrlCleanup(
 }
 
 bool HttpHandler::handleCORS(
-    HttpRequest req, HttpResponse res, Utf8StringSet methods) {
+    HttpRequest &req, HttpResponse &res, const Utf8StringSet &methods) {
   if (!methods.contains("OPTIONS"_u8))
     qWarning() << "HttpHandler::handleCORS(): OPTIONS method should be included"
                   " in methods set whereas it was not: " << methods;
@@ -86,11 +86,11 @@ denied:
   return req.method() == HttpRequest::OPTIONS;
 }
 
-bool HttpHandler::acceptRequest(HttpRequest) {
+bool HttpHandler::acceptRequest(HttpRequest &) {
   return false;
 }
 
-bool HttpHandler::handleRequest(
-  HttpRequest, HttpResponse, ParamsProviderMerger *) {
+bool HttpHandler::handleRequest(HttpRequest&, HttpResponse &,
+                                ParamsProviderMerger &) {
   return false;
 }

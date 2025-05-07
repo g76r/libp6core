@@ -1,4 +1,4 @@
-/* Copyright 2012-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2012-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -70,22 +70,24 @@ public:
     _mimeTypes.prepend(qMakePair(QRegularExpression(pattern, QRegularExpression::CaseInsensitiveOption),
                                  contentType)); }
   void clearMimeTypes() { _mimeTypes.clear(); }
-  bool acceptRequest(HttpRequest req) override;
-  bool handleRequest(HttpRequest req, HttpResponse res,
-                     ParamsProviderMerger *processingContext) override;
-  bool sendFile(HttpRequest req, HttpResponse res, const QByteArray &filename,
-                ParamsProviderMerger *processingContext);
+  bool acceptRequest(HttpRequest &req) override;
+  bool handleRequest(HttpRequest &req, HttpResponse &res,
+                     ParamsProviderMerger &request_context) override;
+  bool sendFile(HttpRequest &req, HttpResponse &res,
+                const QByteArray &filename,
+                ParamsProviderMerger &request_context);
 
 protected:
   /** Thread-safe (called by several HttpWorker threads at the same time). */
-  virtual void sendLocalResource(HttpRequest req, HttpResponse res, QFile *file,
-                                 ParamsProviderMerger *processingContext);
+  virtual void sendLocalResource(
+      HttpRequest &req, HttpResponse &res, QFile *file,
+      ParamsProviderMerger &request_context);
 
 protected:
-  void setMimeTypeByName(const QByteArray &name, HttpResponse res);
+  void setMimeTypeByName(const QByteArray &name, HttpResponse &res);
   /** @return true iff 304 was sent */
-  bool handleCacheHeadersAndSend304(QFile *file, HttpRequest req,
-                                    HttpResponse res);
+  bool handleCacheHeadersAndSend304(QFile *file, HttpRequest &req,
+                                    HttpResponse &res);
 };
 
 #endif // FILESYSTEMHTTPHANDLER_H

@@ -57,67 +57,67 @@ ParamSet::ParamSet(const QMap<Utf8String,QVariant> &params)
 
 ParamSet::ParamSet(const QHash<QString, QString> &params)
   : d(new ParamSetData) {
-  for (auto [key,value]: params.asKeyValueRange())
+  for (const auto &[key,value]: params.asKeyValueRange())
     d->_params.insert(key, value);
 }
 
 ParamSet::ParamSet(const QHash<Utf8String,Utf8String> &params)
   : d(new ParamSetData) {
-  for (auto [key,value]: params.asKeyValueRange())
+  for (const auto &[key,value]: params.asKeyValueRange())
     d->_params.insert(key, value);
 }
 
 ParamSet::ParamSet(const QHash<Utf8String,QVariant> &params)
   : d(new ParamSetData) {
-  for (auto [key,value]: params.asKeyValueRange())
+  for (const auto &[key,value]: params.asKeyValueRange())
     d->_params.insert(key, value);
 }
 
 ParamSet::ParamSet(const QMap<QString, QString> &params)
   : d(new ParamSetData) {
-  for (auto [key,value]: params.asKeyValueRange())
+  for (const auto &[key,value]: params.asKeyValueRange())
     d->_params.insert(key, value);
 }
 
 ParamSet::ParamSet(const QMap<Utf8String,Utf8String> &params)
   : d(new ParamSetData) {
-  for (auto [key,value]: params.asKeyValueRange())
+  for (const auto &[key,value]: params.asKeyValueRange())
     d->_params.insert(key, value);
 }
 
 ParamSet::ParamSet(const QMultiMap<QString, QString> &params)
   : d(new ParamSetData) {
-  for (auto [key,value]: params.asKeyValueRange())
+  for (const auto &[key,value]: params.asKeyValueRange())
     d->_params.insert(key, value);
 }
 
 ParamSet::ParamSet(const QMultiHash<QString, QString> &params)
   : d(new ParamSetData) {
-  for (auto [key,value]: params.asKeyValueRange())
+  for (const auto &[key,value]: params.asKeyValueRange())
     d->_params.insert(key, value);
 }
 
 ParamSet::ParamSet(const QMultiMap<Utf8String, Utf8String> &params)
   : d(new ParamSetData) {
-  for (auto [key,value]: params.asKeyValueRange())
+  for (const auto &[key,value]: params.asKeyValueRange())
     d->_params.insert(key, value);
 }
 
 ParamSet::ParamSet(const QMultiHash<Utf8String, Utf8String> &params)
   : d(new ParamSetData) {
-  for (auto [key,value]: params.asKeyValueRange())
+  for (const auto &[key,value]: params.asKeyValueRange())
     d->_params.insert(key, value);
 }
 
 ParamSet::ParamSet(const QMultiMap<Utf8String, QVariant> &params)
   : d(new ParamSetData) {
-  for (auto [key,value]: params.asKeyValueRange())
+  for (const auto &[key,value]: params.asKeyValueRange())
     d->_params.insert(key, value);
 }
 
 ParamSet::ParamSet(const QMultiHash<Utf8String, QVariant> &params)
   : d(new ParamSetData) {
-  for (auto [key,value]: params.asKeyValueRange())
+  for (const auto &[key,value]: params.asKeyValueRange())
     d->_params.insert(key, value);
 }
 
@@ -126,12 +126,12 @@ ParamSet::ParamSet(
   const Utf8String &constattrname, const ParamSet &parent)
   : d(new ParamSetData(parent)) {
   if (!attrname.isEmpty())
-    for (auto [key, value]: parentnode.children_as_text_pairs_range(attrname))
+    for (const auto &[key, value]: parentnode.children_as_text_pairs_range(attrname))
       if (!key.isEmpty())
         d->_params.insert(key, value.isNull() ? ""_u8 : value);
   if (!constattrname.isEmpty()) {
     ParamSet constparams(parentnode, constattrname, Utf8String(), ParamSet());
-    for (auto k: constparams.paramKeys()) {
+    for (const auto &k: constparams.paramKeys()) {
       auto value = PercentEvaluator::escape(constparams.paramUtf8(k, this));
       d->_params.insert(k, value.isNull() ? ""_u8 : value);
     }
@@ -182,7 +182,7 @@ ParamSet::ParamSet(
       values[i].append(PercentEvaluator::escape(s));
     }
   }
-  for (auto [i,key]: bindings.asKeyValueRange()) {
+  for (const auto &[i,key]: bindings.asKeyValueRange()) {
     insert(key, values[i].join(' '));
   }
 }
@@ -209,7 +209,7 @@ ParamSet &ParamSet::insert(const Utf8String &key, const QVariant &value) {
 ParamSet &ParamSet::insert(const ParamSet &params) {
   if (!d)
     [[unlikely]] d = new ParamSetData;
-  for (auto key: params.paramKeys())
+  for (const auto &key: params.paramKeys())
     d->_params.insert(key, params.paramRawValue(key));
   return *this;
 }
@@ -217,7 +217,7 @@ ParamSet &ParamSet::insert(const ParamSet &params) {
 ParamSet &ParamSet::merge(const ParamSet &params) {
   if (!d)
     [[unlikely]] d = new ParamSetData;
-  for (auto key: params.paramKeys())
+  for (const auto &key: params.paramKeys())
     if (!d->_params.contains(key))
       d->_params.insert(key, params.paramRawValue(key));
   return *this;
@@ -274,7 +274,7 @@ Utf8StringSet ParamSet::paramKeys(const EvalContext &context) const {
       || context.scopeFilter() == _almost_empty_pretend_it_is
 #endif
       )
-    for (auto [k,v]: d->_params.asKeyValueRange())
+    for (const auto &[k,v]: d->_params.asKeyValueRange())
       set += k;
 #if PARAMSET_SUPPORTS_DONTINHERIT
   if (!context.containsScope(DontInheritScope))
@@ -300,7 +300,7 @@ Utf8StringSet ParamSet::unscopedParamKeys(bool inherit) const {
   Utf8StringSet keys;
   if (!d)
     return {};
-  for (auto [k,v]: d->_params.asKeyValueRange())
+  for (const auto &[k,v]: d->_params.asKeyValueRange())
     keys += k;
   if (inherit)
     keys += d->_parent.unscopedParamKeys(true);
@@ -312,7 +312,7 @@ const QString ParamSet::toString(bool inherit, bool decorate) const {
   if (decorate)
     s.append("{ ");
   bool first = true;
-  for(auto key: unscopedParamKeys(inherit).toSortedList()) {
+  for(const auto &key: unscopedParamKeys(inherit).toSortedList()) {
     if (first)
       first = false;
     else
@@ -326,42 +326,42 @@ const QString ParamSet::toString(bool inherit, bool decorate) const {
 
 const QHash<Utf8String, QVariant> ParamSet::toHash(bool inherit) const {
   QHash<Utf8String,QVariant> hash;
-  for (auto key: unscopedParamKeys(inherit))
+  for (const auto &key: unscopedParamKeys(inherit))
     hash.insert(key, paramRawValue(key));
   return hash;
 }
 
 const QMap<Utf8String, QVariant> ParamSet::toMap(bool inherit) const {
   QMap<Utf8String,QVariant> map;
-  for (auto key: unscopedParamKeys(inherit))
+  for (const auto &key: unscopedParamKeys(inherit))
     map.insert(key, paramRawValue(key));
   return map;
 }
 
 const QHash<Utf8String, Utf8String> ParamSet::toUtf8Hash(bool inherit) const {
   QHash<Utf8String,Utf8String> hash;
-  for (auto key: unscopedParamKeys(inherit))
+  for (const auto &key: unscopedParamKeys(inherit))
     hash.insert(key, paramRawUtf8(key));
   return hash;
 }
 
 const QMap<Utf8String, Utf8String> ParamSet::toUtf8Map(bool inherit) const {
   QMap<Utf8String,Utf8String> map;
-  for (auto key: unscopedParamKeys(inherit))
+  for (const auto &key: unscopedParamKeys(inherit))
     map.insert(key, paramRawUtf8(key));
   return map;
 }
 
 const QHash<QString, QString> ParamSet::toUtf16Hash(bool inherit) const {
   QHash<QString,QString> hash;
-  for (auto key: unscopedParamKeys(inherit))
+  for (const auto &key: unscopedParamKeys(inherit))
     hash.insert(key, paramRawValue(key).toString());
   return hash;
 }
 
 const QMap<QString,QString> ParamSet::toUtf16Map(bool inherit) const {
   QMap<QString,QString> map;
-  for (auto key: unscopedParamKeys(inherit))
+  for (const auto &key: unscopedParamKeys(inherit))
     map.insert(key, paramRawValue(key).toString());
   return map;
 }
@@ -380,7 +380,7 @@ QDebug operator<<(QDebug dbg, const ParamSet &params) {
       dbg.nospace().noquote() << "->>";
     auto scope = p.paramScope();
     auto keys = p.paramKeys(EvalContext(scope)).toSortedList();
-    for (auto key: keys)
+    for (const auto &key: keys)
       if (scope.isEmpty())
         dbg.space().noquote() << key << "="
                               << p.paramRawValue(key);
@@ -407,7 +407,7 @@ p6::log::LogHelper operator<<(p6::log::LogHelper lh, const ParamSet &params) {
       lh << "->> ";
     auto scope = p.paramScope();
     auto keys = p.paramKeys(EvalContext(scope)).toSortedList();
-    for (auto key: keys)
+    for (const auto &key: keys)
       if (scope.isEmpty())
         lh << key << "=" << p.paramRawValue(key) << " ";
       else
@@ -443,7 +443,7 @@ void ParamSet::insertFromSqlDb(
     const Utf8StringList &bindings) {
   QMap<int,Utf8String> map;
   int i = 0;
-  for (auto key: bindings)
+  for (const auto &key: bindings)
     map.insert(i++, key);
   insertFromSqlDb(db, sql, map);
 }
@@ -475,7 +475,7 @@ ParamSetData *ParamSet::fromQIODevice(
   csvfile.openReadonly(input);
   auto rows = csvfile.rows();
   //qDebug() << "***password from csv" << rows << separator << quote << escape;
-  for (auto row: rows) {
+  for (const auto &row: rows) {
     auto key = row.value(0);
     auto value = row.value(1);
     if (key.isEmpty())

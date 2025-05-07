@@ -52,7 +52,7 @@ public:
   HttpRequest(const HttpRequest &other);
   ~HttpRequest();
   HttpRequest &operator=(const HttpRequest &other);
-  [[nodiscard]] QAbstractSocket *input();
+  [[nodiscard]] QAbstractSocket *input() const;
   void set_method(HttpMethod method);
   [[nodiscard]] HttpRequest::HttpMethod method() const;
   /** @return protocol and human readable string, e.g. "GET" */
@@ -107,9 +107,6 @@ public:
    * Same as X-Forwarded-For content, plus socket peer address at the end of
    * the list. */
   [[nodiscard]] Utf8StringList client_addresses() const;
-  /** Create a ParamsProvider wrapper object to give access to ! pseudo params,
-   * url params (query items) and base64 cookies, in this order (url params hide
-   * cookies). */
   using ParamsProvider::paramRawValue;
   /** Expose as a ParamsProvider the following data/metadata:
    *  - url URL without password e.g. "http://foobar.io/baz?a=b"

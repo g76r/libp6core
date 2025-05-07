@@ -30,7 +30,7 @@ static QRegularExpression _sqldbspec
 void SqlUtils::configureSqlDatabasesFromChildren(
     const PfNode &config, const Utf8String &childname,
     const ParamsProvider *context) {
-  for (auto sqldb: config/childname) {
+  for (const auto &sqldb: config/childname) {
     auto spec = PercentEvaluator::eval_utf16(sqldb.content_as_text(), context);
     auto m = _sqldbspec.match(spec);
     if (!m.hasMatch()) {
@@ -63,7 +63,7 @@ void SqlUtils::setSqlParamsFromChildren(
     const PfNode &config, ParamSet *params, const Utf8String &childname) {
   if (!params)
     return;
-  for (auto sqlparams: config/childname)
+  for (const auto &sqlparams: config/childname)
     params->insertFromSqlDb(
         sqlparams["db"], sqlparams["sql"],
         sqlparams["bindings"].split(Utf8String::AsciiWhitespace,

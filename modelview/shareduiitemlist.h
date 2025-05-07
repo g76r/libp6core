@@ -75,7 +75,7 @@ public:
 #endif
   inline QList<T> filtered(const Utf8String &qualifier) {
     QList<T> subset;
-    for (auto sui: *this)
+    for (const auto &sui: *this)
       if (sui.qualifier() == qualifier)
         subset += sui.casted<const T>();
         //subset += static_cast<const T&>(sui);
@@ -84,7 +84,7 @@ public:
   /** Select items given their qualifier. */
   inline SharedUiItemList filtered(const Utf8StringSet &qualifiers) {
     SharedUiItemList subset;
-    for (auto sui: *this)
+    for (const auto &sui: *this)
       if (qualifiers.contains(sui.qualifier()))
         subset += sui;
     return subset;
@@ -115,7 +115,7 @@ public:
   /** Append items if they're not yet present in the list.
    *  Expensive on large lists. */
   inline SharedUiItemList& operator|=(const SharedUiItemList &that) {
-    for (auto sui: that)
+    for (const auto &sui: that)
       if (!contains(sui))
         operator+=(sui);
     return *this;

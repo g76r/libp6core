@@ -1,4 +1,4 @@
-/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -301,7 +301,7 @@ QMimeData *SharedUiItemsTreeModel::mimeData(
   QSet<QString> pathsSet;
   QStringList ids;
   QStringList paths;
-  for  (auto index: indexes) {
+  for  (const auto &index: indexes) {
     QString path = itemPath(index);
     if (!pathsSet.contains(path)) {
       ids.append(itemAt(index).qualifiedId());
@@ -438,7 +438,7 @@ QModelIndex SharedUiItemsTreeModel::indexFromPath(const Utf8String &path) {
   auto elements = path.split('.');
   //qDebug() << "indexFromPath" << path << elements;
   QModelIndex index;
-  for (auto element: elements) {
+  for (const auto &element: elements) {
     int row = element.toInt();
     index = this->index(row, 0, index);
     //qDebug() << "  " << element << row << index;

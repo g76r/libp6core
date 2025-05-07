@@ -1,4 +1,4 @@
-/* Copyright 2013-2024 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2013-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -42,14 +42,14 @@ public:
   explicit GraphvizImageHttpHandler(
       QObject *parent = 0, Layout layout = Dot, Format format = Svg);
   QByteArray imageData(
-      HttpRequest req, ParamsProviderMerger *params = 0, int timeoutMillis
+      HttpRequest &req, ParamsProviderMerger &params, int timeoutMillis
       = IMAGEHTTPHANDLER_DEFAULT_ONDEMAND_RENDERING_TIMEOUT) override;
-  QByteArray contentType(
-    HttpRequest req, ParamsProviderMerger *processingContext) const override;
+  QByteArray contentType(HttpRequest &req,
+                         ParamsProviderMerger &context) const override;
   QByteArray contentEncoding(
-    HttpRequest req, ParamsProviderMerger *processingContext) const override;
+    HttpRequest &req, ParamsProviderMerger &context) const override;
   QByteArray source(
-    HttpRequest req, ParamsProviderMerger *processingContext) const override;
+    HttpRequest &req, ParamsProviderMerger &context) const override;
   Layout layout() const { return _layout; }
   void setLayout(Layout layout);
   Format format() const { return _format; }

@@ -1,4 +1,4 @@
-/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -48,10 +48,10 @@ SharedUiItemList SharedUiItemDocumentTransaction::itemsByQualifier(
     const Utf8String &qualifier) const {
   auto changingItems = _changingItems.value(qualifier);
   SharedUiItemList items;
-  for (auto item: changingItems.values())
+  for (const auto &item: changingItems.values())
     if (!item.isNull())
       items.append(item);
-  for (auto item: _dm->itemsByQualifier(qualifier))
+  for (const auto &item: _dm->itemsByQualifier(qualifier))
     if (!changingItems.contains(item.id()))
       items.append(item);
   return items;
@@ -59,8 +59,8 @@ SharedUiItemList SharedUiItemDocumentTransaction::itemsByQualifier(
 
 SharedUiItemList SharedUiItemDocumentTransaction::changingItems() const {
   SharedUiItemList items;
-  for (auto [qualifier,original_items]: _changingItems.asKeyValueRange())
-    for (auto item: original_items) {
+  for (const auto &[qualifier,original_items]: _changingItems.asKeyValueRange())
+    for (const auto &item: original_items) {
       if (!item.isNull())
         items.append(item);
     }
@@ -69,8 +69,8 @@ SharedUiItemList SharedUiItemDocumentTransaction::changingItems() const {
 
 SharedUiItemList SharedUiItemDocumentTransaction::originalItems() const {
   SharedUiItemList items;
-  for (auto [qualifier,original_items]: _originalItems.asKeyValueRange())
-    for (auto item: original_items) {
+  for (const auto &[qualifier,original_items]: _originalItems.asKeyValueRange())
+    for (const auto &item: original_items) {
       if (!item.isNull())
         items.append(item);
     }
@@ -89,11 +89,11 @@ SharedUiItemList SharedUiItemDocumentTransaction::foreignKeySources(
     const Utf8String &referenceId) const {
   SharedUiItemList sources;
   auto changingItems = _changingItems.value(sourceQualifier);
-  for (auto item: changingItems.values()) {
+  for (const auto &item: changingItems.values()) {
     if (item.uiData(sourceSection) == referenceId)
       sources.append(item);
   }
-  for (auto item: _dm->itemsByQualifier(sourceQualifier)) {
+  for (const auto &item: _dm->itemsByQualifier(sourceQualifier)) {
     if (item.uiData(sourceSection) == referenceId
         && !changingItems.contains(item.id()))
       sources.append(item);

@@ -424,7 +424,7 @@ _functions {
 }, true},
 { "=int64", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
-  for (auto param: params) {
+  for (const auto &param: params) {
     bool ok;
     auto i = PercentEvaluator::eval_number<qint64>(param, context, &ok);
     if (ok)
@@ -434,7 +434,7 @@ _functions {
 }, true},
 { "=uint64", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
-  for (auto param: params) {
+  for (const auto &param: params) {
     bool ok;
     auto i = PercentEvaluator::eval_number<quint64>(param, context, &ok);
     if (ok)
@@ -444,7 +444,7 @@ _functions {
 }, true},
 { "=double", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
-  for (auto param: params) {
+  for (const auto &param: params) {
     bool ok;
     auto i = PercentEvaluator::eval_number<double>(param, context, &ok);
     if (ok)
@@ -454,7 +454,7 @@ _functions {
 }, true},
 { "=bool", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
-  for (auto param: params) {
+  for (const auto &param: params) {
     bool ok;
     auto i = PercentEvaluator::eval_number<bool>(param, context, &ok);
     if (ok)
@@ -464,7 +464,7 @@ _functions {
 }, true},
 { "=default", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
-  for (auto param: params) {
+  for (const auto &param: params) {
     auto v = param % context;
     if (auto s = Utf8String(v); !s.isEmpty())
       return v; // =utf8 would return s
@@ -473,7 +473,7 @@ _functions {
 }, true},
 { "=utf8", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
-  for (auto param: params) {
+  for (const auto &param: params) {
     auto v = param % context;
     if (auto s = Utf8String(v); !s.isEmpty())
       return s; // =default would return v
@@ -482,7 +482,7 @@ _functions {
 }, true},
 { "=utf16", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
-  for (auto param: params) {
+  for (const auto &param: params) {
     auto v = param % context;
     if (auto s = v.toString(); !s.isEmpty())
       return s; // =default would return v

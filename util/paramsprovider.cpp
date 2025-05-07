@@ -69,7 +69,7 @@ ParamsProvider *ParamsProvider::_empty = new Empty();
 
 ParamSet ParamsProvider::paramSnapshot() const {
   ParamSet snapshot;
-  for (auto key: paramKeys())
+  for (const auto &key: paramKeys())
     snapshot.insert(key, PercentEvaluator::escape(paramValue(key)));
   return snapshot;
 }
@@ -151,7 +151,7 @@ Utf8String ParamsProvider::evaluate(
   auto ppm = ParamsProviderMerger(this)(context);
   new_context.setParamsProvider(&ppm);
   if (ae)
-    for (auto variable: *ae)
+    for (const auto &variable: *ae)
       new_context.addVariable(variable);
   return PercentEvaluator::eval_utf8(key, new_context);
 }
@@ -163,7 +163,7 @@ Utf8String ParamsProvider::evaluate(
   auto ppm = ParamsProviderMerger(this)(context);
   new_context.setParamsProvider(&ppm);
   if (ae)
-    for (auto variable: *ae)
+    for (const auto &variable: *ae)
       new_context.addVariable(variable);
   if (!inherit && dynamic_cast<const ParamSet*>(this))
     new_context.setScopeFilter(ParamSet::DontInheritScope);
@@ -177,7 +177,7 @@ Utf8StringList ParamsProvider::splitAndEvaluate(
   auto ppm = ParamsProviderMerger(this)(context);
   new_context.setParamsProvider(&ppm);
   if (ae)
-    for (auto variable: *ae)
+    for (const auto &variable: *ae)
       new_context.addVariable(variable);
   new_context.setParamsProvider(&ppm);
   if (!inherit && dynamic_cast<const ParamSet*>(this))

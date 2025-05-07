@@ -25,7 +25,7 @@ namespace {
 template<class T>
 QString dict2string(const T &dict) {
   QJsonObject json;
-  for (auto [k,v] : dict.asKeyValueRange())
+  for (const auto &[k,v] : dict.asKeyValueRange())
     json.insert(k, v);
   QJsonDocument doc;
   doc.setObject(json);

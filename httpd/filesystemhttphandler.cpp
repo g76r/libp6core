@@ -42,14 +42,14 @@ FilesystemHttpHandler::FilesystemHttpHandler(
   appendMimeType("\\.ico$", "image/vnd.microsoft.icon");
 }
 
-bool FilesystemHttpHandler::acceptRequest(HttpRequest req) {
+bool FilesystemHttpHandler::acceptRequest(HttpRequest &req) {
   return _urlPathPrefix.isEmpty()
       || req.path().startsWith(_urlPathPrefix);
 }
 
 bool FilesystemHttpHandler::handleRequest(
-    HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext) {
+    HttpRequest &req, HttpResponse &res,
+    ParamsProviderMerger &request_context) {
   if (_documentRoot.isEmpty()) { // should never happen (at less == "/")
     res.set_status(HttpResponse::HTTP_Internal_Server_Error);
     res.output()->write("No document root.");
@@ -68,7 +68,7 @@ bool FilesystemHttpHandler::handleRequest(
   // returns true for resources directories.
   QDir dir(_documentRoot+path);
   if (dir.exists()) {
-    for (auto index: _directoryIndex) {
+    for (const auto &index: _directoryIndex) {
       file.setFileName(_documentRoot+path+"/"+index);
       //qDebug() << "try file" << file.fileName();
       if (file.exists() && file.open(QIODevice::ReadOnly)) {
@@ -86,16 +86,16 @@ bool FilesystemHttpHandler::handleRequest(
     res.set_status(HttpResponse::HTTP_Forbidden);
     res.output()->write("Directory list denied.");
   }
-  sendFile(req, res, file.fileName().toUtf8(), processingContext);
+  sendFile(req, res, file.fileName().toUtf8(), request_context);
   return true;
 }
 
-bool FilesystemHttpHandler::sendFile(
-    HttpRequest req, HttpResponse res, const QByteArray &filename,
-    ParamsProviderMerger *processingContext) {
+bool FilesystemHttpHandler::sendFile
+(HttpRequest &req, HttpResponse &res, const QByteArray &filename,
+ ParamsProviderMerger &request_context) {
   QFile file(filename);
   if (file.open(QIODevice::ReadOnly)) {
-    sendLocalResource(req, res, &file, processingContext);
+    sendLocalResource(req, res, &file, request_context);
     return true;
   }
   if (file.error() == QFile::PermissionsError) {
@@ -109,10 +109,10 @@ bool FilesystemHttpHandler::sendFile(
 }
 
 void FilesystemHttpHandler::sendLocalResource(
-    HttpRequest req, HttpResponse res, QFile *file,
-    ParamsProviderMerger *processingContext) {
+    HttpRequest &req, HttpResponse &res, QFile *file,
+    ParamsProviderMerger &request_context) {
   Q_UNUSED(req)
-  Q_UNUSED(processingContext)
+  Q_UNUSED(request_context)
   //qDebug() << "success";
   QByteArray filename = file->fileName().toUtf8();
   if (!handleCacheHeadersAndSend304(file, req, res)) {
@@ -124,11 +124,11 @@ void FilesystemHttpHandler::sendLocalResource(
 }
 
 void FilesystemHttpHandler::setMimeTypeByName(
-    const QByteArray &name, HttpResponse res) {
+    const QByteArray &name, HttpResponse &res) {
   // LATER check if performance can be enhanced (regexp)
-  for (auto pair : _mimeTypes) {
-    if (pair.first.match(name).hasMatch()) {
-      res.set_content_type(pair.second);
+  for (const auto &[re, mimetype] : _mimeTypes) {
+    if (re.match(name).hasMatch()) {
+      res.set_content_type(mimetype);
       return;
     }
   }
@@ -138,7 +138,7 @@ static QDateTime startTimeUTC(QDateTime::currentDateTimeUtc());
 
 // LATER handle ETag / If-None-Match
 bool FilesystemHttpHandler::handleCacheHeadersAndSend304(
-    QFile *file, HttpRequest req, HttpResponse res) {
+    QFile *file, HttpRequest &req, HttpResponse &res) {
   if (file) {
     QByteArray filename = file->fileName().toUtf8();
     QFileInfo info(*file);

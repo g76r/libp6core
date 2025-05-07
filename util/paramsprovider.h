@@ -244,7 +244,7 @@ public:
   SimpleParamsProvider(
       std::initializer_list<std::pair<Utf8String,QVariant>> list,
       const Utf8String &scope = {}) : _scope(scope) {
-    for (auto &p : list)
+    for (auto &&p : list)
       _params.insert(p.first, p.second);
   }
   [[nodiscard]] QVariant paramRawValue(

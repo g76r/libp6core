@@ -214,7 +214,7 @@ cycle_detected:;
 template<class K,class T>
 static QHash<K,T> reversed_hash(QHash<T,K> source) {
   QHash<K,T> dest;
-  for (auto [k,v]: source.asKeyValueRange())
+  for (const auto &[k,v]: source.asKeyValueRange())
     dest.insert(v, k);
   return dest;
 }
@@ -226,7 +226,7 @@ static QHash<K,T> reversed_hash(QHash<T,K> source) {
 template<class K,class T>
 static QMap<K,T> reversed_map(QHash<T,K> source) {
   QMap<K,T> dest;
-  for (auto [k,v]: source.asKeyValueRange())
+  for (const auto &[k,v]: source.asKeyValueRange())
     dest.insert(v, k);
   return dest;
 }
@@ -239,7 +239,7 @@ static QMap<K,T> reversed_map(QHash<T,K> source) {
 template<class K,class T>
 static QMap<K,T> reversed_map(QMap<T,K> source) {
   QMap<K,T> dest;
-  for (auto [k,v]: source.asKeyValueRange())
+  for (const auto &[k,v]: source.asKeyValueRange())
     dest.insert(v, k);
   return dest;
 }
@@ -252,7 +252,7 @@ static QMap<K,T> reversed_map(QMap<T,K> source) {
 template<class K,class T>
 static QHash<K,T> reversed_hash(QMap<T,K> source) {
   QHash<K,T> dest;
-  for (auto [k,v]: source.asKeyValueRange())
+  for (const auto &[k,v]: source.asKeyValueRange())
     dest.insert(v, k);
   return dest;
 }

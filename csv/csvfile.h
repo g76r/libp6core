@@ -1,4 +1,4 @@
-/* Copyright 2014-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2014-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -38,8 +38,8 @@ class LIBP6CORESHARED_EXPORT CsvFile : public QObject {
 
 public:
   explicit CsvFile(QObject *parent = 0);
-  CsvFile(QObject *parent, QString filename);
-  explicit CsvFile(QString filename) : CsvFile(0, filename) { }
+  CsvFile(QObject *parent, const QString &filename);
+  explicit CsvFile(const QString &filename) : CsvFile(0, filename) { }
   CsvFile(QObject *parent, QIODevice *input);
   explicit CsvFile(QIODevice *input) : CsvFile(0, input) { }
   QStringList headers() const { return _headers; }
@@ -51,7 +51,7 @@ public:
   int columnCount() const { return _columnCount; }
   int rowCount() const { return _rows.size(); }
   bool open(QIODevice::OpenMode mode);
-  bool open(QString filename, QIODevice::OpenMode mode);
+  bool open(const QString &filename, QIODevice::OpenMode mode);
   bool openReadonly(QIODevice *input);
   bool openReadonly(QByteArray input);
   void close();
@@ -76,19 +76,20 @@ public:
   /** Default: true (first file line contains headers rather than data) */
   CsvFile &enableHeaders(bool headersEnabled = true) {
     _headersEnabled = headersEnabled; return *this; }
-  bool setHeaders(QStringList data);
+  bool setHeaders(const QStringList &data);
 
 public slots:
-  bool insertRow(int row, QStringList data);
-  bool updateRow(int row, QStringList data);
-  bool appendRow(QStringList data);
+  bool insertRow(int row, const QStringList &data);
+  bool updateRow(int row, const QStringList &data);
+  bool appendRow(const QStringList &data);
   bool removeRows(int first, int last);
 
 private:
   bool readAll(QIODevice *input);
   inline bool readRow(QIODevice *input, QStringList *row, bool *atEnd);
   bool writeAll();
-  inline bool writeRow(QSaveFile *file, QStringList row, QString specialChars);
+  inline bool writeRow(QSaveFile *file, const QStringList &row,
+                       const QString &specialChars);
 };
 
 #endif // CSVFILE_H

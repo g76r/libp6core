@@ -33,14 +33,14 @@ TemplatingHttpHandler::TemplatingHttpHandler(
 }
 
 void TemplatingHttpHandler::sendLocalResource(
-    HttpRequest req, HttpResponse res, QFile *file,
-    ParamsProviderMerger *processingContext) {
+    HttpRequest &req, HttpResponse &res, QFile *file,
+    ParamsProviderMerger &context) {
   setMimeTypeByName(file->fileName().toUtf8(), res);
-  for (auto filter: _filters) {
+  for (const auto &filter: _filters) {
     if (QRegularExpression(filter).match(file->fileName()).hasMatch()) {
       Utf8String output;
-      computePathToRoot(req, processingContext);
-      applyTemplateFile(req, res, file, processingContext, &output);
+      computePathToRoot(req, context);
+      applyTemplateFile(req, res, file, context, output);
       res.set_content_length(output.size());
       if (req.method() != HttpRequest::HEAD) {
         QBuffer buf(&output);
@@ -58,11 +58,11 @@ void TemplatingHttpHandler::sendLocalResource(
 }
 
 void TemplatingHttpHandler::computePathToRoot(
-    const HttpRequest &req, ParamsProviderMerger *processingContext) const {
+    HttpRequest &req, ParamsProviderMerger &context) const {
   // note that FileSystemHttpHandler enforces that:
   // - the path never contains several adjacent / (would have been redirected)
   // - the path never points on a directory (would've been redirected to index)
-  if (processingContext->overridingParams().paramContains("!pathtoroot"))
+  if (context.overridingParams().paramContains("!pathtoroot"))
     return;
   auto prefix = urlPathPrefix();
   auto path = req.path().mid(urlPathPrefix().length());
@@ -70,22 +70,15 @@ void TemplatingHttpHandler::computePathToRoot(
                                          : !prefix.endsWith('/');
   int depth = path.count('/') - (ignoreOneSlash ? 1 : 0);
   auto pathToRoot = depth ? "../"_u8.repeated(depth) : "./"_u8;
-  if (processingContext)
-    processingContext->overrideParamValue("!pathtoroot"_u8, pathToRoot);
+  context.overrideParamValue("!pathtoroot"_u8, pathToRoot);
 }
 
 void TemplatingHttpHandler::applyTemplateFile(
-    HttpRequest req, HttpResponse res, QFile *file,
-    ParamsProviderMerger *processingContext,
-    Utf8String *output) {
-  if (!output) {
-    Log::error() << "TemplatingHttpHandler::applyTemplateFile called with null "
-                    "output";
-    [[unlikely]] return;
-  }
-  ParamsProviderMergerRestorer restorer(processingContext);
-  if (processingContext->paramUtf8("!pathtoroot"_u8).isNull())
-    computePathToRoot(req, processingContext);
+    HttpRequest &req, HttpResponse &res, QFile *file,
+    ParamsProviderMerger &context, Utf8String &output) {
+  ParamsProviderMergerRestorer restorer(context);
+  if (context.paramUtf8("!pathtoroot"_u8).isNull())
+    computePathToRoot(req, context);
   QBuffer buf;
   buf.open(QIODevice::WriteOnly);
   IOUtils::copy(&buf, file);
@@ -93,7 +86,7 @@ void TemplatingHttpHandler::applyTemplateFile(
   Utf8String input = buf.data();
   int pos = 0, markupPos;
   while ((markupPos = input.indexOf("<?", pos)) >= 0) {
-    output->append(input.mid(pos, markupPos-pos));
+    output.append(input.mid(pos, markupPos-pos));
     pos = markupPos+2;
     markupPos = input.indexOf("?>", pos);
     auto markupContent = input.mid(pos, markupPos-pos).trimmed();
@@ -104,43 +97,41 @@ void TemplatingHttpHandler::applyTemplateFile(
     if (separatorPos >= markupContent.size()) {
       Log::warning() << "TemplatingHttpHandler found incorrect markup '"
                      << markupContent << "'";
-      output->append('?');
+      output.append('?');
     } else {
       auto markupId = markupContent.left(separatorPos);
       if (markupContent.at(0) == '=') { // syntax: <?=percent_expression?>
-        output->append(PercentEvaluator::eval_utf8(
-                         markupContent.mid(1), processingContext));
+        output.append(markupContent.mid(1) % context);
       } else if (markupId == "view") { // syntax: <?view:viewname?>
         auto markupData = markupContent.mid(separatorPos+1);
         TextView *view = _views.value(markupData);
         if (view) {
-          output->append(view->text(processingContext, req.url()));
+          output.append(view->text(&context, req.url()));
         } else {
           Log::warning() << "TemplatingHttpHandler did not find view '"
                          << markupData << "' among " << _views.keys();
-          [[unlikely]] output->append('?');
+          [[unlikely]] output.append('?');
         }
       } else if (markupId == "value" || markupId == "rawvalue") {
         // syntax: <?[raw]value:variablename[:valueifnotdef[:valueifdef]]?>
         // rawvalue disables html encoding (escaping special chars and links
         // beautifying
         auto markupParams = markupContent.split_headed_list(separatorPos);
-        auto value = processingContext->paramUtf8(markupParams.value(0))
+        auto value = context.paramUtf8(markupParams.value(0))
                      .toUtf16();
         if (!value.isNull()) {
           value = markupParams.value(2, value);
         } else {
           if (markupParams.size() < 2) {
             Log::debug() << "TemplatingHttpHandler did not find value: '"
-                         << markupParams.value(0) << "' in context 0x"
-                         << QByteArray::number((long long)processingContext, 16);
+                         << markupParams.value(0) << "'";
             [[unlikely]] value = u"?"_s;
           } else {
             value = markupParams.value(1);
           }
         }
         convertData(&value, markupId == "rawvalue");
-        output->append(value.toUtf8());
+        output.append(value.toUtf8());
       } else if (markupId == "include") {
         // syntax: <?include:path_relative_to_current_file_dir?>
         auto markupData = markupContent.mid(separatorPos+1);
@@ -150,14 +141,12 @@ void TemplatingHttpHandler::applyTemplateFile(
         QFile included(includePath+"/"_u8+markupData);
         // LATER detect include loops
         if (included.open(QIODevice::ReadOnly)) {
-          applyTemplateFile(req, res, &included, processingContext, output);
+          applyTemplateFile(req, res, &included, context, output);
         } else {
           Log::warning() << "TemplatingHttpHandler couldn't include file: '"
                          << markupData << "' as '" << included.fileName()
-                         << "' in context 0x"
-                         << QByteArray::number((long long)processingContext, 16)
-                         << " : " << included.errorString();
-          [[unlikely]] output->append('?');
+                         << "' : " << included.errorString();
+          [[unlikely]] output.append('?');
         }
       } else if (markupId == "override") {
         // syntax: <?override:key:value?>
@@ -168,28 +157,32 @@ void TemplatingHttpHandler::applyTemplateFile(
           Log::debug() << "TemplatingHttpHandler cannot set parameter with "
                           "null key in file " << file->fileName();
         } else {
-          auto value = PercentEvaluator::eval_utf8(
-                         markupParams.value(1), processingContext);
-          processingContext->overrideParamValue(key, value);
+          auto value = markupParams.value(1) % context;
+          context.overrideParamValue(key, value);
         }
       } else {
         Log::warning() << "TemplatingHttpHandler found unsupported markup: <?"
                        << markupContent << "?>";
-        [[unlikely]] output->append('?');
+        [[unlikely]] output.append('?');
       }
     }
     pos = markupPos+2;
   }
-  output->append(input.right(input.size()-pos));
+  output.append(input.right(input.size()-pos));
 }
 
 TemplatingHttpHandler *TemplatingHttpHandler::addView(TextView *view) {
-  QByteArray label = view ? view->objectName().toUtf8() : QByteArray{};
-  if (label.isEmpty())
+  if (!view) {
+    qWarning() << "TemplatingHttpHandler::addView(null)";
+    [[unlikely]] return this;
+  }
+  Utf8String label = view->objectName().toUtf8();
+  if (label.isEmpty()) {
     qWarning() << "TemplatingHttpHandler::addView(TextView*) called with empty "
                   "TextView::objectName():" << view;
-  else
-    _views.insert(label, view);
+    [[unlikely]] return this;
+  }
+  _views.insert(label, view);
   return this;
 }
 

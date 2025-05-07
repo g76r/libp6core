@@ -59,7 +59,7 @@ void HttpWorker::handleConnection(int socketDescriptor) {
   Utf8StringList args;
   HttpRequest req(socket, this);
   HttpResponse res(socket);
-  ParamsProviderMerger processingContext;
+  ParamsProviderMerger request_context;
   HttpHandler *handler = 0;
   Utf8String uri;
   QUrl url;
@@ -173,13 +173,14 @@ void HttpWorker::handleConnection(int socketDescriptor) {
       // see above
       line.replace('+', ' ');
       // set body (POST) parameters
-      for (auto [key, value]: QUrlQuery(line).queryItems(QUrl::FullyDecoded))
+      for (const auto &[key, value]:
+           QUrlQuery(line).queryItems(QUrl::FullyDecoded))
         req.set_query_param(key, value);
     }
   }
   // set query string (GET) parameters
   // they will override body (POST) parameters if any
-  for (auto [key, value]: QUrlQuery(url).queryItems(QUrl::FullyDecoded))
+  for (const auto &[key, value]: QUrlQuery(url).queryItems(QUrl::FullyDecoded))
     req.set_query_param(key, value);
   handler = _server->chooseHandler(req);
   if (req.header("Expect"_u8) == "100-continue"_u8) {
@@ -189,16 +190,15 @@ void HttpWorker::handleConnection(int socketDescriptor) {
   }
   if (!_defaultCacheControlHeader.isEmpty())
     [[likely]] res.set_header("Cache-Control", _defaultCacheControlHeader);
-  processingContext(&req)(&res);
-  handler->handleRequest(req, res, &processingContext);
+  request_context(&req)(&res);
+  handler->handleRequest(req, res, request_context);
   if (auto logPolicy = _server->logPolicy();
       logPolicy == HttpServer::LogAllHits ||
       (logPolicy == HttpServer::LogErrorHits && !res.success())) {
     res.set_handled_date();
     res.output()->flush(); // calling output() ensures that header was sent
     res.set_flushed_date();
-    Log::info() << PercentEvaluator::eval_utf8(
-                     _server->logFormat(), &processingContext);
+    Log::info() << _server->logFormat() % request_context;
   } else {
     res.output()->flush(); // calling output() ensures that header was sent
   }

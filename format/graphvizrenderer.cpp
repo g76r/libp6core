@@ -37,7 +37,7 @@ GraphvizRenderer::GraphvizRenderer(QObject *parent,
 }
 
 Utf8String GraphvizRenderer::run(
-    ParamsProvider *context, const Utf8String &start_source) {
+    const ParamsProvider &context, const Utf8String &start_source) {
   QMutexLocker ml(&_mutex);
   _output.clear();
   do_start(context, start_source);
@@ -50,10 +50,10 @@ Utf8String GraphvizRenderer::run(
   }
   return _output;
 }
-#include <QDateTime>
+
 void GraphvizRenderer::do_start(
-    ParamsProvider *context, const Utf8String &start_source) {
-  auto ppm = ParamsProviderMerger(context)(_params);
+    const ParamsProvider &context, const Utf8String &start_source) {
+  auto ppm = ParamsProviderMerger(&context)(_params);
   auto source = start_source | ppm.paramRawUtf8("source") | _source;
   Format format = formatFromString(ppm.paramRawUtf8("format"), _format);
   Layout layout = layoutFromString(ppm.paramRawUtf8("layout"), _layout);

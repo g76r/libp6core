@@ -86,9 +86,10 @@ public:
   /** Synchronously start and wait for process finished, then return output
    *  Thread-safe (by blocking and allowing only one rendering at a time).
    */
-  Utf8String run(ParamsProvider *params_evaluation_context = 0,
+  Utf8String run(const ParamsProvider &params_evaluation_context,
                  const Utf8String &source = {});
-  inline Utf8String run(const Utf8String &source) { return run(0, source); }
+  inline Utf8String run(const Utf8String &source) {
+    return run(*ParamsProvider::empty(), source); }
   inline QStringList options() const { return _options; }
   /** Set custom command line options, such as "-Gsplines=spline" or "-n2" */
   inline void set_options(const QStringList &options) { _options = options; }
@@ -101,7 +102,7 @@ public:
 
 private:
   using QProcess::start; // make it private
-  void do_start(ParamsProvider *params_evaluation_context,
+  void do_start(const ParamsProvider &params_evaluation_context,
                 const Utf8String &source);
   void process_error(QProcess::ProcessError error);
   void process_finished(int exitCode, QProcess::ExitStatus exitStatus);

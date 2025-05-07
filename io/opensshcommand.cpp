@@ -1,4 +1,4 @@
-/* Copyright 2024 Grégoire Barbier and others.
+/* Copyright 2024-2025 Grégoire Barbier and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -55,13 +55,13 @@ void OpensshCommand::start(
     sshCmdline << "-oPort="+QString::number(port);
   if (!identity.isEmpty())
     sshCmdline << "-oIdentityFile=" + identity;
-  for (auto option: options)
+  for (const auto &option: options)
     sshCmdline << "-o" + option;
   if (!username.isEmpty())
     sshCmdline << "-oUser=" + username;
   sshCmdline << "--";
   sshCmdline << hostname;
-  for (auto [key, value]: _env_vars.asKeyValueRange())
+  for (const auto &[key, value]: _env_vars.asKeyValueRange())
     cmdline << key+"='"+value.remove('\'')+"'";
   if (!shell.isEmpty()) {
     cmdline << shell << "-c";
