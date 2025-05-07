@@ -489,6 +489,13 @@ _functions {
   }
   return {};
 }, true},
+{ "=coalesce", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
+  auto params = key.split_headed_list(ml);
+  for (const auto &param: params)
+    if (auto v = param % context; v.isValid())
+      return v; // =default would test Utf8String(v) is not empty
+  return {};
+}, true},
 { "=formatint64", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
   bool ok;

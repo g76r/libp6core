@@ -144,6 +144,8 @@ examples:
 ---------
 `%{=default!expr1[!expr2[...]]}`
 
+empty coalescence function
+
 take first non-empty expression in order: expr1 if not empty, expr2 if expr1
 is empty, expr3 if neither expr1 nor expr2 are set, etc.
 
@@ -155,8 +157,10 @@ expr1..n are evaluated (%foo is replaced by foo's value)
 see also %=utf8 and %=utf16 which does the same eval+coalesce thing but also
 convert the result to a string
 
+see also %=coalesce for null coalescence
+
 examples:
-* `%{=default!%foo!null}` -> foo's value or "null" instead if it's empty
+* `%{=default!%foo!empty}` -> foo's value or "empty" instead if it's empty
 * `%{=default!%foo!foo not set}`
 * `%{=default:%foo:foo not set!!!}`
 * `%{=default:%foo:%bar:neither foo nor bar are set!!!}`
@@ -165,6 +169,26 @@ examples:
 * `%{=utf8:%foo}` -> "3.14" if foo holds a double == 3.14
 * `%{=utf16:%foo}` -> "3.14" if foo holds a double == 3.14
 * `%{=default:%foo}` -> 3.14 if foo holds a double == 3.14
+
+%=coalesce
+---------
+`%{=coalesce!expr1[!expr2[...]]}`
+
+null coalescence function
+
+take first non-null/non-invalid/set expression in order: expr1 if not null,
+expr2 if expr1 is null, expr3 if both expr1 and expr2 are null, etc.
+
+see also %=default for empty coalescence
+
+if unsure, use %=default instead, most of the time that's what people want
+
+* `%{=coalesce:%foo:ø}` -> `ø` if foo is not set
+* `%{=coalesce:%foo:ø}` -> "" if foo is set to ""
+* `%{=coalesce:%{=rpn,<null>}:ø}` -> `ø`
+* `%{=coalesce:%{=rpn,xxx,~~}:ø}` -> `ø` because xxx cannot be cast to integer
+* `%{=coalesce:%foo:%bar:%baz}` -> first set variable among foo, bar, baz,
+                                   or null if none is set
 
 %=rawvalue
 ----------
@@ -201,6 +225,9 @@ all parameters are evaluated, hence %foo is replaced by foo's value
 if default_value is not specified, left input as is if no case matches
 
 see also %=match, with regexps
+
+for people knowing SQL: %=switch has exactly the same syntax than SQL decode
+function (even though it's also very close to C-Java-Python-etc. switch)
 
 examples:
 * `%{=switch:%loglevel:E:error:W:warning:I:info:debug}`

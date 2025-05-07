@@ -57,6 +57,7 @@ int main(void) {
   ParamSet ps { "foo", "1", "bar", "2" };
   auto bar = "%bar"_u8;
   bar %= ps;
+  qDebug() << ps.paramValue("foo");
   qDebug() << "%foo"_u8 % ps << "%foo"_u8 % &ps << bar;
   qDebug() << "42"_u8.toNumber<long long>() << "0x1b"_u8.toNumber<int>() << "1e6M"_u8.toNumber<double>();
   ps = { "foo", "12345"};
@@ -114,5 +115,15 @@ int main(void) {
       << Utf8String::asciiCEscaped(0)
       << Utf8String::asciiCEscaped(U'§')
       << Utf8String::asciiCEscaped(U'🥨');
+
+  ps = { "empty", "" };
+  qDebug()
+      << "%{=coalesce:%{=rpn,a}:ø}=a "
+         "%{=coalesce:%{=rpn,<null>}:ø}=ø "
+         "%{=coalesce:%{=rpn,a,~~}:ø}=ø " // cannot convert to int -> invalid
+         "%{=coalesce:%{=rpn,%notdefined}:ø}=ø "
+         "%{=coalesce:%{=rpn,}:ø}=ø " // empty list is invalid
+         "%{=coalesce:%{=rpn,,}:ø}= "
+         "%{=coalesce:%{=rpn,%empty}:ø}= "_u8 % ps;
   return 0;
 }
