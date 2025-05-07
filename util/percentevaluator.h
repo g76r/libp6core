@@ -117,7 +117,7 @@ public:
   [[nodiscard]] static inline QVariant eval(
       const Utf8String &expr, const EvalContext &context = {}) {
     if (!expr.contains('%')) // passthrough keeps memory benefits of implicit
-      return expr; // sharing (and avoids converting "" into {})
+      return QVariant(expr); // sharing and avoids converting "" into {}
     // LATER have a full eval(Utf8String) implementation to avoid double scan
     auto begin = expr.constData();
     return eval(begin, begin+expr.size(), context);
@@ -249,7 +249,7 @@ public:
    * e.g. escape(2) will return an integer QVariant, not "2" string. */
   [[nodiscard]] static inline QVariant escape(const QVariant &v) {
     Utf8String s(v);
-    return s.contains('%') ? s.replace('%', "%%"_u8) : v; }
+    return s.contains('%') ? QVariant(s.replace('%', "%%"_u8)) : v; }
   /** Detects if a string evaluation is independent from params and functions.
    *  e.g. "abc" "" "%%foo" "abc%%foo" are independent whereas "abc%foo" is not.
    *  Note that independent does not means constant: "abc" is constant whereas

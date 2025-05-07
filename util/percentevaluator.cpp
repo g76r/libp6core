@@ -190,22 +190,22 @@ _functions {
     value = transformed;
   }
   //qDebug() << "value:" << value;
-  return value;
+  return QVariant(value);
 }, true},
 { "=uppercase", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context);
-  return input.toUpper();
+  return QVariant(input.toUpper());
 }, true},
 { "=lowercase", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context);
-  return input.toLower();
+  return QVariant(input.toLower());
 }, true},
 { "=titlecase", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context);
-  return input.toTitle();
+  return QVariant(input.toTitle());
 }, true},
 { "=left", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
@@ -219,7 +219,7 @@ _functions {
     else
       input = input.utf8left(i);
   }
-  return input;
+  return QVariant(input);
 }, true},
 { "=right", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
@@ -233,7 +233,7 @@ _functions {
     else
       input = input.utf8right(i);
   }
-  return input;
+  return QVariant(input);
 }, true},
 { "=mid", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
@@ -248,7 +248,7 @@ _functions {
     else
       input = input.utf8mid(i, ok ? j : -1);
   }
-  return input;
+  return QVariant(input);
 }, true},
 { "=box", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
@@ -258,53 +258,53 @@ _functions {
   if (flags.contains('t')) // trim before anything else
     input.trim();
   if (size <= 0) // if size is invalid, neither pad nor elide
-    return input;
+    return QVariant(input);
   auto b = flags.contains('b'); // count bytes rather than characters
   auto is = b ? input.size() : input.utf8size();
   if (is < size) { // too short -> must pad
     auto padding = PercentEvaluator::eval_utf8(params.value(3), context)
                    | " "_u8;
     if (flags.contains('r'))
-      return Utf8String::pad(1, b, input, size, padding);
+      return QVariant(Utf8String::pad(1, b, input, size, padding));
     if (flags.contains('c'))
-      return Utf8String::pad(0, b, input, size, padding);
-    return Utf8String::pad(-1, b, input, size, padding);
+      return QVariant(Utf8String::pad(0, b, input, size, padding));
+    return QVariant(Utf8String::pad(-1, b, input, size, padding));
   }
   if (is > size && !flags.contains('o')) { // too long -> must elide
     auto ellipsis = PercentEvaluator::eval_utf8(params.value(4), context);
     if (flags.contains('l'))
-      return Utf8String::elide(-1, b, input, size, ellipsis);
+      return QVariant(Utf8String::elide(-1, b, input, size, ellipsis));
     if (flags.contains('m'))
-      return Utf8String::elide(0, b, input, size, ellipsis);
-    return Utf8String::elide(1, b, input, size, ellipsis);
+      return QVariant(Utf8String::elide(0, b, input, size, ellipsis));
+    return QVariant(Utf8String::elide(1, b, input, size, ellipsis));
   }
   // nothing to do, (trimmed) input was already the right size
-  return input;
+  return QVariant(input);
 }, true},
 { "=trim", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto input = PercentEvaluator::eval_utf8(key.mid(ml+1), context);
-  return input.trimmed();
+  return QVariant(input.trimmed());
 }, true},
 { "=elideright", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context);
   auto size = PercentEvaluator::eval_number<qsizetype>(params.value(1),context);
   auto ellipsis = PercentEvaluator::eval_utf8(params.value(2),context)|"..."_u8;
-  return Utf8String::elide_right(input, size, ellipsis);
+  return QVariant(Utf8String::elide_right(input, size, ellipsis));
 }, true},
 { "=elideleft", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context);
   auto size = PercentEvaluator::eval_number<qsizetype>(params.value(1),context);
   auto ellipsis = PercentEvaluator::eval_utf8(params.value(2),context)|"..."_u8;
-  return Utf8String::elide_left(input, size, ellipsis);
+  return QVariant(Utf8String::elide_left(input, size, ellipsis));
 }, true},
 { "=elidemiddle", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
   auto input = PercentEvaluator::eval_utf8(params.value(0), context);
   auto size = PercentEvaluator::eval_number<qsizetype>(params.value(1),context);
   auto ellipsis = PercentEvaluator::eval_utf8(params.value(2),context)|"..."_u8;
-  return Utf8String::elide_middle(input, size, ellipsis);
+  return QVariant(Utf8String::elide_middle(input, size, ellipsis));
 }, true},
 { "=htmlencode", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
@@ -325,8 +325,7 @@ _functions {
   auto i = (qlonglong)QRandomGenerator::global()->generate64();
   if (modulo)
     i %= modulo;
-  i += shift;
-  return Utf8String::number(i);
+  return i + shift;
 }, true},
 { "=env", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
@@ -366,24 +365,24 @@ _functions {
 }, true},
 { "=sha1", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto value = PercentEvaluator::eval_utf8(key.mid(ml+1), context);
-  return Utf8String(QCryptographicHash::hash(
-                      value, QCryptographicHash::Sha1).toHex());
+  return QVariant(Utf8String(QCryptographicHash::hash(
+                               value, QCryptographicHash::Sha1).toHex()));
 }, true},
 { "=sha256", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto value = PercentEvaluator::eval_utf8(key.mid(ml+1), context);
-  return Utf8String(QCryptographicHash::hash(
-                      value, QCryptographicHash::Sha256).toHex());
+  return QVariant(Utf8String(QCryptographicHash::hash(
+                               value, QCryptographicHash::Sha256).toHex()));
 }, true},
 { "=md5", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto value = PercentEvaluator::eval_utf8(key.mid(ml+1), context);
-  return Utf8String(QCryptographicHash::hash(
-                      value, QCryptographicHash::Md5).toHex());
+  return QVariant(Utf8String(QCryptographicHash::hash(
+                               value, QCryptographicHash::Md5).toHex()));
 }, true},
 { "=hex", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
   auto value = PercentEvaluator::eval_utf8(params.value(0), context);
   auto separator = params.value(1);
-  return value.toHex(separator.value(0));
+  return QVariant(value.toHex(separator.value(0)));
 }, true},
 { "=fromhex", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
@@ -399,8 +398,7 @@ _functions {
                            : QByteArray::Base64Encoding)
       |(flags.contains('a') ? QByteArray::AbortOnBase64DecodingErrors
                             : QByteArray::IgnoreBase64DecodingErrors);
-  value = value.toBase64(options);
-  return value;
+  return QVariant(value.toBase64(options));
 }, true},
 { "=frombase64", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
@@ -412,8 +410,7 @@ _functions {
                             : QByteArray::Base64Encoding)
       |(flags.contains('a') ? QByteArray::AbortOnBase64DecodingErrors
                             : QByteArray::IgnoreBase64DecodingErrors);
-  value = QByteArray::fromBase64(value, options);
-  return value;
+  return QByteArray::fromBase64(value, options);
 }, true},
 { "=rpn", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto expr = key.mid(ml);
@@ -476,7 +473,7 @@ _functions {
   for (const auto &param: params) {
     auto v = param % context;
     if (auto s = Utf8String(v); !s.isEmpty())
-      return s; // =default would return v
+      return QVariant(s); // =default would return v
   }
   return {};
 }, true},
@@ -501,22 +498,22 @@ _functions {
   bool ok;
   auto i = PercentEvaluator::eval_number<qint64>(params.value(0), context, &ok);
   if (!ok)
-    return PercentEvaluator::eval_utf8(params.value(3), context);
+    return QVariant(PercentEvaluator::eval_utf8(params.value(3), context));
   auto base = PercentEvaluator::eval_number<int>(params.value(1), 10, context);
   auto padding = PercentEvaluator::eval_utf8(params.value(2), context);
   auto s = Utf8String::number(i, base);
-  return padding.utf8left(padding.utf8size()-s.utf8size())+s;
+  return QVariant(padding.utf8left(padding.utf8size()-s.utf8size())+s);
 }, true},
 { "=formatuint64", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
   bool ok;
   auto i = PercentEvaluator::eval_number<quint64>(params.value(0), context, &ok);
   if (!ok)
-    return PercentEvaluator::eval_utf8(params.value(3), context);
+    return QVariant(PercentEvaluator::eval_utf8(params.value(3), context));
   auto base = PercentEvaluator::eval_number<int>(params.value(1), 10, context);
   auto padding = PercentEvaluator::eval_utf8(params.value(2), context);
   auto s = Utf8String::number(i, base);
-  return padding.utf8left(padding.utf8size()-s.utf8size())+s;
+  return QVariant(padding.utf8left(padding.utf8size()-s.utf8size())+s);
 }, true},
 { "=formatdouble", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
@@ -526,7 +523,7 @@ _functions {
                   params.value(1), "g"_u8, context).value(0);
   auto prec = PercentEvaluator::eval_number<int>(params.value(2), 6, context);
   auto def = PercentEvaluator::eval_utf8(params.value(3), context);
-  return ok ? Utf8String::number(d, fmt, prec) : def;
+  return QVariant(ok ? Utf8String::number(d, fmt, prec) : def);
 }, true},
 { "=formatboolean", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
@@ -534,7 +531,7 @@ _functions {
   auto b = PercentEvaluator::eval_number<bool>(params.value(0), context, &ok);
   // param 2 (format) is ignored
   auto def = PercentEvaluator::eval_utf8(params.value(2), context);
-  return ok ? Utf8String::number(b) : def;
+  return QVariant(ok ? Utf8String::number(b) : def);
 }, true},
 { "=apply", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> QVariant {
   auto params = key.split_headed_list(ml);
@@ -764,7 +761,7 @@ QVariant PercentEvaluator::eval(
 stop:
   if (result.isNull())
     return {};
-  return result;
+  return QVariant(result);
 }
 
 const QString PercentEvaluator::matching_regexp(const Utf8String &expr) {

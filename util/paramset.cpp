@@ -262,7 +262,6 @@ QVariant ParamSet::paramRawValue(
     return def;
 #endif
   return parent().paramRawValue(key, def, context);
-  return def;
 }
 
 Utf8StringSet ParamSet::paramKeys(const EvalContext &context) const {

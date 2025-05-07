@@ -363,7 +363,7 @@ public:
 private:
   inline ParamSetData(QMap<Utf8String,QVariant> params) : _params(params) { }
   inline ParamSetData(ParamSet parent) : _parent(parent) { }
-  inline void clear() { _parent = {}; _params.clear(); _scope = {}; }
+  inline void clear() { _parent.clear(); _params.clear(); _scope = {}; }
 };
 
 ParamSet::ParamSet() noexcept {

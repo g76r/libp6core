@@ -1,4 +1,4 @@
-/* Copyright 2024 Gregoire Barbier and others.
+/* Copyright 2024-2025 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -38,7 +38,7 @@ public:
     auto ptr = _cache[key];
     if (ptr) {
       //qDebug() << "cache HIT:" << key << _cache.size();
-      return T(*ptr);
+      [[likely]] return T(*ptr);
     }
     //qDebug() << "cache miss:" << key << _cache.size();
     T value = creator();

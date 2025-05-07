@@ -40,8 +40,12 @@ const Utf8String Utf8String::DefaultPadding = " "_u8;
 static int staticInit() {
   qRegisterMetaType<Utf8String>();
   QMetaType::registerConverter<Utf8String,QVariant>();
+  Q_ASSERT(QMetaType::canConvert(QMetaType::fromType<Utf8String>(),
+                                 QMetaType::fromType<QVariant>()));
   QMetaType::registerConverter<QVariant,Utf8String>(
         [](const QVariant &v) STATIC_LAMBDA { return Utf8String(v); });
+  Q_ASSERT(QMetaType::canConvert(QMetaType::fromType<QVariant>(),
+                                 QMetaType::fromType<Utf8String>()));
   QMetaType::registerConverter<Utf8String,QString>(&Utf8String::toUtf16);
   QMetaType::registerConverter<Utf8String,QByteArray>();
   QMetaType::registerConverter<QString,Utf8String>(
