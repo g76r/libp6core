@@ -136,6 +136,8 @@ public:
     : Record(severity, taskid, Utf8String::number(execid), location) {}
   Record(Severity severity, qint64 execid, const source_location &location = {})
     : Record(severity, {}, Utf8String::number(execid), location) {}
+  Record(Severity severity, const source_location &location = {})
+    : Record(severity, {}, 0ULL, location) {}
 #else
   Record(Severity severity, const Utf8String &taskid = {},
              const Utf8String &execid = {})
@@ -152,6 +154,7 @@ public:
     : Record(severity, taskid, Utf8String::number(execid)) {}
   Record(Severity severity, qint64 execid)
     : Record(severity, {}, Utf8String::number(execid)) {}
+  Record(Severity severity) : Record(severity, {}, 0ULL) {}
 #endif
   Record(Severity severity, const Utf8String &taskid,
          const Utf8String &execid, const Utf8String &location)
@@ -161,6 +164,10 @@ public:
       _execid(sanitized_field(execid, "0"_u8)),
       _location(sanitized_field(location, ":"_u8)) { }
   Record() {}
+  Record(const Record &other) = default;
+  Record(Record &&other) = default;
+  Record &operator =(const Record &other) = default;
+  Record &operator =(Record &&other) = default;
   inline bool operator !() const { return !_timestamp; }
   inline qint64 timestamp() const { return _timestamp; }
   inline Utf8String taskid() const { return _taskid; }
@@ -171,6 +178,8 @@ public:
   Utf8String formated_message() const;
   inline Record &set_message(const Utf8String &message) {
     _message = message; return *this; }
+  inline Record &append_message(const Utf8String &suffix) {
+    _message.append(suffix); return *this; }
 };
 
 /** Add a new logger.
@@ -183,14 +192,17 @@ public:
    * change configuration on the fly without loosing any log record on the
    * hard-wired loggers and the configuration code does not have to recreate/
    * remember the hard-wired loggers. */
-void LIBP6CORESHARED_EXPORT addLogger(Logger *logger, bool autoRemovable);
+void LIBP6CORESHARED_EXPORT add_logger(Logger *logger, bool auto_removable);
 /** Remove a logger (and delete it), even if it is not autoremovable. */
-void LIBP6CORESHARED_EXPORT removeLogger(Logger *logger);
-/** Wrap Qt's log framework to make its output look like Log one. */
-void LIBP6CORESHARED_EXPORT wrapQtLogToSamePattern(bool enable = true);
-/** Add a logger to stdout. */
-void LIBP6CORESHARED_EXPORT addConsoleLogger(
-    Severity severity = Warning, bool autoRemovable = false,
+void LIBP6CORESHARED_EXPORT remove_logger(Logger *logger);
+/** Format Qt's log framework to make its output look like p6::log one, but keep
+ *  them wrote on stderr as Qt does. */
+void LIBP6CORESHARED_EXPORT use_same_format_for_qt_log(bool enable = true);
+/** Wrap Qt's log framework into p6::log, which make them asynchronous. */
+void LIBP6CORESHARED_EXPORT wrap_qt_log(bool enable = true);
+/** Add a logger to stderr (or stdout). */
+void LIBP6CORESHARED_EXPORT add_console_logger(
+    Severity severity = Warning, bool auto_removable = false,
     FILE *stream = stderr);
 /** Remove loggers that are autoremovable and replace them with new ones.
  *  Optionaly prepend a console logger. */
@@ -234,6 +246,7 @@ inline void log(
   log(Record{severity, taskid, execid}.set_message(message));
 }
 #endif // LOG_LOCATION_ENABLED
+
 QString LIBP6CORESHARED_EXPORT pathToLastFullestLog();
 QStringList LIBP6CORESHARED_EXPORT pathsToFullestLogs();
 QStringList LIBP6CORESHARED_EXPORT pathsToAllLogs();
@@ -662,6 +675,22 @@ using p6::log::info;
 using p6::log::warning;
 using p6::log::error;
 using p6::log::fatal;
+[[deprecated("use p6::log::use_same_format_for_qt_log or "
+             "p6::log::wrap_qt_log instead")]]
+inline void qtLogSamePatternWrapper(bool enable = true) {
+  p6::log::use_same_format_for_qt_log(enable);
+}
+[[deprecated("use p6::log::add_console_logger instead")]]
+inline void addConsoleLogger(
+    Severity severity = Warning, bool autoRemovable = false,
+    FILE *stream = stderr) {
+  p6::log::add_console_logger(severity, autoRemovable, stream);
+}
+[[deprecated("use p6::log::add_logger instead")]]
+inline void addLogger(
+    p6::log::Logger *logger, bool autoRemovable) {
+  p6::log::add_logger(logger, autoRemovable);
+}
 
 } // ns Log
 

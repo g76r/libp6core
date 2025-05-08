@@ -19,11 +19,11 @@ namespace p6::log {
 LogRecordItemLogger::LogRecordItemLogger(
     Severity min_severity, const Utf8String &prefix_filter)
   : Logger(min_severity, Logger::DirectCall), _prefix_filter(prefix_filter) {
-  addLogger(this, false);
+  add_logger(this, false);
 }
 
 LogRecordItemLogger::~LogRecordItemLogger() {
-  removeLogger(this);
+  remove_logger(this);
 }
 
 void LogRecordItemLogger::do_log(const Record &record) {

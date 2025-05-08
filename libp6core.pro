@@ -169,6 +169,7 @@ HEADERS *=\
     format/graphvizrenderer.h \
     format/svgwriter.h \
     io/opensshcommand.h \
+    log/log_p.h \
     log/logrecorditemlogger.h \
     log/logrecorditemmodel.h \
     modelview/templatedshareduiitemdata.h \

@@ -13,6 +13,7 @@
  */
 #include "filelogger.h"
 #include "util/paramset.h"
+#include "log/log_p.h"
 #include <QFile>
 #include <QDateTime>
 #include <QCoreApplication>
@@ -25,17 +26,14 @@ FileLogger::FileLogger(QIODevice *device, Severity minSeverity,
                        bool buffered)
   : Logger(minSeverity, Logger::DedicatedThread), _device(device),
     _buffered(buffered) {
-  //qDebug() << "creating FileLogger from device" << device;
-  /*qDebug() << "FileLogger::FileLoger" << this->thread() << _device->thread()
-           << QThread::currentThread();
-  qDebug() << "/FileLogger::setParent";*/
   if (!_device->isOpen()) {
     if (!_device->open(_buffered ? QIODevice::WriteOnly|QIODevice::Append
                        : QIODevice::WriteOnly|QIODevice::Append
                        |QIODevice::Unbuffered)) {
       [[unlikely]];
-      qWarning() << "cannot open log device" << _device << ":"
-                 << _device->errorString();
+      stderr_direct_log("cannot open log device"
+                        +Utf8String::number_and_name(_device)+": "
+                        +_device->errorString(), Warning);
       _device->deleteLater();
       _device = 0;
     }
@@ -47,7 +45,6 @@ FileLogger::FileLogger(QString pathPattern, Severity minSeverity,
   : Logger(minSeverity, Logger::DedicatedThread), _device(0),
     _pathPattern(pathPattern), _lastOpen(QDateTime::currentDateTime()),
     _secondsReopenInterval(secondsReopenInterval), _buffered(buffered) {
-  //qDebug() << "creating FileLogger from path" << pathPattern << this;
 }
 
 FileLogger::~FileLogger() {
@@ -70,8 +67,6 @@ void FileLogger::do_log(const Record &record) {
           || (_secondsReopenInterval >= 0
               && _lastOpen.secsTo(now) > _secondsReopenInterval))) {
     [[unlikely]];
-    //qDebug() << "*******************************************************"
-    //         << _pathPattern << _lastOpen << now << _secondsReopenInterval;
     if (_device)
       _device->deleteLater();
     _currentPath = Utf8String(PercentEvaluator::eval(_pathPattern));
@@ -82,13 +77,10 @@ void FileLogger::do_log(const Record &record) {
                                  : QIODevice::WriteOnly|QIODevice::Append
                                      |QIODevice::Unbuffered)) [[unlikely]] {
       // TODO warn, but only once
-      //qWarning() << "cannot open log file" << _currentPath << ":"
-      //           << _device->errorString();
       _device->deleteLater();
       _device = 0;
     } else {
       _lastOpen = QDateTime::currentDateTime();
-      //qDebug() << "opened log file" << _currentPath;
     }
   }
   if (_device) {
@@ -96,14 +88,9 @@ void FileLogger::do_log(const Record &record) {
     auto line = record.formated_message();
     if (_device->write(line) != line.size()) {
       // TODO warn, but only once
-      //qWarning() << "error while writing log:" << _device
-      //           << _device->errorString();
-      //qWarning() << line;
     }
   } else {
     // TODO warn, but only once
-    //qWarning() << "error while writing log: null log device";
-    //qWarning() << line;
   }
 }
 

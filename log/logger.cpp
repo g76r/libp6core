@@ -13,6 +13,7 @@
  */
 #include "log/logger.h"
 #include "log/loggerthread.h"
+#include "log/log_p.h"
 #include "util/paramset.h"
 #include "format/timeformats.h"
 #include <QMutexLocker>
@@ -24,9 +25,6 @@ namespace p6::log {
 Logger::Logger(Severity minSeverity, ThreadModel threadModel)
   : QObject(0), _min_severity(minSeverity), _auto_removable(true),
     _lastBufferOverflownWarning(0), _buffer(0), _thread_model(threadModel) {
-  //qDebug() << "*** Logger::Logger " << this << " " << minSeverity
-  //         << " " << threadModel << " " << QThread::currentThread();
-  //qDebug() << "Logger" << QString::number((qlonglong)this, 16);
   int logBufferSizeLog2 =
     Utf8String(qEnvironmentVariable("LOG_BUFFER_SIZE_LOG2")).toInt();
   logBufferSizeLog2 = std::clamp(logBufferSizeLog2, 12, 27);
@@ -68,16 +66,18 @@ void Logger::log(const Record &record) {
         // warn only if not warned recently
         QMutexLocker ml(&_bufferOverflownMutex);
         qint64 now = QDateTime::currentMSecsSinceEpoch();
-        if (now - _lastBufferOverflownWarning > _bufferOverflownWarningIntervalMs) {
+        if (now - _lastBufferOverflownWarning >
+            _bufferOverflownWarningIntervalMs) {
           _lastBufferOverflownWarning = now;
-          qWarning().noquote()
-              << QDateTime::currentDateTime().toString(ISO8601) << this
-              << "Logger::log discarded at less one log record due to "
-                 "thread buffer full" << record.message()
-              << "this warning occurs at most every"
-              << TimeFormats::toCoarseHumanReadableTimeInterval(
-                   _bufferOverflownWarningIntervalMs)
-              << "for every logger";
+          stderr_direct_log(
+                Utf8String(QDateTime::currentDateTime().toString(ISO8601))+" "
+                +Utf8String::number_and_name(this)
+                +" Logger::log discarded at less one log record due to "
+                 "thread buffer full "+record.message()
+                +" this warning occurs at most every "
+                +TimeFormats::toCoarseHumanReadableTimeInterval(
+                  _bufferOverflownWarningIntervalMs)+" for every logger",
+                Warning);
         }
       }
     } else {
@@ -87,7 +87,6 @@ void Logger::log(const Record &record) {
 }
 
 void Logger::shutdown() {
-  //qDebug() << "Logger::shutdown" << this << _thread << _buffer->used() << "---";
   if (_thread_model & DedicatedThread) {
     _buffer->tryPut({});
   } else {

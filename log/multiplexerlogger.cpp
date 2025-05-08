@@ -14,6 +14,7 @@
 #include "multiplexerlogger.h"
 #include "filelogger.h"
 #include "io/ioutils.h"
+#include "log/log_p.h"
 #include <QFile>
 #include <QThread>
 
@@ -34,15 +35,6 @@ MultiplexerLogger::~MultiplexerLogger() {
 void MultiplexerLogger::addLogger(Logger *logger, bool autoRemovable) {
   QMutexLocker locker(&_loggersMutex);
   if (logger) {
-    // LATER provide an option to enable Qt's standard log interception
-    // drawbacks:
-    // - Qt's log is synchronous (no writer thread) and thus intercepting it
-    //   would change the behavior (log order, even missing log records on
-    //   crash)
-    // - qFatal() expect the program to write a log and shutdown, which is not
-    //   easy to reproduce here
-    //if (_loggers.isEmpty())
-    //  qInstallMsgHandler(Log::logMessageHandler);
     logger->_auto_removable = autoRemovable;
     _loggers.append(logger);
   }
@@ -158,18 +150,9 @@ void MultiplexerLogger::do_log(const Record &record) {
   for (auto logger : _loggers)
     logger->log(record);
   if (_thread_model & RootLogger && _loggers.isEmpty() && !!record) {
-    switch(record.severity()) {
-      case Debug:
-        qDebug() << record.formated_message() << "(no logger configured)";
-        break;
-      case Info:
-        qInfo() << record.formated_message() << "(no logger configured)";
-        break;
-      case Warning:
-      case Error:
-      case Fatal:
-        qWarning() << record.formated_message() << "(no logger configured)";
-    }
+    Record new_record = record;
+    new_record.append_message(" (no logger configured)");
+    stderr_direct_log(new_record);
   }
 }
 

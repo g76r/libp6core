@@ -15,12 +15,13 @@
 #include "multiplexerlogger.h"
 #include <QThread>
 #include <QDateTime>
+#include <unistd.h>
 
 namespace p6::log {
 
 static MultiplexerLogger *_rootLogger = nullptr;
-static QMutex *_qtHandlerMutex = nullptr;
-static QtMessageHandler _qtOriginalHandler = nullptr;
+static QMutex *_qt_handler_mutex = nullptr;
+static QtMessageHandler _qt_original_handler = nullptr;
 
 /******************************************************************
   /!\ there must be no global variables with a destructor here /!\
@@ -28,25 +29,24 @@ static QtMessageHandler _qtOriginalHandler = nullptr;
   /!\ the program shutdown                                     /!\
  ******************************************************************/
 
-void addLogger(Logger *logger, bool autoRemovable) {
+void add_logger(Logger *logger, bool auto_removable) {
   if (!_rootLogger)
     return;
   if (logger->thread_model() == Logger::DirectCall)
     logger->moveToThread(_rootLogger->thread());
-  _rootLogger->addLogger(logger, autoRemovable);
+  _rootLogger->addLogger(logger, auto_removable);
 }
 
-void removeLogger(Logger *logger) {
+void remove_logger(Logger *logger) {
   if (!_rootLogger)
     return;
   _rootLogger->removeLogger(logger);
 }
 
-void addConsoleLogger(
-    Severity severity, bool autoRemovable, FILE *stream) {
+void add_console_logger(Severity severity, bool auto_removable, FILE *stream) {
   if (!_rootLogger)
     return;
-  _rootLogger->addConsoleLogger(severity, autoRemovable, stream);
+  _rootLogger->addConsoleLogger(severity, auto_removable, stream);
 }
 
 void replace_loggers(
@@ -104,7 +104,7 @@ void init() {
   if (_rootLogger)
     return;
   _rootLogger = new MultiplexerLogger(Debug, true);
-  _qtHandlerMutex = new QMutex;
+  _qt_handler_mutex = new QMutex;
 }
 
 void shutdown() {
@@ -165,7 +165,7 @@ QStringList pathsToAllLogs() {
   return _rootLogger->pathsToAllLogs();
 }
 
-static void qtLogSamePatternWrapper(
+static void same_format_qt_log_handler(
     QtMsgType type, const QMessageLogContext &qtcontext, const QString &msg) {
   auto severity = severity_from_qttype(type);
   Utf8String location;
@@ -178,18 +178,45 @@ static void qtLogSamePatternWrapper(
     [[unlikely]] abort();
 }
 
-void wrapQtLogToSamePattern(bool enable) {
+static void p6_log_wrapper_qt_log_handler(
+    QtMsgType type, const QMessageLogContext &qtcontext, const QString &msg) {
+  auto severity = severity_from_qttype(type);
+  Utf8String location;
+  if (qtcontext.file)
+    [[likely]] location = qtcontext.file+":"_u8
+                          +Utf8String::number(qtcontext.line);
+  log(Record(severity, {}, {}, location).set_message(msg));
+  if (type == QtFatalMsg) {
+    shutdown();
+    ::usleep(100'000);
+    [[unlikely]] abort();
+  }
+}
+
+static inline void set_qt_log_handler(bool enable, QtMessageHandler handler) {
   if (!_rootLogger)
     return;
-  QMutexLocker ml(_qtHandlerMutex);
+  QMutexLocker ml(_qt_handler_mutex);
   if (enable) {
-    QtMessageHandler previous = qInstallMessageHandler(qtLogSamePatternWrapper);
-    if (!_qtOriginalHandler)
-      _qtOriginalHandler = previous;
-  } else if (_qtOriginalHandler) {
-    qInstallMessageHandler(_qtOriginalHandler);
-    _qtOriginalHandler = 0;
+    QtMessageHandler previous = qInstallMessageHandler(handler);
+    if (!_qt_original_handler)
+      _qt_original_handler = previous;
+  } else if (_qt_original_handler) {
+    qInstallMessageHandler(_qt_original_handler);
+    _qt_original_handler = 0;
   }
+}
+
+void use_same_format_for_qt_log(bool enable) {
+  set_qt_log_handler(enable, same_format_qt_log_handler);
+}
+
+void wrap_qt_log(bool enable) {
+  set_qt_log_handler(enable, p6_log_wrapper_qt_log_handler);
+}
+
+void stderr_direct_log(const Record &record) {
+  fputs(record.formated_message(), stderr);
 }
 
 } // ns p6::log
