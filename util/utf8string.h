@@ -770,6 +770,8 @@ public:
   [[nodiscard]] static inline Utf8String number(
       const void *p, int base = 16) {
     return QByteArray::number((qintptr)p, base); }
+  /** format pointer as "QObject(0x0)" or "QObject(0xnnnn, \"objectname\")" */
+  [[nodiscard]] static Utf8String number_and_name(const QObject *p);
   [[nodiscard]] static inline Utf8String number(
       double d, char format = 'g', int precision = 6) {
     return QByteArray::number(d, format, precision); }

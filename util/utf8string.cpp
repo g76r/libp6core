@@ -810,3 +810,9 @@ QList<QPointF> Utf8String::toPointFList() const {
     points += coords.toPointF();
   return points;
 }
+
+Utf8String Utf8String::number_and_name(const QObject *p) {
+  if (!p)
+    return "QObject(0x0)";
+  return "QObject(0x"+number(p, 16)+", \""+p->objectName()+"\")";
+}
