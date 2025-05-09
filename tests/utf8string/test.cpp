@@ -8,7 +8,7 @@
 
 int main(void) {
   p6::log::init();
-  p6::log::addConsoleLogger(Log::Debug, false, stdout);
+  p6::log::add_console_logger(Log::Debug, false, stdout);
   Utf8String s("§foo§bar§baz§§§");
   qDebug() << s.size() << s.utf8size();
   qDebug() << s << s.split('o') << s.split("§"_u8);

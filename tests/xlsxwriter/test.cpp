@@ -22,7 +22,7 @@
 
 int main(int, char **) {
   p6::log::init();
-  p6::log::addConsoleLogger(p6::log::Debug, true, stdout);
+  p6::log::add_console_logger(p6::log::Debug, true, stdout);
   p6::log::debug() << "test";
   qDebug() << "foo";
   QDate date(2023,1,1);
