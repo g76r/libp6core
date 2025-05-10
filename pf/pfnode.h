@@ -328,8 +328,8 @@ public:
   }
   inline bool operator!() const { return _name.isEmpty(); }
   inline bool is_null() const { return !*this; }
-  inline bool operator<(const PfNode &other) const {
-    return _name < other._name; }
+  inline std::weak_ordering operator<=>(const PfNode &other) const {
+    return _name <=> other._name; }
   inline qsizetype fragments_count() const {
     return _fragments ? _fragments->count() : 0;
   }
@@ -349,8 +349,10 @@ public:
   inline bool operator^(const PfNode &that) const {
     return _name == that._name; }
   /** Syntaxic sugar: node ^ list === !!node && names.contains(node.name()) */
-  [[nodiscard]] inline bool operator^(
-      const p6::readable_set<Utf8String> auto &names) const {
+  template <class S>
+  requires (p6::readable_set<S,Utf8String> && !std::same_as<S,QString>
+            && !std::same_as<S,QByteArray>)
+  [[nodiscard]] inline bool operator^(const S &names) const {
     return names.contains(_name); }
   /** Children as range loop expression (currently: as copy). */
 
@@ -382,7 +384,8 @@ public:
   }
   /** Children filtered by their name, as range loop expression. */
   template <class S>
-  requires (p6::readable_set<S,Utf8String> && !std::same_as<S,QString>)
+  requires (p6::readable_set<S,Utf8String> && !std::same_as<S,QString>
+            && !std::same_as<S,QByteArray>)
   [[nodiscard]] inline auto children(const S &names) const {
     return std::views::all(Fragment::FragmentForwardRange(_fragments))
         | std::views::filter([names](const Fragment *f) { auto child = f->child(); return child && *child^names; })
@@ -390,7 +393,8 @@ public:
   }
   /** Children filtered by their name, as range loop expression. */
   template <class S>
-  requires (p6::readable_set<S,Utf8String> && !std::same_as<S,QString>)
+  requires (p6::readable_set<S,Utf8String> && !std::same_as<S,QString>
+            && !std::same_as<S,QByteArray>)
   [[nodiscard]] inline auto children(const S &names) {
     return std::views::all(Fragment::FragmentForwardRange(_fragments))
         | std::views::filter([names](struct Fragment *f) { auto child = f->child(); return child && *child^names; })
@@ -401,7 +405,8 @@ public:
     return children(name); }
   /** Syntaxic sugar: node/{"foo","bar"} === node.children({"foo","bar"}) */
   template <class S>
-  requires (p6::readable_set<S,Utf8String> && !std::same_as<S,QString>)
+  requires (p6::readable_set<S,Utf8String> && !std::same_as<S,QString>
+            && !std::same_as<S,QByteArray>)
   [[nodiscard]] inline auto operator/(const S &names) const {
     return children(names); }
   /** Children as QList copy */
