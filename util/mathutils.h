@@ -15,7 +15,8 @@
 #define MATHUTILS_H
 
 #include "libp6core_global.h"
-#include <QPartialOrdering>
+//#include <QPartialOrdering>
+#include <QVariant>
 
 class LIBP6CORESHARED_EXPORT MathUtils {
   MathUtils() = delete;
@@ -58,8 +59,33 @@ public:
    *  pretends_invalid_is_empty == true, QVariant() is equal to an QString("")
    *  and to QDateTime())
    */
-  static QPartialOrdering compareQVariantAsNumberOrString(
+  static std::partial_ordering compareQVariantAsNumberOrString(
       QVariant a, QVariant b, bool pretends_invalid_is_empty = false);
+  /** Same as QVariant::compare() but:
+   *  - first check if types are strictly the sames, otherwise return unordered
+   *    which mean that 2L and 4LL are unordered (with QVariant::compare() we
+   *    would have 2L < 4LL)
+   *  - NaN <=> NaN is equivalent, not unordered (with regular C++ standard,
+   *    which QVariant::compare() follows, NaN != NaN and two NaNs are unordered
+   *    even if they are both the same kind of NaN)
+   *
+   *  The intend is to use QVariant as a data holder where different types (like
+   *  unsigned long and signed char) must be treated as different values and
+   *  where NaN should be kept as is (as a kind of null double or whatever)
+   */
+  static inline std::partial_ordering compare_qvariant_as_data_holder(
+      const QVariant &a, const QVariant &b) {
+    auto ta = a.metaType(), tb = b.metaType();
+    qDebug() << "***     compare" << a << b << (ta == tb)
+             //<< std::isnan(a.value<double>()) << std::isnan(b.value<double>())
+             << (QVariant::compare(a, b) == 0);
+    if (ta != tb)
+      return std::partial_ordering::unordered;
+    if (ta.id() == QMetaType::Double && tb.id() == QMetaType::Double
+        && std::isnan(a.value<double>()) && std::isnan(b.value<double>()))
+        return std::partial_ordering::equivalent;
+    return QVariant::compare(a, b);
+  }
   /** Add numbers after promoting them to best arithmetic type.
    *  For integers, use __builtin_{s,u}addll_overflow instead of + if supported
    *  by compiler */
