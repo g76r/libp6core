@@ -100,7 +100,7 @@ static bool convertOtherTypesToBestArithmeticTypeIfPossible(
       return false;
     }
   }
-  if (*ta == qMetaTypeId<Utf8String>()) {
+  if (*ta == Utf8String::MetaTypeId) {
     s = a->value<Utf8String>();
   }
   if (!s.isEmpty()) {

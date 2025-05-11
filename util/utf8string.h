@@ -37,6 +37,7 @@ class QSizeF;
  * UTF-8 encoded string (QByteArray, char *, etc.). */
 class LIBP6CORESHARED_EXPORT Utf8String : public QByteArray {
 public:
+  const static int MetaTypeId;
   const static QList<char> AsciiWhitespace; // ' ', '\t', '\n'...
   const static QList<char32_t> UnicodeWhitespace; // same plus \u0084, \u2000...
   enum WellKnownUnicodeCharacters : char32_t {

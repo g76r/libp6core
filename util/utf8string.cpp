@@ -34,11 +34,11 @@ const Utf8String Utf8String::ReplacementCharacterUtf8 = "\xef\xbf\xbd"_u8;
 const Utf8String Utf8String::Empty = ""_u8;
 const Utf8String Utf8String::DefaultEllipsis = "..."_u8;
 const Utf8String Utf8String::DefaultPadding = " "_u8;
+const int Utf8String::MetaTypeId = qMetaTypeId<Utf8String>();
 
 #include "util/unicodedata.cpp"
 
 static int staticInit() {
-  qRegisterMetaType<Utf8String>();
   QMetaType::registerConverter<Utf8String,QVariant>();
   Q_ASSERT(QMetaType::canConvert(QMetaType::fromType<Utf8String>(),
                                  QMetaType::fromType<QVariant>()));

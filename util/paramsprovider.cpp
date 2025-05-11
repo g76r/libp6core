@@ -111,7 +111,7 @@ skip_param_raw_value:
   auto id = v.metaType().id();
   // passing QVariant through if non string type (number, invalid, QPointF...)
   // LATER may add some types here: QJsonValue if text ?
-  if (id != qMetaTypeId<Utf8String>() && id != QMetaType::QString
+  if (id != Utf8String::MetaTypeId && id != QMetaType::QString
       && id != QMetaType::QByteArray)
     return v;
   if (!context.paramsProvider()) { // if context has no pp, use this as a pp

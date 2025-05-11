@@ -215,7 +215,7 @@ public:
     }
     auto mtid = v.metaType().id();
     // text types and types not convertible to a number are for Utf8String
-    if (!v.canConvert<T>() || mtid == qMetaTypeId<Utf8String>()
+    if (!v.canConvert<T>() || mtid == Utf8String::MetaTypeId
         || mtid == QMetaType::QString || mtid == QMetaType::QByteArray)
       return Utf8String(v).toNumber<T>(ok, def);
     if (ok)
