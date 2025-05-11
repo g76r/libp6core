@@ -460,6 +460,8 @@ inline qsizetype decode_oct_char(const char *s, const char *end, char32_t *u) {
 }
 
 static inline qint8 hex_digit_value(char c) {
+  // tested with gcc up to 15.1 on godbolt.org: gcc build a byte array and uses
+  // it by himself (and so does clang)
   switch(c) {
     case '0':
       return 0;
@@ -506,6 +508,8 @@ static inline qint8 hex_digit_value(char c) {
 /** convert 4 into '4' and 13 into 'd', assuming i < 16 */
 static inline char hex_digit(quint8 i) {
   Q_ASSERT(i < 16);
+  // tested with gcc up to 15.1 on godbolt.org: this is probably better than an
+  // array of 16 chars
   if (i < 10)
     return '0'+i;
   return 'a'+i-10;
@@ -528,6 +532,25 @@ inline qsizetype decode_hex_char(
   return digits;
 }
 
+static signed char c_escape_array[] {
+ -1,-1,-1,-1,-1,-1,-1,-1,-1,'t','n',-1,-1,'r',-1,-1,
+ -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+ 0,0,'"',0,0,0,0,'\'',0,0,0,0,0,0,0,0,
+ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+ 0,0,0,0,0,0,0,0,0,0,0,0,'\\',0,0,0,
+ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,
+ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+};
+
 /** return 0 for non escapable chars, their escape char if any or -1 for hex
  *  sequences.
  *  e.g. '\n' -> 'n'
@@ -537,21 +560,9 @@ inline qsizetype decode_hex_char(
  *       '"' -> '"'
  */
 static inline qsizetype c_escape_char(char c) {
-  if (c == '\n')
-    return 'n';
-  if (c == '\r')
-    return 'r';
-  if (c == '\t')
-    return 't';
-  if (c == '\\')
-    return '\\';
-  if (c == '\'')
-    return '\'';
-  if (c == '"')
-    return '"';
-  if ((quint8)c < 32 || c == 127)
-    return -1; // to be escaped with hex sequence
-  [[likely]] return 0; // not to be escaped
+  // tested with gcc up to 15.1 on godbolt.org a switch or a bunch of ifs
+  // produced fare worst code than just on instruction (a LEA) produced here:
+  return c_escape_array[(unsigned char)c];
 }
 
 Utf8String Utf8String::cEscaped(char c) {
