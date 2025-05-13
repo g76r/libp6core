@@ -62,7 +62,7 @@ public:
   /** First item processed as a key, second one as the matching value and so on.
    * If list size is odd the last key will be inserted with "" value. */
   inline ParamSet(std::initializer_list<Utf8String> list);
-  inline ParamSet(std::initializer_list<std::pair<Utf8String,QVariant>> list,
+  inline ParamSet(std::initializer_list<std::pair<Utf8String,TypedValue>> list,
                   const Utf8String &scope = {});
   inline ParamSet(const ParamSet &other) noexcept;
   inline ParamSet(ParamSet &&other) noexcept;
@@ -70,8 +70,8 @@ public:
   explicit ParamSet(const QMap<QString,QString> &params);
   explicit ParamSet(const QHash<Utf8String,Utf8String> &params);
   explicit ParamSet(const QMap<Utf8String,Utf8String> &params);
-  explicit ParamSet(const QHash<Utf8String,QVariant> &params);
-  explicit ParamSet(const QMap<Utf8String,QVariant> &params);
+  explicit ParamSet(const QHash<Utf8String,TypedValue> &params);
+  explicit ParamSet(const QMap<Utf8String,TypedValue> &params);
   /** For multi-valued keys, only most recently inserted value is kept. */
   explicit ParamSet(const QMultiMap<QString,QString> &params);
   /** For multi-valued keys, only most recently inserted value is kept. */
@@ -81,9 +81,9 @@ public:
   /** For multi-valued keys, only most recently inserted value is kept. */
   explicit ParamSet(const QMultiHash<Utf8String,Utf8String> &params);
   /** For multi-valued keys, only most recently inserted value is kept. */
-  explicit ParamSet(const QMultiMap<Utf8String,QVariant> &params);
+  explicit ParamSet(const QMultiMap<Utf8String,TypedValue> &params);
   /** For multi-valued keys, only most recently inserted value is kept. */
-  explicit ParamSet(const QMultiHash<Utf8String,QVariant> &params);
+  explicit ParamSet(const QMultiHash<Utf8String,TypedValue> &params);
   /** Takes params from PfNode children given an attribute name,
    *  parsing their text content as key-whitespace-value.
    *  Optionnaly a second attribute name is used for "const" params, that is
@@ -147,9 +147,9 @@ public:
     params.setParent(new_parent);
     return params;
   }
-  ParamSet &insert(const Utf8String &key, const QVariant &value);
+  ParamSet &insert(const Utf8String &key, const TypedValue &value);
   [[deprecated("use insert instead")]]
-  inline void setValue(const Utf8String &key, const QVariant &value) {
+  inline void setValue(const Utf8String &key, const TypedValue &value) {
     insert(key, value); }
   /** insert (override) params taking them from a SQL database query
    *  SQL query is %-evaluated within parent context.
@@ -193,8 +193,8 @@ public:
   ParamSet &erase(const Utf8String &key);
 
   using ParamsProvider::paramRawValue;
-  [[nodiscard]] QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def = {},
+  [[nodiscard]] TypedValue paramRawValue(
+      const Utf8String &key, const TypedValue &def = {},
       const EvalContext &context = {}) const override;
 
   using ParamsProvider::paramKeys;
@@ -238,8 +238,8 @@ public:
    * @param inherit include params inherited from parents
    * @param decorate surround with curly braces */
   const QString toString(bool inherit = true, bool decorate = true) const;
-  const QHash<Utf8String,QVariant> toHash(bool inherit = true) const;
-  const QMap<Utf8String,QVariant> toMap(bool inherit = true) const;
+  const QHash<Utf8String,TypedValue> toHash(bool inherit = true) const;
+  const QMap<Utf8String,TypedValue> toMap(bool inherit = true) const;
   const QHash<Utf8String,Utf8String> toUtf8Hash(bool inherit = true) const;
   const QMap<Utf8String,Utf8String> toUtf8Map(bool inherit = true) const;
   const QHash<QString,QString> toUtf16Hash(bool inherit = true) const;
@@ -352,7 +352,7 @@ Q_DECLARE_TYPEINFO(ParamSet, Q_RELOCATABLE_TYPE);
 class ParamSetData : public QSharedData {
   friend class ParamSet;
   ParamSet _parent;
-  QMap<Utf8String,QVariant> _params;
+  QMap<Utf8String,TypedValue> _params;
   Utf8String _scope;
 
 public:
@@ -361,8 +361,11 @@ public:
   ParamSetData(ParamSetData &&that) = default;
 
 private:
-  inline ParamSetData(QMap<Utf8String,QVariant> params) : _params(params) { }
-  inline ParamSetData(ParamSet parent) : _parent(parent) { }
+  inline ParamSetData(const QMap<Utf8String,TypedValue> &params)
+    : _params(params) { }
+  inline ParamSetData(QMap<Utf8String,TypedValue> &&params)
+    : _params(params) { }
+  inline ParamSetData(const ParamSet &parent) : _parent(parent) { }
   inline void clear() { _parent.clear(); _params.clear(); _scope = {}; }
 };
 
@@ -386,7 +389,7 @@ ParamSet::ParamSet(std::initializer_list<Utf8String> list) {
 }
 
 ParamSet::ParamSet(
-    std::initializer_list<std::pair<Utf8String, QVariant> > list,
+    std::initializer_list<std::pair<Utf8String,TypedValue>> list,
     const Utf8String &scope) : d(new ParamSetData) {
   for (auto &&p: list)
     d->_params.insert(p.first, p.second);

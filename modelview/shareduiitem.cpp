@@ -77,8 +77,8 @@ QDebug operator<<(QDebug dbg, const SharedUiItem &i) {
   return dbg.space();
 }
 
-QVariant SharedUiItemData::paramRawValue(
-    const Utf8String &key, const QVariant &def,
+TypedValue SharedUiItemData::paramRawValue(
+    const Utf8String &key, const TypedValue &def,
     const EvalContext &context) const {
   if (!context.hasScopeOrNone(paramScope()))
     return def;
@@ -97,14 +97,14 @@ QVariant SharedUiItemData::paramRawValue(
   auto value = uiData(section, context.role());
   if (!value.isValid())
     return def;
-  return value;
+  return TypedValue(value);
 }
 
-QVariant SharedUiItem::paramRawValue(
-    const Utf8String &key, const QVariant &def,
+TypedValue SharedUiItem::paramRawValue(
+    const Utf8String &key, const TypedValue &def,
     const EvalContext &context) const {
   if (!_data)
-    return {};
+    return def;
   return _data->paramRawValue(key, def, context);
 }
 

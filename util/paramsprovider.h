@@ -58,11 +58,11 @@ public:
    *      return {};
    *
    *  Default: always return def. */
-  [[nodiscard]] virtual QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def = {},
+  [[nodiscard]] virtual TypedValue paramRawValue(
+      const Utf8String &key, const TypedValue &def = {},
       const EvalContext &context = {}) const = 0;
   /** Convenience method. */
-  [[nodiscard]] inline QVariant paramRawValue(
+  [[nodiscard]] inline TypedValue paramRawValue(
       const Utf8String &key, const EvalContext &context) const {
     return paramRawValue(key, {}, context); }
   /** Convenience method */
@@ -78,7 +78,8 @@ public:
   [[nodiscard]] inline QString paramRawUtf16(
       const Utf8String &key, const QString &def = {},
       const EvalContext &context = {}) const {
-    return paramRawValue(key, def, context).toString(); }
+    auto v = paramRawValue(key, {}, context);
+    return !!v ? v.as_utf16() : def; }
   /** Convenience method. */
   [[nodiscard]] inline QString paramRawUtf16(
       const Utf8String &key, const EvalContext &context) const {
@@ -108,11 +109,11 @@ public:
    *  @param def default value
    *  @param context %-evaluation context, params providers in the context
    *         will be prepended with this before evaluation */
-  [[nodiscard]] QVariant paramValue(
-      const Utf8String &key, const QVariant &def = {},
+  [[nodiscard]] TypedValue paramValue(
+      const Utf8String &key, const TypedValue &def = {},
       const EvalContext &context = {}) const;
   /** Convenience method */
-  [[nodiscard]] inline QVariant paramValue(
+  [[nodiscard]] inline TypedValue paramValue(
       const Utf8String &key, const ParamsProvider *context) const {
     return paramValue(key, {}, context); }
 
@@ -132,7 +133,8 @@ public:
   [[nodiscard]] inline QString paramUtf16(
       const Utf8String &key, const QString &def = {},
       const EvalContext &context = {}) const {
-    return paramValue(key, def, context).toString(); }
+    auto v = paramValue(key, {}, context);
+    return !!v ? v.as_utf16() : def; }
   /** Convenience method */
   [[nodiscard]] inline QString paramUtf16(
       const Utf8String &key, const EvalContext &context) const {
@@ -142,10 +144,10 @@ public:
   /** Evaluate and then convert result to a number type (i.e. floating, integer
    *  or bool).
    *
-   *  If the raw value is a QVariant with a number type (e.g. QMetaType::Double)
+   *  If the raw value is a TypedValue with a number type (e.g. Float8)
    *  it will be passed through as is, otherwise Utf8String::toNumber<> is used
-   *  to do the conversion (so base autodection and metric (kMPpu...) and casual
-   *  (kbm...) suffixes are supported).
+   *  to do the conversion (so base autodection (0x for hexa...), metric
+   *  suffixes (kMPpu...) and casual suffixes (kbm...) are supported).
    *
    *  Most users want rather to call one of the convenience method without
    *  alreadyEvaluated param.
@@ -153,42 +155,25 @@ public:
    *  @see Utf8String::toNumber<>
    *  @param context is an evaluation context, uses this if null
    *  @param alreadyEvaluated used for loop detections, must not be null */
-#ifdef __cpp_concepts
   template <p6::arithmetic T>
-#else
-  template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
-#endif
   [[nodiscard]] T paramNumber(
       const Utf8String &key, const T &def = {},
       const EvalContext &context = {}) const {
-    auto v = paramValue(key, {}, context);
-    if (!v.isValid())
-      return def;
-    auto mtid = v.metaType().id();
-    // text types and types not convertible to a number are for Utf8String
-    if (!v.canConvert<T>() || mtid == Utf8String::MetaTypeId
-        || mtid == QMetaType::QString || mtid == QMetaType::QByteArray)
-      return Utf8String(v).toNumber<T>(def);
-    return v.value<T>();
-  }
+    return paramValue(key, {}, context).as_number<T>(def); }
   /** Convenience methods */
-#ifdef __cpp_concepts
   template <p6::arithmetic T>
-#else
-  template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
-#endif
   [[nodiscard]] T paramNumber(
       const Utf8String &key, const EvalContext &context) const {
-    return paramNumber<T>(key, {}, context); }
+    return paramValue(key, {}, context).as_number<T>(); }
   /** Convenience method: call paramNumber<bool> */
   [[nodiscard]] bool paramBool(
       const Utf8String &key, bool def = false,
       const EvalContext &context = {}) const {
-    return paramNumber<bool>(key, def, context); }
+    return paramValue(key, {}, context).as_number<bool>(def); }
   /** Convenience method: call paramNumber<bool> */
   [[nodiscard]] bool paramBool(
       const Utf8String &key, const EvalContext &context) const {
-    return paramNumber<bool>(key, {}, context); }
+    return paramValue(key, {}, context).as_number<bool>(); }
 
   // scope
   /** Return default scope, that is more or less a name or type for this
@@ -227,28 +212,28 @@ public:
 #endif
 };
 
-/** Very simple ParamsProvider implementation, based on Utf8String -> QVariant
- *  map. */
+/** Very simple ParamsProvider implementation, based on a
+ *  Utf8String -> TypedValue map. */
 
 class LIBP6CORESHARED_EXPORT SimpleParamsProvider : public ParamsProvider {
-  QMap<Utf8String,QVariant> _params;
+  QMap<Utf8String,TypedValue> _params;
   Utf8String _scope;
 
 public:
   [[deprecated("use ParamSet instead")]]
   SimpleParamsProvider(
-      const QMap<Utf8String,QVariant> &params = {},
+      const QMap<Utf8String,TypedValue> &params = {},
       const Utf8String &scope = {})
     : _params(params), _scope(scope) { }
   [[deprecated("use ParamSet instead")]]
   SimpleParamsProvider(
-      std::initializer_list<std::pair<Utf8String,QVariant>> list,
+      std::initializer_list<std::pair<Utf8String,TypedValue>> list,
       const Utf8String &scope = {}) : _scope(scope) {
     for (auto &&p : list)
       _params.insert(p.first, p.second);
   }
-  [[nodiscard]] QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def = {},
+  [[nodiscard]] TypedValue paramRawValue(
+      const Utf8String &key, const TypedValue &def = {},
       const EvalContext &context = {}) const override;
   [[nodiscard]] Utf8StringSet paramKeys(
       const EvalContext &context = {}) const override;
@@ -257,7 +242,7 @@ public:
   [[nodiscard]] Utf8String paramScope() const override;
   SimpleParamsProvider &setScope(const Utf8String &scope) {
     _scope = scope; return *this; }
-  [[nodiscard]] const QMap<Utf8String,QVariant> toMap() const {
+  [[nodiscard]] const QMap<Utf8String,TypedValue> toMap() const {
     return _params; }
 };
 

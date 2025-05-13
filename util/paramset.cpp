@@ -51,7 +51,7 @@ static int staticInit() {
 }
 Q_CONSTRUCTOR_FUNCTION(staticInit)
 
-ParamSet::ParamSet(const QMap<Utf8String,QVariant> &params)
+ParamSet::ParamSet(const QMap<Utf8String, TypedValue> &params)
   : d(new ParamSetData(params)) {
 }
 
@@ -67,7 +67,7 @@ ParamSet::ParamSet(const QHash<Utf8String,Utf8String> &params)
     d->_params.insert(key, value);
 }
 
-ParamSet::ParamSet(const QHash<Utf8String,QVariant> &params)
+ParamSet::ParamSet(const QHash<Utf8String,TypedValue> &params)
   : d(new ParamSetData) {
   for (const auto &[key,value]: params.asKeyValueRange())
     d->_params.insert(key, value);
@@ -109,13 +109,13 @@ ParamSet::ParamSet(const QMultiHash<Utf8String, Utf8String> &params)
     d->_params.insert(key, value);
 }
 
-ParamSet::ParamSet(const QMultiMap<Utf8String, QVariant> &params)
+ParamSet::ParamSet(const QMultiMap<Utf8String, TypedValue> &params)
   : d(new ParamSetData) {
   for (const auto &[key,value]: params.asKeyValueRange())
     d->_params.insert(key, value);
 }
 
-ParamSet::ParamSet(const QMultiHash<Utf8String, QVariant> &params)
+ParamSet::ParamSet(const QMultiHash<Utf8String, TypedValue> &params)
   : d(new ParamSetData) {
   for (const auto &[key,value]: params.asKeyValueRange())
     d->_params.insert(key, value);
@@ -194,12 +194,12 @@ ParamSet::ParamSet(
   : d(fromQIODevice(input, format, options, escape_percent, parent)) {
 }
 
-ParamSet &ParamSet::insert(const Utf8String &key, const QVariant &value) {
+ParamSet &ParamSet::insert(const Utf8String &key, const TypedValue &value) {
   if (key.isEmpty())
     [[unlikely]] return *this;
   if (!d)
     [[unlikely]] d = new ParamSetData;
-  if (value.isValid())
+  if (!!value)
     d->_params.insert(key, value);
   else
     d->_params.remove(key);
@@ -234,11 +234,11 @@ void ParamSet::clear() {
     d->clear();
 }
 
-QVariant ParamSet::paramRawValue(
-    const Utf8String &key, const QVariant &def,
+TypedValue ParamSet::paramRawValue(
+    const Utf8String &key, const TypedValue &def,
     const EvalContext &original_context) const {
   EvalContext context = original_context;
-  QVariant v;
+  TypedValue v;
   if (!context.functionsEvaluated()) {
     bool is_function;
     v = PercentEvaluator::eval_function(key, context, &is_function);
@@ -254,7 +254,7 @@ QVariant ParamSet::paramRawValue(
 #endif
       ) {
     v = d->_params.value(key);
-    if (v.isValid())
+    if (!!v)
       return v;
   }
 #if PARAMSET_SUPPORTS_DONTINHERIT
@@ -323,15 +323,15 @@ const QString ParamSet::toString(bool inherit, bool decorate) const {
   return s;
 }
 
-const QHash<Utf8String, QVariant> ParamSet::toHash(bool inherit) const {
-  QHash<Utf8String,QVariant> hash;
+const QHash<Utf8String, TypedValue> ParamSet::toHash(bool inherit) const {
+  QHash<Utf8String,TypedValue> hash;
   for (const auto &key: unscopedParamKeys(inherit))
     hash.insert(key, paramRawValue(key));
   return hash;
 }
 
-const QMap<Utf8String, QVariant> ParamSet::toMap(bool inherit) const {
-  QMap<Utf8String,QVariant> map;
+const QMap<Utf8String, TypedValue> ParamSet::toMap(bool inherit) const {
+  QMap<Utf8String,TypedValue> map;
   for (const auto &key: unscopedParamKeys(inherit))
     map.insert(key, paramRawValue(key));
   return map;
@@ -354,14 +354,14 @@ const QMap<Utf8String, Utf8String> ParamSet::toUtf8Map(bool inherit) const {
 const QHash<QString, QString> ParamSet::toUtf16Hash(bool inherit) const {
   QHash<QString,QString> hash;
   for (const auto &key: unscopedParamKeys(inherit))
-    hash.insert(key, paramRawValue(key).toString());
+    hash.insert(key, paramRawValue(key).as_utf16());
   return hash;
 }
 
 const QMap<QString,QString> ParamSet::toUtf16Map(bool inherit) const {
   QMap<QString,QString> map;
   for (const auto &key: unscopedParamKeys(inherit))
-    map.insert(key, paramRawValue(key).toString());
+    map.insert(key, paramRawValue(key).as_utf16());
   return map;
 }
 

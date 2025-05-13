@@ -51,22 +51,14 @@ public:
   /** Safe popeval and eval.
    *  @return def if stack is empty
    */
-  inline QVariant popeval(
-      Stack *stack, const EvalContext &context, const QVariant &def);
+  inline TypedValue popeval(
+      Stack *stack, const EvalContext &context, const TypedValue &def);
   /** Safe popeval and eval as text.
    *  @return def if stack is empty
    */
   inline Utf8String popeval_utf8(
-      Stack *stack, const EvalContext &context, const QVariant &def) {
+      Stack *stack, const EvalContext &context, const TypedValue &def) {
     return Utf8String{popeval(stack, context, def)};
-  }
-  /** Safe popeval and eval as boolean.
-   *  @return def if stack is empty
-   */
-  inline bool popeval_bool(
-      Stack *stack, const EvalContext &context, bool def) {
-    auto x = popeval(stack, context, {});
-    return x.isValid() ? x.toBool() : def;
   }
   /** /!\ This function assumes the stack isn't empty. */
   inline StackItem &top() {
@@ -79,36 +71,36 @@ public:
 };
 
 using StackItemOperator
-= std::function<QVariant(Stack *stack, const EvalContext &context,
-const QVariant &def)>;
+= std::function<TypedValue(Stack *stack, const EvalContext &context,
+const TypedValue &def)>;
 
 class StackItem final {
   StackItemOperator _op;
 
 public:
   StackItem(const StackItemOperator &op) : _op(op) { }
-  StackItem(const QVariant &constant_value = {})
-    : _op([constant_value](Stack *, const EvalContext &, const QVariant &) {
+  StackItem(const TypedValue &constant_value = {})
+    : _op([constant_value](Stack *, const EvalContext &, const TypedValue &) {
     return constant_value;
   }) { }
   StackItem(const Utf8String &constant_value)
-    : _op([constant_value](Stack *, const EvalContext &, const QVariant &) -> QVariant {
+    : _op([constant_value](Stack *, const EvalContext &, const TypedValue &) -> TypedValue {
     return constant_value;
   }) { }
-  inline QVariant operator()(Stack *stack, const EvalContext &context,
-                             const QVariant &def) {
+  inline TypedValue operator()(Stack *stack, const EvalContext &context,
+                             const TypedValue &def) {
     return _op(stack, context, def);
   }
-  inline StackItem &operator=(const QVariant &constant_value) {
-    _op = [constant_value](Stack *, const EvalContext &, const QVariant &) {
+  inline StackItem &operator=(const TypedValue &constant_value) {
+    _op = [constant_value](Stack *, const EvalContext &, const TypedValue &) {
       return constant_value;
     };
     return *this;
   }
 };
 
-QVariant Stack::popeval(Stack *stack, const EvalContext &context,
-                        const QVariant &def) {
+TypedValue Stack::popeval(Stack *stack, const EvalContext &context,
+                          const TypedValue &def) {
   if (_items.isEmpty())
     return def;
   return _items.pop()(stack, context, def);
@@ -142,119 +134,119 @@ static inline QPartialOrdering compareTwoOperands(
   auto x = stack->popeval(stack, context, {});
   //if (x.metaType().id() == QMetaType::QDateTime || !x.isValid())
   //qDebug() << "****** compareTwoOperands" << x << y << tostr(MathUtils::compareQVariantAsNumberOrString(x, y, pretends_invalid_is_empty));
-  if ((!x.isValid() || !y.isValid()) && !pretends_invalid_is_empty)
+  if ((!x || !y) && !pretends_invalid_is_empty)
     return QPartialOrdering::Unordered;
-  auto po = MathUtils::compareQVariantAsNumberOrString(x, y, pretends_invalid_is_empty);
+  auto po = MathUtils::compareQVariantAsNumberOrString(x.as_qvariant(), y.as_qvariant(), pretends_invalid_is_empty); // FIXME
   return po;
 }
 
 static inline QPartialOrdering compareTwoOperands(
-  const QVariant &x, const QVariant &y, bool pretends_invalid_is_empty) {
-  if ((!x.isValid() || !y.isValid()) && !pretends_invalid_is_empty)
+  const TypedValue &x, const TypedValue &y, bool pretends_invalid_is_empty) {
+  if ((!x || !y) && !pretends_invalid_is_empty)
     return QPartialOrdering::Unordered;
-  auto po = MathUtils::compareQVariantAsNumberOrString(x, y, pretends_invalid_is_empty);
+  auto po = MathUtils::compareQVariantAsNumberOrString(x.as_qvariant(), y.as_qvariant(), pretends_invalid_is_empty); // FIXME
   return po;
 }
 
-static const StackItemOperator _percentOperator = [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant {
+static const StackItemOperator _percentOperator = [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue {
   return stack->popeval_utf8(stack, context, def) % context;
 };
 
 static RadixTree<OperatorDefinition> _operatorDefinitions {
   { "<%>", { 1, 1, false, false, _percentOperator }, true },
-  { "??*", { 2, 2, true, false, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant {
+  { "??*", { 2, 2, true, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue {
         auto y = stack->popeval(stack, context, def);
         auto x = stack->popeval(stack, context, {});
-        // null or invalid coalescence
-        return !x.isValid() || x.isNull() ? y : x;
+        // null coalescence
+        return x || y;
       } }, true },
-  { "??", { 2, 2, true, false, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant {
+  { "??", { 2, 2, true, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue {
         auto y = stack->popeval(stack, context, def);
         auto x = stack->popeval(stack, context, {});
-        // null, invalid or empty coalescence
-        return !x.isValid() || x.isNull() || Utf8String{x}.isEmpty() ? y : x;
+        // empty (incl. null) coalescence
+        return x.as_utf8().isEmpty() ? y : x;
       } }, true },
-  { "!", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant {
-        auto x = stack->popeval_bool(stack, context, false);
+  { "!", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue {
+        auto x = stack->popeval(stack, context, false);
+        return !x.as_bool1();
+      } }, true },
+  { "!!", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue {
+        auto x = stack->popeval(stack, context, false);
+        return x.as_bool1();
+      } }, true },
+  { "!*", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue {
+        auto x = stack->popeval(stack, context, {});
+        // is null
         return !x;
       } }, true },
-  { "!!", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant {
-        auto x = stack->popeval_bool(stack, context, false);
-        return x;
-      } }, true },
-  { "!*", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant {
+  { "?*", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue {
         auto x = stack->popeval(stack, context, {});
-        // either invalid or null
-        return !x.isValid() || x.isNull();
+        // is not null
+        return !!x;
       } }, true },
-  { "?*", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant {
+  { "!-", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue {
         auto x = stack->popeval(stack, context, {});
-        // neither invalid nor null
-        return x.isValid() && !x.isNull();
+        // empty (incl. null)
+        return x.as_utf8().isEmpty();
       } }, true },
-  { "!-", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant {
+  { "?-", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue {
         auto x = stack->popeval(stack, context, {});
-        // either invalid, null or empty
-        return !x.isValid() || x.isNull() || Utf8String{x}.isEmpty();
+        // not empty (therefore not null)
+        return !x.as_utf8().isEmpty();
       } }, true },
-  { "?-", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant {
-        auto x = stack->popeval(stack, context, {});
-        // neither invalid, null nor empty
-        return x.isValid() && !x.isNull() && !Utf8String{x}.isEmpty();
-      } }, true },
-  { "~", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant {
+  { "~", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue {
         bool ok;
-        auto x = stack->popeval(stack, context, {}).toLongLong(&ok);
+        auto x = stack->popeval(stack, context, {}).as_signed8(&ok);
         return ok ? ~x : def;
       } }, true },
-  { "~~", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant {
+  { "~~", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue {
         bool ok;
-        auto x = stack->popeval(stack, context, {}).toLongLong(&ok);
+        auto x = stack->popeval(stack, context, {}).as_signed8(&ok);
         return ok ? x : def;
       } }, true },
-  { "#", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant {
+  { "#", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue {
         // LATER support lists
         return stack->popeval_utf8(stack, context, {}).utf8size();
       } }, true },
-  { "##", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant {
+  { "##", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue {
         return stack->popeval_utf8(stack, context, {}).size();
       } }, true },
-  { "*", { 2, 5, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant  {
+  { "*", { 2, 5, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::mulQVariantAsNumber(x, y);
-        return r.isValid() ? r : def;
+        auto r = MathUtils::mulQVariantAsNumber(x.as_qvariant(), y.as_qvariant()); // FIXME
+        return r.isValid() ? TypedValue(r) : def;
       } }, true },
-  { "/", { 2, 5, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant  {
+  { "/", { 2, 5, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::divQVariantAsNumber(x, y);
-        return r.isValid() ? r : def;
+        auto r = MathUtils::divQVariantAsNumber(x.as_qvariant(), y.as_qvariant()); // FIXME
+        return r.isValid() ? TypedValue(r) : def;
       } }, true },
-  { "%", { 2, 5, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant  {
+  { "%", { 2, 5, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::modQVariantAsNumber(x, y);
-        return r.isValid() ? r : def;
+        auto r = MathUtils::modQVariantAsNumber(x.as_qvariant(), y.as_qvariant()); // FIXME
+        return r.isValid() ? TypedValue(r) : def;
       } }, true },
-  { "+", { 2, 6, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant  {
+  { "+", { 2, 6, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::addQVariantAsNumber(x, y);
-        return r.isValid() ? r : def;
+        auto r = MathUtils::addQVariantAsNumber(x.as_qvariant(), y.as_qvariant()); // FIXME
+        return r.isValid() ? TypedValue(r) : def;
       } }, true },
-  { "-", { 2, 6, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant  {
+  { "-", { 2, 6, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::subQVariantAsNumber(x, y);
-        return r.isValid() ? r : def;
+        auto r = MathUtils::subQVariantAsNumber(x.as_qvariant(), y.as_qvariant()); // FIXME
+        return r.isValid() ? TypedValue(r) : def;
       } }, true },
-  { "@", { 2, 6, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant {
+  { "@", { 2, 6, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        return x.isValid() || y.isValid() ? Utf8String{x}+Utf8String{y} : def;
+        return !!x || !!y ? TypedValue(x.as_utf8()+y.as_utf8()) : def;
       } }, true },
-  { "<?", { 2, 7, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant  {
+  { "<?", { 2, 7, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
         auto po = compareTwoOperands(x, y, true);
@@ -266,7 +258,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
           return y;
         return {};
       } }, true },
-  { ">?", { 2, 7, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant  {
+  { ">?", { 2, 7, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
         auto po = compareTwoOperands(x, y, true);
@@ -278,7 +270,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
           return x;
         return {};
       } }, true },
-  { "<?*", { 2, 7, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant  {
+  { "<?*", { 2, 7, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
         auto po = compareTwoOperands(x, y, false);
@@ -290,7 +282,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
           return y;
         return {};
       } }, true },
-  { ">?*", { 2, 7, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant  {
+  { ">?*", { 2, 7, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
         auto po = compareTwoOperands(x, y, false);
@@ -302,7 +294,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
           return x;
         return {};
       } }, true },
-  { "<=>", { 2, 8, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant  {
+  { "<=>", { 2, 8, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
         auto po = compareTwoOperands(stack, context, false);
         if (po == QPartialOrdering::Less)
           return -1;
@@ -312,7 +304,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
           return 1;
         return {};
       } }, true },
-  { "<=", { 2, 9, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant  {
+  { "<=", { 2, 9, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
         auto po = compareTwoOperands(stack, context, false);
         if (po == QPartialOrdering::Less)
           return true;
@@ -322,7 +314,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
           return false;
         return {};
       } }, true },
-  { "<", { 2, 9, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant  {
+  { "<", { 2, 9, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
         auto po = compareTwoOperands(stack, context, false);
         if (po == QPartialOrdering::Less)
           return true;
@@ -332,7 +324,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
           return false;
         return {};
       } }, true },
-  { ">=", { 2, 9, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant  {
+  { ">=", { 2, 9, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
         auto po = compareTwoOperands(stack, context, false);
         if (po == QPartialOrdering::Less)
           return false;
@@ -342,7 +334,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
           return true;
         return {};
       } }, true },
-  { ">", { 2, 9, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant  {
+  { ">", { 2, 9, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
         auto po = compareTwoOperands(stack, context, false);
         if (po == QPartialOrdering::Less)
           return false;
@@ -352,7 +344,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
           return true;
         return {};
       } }, true },
-  { "==*", { 2, 10, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant  {
+  { "==*", { 2, 10, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
         auto po = compareTwoOperands(stack, context, false);
         if (po == QPartialOrdering::Less)
           return false;
@@ -362,7 +354,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
           return false;
         return {};
       } }, true },
-  { "!=*", { 2, 10, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant  {
+  { "!=*", { 2, 10, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
         auto po = compareTwoOperands(stack, context, false);
         if (po == QPartialOrdering::Less)
           return true;
@@ -372,7 +364,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
           return true;
         return {};
       } }, true },
-  { "==", { 2, 10, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant  {
+  { "==", { 2, 10, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
         auto po = compareTwoOperands(stack, context, true);
         if (po == QPartialOrdering::Less)
           return false;
@@ -382,7 +374,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
           return false;
         return {};
       } }, true },
-  { "!=", { 2, 10, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant  {
+  { "!=", { 2, 10, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
         auto po = compareTwoOperands(stack, context, true);
         if (po == QPartialOrdering::Less)
           return true;
@@ -392,14 +384,14 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
           return true;
         return {};
       } }, true },
-  { "=~", { 2, 10, false, true, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant  {
+  { "=~", { 2, 10, false, true, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         QRegularExpression re;
         //qDebug() << "seeing regexp at eval time:" << y;
-        if (y.metaType().id() == QMetaType::QRegularExpression)//qMetaTypeId<QRegularExpression>())
-          re = y.toRegularExpression();
+        if (y.type() == TypedValue::Regexp)
+          re = y.regexp();
         else {
-          auto pattern = y.toString();
+          auto pattern = y.as_utf16();
           re = _regexp_cache.get_or_create(pattern, [&](){
             auto re = QRegularExpression(pattern, _re_match_opts);
             re.optimize();
@@ -411,14 +403,14 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
         auto x = stack->popeval_utf8(stack, context, {});
         return re.match(x).hasMatch();
       } }, true },
-  { "!=~", { 2, 10, false, true, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant  {
+  { "!=~", { 2, 10, false, true, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         QRegularExpression re;
         //qDebug() << "seeing regexp at eval time:" << y;
-        if (y.metaType().id() == QMetaType::QRegularExpression)//qMetaTypeId<QRegularExpression>())
-          re = y.toRegularExpression();
+        if (y.type() == TypedValue::Regexp)
+          re = y.regexp();
         else {
-          auto pattern = y.toString();
+          auto pattern = y.as_utf16();
           re = _regexp_cache.get_or_create(pattern, [&](){
             auto re = QRegularExpression(pattern, _re_match_opts);
             re.optimize();
@@ -430,92 +422,95 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
         auto x = stack->popeval_utf8(stack, context, {});
         return !re.match(x).hasMatch();
       } }, true },
-  { "&", { 2, 11, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant  {
+  { "&", { 2, 11, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::bitwiseAndQVariantAsIntegral(x, y);
-        return r.isValid() ? r : def;
+        auto r = MathUtils::bitwiseAndQVariantAsIntegral(x.as_qvariant(), y.as_qvariant()); // FIXME
+        return r.isValid() ? TypedValue(r) : def;
       } }, true },
-  { "^", { 2, 12, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant  {
+  { "^", { 2, 12, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::bitwiseXorQVariantAsIntegral(x, y);
-        return r.isValid() ? r : def;
+        auto r = MathUtils::bitwiseXorQVariantAsIntegral(x.as_qvariant(), y.as_qvariant()); // FIXME
+        return r.isValid() ? TypedValue(r) : def;
       } }, true },
-  { "|", { 2, 13, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant  {
+  { "|", { 2, 13, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::bitwiseOrQVariantAsIntegral(x, y);
-        return r.isValid() ? r : def;
+        auto r = MathUtils::bitwiseOrQVariantAsIntegral(x.as_qvariant(), y.as_qvariant()); // FIXME
+        return r.isValid() ? TypedValue(r) : def;
       } }, true },
-  { "&&", { 2, 14, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant  {
+  { "&&", { 2, 14, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         // LATER get rid of andQVariantAsNumber and do deferred evaluation here if y is false
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::boolAndQVariantAsNumber(x, y);
-        return r.isValid() ? r : def;
+        auto r = MathUtils::boolAndQVariantAsNumber(x.as_qvariant(), y.as_qvariant()); // FIXME
+        return r.isValid() ? TypedValue(r) : def;
       } }, true },
-  { "^^", { 2, 15, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant  {
+  { "^^", { 2, 15, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::boolXorQVariantAsNumber(x, y);
-        return r.isValid() ? r : def;
+        auto r = MathUtils::boolXorQVariantAsNumber(x.as_qvariant(), y.as_qvariant()); // FIXME
+        return r.isValid() ? TypedValue(r) : def;
       } }, true },
-  { "||", { 2, 16, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant  {
+  { "||", { 2, 16, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::boolOrQVariantAsNumber(x, y);
-        return r.isValid() ? r : def;
+        auto r = MathUtils::boolOrQVariantAsNumber(x.as_qvariant(), y.as_qvariant()); // FIXME
+        return r.isValid() ? TypedValue(r) : def;
       } }, true },
-  { "?:", { 3, 17, false, false, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant  {
+  { "?:", { 3, 17, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto z = stack->popeval(stack, context, def);
         auto y = stack->popeval(stack, context, def);
         auto x = stack->popeval(stack, context, {});
-        if (!x.isValid())
+        if (!x)
           return def;
-        return x.toBool() ? y : z;
+        return x.as_bool1() ? y : z;
       } }, true },
-  { { "<null>", "<nil>" }, { 0, 0, false, false, [](Stack *, const EvalContext &, const QVariant &) STATIC_LAMBDA -> QVariant {
+  { { "<null>", "<nil>" }, { 0, 0, false, false, [](Stack *, const EvalContext &, const TypedValue &) STATIC_LAMBDA -> TypedValue {
         return {};
       } }, true },
-  { "<pi>", { 0, 0, false, false, [](Stack *, const EvalContext &, const QVariant &) STATIC_LAMBDA -> QVariant {
+  { "<pi>", { 0, 0, false, false, [](Stack *, const EvalContext &, const TypedValue &) STATIC_LAMBDA -> TypedValue {
 #if __cpp_lib_math_constants >= 201907L
         return std::numbers::pi;
 #else
         return 3.141592653589793238462643383279502884;
 #endif
       } }, true },
-  { { ":=:", "<swap>" }, { 2, -1, true, false, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant {
+  { { ":=:", "<swap>" }, { 2, -1, true, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue {
         auto y = stack->popeval(stack, context, def);
         auto x = stack->popeval(stack, context, def);
         stack->push(y); // swapping x and y
         return x;
       } }, true },
-  { "<dup>", { 1, -1, true, false, [](Stack *stack, const EvalContext &context, const QVariant &def) STATIC_LAMBDA -> QVariant {
+  { "<dup>", { 1, -1, true, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue {
         auto x = stack->popeval(stack, context, def);
         stack->push(x); // duplicating x
         return x;
       } }, true },
-  { "<metatypeid>", { 1, -1, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant {
+  { "<typeid>", { 1, -1, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue {
         auto x = stack->popeval(stack, context, false);
-        return x.metaType().id();
+        return x.type();
       } }, true },
-  { "<metatypes>", { 1, -1, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant {
+  { "<etv>", { 1, -1, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue {
+        auto x = stack->popeval(stack, context, false);
+        return x.as_etv();
+      } }, true },
+  { "<etvs>", { 1, -1, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue {
         Utf8StringList list;
         while (!stack->is_empty()) {
           auto v = stack->popeval(stack, context, {});
-          list.prepend(Utf8String::number(v.typeId())+"/"_u8
-                       +(v.typeName() | "invalid"_u8));
+          list.prepend(v.as_etv());
         }
-        return list;
+        return list.join(',');
       } }, true },
-  { "<metatypenames>", { 1, -1, false, false, [](Stack *stack, const EvalContext &context, const QVariant &) STATIC_LAMBDA -> QVariant {
+  { "<typecodes>", { 1, -1, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue {
         Utf8StringList list;
         while (!stack->is_empty()) {
           auto v = stack->popeval(stack, context, {});
-          list.prepend(v.typeName() | "invalid"_u8);
+          list.prepend(v.typecode());
         }
-        return list;
+        return list.join(',');
       } }, true },
 };
 
@@ -526,7 +521,7 @@ static QMap<Utf8String, OperatorDefinition> _operatorDefinitionsMap {
 void ParamsFormula::register_operator(
     const Utf8String &symbol, ParamsFormula::UnaryOperator op) {
   OperatorDefinition opdef =
-  {1, 7, false, false, [op](Stack *stack, const EvalContext &context, const QVariant &def) -> QVariant {
+  {1, 7, false, false, [op](Stack *stack, const EvalContext &context, const TypedValue &def) -> TypedValue {
      auto x = stack->popeval_utf8(stack, context, def);
      return op(context, def, x);
    }};
@@ -537,7 +532,7 @@ void ParamsFormula::register_operator(
 void ParamsFormula::register_operator(
     const Utf8String &symbol, ParamsFormula::BinaryOperator op) {
   OperatorDefinition opdef =
-  {1, 7, false, false, [op](Stack *stack, const EvalContext &context, const QVariant &def) -> QVariant {
+  {1, 7, false, false, [op](Stack *stack, const EvalContext &context, const TypedValue &def) -> TypedValue {
      auto y = stack->popeval_utf8(stack, context, def);
      auto x = stack->popeval_utf8(stack, context, def);
      return op(context, def, x, y);
@@ -549,7 +544,7 @@ void ParamsFormula::register_operator(
 void ParamsFormula::register_operator(
     const Utf8String &symbol, ParamsFormula::TernaryOperator op) {
   OperatorDefinition opdef =
-  {1, 7, false, false, [op](Stack *stack, const EvalContext &context, const QVariant &def) -> QVariant {
+  {1, 7, false, false, [op](Stack *stack, const EvalContext &context, const TypedValue &def) -> TypedValue {
      auto z = stack->popeval_utf8(stack, context, def);
      auto y = stack->popeval_utf8(stack, context, def);
      auto x = stack->popeval_utf8(stack, context, def);
@@ -565,9 +560,10 @@ public:
   FormulaDialect _dialect;
   Stack _stack = {};
   explicit ParamsFormulaData(
-      Utf8String expr = {}, FormulaDialect dialect = ParamsFormula::InvalidFormula)
+      Utf8String expr = {},
+      FormulaDialect dialect = ParamsFormula::InvalidFormula)
     : _expr(expr), _dialect(dialect) {}
-  QVariant eval(const EvalContext &context, const QVariant &def) const;
+  TypedValue eval(const EvalContext &context, const TypedValue &def) const;
 };
 
 void ParamsFormula::init_rpn(
@@ -690,13 +686,13 @@ FormulaDialect ParamsFormula::dialect() const noexcept {
   return d->_dialect;
 }
 
-QVariant ParamsFormula::eval(
-    const EvalContext &context, const QVariant &def) const {
+TypedValue ParamsFormula::eval(
+    const EvalContext &context, const TypedValue &def) const {
   return d->eval(context, def);
 }
 
-QVariant ParamsFormulaData::eval(
-    const EvalContext &context, const QVariant &def) const {
+TypedValue ParamsFormulaData::eval(
+    const EvalContext &context, const TypedValue &def) const {
   auto stack = _stack;
   stack.detach();
   auto x = stack.popeval(&stack, context, def);

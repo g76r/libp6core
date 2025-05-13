@@ -15,8 +15,10 @@
 #define PERCENTEVALUATOR_H
 
 #include "utf8stringset.h"
+#include "util/typedvalue.h"
 
 class ParamsProvider;
+using TypedValue = p6::TypedValue;
 
 /** Evaluate a %-expression.
  *
@@ -44,9 +46,7 @@ class ParamsProvider;
  *  @see https://gitlab.com/g76r/libp6core/-/blob/master/util/percent_evaluation.md
  *  @see ParamsProvider
  */
-class LIBP6CORESHARED_EXPORT PercentEvaluator {
-public:
-
+struct LIBP6CORESHARED_EXPORT PercentEvaluator {
   /** Evaluation context */
   class EvalContext {
     const ParamsProvider *_params_provider;
@@ -96,7 +96,7 @@ public:
   };
   /** Evaluation function */
   using EvalFunction = std::function<
-  QVariant(const Utf8String &key, const EvalContext &context, int ml)>;
+  TypedValue(const Utf8String &key, const EvalContext &context, int ml)>;
 
   PercentEvaluator() = delete;
 
@@ -108,22 +108,22 @@ public:
    *  because several fragments are concatenated to a characters string, e.g.
    *  "foo %bar baz" will be an Utf8String with value of bar converted to
    *  Utf8String, even if it was a double.
-   *  On the otherhand, provided there is only one % and key expression without
+   *  On the other hand, provided there is only one % and key expression without
    *  anything before or after, the param value will be returned as is, and so
-   *  can be a QVariant of another type.
+   *  can be a TypedValue of a better type.
    *
    *  @param context is an evaluation context, can be empty (only contextless
    *         function like %=date will be available for evaluation) */
-  [[nodiscard]] static inline QVariant eval(
+  [[nodiscard]] static inline TypedValue eval(
       const Utf8String &expr, const EvalContext &context = {}) {
     if (!expr.contains('%')) // passthrough keeps memory benefits of implicit
-      return QVariant(expr); // sharing and avoids converting "" into {}
+      return expr;           // sharing and avoids converting "" into {}
     // LATER have a full eval(Utf8String) implementation to avoid double scan
     auto begin = expr.constData();
     return eval(begin, begin+expr.size(), context);
   }
   /** Lower level version of the method with char* params. */
-  [[nodiscard]] static QVariant eval(
+  [[nodiscard]] static TypedValue eval(
       const char *expr, const char *end, const EvalContext &context = {});
   /** Low-level %-less key evaluation.
    *
@@ -137,7 +137,7 @@ public:
    *         case it will override the one in context)
    *  @param context is an evaluation context, can be null (only contextless
    *         function like %=date will be available for evaluation) */
-  [[nodiscard]] static QVariant eval_key(
+  [[nodiscard]] static TypedValue eval_key(
       const Utf8String &key, const EvalContext &context = {});
 
   /** Low-level function only evaluation.
@@ -156,7 +156,7 @@ public:
    *         function like %=date will be available for evaluation)
    *  @param found if not null will be set to true if key is evaluated as
              a function otherwise to false. */
-  [[nodiscard]] static QVariant eval_function(
+  [[nodiscard]] static TypedValue eval_function(
       const Utf8String &key, const EvalContext &context = {},
       bool *found = nullptr);
 
@@ -169,12 +169,14 @@ public:
   [[nodiscard]] inline static Utf8String eval_utf8(
       const Utf8String &expr, const Utf8String &def = {},
       const EvalContext &context = {}) {
-    QVariant v = eval(expr, context);
-    return v.isValid() ? Utf8String(v) : def;
+    auto v = eval(expr, context);
+    if (!!v)
+      return v.as_utf8();
+    return def;
   }
   [[nodiscard]] inline static Utf8String eval_utf8(
       const Utf8String &expr, const EvalContext &context) {
-    return eval_utf8(expr, {}, context); }
+    return eval(expr, context).as_utf8(); }
   /** Evaluate and then convert result to utf16 text.
    *
    *  @param context is an evaluation context, can be empty (only contextless
@@ -182,8 +184,8 @@ public:
   [[nodiscard]] inline static QString eval_utf16(
       const Utf8String &expr, const QString &def = {},
       const EvalContext &context = {}) {
-    QVariant v = eval(expr, context);
-    return v.isValid() ? v.toString() : def;
+    auto v = eval(expr, context);
+    return !!v ? v.as_utf16() : def;
   }
   [[nodiscard]] inline static QString eval_utf16(
       const Utf8String &expr, const EvalContext &context) {
@@ -199,37 +201,17 @@ public:
    *  @see Utf8String::toNumber<>
    *  @param context is an evaluation context, can be empty (only contextless
    *         function like %=date will be available for evaluation) */
-#ifdef __cpp_concepts
   template <p6::arithmetic T>
-#else
-  template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
-#endif
   [[nodiscard]] inline static T eval_number(
       const Utf8String &expr, const T &def = {},
       const EvalContext &context = {}, bool *ok = nullptr)  {
-    auto v = eval(expr, context);
-    if (!v.isValid()) {
-      if (ok)
-        *ok = false;
-      return def;
-    }
-    auto mtid = v.metaType().id();
-    // text types and types not convertible to a number are for Utf8String
-    if (!v.canConvert<T>() || mtid == Utf8String::MetaTypeId
-        || mtid == QMetaType::QString || mtid == QMetaType::QByteArray)
-      return Utf8String(v).toNumber<T>(ok, def);
-    if (ok)
-      *ok = true;
-    return v.value<T>();
+    return eval(expr, context).as_number<T>(def, ok);
   }
-#ifdef __cpp_concepts
   template <p6::arithmetic T>
-#else
-  template <typename T, typename = std::enable_if_t<std::is_arithmetic<T>::value>>
-#endif
   [[nodiscard]] inline static T eval_number(
       const Utf8String &expr, const EvalContext &context, bool *ok = nullptr) {
-    return eval_number<T>(expr, {}, context, ok); }
+    return eval(expr, context).as_number<T>({}, ok);
+  }
 
   // escape and matching patterns
   /** Escape all characters in string so that they no longer have special
@@ -250,6 +232,14 @@ public:
   [[nodiscard]] static inline QVariant escape(const QVariant &v) {
     Utf8String s(v);
     return s.contains('%') ? QVariant(s.replace('%', "%%"_u8)) : v; }
+  /** Escape all characters in string so that they no longer have special
+   * meaning for evaluate() and splitAndEvaluate() methods.
+   * That is: replace % with %% within the string.
+   * Pass through if the string representation do not contain any %,
+   * e.g. escape(2) will return an integer TypedValue, not "2" string. */
+  [[nodiscard]] static inline TypedValue escape(const TypedValue &v) {
+    auto s = v.as_utf8();
+    return s.contains('%') ? TypedValue(s.replace('%', "%%"_u8)) : v; }
   /** Detects if a string evaluation is independent from params and functions.
    *  e.g. "abc" "" "%%foo" "abc%%foo" are independent whereas "abc%foo" is not.
    *  Note that independent does not means constant: "abc" is constant whereas
@@ -307,7 +297,7 @@ p6::log::LogHelper LIBP6CORESHARED_EXPORT operator<<(
  *  Utf8String foo = "%foo"_u8 % params;
  *  Utf8String date = "%=date"_u8 % {};
  */
-inline QVariant operator%(
+inline TypedValue operator%(
     const Utf8String &expr, const PercentEvaluator::EvalContext &context) {
   return PercentEvaluator::eval(expr, context);
 }
@@ -316,7 +306,7 @@ inline QVariant operator%(
  *  Utf8String foo = "%foo"_u8 % params;
  *  Utf8String date = "%=date"_u8 % {};
  */
-inline QVariant operator%(
+inline TypedValue operator%(
     const Utf8String &expr, const ParamsProvider &params) {
   return PercentEvaluator::eval(expr, &params);
 }

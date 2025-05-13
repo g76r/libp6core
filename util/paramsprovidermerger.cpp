@@ -146,7 +146,7 @@ ParamsProviderMerger &ParamsProviderMerger::pop_back() {
 }
 
 ParamsProviderMerger &ParamsProviderMerger::overrideParamValue(
-    const Utf8String &key, const QVariant &value) {
+    const Utf8String &key, const TypedValue &value) {
   _data->_overridingParams.insert(key, value);
   return *this;
 }
@@ -164,13 +164,13 @@ ParamsProviderMerger &ParamsProviderMerger::clear() {
   return *this;
 }
 
-QVariant ParamsProviderMerger::paramRawValue(
-    const Utf8String &key, const QVariant &def,
+TypedValue ParamsProviderMerger::paramRawValue(
+    const Utf8String &key, const TypedValue &def,
     const EvalContext &original_context) const {
   auto d = _data.data();
   auto merger_scope = paramScope();
   EvalContext context = original_context;
-  QVariant v;
+  TypedValue v;
   if (!context.functionsEvaluated()) {
     bool is_function;
     v = PercentEvaluator::eval_function(key, context, &is_function);
@@ -188,11 +188,11 @@ QVariant ParamsProviderMerger::paramRawValue(
     context.setScopeFilter({});
   } // otherwise let merged providers filter themselves
   v = d->_overridingParams.paramRawValue(key, {}, context);
-  if (v.isValid())
+  if (!!v)
     return v;
   for (auto &provider: d->_providers) {
     auto v = provider->paramRawValue(key, {}, context);
-    if (v.isValid())
+    if (!!v)
       return v;
   }
   return def;

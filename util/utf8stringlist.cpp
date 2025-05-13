@@ -113,8 +113,8 @@ Utf8String Utf8StringSet::headed_join(const char separator) const {
   return ::headed_join(*this, separator);
 }
 
-QVariant Utf8StringList::paramRawValue(
-    const Utf8String &key, const QVariant &def,
+TypedValue Utf8StringList::paramRawValue(
+    const Utf8String &key, const TypedValue &def,
     const EvalContext &) const {
   bool ok;
   int i = key.toInt(&ok);

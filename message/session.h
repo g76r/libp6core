@@ -33,17 +33,17 @@ public:
    * - login, when authentification has been done successfuly
    * - clientaddr, network peer identifier, e.g. "[::ffff:127.0.0.1]:34669"
    * This method is thread-safe. */
-  QVariant param(const char *key) const;
+  TypedValue param(const char *key) const;
   /** This method is thread-safe. */
-  void setParam(const char *key, const QVariant &value) const;
+  void setParam(const char *key, const TypedValue &value) const;
   /** This method is thread-safe. */
   void unsetParam(const char *key) const;
   /** Convenience method for param(key).toString()
    * This method is thread-safe. */
-  QString string(const char *key) const { return param(key).toString(); }
+  Utf8String string(const char *key) const { return param(key).as_utf8(); }
   /** Convenience method for param(key).toLongLong()
    * This method is thread-safe.*/
-  qlonglong integer(const char *key) const { return param(key).toLongLong(); }
+  qlonglong integer(const char *key) const { return param(key).as_signed8(); }
   [[nodiscard]] inline bool isNull() const { return _id == 0; }
   [[nodiscard]] inline bool operator!() const { return isNull(); }
 };

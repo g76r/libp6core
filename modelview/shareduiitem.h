@@ -177,8 +177,8 @@ public:
   /** ParamsProvider interface, overridable by SharedUiData implementation.
    *  Default: provide values calling uiData() with role Qt::DisplayRole,
    *  supporting named keys, section numbers, and special values "id"... */
-  [[nodiscard]] QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def = {},
+  [[nodiscard]] TypedValue paramRawValue(
+      const Utf8String &key, const TypedValue &def = {},
       const EvalContext &context = {}) const override;
   /** ParamsProvider interface, overridable by SharedUiData implementation.
    *  Default: return every section names (named keys, section numbers and
@@ -594,8 +594,8 @@ public:
   /** ParamsProvider interface, overridable by SharedUiData implementation.
    *  Default: provide values calling uiData() with role Qt::DisplayRole,
    *  supporting named keys, section numbers, and special values "id"... */
-  [[nodiscard]] QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def = {},
+  [[nodiscard]] TypedValue paramRawValue(
+      const Utf8String &key, const TypedValue &def = {},
       const EvalContext &context = {}) const override;
   using ParamsProvider::paramKeys;
   /** ParamsProvider interface, overridable by SharedUiData implementation.

@@ -119,8 +119,8 @@ public:
    *  - base64cookie:xxx content of xxx cookie, decoded as base64
    *  - value:xxx take value from param xxx if set, otherwise base64 cookie xxx
    */
-  [[nodiscard]] QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def = {},
+  [[nodiscard]] TypedValue paramRawValue(
+      const Utf8String &key, const TypedValue &def = {},
       const EvalContext &context = {}) const override;
   using ParamsProvider::paramKeys;
   [[nodiscard]] Utf8StringSet paramKeys(

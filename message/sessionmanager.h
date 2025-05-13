@@ -1,4 +1,4 @@
-/* Copyright 2016-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,7 +20,7 @@
 class LIBP6CORESHARED_EXPORT SessionManager : public QObject {
   Q_OBJECT
   QHash<qint64,Session> _sessions;
-  QHash<qint64,QHash<const char*,QVariant>> _params;
+  QHash<qint64,QHash<const char*,TypedValue>> _params;
   qint64 _lastSessionId;
 
   explicit SessionManager() : QObject(0), _lastSessionId(0) { }
@@ -35,16 +35,16 @@ public:
   /** This method is thread-safe. */
   static SessionManager *instance();
   /** This method is thread-safe. */
-  static QVariant param(qint64 sessionid, const char *key);
+  static TypedValue param(qint64 sessionid, const char *key);
   /** This method is thread-safe. */
   static void setParam(qint64 seesionid, const char *key,
-                       const QVariant &value);
+                       const TypedValue &value);
   /** This method is thread-safe. */
   static void unsetParam(qint64 seesionid, const char *key);
   /** Returned params are detached from real params and modification will have
    * no effect on actual session params.
    * This method is thread-safe. */
-  static const QHash<const char*,QVariant> params(qint64 sessionid);
+  static const QHash<const char*,TypedValue> params(qint64 sessionid);
 
 signals:
   void sessionClosed(const Session &session);

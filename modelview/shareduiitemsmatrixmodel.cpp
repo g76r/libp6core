@@ -1,4 +1,4 @@
-/* Copyright 2015-2023 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2015-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -188,12 +188,12 @@ QVariant SharedUiItemsMatrixModel::evaluate(
   case Qt::DisplayRole:
   case SharedUiItem::ExternalDataRole:
     return PercentEvaluator::eval(binding._display,
-                                  {&binding._item, {}, role});
+                                  {&binding._item, {}, role}).as_qvariant();
   case Qt::ToolTipRole:
       if (_forceDisplayRoleWhenEvaluatingTooltips)
         role = Qt::DisplayRole;
       return PercentEvaluator::eval(binding._tooltip,
-                                    {&binding._item, {}, role});
+                                    {&binding._item, {}, role}).as_qvariant();
   case Qt::EditRole:
   case SharedUiItem::QualifierRole:
   case SharedUiItem::IdRole:

@@ -20,11 +20,11 @@ static int staticInit() {
 }
 Q_CONSTRUCTOR_FUNCTION(staticInit)
 
-QVariant Session::param(const char *key) const {
+TypedValue Session::param(const char *key) const {
   return SessionManager::param(_id, key);
 }
 
-void Session::setParam(const char *key, const QVariant &value) const {
+void Session::setParam(const char *key, const TypedValue &value) const {
   SessionManager::setParam(_id, key, value);
 }
 

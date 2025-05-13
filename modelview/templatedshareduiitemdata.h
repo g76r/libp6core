@@ -1,4 +1,4 @@
-/* Copyright 2023-2024 Gregoire Barbier and others.
+/* Copyright 2023-2025 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,7 +19,7 @@
 #include "util/paramset.h"
 
 using SharedUiItemDataFunction = std::function<
-QVariant(const SharedUiItemData *data, const Utf8String &key,
+TypedValue(const SharedUiItemData *data, const Utf8String &key,
 const PercentEvaluator::EvalContext &context, int matched_length)>;
 
 using SharedUiItemDataFunctions = RadixTree<SharedUiItemDataFunction>;
@@ -97,8 +97,8 @@ template<class T>
 class SharedUiItemDataWithFunctions : public SharedUiItemDataBase<T> {
 public:
   // ParamsProvider interface
-  QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def,
+  TypedValue paramRawValue(
+      const Utf8String &key, const TypedValue &def,
       const PercentEvaluator::EvalContext &context) const override {
     if (!context.hasScopeOrNone(SharedUiItemDataBase<T>::paramScope()))
       return def;
@@ -120,8 +120,8 @@ template<class T>
 class SharedUiItemDynamicDataWithFunctions : public SharedUiItemDynamicData<T> {
 public:
   // ParamsProvider interface
-  QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def,
+  TypedValue paramRawValue(
+      const Utf8String &key, const TypedValue &def,
       const PercentEvaluator::EvalContext &context) const override {
     if (!context.hasScopeOrNone(SharedUiItemDynamicData<T>::paramScope()))
       return def;
@@ -154,8 +154,8 @@ public:
     : SharedUiItemDataWithMutableParams(params, T::_qualifier) {}
 
   // ParamsProvider interface
-  QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def,
+  TypedValue paramRawValue(
+      const Utf8String &key, const TypedValue &def,
       const PercentEvaluator::EvalContext &context) const override {
     if (!context.hasScopeOrNone(
           SharedUiItemDataWithFunctions<T>::paramScope()))
@@ -164,8 +164,8 @@ public:
     auto f = T::_paramFunctions.value(key, &ml);
     if (f)
       return f(this, key, context, ml);
-    QVariant v = _params.lockedData()->paramRawValue(key, {}, context);
-    if (v.isValid())
+    auto v = _params.lockedData()->paramRawValue(key, {}, context);
+    if (!!v)
       return v;
     if constexpr (!INCLUDE_UI_DATA_AS_PARAM)
       return def;
@@ -196,8 +196,8 @@ public:
     : SharedUiItemDynamicDataWithMutableParams(params, {}) { }
 
   // ParamsProvider interface
-  QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def,
+  TypedValue paramRawValue(
+      const Utf8String &key, const TypedValue &def,
       const PercentEvaluator::EvalContext &context) const override {
     if (!context.hasScopeOrNone(
           SharedUiItemDynamicDataWithFunctions<T>::paramScope()))
@@ -206,8 +206,8 @@ public:
     auto f = T::_paramFunctions.value(key, &ml);
     if (f)
       return f(this, key, context, ml);
-    QVariant v = _params.lockedData()->paramRawValue(key, {}, context);
-    if (v.isValid())
+    auto v = _params.lockedData()->paramRawValue(key, {}, context);
+    if (!!v)
       return v;
     if constexpr (!INCLUDE_UI_DATA_AS_PARAM)
       return def;
@@ -239,8 +239,8 @@ public:
     : SharedUiItemDataWithImmutableParams(params, T::_qualifier) { }
 
   // ParamsProvider interface
-  QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def,
+  TypedValue paramRawValue(
+      const Utf8String &key, const TypedValue &def,
       const PercentEvaluator::EvalContext &context) const override {
     if (!context.hasScopeOrNone(SharedUiItemDataWithFunctions<T>::paramScope()))
       return def;
@@ -248,8 +248,8 @@ public:
     auto f = T::_paramFunctions.value(key, &ml);
     if (f)
       return f(this, key, context, ml);
-    QVariant v = _params.paramRawValue(key, {}, context);
-    if (v.isValid())
+    auto v = _params.paramRawValue(key, {}, context);
+    if (!!v)
       return v;
     if constexpr (!INCLUDE_UI_DATA_AS_PARAM)
       return def;
@@ -280,8 +280,8 @@ public:
     : SharedUiItemDynamicDataWithImmutableParams(params, {}) { }
 
   // ParamsProvider interface
-  QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def,
+  TypedValue paramRawValue(
+      const Utf8String &key, const TypedValue &def,
       const PercentEvaluator::EvalContext &context) const override {
     if (!context.hasScopeOrNone(
           SharedUiItemDynamicDataWithFunctions<T>::paramScope()))
@@ -290,8 +290,8 @@ public:
     auto f = T::_paramFunctions.value(key, &ml);
     if (f)
       return f(this, key, context, ml);
-    QVariant v = _params.paramRawValue(key, {}, context);
-    if (v.isValid())
+    auto v = _params.paramRawValue(key, {}, context);
+    if (!!v)
       return v;
     if constexpr (!INCLUDE_UI_DATA_AS_PARAM)
       return def;

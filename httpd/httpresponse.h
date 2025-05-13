@@ -231,8 +231,8 @@ public:
    *  - servicems
    *  - handlingms
    */
-  [[nodiscard]] QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def = {},
+  [[nodiscard]] TypedValue paramRawValue(
+      const Utf8String &key, const TypedValue &def = {},
       const EvalContext &context = {}) const override;
   using ParamsProvider::paramKeys;
   [[nodiscard]] Utf8StringSet paramKeys(

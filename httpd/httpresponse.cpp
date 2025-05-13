@@ -323,32 +323,32 @@ qint64 HttpResponse::handlingms() const {
   return d->_received.msecsTo(d->_handled);
 }
 
-static RadixTree <std::function<QVariant(const HttpResponse *res, const Utf8String &key, const EvalContext &context, int ml)>> _functions {
-{ "status", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> QVariant {
+static RadixTree <std::function<TypedValue(const HttpResponse *res, const Utf8String &key, const EvalContext &context, int ml)>> _functions {
+{ "status", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> TypedValue {
   return res->status();
 }},
-{ "receiveddate", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> QVariant {
+{ "receiveddate", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> TypedValue {
   return res->received_date();
 }},
-{ "handleddate", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> QVariant {
+{ "handleddate", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> TypedValue {
   return res->handled_date();
 }},
-{ "flusheddate", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> QVariant {
+{ "flusheddate", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> TypedValue {
   return res->flushed_date();
 }},
-{ "servicems", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> QVariant {
+{ "servicems", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> TypedValue {
   return res->servicems();
 }},
-{ "handlingms", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> QVariant {
+{ "handlingms", [](const HttpResponse *res, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> TypedValue {
   return res->handlingms();
 }},
-{ { "header", "requestheader" }, [](const HttpResponse *res, const Utf8String &key, const EvalContext&, int ml) STATIC_LAMBDA -> QVariant {
+{ { "header", "requestheader" }, [](const HttpResponse *res, const Utf8String &key, const EvalContext&, int ml) STATIC_LAMBDA -> TypedValue {
   return res->header(key.mid(ml+1).toInternetHeaderCase());
 }, true},
 };
 
-QVariant HttpResponse::paramRawValue(
-    const Utf8String &key, const QVariant &def,
+TypedValue HttpResponse::paramRawValue(
+    const Utf8String &key, const TypedValue &def,
     const EvalContext &context) const {
   if (!context.hasScopeOrNone(paramScope()))
     return def;

@@ -57,8 +57,8 @@ public:
   [[nodiscard]] inline std::set<Utf8String> toStdSet() const {
     return std::set<Utf8String>(cbegin(), cend()); }
   /** Return first string as value 1 and so on. Return join(' ') as value 0. */
-  [[nodiscard]] QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def = {},
+  [[nodiscard]] TypedValue paramRawValue(
+      const Utf8String &key, const TypedValue &def = {},
       const ParamsProvider::EvalContext &context = {}) const override;
   /** Return integers from 0 to size(). */
   [[nodiscard]] Utf8StringSet paramKeys(

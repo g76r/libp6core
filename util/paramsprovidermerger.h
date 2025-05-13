@@ -77,14 +77,14 @@ public:
   /** Parameters set through overrideParamValue() will override any
    * ParamsProvider, even those prepended. */
   ParamsProviderMerger &overrideParamValue(
-      const Utf8String &key, const QVariant &value);
+      const Utf8String &key, const TypedValue &value);
   /** Remove an override set using overrideParamValue(). */
   ParamsProviderMerger &unoverrideParamValue(const Utf8String &key);
   /** Remove all ParamsProvider and overriding params. */
   ParamsProviderMerger &clear();
   using ParamsProvider::paramRawValue;
-  [[nodiscard]] QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def = {},
+  [[nodiscard]] TypedValue paramRawValue(
+      const Utf8String &key, const TypedValue &def = {},
       const EvalContext &context = {}) const override;
   [[nodiscard]] Utf8StringSet paramKeys(
       const EvalContext &context = {}) const override;

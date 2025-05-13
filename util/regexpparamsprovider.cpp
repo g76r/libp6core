@@ -14,8 +14,8 @@
 #include "regexpparamsprovider.h"
 #include "util/utf8stringset.h"
 
-QVariant RegexpParamsProvider::paramRawValue(
-    const Utf8String &key, const QVariant &def,
+TypedValue RegexpParamsProvider::paramRawValue(
+    const Utf8String &key, const TypedValue &def,
     const EvalContext &context) const {
   if (!context.hasScopeOrNone(paramScope()))
     return def;

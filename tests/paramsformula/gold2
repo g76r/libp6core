@@ -1,7 +1,48 @@
-qulonglong int true qlonglong qlonglong 9223372036854775807 -132 9.22337e+18 -132 true false "3: 3" QVariant(qlonglong, 3) "6: 6" "15: 15" ": " QVariant(Invalid) "2: 2" "true: true" QVariant(bool, true) "true: true" "false: false" "true: true" "33: 33" "33.5: 33.5" "2001.5: 2001.5" QVariant(double, 2001.5) "4: 4" "true: true" "false: false" "false: false" "true: true" "true: true" "7: 7" "8: 8"
-"1: 1" "-1: -1" "16: 16" ": " "ø: ø" "ø: ø" ": " "ø: ø" "ø: ø"
+qulonglong int true qlonglong qlonglong 9223372036854775807 -132 9.22337e+18 -132 true false
+"3: 3"
+i8{3}
+"6: 6"
+"15: 15"
+": "
+null{}
+"2: 2"
+"true: true"
+b{true}
+"true: true"
+"false: false"
+"true: true"
+"33: 33"
+"33.5: 33.5"
+"2001.5: 2001.5"
+f8{2001.5}
+"4: 4"
+"true: true"
+"false: false"
+"false: false"
+"true: true"
+"true: true"
+"7: 7"
+"8: 8"
+"1: 1"
+"-1: -1"
+"16: 16"
+": "
+"ø: ø"
+"ø: ø"
+": "
+"ø: ø"
+"ø: ø"
 "false=false true=true false=false false=false bar=bar = bar=bar bar=bar true=true ø=ø false=false ø=ø "
 "bar=bar ø=ø ø=ø ø=ø 18446744073709551615=18446744073709551615 abcfalse=abcfalse "
 "true=true ø=ø ø=ø 3.141592653589793=3.141592653589793 = true=true false=false"
 "bar=bar foo=foo %foo=bar"
 "truez=truez dt:2023-09-20 00:00:00,000=dt:2023-09-20 00:00:00,000 dt:2023-09-20 00:00:00,000=dt:2023-09-20 00:00:00,000 3=3"
+nan nan nan inf inf -inf
+float8() TypedValue isnull isnan isfinite isinf
+nan f8{nan} true true false false
+nan f8{nan} true true false false
+inf f8{inf} false false false true
+3.14 f8{3.14} false false true false
+nan i8{42} false false false false
+nan "§§" false false false false
+"ts{2023-09-20T13:14:00.760},i8{42},f8{3.14}=ts{2023-09-20T13:14:00.760},i8{42},f8{3.14}   ts,i8,f8=ts,i8,f8   f8{3.14}=f8{3.14}   5=5   "

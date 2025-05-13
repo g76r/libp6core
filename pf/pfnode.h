@@ -160,7 +160,7 @@ private:
       *pthis = 0;
     }
   };
-  struct LIBP6CORESHARED_EXPORT TextFragment : public Fragment {
+  struct TextFragment : public Fragment {
     Utf8String _text;
     inline TextFragment(const Utf8String &utf8) : _text(utf8) {}
     FragmentType type() const override { return Text; }
@@ -179,14 +179,14 @@ private:
       return true;
     }
   };
-  struct LIBP6CORESHARED_EXPORT CommentFragment : public Fragment {
+  struct CommentFragment : public Fragment {
     Utf8String _comment;
     inline CommentFragment(const Utf8String &comment) : _comment(comment) {}
     FragmentType type() const override { return Comment; }
     Fragment *deep_copy() const override { return  new CommentFragment(_comment); }
     Utf8String comment() const override { return _comment; }
   };
-  struct LIBP6CORESHARED_EXPORT LoadedBinaryFragment : public Fragment {
+  struct LoadedBinaryFragment : public Fragment {
     QByteArray _data;
     Utf8String _wrappings;
     inline LoadedBinaryFragment(const QByteArray &unwrapped_data,
@@ -202,7 +202,7 @@ private:
     void set_wrappings(const Utf8String &wrappings) override {
       _wrappings = wrappings; }
   };
-  struct LIBP6CORESHARED_EXPORT DeferredBinaryFragment : public Fragment {
+  struct DeferredBinaryFragment : public Fragment {
     QPointer<QIODevice> _file;
     qsizetype _pos = 0, _len = 0;
     quint8 _should_cache:1 = 0;
@@ -817,7 +817,7 @@ private:
 static_assert(sizeof(Utf8String) == 24); // _name
 static_assert(sizeof(PfNode) == 48); // 24+8×3
 
-struct LIBP6CORESHARED_EXPORT PfNode::ChildFragment : public Fragment {
+struct PfNode::ChildFragment : public Fragment {
   PfNode _child;
   inline ChildFragment(const PfNode &child) : _child(child) { }
   inline ChildFragment(PfNode &&child) : _child(std::move(child)) { }

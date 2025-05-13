@@ -86,8 +86,10 @@ public:
     : QByteArray((const char *)s, size) { }
   inline Utf8String(const char *s, qsizetype size = -1)
     : QByteArray(s, size) { }
-  explicit inline Utf8String(const char c) : QByteArray(&c, 1) { }
-  explicit inline Utf8String(const char8_t c) : QByteArray((char*)&c, 1) { }
+  explicit inline Utf8String(char c) : QByteArray(&c, 1) { }
+  explicit inline Utf8String(signed char c) : QByteArray((char*)&c, 1) { }
+  explicit inline Utf8String(unsigned char c) : QByteArray((char*)&c, 1) { }
+  explicit inline Utf8String(char8_t c) : QByteArray((char*)&c, 1) { }
   explicit inline Utf8String(char32_t u) : QByteArray(encode_utf8(u)) { }
   inline ~Utf8String() noexcept {}
   // std::integral includes bool, which will be converted to "true" or "false"
@@ -95,13 +97,13 @@ public:
     : QByteArray(Utf8String::number(i)) {}
   explicit inline Utf8String(std::floating_point auto f)
     : QByteArray(Utf8String::number(f)) {}
-  explicit Utf8String(QPointF point);
-  explicit Utf8String(QSizeF size);
-  explicit Utf8String(QRectF rect);
-  explicit Utf8String(QLineF line);
-  explicit Utf8String(QList<QPointF> list);
+  explicit Utf8String(const QPointF &point);
+  explicit Utf8String(const QSizeF &size);
+  explicit Utf8String(const QRectF &rect);
+  explicit Utf8String(const QLineF &line);
+  explicit Utf8String(const QList<QPointF> &list);
   template <p6::arithmetic T>
-  inline explicit Utf8String(QList<T> list) {
+  inline explicit Utf8String(const QList<T> &list) {
     for (bool begin = true; auto number: list) {
       if (begin)
         begin = false;

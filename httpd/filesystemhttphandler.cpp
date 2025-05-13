@@ -149,7 +149,7 @@ bool FilesystemHttpHandler::handleCacheHeadersAndSend304(
       lastModified = info.lastModified().toUTC();
     if (lastModified.isValid())
       res.set_header("Last-Modified",
-                    TimeFormats::toRfc2822DateTime(lastModified).toUtf8());
+                    TimeFormats::toRfc2822DateTime(lastModified));
     auto ifModifiedSinceString = req.header("If-Modified-Since");
     if (!ifModifiedSinceString.isEmpty() && lastModified.isValid()) {
       QString errorString;

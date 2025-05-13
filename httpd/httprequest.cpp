@@ -274,41 +274,41 @@ Utf8StringList HttpRequest::client_addresses() const {
   return d->_client_addresses;
 }
 
-static RadixTree <std::function<QVariant(const HttpRequest *req, const Utf8String &key, const EvalContext &context, int ml)>> _functions {
-{ "url", [](const HttpRequest *req, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> QVariant {
+static RadixTree <std::function<TypedValue(const HttpRequest *req, const Utf8String &key, const EvalContext &context, int ml)>> _functions {
+{ "url", [](const HttpRequest *req, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> TypedValue {
   return "http://"_u8+req->header("Host"_u8)+req->url();
 }},
-{ "path", [](const HttpRequest *req, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> QVariant {
+{ "path", [](const HttpRequest *req, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> TypedValue {
   return req->path();
 }},
-{ "method", [](const HttpRequest *req, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> QVariant {
+{ "method", [](const HttpRequest *req, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> TypedValue {
   return req->method_name();
 }},
-{ "clientaddresses", [](const HttpRequest *req, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> QVariant {
+{ "clientaddresses", [](const HttpRequest *req, const Utf8String &, const EvalContext&, int) STATIC_LAMBDA -> TypedValue {
   return req->client_addresses().join(' ');
 }},
-{ "cookie:", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) STATIC_LAMBDA -> QVariant {
+{ "cookie:", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) STATIC_LAMBDA -> TypedValue {
   return req->cookie(key.mid(ml));
 }, true},
-{ "base64cookie:", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) STATIC_LAMBDA -> QVariant {
+{ "base64cookie:", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) STATIC_LAMBDA -> TypedValue {
   return req->base64_cookie(key.mid(ml));
 }, true},
-{ "param:", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) STATIC_LAMBDA -> QVariant {
+{ "param:", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) STATIC_LAMBDA -> TypedValue {
   return req->query_param(key.mid(ml));
 }, true},
-{ "value:", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) STATIC_LAMBDA -> QVariant {
+{ "value:", [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) STATIC_LAMBDA -> TypedValue {
   auto v = req->query_param(key.mid(ml));
   if (!v.isNull())
     return v;
   return req->base64_cookie(key.mid(ml));
 }, true},
-{ { "header:", "requestheader:" }, [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) STATIC_LAMBDA -> QVariant {
+{ { "header:", "requestheader:" }, [](const HttpRequest *req, const Utf8String &key, const EvalContext&, int ml) STATIC_LAMBDA -> TypedValue {
   return req->header(key.mid(ml).toInternetHeaderCase());
 }, true},
 };
 
-QVariant HttpRequest::paramRawValue(
-    const Utf8String &key, const QVariant &def,
+TypedValue HttpRequest::paramRawValue(
+    const Utf8String &key, const TypedValue &def,
     const EvalContext &context) const {
   if (!context.hasScopeOrNone(paramScope()))
     return def;

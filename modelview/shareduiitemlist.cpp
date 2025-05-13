@@ -13,8 +13,8 @@
  */
 #include "shareduiitemlist.h"
 
-QVariant SharedUiItemList::paramRawValue(
-    const Utf8String &key, const QVariant &def,
+TypedValue SharedUiItemList::paramRawValue(
+    const Utf8String &key, const TypedValue &def,
     const EvalContext &context) const {
   int colon = key.indexOf(':');
   Utf8String qualifier = colon >= 0 ? key.left(colon) : Utf8String{};
@@ -39,13 +39,12 @@ QVariant SharedUiItemList::paramRawValue(
     // section by number e.g. "0" or "employee:12"
     if (section < 0)
       section = sectionName.toNumber<int>(-1);
-    // ignore item for which the section can't be found
     if (section < 0)
-      continue;
+      continue; // ignore item for which the section can't be found
     QVariant value = item.uiData(section, context.role());
-    // ignore item for which no valid data can be found
     if (!value.isValid())
-      return value;
+      continue; // ignore item for which no valid data can be found
+    return TypedValue(value);
   }
   return def;
 }

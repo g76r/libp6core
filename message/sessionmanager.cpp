@@ -1,4 +1,4 @@
-/* Copyright 2016-2017 Hallowyn, Gregoire Barbier and others.
+/* Copyright 2016-2025 Hallowyn, Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -50,15 +50,15 @@ void SessionManager::closeSession(qint64 sessionid) {
   emit sm->sessionClosed(session);
 }
 
-QVariant SessionManager::param(qint64 sessionid, const char *key) {
+TypedValue SessionManager::param(qint64 sessionid, const char *key) {
   SessionManager *sm = instance();
   QMutexLocker ml(&_mutex);
-  const QHash<const char*,QVariant> &paramset = sm->_params.value(sessionid);
+  const auto &paramset = sm->_params.value(sessionid);
   return paramset.value(key);
 }
 
 void SessionManager::setParam(
-    qint64 seesionid, const char *key, const QVariant &value) {
+    qint64 seesionid, const char *key, const TypedValue &value) {
   SessionManager *sm = instance();
   QMutexLocker ml(&_mutex);
   if (!sm->_sessions.contains(seesionid))
@@ -75,10 +75,10 @@ void SessionManager::unsetParam(
   sm->_params[seesionid].remove(key);
 }
 
-const QHash<const char*,QVariant> SessionManager::params(qint64 sessionid) {
+const QHash<const char *, TypedValue> SessionManager::params(qint64 sessionid) {
   SessionManager *sm = instance();
   QMutexLocker ml(&_mutex);
-  QHash<const char *,QVariant> params;
+  QHash<const char *,TypedValue> params;
   if (sm->_sessions.contains(sessionid)) {
     params = sm->_params.value(sessionid);
     params.detach();

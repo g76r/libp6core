@@ -23,8 +23,8 @@ namespace {
 
 struct Environment : public ParamsProvider {
   static Utf8String _scope;
-  QVariant paramRawValue(
-    const Utf8String &key, const QVariant &def,
+  TypedValue paramRawValue(
+    const Utf8String &key, const TypedValue &def,
       const EvalContext &context) const override {
     if (context.hasScopeOrNone(_scope)) {
       auto v = qEnvironmentVariable(key);
@@ -51,8 +51,8 @@ struct Environment : public ParamsProvider {
 Utf8String Environment::_scope = "env"_u8;
 
 struct Empty : public ParamsProvider {
-  QVariant paramRawValue(
-    const Utf8String &, const QVariant &def,
+  TypedValue paramRawValue(
+    const Utf8String &, const TypedValue &def,
       const EvalContext &) const override {
     return def;
   }
@@ -74,12 +74,12 @@ ParamSet ParamsProvider::paramSnapshot() const {
   return snapshot;
 }
 
-QVariant ParamsProvider::paramValue(
-    const Utf8String &original_key, const QVariant &def,
+TypedValue ParamsProvider::paramValue(
+    const Utf8String &original_key, const TypedValue &def,
     const EvalContext &original_context) const {
   Utf8String key = original_key;
   EvalContext context = original_context;
-  QVariant v;
+  TypedValue v;
   // support for [scope] prefix
   // note that this is a duplicated test when paramValue() is called from
   // PercentEvaluator::eval_key() but when calling directly
@@ -108,12 +108,8 @@ QVariant ParamsProvider::paramValue(
   // don't check scope filter here, because it's up to paramRawValue to do that
   v = paramRawValue(key, def, context);
 skip_param_raw_value:
-  auto id = v.metaType().id();
-  // passing QVariant through if non string type (number, invalid, QPointF...)
-  // LATER may add some types here: QJsonValue if text ?
-  if (id != Utf8String::MetaTypeId && id != QMetaType::QString
-      && id != QMetaType::QByteArray)
-    return v;
+  if (v.type() != TypedValue::Utf8)
+    return v; // if TypedValue is not Utf8, skip %-evaluation
   if (!context.paramsProvider()) { // if context has no pp, use this as a pp
     context.setParamsProvider(this);
     v = PercentEvaluator::eval(Utf8String(v), context);
@@ -125,8 +121,8 @@ skip_param_raw_value:
   return v;
 }
 
-QVariant ParamsProvider::paramRawValue(
-    const Utf8String &, const QVariant &def, const EvalContext&) const {
+TypedValue ParamsProvider::paramRawValue(
+    const Utf8String &, const TypedValue &def, const EvalContext&) const {
   return def;
 }
 
@@ -136,7 +132,7 @@ Utf8StringSet ParamsProvider::paramKeys(const EvalContext &) const {
 
 bool ParamsProvider::paramContains(
     const Utf8String &key, const EvalContext &) const {
-  return paramRawValue(key).isValid();
+  return !!paramRawValue(key);
 }
 
 Utf8String ParamsProvider::paramScope() const {
@@ -196,8 +192,8 @@ Utf8String SimpleParamsProvider::paramScope() const {
   return _scope;
 }
 
-QVariant SimpleParamsProvider::paramRawValue(
-    const Utf8String &key, const QVariant &def,
+TypedValue SimpleParamsProvider::paramRawValue(
+    const Utf8String &key, const TypedValue &def,
     const EvalContext &context) const {
   if (!context.functionsEvaluated()) {
     bool is_function;
@@ -207,7 +203,7 @@ QVariant SimpleParamsProvider::paramRawValue(
   }
   if (context.hasScopeOrNone(paramScope())) {
     auto v = _params.value(key);
-    if (v.isValid())
+    if (!!v)
       return v;
   }
   return def;

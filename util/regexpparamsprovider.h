@@ -30,8 +30,8 @@ public:
   QRegularExpressionMatch match() const { return _match; }
   void setMatch(QRegularExpressionMatch  match) { _match = match; }
   using ParamsProvider::paramRawValue;
-  QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def = {},
+  TypedValue paramRawValue(
+      const Utf8String &key, const TypedValue &def = {},
       const EvalContext &context = {}) const override;
   using ParamsProvider::paramKeys;
   Utf8StringSet paramKeys(const EvalContext &context = {}) const override;

@@ -25,12 +25,7 @@ public:
     : QList<SharedUiItem>(other) {}
   inline SharedUiItemList(const QList<SharedUiItem> &other)
     : QList<SharedUiItem>(other) {}
-#ifdef __cpp_concepts
   template <shareduiitem_subclass T>
-#else
-  template <class T,
-            std::enable_if_t<std::is_base_of_v<SharedUiItem,T>,bool> = true>
-#endif
   inline SharedUiItemList(const QList<T> &other)
     : QList<SharedUiItem>(reinterpret_cast<const QList<SharedUiItem>&>(other)) {
   }
@@ -55,8 +50,8 @@ public:
                     const Utf8StringSet &qualifiers = {}) const;
   QString joinUtf16(const QChar separator, const Utf8String &format,
                     const Utf8StringSet &qualifiers = {}) const;
-  QVariant paramRawValue(
-      const Utf8String &key, const QVariant &def = {},
+  TypedValue paramRawValue(
+      const Utf8String &key, const TypedValue &def = {},
       const ParamsProvider::EvalContext &context = {}) const override;
   Utf8StringSet paramKeys(
       const ParamsProvider::EvalContext &context = {}) const override;
@@ -67,12 +62,7 @@ public:
   }
   /** Select items given their qualifier. Blindly trust that T and qualifier
    *  match each other. */
-#ifdef __cpp_concepts
   template <shareduiitem_subclass T = SharedUiItem>
-#else
-  template<class T = SharedUiItem,
-           std::enable_if_t<std::is_base_of_v<SharedUiItem,T>,bool> = true>
-#endif
   inline QList<T> filtered(const Utf8String &qualifier) {
     QList<T> subset;
     for (const auto &sui: *this)
@@ -91,23 +81,13 @@ public:
   }
   /** Blindly trust that every item in list is of type T.
    *  This is undefinied behaviour, use filtered() or join() instead. */
-#ifdef __cpp_concepts
   template <shareduiitem_subclass T = SharedUiItem>
-#else
-  template<class T = SharedUiItem,
-           std::enable_if_t<std::is_base_of_v<SharedUiItem,T>,bool> = true>
-#endif
   inline QList<T> &casted() {
     return reinterpret_cast<QList<T>&>(static_cast<QList<SharedUiItem>&>(*this));
   }
   /** Blindly trust that every item in list is of type T.
    *  This is undefinied behaviour, use filtered() or join() instead. */
-#ifdef __cpp_concepts
   template <shareduiitem_subclass T = SharedUiItem>
-#else
-  template<class T = SharedUiItem,
-           std::enable_if_t<std::is_base_of_v<SharedUiItem,T>,bool> = true>
-#endif
   inline const QList<T> &casted() const {
     return reinterpret_cast<const QList<T>&>(static_cast<const QList<SharedUiItem>&>(*this));
   }

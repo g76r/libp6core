@@ -63,6 +63,7 @@ PRECOMPILED_HEADER *= \
     libp6core_stable.h
 
 SOURCES *= \
+    eg/entity.cpp \
     format/graphvizparser.cpp \
     format/graphvizrenderer.cpp \
     format/svgwriter.cpp \
@@ -73,6 +74,8 @@ SOURCES *= \
     pf/pfparser.cpp \
     util/paramsformula.cpp \
     util/percentevaluator.cpp \
+    util/typedvalue.cpp \
+    util/typedvaluelist.cpp \
     util/utf8string.cpp \
     util/utf8stringlist.cpp \
     util/paramsprovider.cpp \
@@ -165,6 +168,7 @@ SOURCES *= \
     modelview/stringlistdiffmodel.cpp
 
 HEADERS *=\
+    eg/entity.h \
     format/graphvizparser.h \
     format/graphvizrenderer.h \
     format/svgwriter.h \
@@ -179,6 +183,8 @@ HEADERS *=\
     util/datacache.h \
     util/paramsformula.h \
     util/percentevaluator.h \
+    util/typedvalue.h \
+    util/typedvaluelist.h \
     util/utf8string.h \
     util/utf8stringlist.h \
     util/utf8stringset.h \

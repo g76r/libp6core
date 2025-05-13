@@ -180,6 +180,130 @@ inline qsizetype read_byte(
   return width;
 }
 
+template <arithmetic T, char scalar_sep = ',', char vector_sep =' '>
+inline std::vector<std::vector<T>> utf8_to_number2dmatrix(
+    const char *s, size_t len, const std::vector<std::vector<T>> &def = {},
+    bool *ok = 0) {
+  std::vector<std::vector<T>> vectors;
+  std::vector<T> scalars;
+  auto end = s+len, prev = s;
+  for (; s < end; ++s) {
+    if (*s == scalar_sep) {
+      if (s == prev)
+        goto failure; // empty field between 2 separators
+      bool conversion_ok;
+      T d = Utf8String(prev, s-prev).toNumber<T>(&conversion_ok);
+      if (!conversion_ok)
+        goto failure;
+      scalars.push_back(d);
+      prev = s+1;
+    }
+    if (*s == vector_sep) {
+      if (s != prev) { // true but if previous vector ends with scalar_sep
+        bool conversion_ok;
+        T d = Utf8String(prev, s-prev).toNumber<T>(&conversion_ok);
+        if (!conversion_ok)
+          goto failure;
+        scalars.push_back(d);
+      } else {
+        if (scalars.empty())
+          goto failure; // empty field between 2 separators
+        continue; // skip double vector separator (maybe we shouldn't)
+      }
+      vectors.push_back(scalars);
+      scalars.clear();
+      prev = s+1;
+    }
+  }
+  if (s != prev) { // true but if the string ends with scalar_sep
+    bool conversion_ok;
+    T d = Utf8String(prev, s-prev).toNumber<T>(&conversion_ok);
+    if (!conversion_ok)
+      goto failure;
+    scalars.push_back(d);
+  }
+  if (scalars.size() > 0) // true but if the string ends with vector_sep
+    vectors.push_back(scalars);
+  if (ok) *ok = true;
+  return vectors;
+failure:
+  if (ok) *ok = false;
+  return def;
+}
+
+template <arithmetic T, char scalar_sep = ','>
+inline std::vector<T> utf8_to_numbervector(
+    const char *s, size_t len, const std::vector<T> &def = {}, bool *ok = 0) {
+  std::vector<T> scalars;
+  auto end = s+len, prev = s;
+  for (; s < end; ++s) {
+    if (*s == scalar_sep) {
+      if (s == prev)
+        goto failure; // empty field between 2 separators
+      bool conversion_ok;
+      T d = Utf8String(prev, s-prev).toNumber<T>(&conversion_ok);
+      if (!conversion_ok)
+        goto failure;
+      scalars.push_back(d);
+      prev = s+1;
+    }
+  }
+  if (s != prev) { // true but if the string ends with scalar_sep
+    bool conversion_ok;
+    T d = Utf8String(prev, s-prev).toNumber<T>(&conversion_ok);
+    if (!conversion_ok)
+      goto failure;
+    scalars.push_back(d);
+  }
+  if (ok) *ok = true;
+  return scalars;
+failure:
+  if (ok) *ok = false;
+  return def;
+}
+
+template <char scalar_sep = ','>
+inline std::vector<double> utf8_to_fvector(
+    const char *s, size_t len, const std::vector<double> &def = {},
+    bool *ok = 0) {
+  return utf8_to_numbervector<double, scalar_sep>(s, len, def, ok);
+}
+
+template <char scalar_sep = ','>
+inline std::vector<double> utf8_to_fvector(
+    const QByteArray &s, const std::vector<double> &def = {}, bool *ok = 0) {
+  return utf8_to_numbervector<double, scalar_sep>(
+        s.constData(), s.size(), def, ok);
+}
+
+template <char scalar_sep = ','>
+inline std::vector<int64_t> utf8_to_svector(
+    const char *s, size_t len, const std::vector<int64_t> &def = {},
+    bool *ok = 0) {
+  return utf8_to_numbervector<int64_t, scalar_sep>(s, len, def, ok);
+}
+
+template <char scalar_sep = ','>
+inline std::vector<int64_t> utf8_to_svector(
+    const QByteArray &s, const std::vector<int64_t> &def = {}, bool *ok = 0) {
+  return utf8_to_numbervector<int64_t, scalar_sep>(
+        s.constData(), s.size(), def, ok);
+}
+
+template <char scalar_sep = ','>
+inline std::vector<uint64_t> utf8_to_uvector(
+    const char *s, size_t len, const std::vector<uint64_t> &def = {},
+    bool *ok = 0) {
+  return utf8_to_numbervector<uint64_t, scalar_sep>(s, len, def, ok);
+}
+
+template <char scalar_sep = ','>
+inline std::vector<uint64_t> utf8_to_uvector(
+    const QByteArray &s, const std::vector<uint64_t> &def = {}, bool *ok = 0) {
+  return utf8_to_numbervector<uint64_t, scalar_sep>(
+        s.constData(), s.size(), def, ok);
+}
+
 } // namespace p6
 
 #endif // UTF8UTILS_H

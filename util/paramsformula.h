@@ -1,4 +1,4 @@
-/* Copyright 2024 Gregoire Barbier and others.
+/* Copyright 2024-2025 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -33,13 +33,13 @@ class LIBP6CORESHARED_EXPORT ParamsFormula final {
 
 public:
   using EvalContext = PercentEvaluator::EvalContext;
-  using UnaryOperator = std::function<QVariant(const EvalContext &context,
-  const QVariant &def, const QVariant &x)>;
-  using BinaryOperator = std::function<QVariant(const EvalContext &context,
-  const QVariant &def, const QVariant &x, const QVariant &y)>;
-  using TernaryOperator = std::function<QVariant(const EvalContext &context,
-  const QVariant &def, const QVariant &x, const QVariant &y,
-  const QVariant &z)>;
+  using UnaryOperator = std::function<TypedValue(const EvalContext &context,
+  const TypedValue &def, const TypedValue &x)>;
+  using BinaryOperator = std::function<TypedValue(const EvalContext &context,
+  const TypedValue &def, const TypedValue &x, const TypedValue &y)>;
+  using TernaryOperator = std::function<TypedValue(const EvalContext &context,
+  const TypedValue &def, const TypedValue &x, const TypedValue &y,
+  const TypedValue &z)>;
   enum FormulaDialect {
     InvalidFormula = 0,
     PercentExpression, // e.g. "%{=uppercase:%foo}" -> "HELLO" if foo="hello"
@@ -71,11 +71,11 @@ public:
   [[nodiscard]] inline bool operator!() const noexcept { return !isValid(); }
   [[nodiscard]] Utf8String expr() const noexcept;
   [[nodiscard]] FormulaDialect dialect() const noexcept;
-  [[nodiscard]] QVariant eval(
-      const EvalContext &context = {}, const QVariant &def = {}) const;
+  [[nodiscard]] TypedValue eval(
+      const EvalContext &context = {}, const TypedValue &def = {}) const;
   [[nodiscard]] inline Utf8String eval_utf8(
-      const EvalContext &context = {}, const QVariant &def = {}) const {
-    return Utf8String{eval(context, def)};
+      const EvalContext &context = {}, const TypedValue &def = {}) const {
+    return eval(context, def).as_utf8();
   }
   static void register_operator(const Utf8String &symbol, UnaryOperator op);
   static void register_operator(const Utf8String &symbol, BinaryOperator op);

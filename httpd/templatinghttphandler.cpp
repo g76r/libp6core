@@ -69,7 +69,7 @@ void TemplatingHttpHandler::computePathToRoot(
   bool ignoreOneSlash = prefix.isEmpty() ? path.startsWith('/')
                                          : !prefix.endsWith('/');
   int depth = path.count('/') - (ignoreOneSlash ? 1 : 0);
-  auto pathToRoot = depth ? "../"_u8.repeated(depth) : "./"_u8;
+  Utf8String pathToRoot = depth ? "../"_u8.repeated(depth) : "./"_u8;
   context.overrideParamValue("!pathtoroot"_u8, pathToRoot);
 }
 
