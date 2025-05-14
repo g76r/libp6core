@@ -1788,7 +1788,13 @@ inline F Utf8String::toFloating(
         break;
         // won't go further 'f' by consistency with 'P': 1e15~1e-15 range
       default:
-        goto no_suffix;
+        [[likely]] goto no_suffix;
+    }
+    s = s.toUpper();
+    if (s.contains("NAN") || s.contains("INF")) {
+      // avoid hiding nan or inf with nano or femto would-be suffix
+      mul = 1.0;
+      goto no_suffix;
     }
     s.utf8chop(1);
   }
