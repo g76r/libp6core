@@ -119,6 +119,8 @@ private:
     bool operator!() const override;
     using Value::unsigned8;
     Entity entity8() const override;
+    using Value::as_unsigned8;
+    using Value::as_signed8;
     using Value::as_float8;
     using Value::as_bool1;
     Utf8String as_utf8(const Utf8String &, bool *ok) const override;
@@ -159,6 +161,7 @@ private:
     double float8() const override;
     uint64_t as_unsigned8(uint64_t def, bool *ok) const override;
     int64_t as_signed8(int64_t, bool *ok) const override;
+    double as_float8(double def, bool *ok) const override;
     bool as_bool1(bool, bool *ok) const override;
     Utf8String as_utf8(const Utf8String &, bool *ok) const override;
   };
@@ -264,6 +267,7 @@ private:
     QDateTime timestamp8() const override;
     uint64_t as_unsigned8(uint64_t def, bool *ok) const override;
     int64_t as_signed8(int64_t def, bool *ok) const override;
+    double as_float8(double def, bool *ok) const override;
     Utf8String as_utf8(const Utf8String &def, bool *ok) const override;
   };
   struct LIBP6CORESHARED_EXPORT RegexpValue : Value {
@@ -311,6 +315,33 @@ public:
     if (type() != other.type())
       return std::partial_ordering::unordered;
     return value() <=> other.value(); }
+  /** compare two TypedValue as numbers if both are numbers or can be converted
+   *  to numbers (incl. timestamps which are ms since 1970 UTC) and otherwise
+   *  compare them as characters string.
+   *  if pretend_null_or_nan_is_empty is false (the default) the result will be
+   *  unordered if one at less of the operands is null or NaN or cannot be
+   *  converted to a string otherwise null, NaN and unconvertible values will be
+   *  processed as if they were "".
+   *  compare_as_number_otherwise_string(42.0, 42) -> equivalent
+   *  compare_as_number_otherwise_string(42.0, "42") -> equivalent
+   *  compare_as_number_otherwise_string(
+   *    42, std::vector<double>({42.0})) -> equivalent
+   *  compare_as_number_otherwise_string(NaN, NaN, false) -> unordered
+   *  compare_as_number_otherwise_string(NaN, NaN, true) -> equivalent
+   *  compare_as_number_otherwise_string(NaN, "", false) -> unordered
+   *  compare_as_number_otherwise_string(NaN, "", true) -> equivalent
+   *    because NaN is assimilated to ""
+   *  compare_as_number_otherwise_string(NaN, "nan", false) -> unordered
+   *  compare_as_number_otherwise_string(NaN, "nan", true) -> equivalent
+   *    because "nan" string is convertible to NaN double
+   *    (so, yes, NaN is equivalent to both "" and "nan" (or "NaN") when
+   *    pretend_null_or_nan_is_empty is true)
+   *  compare_as_number_otherwise_string(
+   *    42, QDateTime::from...("1970-01-01T00:00:00,042Z")) -> equivalent
+   */
+  [[nodiscard]] static std::partial_ordering compare_as_number_otherwise_string(
+      const TypedValue &a, const TypedValue &b,
+      bool pretend_null_or_nan_is_empty = false);
   /** highly depends on contained type
    *  - TypedValues of different types are always !=
    *  - TypedValues of same type rely on their type operator == (implies that
@@ -358,6 +389,11 @@ public:
   [[nodiscard]] static Utf8String typecode(Type type);
   [[nodiscard]] inline Utf8String typecode() const { return typecode(type()); }
   [[nodiscard]] static Type from_typecode(const Utf8String &typecode);
+  [[nodiscard]] static inline bool is_arithmetic(Type type) {
+    return type == Float8 || type == Unsigned8 || type == Signed8
+        || type == Bool1;
+  }
+  [[nodiscard]] bool is_arithmetic() { return is_arithmetic(type()); }
 
   // regular data access //////////////////////////////////////////////////////
   TypedValue(bool b) : d(new Bool1Value{b}) { }

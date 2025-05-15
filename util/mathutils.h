@@ -21,7 +21,7 @@
 class LIBP6CORESHARED_EXPORT MathUtils {
   MathUtils() = delete;
 
-public:
+private:
   /** Try to convert to largest compatible arithmetic type:
    *  - double if floating type
    *  - otherwise qlonglong / std::int64_t if possible (small enough integer)
@@ -42,50 +42,7 @@ public:
    * @return true on success false on failure
    */
   static bool promoteToBestArithmeticType(QVariant *a, QVariant *b);
-  /** same as QVariant::compare() but:
-   *  - first try to promote numbers to best arithmetic type
-   *  and to convert strings if they are valid representations of numbers
-   *  (such as: "1" "8e-10" "0x20" "true"), to convert dates and
-   *  datetimes to msecs since 1970, times to msecs since midnight, booleans to
-   *  1 or 0. try to compare signed and unsigned whenever possible
-   *  (provided the unsigned one is lower than signed long long positive max).
-   *  - then if pretends_invalid_is_empty is false (the default) :
-   *  if a or b cannot be converted to a number but both can be converted as
-   *  strings, compare them as strings (for instance: QDateTime
-   *  compared to an ISO timestamp in a QString)
-   *  - or, if pretends_invalid_is_empty is true: compare the string
-   *  representation of variants, whatever they are. including invalid objects
-   *  that will be processed as if they were an empty string (so using
-   *  pretends_invalid_is_empty == true, QVariant() is equal to an QString("")
-   *  and to QDateTime())
-   */
-  static std::partial_ordering compareQVariantAsNumberOrString(
-      QVariant a, QVariant b, bool pretends_invalid_is_empty = false);
-  /** Same as QVariant::compare() but:
-   *  - first check if types are strictly the sames, otherwise return unordered
-   *    which mean that 2L and 4LL are unordered (with QVariant::compare() we
-   *    would have 2L < 4LL)
-   *  - NaN <=> NaN is equivalent, not unordered (with regular C++ standard,
-   *    which QVariant::compare() follows, NaN != NaN and two NaNs are unordered
-   *    even if they are both the same kind of NaN)
-   *
-   *  The intend is to use QVariant as a data holder where different types (like
-   *  unsigned long and signed char) must be treated as different values and
-   *  where NaN should be kept as is (as a kind of null double or whatever)
-   */
-  static inline std::partial_ordering compare_qvariant_as_data_holder(
-      const QVariant &a, const QVariant &b) {
-    auto ta = a.metaType(), tb = b.metaType();
-    qDebug() << "***     compare" << a << b << (ta == tb)
-             //<< std::isnan(a.value<double>()) << std::isnan(b.value<double>())
-             << (QVariant::compare(a, b) == 0);
-    if (ta != tb)
-      return std::partial_ordering::unordered;
-    if (ta.id() == QMetaType::Double && tb.id() == QMetaType::Double
-        && std::isnan(a.value<double>()) && std::isnan(b.value<double>()))
-        return std::partial_ordering::equivalent;
-    return QVariant::compare(a, b);
-  }
+public:
   /** Add numbers after promoting them to best arithmetic type.
    *  For integers, use __builtin_{s,u}addll_overflow instead of + if supported
    *  by compiler */
@@ -119,6 +76,7 @@ public:
   static QVariant bitwiseXorQVariantAsIntegral(QVariant a, QVariant b);
   /** Bitwise or integers after promoting them to best integral type. */
   static QVariant bitwiseOrQVariantAsIntegral(QVariant a, QVariant b);
+private:
   /** convert QVariant to QString */
   static bool convertToUtf16(QVariant *a);
 };

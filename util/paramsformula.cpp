@@ -120,34 +120,6 @@ struct OperatorDefinition {
 
 } // unnamed namespace
 
-// static inline Utf8String tostr(QPartialOrdering o) {
-//   if (o == QPartialOrdering::Equivalent) return "equivalent";
-//   if (o == QPartialOrdering::Less) return "less";
-//   if (o == QPartialOrdering::Greater) return "greater";
-//   if (o == QPartialOrdering::Unordered) return "unordered";
-//   return "default";
-// }
-
-static inline QPartialOrdering compareTwoOperands(
-  Stack *stack, const EvalContext &context, bool pretends_invalid_is_empty) {
-  auto y = stack->popeval(stack, context, {});
-  auto x = stack->popeval(stack, context, {});
-  //if (x.metaType().id() == QMetaType::QDateTime || !x.isValid())
-  //qDebug() << "****** compareTwoOperands" << x << y << tostr(MathUtils::compareQVariantAsNumberOrString(x, y, pretends_invalid_is_empty));
-  if ((!x || !y) && !pretends_invalid_is_empty)
-    return QPartialOrdering::Unordered;
-  auto po = MathUtils::compareQVariantAsNumberOrString(x.as_qvariant(), y.as_qvariant(), pretends_invalid_is_empty); // FIXME
-  return po;
-}
-
-static inline QPartialOrdering compareTwoOperands(
-  const TypedValue &x, const TypedValue &y, bool pretends_invalid_is_empty) {
-  if ((!x || !y) && !pretends_invalid_is_empty)
-    return QPartialOrdering::Unordered;
-  auto po = MathUtils::compareQVariantAsNumberOrString(x.as_qvariant(), y.as_qvariant(), pretends_invalid_is_empty); // FIXME
-  return po;
-}
-
 static const StackItemOperator _percentOperator = [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue {
   return stack->popeval_utf8(stack, context, def) % context;
 };
@@ -214,31 +186,31 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { "*", { 2, 5, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::mulQVariantAsNumber(x.as_qvariant(), y.as_qvariant()); // FIXME
+        auto r = MathUtils::mulQVariantAsNumber(x.as_qvariant(), y.as_qvariant());
         return r.isValid() ? TypedValue(r) : def;
       } }, true },
   { "/", { 2, 5, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::divQVariantAsNumber(x.as_qvariant(), y.as_qvariant()); // FIXME
+        auto r = MathUtils::divQVariantAsNumber(x.as_qvariant(), y.as_qvariant());
         return r.isValid() ? TypedValue(r) : def;
       } }, true },
   { "%", { 2, 5, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::modQVariantAsNumber(x.as_qvariant(), y.as_qvariant()); // FIXME
+        auto r = MathUtils::modQVariantAsNumber(x.as_qvariant(), y.as_qvariant());
         return r.isValid() ? TypedValue(r) : def;
       } }, true },
   { "+", { 2, 6, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::addQVariantAsNumber(x.as_qvariant(), y.as_qvariant()); // FIXME
+        auto r = MathUtils::addQVariantAsNumber(x.as_qvariant(), y.as_qvariant());
         return r.isValid() ? TypedValue(r) : def;
       } }, true },
   { "-", { 2, 6, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::subQVariantAsNumber(x.as_qvariant(), y.as_qvariant()); // FIXME
+        auto r = MathUtils::subQVariantAsNumber(x.as_qvariant(), y.as_qvariant());
         return r.isValid() ? TypedValue(r) : def;
       } }, true },
   { "@", { 2, 6, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue {
@@ -249,7 +221,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { "<?", { 2, 7, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto po = compareTwoOperands(x, y, true);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, true);
         if (po == QPartialOrdering::Less)
           return x;
         if (po == QPartialOrdering::Equivalent)
@@ -261,7 +233,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { ">?", { 2, 7, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto po = compareTwoOperands(x, y, true);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, true);
         if (po == QPartialOrdering::Less)
           return y;
         if (po == QPartialOrdering::Equivalent)
@@ -273,7 +245,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { "<?*", { 2, 7, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto po = compareTwoOperands(x, y, false);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, false);
         if (po == QPartialOrdering::Less)
           return x;
         if (po == QPartialOrdering::Equivalent)
@@ -285,7 +257,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { ">?*", { 2, 7, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto po = compareTwoOperands(x, y, false);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, false);
         if (po == QPartialOrdering::Less)
           return y;
         if (po == QPartialOrdering::Equivalent)
@@ -295,7 +267,9 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
         return {};
       } }, true },
   { "<=>", { 2, 8, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
-        auto po = compareTwoOperands(stack, context, false);
+        auto y = stack->popeval(stack, context, {});
+        auto x = stack->popeval(stack, context, {});
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, false);
         if (po == QPartialOrdering::Less)
           return -1;
         if (po == QPartialOrdering::Equivalent)
@@ -305,7 +279,9 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
         return {};
       } }, true },
   { "<=", { 2, 9, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
-        auto po = compareTwoOperands(stack, context, false);
+        auto y = stack->popeval(stack, context, {});
+        auto x = stack->popeval(stack, context, {});
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, false);
         if (po == QPartialOrdering::Less)
           return true;
         if (po == QPartialOrdering::Equivalent)
@@ -315,7 +291,9 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
         return {};
       } }, true },
   { "<", { 2, 9, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
-        auto po = compareTwoOperands(stack, context, false);
+        auto y = stack->popeval(stack, context, {});
+        auto x = stack->popeval(stack, context, {});
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, false);
         if (po == QPartialOrdering::Less)
           return true;
         if (po == QPartialOrdering::Equivalent)
@@ -325,7 +303,9 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
         return {};
       } }, true },
   { ">=", { 2, 9, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
-        auto po = compareTwoOperands(stack, context, false);
+        auto y = stack->popeval(stack, context, {});
+        auto x = stack->popeval(stack, context, {});
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, false);
         if (po == QPartialOrdering::Less)
           return false;
         if (po == QPartialOrdering::Equivalent)
@@ -335,7 +315,9 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
         return {};
       } }, true },
   { ">", { 2, 9, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
-        auto po = compareTwoOperands(stack, context, false);
+        auto y = stack->popeval(stack, context, {});
+        auto x = stack->popeval(stack, context, {});
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, false);
         if (po == QPartialOrdering::Less)
           return false;
         if (po == QPartialOrdering::Equivalent)
@@ -345,7 +327,9 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
         return {};
       } }, true },
   { "==*", { 2, 10, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
-        auto po = compareTwoOperands(stack, context, false);
+        auto y = stack->popeval(stack, context, {});
+        auto x = stack->popeval(stack, context, {});
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, false);
         if (po == QPartialOrdering::Less)
           return false;
         if (po == QPartialOrdering::Equivalent)
@@ -355,7 +339,9 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
         return {};
       } }, true },
   { "!=*", { 2, 10, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
-        auto po = compareTwoOperands(stack, context, false);
+        auto y = stack->popeval(stack, context, {});
+        auto x = stack->popeval(stack, context, {});
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, false);
         if (po == QPartialOrdering::Less)
           return true;
         if (po == QPartialOrdering::Equivalent)
@@ -365,7 +351,9 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
         return {};
       } }, true },
   { "==", { 2, 10, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
-        auto po = compareTwoOperands(stack, context, true);
+        auto y = stack->popeval(stack, context, {});
+        auto x = stack->popeval(stack, context, {});
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, true);
         if (po == QPartialOrdering::Less)
           return false;
         if (po == QPartialOrdering::Equivalent)
@@ -375,7 +363,9 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
         return {};
       } }, true },
   { "!=", { 2, 10, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue  {
-        auto po = compareTwoOperands(stack, context, true);
+        auto y = stack->popeval(stack, context, {});
+        auto x = stack->popeval(stack, context, {});
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, true);
         if (po == QPartialOrdering::Less)
           return true;
         if (po == QPartialOrdering::Equivalent)
@@ -425,41 +415,43 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { "&", { 2, 11, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::bitwiseAndQVariantAsIntegral(x.as_qvariant(), y.as_qvariant()); // FIXME
+        auto r = MathUtils::bitwiseAndQVariantAsIntegral(x.as_qvariant(), y.as_qvariant());
         return r.isValid() ? TypedValue(r) : def;
       } }, true },
   { "^", { 2, 12, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::bitwiseXorQVariantAsIntegral(x.as_qvariant(), y.as_qvariant()); // FIXME
+        auto r = MathUtils::bitwiseXorQVariantAsIntegral(x.as_qvariant(), y.as_qvariant());
         return r.isValid() ? TypedValue(r) : def;
       } }, true },
   { "|", { 2, 13, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::bitwiseOrQVariantAsIntegral(x.as_qvariant(), y.as_qvariant()); // FIXME
+        auto r = MathUtils::bitwiseOrQVariantAsIntegral(x.as_qvariant(), y.as_qvariant());
         return r.isValid() ? TypedValue(r) : def;
       } }, true },
   { "&&", { 2, 14, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
-        // LATER get rid of andQVariantAsNumber and do deferred evaluation here if y is false
+        // LATER get rid of boolAndQVariantAsNumber and do deferred evaluation here if y is false
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::boolAndQVariantAsNumber(x.as_qvariant(), y.as_qvariant()); // FIXME
+        auto r = MathUtils::boolAndQVariantAsNumber(x.as_qvariant(), y.as_qvariant());
         return r.isValid() ? TypedValue(r) : def;
       } }, true },
   { "^^", { 2, 15, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::boolXorQVariantAsNumber(x.as_qvariant(), y.as_qvariant()); // FIXME
+        auto r = MathUtils::boolXorQVariantAsNumber(x.as_qvariant(), y.as_qvariant());
         return r.isValid() ? TypedValue(r) : def;
       } }, true },
   { "||", { 2, 16, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
+        // LATER get rid of boolOrQVariantAsNumber and do deferred evaluation here if y is true
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::boolOrQVariantAsNumber(x.as_qvariant(), y.as_qvariant()); // FIXME
+        auto r = MathUtils::boolOrQVariantAsNumber(x.as_qvariant(), y.as_qvariant());
         return r.isValid() ? TypedValue(r) : def;
       } }, true },
   { "?:", { 3, 17, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
+        // LATER change operand order on the stack to enable lazy evaluation (don't evaluate else part if condition is true)
         auto z = stack->popeval(stack, context, def);
         auto y = stack->popeval(stack, context, def);
         auto x = stack->popeval(stack, context, {});

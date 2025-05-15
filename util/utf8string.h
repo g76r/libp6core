@@ -15,9 +15,8 @@
 #ifndef UTF8STRING_H
 #define UTF8STRING_H
 
-#include "libp6core_global.h"
+#include "util/numberutils.h"
 #include <QVariant>
-#include <cfloat>
 
 using namespace Qt::Literals::StringLiterals;
 
@@ -1241,8 +1240,6 @@ private:
     operator char32_t() const { return utf32; }
   };
   const static std::vector<UnicodeCaseMapping> _case_mapping;
-  template<typename I>
-  [[nodiscard]] static inline bool double_fits_integer(double d);
   template<typename F, bool suffixes_enabled>
   [[nodiscard]] static inline F toFloating(
       QByteArray ba, bool *ok, F def,
@@ -1730,22 +1727,6 @@ struct Utf8String::NumberConverter<bool, suffixes_enabled, floating_point_enable
   }
 };
 
-template<typename I>
-inline bool Utf8String::double_fits_integer(double d) {
-  if (std::numeric_limits<I>::digits >= DBL_MANT_DIG) {
-    // integral types with more digits than double's mantissa:
-    // use double value only if it's within DBL_MANT_DIG bits integer range
-    // (if double is IEE754 double precision, DBL_MANT_DIG == 53)
-    if (std::numeric_limits<I>::is_signed)
-      return d >= -(1LL<<DBL_MANT_DIG) && d <= (1LL<<DBL_MANT_DIG);
-    return d >= 0 && d <= (1LL<<DBL_MANT_DIG);
-  }
-  // integral types with less digits than double's mantissa:
-  // use double value only if it fits in the integer type
-  return d >= std::numeric_limits<I>::min() &&
-      d <= std::numeric_limits<I>::max();
-}
-
 // TODO turn wrapped into template arg
 template<typename F, bool suffixes_enabled>
 inline F Utf8String::toFloating(
@@ -1846,7 +1827,7 @@ inline I Utf8String::toIntegral(
     // try to convert to double and then truncate to integer part
     double d = toFloating<double, suffixes_enabled>(
           s, &_ok, (double)NAN, &QByteArray::toDouble);
-    if(_ok && double_fits_integer<I>(d))
+    if(_ok && p6::double_fits_in_integral_type<I>(d))
       i = d;
     else
       _ok = false;

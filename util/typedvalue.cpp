@@ -197,6 +197,62 @@ Type TypedValue::NullValue::type() const {
   return Null;
 }
 
+std::partial_ordering TypedValue::compare_as_number_otherwise_string(
+    const TypedValue &a, const TypedValue &b,
+    bool pretend_null_or_nan_is_empty) {
+  bool oka, okb;
+  auto fa = a.as_float8(&oka), fb = b.as_float8(&okb);
+  if (oka && okb) { // comparing as doubles
+    if (pretend_null_or_nan_is_empty) {
+      auto na = std::isnan(fa), nb = std::isnan(fb);
+      if (na && nb)
+        return std::partial_ordering::equivalent;
+      if (na || nb)
+        return std::partial_ordering::unordered;
+    }
+    return fa <=> fb;
+  } else if (pretend_null_or_nan_is_empty) {
+    // if one and only one operand was convertible to float8 and this one is
+    // nan and pretend_null_or_nan_is_empty == true, we must compare the other
+    // one with ""
+    if (oka && std::isnan(a))
+      return ""_u8 <=> b.as_utf8();
+    if (okb && std::isnan(b))
+      return a.as_utf8() <=> ""_u8;
+    // note: we can't rely on a further string comparison, because
+    // TypedValue(NAN).as_utf8() returns "nan"
+  } else {
+    // must do the test now because e.g. if a is NaN and b is "" and we don't
+    // stop the comparison now, they will be compared as string and "nan" > ""
+    if (std::isnan(a) || std::isnan(b))
+      return std::partial_ordering::unordered;
+    // note that it's std::isnan(const TypedValue&) which is used above, not
+    // std::isnan(double), so both type and nanness is tested
+  }
+  // note: an operand can be convertible to unsigned whereas it wasn't to double
+  // e.g. a string containing "1e16" because it exceeds double mantissa
+  // precision but fits in a uint64_t
+  auto ua = a.as_unsigned8(&oka), ub = b.as_unsigned8(&okb);
+  if (oka && okb) // comparing as unsigneds
+    return ua <=> ub;
+  // note: an operand can be convertible to signed whereas it wasn't before
+  // e.g. a string containing "-1e16" because it exceeds double mantissa
+  // precision and is negative
+  auto ia = a.as_signed8(&oka), ib = b.as_signed8(&okb);
+  if (oka && okb) // comparing as signeds
+    return ia <=> ib;
+  // note: an operand can be convertible to bool whereas it wasn't before
+  // e.g. a string containing "true"
+  auto ba = a.as_bool1(&oka), bb = b.as_bool1(&okb);
+  if (oka && okb) // comparing as booleans
+    return ba <=> bb;
+  // every number conversion failed, we have to rely on character strings
+  auto sa = a.as_utf8(), sb = b.as_utf8();
+  if (!pretend_null_or_nan_is_empty && (!sa || !sb))
+    return std::partial_ordering::unordered;
+  return sa <=> sb; // Utf8String::operator<=>() processes null as empty
+}
+
 // Unsigned8Value /////////////////////////////////////////////////////////////
 
 Type TypedValue::Unsigned8Value::type() const {
@@ -236,9 +292,13 @@ int64_t TypedValue::Unsigned8Value::as_signed8(int64_t def, bool *ok) const {
   return def;
 }
 
-double TypedValue::Unsigned8Value::as_float8(double, bool *ok) const {
-  if (ok) *ok = true;
-  return u;
+double TypedValue::Unsigned8Value::as_float8(double def, bool *ok) const {
+  if (p6::integral_type_fits_in_double(u)) {
+    if (ok) *ok = true;
+    return u;
+  }
+  if (ok) *ok = false;
+  return def;
 }
 
 bool TypedValue::Unsigned8Value::as_bool1(bool, bool *ok) const {
@@ -350,9 +410,13 @@ uint64_t TypedValue::Signed8Value::as_unsigned8(uint64_t def, bool *ok) const {
   return def;
 }
 
-double TypedValue::Signed8Value::as_float8(double, bool *ok) const {
-  if (ok) *ok = true;
-  return i;
+double TypedValue::Signed8Value::as_float8(double def, bool *ok) const {
+  if (p6::integral_type_fits_in_double(i)) {
+    if (ok) *ok = true;
+    return i;
+  }
+  if (ok) *ok = false;
+  return def;
 }
 
 bool TypedValue::Signed8Value::as_bool1(bool, bool *ok) const {
@@ -404,7 +468,7 @@ double TypedValue::Float8Value::float8() const {
 }
 
 uint64_t TypedValue::Float8Value::as_unsigned8(uint64_t def, bool *ok) const {
-  if (f > 0.0 ) {
+  if (p6::double_fits_in_integral_type<uint64_t>(f)) {
     if (ok) *ok = true;
     return f;
   }
@@ -412,12 +476,21 @@ uint64_t TypedValue::Float8Value::as_unsigned8(uint64_t def, bool *ok) const {
   return def;
 }
 
-int64_t TypedValue::Float8Value::as_signed8(int64_t, bool *ok) const {
+int64_t TypedValue::Float8Value::as_signed8(int64_t def, bool *ok) const {
+  if (p6::double_fits_in_integral_type<int64_t>(f)) {
+    if (ok) *ok = true;
+    return f;
+  }
+  if (ok) *ok = false;
+  return def;
+}
+
+bool TypedValue::Float8Value::as_bool1(bool, bool *ok) const {
   if (ok) *ok = true;
   return f;
 }
 
-bool TypedValue::Float8Value::as_bool1(bool, bool *ok) const {
+double TypedValue::Float8Value::as_float8(double, bool *ok) const {
   if (ok) *ok = true;
   return f;
 }
@@ -898,6 +971,15 @@ uint64_t TypedValue::Timestamp8Value::as_unsigned8(
 }
 
 int64_t TypedValue::Timestamp8Value::as_signed8(int64_t def, bool *ok) const {
+  if (ts->isValid()) {
+    if (ok) *ok = true;
+    return ts->toMSecsSinceEpoch();
+  }
+  if (ok) *ok = false;
+  return def;
+}
+
+double TypedValue::Timestamp8Value::as_float8(double def, bool *ok) const {
   if (ts->isValid()) {
     if (ok) *ok = true;
     return ts->toMSecsSinceEpoch();

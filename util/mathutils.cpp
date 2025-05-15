@@ -224,31 +224,6 @@ bool MathUtils::promoteToBestArithmeticType(QVariant *a, QVariant *b) {
   return false;
 }
 
-std::partial_ordering MathUtils::compareQVariantAsNumberOrString(
-  QVariant a, QVariant b, bool pretends_invalid_is_empty) {
-  auto a0 = a, b0 = b;
-  //qDebug() << "compareQVariantAsNumber" << a << b;
-  if (promoteToBestArithmeticType(&a, &b)) {
-    //qDebug() << "  promoted" << a << b;
-    return QVariant::compare(a, b);
-  }
-  if (pretends_invalid_is_empty) {
-    convertToUtf16(&a0);
-    convertToUtf16(&b0);
-    auto c = a0.toString().compare(b0.toString());
-    //qDebug() << "  stringified(any)" << a0 << b0 << c;
-    return c > 0 ? std::partial_ordering::greater
-           : c < 0 ? std::partial_ordering::less
-                   : std::partial_ordering::equivalent;
-  }
-  if (convertToUtf16(&a0) && convertToUtf16(&b0)) {
-    //qDebug() << "  stringified" << a0 << b0;
-    return QVariant::compare(a0, b0);
-  }
-  //qDebug() << "  unordered";
-  return std::partial_ordering::unordered;
-}
-
 QVariant MathUtils::addQVariantAsNumber(QVariant a, QVariant b) {
   if (!promoteToBestArithmeticType(&a, &b))
     return QVariant();

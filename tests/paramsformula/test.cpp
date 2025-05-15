@@ -3,6 +3,16 @@
 #include "util/mathutils.h"
 #include <QDateTime>
 
+QDebug operator<<(QDebug dbg, std::partial_ordering po) {
+  if (po == std::partial_ordering::equivalent)
+    return dbg << "equivalent";
+  if (po == std::partial_ordering::less)
+    return dbg << "less";
+  if (po == std::partial_ordering::greater)
+    return dbg << "greater";
+  return dbg << "unordered";
+}
+
 int main(void) {
   QVariant x(ULLONG_MAX/2);
   QVariant y(-132);
@@ -11,13 +21,6 @@ int main(void) {
   ParamSet x4 { "x", "4" };
   ParamSet x5 { "x", "5" };
   ParamSet xa_d { "x", "a$" };
-  qDebug() << x.metaType().name() << y.metaType().name()
-           << MathUtils::promoteToBestArithmeticType(&x, &y)
-           << x.metaType().name() << y.metaType().name()
-           << x.toLongLong() << y.toLongLong()
-           << x.toDouble() << y.toDouble()
-           << (MathUtils::compareQVariantAsNumberOrString(x, y) == QPartialOrdering::Greater)
-           << (MathUtils::compareQVariantAsNumberOrString(x, y) == QPartialOrdering::Unordered);
   qDebug() << PercentEvaluator::eval_utf8("3: %{=rpn,1,2,+}");
   qDebug() << PercentEvaluator::eval("%{=rpn,1,2,+}");
   qDebug() << PercentEvaluator::eval_utf8("6: %{=rpn,1,%x,+}", &x5);
@@ -106,5 +109,31 @@ int main(void) {
                 "%{=rpn,0,0.0,/}=nan %{=switch:%{=rpn,0,0.0,/}:foo:}=nan "
                 "%{=switch:%{=rpn,0,0.0,/}:nan:good:bad} ",
                 &p);
+  qDebug() << TypedValue::compare_as_number_otherwise_string(42.0, 42, false)
+           << TypedValue::compare_as_number_otherwise_string(42.0, 42, true)
+           << TypedValue::compare_as_number_otherwise_string(42.0, "42", false)
+           << TypedValue::compare_as_number_otherwise_string(42.0, "42", true)
+           << TypedValue::compare_as_number_otherwise_string(42.000000001, "42", false)
+           << TypedValue::compare_as_number_otherwise_string(42.000000001, "42", true)
+           << TypedValue::compare_as_number_otherwise_string(42, std::vector<double>({42.0}), false)
+           << TypedValue::compare_as_number_otherwise_string(42, std::vector<double>({42.0}), true)
+           << TypedValue(42) << TypedValue(std::vector<double>({42.0}))
+              ;
+  qDebug() << TypedValue::compare_as_number_otherwise_string(f1, f1, false) // unordered because any null/nan result in unordered
+           << TypedValue::compare_as_number_otherwise_string(f1, f1, true) // equivalent because two nans are equivalent when pretending null is empty
+           << TypedValue::compare_as_number_otherwise_string(f1, "", false) // unordered
+           << TypedValue::compare_as_number_otherwise_string(f1, "", true) // equivalent because we pretend nan is ""
+           << TypedValue::compare_as_number_otherwise_string(f1, "nan", false) // unordered
+           << TypedValue::compare_as_number_otherwise_string(f1, "nan", true) // equivalent because "nan" can be converted to a double
+           << TypedValue::compare_as_number_otherwise_string(f1, "foo", true) // unordered
+              ;
+  //ts1(QDateTime::fromString("2023-09-20T13:14:00,760",Qt::ISODateWithMs))
+  auto ts42 = QDateTime::fromString("1970-01-01T00:00:00,042Z",Qt::ISODateWithMs);
+  qDebug() << TypedValue::compare_as_number_otherwise_string(42, ts42, false)
+           << TypedValue::compare_as_number_otherwise_string(42, ts42, true)
+           << TypedValue(42) << TypedValue(ts42) << TypedValue(ts42).as_utf8()
+           << TypedValue(ts42).as_unsigned8() << TypedValue(ts42).as_float8()
+           << TypedValue(ts42).as_signed8()
+              ;
   return 0;
 }

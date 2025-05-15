@@ -181,6 +181,7 @@ HEADERS *=\
     pf/pfoptions.h \
     pf/pfparser.h \
     util/datacache.h \
+    util/numberutils.h \
     util/paramsformula.h \
     util/percentevaluator.h \
     util/typedvalue.h \
