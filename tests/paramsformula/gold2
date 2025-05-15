@@ -46,3 +46,5 @@ inf f8{inf} false false false true
 nan i8{42} false false false false
 nan "§§" false false false false
 "ts{2023-09-20T13:14:00.760},i8{42},f8{3.14}=ts{2023-09-20T13:14:00.760},i8{42},f8{3.14}   ts,i8,f8=ts,i8,f8   f8{3.14}=f8{3.14}   5=5   "
+null{} f8{nan} null{}
+"good good good good good good nan=nan nan=nan good "

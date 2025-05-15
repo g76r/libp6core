@@ -16,7 +16,6 @@
 #include "paramset.h"
 #include "util/utf8stringset.h"
 #include "util/radixtree.h"
-#include "util/mathutils.h"
 #include "util/paramsformula.h"
 #include "util/regexpparamsprovider.h"
 #include "util/paramsprovidermerger.h"
@@ -88,12 +87,12 @@ _functions {
   if (params.size() < 1)
     [[unlikely]] return {};
   auto input = PercentEvaluator::eval(params.value(0), context);
+  auto input_as_utf8 = input.as_utf8();
   // evaluating :case:value params, if any
   int n = (params.size() - 1) / 2;
   for (int i = 0; i < n; ++i) {
     auto ref = PercentEvaluator::eval(params.value(1+i*2), context);
-    if (MathUtils::compareQVariantAsNumberOrString(input.as_qvariant(), ref.as_qvariant(), true) // FIXME
-        == QPartialOrdering::Equivalent)
+    if (input_as_utf8 == ref.as_utf8())
       return PercentEvaluator::eval(params.value(1+i*2+1), context);
   }
   // evaluating :default param, if any

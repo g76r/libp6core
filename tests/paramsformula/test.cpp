@@ -75,8 +75,14 @@ int main(void) {
               "%{=rpn,1,2,+}=3", &p);
   TypedValue f1(std::sqrt(-1)), f2(0/0.0),
       f3(std::numeric_limits<double>::infinity()), f4(3.14), i1(42), s1("§§"),
-      ts1(QDateTime::fromString("2023-09-20T13:14:00,760",Qt::ISODateWithMs));
-  p.insert("now", ts1);
+      ts1(QDateTime::fromString("2023-09-20T13:14:00,760",Qt::ISODateWithMs)),
+      f5(42.0);
+  p.insert("ts1", ts1);
+  p.insert("f1", f1); // don't insert because !f1
+  p.insert("f3", f3);
+  p.insert("f4", f4);
+  p.insert("i1", i1);
+  p.insert("f5", f5);
   qDebug() << "nan"_u8.toDouble() << "NAN"_u8.toDouble() << "NaN"_u8.toDouble()
            << "inf"_u8.toDouble() << "INF"_u8.toDouble() << "-inf"_u8.toDouble();
   qDebug() << "float8() TypedValue isnull isnan isfinite isinf";
@@ -87,10 +93,18 @@ int main(void) {
   qDebug() << i1.float8() << i1 << !i1 << std::isnan(i1) << std::isfinite(i1) << std::isinf(i1);
   qDebug() << s1.float8() << s1 << !s1 << std::isnan(s1) << std::isfinite(s1) << std::isinf(s1);
   qDebug() << PercentEvaluator::eval_utf8(
-                "%{=rpn,%now,42,~~,3.14,0,+,<etvs>}=ts{2023-09-20T13:14:00.760},i8{42},f8{3.14}   "
-                "%{=rpn,%now,42,~~,3.14,0,+,<typecodes>}=ts,i8,f8   "
+                "%{=rpn,%ts1,42,~~,3.14,0,+,<etvs>}=ts{2023-09-20T13:14:00.760},i8{42},f8{3.14}   "
+                "%{=rpn,%ts1,42,~~,3.14,0,+,<typecodes>}=ts,i8,f8   "
                 "%{=rpn,3.14,0,+,<etv>}=f8{3.14}   "
                 "%{=rpn,3.14,0,+,<typeid>}=5   ",
+                &p);
+  qDebug() << p.paramValue("f1") << f1 << "%f1"_u8 % p;
+  qDebug() << PercentEvaluator::eval_utf8(
+                "%{=switch:%f5:%i1:good:bad} %{=switch:%f4:3.14:good:bad} "
+                "%{=switch:%f1::good:bad} %{=switch:::good:bad} "
+                "%{=switch:%notexist::good:bad} %{=switch:%f3:inf:good:bad} "
+                "%{=rpn,0,0.0,/}=nan %{=switch:%{=rpn,0,0.0,/}:foo:}=nan "
+                "%{=switch:%{=rpn,0,0.0,/}:nan:good:bad} ",
                 &p);
   return 0;
 }
