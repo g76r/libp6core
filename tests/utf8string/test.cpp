@@ -1,10 +1,5 @@
-#include "util/utf8string.h"
-#include "log/log.h"
-#include <QtDebug>
-#include <unistd.h>
 #include "util/paramset.h"
-#include "util/mathutils.h"
-#include <cfloat>
+#include <QtDebug>
 
 int main(void) {
   p6::log::init();
@@ -31,23 +26,7 @@ int main(void) {
   p6::log::debug() << s << " - " << s.split('o') << " - " << s.split("§"_u8);
   Utf8StringList l = { "foo", "bar", "baz" };
   qDebug() << PercentEvaluator::eval_utf8("%0,%{-1},%2,%8=foo bar baz,,bar,", &l);
-  qDebug() << l << '|' << l.join(' ') << '|' << QVariant(l).toString() << '|'
-           << (MathUtils::compareQVariantAsNumberOrString(l, "foo bar baz"_u8) == QPartialOrdering::Equivalent);
-  struct Foobar {
-    operator QVariant() const { return QVariant::fromValue(*this); }
-  } foobar;
-  QVariant foobarv = foobar;
-  qDebug() << (MathUtils::compareQVariantAsNumberOrString(foobar, ""_u8) == QPartialOrdering::Unordered)
-           << (MathUtils::compareQVariantAsNumberOrString(foobar, u""_s) == QPartialOrdering::Unordered)
-           << (MathUtils::compareQVariantAsNumberOrString(foobar, QString()) == QPartialOrdering::Unordered)
-           << (MathUtils::compareQVariantAsNumberOrString(foobar, QString()) == QPartialOrdering::Unordered)
-              ;
-  qDebug() << MathUtils::convertToUtf16(&foobarv);
-  qDebug() << (MathUtils::compareQVariantAsNumberOrString(foobarv, ""_u8) == QPartialOrdering::Unordered)
-           << (MathUtils::compareQVariantAsNumberOrString(foobarv, u""_s) == QPartialOrdering::Unordered)
-           << (MathUtils::compareQVariantAsNumberOrString(foobarv, QString()) == QPartialOrdering::Unordered)
-           << (MathUtils::compareQVariantAsNumberOrString(foobarv, QString()) == QPartialOrdering::Unordered)
-              ;
+  qDebug() << l << '|' << l.join(' ') << '|' << QVariant(l).toString();
   s = "aéÉb€¢\u03c3\u03c2\u03a3øœ×o'z"_u8;
   qDebug() << s << s.toUpper() << s.toLower() << s.toTitle() << s.isLower() << Utf8String::toTitle(0x01c6);
   s = "abcdabababaaacda";
