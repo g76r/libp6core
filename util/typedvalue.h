@@ -532,42 +532,40 @@ public:
   [[nodiscard]] QString as_utf16() const;
   [[deprecated]] QString toString() const;
   [[nodiscard]] explicit operator QString() const { return as_utf16(); }
-  /** conversion helper for any number, applicable domain is checked for
+  /** conversion for any number type, applicable domain is checked for
     * smaller datatypes (e.g. as_number<short>(TypedValue(4e9)) will return
     * def and set *ok to false because the result fits in an int64_t but not
     * in an int16_t) */
   template <p6::arithmetic T>
-  [[nodiscard]] inline T as_number(const T &def = {}, bool *ok = nullptr) const {
-    // qDebug() << "TypedValue::as_number<>" << typecode() << sizeof(T)
-    //          << std::numeric_limits<T>::max() << def << ok;
+  [[nodiscard]] inline T as_number(const T &def = {}, bool *ok = nullptr) const{
     if constexpr (std::same_as<T, bool>)
-      return value().as_bool1(def, ok); // remove safed() in the whole template
+      return value().as_bool1(def, ok);
     if constexpr (std::is_floating_point_v<T>) {
       double d = value().as_float8(def, ok);
       if (std::numeric_limits<T>::min() <= d
-          && d <= std::numeric_limits<T>::max())
+          && d <= std::numeric_limits<T>::max()) {
+        if (ok) *ok = true;
         return d;
+      }
       if (ok) *ok = false;
       return def;
     }
     if constexpr (std::is_signed_v<T>) {
       int64_t i = value().as_signed8(def, ok);
       if (std::numeric_limits<T>::min() <= i
-          && i <= std::numeric_limits<T>::max())
+          && i <= std::numeric_limits<T>::max()) {
+        if (ok) *ok = true;
         return i;
+      }
       if (ok) *ok = false;
       return def;
     }
-    if constexpr (!std::is_signed_v<T>) {
-      uint64_t u = value().as_unsigned8(def, ok);
-      if (std::numeric_limits<T>::min() <= u
-          && u <= std::numeric_limits<T>::max())
-        return u;
-      if (ok) *ok = false;
-      return def;
+    uint64_t u = value().as_unsigned8(def, ok);
+    if (std::numeric_limits<T>::min() <= u
+        && u <= std::numeric_limits<T>::max()) {
+      if (ok) *ok = true;
+      return u;
     }
-    // should never happen
-    qWarning() << "TypedValue::as_number<T> with unsupported type";
     if (ok) *ok = false;
     return def;
   }
