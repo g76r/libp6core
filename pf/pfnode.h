@@ -304,7 +304,7 @@ public:
     if (!name.isEmpty())
       (append_child(children), ...);
   }
-  PfNode &operator=(const PfNode &other) {
+  inline PfNode &operator=(const PfNode &other) {
     _name = other._name;
     _line = other._line;
     _column = other._column;
@@ -315,7 +315,7 @@ public:
     //          << Utf8String::number(&other);
     return *this;
   }
-  PfNode &operator=(PfNode &&other) {
+  inline PfNode &operator=(PfNode &&other) {
     _name = std::move(other._name);
     _line = other._line;
     _column = other._column;
@@ -324,6 +324,16 @@ public:
     _fragments = std::exchange(other._fragments, nullptr); // prevents double delete
     // qDebug() << "=&&Node" << Utf8String::number(this)
     //          << Utf8String::number(&other);
+    return *this;
+  }
+  inline PfNode &clear() {
+    _name.clear();
+    _line = 0;
+    _column = 0;
+    if (_fragments) {
+      delete _fragments;
+      _fragments = 0;
+    }
     return *this;
   }
   inline bool operator!() const { return _name.isEmpty(); }
@@ -341,6 +351,8 @@ public:
 
   /** A node has an empty string name if and only if the node is null. */
   [[nodiscard]] inline Utf8String name() const { return _name; }
+  inline PfNode &set_name(const Utf8String &name) {
+    _name = name; return *this; } // LATER maybe remove content if name empty
   /** Syntaxic sugar: node ^ "foo" === !!node && node.name() == "foo" */
   inline bool operator^(const Utf8String &name) const {
     return _name == name; }
