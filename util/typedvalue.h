@@ -538,9 +538,9 @@ public:
     * in an int16_t) */
   template <p6::arithmetic T>
   [[nodiscard]] inline T as_number(const T &def = {}, bool *ok = nullptr) const{
-    if constexpr (std::same_as<T, bool>)
+    if constexpr (std::same_as<T, bool>) {
       return value().as_bool1(def, ok);
-    if constexpr (std::is_floating_point_v<T>) {
+    } else if constexpr (std::is_floating_point_v<T>) {
       double d = value().as_float8(def, ok);
       if (std::numeric_limits<T>::min() <= d
           && d <= std::numeric_limits<T>::max()) {
@@ -549,8 +549,7 @@ public:
       }
       if (ok) *ok = false;
       return def;
-    }
-    if constexpr (std::is_signed_v<T>) {
+    } else if constexpr (std::is_signed_v<T>) {
       int64_t i = value().as_signed8(def, ok);
       if (std::numeric_limits<T>::min() <= i
           && i <= std::numeric_limits<T>::max()) {
@@ -559,15 +558,16 @@ public:
       }
       if (ok) *ok = false;
       return def;
+    } else {
+      uint64_t u = value().as_unsigned8(def, ok);
+      if (std::numeric_limits<T>::min() <= u
+          && u <= std::numeric_limits<T>::max()) {
+        if (ok) *ok = true;
+        return u;
+      }
+      if (ok) *ok = false;
+      return def;
     }
-    uint64_t u = value().as_unsigned8(def, ok);
-    if (std::numeric_limits<T>::min() <= u
-        && u <= std::numeric_limits<T>::max()) {
-      if (ok) *ok = true;
-      return u;
-    }
-    if (ok) *ok = false;
-    return def;
   }
   [[nodiscard]] static TypedValue from_qvariant(const QVariant &v);
   [[nodiscard]] QVariant as_qvariant() const;
