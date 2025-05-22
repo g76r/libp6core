@@ -279,6 +279,185 @@ fragment_skipped:;
   return 0;
 }
 
+Utf8String PfNode::position() const {
+  if (!_line)
+    return "unknown position"_u8;
+  return "line: "_u8 + Utf8String::number(_line)
+      + " column: "_u8 + Utf8String::number(_column);
+}
+
+PfNode::Fragment::~Fragment() {
+  // qDebug() << "~Fragment" << Utf8String::number(this)
+  //          << Utf8String::number(_next);
+  if (_next)
+    delete _next;
+}
+
+PfNode::Fragment::FragmentType PfNode::Fragment::type() const {
+  qWarning() << "PfNode::Fragment::type() called on base class";
+  return Text;
+}
+
+PfNode::Fragment *PfNode::Fragment::deep_copy() const {
+  qWarning() << "PfNode::Fragment::clone() called on base class";
+  return 0;
+}
+
+bool PfNode::Fragment::has_payload() const {
+  return false;
+}
+
+Utf8String PfNode::Fragment::wrappings() const {
+  return {};
+}
+
+void PfNode::Fragment::set_wrappings(const Utf8String &) {
+}
+
+Utf8String PfNode::Fragment::text() const {
+  return {};
+}
+
+Utf8String PfNode::Fragment::escaped_text() const {
+  return {};
+}
+
+Utf8String PfNode::Fragment::comment() const {
+  return {};
+}
+
+QByteArray PfNode::Fragment::unwrapped_data() const {
+  return {};
+}
+
+qsizetype PfNode::Fragment::size() const {
+  return 0;
+}
+
+PfNode *PfNode::Fragment::child() {
+  return 0;
+}
+
+bool PfNode::Fragment::merge_text_on_last_fragment(const Utf8String &text) {
+  if (_next)
+    return _next->merge_text_on_last_fragment(text);
+  _next = new TextFragment(text);
+  return false;
+}
+
+void PfNode::Fragment::set_attribute(
+    PfNode::Fragment **pthis, const Utf8String &name, const Utf8String &value) {
+  Q_ASSERT(pthis != 0);
+  for (;*pthis; pthis = &((*pthis)->_next)) {
+    auto child = (*pthis)->child();
+    if (!!child && *child^name) {
+      child->set_text(value);
+      goto found_so_delete_others;
+    }
+  }
+  *pthis = new ChildFragment(PfNode(name, value));
+  return;
+found_so_delete_others:
+  pthis = &((*pthis)->_next);
+  while (*pthis) {
+    auto child = (*pthis)->child();
+    if (child && *child^name)
+      delete take_first(pthis);
+    else
+      pthis = &((*pthis)->_next);
+  }
+}
+
+PfNode::Fragment::FragmentType PfNode::TextFragment::type() const {
+  return Text;
+}
+
+PfNode::Fragment *PfNode::TextFragment::deep_copy() const {
+  return  new TextFragment(_text);
+}
+
+bool PfNode::TextFragment::has_payload() const {
+  return true;
+}
+
+Utf8String PfNode::TextFragment::text() const {
+  return _text;
+}
+
+Utf8String PfNode::TextFragment::escaped_text() const {
+  return PfNode::escaped_text(_text);
+}
+
+QByteArray PfNode::TextFragment::unwrapped_data() const {
+  return _text;
+}
+
+qsizetype PfNode::TextFragment::size() const {
+  return _text.size();
+}
+
+bool PfNode::TextFragment::merge_text_on_last_fragment(const Utf8String &text) {
+  if (_next)
+    return _next->merge_text_on_last_fragment(text);
+  _text += ' ';
+  _text += text;
+  return true;
+}
+
+PfNode::Fragment::FragmentType PfNode::CommentFragment::type() const {
+  return Comment;
+}
+
+PfNode::Fragment *PfNode::CommentFragment::deep_copy() const {
+  return new CommentFragment(_comment);
+}
+
+Utf8String PfNode::CommentFragment::comment() const {
+  return _comment;
+}
+
+PfNode::Fragment::FragmentType PfNode::LoadedBinaryFragment::type() const {
+  return LoadedBinary;
+}
+
+PfNode::Fragment *PfNode::LoadedBinaryFragment::deep_copy() const {
+  return new LoadedBinaryFragment(_data, _wrappings);
+}
+
+bool PfNode::LoadedBinaryFragment::has_payload() const {
+  return true;
+}
+
+QByteArray PfNode::LoadedBinaryFragment::unwrapped_data() const {
+  return _data;
+}
+
+qsizetype PfNode::LoadedBinaryFragment::size() const {
+  return _data.size();
+}
+
+Utf8String PfNode::LoadedBinaryFragment::wrappings() const {
+  return _wrappings;
+}
+
+void PfNode::LoadedBinaryFragment::set_wrappings(const Utf8String &wrappings) {
+  _wrappings = wrappings;
+}
+
+PfNode::Fragment::FragmentType PfNode::DeferredBinaryFragment::type() const {
+  return DeferredBinary;
+}
+
+PfNode::Fragment *PfNode::DeferredBinaryFragment::deep_copy() const {
+  auto f = new DeferredBinaryFragment(_file, _pos, _len, _should_cache);
+  f->_cache = _cache;
+  return f;
+}
+
+bool PfNode::DeferredBinaryFragment::has_payload() const {
+  return true;
+}
+
 QByteArray PfNode::DeferredBinaryFragment::unwrapped_data() const {
   if (_len == 0 || !_cache.isEmpty())
     return _cache;
@@ -307,42 +486,14 @@ qsizetype PfNode::DeferredBinaryFragment::size() const {
   return _len;
 }
 
-Utf8String PfNode::position() const {
-  if (!_line)
-    return "unknown position"_u8;
-  return "line: "_u8 + Utf8String::number(_line)
-      + " column: "_u8 + Utf8String::number(_column);
+PfNode::Fragment::FragmentType PfNode::ChildFragment::type() const {
+  return Child;
 }
 
-PfNode::Fragment::FragmentType PfNode::Fragment::type() const {
-  qWarning() << "PfNode::Fragment::type() called on base class";
-  return Text;
+PfNode::Fragment *PfNode::ChildFragment::deep_copy() const {
+  return new ChildFragment(_child);
 }
 
-PfNode::Fragment *PfNode::Fragment::deep_copy() const {
-  qWarning() << "PfNode::Fragment::clone() called on base class";
-  return 0;
-}
-
-void PfNode::Fragment::set_attribute(
-    PfNode::Fragment **pthis, const Utf8String &name, const Utf8String &value) {
-  Q_ASSERT(pthis != 0);
-  for (;*pthis; pthis = &((*pthis)->_next)) {
-    auto child = (*pthis)->child();
-    if (!!child && *child^name) {
-      child->set_text(value);
-      goto found_so_delete_others;
-    }
-  }
-  *pthis = new ChildFragment(PfNode(name, value));
-  return;
-found_so_delete_others:
-  pthis = &((*pthis)->_next);
-  while (*pthis) {
-    auto child = (*pthis)->child();
-    if (child && *child^name)
-      delete take_first(pthis);
-    else
-      pthis = &((*pthis)->_next);
-  }
+PfNode *PfNode::ChildFragment::child() {
+  return &_child;
 }

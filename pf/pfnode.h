@@ -59,39 +59,29 @@ private:
 
     inline Fragment() { }
     Fragment(const Fragment&) = delete;
-    virtual ~Fragment() {
-      // qDebug() << "~Fragment" << Utf8String::number(this)
-      //          << Utf8String::number(_next);
-      if (_next)
-        delete _next;
-    }
+    virtual ~Fragment();
     virtual FragmentType type() const = 0;
     /** method is responsible for performing deep copy of fragment impl.
      *  it's not responsible for copying/recursively cloning _next fragment */
     virtual Fragment *deep_copy() const = 0;
     /** @return true if type is a payload type (text or binary) */
-    virtual bool has_payload() const { return false; }
-    virtual Utf8String wrappings() const { return {}; }
+    virtual bool has_payload() const;
+    virtual Utf8String wrappings() const;
     /** change wrappings of LoadedBinary fragment.
      *  do nothing to other fragment types, including DeferredBinary. */
-    virtual void set_wrappings(const Utf8String &) { }
-    virtual Utf8String text() const { return {}; }
-    virtual Utf8String escaped_text() const { return {}; }
-    virtual Utf8String comment() const { return {}; }
-    virtual QByteArray unwrapped_data() const { return {}; }
-    virtual qsizetype size() const { return 0; }
-    virtual PfNode *child() { return 0; }
+    virtual void set_wrappings(const Utf8String &wrappings);
+    virtual Utf8String text() const;
+    virtual Utf8String escaped_text() const;
+    virtual Utf8String comment() const;
+    virtual QByteArray unwrapped_data() const;
+    virtual qsizetype size() const;
+    virtual PfNode *child();
     const PfNode *child() const { return const_cast<Fragment*>(this)->child(); }
     /** append text to fragments list: merge on last text fragment if any or
      *  append a new text fragment at end if no text fragment was found or if
      *  last fragment wasn't a text fragment.
      *  @return true if merged, false if appended a new text fragment */
-    virtual bool merge_text_on_last_fragment(const Utf8String &text) {
-      if (_next)
-        return _next->merge_text_on_last_fragment(text);
-      _next = new TextFragment(text);
-      return false;
-    }
+    virtual bool merge_text_on_last_fragment(const Utf8String &text);
     static void push_back(Fragment **pthis, Fragment *f) {
       Q_ASSERT(pthis != 0);
       while (*pthis)
@@ -161,49 +151,40 @@ private:
       *pthis = 0;
     }
   };
-  struct TextFragment : public Fragment {
+  struct LIBP6CORESHARED_EXPORT TextFragment : Fragment {
     Utf8String _text;
     inline TextFragment(const Utf8String &utf8) : _text(utf8) {}
-    FragmentType type() const override { return Text; }
-    Fragment *deep_copy() const override { return  new TextFragment(_text); }
-    bool has_payload() const override { return true; }
-    Utf8String text() const override { return _text; }
-    Utf8String escaped_text() const override {
-      return PfNode::escaped_text(_text); }
-    QByteArray unwrapped_data() const override { return _text; }
-    qsizetype size() const override { return _text.size(); }
-    bool merge_text_on_last_fragment(const Utf8String &text) override {
-      if (_next)
-        return _next->merge_text_on_last_fragment(text);
-      _text += ' ';
-      _text += text;
-      return true;
-    }
+    FragmentType type() const override;
+    Fragment *deep_copy() const override;
+    bool has_payload() const override;
+    Utf8String text() const override;
+    Utf8String escaped_text() const override;
+    QByteArray unwrapped_data() const override;
+    qsizetype size() const override;
+    bool merge_text_on_last_fragment(const Utf8String &text) override;
   };
-  struct CommentFragment : public Fragment {
+  struct LIBP6CORESHARED_EXPORT CommentFragment : Fragment {
     Utf8String _comment;
     inline CommentFragment(const Utf8String &comment) : _comment(comment) {}
-    FragmentType type() const override { return Comment; }
-    Fragment *deep_copy() const override { return  new CommentFragment(_comment); }
-    Utf8String comment() const override { return _comment; }
+    FragmentType type() const override;
+    Fragment *deep_copy() const override;
+    Utf8String comment() const override;
   };
-  struct LoadedBinaryFragment : public Fragment {
+  struct LIBP6CORESHARED_EXPORT LoadedBinaryFragment : Fragment {
     QByteArray _data;
     Utf8String _wrappings;
     inline LoadedBinaryFragment(const QByteArray &unwrapped_data,
                                 const Utf8String &wrappings)
       : _data(unwrapped_data), _wrappings(wrappings) {}
-    FragmentType type() const override { return LoadedBinary; }
-    Fragment *deep_copy() const override {
-      return new LoadedBinaryFragment(_data, _wrappings); }
-    bool has_payload() const override { return true; }
-    QByteArray unwrapped_data() const override { return _data; }
-    qsizetype size() const override { return _data.size(); }
-    Utf8String wrappings() const override { return _wrappings; }
-    void set_wrappings(const Utf8String &wrappings) override {
-      _wrappings = wrappings; }
+    FragmentType type() const override;
+    Fragment *deep_copy() const override;
+    bool has_payload() const override;
+    QByteArray unwrapped_data() const override;
+    qsizetype size() const override;
+    Utf8String wrappings() const override;
+    void set_wrappings(const Utf8String &wrappings) override;
   };
-  struct DeferredBinaryFragment : public Fragment {
+  struct LIBP6CORESHARED_EXPORT DeferredBinaryFragment : Fragment {
     QPointer<QIODevice> _file;
     qsizetype _pos = 0, _len = 0;
     quint8 _should_cache:1 = 0;
@@ -211,13 +192,9 @@ private:
     inline DeferredBinaryFragment(QIODevice *file, qsizetype pos,
                                   qsizetype len, bool should_cache)
       : _file(file), _pos(pos), _len(len), _should_cache(should_cache) { }
-    FragmentType type() const override { return DeferredBinary; }
-    Fragment *deep_copy() const override {
-      auto f = new DeferredBinaryFragment(_file, _pos, _len, _should_cache);
-      f->_cache = _cache;
-      return f;
-    }
-    bool has_payload() const override { return true; }
+    FragmentType type() const override;
+    Fragment *deep_copy() const override;
+    bool has_payload() const override;
     QByteArray unwrapped_data() const override;
     qsizetype size() const override;
   };
@@ -834,13 +811,13 @@ private:
 static_assert(sizeof(Utf8String) == 24); // _name
 static_assert(sizeof(PfNode) == 48); // 24+8×3
 
-struct PfNode::ChildFragment : public Fragment {
+struct LIBP6CORESHARED_EXPORT PfNode::ChildFragment : Fragment {
   PfNode _child;
   inline ChildFragment(const PfNode &child) : _child(child) { }
   inline ChildFragment(PfNode &&child) : _child(std::move(child)) { }
-  FragmentType type() const override { return Child; }
-  Fragment *deep_copy() const override { return new ChildFragment(_child); }
-  PfNode *child() override { return &_child; }
+  FragmentType type() const override;
+  Fragment *deep_copy() const override;
+  PfNode *child() override;
 };
 
 PfNode &PfNode ::append_child(const PfNode &child) {
