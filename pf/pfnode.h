@@ -151,10 +151,11 @@ private:
     }
     static inline void deep_copy(Fragment **pthis, const Fragment *original) {
       // qDebug() << "*** deep_copy" << *pthis << original;
-      for (const Fragment *f = original; f; f = f->_next) {
-        *pthis = f->deep_copy();
-        // qDebug() << "   copied" << f << "as" << *pthis << (*pthis)->_next
-        //          << f->text() << f->type() << f->child();
+      for (; original; original = original->_next) {
+        *pthis = original->deep_copy();
+        // qDebug() << "   copied" << original << "as" << *pthis
+        //          << (*pthis)->_next << original->text() << original->type()
+        //          << original->child();
         pthis = &((*pthis)->_next);
       }
       *pthis = 0;
@@ -305,25 +306,29 @@ public:
       (append_child(children), ...);
   }
   inline PfNode &operator=(const PfNode &other) {
-    _name = other._name;
-    _line = other._line;
-    _column = other._column;
-    if (_fragments)
-      delete _fragments;
-    Fragment::deep_copy(&_fragments, other._fragments);
-    // qDebug() << "=&Node" << Utf8String::number(this)
-    //          << Utf8String::number(&other);
+    if (&other != this) {
+      _name = other._name;
+      _line = other._line;
+      _column = other._column;
+      if (_fragments)
+        delete _fragments;
+      Fragment::deep_copy(&_fragments, other._fragments);
+      // qDebug() << "=&Node" << Utf8String::number(this)
+      //          << Utf8String::number(&other);
+    }
     return *this;
   }
   inline PfNode &operator=(PfNode &&other) {
-    _name = std::move(other._name);
-    _line = other._line;
-    _column = other._column;
-    if (_fragments)
-      delete _fragments;
-    _fragments = std::exchange(other._fragments, nullptr); // prevents double delete
-    // qDebug() << "=&&Node" << Utf8String::number(this)
-    //          << Utf8String::number(&other);
+    if (&other != this) {
+      _name = std::move(other._name);
+      _line = other._line;
+      _column = other._column;
+      if (_fragments)
+        delete _fragments;
+      _fragments = std::exchange(other._fragments, nullptr); // prevents double delete
+      // qDebug() << "=&&Node" << Utf8String::number(this)
+      //          << Utf8String::number(&other);
+    }
     return *this;
   }
   inline PfNode &clear() {
