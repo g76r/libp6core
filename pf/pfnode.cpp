@@ -12,6 +12,7 @@
  * along with libpumpkin.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "pfnode.h"
+#include "util/utf8utils.h"
 #include <QBuffer>
 
 PfNode PfNode::_empty;
@@ -56,26 +57,13 @@ struct Wrapper {
   Unwrapper unwrap;
 };
 
-template<int n = 80>
-static inline QByteArray split_every_n_chars(const QByteArray &input) {
-  auto s = input.constData(), end = s+input.size(), end1 = s+input.size()/n*n;
-  QByteArray output;
-  for (; s < end1; s += n)
-    output.append(s, n).append('\n');
-  if (end == end1)
-    output.chop(1);
-  else
-    output.append(s, end-end1);
-  return output;
-}
-
 static QMap<Utf8String,Wrapper> _wrappers {
   {"", { {}, {}, } },
   {"null", { {}, {}, } },
   {"hex", {
       [](QByteArray *data, const PfOptions &options) STATIC_LAMBDA {
         if (options._indent_size)
-          *data = split_every_n_chars(data->toHex());
+          *data = p6::break_every_n_bytes(data->toHex());
         else
           *data = data->toHex();
       },
@@ -86,7 +74,7 @@ static QMap<Utf8String,Wrapper> _wrappers {
   {"base64", {
       [](QByteArray *data, const PfOptions &options) STATIC_LAMBDA {
         if (options._indent_size)
-          *data = split_every_n_chars(data->toBase64());
+          *data = p6::break_every_n_bytes(data->toBase64());
         else
           *data = data->toBase64();
       },

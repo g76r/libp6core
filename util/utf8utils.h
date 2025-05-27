@@ -304,6 +304,21 @@ inline std::vector<uint64_t> utf8_to_uvector(
         s.constData(), s.size(), def, ok);
 }
 
+/** break a bytes array every n byte, for instance to add newline in an ascii
+ *  string every 80 bytes */
+template<int n = 80, char separator = '\n'>
+inline QByteArray break_every_n_bytes(const QByteArray &input) {
+  auto s = input.constData(), end = s+input.size(), end1 = s+input.size()/n*n;
+  QByteArray output;
+  for (; s < end1; s += n)
+    output.append(s, n).append(separator);
+  if (end == end1)
+    output.chop(1);
+  else
+    output.append(s, end-end1);
+  return output;
+}
+
 } // namespace p6
 
 #endif // UTF8UTILS_H
