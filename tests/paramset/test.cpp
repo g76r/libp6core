@@ -26,6 +26,13 @@ int main(void) {
               "%{=rawvalue!fooz!e}=%%%%bar "
               "%ooks=42 %{%ooks}= %{=eval:ooks}=42 %{x%ooks}= %{=eval:x%ooks}=43 "
               "%{=rpn,%%foo}=%%foo %{=rpn,foo}=foo %{=rpn,%foo}=bar ***", &p);
+  qDebug() << PercentEvaluator::eval_utf8(
+                "%{=rawvalue!fooz!baz!e}=%%%%bar "
+                "%{=rawvalue!notexist!baz!e}=42 "
+                "%{=rawvalue!empty!baz!ehun}= "
+                "%{=rawvalue!fooz!baz!}=%%bar "
+                "%{=rawvalue!notexist!baz}= " // "baz" is processed as flags
+                , &p);
   qDebug() << PercentEvaluator::eval_utf8("%{=rawvalue:h1:hun}", &p);
   qDebug() << PercentEvaluator::eval_utf8(
                 "%{=htmlencode|%{=rawvalue:h1}|un}", &p);
@@ -34,8 +41,8 @@ int main(void) {
                 "%{=uint64:3.14:2.71}=3 %{=uint64:-3.14:2.72}=2 "
                 "%{=int64:1e3}=1000 %{=int64:1k}=1000", &p);
   qDebug() << PercentEvaluator::eval_utf8(
-                "%{=rpn,%{=int64:-3.14},%{=uint64:3.14},%{=double:3.14},%{=bool:3.14},3.14,%s2,%does_not_exists,<metatypenames>}"
-                "=qlonglong qulonglong double bool Utf8String Utf8String invalid", &p);
+                "%{=rpn,%{=int64:-3.14},%{=uint64:3.14},%{=double:3.14},%{=bool:3.14},3.14,%s2,%does_not_exists,<etvs>}"
+                "=i8{-3},u8{3},f8{3.14},b{true},\"3.14\",\"b\",null{}", &p);
   qDebug() << PercentEvaluator::eval_utf8( // overflows
                 "%{=int64:1e50}= %{=int64:10000P}= %{=rpn,4G,4G,*}= "
                 "%{=rpn,4.0G,4G,*}=1.6e+19");

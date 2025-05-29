@@ -192,9 +192,11 @@ if unsure, use %=default instead, most of the time that's what people want
 
 %=rawvalue
 ----------
-`%{=rawvalue!variable[!flags]}`
+`%{=rawvalue!variable[[!variable2[!...]]!flags]}`
 
 return unevaluated value of a variable
+* uses first non-null/non-invalid/set variable, even an empty string,
+  like %=coalesce does
 * flags is a combination of letters with the following meaning:
   * e %-escape value (in case it will be further %-evaluated) replace every %
       with %%
@@ -212,6 +214,10 @@ examples:
 * `%{=rpn,%foo}` -> `bar` if foo is `bar`
 * `%{=rpn,foo}` -> `foo`
 * `%{=rpn,%%foo}` -> `%foo`
+* `%{=rawvalue!notexist!baz!e}` -> `42` if baz is `42`
+* `%{=rawvalue!empty!baz!e}` -> `` if empty is an empty string
+* `%{=rawvalue!notexist!baz}` -> invalid whatever baz because `baz` is processed
+                                 as flags
 
 %=switch
 --------

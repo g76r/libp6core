@@ -61,27 +61,6 @@ _functions {
                  params.value(0), 0.0, context)*1000;
   return TimeFormats::toCoarseHumanReadableTimeInterval(msecs);
 }, true},
-{ "=eval", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> TypedValue {
-  auto v = "%{"_u8+PercentEvaluator::eval_utf8(key.mid(ml+1), context)+'}';
-  return v % context;
-}, true},
-{ "=rawvalue", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> TypedValue {
-  auto params = key.split_headed_list(ml);
-  if (params.size() < 1 || !context)
-    return {};
-  const ParamsProvider *pp = context;
-  if (!pp)
-    return {};
-  auto v = pp->paramRawValue(params.value(0));
-  auto flags = params.value(1);
-  if (flags.contains('e')) // %-escape
-    v = PercentEvaluator::escape(v);
-  if (flags.contains('h')) // htmlencode
-    v = StringUtils::htmlEncode(
-          v.as_utf16(), flags.contains('u'), // url as links
-          flags.contains('n')); // newline as <br>
-  return v;
-}, true},
 { "=switch", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> TypedValue {
   auto params = key.split_headed_list(ml);
   if (params.size() < 1)
@@ -458,6 +437,31 @@ _functions {
   }
   return {};
 }, true},
+  { "=eval", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> TypedValue {
+    auto v = "%{"_u8+PercentEvaluator::eval_utf8(key.mid(ml+1), context)+'}';
+    return v % context;
+  }, true},
+  { "=rawvalue", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> TypedValue {
+    auto params = key.split_headed_list(ml);
+    const ParamsProvider *pp = context;
+    if (params.size() == 0 || !pp)
+      return {};
+    Utf8String flags;
+    if (params.size() > 1)
+      flags = params.takeLast();
+    for (const auto &param: params) {
+      if (auto v = pp->paramRawValue(param); !!v) {
+        if (flags.contains('e')) // %-escape
+          v = PercentEvaluator::escape(v);
+        if (flags.contains('h')) // htmlencode
+          v = StringUtils::htmlEncode(
+                v.as_utf16(), flags.contains('u'), // url as links
+                flags.contains('n')); // newline as <br>
+        return v;
+      }
+    }
+    return {};
+  }, true},
 { "=default", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> TypedValue {
   auto params = key.split_headed_list(ml);
   for (const auto &param: params) {
