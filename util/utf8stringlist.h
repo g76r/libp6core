@@ -28,6 +28,8 @@ public:
     : QList<Utf8String>(args) { }
   // explicit Utf8StringList(const Utf8String &item) : QList<Utf8String>({item}) { }
   Utf8StringList(const QList<Utf8String> &list) : QList<Utf8String>(list) { }
+  Utf8StringList(QList<Utf8String> &&list)
+    : QList<Utf8String>(std::move(list)) { }
   Utf8StringList(const QList<QByteArray> &list)
     : QList<Utf8String>(list.cbegin(), list.cend()) { }
   Utf8StringList(const QList<QString> &list)

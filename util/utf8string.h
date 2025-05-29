@@ -64,11 +64,12 @@ public:
   inline constexpr Utf8String() noexcept {}
   inline constexpr Utf8String(std::nullptr_t) noexcept {}
   inline Utf8String(const QByteArray &ba) noexcept : QByteArray(ba) {}
-  inline Utf8String(QByteArray &&ba) noexcept : QByteArray(ba) {}
+  inline Utf8String(QByteArray &&ba) noexcept : QByteArray(std::move(ba)) {}
   inline Utf8String(const QByteArrayData ba) noexcept : QByteArray(ba) {}
   inline Utf8String(const QString &s) noexcept : QByteArray(s.toUtf8()) {}
   inline Utf8String(const Utf8String &other) : QByteArray(other) {}
-  inline Utf8String(Utf8String &&other) noexcept : QByteArray(other) {}
+  inline Utf8String(Utf8String &&other) noexcept
+    : QByteArray(std::move(other)) {}
   inline Utf8String(const QLatin1StringView v)
     : QByteArray(v.toString().toUtf8()) {}
   inline Utf8String(const QByteArrayView v) : QByteArray(v.toByteArray()) {}

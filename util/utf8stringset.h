@@ -29,6 +29,8 @@ public:
     : QSet<Utf8String>(args) { }
   Utf8StringSet(const QSet<Utf8String> &set)
     : QSet<Utf8String>(set) { }
+  Utf8StringSet(QSet<Utf8String> &&set)
+    : QSet<Utf8String>(std::move(set)) { }
   Utf8StringSet(const QSet<QByteArray> &set)
     : QSet<Utf8String>(set.cbegin(), set.cend()) { }
   Utf8StringSet(const QSet<QString> &set)

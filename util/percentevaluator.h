@@ -69,6 +69,7 @@ struct LIBP6CORESHARED_EXPORT PercentEvaluator {
     explicit EvalContext(const Utf8String &scope_expr, int role = 0)
       : EvalContext(nullptr, scope_expr, role) { }
     EvalContext(const EvalContext &that) = default;
+    EvalContext(EvalContext &&that) = default;
     inline operator const ParamsProvider *() const { return _params_provider; }
     inline const ParamsProvider *paramsProvider() const {
       return _params_provider; }
