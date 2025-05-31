@@ -415,20 +415,17 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { "&", { 2, 11, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::bitwiseAndQVariantAsIntegral(x.as_qvariant(), y.as_qvariant());
-        return r.isValid() ? TypedValue(r) : def;
+        return x.bitwise_and(y) || def;
       } }, true },
   { "^", { 2, 12, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::bitwiseXorQVariantAsIntegral(x.as_qvariant(), y.as_qvariant());
-        return r.isValid() ? TypedValue(r) : def;
+        return x.bitwise_xor(y) || def;
       } }, true },
   { "|", { 2, 13, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});
         auto x = stack->popeval(stack, context, {});
-        auto r = MathUtils::bitwiseOrQVariantAsIntegral(x.as_qvariant(), y.as_qvariant());
-        return r.isValid() ? TypedValue(r) : def;
+        return x.bitwise_or(y) || def;
       } }, true },
   { "&&", { 2, 14, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context, {});

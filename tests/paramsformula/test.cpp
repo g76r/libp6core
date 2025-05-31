@@ -29,8 +29,13 @@ int main(void) {
   qDebug() << PercentEvaluator::eval_utf8(": %{=rpn,1,,+}");
   qDebug() << PercentEvaluator::eval("%{=rpn,1,,+}");
   qDebug() << PercentEvaluator::eval_utf8("2: %{=rpn,1,true,+}");
-  qDebug() << PercentEvaluator::eval_utf8("true: %{=rpn,1,true,&&}");
-  qDebug() << PercentEvaluator::eval("%{=rpn,1,true,&&}");
+  qDebug() << "true" << PercentEvaluator::eval("%{=rpn,1,true,&&}");
+  qDebug() << "null" << PercentEvaluator::eval("%{=rpn,<null>,true,&&}");
+  //qDebug() << "false" << PercentEvaluator::eval("%{=rpn,<null>,true,&&*}");
+  qDebug() << "160 (0xa0): %{=rpn,0xaa,0xf0,&}" % e;
+  qDebug() << "250 (0xfa): %{=rpn,0xaa,0xf0,|}" % e;
+  qDebug() << "90 (0x5a): %{=rpn,0xaa,0xf0,^}" % e;
+  qDebug() << "null" <<  PercentEvaluator::eval("%{=rpn,0xaa,<null>,|}");
   qDebug() << PercentEvaluator::eval_utf8("true: %{=rpn,1,true,==}");
   qDebug() << PercentEvaluator::eval_utf8("false: %{=rpn,42,true,==}");
   qDebug() << PercentEvaluator::eval_utf8("true: %{=rpn,42,!!,true,==}");

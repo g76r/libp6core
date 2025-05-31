@@ -26,7 +26,7 @@ would hide future ParamSet functions with the same name).
 
 Variables can be the strings key-values holded by the ParamSet itself or by one
 of its parents or provided through a more general ParamsProvider evaluation
-context which can hold any QVariant value which will be converted to strings
+context which can hold any TypedValue value which will be converted to strings
 when needed (and can stay typed during functions evaluation, see %=rpn below).
 
 Detailed % syntax examples
@@ -666,10 +666,10 @@ please note that:
 - `??*` is a null coalescence operator (`%{=rpn,<null>,%foo,??,null,??*}` -> foo
   value, including empty if foo is set, event to an empty string, and otherwise
   "null"; `%{=rpn,,%foo,??*}` -> always return an empty string)
-- `==` and `!=` consider non set variable or any invalid QVariant or valid
-  QVariant not convertible to a number or string as if it were an empty string,
-  and thus always return either true or false
-- `==* !=* <=> <= >= < >` consider invalid QVariant (null) or QVariant not
+- `==` and `!=` consider non set variable or any null TypedValue or valid
+  TypedValue not convertible to a number or string as if it were an empty
+  string, and thus always return either true or false
+- `==* !=* <=> <= >= < >` consider null TypedValue or TypedValue not
   convertible to a number or string as impossible to compare and return null
   whatever the value of the other operand is
 - ?: and :? processe returns null if its test operand is null so that
@@ -696,8 +696,8 @@ please note that:
   unconvertible operand to be an empty string
 - `<?*` and `>?*` do the same but will return null as soon as one of their
   operand is null, invalid or unconvertible
-- `<null>` and `<nil>` which are synonymous and hold a null value (an invalid
-  QVariant)
+- `<null>` and `<nil>` which are synonymous and hold a null value (a null
+  TypedValue)
 - `<pi>` holds Archimedes' constant
 - `:=:` (and its `<swap>` synonymous) swaps the two previous values in the stack
   e.g. `%{=rpn,5,4,:=:,-}` -> -1

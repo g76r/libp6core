@@ -70,12 +70,6 @@ public:
   /** Boolean inclusive or after best arithmethic type conversion then bool
    *  conversion. */
   static QVariant boolOrQVariantAsNumber(QVariant a, QVariant b);
-  /** Bitwise and integers after promoting them to best integral type. */
-  static QVariant bitwiseAndQVariantAsIntegral(QVariant a, QVariant b);
-  /** Bitwise xor integers after promoting them to best integral type. */
-  static QVariant bitwiseXorQVariantAsIntegral(QVariant a, QVariant b);
-  /** Bitwise or integers after promoting them to best integral type. */
-  static QVariant bitwiseOrQVariantAsIntegral(QVariant a, QVariant b);
 private:
   /** convert QVariant to QString */
   static bool convertToUtf16(QVariant *a);

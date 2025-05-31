@@ -590,6 +590,38 @@ public:
   [[nodiscard]] static TypedValue from_etv(
       Type type, const Utf8String &unquoted_etv);
 
+  // operations ///////////////////////////////////////////////////////////////
+  template <bool pretend_null_or_invalid_as_zero = false>
+  [[nodiscard]] TypedValue bitwise_or(const TypedValue &other) {
+    bool ok1, ok2;
+    uint64_t x = as_unsigned8(0, &ok1), y = other.as_unsigned8(0, &ok2);
+    if constexpr (pretend_null_or_invalid_as_zero)
+      return x|y;
+    if (ok1 && ok2)
+      return x|y;
+    return {};
+  }
+  template <bool pretend_null_or_invalid_as_zero = false>
+  [[nodiscard]] TypedValue bitwise_and(const TypedValue &other) {
+    bool ok1, ok2;
+    uint64_t x = as_unsigned8(0, &ok1), y = other.as_unsigned8(0, &ok2);
+    if constexpr (pretend_null_or_invalid_as_zero)
+      return x&y;
+    if (ok1 && ok2)
+      return x&y;
+    return {};
+  }
+  template <bool pretend_null_or_invalid_as_zero = false>
+  [[nodiscard]] TypedValue bitwise_xor(const TypedValue &other) {
+    bool ok1, ok2;
+    uint64_t x = as_unsigned8(0, &ok1), y = other.as_unsigned8(0, &ok2);
+    if constexpr (pretend_null_or_invalid_as_zero)
+      return x^y;
+    if (ok1 && ok2)
+      return x^y;
+    return {};
+  }
+
 private:
   QSharedDataPointer<Value> d;
   inline TypedValue(Value *value) : d(value) {}

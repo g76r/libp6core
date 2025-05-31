@@ -5,8 +5,12 @@ i8{3}
 ": "
 null{}
 "2: 2"
-"true: true"
-b{true}
+true b{true}
+null null{}
+"160 (0xa0): 160"
+"250 (0xfa): 250"
+"90 (0x5a): 90"
+null null{}
 "true: true"
 "false: true"
 "true: true"
