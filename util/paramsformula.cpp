@@ -127,16 +127,14 @@ static const StackItemOperator _percentOperator = [](Stack *stack, const EvalCon
 static RadixTree<OperatorDefinition> _operatorDefinitions {
   { "<%>", { 1, 1, false, false, _percentOperator }, true },
   { "??*", { 2, 2, true, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue {
-        auto y = stack->popeval(stack, context, def);
-        auto x = stack->popeval(stack, context, {});
-        // null coalescence
-        return x || y;
+        auto x = stack->popeval(stack, context, def);
+        auto y = stack->popeval(stack, context, {});
+        return x || y; // null coalescence
       } }, true },
   { "??", { 2, 2, true, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue {
-        auto y = stack->popeval(stack, context, def);
-        auto x = stack->popeval(stack, context, {});
-        // empty (incl. null) coalescence
-        return x.as_utf8().isEmpty() ? y : x;
+        auto x = stack->popeval(stack, context, def);
+        auto y = stack->popeval(stack, context, {});
+        return x.as_utf8().isEmpty() ? y : x; // empty (incl. null) coalescence
       } }, true },
   { "!", { 1, 3, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &) STATIC_LAMBDA -> TypedValue {
         auto x = stack->popeval(stack, context, false);

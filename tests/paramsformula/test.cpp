@@ -70,16 +70,19 @@ int main(void) {
   qDebug() << PercentEvaluator::eval_utf8(
               "%{=rpn,%empty,?-}=false %{=rpn,%empty,?*}=true "
               "%{=rpn,%inexistent,?-}=false %{=rpn,%inexistent,?*}=false "
-              "%{=rpn,%empty,%foo,??}=bar %{=rpn,%empty,%foo,??*}= "
-              "%{=rpn,%inexistent,%foo,??}=bar %{=rpn,%inexistent,%foo,??*}=bar "
-              "%{=rpn,%empty,%inexistent,==,ø,??*}=true %{=rpn,%empty,%inexistent,==*,ø,??*}=ø "
-              "%{=rpn,%empty,%inexistent,!=,ø,??*}=false %{=rpn,%empty,%inexistent,!=*,ø,??*}=ø ", &p);
-  qDebug() << PercentEvaluator::eval_utf8("%{=rpn,%foo,%inexistent,>?}=bar %{=rpn,%foo,%inexistent,>?*,ø,??*}=ø "
-              "%{=rpn,0xffffffffffffffff,1,+,ø,??*}=ø %{=rpn,1,foo,+,ø,??*}=ø "
-              "%{=rpn,0xfffffffffffffffe,1,+,ø,??*}=18446744073709551615 "
+              "%{=rpn,%foo,%empty,??}=bar %{=rpn,%foo,%empty,??*}= "
+              "%{=rpn,%foo,%inexistent,??}=bar %{=rpn,%foo,%inexistent,??*}=bar "
+              "%{=rpn,ø,%empty,%inexistent,==,??*}=true %{=rpn,ø,%empty,%inexistent,==*,??*}=ø "
+              "%{=rpn,ø,%empty,%inexistent,!=,??*}=false %{=rpn,ø,%empty,%inexistent,!=*,??*}=ø ", &p);
+  qDebug() << PercentEvaluator::eval_utf8("%{=rpn,%foo,%inexistent,>?}=bar %{=rpn,ø,%foo,%inexistent,>?*,??*}=ø "
+              "%{=rpn,ø,0xffffffffffffffff,1,+,??*}=ø %{=rpn,ø,1,foo,+,??*}=ø "
+              "%{=rpn,ø,0xfffffffffffffffe,1,+,??*}=18446744073709551615 "
               "%{=rpn,abc,12,13,==,@}=falseabc ", &p);
-  qDebug() << PercentEvaluator::eval_utf8("%{=rpn,%x,true,&&,ø,??*}=true %{=rpn,%x,%empty,&&,ø,??*}=ø "
-              "%{=rpn,%x,%nonexistent,&&,ø,??*}=ø %{=rpn,<pi>}=3.141592653589793 "
+  qDebug() << "18446744073709551614:" << PercentEvaluator::eval("%{=rpn,0xfffffffffffffffe,~~}");
+  qDebug() << "-7:" << PercentEvaluator::eval("%{=rpn,-7,~~}");
+  qDebug() << "18446744073709551614:" << "0xfffffffffffffffe"_u8.toULongLong();
+  qDebug() << PercentEvaluator::eval_utf8("%{=rpn,ø,%x,true,&&,??*}=true %{=rpn,ø,%x,%empty,&&,??*}=ø "
+              "%{=rpn,ø,%x,%nonexistent,&&,??*}=ø %{=rpn,<pi>}=3.141592653589793 "
               "%{=rpn,<null>}= %{=rpn,,?*}=true %{=rpn,<nil>,?*}=false", &p);
   qDebug() << PercentEvaluator::eval_utf8("%{=rpn,%foo}=bar %{=rpn,foo}=foo "
               "%{=rpn,%%foo}=%foo",

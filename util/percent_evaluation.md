@@ -655,10 +655,10 @@ please note that:
 - `=~` is a regexp matching operator (top/last operand is a regexp)
 - `!!` is a boolean conversion operator (`%{=rpn,1,!!}` -> true)
 - `~~` is a signed 64 bits integer conversion operator (`%{=rpn,3.14,~~}` -> 3)
-- `?-` returns "false" for empty or null operand and "true" otherwise (is empty)
-- `!-` returns the opposite (not empty)
-- `?*` returns "false" for null operand and "true" otherwise (is null)
-- `!*` returns the opposite (not null)
+- `?-` returns "false" for empty or null operand and "true" otherwise (not empty)
+- `!-` returns the opposite (is empty)
+- `?*` returns "false" for null operand and "true" otherwise (not null)
+- `!*` returns the opposite (is null)
 - `#` returns the size, for a string its length in characters, for a number, its
   string representation length in characters
 - `##` returns the memory size, for a string its length in bytes, for a number,
