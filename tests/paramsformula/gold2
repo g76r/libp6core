@@ -14,7 +14,12 @@ b{true}
 "33.5: 33.5"
 "2001.5: 2001.5"
 f8{2001.5}
-"4: 4"
+4 "4"
+4 "4"
+null null{}
+null null{}
+4 "4"
+4 "4"
 "true: true"
 "false: false"
 "false: false"

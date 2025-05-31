@@ -16,6 +16,7 @@ QDebug operator<<(QDebug dbg, std::partial_ordering po) {
 int main(void) {
   QVariant x(ULLONG_MAX/2);
   QVariant y(-132);
+  ParamSet e;
   ParamSet x1 { "x", "1" };
   ParamSet x1_5 { "x", "1.5" };
   ParamSet x4 { "x", "4" };
@@ -37,7 +38,12 @@ int main(void) {
   qDebug() << PercentEvaluator::eval_utf8("33.5: %{=rpn,0x20,%x,+}", &x1_5);
   qDebug() << PercentEvaluator::eval_utf8("2001.5: %{=rpn,2k,%x,+}", &x1_5);
   qDebug() << PercentEvaluator::eval("%{=rpn,2k,%x,+}", &x1_5);
-  qDebug() << PercentEvaluator::eval_utf8("4: %{=rpn,1,2,==,3,%x,?:}", &x4);
+  qDebug() << 4 << "%{=rpn,2,1,==,3,%x,:?}" % x4;
+  qDebug() << 4 << "%{=rpn,%x,3,2,1,==,?:}" % x4;
+  qDebug() << "null" << "%{=rpn,%notexists,3,4,:?}" % e;
+  qDebug() << "null" << "%{=rpn,4,3,%notexists,?:}" % e;
+  qDebug() << 4 << "%{=rpn,%notexists,3,4,:?*}" % e;
+  qDebug() << 4 << "%{=rpn,4,3,%notexists,?:*}" % e;
   qDebug() << PercentEvaluator::eval_utf8("true: %{=rpn,aabcdaa,bc,=~}");
   qDebug() << PercentEvaluator::eval_utf8("false: %{=rpn,aabcdaa,bC,=~}");
   qDebug() << PercentEvaluator::eval_utf8("false: %{=rpn,aabcdaa,c$,=~}");

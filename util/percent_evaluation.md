@@ -643,7 +643,7 @@ OCaml...) meaning:
 binary operators: `+ - * / % @ <=> <= >= < > == != ==* !=* =~ !=~ & ^ | && ^^`
 `|| ?? ??* <? >? <?* >?*`
 unary operators: `! !! ~ ~~ ?- !- ?* !* # ##`
-ternary operator: `?:`
+ternary operators: `?: ?:* :? :?*`
 stack operators: `:=: <swap> <dup>`
 constant operators: `<pi> <null> <nil>`
 please note that:
@@ -672,6 +672,17 @@ please note that:
 - `==* !=* <=> <= >= < >` consider invalid QVariant (null) or QVariant not
   convertible to a number or string as impossible to compare and return null
   whatever the value of the other operand is
+- ?: and :? processe returns null if its test operand is null so that
+  `%{=rpn,2,1,<null>,?:*}` -> null whereas ?:* and :?* process null test operand
+  as if it were false so that `%{=rpn,2,1,<null>,?:}` -> 2
+- :? evaluates its operands in the human natural order (test,then,else), whereas
+  ?: evaluates them in the stack natural order (else,then,test) which enables
+  lazy evaluation: if test is null the stack won't be evaluated below test,
+  if test is false the stack won't be evaluated below then, for instance: if %x
+  is true `%{=rpn,1,2,+,3,4,+,%x,?:}` will finish with a stack containing
+  `1,2,+,7` and thus return 7 without evaluating the stack below it
+  in the other hand `%{=rpn,%x,3,4,+,1,2,+,:?}` will finish with a stack
+  containing only `7` since it must always evaluate every operand
 - `+ - *` will return null if one of their operand is not convertible to a
   number or if an integer operation overflows e.g.
   `%{=rpn,0xffffffffffffffff,1,+}` and `%{=rpn,1,foo,+}` both return
@@ -709,7 +720,8 @@ examples:
 * `%{=rpn,1,true,&&}` -> true (1 is casted to true by && operator)
 * `%{=rpn,1,true,==}` -> false (1 is not a boolean)
 * `%{=rpn,42,!!,true,==}` -> true (42 is casted to true by !! operator)
-* `%{=rpn,1,2,==,3,4,?:}` -> "4"
+* `%{=rpn,2,1,==,3,4,:?}` -> "4"
+* `%{=rpn,4,3,2,1,==,?:}` -> "4"
 * `%{=rpn,aabcdaa,a$,=~` -> true
 * `%{=rpn,aabcdaa,c$,=~` -> false
 * `%{=rpn,%foo}` -> "bar" if foo is "bar"

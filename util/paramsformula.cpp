@@ -450,8 +450,27 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
         auto r = MathUtils::boolOrQVariantAsNumber(x.as_qvariant(), y.as_qvariant());
         return r.isValid() ? TypedValue(r) : def;
       } }, true },
+  { "?:*", { 3, 17, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
+        // use lazy evaluation i.e. the third operand won't be evaluated if x is true
+        auto x = stack->popeval(stack, context, {});
+        auto y = stack->popeval(stack, context, def);
+        return x.as_bool1() ? y : stack->popeval(stack, context, def);
+      } }, true },
   { "?:", { 3, 17, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
-        // LATER change operand order on the stack to enable lazy evaluation (don't evaluate else part if condition is true)
+        // use lazy evaluation i.e. the third operand won't be evaluated if x is true (even the second one if x is null)
+        auto x = stack->popeval(stack, context, {});
+        if (!x)
+          return def;
+        auto y = stack->popeval(stack, context, def);
+        return x.as_bool1() ? y : stack->popeval(stack, context, def);
+      } }, true },
+  { ":?*", { 3, 17, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
+        auto z = stack->popeval(stack, context, def);
+        auto y = stack->popeval(stack, context, def);
+        auto x = stack->popeval(stack, context, {});
+        return x.as_bool1() ? y : z;
+      } }, true },
+  { ":?", { 3, 17, false, false, [](Stack *stack, const EvalContext &context, const TypedValue &def) STATIC_LAMBDA -> TypedValue  {
         auto z = stack->popeval(stack, context, def);
         auto y = stack->popeval(stack, context, def);
         auto x = stack->popeval(stack, context, {});
