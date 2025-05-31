@@ -640,8 +640,8 @@ see https://en.wikipedia.org/wiki/Reverse_Polish_notation
 
 following operators are supported with their usual (C, C++, Java, JS, bash,
 OCaml...) meaning:
-binary operators: `+ - * / % @ <=> <= >= < > == != ==* !=* =~ !=~ & ^ | && ^^`
-`|| ?? ??* <? >? <?* >?*`
+binary operators: `+ - * / % @ @* <=> <= >= < > == != ==* !=* =~ !=~ & ^ | `
+`&& ^^ || ?? ??* <? >? <?* >?*`
 unary operators: `! !! ~ ~~ ?- !- ?* !* # ##`
 ternary operators: `?: ?:* :? :?*`
 stack operators: `:=: <swap> <dup>`
@@ -650,21 +650,23 @@ please note that:
 - there are no unary - and + operators
 - `@` is a concatenation operator whereas `+` is always an addition operator
   so `@` will convert numbers to strings and then concatenate them
-- `=~` is a regexp matching operator (right operand is a regexp)
+  `@` will return null if one of its operand is null whereas `@*` will pretend
+  any null (or non convertible to text) operand to be an empty string
+- `=~` is a regexp matching operator (top/last operand is a regexp)
 - `!!` is a boolean conversion operator (`%{=rpn,1,!!}` -> true)
-- `~~` is an integer conversion operator (`%{=rpn,3.14,~~}` -> 3)
-- `?-` returns "false" for empty, null or invalid param and "true" otherwise
-- `!-` returns the opposite
-- `?*` returns "false" for null or invalid param and "true" otherwise
-- `!*` returns the opposite
+- `~~` is a signed 64 bits integer conversion operator (`%{=rpn,3.14,~~}` -> 3)
+- `?-` returns "false" for empty or null operand and "true" otherwise (is empty)
+- `!-` returns the opposite (not empty)
+- `?*` returns "false" for null operand and "true" otherwise (is null)
+- `!*` returns the opposite (not null)
 - `#` returns the size, for a string its length in characters, for a number, its
   string representation length in characters
 - `##` returns the memory size, for a string its length in bytes, for a number,
   its string representation length in bytes
-- `??` is a coalescence operator (`%{=rpn,,%foo,??,null,??}` -> foo value if
-  not empty otherwise "null")
+- `??` is an empty coalescence operator (`%{=rpn,,%foo,??,null,??}` -> foo value
+  if not empty otherwise "null")
 - `??*` is a null coalescence operator (`%{=rpn,<null>,%foo,??,null,??*}` -> foo
-  value, including empty if foo is set, event to an empty string, and otherwise
+  value, including empty if foo is set, even to an empty string, and otherwise
   "null"; `%{=rpn,,%foo,??*}` -> always return an empty string)
 - `==` and `!=` consider non set variable or any null TypedValue or valid
   TypedValue not convertible to a number or string as if it were an empty
@@ -714,7 +716,7 @@ examples:
 * `%{=rpn,1,%x,+}` -> 2 if x is "1"
 * `%{=rpn,0x20,%x,+}` -> 33.5 if x is "1.5"
 * `%{=rpn,2k,%x,+}` -> 2001.5 if x is "1.5"
-* `%{=rpn,1,,+}` -> invalid (because 2nd operand isn't a number)
+* `%{=rpn,1,,+}` -> null (because 2nd operand isn't a number)
 * `%{=rpn,1,,@}` -> "1"
 * `%{=rpn,1,true,+}` -> 2
 * `%{=rpn,1,true,&&}` -> true (1 is casted to true by && operator)

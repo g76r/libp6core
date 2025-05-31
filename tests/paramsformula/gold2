@@ -1,7 +1,7 @@
 "3: 3"
 i8{3}
 "6: 6"
-"15: 15"
+"51: 51"
 ": "
 null{}
 "2: 2"
@@ -37,14 +37,15 @@ null null{}
 ": "
 "ø: ø"
 "ø: ø"
-": "
+"ø: ø"
+"a: a"
 "ø: ø"
 "ø: ø"
 "false=false true=true false=false false=false bar=bar = bar=bar bar=bar true=true ø=ø false=false ø=ø "
-"bar=bar ø=ø ø=ø ø=ø 18446744073709551615=18446744073709551615 abcfalse=abcfalse "
+"bar=bar ø=ø ø=ø ø=ø 18446744073709551615=18446744073709551615 falseabc=falseabc "
 "true=true ø=ø ø=ø 3.141592653589793=3.141592653589793 = true=true false=false"
 "bar=bar foo=foo %foo=bar"
-"truez=truez dt:2023-09-20 00:00:00,000=dt:2023-09-20 00:00:00,000 dt:2023-09-20 00:00:00,000=dt:2023-09-20 00:00:00,000 3=3"
+"ztrue=ztrue dt:2023-09-20 00:00:00,000=dt:2023-09-20 00:00:00,000 dt:2023-09-20 00:00:00,000=dt:2023-09-20 00:00:00,000 3=3"
 nan nan nan inf inf -inf
 float8() TypedValue isnull isnan isfinite isinf
 nan f8{nan} true true false false

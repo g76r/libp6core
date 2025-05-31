@@ -621,6 +621,16 @@ public:
       return x^y;
     return {};
   }
+  template <bool pretend_null_or_invalid_as_empty = false>
+  [[nodiscard]] TypedValue concat(const TypedValue &other) {
+    bool ok1, ok2;
+    Utf8String x = as_utf8(&ok1), y = other.as_utf8(&ok2);
+    if constexpr (pretend_null_or_invalid_as_empty)
+      return x+y;
+    if (ok1 && ok2)
+      return x+y;
+    return {};
+  }
 
 private:
   QSharedDataPointer<Value> d;
