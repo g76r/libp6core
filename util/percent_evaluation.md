@@ -652,13 +652,13 @@ please note that:
   so `@` will convert numbers to strings and then concatenate them
   `@` will return null if one of its operand is null whereas `@*` will pretend
   any null (or non convertible to text) operand to be an empty string
-- `=~` is a regexp matching operator (top/last operand is a regexp)
+- `=~ !=~` are regexp matching operators (top stack operand is a regexp)
 - `!!` is a boolean conversion operator (`%{=rpn,1,!!}` -> true)
 - `~~` is a signed 64 bits integer conversion operator (`%{=rpn,3.14,~~}` -> 3)
-- `?-` returns "false" for empty or null operand and "true" otherwise (not empty)
-- `!-` returns the opposite (is empty)
-- `?*` returns "false" for null operand and "true" otherwise (not null)
-- `!*` returns the opposite (is null)
+- `?*` not null operator: returns false if null or nan
+- `!*` is null operator: returns true if null or nan
+- `?-` not empty operator: returns false if empty, incl. null and nan
+- `!-` is empty operator: returns true if empty, incl. null and nan
 - `#` returns the size, for a string its length in characters, for a number, its
   string representation length in characters
 - `##` returns the memory size, for a string its length in bytes, for a number,

@@ -89,6 +89,18 @@ null: null{}
 null: null{}
 0: i8{0}
 true: b{true}
+true: b{true}
+true: b{true}
+false: b{false}
+false: b{false}
+false: b{false}
+true: b{true}
+true: b{true}
+true: b{true}
+true: b{true}
+false: b{false}
+false: b{false}
+false: b{false}
 equivalent equivalent equivalent equivalent greater greater equivalent equivalent i8{42} f8[]{42}
 unordered equivalent unordered equivalent unordered equivalent less
 equivalent equivalent i8{42} ts{1970-01-01T00:00:00.042Z} 1970-01-01T00:00:00.042Z 42 42 42

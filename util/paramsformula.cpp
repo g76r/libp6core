@@ -149,13 +149,11 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
       } }, true },
   { "!-", { 1, 3, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue {
         auto x = stack->popeval(stack, context);
-        // empty (incl. null)
-        return x.as_utf8().isEmpty();
+        return !x || x.as_utf8().isEmpty(); // is empty (incl. null and nan)
       } }, true },
   { "?-", { 1, 3, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue {
         auto x = stack->popeval(stack, context);
-        // not empty (therefore not null)
-        return !x.as_utf8().isEmpty();
+        return !!x && !x.as_utf8().isEmpty(); // is not empty (neither null or nan)
       } }, true },
   { "~", { 1, 3, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue {
         bool ok;

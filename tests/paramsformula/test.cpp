@@ -153,6 +153,18 @@ int main(void) {
   qDebug() << "null:" << PercentEvaluator::eval("%{=rpn,<nan>,<nan>,<=>}");
   qDebug() << "0:" << PercentEvaluator::eval("%{=rpn,<nan>,<nan>,<=>*}");
   qDebug() << "true:" << PercentEvaluator::eval("%{=rpn,<nan>,<null>,==*}");
+  qDebug() << "true:" << PercentEvaluator::eval("%{=rpn,<nan>,!*}");
+  qDebug() << "true:" << PercentEvaluator::eval("%{=rpn,<null>,!*}");
+  qDebug() << "false:" << PercentEvaluator::eval("%{=rpn,,!*}");
+  qDebug() << "false:" << PercentEvaluator::eval("%{=rpn,<nan>,?*}");
+  qDebug() << "false:" << PercentEvaluator::eval("%{=rpn,<null>,?*}");
+  qDebug() << "true:" << PercentEvaluator::eval("%{=rpn,,?*}");
+  qDebug() << "true:" << PercentEvaluator::eval("%{=rpn,<nan>,!-}");
+  qDebug() << "true:" << PercentEvaluator::eval("%{=rpn,<null>,!-}");
+  qDebug() << "true:" << PercentEvaluator::eval("%{=rpn,,!-}");
+  qDebug() << "false:" << PercentEvaluator::eval("%{=rpn,<nan>,?-}");
+  qDebug() << "false:" << PercentEvaluator::eval("%{=rpn,<null>,?-}");
+  qDebug() << "false:" << PercentEvaluator::eval("%{=rpn,,?-}");
   qDebug() << TypedValue::compare_as_number_otherwise_string(42.0, 42, false)
            << TypedValue::compare_as_number_otherwise_string(42.0, 42, true)
            << TypedValue::compare_as_number_otherwise_string(42.0, "42", false)
