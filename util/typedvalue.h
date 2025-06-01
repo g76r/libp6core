@@ -37,10 +37,10 @@ struct LIBP6CORESHARED_EXPORT TypedValue {
 public:
   enum Type {
     Null = 0,
-    Unsigned8, Entity8, Bool1,
-    Signed8,
-    Float8,
-    Bytes, Utf8,
+    Unsigned8 = 0x40, Entity8 = 0x1, Bool1 = 0x41,
+    Signed8 = 0x42,
+    Float8 = 0x80,
+    Bytes = 0x2, Utf8,
     //UVector, SVector,
     Entity8Vector,
     FVector, PointF, SizeF, RectF, LineF,
@@ -50,6 +50,10 @@ public:
     Regexp,
     EmbeddedQVariant,
   };
+  static inline bool is_integral(Type t) { return t & 0x40; }
+  inline bool is_integral() const { return is_integral(type()); }
+  static inline bool is_arithmetic(Type t) { return t & (0x80|0x40); }
+  inline bool is_arithmetic() const { return is_arithmetic(type()); }
 
 private:
   struct LIBP6CORESHARED_EXPORT Value : QSharedData {
@@ -389,11 +393,6 @@ public:
   [[nodiscard]] static Utf8String typecode(Type type);
   [[nodiscard]] inline Utf8String typecode() const { return typecode(type()); }
   [[nodiscard]] static Type from_typecode(const Utf8String &typecode);
-  [[nodiscard]] static inline bool is_arithmetic(Type type) {
-    return type == Float8 || type == Unsigned8 || type == Signed8
-        || type == Bool1;
-  }
-  [[nodiscard]] bool is_arithmetic() { return is_arithmetic(type()); }
 
   // regular data access //////////////////////////////////////////////////////
   TypedValue(bool b) : d(new Bool1Value{b}) { }
@@ -600,8 +599,11 @@ public:
       Type type, const Utf8String &unquoted_etv);
 
   // operations ///////////////////////////////////////////////////////////////
+  /** return bitwise or between this and other, don't change this
+   *  return {} if this or other can't be converted to unsigned8 and
+   *  pretend_null_or_invalid_as_zero is false */
   template <bool pretend_null_or_invalid_as_zero = false>
-  [[nodiscard]] TypedValue bitwise_or(const TypedValue &other) {
+  [[nodiscard]] TypedValue bitwise_or(const TypedValue &other) const {
     bool ok1, ok2;
     uint64_t x = as_unsigned8(0, &ok1), y = other.as_unsigned8(0, &ok2);
     if constexpr (pretend_null_or_invalid_as_zero)
@@ -610,8 +612,11 @@ public:
       return x|y;
     return {};
   }
+  /** return bitwise and between this and other, don't change this
+   *  return {} if this or other can't be converted to unsigned8 and
+   *  pretend_null_or_invalid_as_zero is false */
   template <bool pretend_null_or_invalid_as_zero = false>
-  [[nodiscard]] TypedValue bitwise_and(const TypedValue &other) {
+  [[nodiscard]] TypedValue bitwise_and(const TypedValue &other) const {
     bool ok1, ok2;
     uint64_t x = as_unsigned8(0, &ok1), y = other.as_unsigned8(0, &ok2);
     if constexpr (pretend_null_or_invalid_as_zero)
@@ -620,8 +625,11 @@ public:
       return x&y;
     return {};
   }
+  /** return bitwise xor between this and other, don't change this
+   *  return {} if this or other can't be converted to unsigned8 and
+   *  pretend_null_or_invalid_as_zero is false */
   template <bool pretend_null_or_invalid_as_zero = false>
-  [[nodiscard]] TypedValue bitwise_xor(const TypedValue &other) {
+  [[nodiscard]] TypedValue bitwise_xor(const TypedValue &other) const {
     bool ok1, ok2;
     uint64_t x = as_unsigned8(0, &ok1), y = other.as_unsigned8(0, &ok2);
     if constexpr (pretend_null_or_invalid_as_zero)
@@ -630,8 +638,11 @@ public:
       return x^y;
     return {};
   }
+  /** return string concatenation between this and other, don't change this
+   *  return {} if this or other can't be converted to utf8 and
+   *  pretend_null_or_invalid_as_zero is false */
   template <bool pretend_null_or_invalid_as_empty = false>
-  [[nodiscard]] TypedValue concat(const TypedValue &other) {
+  [[nodiscard]] TypedValue concat(const TypedValue &other) const {
     bool ok1, ok2;
     Utf8String x = as_utf8(&ok1), y = other.as_utf8(&ok2);
     if constexpr (pretend_null_or_invalid_as_empty)
@@ -640,6 +651,26 @@ public:
       return x+y;
     return {};
   }
+  /** return a+b using best suited arithmetic type, checking integer overflow
+   *  return {} if an operand can't be converted to a number type
+   *  return {} if both operands are integers and the operation overflows */
+  [[nodiscard]] static TypedValue add(TypedValue a, TypedValue b);
+  /** return a-b using best suited arithmetic type, checking integer overflow
+   *  return {} if an operand can't be converted to a number type
+   *  return {} if both operands are integers and the operation overflows */
+  [[nodiscard]] static TypedValue sub(TypedValue a, TypedValue b);
+  /** return a*b using best suited arithmetic type, checking integer overflow
+   *  return {} if an operand can't be converted to a number type
+   *  return {} if both operands are integers and the operation overflows */
+  [[nodiscard]] static TypedValue mul(TypedValue a, TypedValue b);
+  /** return a/b using best suited arithmetic type
+   *  if both operands are integral types, use euclidean division and return
+   *  integer quotient rather than floating point division
+   *  return {} if an operand can't be converted to a number type or b == 0 */
+  [[nodiscard]] static TypedValue div(TypedValue a, TypedValue b);
+  /** return remainder between a and b using best suited arithmetic type
+   *  return {} if an operand can't be converted to a number type or b == 0 */
+  [[nodiscard]] static TypedValue mod(TypedValue a, TypedValue b);
 
 private:
   QSharedDataPointer<Value> d;

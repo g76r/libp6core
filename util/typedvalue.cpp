@@ -306,6 +306,222 @@ TypedValue TypedValue::best_number_type(const Utf8String &utf8) {
   return ok ? u : TypedValue{};
 }
 
+using ArithmeticBinaryOperator = std::function<TypedValue(const TypedValue&,const TypedValue&)>;
+
+static inline TypedValue arithmetic_binary_operation_with_best_type(
+    TypedValue a, TypedValue b, ArithmeticBinaryOperator float8_op,
+    ArithmeticBinaryOperator unsigned8_op, ArithmeticBinaryOperator signed8_op,
+    ArithmeticBinaryOperator bool1_op) {
+  auto ta = a.type(), tb = b.type();
+  bool ok;
+  using enum TypedValue::Type;
+  // first: convert non arithmetic types (incl. utf8) if possible
+  if (!TypedValue::is_arithmetic(ta)) {
+    a = TypedValue::best_number_type(a.as_utf8());
+    ta = a.type();
+    if (ta == Null)
+      return {};
+  }
+  if (!TypedValue::is_arithmetic(tb)) {
+    b = TypedValue::best_number_type(b.as_utf8());
+    tb = b.type();
+    if (tb == Null)
+      return {};
+  }
+  // at this point both ta and tb are arithmetic types
+  // try float8 first because we don't want to loose the fractionnal part by
+  // wrongly converting a float8 to an integral type
+  if (ta == Float8) {
+    if (tb == Unsigned8 || tb == Bool1) {
+      b = b.as_float8(&ok);
+      if (!ok)
+        return {};
+    } else if (tb == Signed8) {
+      b = b.as_float8(&ok);
+      if (!ok)
+        return {};
+    } else {
+      // tb == Float8 nothing to convert
+    }
+    return float8_op(a, b);
+  }
+  if (tb == Float8) {
+    if (ta == Unsigned8 || ta == Bool1) {
+      a = a.as_float8(&ok);
+      if (!ok)
+        return {};
+    } else if (ta == Signed8) {
+      a = a.as_float8(&ok);
+      if (!ok)
+        return {};
+    } else {
+      // should never happen
+    }
+    return float8_op(a, b);
+  }
+  // at this point both ta and tb are integral types
+  // process negative numbers as signed8 and keep signed8 if both operands are
+  // signed8 otherwise convert signed8 to unsigned8 and carry on
+  if (ta == Signed8) {
+    if (tb == Signed8)
+      return signed8_op(a, b);
+    auto i = a.signed8();
+    if (i < 0) {
+      b = b.as_signed8(&ok);
+      if (!ok)
+        return {};
+      return signed8_op(a, b);
+    }
+    a = a.as_unsigned8(); // convert to unsigned8 because b is not a signed8
+  }
+  if (tb == Signed8) {
+    auto i = b.signed8();
+    if (i < 0) {
+      a = a.as_signed8(&ok);
+      if (!ok)
+        return {};
+      return signed8_op(a, b);
+    }
+  }
+  // at this point both ta and tb are Unsigned8 or Bool1
+  // convert bool1 to unsigned8 but if both operand are bool1
+  if (ta == Bool1) {
+    if (tb == Bool1)
+      return bool1_op(a, b);
+    a = a.as_unsigned8();
+  } else {
+    if (tb == Bool1)
+      b = b.as_unsigned8();
+  }
+  return unsigned8_op(a, b);
+}
+
+TypedValue TypedValue::add(TypedValue a, TypedValue b) {
+  return arithmetic_binary_operation_with_best_type(
+        a, b, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+    return a.float8()+b.float8();
+  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+    // C++26: use ckd_add
+#if __has_builtin(__builtin_add_overflow)
+    unsigned long long u;
+    return __builtin_uaddll_overflow(a.unsigned8(), b.unsigned8(), &u) ? TypedValue{} : u;
+#else
+    return a.unsigned8()+b.unsigned8();
+#endif
+  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+    // C++26: use ckd_add
+#if __has_builtin(__builtin_add_overflow)
+    signed long long i;
+    return __builtin_saddll_overflow(a.signed8(), b.signed8(), &i) ? TypedValue{} : i;
+#else
+    return a.signed8()+b.signed8();
+#endif
+  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+    return a.bool1()+b.bool1();
+  });
+}
+
+TypedValue TypedValue::sub(TypedValue a, TypedValue b) {
+  return arithmetic_binary_operation_with_best_type(
+        a, b, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+    return a.float8()-b.float8();
+  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+    auto ua = a.unsigned8(), ub = b.unsigned8();
+    if (ub > ua) {
+      // the result is < 0, try to make it fit in a signed8
+      if (ub < std::numeric_limits<int64_t>::max()
+          && ua < std::numeric_limits<int64_t>::max())
+        return (int64_t)ua-(int64_t)ub;
+      return {};
+    }
+    // C++26: use ckd_sub
+#if __has_builtin(__builtin_sub_overflow)
+    unsigned long long u;
+    return __builtin_usubll_overflow(a.unsigned8(), b.unsigned8(), &u) ? TypedValue{} : u;
+#else
+    return a.unsigned8()-b.unsigned8();
+#endif
+  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+    // C++26: use ckd_sub
+#if __has_builtin(__builtin_sub_overflow)
+    signed long long i;
+    return __builtin_ssubll_overflow(a.signed8(), b.signed8(), &i) ? TypedValue{} : i;
+#else
+    return a.signed8()-b.signed8();
+#endif
+  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+    return a.bool1()-b.bool1();
+  });
+}
+
+TypedValue TypedValue::mul(TypedValue a, TypedValue b) {
+  return arithmetic_binary_operation_with_best_type(
+        a, b, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+    return a.float8()*b.float8();
+  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+    // C++26: use ckd_mul
+#if __has_builtin(__builtin_mul_overflow)
+    unsigned long long u;
+    return __builtin_umulll_overflow(a.unsigned8(), b.unsigned8(), &u) ? TypedValue{} : u;
+#else
+#warning TypedValue::{multiply,add,substract,divide,modulo} w/o checked overflow
+    return a.unsigned8()*b.unsigned8();
+#endif
+  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+    // C++26: use ckd_mul
+#if __has_builtin(__builtin_mul_overflow)
+    signed long long i;
+    return __builtin_smulll_overflow(a.signed8(), b.signed8(), &i) ? TypedValue{} : i;
+#else
+    return a.signed8()*b.signed8();
+#endif
+  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+    return a.bool1()*b.bool1();
+  });
+}
+
+TypedValue TypedValue::div(TypedValue a, TypedValue b) {
+  return arithmetic_binary_operation_with_best_type(
+        a, b, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+    return a.float8()/b.float8();
+  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+    auto u = b.unsigned8();
+    if (u == 0)
+      return {};
+    return a.unsigned8()/u;
+  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+    auto i = b.signed8();
+    if (i == 0)
+      return {};
+    return a.signed8()/i;
+  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+    if (!b.bool1())
+      return {};
+    return a.bool1();
+  });
+}
+
+TypedValue TypedValue::mod(TypedValue a, TypedValue b) {
+  return arithmetic_binary_operation_with_best_type(
+        a, b, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+    return std::fmod(a.float8(), b.float8());
+  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+    auto u = b.unsigned8();
+    if (u == 0)
+      return {};
+    return a.unsigned8()%u;
+  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+    auto i = b.signed8();
+    if (i == 0)
+      return {};
+    return a.signed8()%i;
+  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+    if (!b.bool1())
+      return {};
+    return a.bool1();
+  });
+}
+
 // Unsigned8Value /////////////////////////////////////////////////////////////
 
 Type TypedValue::Unsigned8Value::type() const {
