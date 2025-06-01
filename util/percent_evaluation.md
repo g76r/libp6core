@@ -701,6 +701,7 @@ please note that:
 - `<null>` and `<nil>` which are synonymous and hold a null value (a null
   TypedValue)
 - `<pi>` holds Archimedes' constant
+- `<nan>` not a number floating point constant
 - `:=:` (and its `<swap>` synonymous) swaps the two previous values in the stack
   e.g. `%{=rpn,5,4,:=:,-}` -> -1
 - `<dup>` duplicates previous value e.g. `%{=rpn,4,<dup>,*}` -> 16

@@ -395,7 +395,7 @@ _functions {
   auto formula = _rpn_cache.get_or_create(expr, [&]() {
     return ParamsFormula(expr, ParamsFormula::RpnWithPercents);
   });
-  return formula.eval(context, {});
+  return formula.eval(context);
 }, true},
 { "=int64", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> TypedValue {
   auto params = key.split_headed_list(ml);

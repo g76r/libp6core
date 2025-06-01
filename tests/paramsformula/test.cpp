@@ -1,6 +1,5 @@
 #include "util/paramset.h"
 #include "util/paramsformula.h"
-#include "util/mathutils.h"
 #include <QDateTime>
 
 QDebug operator<<(QDebug dbg, std::partial_ordering po) {
@@ -29,9 +28,12 @@ int main(void) {
   qDebug() << PercentEvaluator::eval_utf8(": %{=rpn,1,,+}");
   qDebug() << PercentEvaluator::eval("%{=rpn,1,,+}");
   qDebug() << PercentEvaluator::eval_utf8("2: %{=rpn,1,true,+}");
-  qDebug() << "true" << PercentEvaluator::eval("%{=rpn,1,true,&&}");
-  qDebug() << "null" << PercentEvaluator::eval("%{=rpn,<null>,true,&&}");
-  //qDebug() << "false" << PercentEvaluator::eval("%{=rpn,<null>,true,&&*}");
+  qDebug() << "true:" << PercentEvaluator::eval("%{=rpn,1,true,&&}");
+  qDebug() << "null:" << PercentEvaluator::eval("%{=rpn,<null>,true,&&}");
+  qDebug() << "true:" << PercentEvaluator::eval("%{=rpn,0,true,||}");
+  qDebug() << "false:" << PercentEvaluator::eval("%{=rpn,1,true,^^}");
+  qDebug() << "true:" << PercentEvaluator::eval("%{=rpn,0,true,^^}");
+  qDebug() << "null:" << PercentEvaluator::eval("%{=rpn,<null>,true,^^}");
   qDebug() << "160 (0xa0): %{=rpn,0xaa,0xf0,&}" % e;
   qDebug() << "250 (0xfa): %{=rpn,0xaa,0xf0,|}" % e;
   qDebug() << "90 (0x5a): %{=rpn,0xaa,0xf0,^}" % e;
@@ -42,6 +44,7 @@ int main(void) {
   qDebug() << PercentEvaluator::eval_utf8("33: %{=rpn,0x20,%x,+}", &x1);
   qDebug() << PercentEvaluator::eval_utf8("33.5: %{=rpn,0x20,%x,+}", &x1_5);
   qDebug() << PercentEvaluator::eval_utf8("2001.5: %{=rpn,2k,%x,+}", &x1_5);
+  qDebug() << PercentEvaluator::eval_utf8("2001.5: %{=rpn,.2e4,%x,+}", &x1_5);
   qDebug() << PercentEvaluator::eval("%{=rpn,2k,%x,+}", &x1_5);
   qDebug() << 4 << "%{=rpn,2,1,==,3,%x,:?}" % x4;
   qDebug() << 4 << "%{=rpn,%x,3,2,1,==,?:}" % x4;
@@ -56,16 +59,16 @@ int main(void) {
   qDebug() << PercentEvaluator::eval_utf8("true: %{=rpn,aabcdaa,%x,=~}", &xa_d);
   qDebug() << PercentEvaluator::eval_utf8("7: %{=rpn,foo§bar,#}");
   qDebug() << PercentEvaluator::eval_utf8("8: %{=rpn,foo§bar,##}");
-  qDebug() << PercentEvaluator::eval_utf8("1: %{=rpn,5,4,-}");
-  qDebug() << PercentEvaluator::eval_utf8("-1: %{=rpn,5,4,:=:,-}");
+  qDebug() << PercentEvaluator::eval_utf8("-1: %{=rpn,5,4,-}");
+  qDebug() << PercentEvaluator::eval_utf8("1: %{=rpn,5,4,:=:,-}");
   qDebug() << PercentEvaluator::eval_utf8("16: %{=rpn,4,<dup>,*}");
   qDebug() << PercentEvaluator::eval_utf8(": %{=rpn,*}");
-  qDebug() << "ø: "+ParamsFormula(",*", ParamsFormula::RpnWithPercents).eval_utf8({}, "ø");
-  qDebug() << "ø: "+ParamsFormula(",<nil>,<nil>,@", ParamsFormula::RpnWithPercents).eval_utf8({}, "ø");
-  qDebug() << "ø: "+ParamsFormula(",<nil>,a,@", ParamsFormula::RpnWithPercents).eval_utf8({}, "ø");
-  qDebug() << "a: "+ParamsFormula(",<nil>,a,@*", ParamsFormula::RpnWithPercents).eval_utf8({}, "ø");
-  qDebug() << "ø: "+ParamsFormula(",1,<nil>,*", ParamsFormula::RpnWithPercents).eval_utf8({}, "ø");
-  qDebug() << "ø: "+ParamsFormula(",1,foo,*", ParamsFormula::RpnWithPercents).eval_utf8({}, "ø");
+  qDebug() << "null: " << ParamsFormula(",*", ParamsFormula::RpnWithPercents).eval({});
+  qDebug() << "null: " << ParamsFormula(",<nil>,<nil>,@", ParamsFormula::RpnWithPercents).eval({});
+  qDebug() << "null: " << ParamsFormula(",<nil>,a,@", ParamsFormula::RpnWithPercents).eval({});
+  qDebug() << "a: " << ParamsFormula(",<nil>,a,@*", ParamsFormula::RpnWithPercents).eval({});
+  qDebug() << "null: " << ParamsFormula(",1,<nil>,*", ParamsFormula::RpnWithPercents).eval({});
+  qDebug() << "null: " << ParamsFormula(",1,foo,*", ParamsFormula::RpnWithPercents).eval({});
   ParamSet p { "foo", "bar", "empty", "", "x", "42" };
   qDebug() << PercentEvaluator::eval_utf8(
               "%{=rpn,%empty,?-}=false %{=rpn,%empty,?*}=true "
@@ -81,8 +84,8 @@ int main(void) {
   qDebug() << "18446744073709551614:" << PercentEvaluator::eval("%{=rpn,0xfffffffffffffffe,~~}");
   qDebug() << "-7:" << PercentEvaluator::eval("%{=rpn,-7,~~}");
   qDebug() << "18446744073709551614:" << "0xfffffffffffffffe"_u8.toULongLong();
-  qDebug() << PercentEvaluator::eval_utf8("%{=rpn,ø,%x,true,&&,??*}=true %{=rpn,ø,%x,%empty,&&,??*}=ø "
-              "%{=rpn,ø,%x,%nonexistent,&&,??*}=ø %{=rpn,<pi>}=3.141592653589793 "
+  qDebug() << PercentEvaluator::eval_utf8("%{=rpn,ø,%x,true,&&,??*}=true %{=rpn,%x,%empty,&&,ø,:=:,??*}=ø "
+              "%{=rpn,%x,%nonexistent,&&,ø,:=:,??*}=ø %{=rpn,<pi>}=3.141592653589793 "
               "%{=rpn,<null>}= %{=rpn,,?*}=true %{=rpn,<nil>,?*}=false", &p);
   qDebug() << PercentEvaluator::eval_utf8("%{=rpn,%foo}=bar %{=rpn,foo}=foo "
               "%{=rpn,%%foo}=%foo",
@@ -101,6 +104,7 @@ int main(void) {
   p.insert("f4", f4);
   p.insert("i1", i1);
   p.insert("f5", f5);
+  p.insert("zerof", TypedValue(0.0));
   qDebug() << "nan"_u8.toDouble() << "NAN"_u8.toDouble() << "NaN"_u8.toDouble()
            << "inf"_u8.toDouble() << "INF"_u8.toDouble() << "-inf"_u8.toDouble();
   qDebug() << "float8() TypedValue isnull isnan isfinite isinf";
@@ -111,19 +115,24 @@ int main(void) {
   qDebug() << i1.float8() << i1 << !i1 << std::isnan(i1) << std::isfinite(i1) << std::isinf(i1);
   qDebug() << s1.float8() << s1 << !s1 << std::isnan(s1) << std::isfinite(s1) << std::isinf(s1);
   qDebug() << PercentEvaluator::eval_utf8(
-                "%{=rpn,%ts1,42,~~,3.14,0,+,<etvs>}=ts{2023-09-20T13:14:00.760},i8{42},f8{3.14}   "
-                "%{=rpn,%ts1,42,~~,3.14,0,+,<typecodes>}=ts,i8,f8   "
-                "%{=rpn,3.14,0,+,<etv>}=f8{3.14}   "
-                "%{=rpn,3.14,0,+,<typeid>}=5   ",
-                &p);
+                "%{=rpn,%ts1,42,~~,3.14,0,+,<etvs>}=ts{2023-09-20T13:14:00.760},i8{42},f8{3.14} "
+                "%{=rpn,%ts1,42,~~,3.14,0,+,<typecodes>}=ts,i8,f8 "
+                "%{=rpn,3.14,0,+,<etv>}=f8{3.14} "
+                "%{=rpn,3.14,0,+,<typeid>}=128", &p);
   qDebug() << p.paramValue("f1") << f1 << "%f1"_u8 % p;
   qDebug() << PercentEvaluator::eval_utf8(
                 "%{=switch:%f5:%i1:good:bad} %{=switch:%f4:3.14:good:bad} "
                 "%{=switch:%f1::good:bad} %{=switch:::good:bad} "
                 "%{=switch:%notexist::good:bad} %{=switch:%f3:inf:good:bad} "
-                "%{=rpn,0,0.0,/}=nan %{=switch:%{=rpn,0,0.0,/}:foo:}=nan "
-                "%{=switch:%{=rpn,0,0.0,/}:nan:good:bad} ",
-                &p);
+                "%{=rpn,0,0,/,<typeid>}=0 %{=switch:%{=rpn,<nan>}:foo:}=nan "
+                "%{=switch:%{=rpn,0,1.1,/}:foo:}=inf "
+                "%{=switch:%{=rpn,0,0,/}::good:bad} "
+                "%{=switch:%{=rpn,<nan>}:nan:good:bad} ", &p);
+  qDebug() << "null:" << PercentEvaluator::eval("%{=rpn,0,0,/}"); // divide by 0 (unsigned8: null)
+  qDebug() << "inf:" << PercentEvaluator::eval("%{=rpn,0,1.1,/}"); // divide by 0 (float8: inf)
+  qDebug() << "nan:" << PercentEvaluator::eval("%{=rpn,0,%zerof,/}", &p); // divide 0 by 0 (float8: nan)
+  qDebug() << "nan:" << PercentEvaluator::eval("%{=rpn,<nan>}");
+  qDebug() << "nan:" << TypedValue(std::nan(""));
   qDebug() << TypedValue::compare_as_number_otherwise_string(42.0, 42, false)
            << TypedValue::compare_as_number_otherwise_string(42.0, 42, true)
            << TypedValue::compare_as_number_otherwise_string(42.0, "42", false)

@@ -100,7 +100,6 @@ SOURCES *= \
     httpd/templatinghttphandler.cpp \
     mail/mailsender.cpp \
     textview/clockview.cpp \
-    util/mathutils.cpp \
     modelview/paramsetmodel.cpp \
     textview/csvtableview.cpp \
     textview/texttableview.cpp \
@@ -216,7 +215,6 @@ HEADERS *=\
     httpd/templatinghttphandler.h \
     mail/mailsender.h \
     textview/clockview.h \
-    util/mathutils.h \
     textview/csvtableview.h \
     textview/texttableview.h \
     httpd/httpcommon.h \

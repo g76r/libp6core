@@ -1,12 +1,16 @@
 "3: 3"
-i8{3}
+u8{3}
 "6: 6"
 "51: 51"
 ": "
 null{}
 "2: 2"
-true b{true}
-null null{}
+true: b{true}
+null: null{}
+true: b{true}
+false: b{false}
+true: b{true}
+null: null{}
 "160 (0xa0): 160"
 "250 (0xfa): 250"
 "90 (0x5a): 90"
@@ -16,6 +20,7 @@ null null{}
 "true: true"
 "33: 33"
 "33.5: 33.5"
+"2001.5: 2001.5"
 "2001.5: 2001.5"
 f8{2001.5}
 4 "4"
@@ -31,18 +36,21 @@ null null{}
 "true: true"
 "7: 7"
 "8: 8"
-"1: 1"
 "-1: -1"
+"1: 1"
 "16: 16"
 ": "
-"ø: ø"
-"ø: ø"
-"ø: ø"
-"a: a"
-"ø: ø"
-"ø: ø"
+null:  null{}
+null:  null{}
+null:  null{}
+a:  "a"
+null:  null{}
+null:  null{}
 "false=false true=true false=false false=false bar=bar = bar=bar bar=bar true=true ø=ø false=false ø=ø "
 "bar=bar ø=ø ø=ø ø=ø 18446744073709551615=18446744073709551615 falseabc=falseabc "
+18446744073709551614: u8{18446744073709551614}
+-7: i8{-7}
+18446744073709551614: 18446744073709551614
 "true=true ø=ø ø=ø 3.141592653589793=3.141592653589793 = true=true false=false"
 "bar=bar foo=foo %foo=bar"
 "ztrue=ztrue dt:2023-09-20 00:00:00,000=dt:2023-09-20 00:00:00,000 dt:2023-09-20 00:00:00,000=dt:2023-09-20 00:00:00,000 3=3"
@@ -54,9 +62,14 @@ inf f8{inf} false false false true
 3.14 f8{3.14} false false true false
 nan i8{42} false false false false
 nan "§§" false false false false
-"ts{2023-09-20T13:14:00.760},i8{42},f8{3.14}=ts{2023-09-20T13:14:00.760},i8{42},f8{3.14}   ts,i8,f8=ts,i8,f8   f8{3.14}=f8{3.14}   5=5   "
+"ts{2023-09-20T13:14:00.760},u8{42},f8{3.14}=ts{2023-09-20T13:14:00.760},i8{42},f8{3.14} ts,u8,f8=ts,i8,f8 f8{3.14}=f8{3.14} 128=128"
 null{} f8{nan} null{}
-"good good good good good good nan=nan nan=nan good "
+"good good good good good good 0=0 nan=nan inf=inf good good "
+null: null{}
+inf: f8{inf}
+nan: f8{nan}
+nan: f8{nan}
+nan: f8{nan}
 equivalent equivalent equivalent equivalent greater greater equivalent equivalent i8{42} f8[]{42}
 unordered equivalent unordered equivalent unordered equivalent less
 equivalent equivalent i8{42} ts{1970-01-01T00:00:00.042Z} 1970-01-01T00:00:00.042Z 42 42 42

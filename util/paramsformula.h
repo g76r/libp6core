@@ -34,11 +34,11 @@ class LIBP6CORESHARED_EXPORT ParamsFormula final {
 public:
   using EvalContext = PercentEvaluator::EvalContext;
   using UnaryOperator = std::function<TypedValue(const EvalContext &context,
-  const TypedValue &def, const TypedValue &x)>;
+  const TypedValue &x)>;
   using BinaryOperator = std::function<TypedValue(const EvalContext &context,
-  const TypedValue &def, const TypedValue &x, const TypedValue &y)>;
+  const TypedValue &x, const TypedValue &y)>;
   using TernaryOperator = std::function<TypedValue(const EvalContext &context,
-  const TypedValue &def, const TypedValue &x, const TypedValue &y,
+  const TypedValue &x, const TypedValue &y,
   const TypedValue &z)>;
   enum FormulaDialect {
     InvalidFormula = 0,
@@ -71,11 +71,10 @@ public:
   [[nodiscard]] inline bool operator!() const noexcept { return !isValid(); }
   [[nodiscard]] Utf8String expr() const noexcept;
   [[nodiscard]] FormulaDialect dialect() const noexcept;
-  [[nodiscard]] TypedValue eval(
-      const EvalContext &context = {}, const TypedValue &def = {}) const;
+  [[nodiscard]] TypedValue eval(const EvalContext &context = {}) const;
   [[nodiscard]] inline Utf8String eval_utf8(
-      const EvalContext &context = {}, const TypedValue &def = {}) const {
-    return eval(context, def).as_utf8();
+      const EvalContext &context = {}) const {
+    return eval(context).as_utf8();
   }
   static void register_operator(const Utf8String &symbol, UnaryOperator op);
   static void register_operator(const Utf8String &symbol, BinaryOperator op);
