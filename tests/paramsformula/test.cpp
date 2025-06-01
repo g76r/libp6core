@@ -133,6 +133,14 @@ int main(void) {
   qDebug() << "nan:" << PercentEvaluator::eval("%{=rpn,0,%zerof,/}", &p); // divide 0 by 0 (float8: nan)
   qDebug() << "nan:" << PercentEvaluator::eval("%{=rpn,<nan>}");
   qDebug() << "nan:" << TypedValue(std::nan(""));
+  qDebug() << "null:" << TypedValue::best_number_type("100000P"); // integer overflow
+  qDebug() << "1e20:" << TypedValue::best_number_type("100000.0P");
+  qDebug() << "null:" << TypedValue::best_number_type("100000P", true); // still integer overflow since there is no . or e
+  qDebug() << "1e20:" << TypedValue::best_number_type("100000.0P", true);
+  qDebug() << "1.0:" << TypedValue::best_number_type("1.0");
+  qDebug() << "1:" << TypedValue::best_number_type("1.0", true); // here we guess it's an integer despite the .
+  qDebug() << "null:" << PercentEvaluator::eval("%{=rpn,100000P,1,*}");
+  qDebug() << "1e20:" << PercentEvaluator::eval("%{=rpn,100000.0P,1,*}");
   qDebug() << TypedValue::compare_as_number_otherwise_string(42.0, 42, false)
            << TypedValue::compare_as_number_otherwise_string(42.0, 42, true)
            << TypedValue::compare_as_number_otherwise_string(42.0, "42", false)

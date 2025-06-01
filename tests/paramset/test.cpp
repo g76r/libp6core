@@ -43,9 +43,13 @@ int main(void) {
   qDebug() << PercentEvaluator::eval_utf8(
                 "%{=rpn,%{=int64:-3.14},%{=uint64:3.14},%{=double:3.14},%{=bool:3.14},3.14,%s2,%does_not_exists,<etvs>}"
                 "=i8{-3},u8{3},f8{3.14},b{true},\"3.14\",\"b\",null{}", &p);
-  qDebug() << PercentEvaluator::eval_utf8( // overflows
-                "%{=int64:1e50}= %{=int64:10000P}= %{=rpn,4G,4G,*}= "
-                "%{=rpn,4.0G,4G,*}=1.6e+19");
+  qDebug() << PercentEvaluator::eval_utf8(
+                "%{=int64:1e50}= %{=int64:10000P}= " // both overflows
+                "%{=rpn,4G,4G,*}=16000000000000000000 " // still fit in an unsigned8
+                "%{=rpn,-4G,4G,*}= " // overflows a signed8
+                "%{=rpn,4.0G,4G,*}=1.6e+19"
+                "%{=rpn,8G,4G,*}= " // overflows an unsigned8
+                "%{=rpn,8.0G,4G,*}=3.2e+19 ");
   qDebug() << PercentEvaluator::eval_utf8("%{=uppercase:fooǆ}|%{=lowercase:fooǆ}|%{=titlecase:fooǆ}");
   qDebug() << PercentEvaluator::eval_utf8("%{=sub;Foo_Barǆ;/_/-/g↑}|%{=sub;Foo_Barǆ;/_/-/g↓}");
   qDebug() << PercentEvaluator::eval_utf8("%{=sub;Foo_Bar;/O/z/gi}=Fzz_Bar %{=sub;Foo_Bar;/O/z/g}=Foo_Bar %{=sub;Foo_Bar;/(?i)O/z/g}=Fzz_Bar");

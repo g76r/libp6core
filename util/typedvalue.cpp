@@ -253,7 +253,9 @@ std::partial_ordering TypedValue::compare_as_number_otherwise_string(
   return sa <=> sb; // Utf8String::operator<=>() processes null as empty
 }
 
-TypedValue TypedValue::best_number_type(const Utf8String &utf8) {
+TypedValue TypedValue::best_number_type(
+    const Utf8String &utf8,
+    bool use_integral_types_despite_floating_notation_if_possible) {
   auto s = utf8.constData(), begin = s, end = s+utf8.length();
   bool ok;
   if (!s)
@@ -287,14 +289,16 @@ TypedValue TypedValue::best_number_type(const Utf8String &utf8) {
           auto d = utf8.toDouble(&ok);
           if (!ok)
             return {};
-          double i;
-          std::modf(d, &i);
-          if (d != i)
-            return d;
-          if (double_fits_in_integral_type<uint64_t>(d))
-            return (uint64_t)d;
-          if (double_fits_in_integral_type<int64_t>(d))
-            return (int64_t)d;
+          if (use_integral_types_despite_floating_notation_if_possible) {
+            double i;
+            std::modf(d, &i);
+            if (d != i)
+              return d;
+            if (double_fits_in_integral_type<uint64_t>(d))
+              return (uint64_t)d;
+            if (double_fits_in_integral_type<int64_t>(d))
+              return (int64_t)d;
+          }
           return d;
         }
     }

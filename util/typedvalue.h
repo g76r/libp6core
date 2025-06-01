@@ -529,13 +529,24 @@ public:
   explicit TypedValue(const QVariant &v);
   /** create a TypedValue with best matching number type from a text
    *  representation.
-   *  "1.2" -> Float8
-   *  "1" or "1.0" or "1e3" or "1.2k" -> Unsigned8
-   *  "-1" or "-1.0" -> Signed8
+   *
+   *  examples:
+   *  "1.2" or "1.0" or "1e3" or "1.2k" or "-1.0" or "100000.0P" -> Float8
+   *  "1" or "1k" or "0xe" -> Unsigned8
+   *  "-1" or "-1G" -> Signed8
    *  "true" or "false" -> Bool1
-   *  "" or "foo" -> Null
+   *  "" or "foo" or "100000P" -> Null
+   *
+   *  if use_integral_types_with_floating_notation_if_possible is true, then:
+   *  "1.2" or "100000.0P" -> Float8
+   *  "1" or "1k" or "0xe" or "1.0" or "1e3" or "1.2k"  -> Unsigned8
+   *  "-1" or "-1G" or "-1.0" -> Signed8
+   *  "true" or "false" -> Bool1
+   *  "" or "foo" or "100000P" -> Null
    */
-  static TypedValue best_number_type(const Utf8String &utf8);
+  static TypedValue best_number_type(
+      const Utf8String &utf8,
+      bool use_integral_types_despite_floating_notation_if_possible = false);
   /** conversion helper for QString */
   [[nodiscard]] QString as_utf16() const;
   [[deprecated]] QString toString() const;
