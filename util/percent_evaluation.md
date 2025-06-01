@@ -694,10 +694,10 @@ please note that:
 - `& ^ |` will return null if one of their operands is not convertible
   to an integer
 - `<?` and `>?` are min and max operators (`%{=rpn,abc,ABC,<?}` -> ABC
-  and `%{=rpn,100,~~,20,~~,>?}` -> 100), they pretend a null, invalid or
-  unconvertible operand to be an empty string
-- `<?*` and `>?*` do the same but will return null as soon as one of their
-  operand is null, invalid or unconvertible
+  and `%{=rpn,100,~~,20,~~,>?}` -> 100), and will return null as soon as one of
+  their operand is null, invalid or unconvertible
+- `<?*` and `>?*` do the same but will pretend a null invalid or unconvertible
+  operand is an empty string
 - `<null>` and `<nil>` which are synonymous and hold a null value (a null
   TypedValue)
 - `<pi>` holds Archimedes' constant

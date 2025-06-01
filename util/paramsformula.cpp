@@ -224,7 +224,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { "<?", { 2, 7, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context);
         auto x = stack->popeval(stack, context);
-        auto po = TypedValue::compare_as_number_otherwise_string(x, y, true);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y);
         if (po == QPartialOrdering::Less)
           return x;
         if (po == QPartialOrdering::Equivalent)
@@ -236,7 +236,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { ">?", { 2, 7, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context);
         auto x = stack->popeval(stack, context);
-        auto po = TypedValue::compare_as_number_otherwise_string(x, y, true);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y);
         if (po == QPartialOrdering::Less)
           return y;
         if (po == QPartialOrdering::Equivalent)
@@ -248,7 +248,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { "<?*", { 2, 7, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
         auto x = stack->popeval(stack, context);
         auto y = stack->popeval(stack, context);
-        auto po = TypedValue::compare_as_number_otherwise_string(x, y, false);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, true);
         if (po == QPartialOrdering::Less)
           return x;
         if (po == QPartialOrdering::Equivalent)
@@ -260,7 +260,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { ">?*", { 2, 7, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
         auto x = stack->popeval(stack, context);
         auto y = stack->popeval(stack, context);
-        auto po = TypedValue::compare_as_number_otherwise_string(x, y, false);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, true);
         if (po == QPartialOrdering::Less)
           return y;
         if (po == QPartialOrdering::Equivalent)
