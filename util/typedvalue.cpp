@@ -253,6 +253,59 @@ std::partial_ordering TypedValue::compare_as_number_otherwise_string(
   return sa <=> sb; // Utf8String::operator<=>() processes null as empty
 }
 
+TypedValue TypedValue::best_number_type(const Utf8String &utf8) {
+  auto s = utf8.constData(), begin = s, end = s+utf8.length();
+  bool ok;
+  if (!s)
+    return {};
+  bool ignore_e = false;
+  for (; s < end; ++s)
+    switch (*s) {
+      case 't':
+      case 's': {
+          // t and s are allowed only in "true" or "false" booleans
+          // and they are before the 'e' which avoids mistaking it for a float
+          // note: can't use f because of femto suffix and inf litteral, can't
+          // use a because of nan litteral
+          if (strcmp(begin, "true") == 0)
+            return true;
+          if (strcmp(begin, "false") == 0)
+            return false;
+          return {};
+        }
+      case 'x':
+        ignore_e = true;
+        break;
+      case 'e':
+      case 'E':
+        if (ignore_e)
+          break;
+        [[fallthrough]];
+      case '.': {
+          // . and e are not allowed in an integer (excepted hexadecimal), so it
+          // must be a float
+          auto d = utf8.toDouble(&ok);
+          if (!ok)
+            return {};
+          double i;
+          std::modf(d, &i);
+          if (d != i)
+            return d;
+          if (double_fits_in_integral_type<uint64_t>(d))
+            return (uint64_t)d;
+          if (double_fits_in_integral_type<int64_t>(d))
+            return (int64_t)d;
+          return d;
+        }
+    }
+  if (*begin == '-') {
+    auto i = utf8.toLongLong(&ok);
+    return ok ? i : TypedValue{};
+  }
+  auto u = utf8.toULongLong(&ok);
+  return ok ? u : TypedValue{};
+}
+
 // Unsigned8Value /////////////////////////////////////////////////////////////
 
 Type TypedValue::Unsigned8Value::type() const {

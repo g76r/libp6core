@@ -528,6 +528,15 @@ public:
   explicit inline TypedValue(char32_t c) : TypedValue(Utf8String{c}) { }
   TypedValue(const QString &utf16);
   explicit TypedValue(const QVariant &v);
+  /** create a TypedValue with best matching number type from a text
+   *  representation.
+   *  "1.2" -> Float8
+   *  "1" or "1.0" or "1e3" or "1.2k" -> Unsigned8
+   *  "-1" or "-1.0" -> Signed8
+   *  "true" or "false" -> Bool1
+   *  "" or "foo" -> Null
+   */
+  static TypedValue best_number_type(const Utf8String &utf8);
   /** conversion helper for QString */
   [[nodiscard]] QString as_utf16() const;
   [[deprecated]] QString toString() const;
