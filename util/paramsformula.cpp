@@ -272,7 +272,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { "<=>", { 2, 8, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context);
         auto x = stack->popeval(stack, context);
-        auto po = TypedValue::compare_as_number_otherwise_string(x, y, false);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y);
         if (po == QPartialOrdering::Less)
           return -1;
         if (po == QPartialOrdering::Equivalent)
@@ -284,7 +284,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { "<=", { 2, 9, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context);
         auto x = stack->popeval(stack, context);
-        auto po = TypedValue::compare_as_number_otherwise_string(x, y, false);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y);
         if (po == QPartialOrdering::Less)
           return true;
         if (po == QPartialOrdering::Equivalent)
@@ -296,7 +296,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { "<", { 2, 9, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context);
         auto x = stack->popeval(stack, context);
-        auto po = TypedValue::compare_as_number_otherwise_string(x, y, false);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y);
         if (po == QPartialOrdering::Less)
           return true;
         if (po == QPartialOrdering::Equivalent)
@@ -308,7 +308,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { ">=", { 2, 9, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context);
         auto x = stack->popeval(stack, context);
-        auto po = TypedValue::compare_as_number_otherwise_string(x, y, false);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y);
         if (po == QPartialOrdering::Less)
           return false;
         if (po == QPartialOrdering::Equivalent)
@@ -320,7 +320,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { ">", { 2, 9, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context);
         auto x = stack->popeval(stack, context);
-        auto po = TypedValue::compare_as_number_otherwise_string(x, y, false);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y);
         if (po == QPartialOrdering::Less)
           return false;
         if (po == QPartialOrdering::Equivalent)
@@ -332,7 +332,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { "==*", { 2, 10, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
         auto x = stack->popeval(stack, context);
         auto y = stack->popeval(stack, context);
-        auto po = TypedValue::compare_as_number_otherwise_string(x, y, false);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, true);
         if (po == QPartialOrdering::Less)
           return false;
         if (po == QPartialOrdering::Equivalent)
@@ -344,7 +344,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { "!=*", { 2, 10, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
         auto x = stack->popeval(stack, context);
         auto y = stack->popeval(stack, context);
-        auto po = TypedValue::compare_as_number_otherwise_string(x, y, false);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, true);
         if (po == QPartialOrdering::Less)
           return true;
         if (po == QPartialOrdering::Equivalent)
@@ -356,7 +356,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { "==", { 2, 10, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
         auto x = stack->popeval(stack, context);
         auto y = stack->popeval(stack, context);
-        auto po = TypedValue::compare_as_number_otherwise_string(x, y, true);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y);
         if (po == QPartialOrdering::Less)
           return false;
         if (po == QPartialOrdering::Equivalent)
@@ -368,7 +368,7 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { "!=", { 2, 10, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
         auto x = stack->popeval(stack, context);
         auto y = stack->popeval(stack, context);
-        auto po = TypedValue::compare_as_number_otherwise_string(x, y, true);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y);
         if (po == QPartialOrdering::Less)
           return true;
         if (po == QPartialOrdering::Equivalent)

@@ -668,12 +668,12 @@ please note that:
 - `??*` is a null coalescence operator (`%{=rpn,<null>,%foo,??,null,??*}` -> foo
   value, including empty if foo is set, even to an empty string, and otherwise
   "null"; `%{=rpn,,%foo,??*}` -> always return an empty string)
-- `==` and `!=` consider non set variable or any null TypedValue or valid
-  TypedValue not convertible to a number or string as if it were an empty
-  string, and thus always return either true or false
-- `==* !=* <=> <= >= < >` consider null TypedValue or TypedValue not
+- `== != <=> <= >= < >` consider null TypedValue or TypedValue not
   convertible to a number or string as impossible to compare and return null
   whatever the value of the other operand is
+- `==*` and `!=*` consider non set variable or any null TypedValue or valid
+  TypedValue not convertible to a number or string as if it were an empty
+  string, and thus always return either true or false
 - ?: and :? processe returns null if its test operand is null so that
   `%{=rpn,2,1,<null>,?:*}` -> null whereas ?:* and :?* process null test operand
   as if it were false so that `%{=rpn,2,1,<null>,?:}` -> 2
