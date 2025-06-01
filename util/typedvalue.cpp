@@ -606,13 +606,9 @@ int64_t TypedValue::Unsigned8Value::as_signed8(int64_t def, bool *ok) const {
   return def;
 }
 
-double TypedValue::Unsigned8Value::as_float8(double def, bool *ok) const {
-  if (p6::integral_type_fits_in_double(u)) {
-    if (ok) *ok = true;
-    return u;
-  }
-  if (ok) *ok = false;
-  return def;
+double TypedValue::Unsigned8Value::as_float8(double, bool *ok) const {
+  if (ok) *ok = true;
+  return u;
 }
 
 bool TypedValue::Unsigned8Value::as_bool1(bool, bool *ok) const {
@@ -724,13 +720,9 @@ uint64_t TypedValue::Signed8Value::as_unsigned8(uint64_t def, bool *ok) const {
   return def;
 }
 
-double TypedValue::Signed8Value::as_float8(double def, bool *ok) const {
-  if (p6::integral_type_fits_in_double(i)) {
-    if (ok) *ok = true;
-    return i;
-  }
-  if (ok) *ok = false;
-  return def;
+double TypedValue::Signed8Value::as_float8(double, bool *ok) const {
+  if (ok) *ok = true;
+  return i;
 }
 
 bool TypedValue::Signed8Value::as_bool1(bool, bool *ok) const {
