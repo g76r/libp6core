@@ -270,8 +270,8 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
         return {};
       } }, true },
   { "<=>", { 2, 8, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
-        auto y = stack->popeval(stack, context);
         auto x = stack->popeval(stack, context);
+        auto y = stack->popeval(stack, context);
         auto po = TypedValue::compare_as_number_otherwise_string(x, y);
         if (po == QPartialOrdering::Less)
           return -1;
@@ -282,8 +282,8 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
         return {};
       } }, true },
   { "<=", { 2, 9, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
-        auto y = stack->popeval(stack, context);
         auto x = stack->popeval(stack, context);
+        auto y = stack->popeval(stack, context);
         auto po = TypedValue::compare_as_number_otherwise_string(x, y);
         if (po == QPartialOrdering::Less)
           return true;
@@ -294,8 +294,8 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
         return {};
       } }, true },
   { "<", { 2, 9, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
-        auto y = stack->popeval(stack, context);
         auto x = stack->popeval(stack, context);
+        auto y = stack->popeval(stack, context);
         auto po = TypedValue::compare_as_number_otherwise_string(x, y);
         if (po == QPartialOrdering::Less)
           return true;
@@ -306,8 +306,8 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
         return {};
       } }, true },
   { ">=", { 2, 9, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
-        auto y = stack->popeval(stack, context);
         auto x = stack->popeval(stack, context);
+        auto y = stack->popeval(stack, context);
         auto po = TypedValue::compare_as_number_otherwise_string(x, y);
         if (po == QPartialOrdering::Less)
           return false;
@@ -318,9 +318,69 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
         return {};
       } }, true },
   { ">", { 2, 9, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
-        auto y = stack->popeval(stack, context);
         auto x = stack->popeval(stack, context);
+        auto y = stack->popeval(stack, context);
         auto po = TypedValue::compare_as_number_otherwise_string(x, y);
+        if (po == QPartialOrdering::Less)
+          return false;
+        if (po == QPartialOrdering::Equivalent)
+          return false;
+        if (po == QPartialOrdering::Greater)
+          return true;
+        return {};
+      } }, true },
+  { "<=>*", { 2, 8, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
+        auto x = stack->popeval(stack, context);
+        auto y = stack->popeval(stack, context);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, true);
+        if (po == QPartialOrdering::Less)
+          return -1;
+        if (po == QPartialOrdering::Equivalent)
+          return 0;
+        if (po == QPartialOrdering::Greater)
+          return 1;
+        return {};
+      } }, true },
+  { "<=*", { 2, 9, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
+        auto x = stack->popeval(stack, context);
+        auto y = stack->popeval(stack, context);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, true);
+        if (po == QPartialOrdering::Less)
+          return true;
+        if (po == QPartialOrdering::Equivalent)
+          return true;
+        if (po == QPartialOrdering::Greater)
+          return false;
+        return {};
+      } }, true },
+  { "<*", { 2, 9, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
+        auto x = stack->popeval(stack, context);
+        auto y = stack->popeval(stack, context);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, true);
+        if (po == QPartialOrdering::Less)
+          return true;
+        if (po == QPartialOrdering::Equivalent)
+          return false;
+        if (po == QPartialOrdering::Greater)
+          return false;
+        return {};
+      } }, true },
+  { ">=*", { 2, 9, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
+        auto x = stack->popeval(stack, context);
+        auto y = stack->popeval(stack, context);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, true);
+        if (po == QPartialOrdering::Less)
+          return false;
+        if (po == QPartialOrdering::Equivalent)
+          return true;
+        if (po == QPartialOrdering::Greater)
+          return true;
+        return {};
+      } }, true },
+  { ">*", { 2, 9, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
+        auto x = stack->popeval(stack, context);
+        auto y = stack->popeval(stack, context);
+        auto po = TypedValue::compare_as_number_otherwise_string(x, y, true);
         if (po == QPartialOrdering::Less)
           return false;
         if (po == QPartialOrdering::Equivalent)

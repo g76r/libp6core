@@ -142,6 +142,17 @@ int main(void) {
   qDebug() << "1:" << TypedValue::best_number_type("1.0", true); // here we guess it's an integer despite the .
   qDebug() << "null:" << PercentEvaluator::eval("%{=rpn,100000P,1,*}");
   qDebug() << "1e20:" << PercentEvaluator::eval("%{=rpn,100000.0P,1,*}");
+  qDebug() << "true:" << PercentEvaluator::eval("%{=rpn,10,1,<}");
+  qDebug() << "true:" << PercentEvaluator::eval("%{=rpn,a,,<}");
+  qDebug() << "null:" << PercentEvaluator::eval("%{=rpn,a,<null>,<}");
+  qDebug() << "true:" << PercentEvaluator::eval("%{=rpn,a,<null>,<*}");
+  qDebug() << "-1:" << PercentEvaluator::eval("%{=rpn,10,1,<=>}");
+  qDebug() << "1:" << PercentEvaluator::eval("%{=rpn,A,a,<=>}");
+  qDebug() << "1:" << PercentEvaluator::eval("%{=rpn,<null>,a,<=>*}");
+  qDebug() << "null:" << PercentEvaluator::eval("%{=rpn,<nan>,a,<=>}");
+  qDebug() << "null:" << PercentEvaluator::eval("%{=rpn,<nan>,<nan>,<=>}");
+  qDebug() << "0:" << PercentEvaluator::eval("%{=rpn,<nan>,<nan>,<=>*}");
+  qDebug() << "true:" << PercentEvaluator::eval("%{=rpn,<nan>,<null>,==*}");
   qDebug() << TypedValue::compare_as_number_otherwise_string(42.0, 42, false)
            << TypedValue::compare_as_number_otherwise_string(42.0, 42, true)
            << TypedValue::compare_as_number_otherwise_string(42.0, "42", false)
