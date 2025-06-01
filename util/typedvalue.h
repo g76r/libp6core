@@ -33,6 +33,14 @@ namespace log {
 class LogHelper;
 }
 
+/** Class holding a value that can have various types, kind of variant pattern.
+ *  Its overhead is lower than QVariant and it's less static/more extendable
+ *  than std::variant.
+ *  Its sizeof is 8 (64 bits, holds only a pointer) and implement Qt's implicit
+ *  sharing pattern with move semantics so it can be passed by value with a
+ *  rather low overhead.
+ *
+ */
 struct LIBP6CORESHARED_EXPORT TypedValue {
 public:
   enum Type {
@@ -344,8 +352,7 @@ public:
    *    42, QDateTime::from...("1970-01-01T00:00:00,042Z")) -> equivalent
    */
   [[nodiscard]] static std::partial_ordering compare_as_number_otherwise_string(
-      const TypedValue &a, const TypedValue &b,
-      bool pretend_null_or_nan_is_empty = false);
+      TypedValue a, TypedValue b, bool pretend_null_or_nan_is_empty = false);
   /** highly depends on contained type
    *  - TypedValues of different types are always !=
    *  - TypedValues of same type rely on their type operator == (implies that

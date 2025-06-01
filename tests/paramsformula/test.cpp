@@ -39,7 +39,7 @@ int main(void) {
   qDebug() << "90 (0x5a): %{=rpn,0xaa,0xf0,^}" % e;
   qDebug() << "null" <<  PercentEvaluator::eval("%{=rpn,0xaa,<null>,|}");
   qDebug() << PercentEvaluator::eval_utf8("true: %{=rpn,1,true,==}");
-  qDebug() << PercentEvaluator::eval_utf8("false: %{=rpn,42,true,==}");
+  qDebug() << PercentEvaluator::eval_utf8("false: %{=rpn,42,true,==}"); // in C/C++ 42==true is always false
   qDebug() << PercentEvaluator::eval_utf8("true: %{=rpn,42,!!,true,==}");
   qDebug() << PercentEvaluator::eval_utf8("33: %{=rpn,0x20,%x,+}", &x1);
   qDebug() << PercentEvaluator::eval_utf8("33.5: %{=rpn,0x20,%x,+}", &x1_5);
@@ -150,6 +150,7 @@ int main(void) {
   qDebug() << "1:" << PercentEvaluator::eval("%{=rpn,A,a,<=>}");
   qDebug() << "1:" << PercentEvaluator::eval("%{=rpn,<null>,a,<=>*}");
   qDebug() << "null:" << PercentEvaluator::eval("%{=rpn,<nan>,a,<=>}");
+  qDebug() << "null:" << PercentEvaluator::eval("%{=rpn,<nan>,,<=>}");
   qDebug() << "null:" << PercentEvaluator::eval("%{=rpn,<nan>,<nan>,<=>}");
   qDebug() << "0:" << PercentEvaluator::eval("%{=rpn,<nan>,<nan>,<=>*}");
   qDebug() << "true:" << PercentEvaluator::eval("%{=rpn,<nan>,<null>,==*}");
@@ -185,11 +186,29 @@ int main(void) {
               ;
   //ts1(QDateTime::fromString("2023-09-20T13:14:00,760",Qt::ISODateWithMs))
   auto ts42 = QDateTime::fromString("1970-01-01T00:00:00,042Z",Qt::ISODateWithMs);
-  qDebug() << TypedValue::compare_as_number_otherwise_string(42, ts42, false)
-           << TypedValue::compare_as_number_otherwise_string(42, ts42, true)
+  qDebug() << TypedValue::compare_as_number_otherwise_string(42, ts42, false) // "42" > "1970..."
+           << TypedValue::compare_as_number_otherwise_string(42, ts42, true) // "42" > "1970..."
            << TypedValue(42) << TypedValue(ts42) << TypedValue(ts42).as_utf8()
            << TypedValue(ts42).as_unsigned8() << TypedValue(ts42).as_float8()
            << TypedValue(ts42).as_signed8()
               ;
+  qDebug() << "inf:" << TypedValue::best_number_type("inf");
+  qDebug() << "-inf:" << TypedValue::best_number_type("-inF");
+  qDebug() << "nan:" << TypedValue::best_number_type("NaN");
+  qDebug() << "0:" << TypedValue::best_number_type("0.0");
+  qDebug() << "-0:" << TypedValue::best_number_type("-0.0");
+  qDebug() << "-0:" << TypedValue::from_etv("f8{-0}");
+  qDebug() << "-0:" << TypedValue::from_etv("f8{-}"); // corner case, not specs
+  qDebug() << "-0:" << TypedValue::from_etv("f8{-foo}"); // corner case, not specs
+  qDebug() << "0:" << TypedValue::from_etv("f8{}");
+  qDebug() << "0:" << TypedValue::from_etv("u8{}");
+  qDebug() << "nan:" << PercentEvaluator::eval("%{=rpn,inf,inf,/}");
+  qDebug() << "inf:" << PercentEvaluator::eval("%{=rpn,0.0,1,/}");
+  qDebug() << "-inf:" << PercentEvaluator::eval("%{=rpn,0,-1.0,/}");
+  qDebug() << "0:" << PercentEvaluator::eval("%{=rpn,inf,0,/}");
+  qDebug() << "-0:" << PercentEvaluator::eval("%{=rpn,-inf,0,/}");
+  qDebug() << "0:" << PercentEvaluator::eval("%{=rpn,-inf,-0.0,/}");
+  qDebug() << "inf:" << PercentEvaluator::eval("%{=rpn,inf,0,+}");
+  qDebug() << "inf:" << PercentEvaluator::eval("%{=rpn,0.0,1,/,0,+}");
   return 0;
 }

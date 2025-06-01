@@ -198,55 +198,84 @@ Type TypedValue::NullValue::type() const {
 }
 
 std::partial_ordering TypedValue::compare_as_number_otherwise_string(
-    const TypedValue &a, const TypedValue &b,
-    bool pretend_null_or_nan_is_empty) {
-  bool oka, okb;
-  auto fa = a.as_float8(&oka), fb = b.as_float8(&okb);
-  if (oka && okb) { // comparing as doubles
-    if (pretend_null_or_nan_is_empty) {
-      auto na = std::isnan(fa), nb = std::isnan(fb);
-      if (na && nb)
-        return std::partial_ordering::equivalent;
-      if (na || nb)
-        return std::partial_ordering::unordered;
+    TypedValue a, TypedValue b, bool pretend_null_or_nan_is_empty) {
+  auto ta = a.type(), tb = b.type();
+  bool ok;
+  using enum TypedValue::Type;
+  // first: convert non arithmetic types (incl. utf8) if possible
+  if (!TypedValue::is_arithmetic(ta)) {
+    TypedValue n = TypedValue::best_number_type(a.as_utf8());
+    auto tn = n.type();
+    if (tn != Null) {
+      a = n;
+      ta = tn;
     }
-    return fa <=> fb;
-  } else if (pretend_null_or_nan_is_empty) {
-    // if one and only one operand was convertible to float8 and this one is
-    // nan and pretend_null_or_nan_is_empty == true, we must compare the other
-    // one with ""
-    if (oka && std::isnan(a))
-      return ""_u8 <=> b.as_utf8();
-    if (okb && std::isnan(b))
-      return a.as_utf8() <=> ""_u8;
-    // note: we can't rely on a further string comparison, because
-    // TypedValue(NAN).as_utf8() returns "nan"
-  } else {
-    // must do the test now because e.g. if a is NaN and b is "" and we don't
-    // stop the comparison now, they will be compared as string and "nan" > ""
-    if (std::isnan(a) || std::isnan(b))
-      return std::partial_ordering::unordered;
-    // note that it's std::isnan(const TypedValue&) which is used above, not
-    // std::isnan(double), so both type and nanness is tested
   }
-  // note: an operand can be convertible to unsigned whereas it wasn't to double
-  // e.g. a string containing "1e16" because it exceeds double mantissa
-  // precision but fits in a uint64_t
-  auto ua = a.as_unsigned8(&oka), ub = b.as_unsigned8(&okb);
-  if (oka && okb) // comparing as unsigneds
-    return ua <=> ub;
-  // note: an operand can be convertible to signed whereas it wasn't before
-  // e.g. a string containing "-1e16" because it exceeds double mantissa
-  // precision and is negative
-  auto ia = a.as_signed8(&oka), ib = b.as_signed8(&okb);
-  if (oka && okb) // comparing as signeds
-    return ia <=> ib;
-  // note: an operand can be convertible to bool whereas it wasn't before
-  // e.g. a string containing "true"
-  auto ba = a.as_bool1(&oka), bb = b.as_bool1(&okb);
-  if (oka && okb) // comparing as booleans
-    return ba <=> bb;
-  // every number conversion failed, we have to rely on character strings
+  if (!TypedValue::is_arithmetic(tb)) {
+    TypedValue n = TypedValue::best_number_type(b.as_utf8());
+    auto tn = n.type();
+    if (tn != Null) {
+      b = n;
+      tb = tn;
+    }
+  }
+  if (is_arithmetic(ta) && is_arithmetic(tb)) {
+    // at this point both ta and tb are arithmetic types
+    // try float8 first because we don't want to loose the fractionnal part by
+    // wrongly converting a float8 to an integral type
+    auto float8_cmp = [pretend_null_or_nan_is_empty](double fa, double fb) -> std::partial_ordering {
+      if (pretend_null_or_nan_is_empty) {
+        auto na = std::isnan(fa), nb = std::isnan(fb);
+        if (na && nb)
+          return std::partial_ordering::equivalent;
+        if (na || nb)
+          return std::partial_ordering::unordered;
+      }
+      return fa <=> fb;
+    };
+    if (ta == Float8) {
+      if (tb == Float8)
+        return float8_cmp(a.float8(), b.float8());
+      auto fb = b.as_float8(&ok);
+      return ok ? float8_cmp(a.float8(), fb) : std::partial_ordering::unordered;
+    }
+    if (tb == Float8) {
+      auto fa = a.as_float8(&ok);
+      return ok ? float8_cmp(fa, b.float8()) : std::partial_ordering::unordered;
+    }
+    // at this point both ta and tb are integral types
+    // handle mixed sign comparison
+    // process bool1 as if it was unsigned8, like in C++: 42==true is false and
+    // 1==true is true
+    if (ta == Signed8) {
+      if (tb == Signed8)
+        return a.signed8() <=> b.signed8();
+      auto ia = a.signed8();
+      if (ia < 0)
+        return std::partial_ordering::less;
+      return (uint64_t)ia <=> b.as_unsigned8();
+    }
+    if (tb == Signed8) {
+      auto ib = b.signed8();
+      if (ib < 0)
+        return std::partial_ordering::greater;
+      return a.as_unsigned8() <=> (uint64_t)ib;
+    }
+    return a.as_unsigned8() <=> b.as_unsigned8();
+  }
+  // at this point at less one operand is not an arithmetic type
+  // if one and only one operand was a float8 and is nan, then we must process
+  // it as if it were null, so either return unordered or, if
+  // pretend_null_or_nan_is_empty == true, compare the other one with ""
+  if (ta == Float8 && std::isnan(a.float8()))
+    return pretend_null_or_nan_is_empty ? ""_u8 <=> b.as_utf8()
+                                        : std::partial_ordering::unordered;
+  if (tb == Float8 && std::isnan(b.float8()))
+    return pretend_null_or_nan_is_empty ? a.as_utf8() <=> ""_u8
+                                        : std::partial_ordering::unordered;
+  // note: we can't rely on a further string comparison, because
+  // TypedValue(NAN).as_utf8() returns "nan"
+  // at this point no arithmetic comparison rule was applicable
   auto sa = a.as_utf8(), sb = b.as_utf8();
   if (!pretend_null_or_nan_is_empty && (!sa || !sb))
     return std::partial_ordering::unordered;
@@ -264,17 +293,29 @@ TypedValue TypedValue::best_number_type(
   for (; s < end; ++s)
     switch (*s) {
       case 't':
-      case 's': {
-          // t and s are allowed only in "true" or "false" booleans
-          // and they are before the 'e' which avoids mistaking it for a float
-          // note: can't use f because of femto suffix and inf litteral, can't
-          // use a because of nan litteral
-          if (strcmp(begin, "true") == 0)
-            return true;
-          if (strcmp(begin, "false") == 0)
-            return false;
-          return {};
-        }
+      case 's':
+        // t and s are allowed only in "true" or "false" booleans
+        // and they are before the 'e' which avoids mistaking it for a float
+        // note: can't use f because of femto suffix and inf litteral, can't
+        // use a because of nan litteral
+        if (strcmp(begin, "true") == 0)
+          return true;
+        if (strcmp(begin, "false") == 0)
+          return false;
+        return {};
+      case 'n':
+      case 'N':
+        // check for nan or inf or -inf, case insensitive (may also be nano)
+        if (s == begin && end == begin+3 && (s[1] == 'a' || s[1] == 'A')
+            && (s[2] == 'n' || s[2] == 'N'))
+          return std::numeric_limits<double>::quiet_NaN();
+        if (s == begin+1 && end == begin+3 && (s[-1] == 'i' || s[-1] == 'I')
+            && (s[1] == 'f' || s[1] == 'F'))
+          return std::numeric_limits<double>::infinity();
+        if (s == begin+2 && end == begin+4 && s[-2] == '-' &&
+            (s[-1] == 'i' || s[-1] == 'I') && (s[1] == 'f' || s[1] == 'F'))
+          return -std::numeric_limits<double>::infinity();
+        break;
       case 'x':
         ignore_e = true;
         break;
@@ -771,6 +812,8 @@ double TypedValue::Float8Value::as_float8(double, bool *ok) const {
 Utf8String TypedValue::Float8Value::as_utf8(
     const Utf8String &, bool *ok) const {
   if (ok) *ok = true;
+  if (f == 0 && std::signbit(f))
+    return "-0.0"_u8; // QByteArray::number() doesn't support -0.0
   return Utf8String::number(f, 'g', QLocale::FloatingPointShortest);
 }
 
@@ -1542,10 +1585,12 @@ Utf8String TypedValue::as_etv() const {
 
 TypedValue TypedValue::from_etv(const Utf8String &etv) {
   auto size = etv.size(), i = etv.indexOf('{');
-  auto type = _from_typecodes.value(etv.left(i), Null);
-  if (type == Null || etv.at(size-1) != '}')
+  if (i == -1)
     return {};
-  return from_etv(type, etv.first(size-1));
+  auto type = _from_typecodes.value(etv.first(i), Null);
+  if (type == Null || etv[size-1] != '}')
+    return {};
+  return from_etv(type, etv.sliced(i+1, size-i-2));
 }
 
 TypedValue TypedValue::from_etv(Type type, const Utf8String &unquoted_etv) {
@@ -1559,7 +1604,11 @@ TypedValue TypedValue::from_etv(Type type, const Utf8String &unquoted_etv) {
     case Signed8:
       return unquoted_etv.toNumber<int64_t>();
     case Float8:
-      return unquoted_etv.toNumber<double>();
+      if (auto d = unquoted_etv.toNumber<double>();
+          d == 0 && unquoted_etv.value(0) == '-')
+        return -0.0; // QByteArray::toDouble() doesn't support -0.0
+      else
+        return d;
     case Bytes:
       return QByteArray::fromHex(unquoted_etv);
     case Utf8:

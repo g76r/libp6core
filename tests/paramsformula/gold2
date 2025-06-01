@@ -16,7 +16,7 @@ null: null{}
 "90 (0x5a): 90"
 null null{}
 "true: true"
-"false: true"
+"false: false"
 "true: true"
 "33: 33"
 "33.5: 33.5"
@@ -87,6 +87,7 @@ true: b{true}
 1: i8{1}
 null: null{}
 null: null{}
+null: null{}
 0: i8{0}
 true: b{true}
 true: b{true}
@@ -103,4 +104,22 @@ false: b{false}
 false: b{false}
 equivalent equivalent equivalent equivalent greater greater equivalent equivalent i8{42} f8[]{42}
 unordered equivalent unordered equivalent unordered equivalent less
-equivalent equivalent i8{42} ts{1970-01-01T00:00:00.042Z} 1970-01-01T00:00:00.042Z 42 42 42
+greater greater i8{42} ts{1970-01-01T00:00:00.042Z} 1970-01-01T00:00:00.042Z 42 42 42
+inf: f8{inf}
+-inf: f8{-inf}
+nan: f8{nan}
+0: f8{0}
+-0: f8{-0.0}
+-0: f8{-0.0}
+-0: f8{-0.0}
+-0: f8{-0.0}
+0: f8{0}
+0: u8{0}
+nan: f8{nan}
+inf: f8{inf}
+-inf: f8{-inf}
+0: f8{0}
+-0: f8{-0.0}
+0: f8{0}
+inf: f8{inf}
+inf: f8{inf}
