@@ -610,56 +610,18 @@ public:
       Type type, const Utf8String &unquoted_etv);
 
   // operations ///////////////////////////////////////////////////////////////
-  /** return bitwise or between this and other, don't change this
-   *  return {} if this or other can't be converted to unsigned8 and
-   *  pretend_null_or_invalid_as_zero is false */
-  template <bool pretend_null_or_invalid_as_zero = false>
-  [[nodiscard]] TypedValue bitwise_or(const TypedValue &other) const {
-    bool ok1, ok2;
-    uint64_t x = as_unsigned8(0, &ok1), y = other.as_unsigned8(0, &ok2);
-    if constexpr (pretend_null_or_invalid_as_zero)
-      return x|y;
-    if (ok1 && ok2)
-      return x|y;
-    return {};
-  }
-  /** return bitwise and between this and other, don't change this
-   *  return {} if this or other can't be converted to unsigned8 and
-   *  pretend_null_or_invalid_as_zero is false */
-  template <bool pretend_null_or_invalid_as_zero = false>
-  [[nodiscard]] TypedValue bitwise_and(const TypedValue &other) const {
-    bool ok1, ok2;
-    uint64_t x = as_unsigned8(0, &ok1), y = other.as_unsigned8(0, &ok2);
-    if constexpr (pretend_null_or_invalid_as_zero)
-      return x&y;
-    if (ok1 && ok2)
-      return x&y;
-    return {};
-  }
-  /** return bitwise xor between this and other, don't change this
-   *  return {} if this or other can't be converted to unsigned8 and
-   *  pretend_null_or_invalid_as_zero is false */
-  template <bool pretend_null_or_invalid_as_zero = false>
-  [[nodiscard]] TypedValue bitwise_xor(const TypedValue &other) const {
-    bool ok1, ok2;
-    uint64_t x = as_unsigned8(0, &ok1), y = other.as_unsigned8(0, &ok2);
-    if constexpr (pretend_null_or_invalid_as_zero)
-      return x^y;
-    if (ok1 && ok2)
-      return x^y;
-    return {};
-  }
-  /** return string concatenation between this and other, don't change this
-   *  return {} if this or other can't be converted to utf8 and
+  /** return string concatenation a+b
+   *  return {} if an operand can't be converted to utf8 and
    *  pretend_null_or_invalid_as_zero is false */
   template <bool pretend_null_or_invalid_as_empty = false>
-  [[nodiscard]] TypedValue concat(const TypedValue &other) const {
-    bool ok1, ok2;
-    Utf8String x = as_utf8(&ok1), y = other.as_utf8(&ok2);
+  [[nodiscard]] static TypedValue concat(
+      const TypedValue &a, const TypedValue &b) {
+    bool oka, okb;
+    Utf8String sa = a.as_utf8(&oka), sb = b.as_utf8(&okb);
     if constexpr (pretend_null_or_invalid_as_empty)
-      return x+y;
-    if (ok1 && ok2)
-      return x+y;
+      return sa+sb;
+    if (oka && okb)
+      return sa+sb;
     return {};
   }
   /** return a+b using best suited arithmetic type, checking integer overflow
@@ -682,12 +644,61 @@ public:
   /** return remainder between a and b using best suited arithmetic type
    *  return {} if an operand can't be converted to a number type or b == 0 */
   [[nodiscard]] static TypedValue mod(TypedValue a, TypedValue b);
+  /** return bitwise and a&b
+   *  return {} if an operand can't be converted to unsigned8 or signed8 and
+   *  pretend_null_or_invalid_as_zero is false */
+  template <bool pretend_null_or_invalid_as_zero = false>
+  [[nodiscard]] static inline TypedValue bitwise_and(
+      const TypedValue &a, const TypedValue &b) {
+    return bitwise_op<pretend_null_or_invalid_as_zero>(
+          a, b, [](uint64_t a, uint64_t b) STATIC_LAMBDA {
+      return a&b;
+    });
+  }
+  /** return bitwise or a|b
+   *  return {} if an operand can't be converted to unsigned8 or signed8 and
+   *  pretend_null_or_invalid_as_zero is false */
+  template <bool pretend_null_or_invalid_as_zero = false>
+  [[nodiscard]] static inline TypedValue bitwise_or(
+      const TypedValue &a, const TypedValue &b) {
+    return bitwise_op<pretend_null_or_invalid_as_zero>(
+          a, b, [](uint64_t a, uint64_t b) STATIC_LAMBDA {
+      return a|b;
+    });
+  }
+  /** return bitwise xor a^b
+   *  return {} if an operand can't be converted to unsigned8 or signed8 and
+   *  pretend_null_or_invalid_as_zero is false */
+  template <bool pretend_null_or_invalid_as_zero = false>
+  [[nodiscard]] static inline TypedValue bitwise_xor(
+      const TypedValue &a, const TypedValue &b) {
+    return bitwise_op<pretend_null_or_invalid_as_zero>(
+          a, b, [](uint64_t a, uint64_t b) STATIC_LAMBDA {
+      return a^b;
+    });
+  }
 
 private:
   QSharedDataPointer<Value> d;
   inline TypedValue(Value *value) : d(value) {}
   /** safe access to a Value object reference even if d == 0 */
   inline const Value &value() const { return !!d ? *d : NullValue::_nullvalue; }
+  template <bool pretend_null_or_invalid_as_zero = false>
+  [[nodiscard]] static inline TypedValue bitwise_op(
+      const TypedValue &a, const TypedValue &b,
+      std::function<uint64_t(uint64_t,uint64_t)> op) {
+    bool oka, okb;
+    uint64_t ua = a.as_unsigned8(&oka), ub = b.as_unsigned8(&okb);
+    if (!oka)
+      ua = a.as_signed8(&oka);
+    if (!okb)
+      ua = b.as_signed8(&okb);
+    if constexpr (pretend_null_or_invalid_as_zero)
+      return op(ua, ub);
+    if (oka && okb)
+      return op(ua, ub);
+    return {};
+  }
 };
 static_assert(sizeof(TypedValue)==8);
 

@@ -214,12 +214,12 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { "@", { 2, 6, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue {
         auto x = stack->popeval(stack, context);
         auto y = stack->popeval(stack, context);
-        return x.concat(y);
+        return TypedValue::concat(x, y);
       } }, true },
   { "@*", { 2, 6, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue {
         auto x = stack->popeval(stack, context);
         auto y = stack->popeval(stack, context);
-        return x.concat<true>(y);
+        return TypedValue::concat<true>(x, y);
       } }, true },
   { "<?", { 2, 7, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context);
@@ -418,17 +418,17 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
   { "&", { 2, 11, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context);
         auto x = stack->popeval(stack, context);
-        return x.bitwise_and(y);
+        return TypedValue::bitwise_and(x, y);
       } }, true },
   { "^", { 2, 12, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context);
         auto x = stack->popeval(stack, context);
-        return x.bitwise_xor(y);
+        return TypedValue::bitwise_xor(x, y);
       } }, true },
   { "|", { 2, 13, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
         auto y = stack->popeval(stack, context);
         auto x = stack->popeval(stack, context);
-        return x.bitwise_or(y);
+        return TypedValue::bitwise_or(x, y);
       } }, true },
   { "&&", { 2, 14, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
         bool ok;
