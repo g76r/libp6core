@@ -33,6 +33,20 @@ namespace log {
 class LogHelper;
 }
 
+struct TypedValue;
+
+}
+
+namespace std {
+
+inline bool isnan(const p6::TypedValue &tv);
+inline bool isinf(const p6::TypedValue &tv);
+inline bool isfinite(const p6::TypedValue &tv);
+
+}
+
+namespace p6 {
+
 /** Class holding a value that can have various types, kind of variant pattern.
  *  Its overhead is lower than QVariant and it's less static/more extendable
  *  than std::variant.
@@ -45,8 +59,8 @@ struct LIBP6CORESHARED_EXPORT TypedValue {
 public:
   enum Type {
     Null = 0,
-    Unsigned8 = 0x40, Entity8 = 0x1, Bool1 = 0x41,
-    Signed8 = 0x42,
+    Unsigned8 = 0x41, Entity8 = 0x1, Bool1 = 0x43,
+    Signed8 = 0x48,
     Float8 = 0x80,
     Bytes = 0x2, Utf8,
     //UVector, SVector,
@@ -58,9 +72,14 @@ public:
     Regexp,
     EmbeddedQVariant,
   };
-  static inline bool is_integral(Type t) { return t & 0x40; }
+  /** is Unsigned8, Signed8 or Bool1 (not Entity8) */
+  static inline bool constexpr is_integral(Type t) { return t & 0x40; }
   inline bool is_integral() const { return is_integral(type()); }
-  static inline bool is_arithmetic(Type t) { return t & (0x80|0x40); }
+  /** is Unsigned8 or Bool1 (not Entity8) */
+  static inline bool constexpr is_unsigned_integral(Type t) { return t & 0x41; }
+  inline bool is_unsigned_integral() const { return is_integral(type()); }
+  /** is Unsigned8, Signed8, Bool1, or Float8 (not Entity8) */
+  static inline bool constexpr is_arithmetic(Type t) { return t & (0xc0); }
   inline bool is_arithmetic() const { return is_arithmetic(type()); }
 
 private:
@@ -352,27 +371,29 @@ public:
    *    42, QDateTime::from...("1970-01-01T00:00:00,042Z")) -> equivalent
    */
   [[nodiscard]] static std::partial_ordering compare_as_number_otherwise_string(
-      TypedValue a, TypedValue b, bool pretend_null_or_nan_is_empty = false);
+      const TypedValue &a, const TypedValue &b,
+      bool pretend_null_or_nan_is_empty = false);
   /** highly depends on contained type
    *  - TypedValues of different types are always !=
    *  - TypedValues of same type rely on their type operator == (implies that
    *    for doubles NaN != NaN)
+   *  - null != null (and obviously also != any non-null TypedValue)
    *  - operator == does not rely on <=>
    */
   [[nodiscard]] inline bool operator==(const TypedValue &other) const {
     return !!*this && type() == other.type() && value() == other.value(); }
   [[nodiscard]] friend inline bool operator==(
       const TypedValue &tv, const Utf8String &o) {
-    return tv.type() == Utf8 && tv.utf8() == o; }
+    return tv.type() == Utf8 && tv.direct_utf8() == o; }
   [[nodiscard]] friend inline bool operator==(
       const Utf8String &o, const TypedValue &tv) {
-    return tv.type() == Utf8 && tv.utf8() == o; }
+    return tv.type() == Utf8 && tv.direct_utf8() == o; }
   [[nodiscard]] friend inline bool operator==(
       const TypedValue &tv, const Entity &o) {
-    return tv.type() == Entity8 && tv.entity8() == o; }
+    return tv.type() == Entity8 && tv.direct_unsigned8() == o.id(); }
   [[nodiscard]] friend inline bool operator==(
       const Entity &o, const TypedValue &tv) {
-    return tv.type() == Entity8 && tv.entity8() == o; }
+    return tv.type() == Entity8 && tv.direct_unsigned8() == o.id(); }
 
   // null values and types ////////////////////////////////////////////////////
   /** is null operator
@@ -634,23 +655,23 @@ public:
   /** return a+b using best suited arithmetic type, checking integer overflow
    *  return {} if an operand can't be converted to a number type
    *  return {} if both operands are integers and the operation overflows */
-  [[nodiscard]] static TypedValue add(TypedValue a, TypedValue b);
+  [[nodiscard]] static TypedValue add(const TypedValue &a, const TypedValue &b);
   /** return a-b using best suited arithmetic type, checking integer overflow
    *  return {} if an operand can't be converted to a number type
    *  return {} if both operands are integers and the operation overflows */
-  [[nodiscard]] static TypedValue sub(TypedValue a, TypedValue b);
+  [[nodiscard]] static TypedValue sub(const TypedValue &a, const TypedValue &b);
   /** return a*b using best suited arithmetic type, checking integer overflow
    *  return {} if an operand can't be converted to a number type
    *  return {} if both operands are integers and the operation overflows */
-  [[nodiscard]] static TypedValue mul(TypedValue a, TypedValue b);
+  [[nodiscard]] static TypedValue mul(const TypedValue &a, const TypedValue &b);
   /** return a/b using best suited arithmetic type
    *  if both operands are integral types, use euclidean division and return
    *  integer quotient rather than floating point division
    *  return {} if an operand can't be converted to a number type or b == 0 */
-  [[nodiscard]] static TypedValue div(TypedValue a, TypedValue b);
+  [[nodiscard]] static TypedValue div(const TypedValue &a, const TypedValue &b);
   /** return remainder between a and b using best suited arithmetic type
    *  return {} if an operand can't be converted to a number type or b == 0 */
-  [[nodiscard]] static TypedValue mod(TypedValue a, TypedValue b);
+  [[nodiscard]] static TypedValue mod(const TypedValue &a, const TypedValue &b);
   /** return bitwise and a&b
    *  return {} if an operand can't be converted to unsigned8 or signed8 and
    *  pretend_null_or_invalid_as_zero is false */
@@ -690,6 +711,46 @@ private:
   inline TypedValue(Value *value) : d(value) {}
   /** safe access to a Value object reference even if d == 0 */
   inline const Value &value() const { return !!d ? *d : NullValue::_nullvalue; }
+  [[gnu::always_inline]] static inline std::partial_ordering
+  compare_assuming_one_float_or_both_integral(
+      const TypedValue &a, const TypedValue &b,
+      bool pretend_null_or_nan_is_empty, const Type ta, const Type tb);
+  /** /!\ direct access w/o virtual method call, assuming type is Float8 */
+  inline const double &direct_float8() const {
+    return static_cast<const Float8Value*>(d.constData())->f;
+  }
+  /** /!\ direct access w/o virtual method call, assuming type is Unsigned8
+    * (or a subclass, like Bool1 or Entity8, can also cast Signed8 since it's
+    * binary compatible) */
+  inline const uint64_t &direct_unsigned8() const {
+    return static_cast<const Unsigned8Value*>(d.constData())->u;
+  }
+  /** /!\ direct access w/o virtual method call, assuming type is Signed8
+   *  (can also cast Unsigned8 since it's binary compatible) */
+  inline const int64_t &direct_signed8() const {
+    return static_cast<const Signed8Value*>(d.constData())->i;
+  }
+  /** /!\ direct access w/o virtual method call, assuming type is Bytes
+   *  (or a subclass, like Utf8) */
+  inline const Utf8String &direct_utf8() const {
+    return static_cast<const BytesValue*>(d.constData())->s;
+  }
+  template <typename T>
+  using ArithmeticBinaryOperator = std::function<TypedValue(T,T)>;
+  [[gnu::always_inline]] static inline TypedValue
+  arithmetic_binary_operation_assuming_one_float_or_both_integral(
+      const TypedValue &original_a, const TypedValue &original_b,
+      ArithmeticBinaryOperator<double> float8_op,
+      ArithmeticBinaryOperator<uint64_t> unsigned8_op,
+      ArithmeticBinaryOperator<int64_t> signed8_op,
+      ArithmeticBinaryOperator<bool> bool1_op, Type ta, Type tb);
+  [[gnu::always_inline]] static inline TypedValue
+  arithmetic_binary_operation_with_best_type(
+      const TypedValue &original_a, const TypedValue &original_b,
+      ArithmeticBinaryOperator<double> float8_op,
+      ArithmeticBinaryOperator<uint64_t> unsigned8_op,
+      ArithmeticBinaryOperator<int64_t> signed8_op,
+      ArithmeticBinaryOperator<bool> bool1_op);
   template <bool pretend_null_or_invalid_as_zero = false>
   [[nodiscard]] static inline TypedValue bitwise_op(
       const TypedValue &a, const TypedValue &b,
@@ -706,6 +767,9 @@ private:
       return op(ua, ub);
     return {};
   }
+  friend bool std::isnan(const p6::TypedValue &tv);
+  friend bool std::isinf(const p6::TypedValue &tv);
+  friend bool std::isfinite(const p6::TypedValue &tv);
 };
 static_assert(sizeof(TypedValue)==8);
 
@@ -724,17 +788,17 @@ namespace std {
 
 /** always return false if tv is not a floating number */
 inline bool isnan(const p6::TypedValue &tv) {
-  return tv.type() == p6::TypedValue::Float8 && isnan(tv.float8());
+  return tv.type() == p6::TypedValue::Float8 && isnan(tv.direct_float8());
 }
 
 /** always return false if tv is not a floating number */
 inline bool isinf(const p6::TypedValue &tv) {
-  return tv.type() == p6::TypedValue::Float8 && isinf(tv.float8());
+  return tv.type() == p6::TypedValue::Float8 && isinf(tv.direct_float8());
 }
 
 /** always return false if tv is not a floating number */
 inline bool isfinite(const p6::TypedValue &tv) {
-  return tv.type() == p6::TypedValue::Float8 && isfinite(tv.float8());
+  return tv.type() == p6::TypedValue::Float8 && isfinite(tv.direct_float8());
 }
 
 } // std

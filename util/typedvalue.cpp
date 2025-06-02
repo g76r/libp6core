@@ -197,86 +197,143 @@ Type TypedValue::NullValue::type() const {
   return Null;
 }
 
+// arithmetic and comparison operators ////////////////////////////////////////
+
+std::partial_ordering TypedValue::compare_assuming_one_float_or_both_integral(
+    const TypedValue &a, const TypedValue &b, bool pretend_null_or_nan_is_empty,
+    const Type ta, const Type tb) {
+  Q_ASSERT((is_integral(ta) && is_integral(tb)) || ta == Float8 || tb == Float8);
+  // C++23: maybe replace __attribute__ with front attribute [[gnu::always_inline]] (between capture list and function args)
+  auto float8_cmp = [pretend_null_or_nan_is_empty](double fa, double fb) __attribute__((always_inline)) -> std::partial_ordering {
+    if (pretend_null_or_nan_is_empty) {
+      auto na = std::isnan(fa), nb = std::isnan(fb);
+      if (na && nb)
+        return std::partial_ordering::equivalent;
+      if (na || nb)
+        return std::partial_ordering::unordered;
+    }
+    return fa <=> fb;
+  };
+  // try float8 first because we don't want to loose the fractionnal part by
+  // wrongly converting a float8 to an integral type
+  if (ta == Float8) {
+    if (tb == Float8)
+      return float8_cmp(a.direct_float8(), b.direct_float8());
+    // float promotion for integral types and conversion for others (incl. utf8)
+    bool ok;
+    auto fb = b.as_float8(&ok);
+    if (ok)
+      return float8_cmp(a.direct_float8(), fb);
+    if (pretend_null_or_nan_is_empty && std::isnan(a.direct_float8()))
+      return ""_u8 <=> b.as_utf8();
+    return std::partial_ordering::unordered;
+  }
+  if (tb == Float8) {
+    // float promotion for integral types and conversion for others (incl. utf8)
+    bool ok;
+    auto fa = a.as_float8(&ok);
+    if (ok)
+      return float8_cmp(fa, b.direct_float8());
+    if (pretend_null_or_nan_is_empty && std::isnan(b.direct_float8()))
+      return a.as_utf8() <=> ""_u8;
+    return std::partial_ordering::unordered;
+  }
+  // at this point both must be integral, since the function assumes being
+  // called with either at less one float operand or both integral ones
+  // handle mixed sign comparison
+  // process bool1 as if it was unsigned8, like in C++: 42==true is false and
+  // 1==true is true
+  if (ta == Signed8) {
+    if (tb == Signed8)
+      return a.direct_signed8() <=> b.direct_signed8();
+    if (a.direct_signed8() < 0)
+      return std::partial_ordering::less;
+  } else if (tb == Signed8) {
+    if (b.direct_signed8() < 0)
+      return std::partial_ordering::greater;
+  }
+  return a.direct_unsigned8() <=> b.direct_unsigned8();
+}
+
 std::partial_ordering TypedValue::compare_as_number_otherwise_string(
-    TypedValue a, TypedValue b, bool pretend_null_or_nan_is_empty) {
+    const TypedValue &a, const TypedValue &b, bool pretend_null_or_nan_is_empty) {
   auto ta = a.type(), tb = b.type();
-  bool ok;
-  using enum TypedValue::Type;
-  // first: convert non arithmetic types (incl. utf8) if possible
-  if (!TypedValue::is_arithmetic(ta)) {
-    TypedValue n = TypedValue::best_number_type(a.as_utf8());
-    auto tn = n.type();
-    if (tn != Null) {
-      a = n;
-      ta = tn;
-    }
-  }
-  if (!TypedValue::is_arithmetic(tb)) {
-    TypedValue n = TypedValue::best_number_type(b.as_utf8());
-    auto tn = n.type();
-    if (tn != Null) {
-      b = n;
-      tb = tn;
-    }
-  }
-  if (is_arithmetic(ta) && is_arithmetic(tb)) {
-    // at this point both ta and tb are arithmetic types
-    // try float8 first because we don't want to loose the fractionnal part by
-    // wrongly converting a float8 to an integral type
-    auto float8_cmp = [pretend_null_or_nan_is_empty](double fa, double fb) -> std::partial_ordering {
-      if (pretend_null_or_nan_is_empty) {
-        auto na = std::isnan(fa), nb = std::isnan(fb);
-        if (na && nb)
-          return std::partial_ordering::equivalent;
-        if (na || nb)
-          return std::partial_ordering::unordered;
+  auto aa = is_arithmetic(ta), ab = is_arithmetic(tb);
+  //qDebug() << "comparing" << a << b << ta << tb << aa << ab;
+  // short path when no conversion is needed
+  if ((aa && ab) || ta == Float8 || tb == Float8)
+    return compare_assuming_one_float_or_both_integral(
+          a, b, pretend_null_or_nan_is_empty, ta, tb);
+  // at this point at less one operand is not an arithmetic number, but maybe
+  // one (or both) can be casted to from non arithmetic type (incl. utf8)
+  Utf8String sa, sb;
+  if (!aa) {
+    // a needs conversion
+    sa = a.as_utf8();
+    auto ca = best_number_type(sa);
+    ta = ca.type();
+    if (ta != Null) {
+      if (ab)
+        return compare_assuming_one_float_or_both_integral(
+              ca, b, pretend_null_or_nan_is_empty, ta, tb);
+      // b also needs conversion
+      sb = b.as_utf8();
+      auto cb = best_number_type(sb);
+      tb = cb.type();
+      if (tb != Null)
+        return compare_assuming_one_float_or_both_integral(
+              ca, cb, pretend_null_or_nan_is_empty, ta, tb);
+      // at this point b cannot be converted to an arithmetic type, but a was
+      // if ta is nan, must process as if it were null
+      if (ta == Float8 && std::isnan(ca.direct_float8())) {
+        // qDebug() << "a is converted to nan but not b" << ca << b
+        //          << (""_u8 <=> sb);
+        if (pretend_null_or_nan_is_empty)
+          return ""_u8 <=> sb;
+        return std::partial_ordering::unordered;
       }
-      return fa <=> fb;
-    };
-    if (ta == Float8) {
-      if (tb == Float8)
-        return float8_cmp(a.float8(), b.float8());
-      auto fb = b.as_float8(&ok);
-      return ok ? float8_cmp(a.float8(), fb) : std::partial_ordering::unordered;
+      goto b_converted_to_utf8_but_cannot_be_converted_to_number;
+    } else {
+      // at this point a cannot be converted to an arithmetic type, but b is one
+      // if ba is nan, must process as if it were null
+      if (tb == Float8 && std::isnan(b.direct_float8())) {
+        // qDebug() << "b is nan" << a << b
+        //          << (sa <=> ""_u8);
+        if (pretend_null_or_nan_is_empty)
+          return sa <=> ""_u8;
+        return std::partial_ordering::unordered;
+      }
+      // note: we can't rely on a further string comparison, because
+      // TypedValue(NAN).as_utf8() returns "nan", not ""
     }
-    if (tb == Float8) {
-      auto fa = a.as_float8(&ok);
-      return ok ? float8_cmp(fa, b.float8()) : std::partial_ordering::unordered;
-    }
-    // at this point both ta and tb are integral types
-    // handle mixed sign comparison
-    // process bool1 as if it was unsigned8, like in C++: 42==true is false and
-    // 1==true is true
-    if (ta == Signed8) {
-      if (tb == Signed8)
-        return a.signed8() <=> b.signed8();
-      auto ia = a.signed8();
-      if (ia < 0)
-        return std::partial_ordering::less;
-      return (uint64_t)ia <=> b.as_unsigned8();
-    }
-    if (tb == Signed8) {
-      auto ib = b.signed8();
-      if (ib < 0)
-        return std::partial_ordering::greater;
-      return a.as_unsigned8() <=> (uint64_t)ib;
-    }
-    return a.as_unsigned8() <=> b.as_unsigned8();
+    // at this point a cannot be converted to an arithmetic type
   }
-  // at this point at less one operand is not an arithmetic type
-  // if one and only one operand was a float8 and is nan, then we must process
-  // it as if it were null, so either return unordered or, if
-  // pretend_null_or_nan_is_empty == true, compare the other one with ""
-  if (ta == Float8 && std::isnan(a.float8()))
-    return pretend_null_or_nan_is_empty ? ""_u8 <=> b.as_utf8()
-                                        : std::partial_ordering::unordered;
-  if (tb == Float8 && std::isnan(b.float8()))
-    return pretend_null_or_nan_is_empty ? a.as_utf8() <=> ""_u8
-                                        : std::partial_ordering::unordered;
-  // note: we can't rely on a further string comparison, because
-  // TypedValue(NAN).as_utf8() returns "nan"
-  // at this point no arithmetic comparison rule was applicable
-  auto sa = a.as_utf8(), sb = b.as_utf8();
+  if (!ab) {
+    // b needs conversion
+    sb = b.as_utf8(); // no duplicate conversion b/c skipped by goto
+    auto cb = best_number_type(sb);
+    tb = cb.type();
+    if (tb != Null)
+      return compare_assuming_one_float_or_both_integral(
+            a, cb, pretend_null_or_nan_is_empty, ta, tb);
+    // at this point b cannot be converted to an arithmetic type
+    // if ta is nan, must process as if it were null
+    if (ta == Float8 && std::isnan(a.direct_float8())) {
+      // qDebug() << "a is nan" << a << b
+      //          << (""_u8 <=> b.as_utf8());
+      if (pretend_null_or_nan_is_empty)
+        return ""_u8 <=> b.as_utf8();
+      return std::partial_ordering::unordered;
+    }
+  }
+  // at this point at less one operand can't be converted to an arithmetic type
+  // and none is nan, only string comparison is still possible
+  if (aa)
+    sa = a.as_utf8();
+  if (ab)
+    sb = b.as_utf8();
+b_converted_to_utf8_but_cannot_be_converted_to_number:
+  //qDebug() << "no conversion matched" << a << b << sa << sb;
   if (!pretend_null_or_nan_is_empty && (!sa || !sb))
     return std::partial_ordering::unordered;
   return sa <=> sb; // Utf8String::operator<=>() processes null as empty
@@ -351,219 +408,216 @@ TypedValue TypedValue::best_number_type(
   return ok ? u : TypedValue{};
 }
 
-using ArithmeticBinaryOperator = std::function<TypedValue(const TypedValue&,const TypedValue&)>;
 
-static inline TypedValue arithmetic_binary_operation_with_best_type(
-    TypedValue a, TypedValue b, ArithmeticBinaryOperator float8_op,
-    ArithmeticBinaryOperator unsigned8_op, ArithmeticBinaryOperator signed8_op,
-    ArithmeticBinaryOperator bool1_op) {
-  auto ta = a.type(), tb = b.type();
-  bool ok;
-  using enum TypedValue::Type;
-  // first: convert non arithmetic types (incl. utf8) if possible
-  if (!TypedValue::is_arithmetic(ta)) {
-    a = TypedValue::best_number_type(a.as_utf8());
-    ta = a.type();
-    if (ta == Null)
-      return {};
-  }
-  if (!TypedValue::is_arithmetic(tb)) {
-    b = TypedValue::best_number_type(b.as_utf8());
-    tb = b.type();
-    if (tb == Null)
-      return {};
-  }
-  // at this point both ta and tb are arithmetic types
+TypedValue TypedValue::arithmetic_binary_operation_assuming_one_float_or_both_integral(
+    const TypedValue &a, const TypedValue &b,
+    ArithmeticBinaryOperator<double> float8_op,
+    ArithmeticBinaryOperator<uint64_t> unsigned8_op,
+    ArithmeticBinaryOperator<int64_t> signed8_op,
+    ArithmeticBinaryOperator<bool> bool1_op, Type ta, Type tb) {
+  Q_ASSERT((is_integral(ta) && is_integral(tb)) || ta == Float8 || tb == Float8);
   // try float8 first because we don't want to loose the fractionnal part by
   // wrongly converting a float8 to an integral type
   if (ta == Float8) {
-    if (tb == Unsigned8 || tb == Bool1) {
-      b = b.as_float8(&ok);
-      if (!ok)
-        return {};
-    } else if (tb == Signed8) {
-      b = b.as_float8(&ok);
-      if (!ok)
-        return {};
-    } else {
-      // tb == Float8 nothing to convert
-    }
-    return float8_op(a, b);
+    if (tb == Float8)
+      return float8_op(a.direct_float8(), b.direct_float8());
+    // float promotion for integral types and conversion for others (incl. utf8)
+    bool ok;
+    auto fb = b.as_float8(&ok);
+    if (!ok)
+      return {};
+    return float8_op(a.direct_float8(), fb);
   }
   if (tb == Float8) {
-    if (ta == Unsigned8 || ta == Bool1) {
-      a = a.as_float8(&ok);
-      if (!ok)
-        return {};
-    } else if (ta == Signed8) {
-      a = a.as_float8(&ok);
-      if (!ok)
-        return {};
-    } else {
-      // should never happen
-    }
-    return float8_op(a, b);
+    // float promotion for integral types and conversion for others (incl. utf8)
+    bool ok;
+    auto fa = a.as_float8(&ok);
+    if (!ok)
+      return {};
+    return float8_op(fa, b.direct_float8());
   }
-  // at this point both ta and tb are integral types
-  // process negative numbers as signed8 and keep signed8 if both operands are
-  // signed8 otherwise convert signed8 to unsigned8 and carry on
+  // at this point both must be integral, since the function assumes being
+  // called with either at less one float operand or both integral ones
+  // handle bool1 apart from unsigned8 only when both operands are booleans
+  if (ta == Bool1 && tb == Bool1) // at less + and - are not same as Unsigned8
+    return bool1_op(a.direct_unsigned8(), b.direct_unsigned8());
+  // handle mixed sign operation when possible
   if (ta == Signed8) {
     if (tb == Signed8)
-      return signed8_op(a, b);
-    auto i = a.signed8();
-    if (i < 0) {
-      b = b.as_signed8(&ok);
-      if (!ok)
-        return {};
-      return signed8_op(a, b);
-    }
-    a = a.as_unsigned8(); // convert to unsigned8 because b is not a signed8
+      return signed8_op(a.direct_signed8(), b.direct_signed8());
+    if (a.direct_signed8() < 0
+        && b.direct_unsigned8() > std::numeric_limits<int64_t>::max())
+      return {}; // operation between negative signed and large unsigned
+  } else if (tb == Signed8) {
+    if (b.direct_signed8() < 0
+        && a.direct_unsigned8() > std::numeric_limits<int64_t>::max())
+      return {}; // operation between negative signed and large unsigned
   }
-  if (tb == Signed8) {
-    auto i = b.signed8();
-    if (i < 0) {
-      a = a.as_signed8(&ok);
-      if (!ok)
-        return {};
-      return signed8_op(a, b);
-    }
-  }
-  // at this point both ta and tb are Unsigned8 or Bool1
-  // convert bool1 to unsigned8 but if both operand are bool1
-  if (ta == Bool1) {
-    if (tb == Bool1)
-      return bool1_op(a, b);
-    a = a.as_unsigned8();
-  } else {
-    if (tb == Bool1)
-      b = b.as_unsigned8();
-  }
-  return unsigned8_op(a, b);
+  // process operation as unsigned, being it a cast from bool or positive signed
+  // or true natural unsigned operation
+  return unsigned8_op(a.direct_unsigned8(), b.direct_unsigned8());
 }
 
-TypedValue TypedValue::add(TypedValue a, TypedValue b) {
+TypedValue TypedValue::arithmetic_binary_operation_with_best_type(
+    const TypedValue &a, const TypedValue &b,
+    ArithmeticBinaryOperator<double> float8_op,
+    ArithmeticBinaryOperator<uint64_t> unsigned8_op,
+    ArithmeticBinaryOperator<int64_t> signed8_op,
+    ArithmeticBinaryOperator<bool> bool1_op) {
+  auto ta = a.type(), tb = b.type();
+  auto aa = is_arithmetic(ta), ab = is_arithmetic(tb);
+  // short path when no conversion is needed (not including float promotion)
+  if ((aa && ab) || ta == Float8 || tb == Float8)
+    return arithmetic_binary_operation_assuming_one_float_or_both_integral(
+          a, b, float8_op, unsigned8_op, signed8_op, bool1_op, ta, tb);
+  // at this point either ta or tb or both are not an arithmetic type
+  if (!aa) {
+    auto ca = best_number_type(a.as_utf8());
+    ta = ca.type();
+    if (ta == Null)
+      return {};
+    if (!ab) {
+      auto cb = best_number_type(b.as_utf8());
+      tb = cb.type();
+      if (tb == Null)
+        return {};
+      return arithmetic_binary_operation_assuming_one_float_or_both_integral(
+            ca, cb, float8_op, unsigned8_op, signed8_op, bool1_op, ta, tb);
+    }
+    return arithmetic_binary_operation_assuming_one_float_or_both_integral(
+          ca, b, float8_op, unsigned8_op, signed8_op, bool1_op, ta, tb);
+  }
+  auto cb = best_number_type(b.as_utf8());
+  tb = cb.type();
+  if (tb == Null)
+    return {};
+  return arithmetic_binary_operation_assuming_one_float_or_both_integral(
+        a, cb, float8_op, unsigned8_op, signed8_op, bool1_op, ta, tb);
+}
+
+TypedValue TypedValue::add(const TypedValue &a, const TypedValue &b) {
   return arithmetic_binary_operation_with_best_type(
-        a, b, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
-    return a.float8()+b.float8();
-  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+        a, b,
+        [](double fa, double fb) __attribute__((always_inline)) STATIC_LAMBDA -> TypedValue {
+    return fa + fb;
+  }, [](uint64_t ua, uint64_t ub) __attribute__((always_inline)) STATIC_LAMBDA -> TypedValue {
     // C++26: use ckd_add
 #if __has_builtin(__builtin_add_overflow)
     unsigned long long u;
-    return __builtin_uaddll_overflow(a.unsigned8(), b.unsigned8(), &u) ? TypedValue{} : u;
+    return __builtin_uaddll_overflow(ua, ub, &u) ? TypedValue{} : u;
 #else
-    return a.unsigned8()+b.unsigned8();
+    return ua + ub;
 #endif
-  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+  }, [](int64_t ia, int64_t ib) __attribute__((always_inline)) STATIC_LAMBDA -> TypedValue {
     // C++26: use ckd_add
 #if __has_builtin(__builtin_add_overflow)
     signed long long i;
-    return __builtin_saddll_overflow(a.signed8(), b.signed8(), &i) ? TypedValue{} : i;
+    return __builtin_saddll_overflow(ia, ib, &i) ? TypedValue{} : i;
 #else
-    return a.signed8()+b.signed8();
+    return ia + ib;
 #endif
-  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
-    return a.bool1()+b.bool1();
+  }, [](bool ba, bool bb) __attribute__((always_inline)) STATIC_LAMBDA -> TypedValue {
+    return ba || bb; // addition is disjonction
   });
 }
 
-TypedValue TypedValue::sub(TypedValue a, TypedValue b) {
+TypedValue TypedValue::sub(const TypedValue &a, const TypedValue &b) {
   return arithmetic_binary_operation_with_best_type(
-        a, b, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
-    return a.float8()-b.float8();
-  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
-    auto ua = a.unsigned8(), ub = b.unsigned8();
+        a, b,
+        [](double fa, double fb) __attribute__((always_inline)) STATIC_LAMBDA -> TypedValue {
+    return fa - fb;
+  }, [](uint64_t ua, uint64_t ub) __attribute__((always_inline)) STATIC_LAMBDA -> TypedValue {
     if (ub > ua) {
       // the result is < 0, try to make it fit in a signed8
       if (ub < std::numeric_limits<int64_t>::max()
           && ua < std::numeric_limits<int64_t>::max())
-        return (int64_t)ua-(int64_t)ub;
+        return (int64_t)ua - (int64_t)ub;
       return {};
     }
     // C++26: use ckd_sub
 #if __has_builtin(__builtin_sub_overflow)
     unsigned long long u;
-    return __builtin_usubll_overflow(a.unsigned8(), b.unsigned8(), &u) ? TypedValue{} : u;
+    return __builtin_usubll_overflow(ua, ub, &u) ? TypedValue{} : u;
 #else
-    return a.unsigned8()-b.unsigned8();
+    return ua - ub;
 #endif
-  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+  }, [](int64_t ia, int64_t ib) __attribute__((always_inline)) STATIC_LAMBDA -> TypedValue {
     // C++26: use ckd_sub
 #if __has_builtin(__builtin_sub_overflow)
     signed long long i;
-    return __builtin_ssubll_overflow(a.signed8(), b.signed8(), &i) ? TypedValue{} : i;
+    return __builtin_ssubll_overflow(ia, ib, &i) ? TypedValue{} : i;
 #else
-    return a.signed8()-b.signed8();
+    return ia - ib;
 #endif
-  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
-    return a.bool1()-b.bool1();
+  }, [](bool ba, bool bb) __attribute__((always_inline)) STATIC_LAMBDA -> TypedValue {
+    return ba != bb; // substraction is xor
   });
 }
 
-TypedValue TypedValue::mul(TypedValue a, TypedValue b) {
+TypedValue TypedValue::mul(const TypedValue &a, const TypedValue &b) {
   return arithmetic_binary_operation_with_best_type(
-        a, b, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
-    return a.float8()*b.float8();
-  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+        a, b,
+        [](double fa, double fb) __attribute__((always_inline)) STATIC_LAMBDA -> TypedValue {
+    return fa * fb;
+  }, [](uint64_t ua, uint64_t ub) __attribute__((always_inline)) STATIC_LAMBDA -> TypedValue {
     // C++26: use ckd_mul
 #if __has_builtin(__builtin_mul_overflow)
     unsigned long long u;
-    return __builtin_umulll_overflow(a.unsigned8(), b.unsigned8(), &u) ? TypedValue{} : u;
+    return __builtin_umulll_overflow(ua, ub, &u) ? TypedValue{} : u;
 #else
 #warning TypedValue::{multiply,add,substract,divide,modulo} w/o checked overflow
-    return a.unsigned8()*b.unsigned8();
+    return ua * ub;
 #endif
-  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
+  }, [](int64_t ia, int64_t ib) __attribute__((always_inline)) STATIC_LAMBDA -> TypedValue {
     // C++26: use ckd_mul
 #if __has_builtin(__builtin_mul_overflow)
     signed long long i;
-    return __builtin_smulll_overflow(a.signed8(), b.signed8(), &i) ? TypedValue{} : i;
+    return __builtin_smulll_overflow(ia, ib, &i) ? TypedValue{} : i;
 #else
-    return a.signed8()*b.signed8();
+    return ia * ib;
 #endif
-  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
-    return a.bool1()*b.bool1();
+  }, [](bool ba, bool bb) __attribute__((always_inline)) STATIC_LAMBDA -> TypedValue {
+    return ba && bb; // multiplication is conjonction
   });
 }
 
-TypedValue TypedValue::div(TypedValue a, TypedValue b) {
+TypedValue TypedValue::div(const TypedValue &a, const TypedValue &b) {
   return arithmetic_binary_operation_with_best_type(
-        a, b, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
-    return a.float8()/b.float8();
-  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
-    auto u = b.unsigned8();
-    if (u == 0)
+        a, b,
+        [](double fa, double fb) __attribute__((always_inline)) STATIC_LAMBDA -> TypedValue {
+    return fa / fb;
+  }, [](uint64_t ua, uint64_t ub) __attribute__((always_inline)) STATIC_LAMBDA -> TypedValue {
+    if (ub == 0)
       return {};
-    return a.unsigned8()/u;
-  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
-    auto i = b.signed8();
-    if (i == 0)
+    return ua / ub;
+  }, [](int64_t ia, int64_t ib) __attribute__((always_inline)) STATIC_LAMBDA -> TypedValue {
+    if (ib == 0)
       return {};
-    return a.signed8()/i;
-  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
-    if (!b.bool1())
+    return ia / ib;
+  }, [](bool ba, bool bb) __attribute__((always_inline)) STATIC_LAMBDA -> TypedValue {
+    if (!bb)
       return {};
-    return a.bool1();
+    return ba; // division is identity, provided the divisor is non null
   });
 }
 
-TypedValue TypedValue::mod(TypedValue a, TypedValue b) {
+TypedValue TypedValue::mod(const TypedValue &a, const TypedValue &b) {
   return arithmetic_binary_operation_with_best_type(
-        a, b, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
-    return std::fmod(a.float8(), b.float8());
-  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
-    auto u = b.unsigned8();
-    if (u == 0)
+        a, b,
+        [](double fa, double fb) __attribute__((always_inline)) STATIC_LAMBDA -> TypedValue {
+    return std::fmod(fa, fb);
+  }, [](uint64_t ua, uint64_t ub) __attribute__((always_inline)) STATIC_LAMBDA -> TypedValue {
+    if (ub == 0)
       return {};
-    return a.unsigned8()%u;
-  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
-    auto i = b.signed8();
-    if (i == 0)
+    return ua % ub;
+  }, [](int64_t ia, int64_t ib) __attribute__((always_inline)) STATIC_LAMBDA -> TypedValue {
+    if (ib == 0)
       return {};
-    return a.signed8()%i;
-  }, [](const TypedValue &a, const TypedValue &b) STATIC_LAMBDA -> TypedValue {
-    if (!b.bool1())
+    return ia % ib;
+  }, [](bool ba, bool bb) __attribute__((always_inline)) STATIC_LAMBDA -> TypedValue {
+    if (!bb)
       return {};
-    return a.bool1();
+    return ba;  // division is identity, provided the divisor is non null
   });
 }
 
@@ -1482,19 +1536,19 @@ TypedValue TypedValue::from_qvariant(const QVariant &v) {
 QVariant TypedValue::as_qvariant() const {
   switch (type()) {
     case Unsigned8:
-      return QVariant::fromValue(unsigned8());
+      return QVariant::fromValue(direct_unsigned8());
     case Entity8:
-      return entity8();
+      return Entity{direct_unsigned8()};
     case Bool1:
-      return bool1();
+      return QVariant::fromValue(!!direct_unsigned8());
     case Signed8:
-      return QVariant::fromValue(signed8());
+      return QVariant::fromValue(direct_signed8());
     case Float8:
-      return float8();
+      return QVariant::fromValue(direct_float8());
     case Bytes:
-      return bytes();
+      return QByteArray(direct_utf8());
     case Utf8:
-      return utf8();
+      return direct_utf8();
     case Entity8Vector: {
         auto v = value().entityvector();
         return QVariant::fromValue(EntityList(QList<Entity>(v.begin(), v.end())));
@@ -1562,9 +1616,9 @@ Utf8String TypedValue::as_etv() const {
   auto t = type();
   switch (t) {
     case Utf8:
-      return '"'+utf8().cEscaped()+'"';
+      return '"'+direct_utf8().cEscaped()+'"';
     case Bytes:
-      return "bytes{"_u8+bytes().toHex()+"}"_u8;
+      return "bytes{"_u8+direct_utf8().toHex()+"}"_u8;
     case Null:
       return "null{}"_u8;
     default:
