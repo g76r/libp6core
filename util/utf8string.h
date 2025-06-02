@@ -1259,7 +1259,7 @@ private:
 #endif
   struct NumberConverter {
     // this struct is needed because non-class non-variable partial
-    // specialization is not allowed in C++ (at less until C++20)
+    // specialization is not allowed in C++ (at less up to C++20)
     // see for instance https://stackoverflow.com/questions/8061456/why-can-i-seemingly-define-a-partial-specialization-for-function-templates
     [[nodiscard]] STATIC_LAMBDA inline T operator()(
         const Utf8String &s, bool *ok = nullptr, const T &def = {}) STATIC_LAMBDA_CONST;

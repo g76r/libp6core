@@ -269,21 +269,6 @@ static QMap<T,int> index(QList<T> source) {
   return dest;
 }
 
-/** Object hiding a QList behind a range loop expression.
- *  Usefull as an API return value waiting for C++23 and temporary
- *  std::ranges::view actually working (not UB, not crashing).
- *  Note that returning this object as a temporary for use as a range loop
- *  expression is still UB anyway in C++20, but it's supported by GCC.
- */
-template<typename T>
-class QListRange {
-  QList<T> _list;
-public:
-  QListRange(QList<T> list) : _list(list) {}
-  auto begin() const { return _list.constBegin(); }
-  auto end() const { return _list.constEnd(); }
-};
-
 template<typename C, typename T>
 concept readable_set = requires(const C &c, const T &t) {
   { c.contains(t) } -> std::same_as<bool>;
