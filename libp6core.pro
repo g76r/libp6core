@@ -68,6 +68,7 @@ SOURCES *= \
     format/graphvizrenderer.cpp \
     format/svgwriter.cpp \
     io/opensshcommand.cpp \
+    libp6core_global.cpp \
     log/logrecorditemlogger.cpp \
     log/logrecorditemmodel.cpp \
     pf/pfnode.cpp \

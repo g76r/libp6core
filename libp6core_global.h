@@ -49,4 +49,8 @@ concept integral_or_enum = std::integral<T> || std::is_enum_v<T>;
 
 }
 
+class QDebug;
+
+QDebug operator<<(QDebug dbg, std::partial_ordering po);
+
 #endif // LIBP6CORE_GLOBAL_H
