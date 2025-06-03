@@ -56,11 +56,11 @@ namespace p6 {
  *  @see https://en.wikipedia.org/wiki/Topological_sorting
  */
 #ifdef __cpp_concepts
-template<bool AssumeAcyclic = false, bool AssumeInjective = false,
+template<bool assume_acyclic = false, bool assume_injective = false,
          std::forward_iterator Iterator,
          std::indirect_binary_predicate<Iterator,Iterator> DependsOn>
 #else
-template<bool AssumeAcyclic = false, bool AssumeInjective = false,
+template<bool assume_acyclic = false, bool assume_injective = false,
          typename Iterator, typename DependsOn>
 #endif
 inline void stable_topological_sort(
@@ -136,24 +136,26 @@ inline void stable_topological_sort(
    *  @return count of items that can be skipped in next iterations b/c their
    *    dependencies have already been searched for by recursive calls
    */
+  // C++23 gcc 14: use explicit this parameter ("this auto self")
+  // see https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p0847r7.html#recursive-lambdas
   std::function<size_t(Iterator, Iterator, const bool)> do_sort
-      = [&do_sort,&first,&end,&depends_on,cyclic_dependency_found](
+      = [&do_sort,end,depends_on,cyclic_dependency_found](
         Iterator current, Iterator after_last_moved, const bool in_high_branch) -> size_t {
     const auto current0 = current; // current at begining of this iteration
-    if (current == end) [[unlikely]]
-      return 0; // empty set is already sorted
+    if (current == end)
+      [[unlikely]] return 0; // empty set is already sorted
     auto next = std::next(current); // will be current in next low branch iteration
-    if (next == end) [[unlikely]]
-      return 0; // 1 item set is already sorted
+    if (next == end)
+      [[unlikely]] return 0; // 1 item set is already sorted
     size_t skippable_items_count = 0; // counting how many times we ++after_last_moved
     auto after_first_moved = current; // first interval value for cycles detection
     bool i_is_beyond_last_moved = (after_last_moved == current);
     // search for current dependencies within i items beyond current
     for (auto i = next; i != end; ++i) [[likely]] {
-      if (i == after_last_moved) [[unlikely]]
-        i_is_beyond_last_moved = true;
-      if (depends_on(*current, *i) && i != current) [[unlikely]] {
-        if (!AssumeAcyclic && in_high_branch) {
+      if (i == after_last_moved)
+        [[unlikely]] i_is_beyond_last_moved = true;
+      if (depends_on(*current, *i) && i != current) {
+        if (!assume_acyclic && in_high_branch) {
           // search for circular dependencies: j items on which i depends
           // with j in [after_first_moved,after_last_moved)
           for (auto j = after_first_moved; j != after_last_moved; ++j) {
@@ -165,7 +167,7 @@ inline void stable_topological_sort(
             }
           }
         }
-        // *i = *current and shift [current,i) values to the right
+        // rotate: set *i = *current and shift [current,i) values to the right
         std::rotate(current, i, std::next(i));
         if (i_is_beyond_last_moved) {
           ++after_last_moved;
@@ -173,7 +175,7 @@ inline void stable_topological_sort(
           ++skippable_items_count;
         }
         ++current;
-        if (AssumeInjective)
+        if (assume_injective)
           break;
       }
 cycle_detected:;
