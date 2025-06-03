@@ -26,13 +26,18 @@ class QIODevice;
 /** Class representing any level of Parenthesis Format (PF) tree node.
  *  Holds methods reading and modifying data in the node and its children,
  *  and for writing to PF external format.
- *  For reading one should have a look to PfParser. */
+ *  For reading, one should have a look to PfParser. */
 struct LIBP6CORESHARED_EXPORT PfNode {
 private:
   struct LIBP6CORESHARED_EXPORT Fragment {
     enum FragmentType : quint8 {
       Text = 0, Comment, LoadedBinary, DeferredBinary, Child,
     };
+    /** Iterator returned by FragmentForwardRange.
+     *  It's required by the range lib (especially for FragmentForwardRange to
+     *  be usable by std::views::all) to be a std::input_or_output_iterator.
+     *  https://en.cppreference.com/w/cpp/iterator/input_or_output_iterator.html
+     */
     template <typename T>
     struct FragmentsForwardIterator {
       using difference_type = std::ptrdiff_t;
@@ -43,11 +48,17 @@ private:
         f = f ? f->_next : 0;
         return *this;
       };
+      // post-increment operator, which is not requires by the range lib
+      // to return this& like the pre-increment is:
+      // https://en.cppreference.com/w/cpp/iterator/weakly_incrementable.html
       void operator++(int) { ++*this; }
       bool operator==(const FragmentsForwardIterator &that) const {
         return f == that.f;
       }
     };
+    /** Range to be usable by std::views::all.
+     *  It needs to be std::ranges::range:
+     *  https://en.cppreference.com/w/cpp/ranges/range.html */
     template <typename T>
     struct FragmentForwardRange {
       T *f;
