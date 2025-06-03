@@ -28,10 +28,10 @@
 
 #if __cpp_static_call_operator >= 202207L && __cplusplus >= 202302
 #define STATIC_LAMBDA static
-#define STATIC_LAMBDA_CONST
+#define CONST_IF_NOT_STATIC_FUNCTION_CALL_OPERATOR
 #else
 #define STATIC_LAMBDA
-#define STATIC_LAMBDA_CONST const
+#define CONST_IF_NOT_STATIC_FUNCTION_CALL_OPERATOR const
 #endif
 
 namespace p6 {

@@ -1262,7 +1262,7 @@ private:
     // specialization is not allowed in C++ (at less up to C++20)
     // see for instance https://stackoverflow.com/questions/8061456/why-can-i-seemingly-define-a-partial-specialization-for-function-templates
     [[nodiscard]] STATIC_LAMBDA inline T operator()(
-        const Utf8String &s, bool *ok = nullptr, const T &def = {}) STATIC_LAMBDA_CONST;
+        const Utf8String &s, bool *ok = nullptr, const T &def = {}) CONST_IF_NOT_STATIC_FUNCTION_CALL_OPERATOR;
   };
 };
 
@@ -1642,7 +1642,7 @@ inline Utf8String &Utf8String::null_coalesce() {
 template<bool suffixes_enabled, bool floating_point_enabled>
 struct Utf8String::NumberConverter<double, suffixes_enabled, floating_point_enabled> {
   STATIC_LAMBDA double operator()(
-      const Utf8String &s, bool *ok, const double &def) STATIC_LAMBDA_CONST {
+      const Utf8String &s, bool *ok, const double &def) CONST_IF_NOT_STATIC_FUNCTION_CALL_OPERATOR {
     return s.toDouble<suffixes_enabled>(ok, def);
   }
 };
@@ -1650,7 +1650,7 @@ struct Utf8String::NumberConverter<double, suffixes_enabled, floating_point_enab
 template<bool suffixes_enabled, bool floating_point_enabled>
 struct Utf8String::NumberConverter<float, suffixes_enabled, floating_point_enabled> {
   STATIC_LAMBDA float operator()(
-      const Utf8String &s, bool *ok, const float &def) STATIC_LAMBDA_CONST {
+      const Utf8String &s, bool *ok, const float &def) CONST_IF_NOT_STATIC_FUNCTION_CALL_OPERATOR {
     return s.toFloat<suffixes_enabled>(ok, def);
   }
 };
@@ -1658,7 +1658,7 @@ struct Utf8String::NumberConverter<float, suffixes_enabled, floating_point_enabl
 template<bool suffixes_enabled, bool floating_point_enabled>
 struct Utf8String::NumberConverter<qlonglong, suffixes_enabled, floating_point_enabled> {
   STATIC_LAMBDA qlonglong operator()(
-      const Utf8String &s, bool *ok, const qlonglong &def) STATIC_LAMBDA_CONST {
+      const Utf8String &s, bool *ok, const qlonglong &def) CONST_IF_NOT_STATIC_FUNCTION_CALL_OPERATOR {
     return s.toLongLong<suffixes_enabled, floating_point_enabled>(ok, 0, def);
   }
 };
@@ -1666,7 +1666,7 @@ struct Utf8String::NumberConverter<qlonglong, suffixes_enabled, floating_point_e
 template<bool suffixes_enabled, bool floating_point_enabled>
 struct Utf8String::NumberConverter<qulonglong, suffixes_enabled, floating_point_enabled> {
   STATIC_LAMBDA qulonglong operator()(
-      const Utf8String &s, bool *ok, const qulonglong &def) STATIC_LAMBDA_CONST {
+      const Utf8String &s, bool *ok, const qulonglong &def) CONST_IF_NOT_STATIC_FUNCTION_CALL_OPERATOR {
     return s.toULongLong<suffixes_enabled, floating_point_enabled>(ok, 0, def);
   }
 };
@@ -1674,7 +1674,7 @@ struct Utf8String::NumberConverter<qulonglong, suffixes_enabled, floating_point_
 template<bool suffixes_enabled, bool floating_point_enabled>
 struct Utf8String::NumberConverter<long, suffixes_enabled, floating_point_enabled> {
   STATIC_LAMBDA long operator()(
-      const Utf8String &s, bool *ok, const long &def) STATIC_LAMBDA_CONST {
+      const Utf8String &s, bool *ok, const long &def) CONST_IF_NOT_STATIC_FUNCTION_CALL_OPERATOR {
     return s.toLong<suffixes_enabled, floating_point_enabled>(ok, 0, def);
   }
 };
@@ -1682,7 +1682,7 @@ struct Utf8String::NumberConverter<long, suffixes_enabled, floating_point_enable
 template<bool suffixes_enabled, bool floating_point_enabled>
 struct Utf8String::NumberConverter<ulong, suffixes_enabled, floating_point_enabled> {
   STATIC_LAMBDA ulong operator()(
-      const Utf8String &s, bool *ok, const ulong &def) STATIC_LAMBDA_CONST {
+      const Utf8String &s, bool *ok, const ulong &def) CONST_IF_NOT_STATIC_FUNCTION_CALL_OPERATOR {
     return s.toULong<suffixes_enabled, floating_point_enabled>(ok, 0, def);
   }
 };
@@ -1690,7 +1690,7 @@ struct Utf8String::NumberConverter<ulong, suffixes_enabled, floating_point_enabl
 template<bool suffixes_enabled, bool floating_point_enabled>
 struct Utf8String::NumberConverter<int, suffixes_enabled, floating_point_enabled> {
   STATIC_LAMBDA int operator()(
-      const Utf8String &s, bool *ok, const int &def) STATIC_LAMBDA_CONST {
+      const Utf8String &s, bool *ok, const int &def) CONST_IF_NOT_STATIC_FUNCTION_CALL_OPERATOR {
     return s.toInt<suffixes_enabled, floating_point_enabled>(ok, 0, def);
   }
 };
@@ -1698,7 +1698,7 @@ struct Utf8String::NumberConverter<int, suffixes_enabled, floating_point_enabled
 template<bool suffixes_enabled, bool floating_point_enabled>
 struct Utf8String::NumberConverter<uint, suffixes_enabled, floating_point_enabled> {
   STATIC_LAMBDA uint operator()(
-      const Utf8String &s, bool *ok, const uint &def) STATIC_LAMBDA_CONST {
+      const Utf8String &s, bool *ok, const uint &def) CONST_IF_NOT_STATIC_FUNCTION_CALL_OPERATOR {
     return s.toUInt<suffixes_enabled, floating_point_enabled>(ok, 0, def);
   }
 };
@@ -1707,7 +1707,7 @@ struct Utf8String::NumberConverter<uint, suffixes_enabled, floating_point_enable
 template<bool suffixes_enabled, bool floating_point_enabled>
 struct Utf8String::NumberConverter<short, suffixes_enabled, floating_point_enabled> {
   STATIC_LAMBDA short operator()(
-      const Utf8String &s, bool *ok, const short &def) STATIC_LAMBDA_CONST {
+      const Utf8String &s, bool *ok, const short &def) CONST_IF_NOT_STATIC_FUNCTION_CALL_OPERATOR {
     return s.toShort<suffixes_enabled, floating_point_enabled>(ok, 0, def);
   }
 };
@@ -1715,7 +1715,7 @@ struct Utf8String::NumberConverter<short, suffixes_enabled, floating_point_enabl
 template<bool suffixes_enabled, bool floating_point_enabled>
 struct Utf8String::NumberConverter<ushort, suffixes_enabled, floating_point_enabled> {
   STATIC_LAMBDA ushort operator()(
-      const Utf8String &s, bool *ok, const ushort &def) STATIC_LAMBDA_CONST {
+      const Utf8String &s, bool *ok, const ushort &def) CONST_IF_NOT_STATIC_FUNCTION_CALL_OPERATOR {
     return s.toUShort<suffixes_enabled, floating_point_enabled>(ok, 0, def);
   }
 };
@@ -1723,7 +1723,7 @@ struct Utf8String::NumberConverter<ushort, suffixes_enabled, floating_point_enab
 template<bool suffixes_enabled, bool floating_point_enabled>
 struct Utf8String::NumberConverter<bool, suffixes_enabled, floating_point_enabled> {
   STATIC_LAMBDA bool operator()(
-      const Utf8String &s, bool *ok, const bool &def) STATIC_LAMBDA_CONST {
+      const Utf8String &s, bool *ok, const bool &def) CONST_IF_NOT_STATIC_FUNCTION_CALL_OPERATOR {
     return s.toBool(ok, def);
   }
 };
