@@ -1121,7 +1121,7 @@ const std::vector<double> TypedValue::FVectorValue::as_fvector(
 }
 
 QPointF TypedValue::FVectorValue::as_pointf(const QPointF &def, bool *ok) const {
-  if (v.size() == 2) {
+  if (v.size() >= 2) {
     if (ok) *ok = true;
     return QPointF{v[0], v[1]};
   }
@@ -1130,7 +1130,7 @@ QPointF TypedValue::FVectorValue::as_pointf(const QPointF &def, bool *ok) const 
 }
 
 QSizeF TypedValue::FVectorValue::as_sizef(const QSizeF &def, bool *ok) const {
-  if (v.size() == 2) {
+  if (v.size() >= 2) {
     if (ok) *ok = true;
     return QSizeF{v[0], v[1]};
   }
@@ -1139,9 +1139,11 @@ QSizeF TypedValue::FVectorValue::as_sizef(const QSizeF &def, bool *ok) const {
 }
 
 QRectF TypedValue::FVectorValue::as_rectf(const QRectF &def, bool *ok) const {
-  if (v.size() == 4) {
+  auto s = v.size();
+  if (s >= 4 && s%2 == 0) {
+    auto dim = s/2;
     if (ok) *ok = true;
-    return QRectF{v[0], v[1], v[2], v[3]};
+    return QRectF{v[0], v[1], v[dim+0], v[dim+1]};
   }
   if (ok) *ok = false;
   return def;
