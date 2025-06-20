@@ -29,6 +29,10 @@ namespace p6 {
 
 using Type = TypedValue::Type;
 
+const int TypedValue::_entity8vector_mtid = qMetaTypeId<QList<Entity>>();
+const int TypedValue::_fvector_mtid = qMetaTypeId<QList<double>>();
+const int TypedValue::_pointfvector_mtid = qMetaTypeId<QList<QPointF>>();
+
 // Value base class ///////////////////////////////////////////////////////////
 
 const std::vector<Entity> TypedValue::Value::_empty_entityvector;

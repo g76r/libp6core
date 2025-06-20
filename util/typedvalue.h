@@ -81,6 +81,59 @@ public:
   /** is Unsigned8, Signed8, Bool1, or Float8 (not Entity8) */
   static inline bool constexpr is_arithmetic(Type t) { return t & (0xc0); }
   inline bool is_arithmetic() const { return is_arithmetic(type()); }
+  /** convert TypedValue::Type to QMetaType'::Type's typeId */
+  static inline int constexpr metatype(Type t) {
+    switch (t) {
+      case Unsigned8:
+        return QMetaType::ULongLong;
+      case Entity8:
+        return Entity::MetaTypeId;
+      case Bool1:
+        return QMetaType::Bool;
+      case Signed8:
+        return QMetaType::LongLong;
+      case Float8:
+        return QMetaType::Double;
+      case Bytes:
+        return QMetaType::QByteArray;
+      case Utf8:
+        return Utf8String::MetaTypeId;
+      case Entity8Vector:
+        return _entity8vector_mtid;
+      case FVector:
+        return _fvector_mtid;
+      case PointF:
+        return QMetaType::QPointF;
+      case SizeF:
+        return QMetaType::QSizeF;
+      case RectF:
+        return QMetaType::QRectF;
+      case LineF:
+        return QMetaType::QLineF;
+      case PointFVector:
+        return _pointfvector_mtid;
+      case Timestamp8:
+        return QMetaType::QDateTime;
+      case Regexp:
+        return QMetaType::QRegularExpression;
+      case EmbeddedQVariant:
+        return QMetaType::QVariant;
+      case Null:
+        ;
+    }
+    return QMetaType::UnknownType;
+  }
+  /** convert TypedValue::Type to QMetaType'::Type's typeId */
+  inline int metatype() const {
+    auto t = type();
+    // provides metatype of embedded QVariant instead of QMetaType::QVariant
+    // note that this cannot be QMetaType::ULongLong,Bool,... because
+    // EmbeddedQVariantValue is only created when building a TypedValue from
+    // QVariant and that would have lead to Unsigned8Value, Bool1Value, ...
+    if (t == EmbeddedQVariant)
+      return d->qvariant().typeId();
+    return metatype(t);
+  }
 
 private:
   struct LIBP6CORESHARED_EXPORT Value : QSharedData {
@@ -708,6 +761,7 @@ public:
 
 private:
   QSharedDataPointer<Value> d;
+  const static int _entity8vector_mtid, _fvector_mtid, _pointfvector_mtid;
   inline TypedValue(Value *value) : d(value) {}
   /** safe access to a Value object reference even if d == 0 */
   inline const Value &value() const { return !!d ? *d : NullValue::_nullvalue; }
