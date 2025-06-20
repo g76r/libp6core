@@ -681,12 +681,6 @@ please note that:
   as if it were false so that `%{=rpn,2,1,<null>,?:}` -> 2
 - :? evaluates its operands in the human natural order (test,then,else), whereas
   ?: evaluates them in the stack natural order (else,then,test) which enables
-  lazy evaluation: if test is null the stack won't be evaluated below test,
-  if test is false the stack won't be evaluated below then, for instance: if %x
-  is true `%{=rpn,1,2,+,3,4,+,%x,?:}` will finish with a stack containing
-  `1,2,+,7` and thus return 7 without evaluating the stack below it
-  in the other hand `%{=rpn,%x,3,4,+,1,2,+,:?}` will finish with a stack
-  containing only `7` since it must always evaluate every operand
 - `+ - *` will return null if one of their operand is not convertible to a
   number or if an integer operation overflows e.g.
   `%{=rpn,0xffffffffffffffff,1,+}` and `%{=rpn,1,foo,+}` both return

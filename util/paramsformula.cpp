@@ -489,52 +489,42 @@ static RadixTree<OperatorDefinition> _operatorDefinitions {
         return TypedValue::bitwise_or(x, y);
       } }, true },
   { "&&", { 2, 14, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
-        bool ok;
-        auto x = stack->popeval(stack, context).as_bool1(&ok);
-        if (!ok) // lazy evaluation if x is null
+        bool okx, oky;
+        auto x = stack->popeval(stack, context).as_bool1(&okx);
+        auto y = stack->popeval(stack, context).as_bool1(&oky);
+        if (!okx || !oky)
           return {};
-        if (!x) // lazy evaluation if x is false
-          return false;
-        auto y = stack->popeval(stack, context).as_bool1(&ok);
-        if (!ok)
-          return {};
-        return y;
+        return x && y;
       } }, true },
   { "^^", { 2, 15, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
-        bool ok;
-        auto x = stack->popeval(stack, context).as_bool1(&ok);
-        if (!ok) // lazy evaluation if x is null
-          return {};
-        auto y = stack->popeval(stack, context).as_bool1(&ok);
-        if (!ok)
+        bool okx, oky;
+        auto x = stack->popeval(stack, context).as_bool1(&okx);
+        auto y = stack->popeval(stack, context).as_bool1(&oky);
+        if (!okx || !oky)
           return {};
         return x != y;
       } }, true },
   { "||", { 2, 16, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
-        bool ok;
-        auto x = stack->popeval(stack, context).as_bool1(&ok);
-        if (!ok) // lazy evaluation if x is null
+        bool okx, oky;
+        auto x = stack->popeval(stack, context).as_bool1(&okx);
+        auto y = stack->popeval(stack, context).as_bool1(&oky);
+        if (!okx || !oky)
           return {};
-        if (x) // lazy evaluation if x is true
-          return true;
-        auto y = stack->popeval(stack, context).as_bool1(&ok);
-        if (!ok)
-          return {};
-        return y;
+        return x || y;
       } }, true },
   { "?:*", { 3, 17, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
-        // use lazy evaluation i.e. the third operand won't be evaluated if x is true
         auto x = stack->popeval(stack, context);
         auto y = stack->popeval(stack, context);
-        return x.as_bool1() ? y : stack->popeval(stack, context);
+        auto z = stack->popeval(stack, context);
+        return x.as_bool1() ? y : z;
       } }, true },
   { "?:", { 3, 17, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
-        // use lazy evaluation i.e. the third operand won't be evaluated if x is true (even the second one if x is null)
         auto x = stack->popeval(stack, context);
+        auto y = stack->popeval(stack, context);
+        auto z = stack->popeval(stack, context);
         if (!x)
           return {};
-        auto y = stack->popeval(stack, context);
-        return x.as_bool1() ? y : stack->popeval(stack, context);
+        return x.as_bool1() ? y : z;
       } }, true },
   { ":?*", { 3, 17, false, false, [](Stack *stack, const EvalContext &context) STATIC_LAMBDA -> TypedValue  {
         auto z = stack->popeval(stack, context);
