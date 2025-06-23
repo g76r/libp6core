@@ -1227,7 +1227,7 @@ QLineF TypedValue::LineFValue::linef() const {
 }
 
 QLineF TypedValue::linef() const {
-  return value().linef();;
+  return value().linef();
 }
 
 // PointFVectorValue //////////////////////////////////////////////////////////

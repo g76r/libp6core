@@ -88,7 +88,7 @@ TypedValue ParamsProvider::paramValue(
   if (key.value(0) == '['){
     [[unlikely]];
     auto eos = key.indexOf(']');
-    if (eos < 0) {// no ] in key
+    if (eos < 0) { // no ] in key
       v = def;
       [[unlikely]] goto skip_param_raw_value;
     }
