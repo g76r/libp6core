@@ -392,6 +392,7 @@ _functions {
 }, true},
 { "=rpn", [](const Utf8String &key, const EvalContext &context, int ml) STATIC_LAMBDA -> TypedValue {
   auto expr = key.mid(ml);
+  // LATER must move the cache to ParamsFormula itself, to make it possible to clear it when a new operator is registered
   auto formula = _rpn_cache.get_or_create(expr, [&]() {
     return ParamsFormula(expr, ParamsFormula::RpnWithPercents);
   });

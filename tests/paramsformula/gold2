@@ -144,3 +144,8 @@ inf: f8{inf}
 inf: f8{inf}
 inf: f8{inf}
 marker 17
+<identity>: "<identity>"
+42: u8{42}
+42: "42"
+abc: "abc"
+marker 18

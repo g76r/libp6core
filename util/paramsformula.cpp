@@ -597,8 +597,8 @@ static QMap<Utf8String, OperatorDefinition> _operatorDefinitionsMap {
 void ParamsFormula::register_operator(
     const Utf8String &symbol, ParamsFormula::UnaryOperator op) {
   OperatorDefinition opdef =
-  {1, 7, false, false, [op](Stack *stack, const EvalContext &context) -> TypedValue {
-     auto x = stack->popeval_utf8(stack, context);
+  {1, 7, false, false, [op](Stack *stack, const EvalContext &context) {
+     const auto &x = stack->popeval(stack, context);
      return op(context, x);
    }};
   _operatorDefinitions.insert(symbol, opdef, false);
@@ -608,9 +608,9 @@ void ParamsFormula::register_operator(
 void ParamsFormula::register_operator(
     const Utf8String &symbol, ParamsFormula::BinaryOperator op) {
   OperatorDefinition opdef =
-  {1, 7, false, false, [op](Stack *stack, const EvalContext &context) -> TypedValue {
-     auto y = stack->popeval_utf8(stack, context);
-     auto x = stack->popeval_utf8(stack, context);
+  {1, 7, false, false, [op](Stack *stack, const EvalContext &context) {
+     const auto &x = stack->popeval(stack, context);
+     const auto &y = stack->popeval(stack, context);
      return op(context, x, y);
    }};
   _operatorDefinitions.insert(symbol, opdef, false);
@@ -620,10 +620,10 @@ void ParamsFormula::register_operator(
 void ParamsFormula::register_operator(
     const Utf8String &symbol, ParamsFormula::TernaryOperator op) {
   OperatorDefinition opdef =
-  {1, 7, false, false, [op](Stack *stack, const EvalContext &context) -> TypedValue {
-     auto z = stack->popeval_utf8(stack, context);
-     auto y = stack->popeval_utf8(stack, context);
-     auto x = stack->popeval_utf8(stack, context);
+  {1, 7, false, false, [op](Stack *stack, const EvalContext &context) {
+     const auto &x = stack->popeval(stack, context);
+     const auto &y = stack->popeval(stack, context);
+     const auto &z = stack->popeval(stack, context);
      return op(context, x, y, z);
    }};
   _operatorDefinitions.insert(symbol, opdef, false);
@@ -655,7 +655,7 @@ void ParamsFormula::init_rpn(
       if (operator_definition._last_arg_is_regexp && previous_was_constant) {
         // if possible, compile regular expression now rather than at eval time
         // a string can be substituted with a QRegularExpression provided
-        // previous item was a QVariant (not an operator) and we already know
+        // previous item was a TypedValue (not an operator) and we already know
         // its value (it has not to be %-evaluated at eval time)
         auto pattern = list[i-1].toUtf16();
         auto re = _regexp_cache.get_or_create(pattern, [&](){

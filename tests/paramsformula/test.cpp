@@ -221,5 +221,22 @@ int main(void) {
   qDebug() << "inf:" << PercentEvaluator::eval("%{=rpn,inf,0,+}");
   qDebug() << "inf:" << PercentEvaluator::eval("%{=rpn,0.0,1,/,0,+}");
   qDebug() << "marker 17";
+  qDebug() << "<identity>:" << PercentEvaluator::eval("%{=rpn,43,~~,<identity>}"); // wouldn't work with 42 because ParamsFormula::register_operator do not flushes PercentEvaluator's %=rpn cache
+  ParamsFormula::register_operator(
+        "<identity>", [](const ParamsFormula::EvalContext &, const TypedValue &x) {
+    return x;
+  });
+  ParamsFormula::register_operator(
+        "<concat2>", [](const ParamsFormula::EvalContext &, const TypedValue &x, const TypedValue &y) {
+    return TypedValue::concat(x, y);
+  });
+  ParamsFormula::register_operator(
+        "<concat3>", [](const ParamsFormula::EvalContext &, const TypedValue &x, const TypedValue &y, const TypedValue &z) {
+    return TypedValue::concat(TypedValue::concat(x, y), z);
+  });
+  qDebug() << "42:" << PercentEvaluator::eval("%{=rpn,42,~~,<identity>}");
+  qDebug() << "42:" << PercentEvaluator::eval("%{=rpn,2,4,<concat2>}");
+  qDebug() << "abc:" << PercentEvaluator::eval("%{=rpn,c,b,a,<concat3>}");
+  qDebug() << "marker 18";
   return 0;
 }
