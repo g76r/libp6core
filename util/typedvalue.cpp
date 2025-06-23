@@ -1556,31 +1556,31 @@ QVariant TypedValue::as_qvariant() const {
     case Utf8:
       return direct_utf8();
     case Entity8Vector: {
-        auto v = value().entityvector();
+        const auto &v = d->entityvector();
         return QVariant::fromValue(EntityList(QList<Entity>(v.begin(), v.end())));
       }
     case FVector: {
-        auto v = fvector();
+        const auto &v = d->fvector();
         return QVariant::fromValue(QList<double>(v.begin(), v.end()));
       }
     case PointF:
-      return pointf();
+      return d->pointf();
     case SizeF:
-      return sizef();
+      return d->sizef();
     case RectF:
-      return rectf();
+      return d->rectf();
     case LineF:
-      return linef();
+      return d->linef();
     case PointFVector: {
-        auto v = pointfvector();
+        const auto &v = d->pointfvector();
         return QVariant::fromValue(QList<QPointF>(v.begin(), v.end()));
       }
     case Timestamp8:
-      return timestamp8();
+      return d->timestamp8();
     case Regexp:
-      return regexp();
+      return d->regexp();
     case EmbeddedQVariant:
-      return value().qvariant();
+      return d->qvariant();
     case Null:
       ;
   }

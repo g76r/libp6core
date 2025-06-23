@@ -396,9 +396,10 @@ public:
    */
   [[nodiscard]] inline std::partial_ordering operator<=>(
       const TypedValue &other) const {
-    if (type() != other.type())
+    Type ta = type(), tb = other.type();
+    if (ta == Null || tb == Null || ta != tb)
       return std::partial_ordering::unordered;
-    return value() <=> other.value(); }
+    return *d <=> *other.d; }
   /** compare two TypedValue as numbers if both are numbers or can be converted
    *  to numbers (incl. timestamps which are ms since 1970 UTC) and otherwise
    *  compare them as characters string.
@@ -434,7 +435,8 @@ public:
    *  - operator == does not rely on <=>
    */
   [[nodiscard]] inline bool operator==(const TypedValue &other) const {
-    return !!*this && type() == other.type() && value() == other.value(); }
+    Type ta = type(), tb = other.type();
+    return ta != Null && tb != Null && ta == tb && *d == *other.d; }
   [[nodiscard]] friend inline bool operator==(
       const TypedValue &tv, const Utf8String &o) {
     return tv.type() == Utf8 && tv.direct_utf8() == o; }
@@ -469,7 +471,7 @@ public:
   inline bool operator!() const { return !!d ? !*d : true; }
   [[deprecated]] inline bool isValid() const { return !operator!(); }
   [[deprecated]] inline bool isNull() const { return operator!(); }
-  [[nodiscard]] inline Type type() const { return value().type(); }
+  [[nodiscard]] inline Type type() const { return !!d ? d->type() : Null; }
   /** convert a type enum/int code (Signed8...) into an ETV code ("i8"...) */
   [[nodiscard]] static Utf8String typecode(Type type);
   [[nodiscard]] inline Utf8String typecode() const { return typecode(type()); }
